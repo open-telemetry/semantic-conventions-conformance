@@ -421,13 +421,16 @@ def run_pipeline(
     state.weaver_proc = None
     logger.info("=== Weaver exit code: %d ===", weaver_exit)
     logger.info("=== Results in: %s ===", results_dir)
-    fresh_result = domain.parse_result_dir(results_dir, location)
 
+    # Checked before parsing: a crashed scenario tends to leave Weaver's
+    # output truncated, and a parse error there would mask the exit code.
     if scenario_run.exit_code != 0:
         raise RunnerError(
             f"Scenario process exited with code {scenario_run.exit_code}",
             exit_code=scenario_run.exit_code or 1,
         )
+
+    fresh_result = domain.parse_result_dir(results_dir, location)
 
     has_statistics = fresh_result is not None and fresh_result.statistics is not None
     _validate_weaver_output(location, results_dir, weaver_exit, has_statistics)

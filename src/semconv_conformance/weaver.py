@@ -114,8 +114,15 @@ def _download_file(url: str, destination: Path) -> None:
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme != "https" or parsed.hostname != "github.com":
         raise RuntimeError(f"Refusing to download non-github.com URL: {url}")
-    with urllib.request.urlopen(url, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response, destination.open("wb") as out:
-        shutil.copyfileobj(response, out)
+    with urllib.request.urlopen(url, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response:
+        # Release assets redirect to GitHub's CDN, so the final host is not
+        # github.com. Only the scheme is re-checked, to catch a redirect that
+        # would otherwise downgrade the transfer to plaintext HTTP.
+        final_url = response.geturl()
+        if urllib.parse.urlparse(final_url).scheme != "https":
+            raise RuntimeError(f"Refusing to follow non-HTTPS redirect to: {final_url}")
+        with destination.open("wb") as out:
+            shutil.copyfileobj(response, out)
 
 
 def _extract_archive(archive_path: Path, extract_dir: Path) -> None:
@@ -205,6 +212,11 @@ def ensure_semconv_registry() -> str:
 
     if not model_dir.is_dir():
         logger.info("Caching semantic conventions registry (%s)", SEMCONV_VERSION)
+        # An interrupted clone leaves `semconv_cache` present but without
+        # `model/`. `git clone` refuses to write into a non-empty directory,
+        # so the cache would stay wedged until deleted by hand.
+        if semconv_cache.exists():
+            shutil.rmtree(semconv_cache)
         semconv_cache.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [
