@@ -47,10 +47,13 @@ class OtlpHttpBridge:
             def handle(self) -> None:
                 try:
                     super().handle()
-                except ConnectionResetError:
+                except ConnectionError:
                     # Noisy and expected: instrumentation clients routinely
                     # close the connection immediately after an export
-                    # without waiting for us to finish reading the request.
+                    # without waiting for us to finish reading the request or
+                    # writing the response. Covers ConnectionResetError,
+                    # BrokenPipeError, and ConnectionAbortedError (Windows),
+                    # all of which mean the same thing here.
                     return
 
             def do_GET(self) -> None:

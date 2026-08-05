@@ -25,12 +25,20 @@ VERSIONS_FILE = REPO_ROOT / "versions.env"
 logger = logging.getLogger(__name__)
 
 
+class WeaverError(RuntimeError):
+    """A Weaver or semantic-conventions provisioning step failed.
+
+    Subclasses RuntimeError so existing handlers keep working, but gives the
+    CLI a specific type to report cleanly instead of a traceback.
+    """
+
+
 def _load_version_pins() -> dict[str, str]:
     """Load shared external version pins from the repository root."""
     try:
         content = VERSIONS_FILE.read_text(encoding="utf-8")
     except OSError as e:
-        raise RuntimeError(f"Could not read version pins file: {VERSIONS_FILE}") from e
+        raise WeaverError(f"Could not read version pins file: {VERSIONS_FILE}") from e
 
     pins: dict[str, str] = {}
     for raw_line in content.splitlines():
@@ -39,7 +47,7 @@ def _load_version_pins() -> dict[str, str]:
             continue
         key, sep, value = line.partition("=")
         if not sep:
-            raise RuntimeError(f"Invalid version pin line in {VERSIONS_FILE}: {raw_line!r}")
+            raise WeaverError(f"Invalid version pin line in {VERSIONS_FILE}: {raw_line!r}")
         pins[key.strip()] = value.strip().strip('"').strip("'")
 
     return pins
@@ -51,6 +59,9 @@ SEMCONV_VERSION = VERSION_PINS["SEMCONV_VERSION"]
 #: Per-read socket timeout for the Weaver release download, so a stalled
 #: network fails the run instead of hanging CI until the job times out.
 DOWNLOAD_TIMEOUT_SECONDS = 60
+#: Whole-operation cap on the shallow semconv clone, for the same reason.
+#: Generous, because unlike the download this covers the entire transfer.
+CLONE_TIMEOUT_SECONDS = 300
 
 
 def _normalize_version(version: str) -> str:
@@ -81,7 +92,7 @@ def _weaver_asset_name() -> str:
         return "weaver-aarch64-apple-darwin.tar.xz"
     if sys.platform == "darwin" and machine in {"amd64", "x86_64"}:
         return "weaver-x86_64-apple-darwin.tar.xz"
-    raise RuntimeError(f"Unsupported platform for managed Weaver install: {sys.platform} / {platform.machine()}")
+    raise WeaverError(f"Unsupported platform for managed Weaver install: {sys.platform} / {platform.machine()}")
 
 
 def _find_weaver_binary(search_root: Path) -> Path | None:
@@ -113,14 +124,14 @@ def _download_file(url: str, destination: Path) -> None:
     """Download a file over HTTPS from github.com to disk."""
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme != "https" or parsed.hostname != "github.com":
-        raise RuntimeError(f"Refusing to download non-github.com URL: {url}")
+        raise WeaverError(f"Refusing to download non-github.com URL: {url}")
     with urllib.request.urlopen(url, timeout=DOWNLOAD_TIMEOUT_SECONDS) as response:
         # Release assets redirect to GitHub's CDN, so the final host is not
         # github.com. Only the scheme is re-checked, to catch a redirect that
         # would otherwise downgrade the transfer to plaintext HTTP.
         final_url = response.geturl()
         if urllib.parse.urlparse(final_url).scheme != "https":
-            raise RuntimeError(f"Refusing to follow non-HTTPS redirect to: {final_url}")
+            raise WeaverError(f"Refusing to follow non-HTTPS redirect to: {final_url}")
         with destination.open("wb") as out:
             shutil.copyfileobj(response, out)
 
@@ -132,7 +143,7 @@ def _extract_archive(archive_path: Path, extract_dir: Path) -> None:
             for name in zip_archive.namelist():
                 resolved = (extract_dir / name).resolve()
                 if not resolved.is_relative_to(extract_dir.resolve()):
-                    raise RuntimeError(f"Refusing to extract archive member outside target dir: {name}")
+                    raise WeaverError(f"Refusing to extract archive member outside target dir: {name}")
             zip_archive.extractall(extract_dir)
     else:
         with tarfile.open(archive_path, "r:*") as tar_archive:
@@ -178,7 +189,7 @@ def ensure_weaver() -> Path:
 
         extracted_binary = _find_weaver_binary(extract_dir)
         if extracted_binary is None:
-            raise RuntimeError(f"Downloaded Weaver archive did not contain {_weaver_binary_name()}")
+            raise WeaverError(f"Downloaded Weaver archive did not contain {_weaver_binary_name()}")
 
         if install_dir.exists():
             shutil.rmtree(install_dir)
@@ -186,12 +197,12 @@ def ensure_weaver() -> Path:
 
     cached_binary = _find_weaver_binary(install_dir)
     if cached_binary is None:
-        raise RuntimeError(f"Installed Weaver binary not found under {install_dir}")
+        raise WeaverError(f"Installed Weaver binary not found under {install_dir}")
     if sys.platform != "win32":
         cached_binary.chmod(cached_binary.stat().st_mode | 0o111)
     installed_version = _weaver_version(cached_binary)
     if installed_version != expected_version:
-        raise RuntimeError(
+        raise WeaverError(
             f"Installed Weaver version mismatch: expected {WEAVER_VERSION}, found {installed_version or 'unknown'}"
         )
     return cached_binary
@@ -218,19 +229,37 @@ def ensure_semconv_registry() -> str:
         if semconv_cache.exists():
             shutil.rmtree(semconv_cache)
         semconv_cache.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                "git",
-                "clone",
-                "--branch",
-                SEMCONV_VERSION,
-                "--depth",
-                "1",
-                "-q",
-                "https://github.com/open-telemetry/semantic-conventions.git",
-                str(semconv_cache),
-            ],
-            check=True,
-        )
+        # GIT_TERMINAL_PROMPT=0 turns a credential prompt into an immediate
+        # failure. Without it git blocks on stdin forever when it can't
+        # authenticate. Credential *helpers* are deliberately left enabled so
+        # environments that proxy github.com still work.
+        clone_env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+        try:
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--branch",
+                    SEMCONV_VERSION,
+                    "--depth",
+                    "1",
+                    "-q",
+                    "https://github.com/open-telemetry/semantic-conventions.git",
+                    str(semconv_cache),
+                ],
+                check=True,
+                timeout=CLONE_TIMEOUT_SECONDS,
+                env=clone_env,
+            )
+        except subprocess.TimeoutExpired as e:
+            # The partial clone left behind is harmless: the `model/` check
+            # above sees it as incomplete and removes it on the next run.
+            raise WeaverError(
+                f"Timed out after {CLONE_TIMEOUT_SECONDS}s cloning semantic conventions {SEMCONV_VERSION}"
+            ) from e
+        except subprocess.CalledProcessError as e:
+            raise WeaverError(
+                f"Failed to clone semantic conventions {SEMCONV_VERSION} (git exited {e.returncode})"
+            ) from e
 
     return str(model_dir)
