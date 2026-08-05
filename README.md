@@ -3,7 +3,7 @@
 ## Maintainers
 
 - [Christophe Kamphaus](https://github.com/kamphaus), Independent
-- [Jay DeLuca](https://github.com/jaydeluca), Grafana
+- [Jay DeLuca](https://github.com/jaydeluca), Grafana Labs
 - [Josh Suereth](https://github.com/jsuereth), Google
 - [Liudmila Molkova](https://github.com/lmolkova), Google
 - [Trask Stalnaker](https://github.com/trask), Microsoft
