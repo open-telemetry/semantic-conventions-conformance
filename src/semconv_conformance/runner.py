@@ -87,6 +87,8 @@ class DomainConfig(Protocol):
     @property
     def extra_env(self) -> dict[str, str]: ...
     @property
+    def required_opt_in_env_var(self) -> Callable[[str, str, str], str]: ...
+    @property
     def weaver_health_timeout(self) -> int: ...
     @property
     def inactivity_timeout(self) -> int: ...
@@ -236,6 +238,7 @@ def _build_test_environment(
     weaver_port: int,
     otlp_http_bridge: OtlpHttpBridge | None,
     extra_env: dict[str, str] | None,
+    opt_in_env_var: str = "",
 ) -> dict[str, str]:
     env = {
         **os.environ,
@@ -248,6 +251,17 @@ def _build_test_environment(
     }
     if extra_env:
         env.update(extra_env)
+
+    # Scenarios never set semconv opt-ins themselves, so the committed data
+    # records which instrumentations still need one.
+    if opt_in_env_var:
+        name, sep, value = opt_in_env_var.partition("=")
+        if not sep or not name.strip():
+            raise RunnerError(
+                f"Malformed opt_in_env_vars entry {opt_in_env_var!r} for scenario: "
+                f"{location.scenario_id} (expected NAME=VALUE)"
+            )
+        env[name.strip()] = value
 
     if otlp_protocol == "grpc":
         env.update(
@@ -387,7 +401,14 @@ def run_pipeline(
 
     _maybe_start_otlp_bridge(state, otlp_protocol, weaver_port, bridge_port)
 
-    env = _build_test_environment(location, otlp_protocol, weaver_port, state.otlp_http_bridge, domain.extra_env)
+    env = _build_test_environment(
+        location,
+        otlp_protocol,
+        weaver_port,
+        state.otlp_http_bridge,
+        domain.extra_env,
+        domain.required_opt_in_env_var(location.lang, location.library, location.ecosystem),
+    )
 
     logger.info("=== Running scenario: %s ===", location.scenario_id)
     scenario_run = domain.language_adapters.run_scenario_cmd(location, env)

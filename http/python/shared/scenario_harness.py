@@ -3,16 +3,21 @@
 
 """Server-side conformance scenario harness.
 
-Most HTTP server scenarios share the same shape: set the semconv opt-in,
-bring up the SDK, spin up the app in a daemon thread, drive the standard
-client scenarios against it, then tear everything down. These helpers
-collapse that boilerplate so each scenario's ``main()`` is a single call.
+Most HTTP server scenarios share the same shape: bring up the SDK, spin up
+the app in a daemon thread, drive the standard client scenarios against it,
+then tear everything down. These helpers collapse that boilerplate so each
+scenario's ``main()`` is a single call.
+
+Semantic-convention opt-in environment variables are deliberately *not* set
+here. A scenario that needs one declares it in its ``metadata.json`` under
+``opt_in_env_vars`` and the runner exports it, so the committed data records
+which instrumentations still require an opt-in and which emit stable
+conventions on their own.
 
 ``app_factory`` is a zero-arg callable so the SDK is initialized before
 the instrumentor runs at app-construction time.
 """
 
-import os
 import threading
 from collections.abc import Callable
 from typing import Any
@@ -23,15 +28,10 @@ from otel_setup import flush_and_shutdown, setup_otel
 BASE_HOST = "127.0.0.1"
 
 
-def _opt_in() -> None:
-    os.environ.setdefault("OTEL_SEMCONV_STABILITY_OPT_IN", "http")
-
-
 def serve_via_wsgiref(app_factory: Callable[[], Any], port: int) -> None:
     """Run a WSGI conformance scenario against ``app_factory()``."""
     from wsgiref.simple_server import make_server
 
-    _opt_in()
     tp, lp, mp = setup_otel()
     try:
         server = make_server(BASE_HOST, port, app_factory())
@@ -52,7 +52,6 @@ def serve_via_uvicorn(app_factory: Callable[[], Any], port: int) -> None:
     """Run an ASGI conformance scenario via uvicorn."""
     import uvicorn
 
-    _opt_in()
     tp, lp, mp = setup_otel()
     try:
         server = uvicorn.Server(

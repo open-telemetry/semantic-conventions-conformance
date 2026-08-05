@@ -3,20 +3,8 @@ name: Conformance
 on:
   push:
     branches: [main]
-    paths:
-      - 'http/**'
-      - 'src/semconv_conformance/**'
-      - 'pyproject.toml'
-      - 'versions.env'
-      - '.github/**'
   pull_request:
     branches: [main]
-    paths:
-      - 'http/**'
-      - 'src/semconv_conformance/**'
-      - 'pyproject.toml'
-      - 'versions.env'
-      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

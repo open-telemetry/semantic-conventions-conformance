@@ -164,10 +164,10 @@ scenario shipping only a `.txt` would go unmanaged.
   appears in reports.
 - **`opt_in_env_vars`** declares the environment variable an instrumentation
   needs in order to emit stable semantic conventions. The value is a
-  `KEY=value` string. It is descriptive — the scenario itself is responsible
-  for setting the variable (for Python, `shared/scenario_harness.py` does it)
-  — and it is recorded alongside the results so the opt-in requirement stays
-  visible.
+  `KEY=value` string, which the runner exports for that scenario's process.
+  Scenarios must not set semconv opt-ins themselves — keeping the declaration
+  here is what makes it visible which instrumentations still require an opt-in
+  and which emit stable conventions on their own.
 - **`otlp_protocol`** — set to `"http/protobuf"` when the instrumentation
   cannot export OTLP gRPC. The runner's OTLP bridge will transcode to gRPC
   before forwarding to Weaver.

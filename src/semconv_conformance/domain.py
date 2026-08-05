@@ -116,6 +116,10 @@ class Domain:
     def generate_single_scenario_data(self) -> Callable[[ScenarioLocation], GeneratedScenarioData | None]:
         return self.data_files.generate_single_scenario_data
 
+    @property
+    def required_opt_in_env_var(self) -> Callable[[str, str, str], str]:
+        return self.metadata.required_opt_in_env_var
+
     # ``dashboard_config`` deliberately does not live here. When the dashboard
     # lands it builds its own config from a ``Domain``, so the model doesn't
     # depend on its presentation layer.

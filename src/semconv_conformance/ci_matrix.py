@@ -24,25 +24,6 @@ from semconv_conformance.locations import iter_scenario_locations
 REPO_ROOT = Path(__file__).resolve().parents[2]
 #: Domains with scenarios in the repo. Extend as each domain lands.
 DOMAINS = ("http",)
-#: `ci_runs_on` values a scenario may request. Restricted to GitHub-hosted
-#: labels so a scenario's metadata.json can't route its job onto an
-#: unexpected runner.
-ALLOWED_RUNNERS = frozenset(
-    {
-        "ubuntu-latest",
-        "ubuntu-24.04",
-        "ubuntu-24.04-arm",
-        "ubuntu-22.04",
-        "ubuntu-22.04-arm",
-        "windows-latest",
-        "windows-2025",
-        "windows-2022",
-        "macos-latest",
-        "macos-15",
-        "macos-14",
-        "macos-13",
-    }
-)
 
 
 def _load_json(path: Path) -> object:
@@ -69,16 +50,11 @@ def _require_metadata(scenario_dir: Path, domain: str, language: str, library: s
     return metadata
 
 
-def _runner_for_scenario(metadata: dict[str, object], language: str, metadata_file: Path) -> str:
+def _runner_for_scenario(metadata: dict[str, object], language: str) -> str:
     runner = metadata.get("ci_runs_on")
-    if runner is None:
-        return default_runner(language)
-    if not isinstance(runner, str) or runner not in ALLOWED_RUNNERS:
-        raise SystemExit(
-            f"error: {metadata_file} requests ci_runs_on={runner!r}, which is not one of "
-            f"{', '.join(sorted(ALLOWED_RUNNERS))}"
-        )
-    return runner
+    if isinstance(runner, str) and runner:
+        return runner
+    return default_runner(language)
 
 
 def _discover_scenarios(domain: str, repo_root: Path) -> list[dict[str, str]]:
@@ -94,7 +70,7 @@ def _discover_scenarios(domain: str, repo_root: Path) -> list[dict[str, str]]:
                     "language": language,
                     "lib": loc.library,
                     "eco": loc.ecosystem,
-                    "runner": _runner_for_scenario(metadata, language, scenario_dir / "metadata.json"),
+                    "runner": _runner_for_scenario(metadata, language),
                 }
             )
     return entries

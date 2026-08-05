@@ -23,7 +23,7 @@ Automated conformance validation of library instrumentations against the
 Scenario App  ──OTLP──▶  Weaver registry live-check  ──▶  data-<eco>.json
 ```
 
-CI re-runs the scenarios affected by a pull request and fails if any committed
+CI re-runs every scenario on each pull request and fails if any committed
 `data-<eco>.json` no longer matches what the instrumentation produces, so the
 recorded results stay honest as upstream libraries change.
 
