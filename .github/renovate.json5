@@ -4,6 +4,41 @@
     "config:best-practices",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
+  "customManagers": [
+    {
+      // Tool versions shared by CI and the local tooling. Any `VAR=value`
+      // line immediately preceded by a `# renovate:` comment is picked up,
+      // so new entries in versions.env don't require a config change here.
+      "customType": "regex",
+      "managerFilePatterns": ["/^versions\\.env$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\r?\\n[A-Z][A-Z0-9_]*=(?<currentValue>\\S+)"
+      ]
+    },
+    {
+      // Language toolchain versions pinned in the setup-language composite
+      // action, which lands with the conformance CI workflows.
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/actions/setup-language/action\\.yml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+toolchain:\\s+\"(?<currentValue>[^\"]+)\""
+      ],
+      "versioningTemplate": "semver"
+    },
+    {
+      // .NET SDK tags on github.com/dotnet/sdk have the form "v10.0.202";
+      // strip the leading "v" to get a semver value.
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/actions/setup-language/action\\.yml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+dotnet-version:\\s+\"(?<currentValue>[^\"]+)\""
+      ],
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ],
+  // Renovate applies packageRules in order and later rules win, so the
+  // catch-all rules come first and the more specific ones follow.
   "packageRules": [
     {
       "groupName": "all patch versions",
@@ -14,9 +49,94 @@
       "matchUpdateTypes": ["minor", "major"],
       "schedule": ["before 8am on Monday"]
     },
+    // Scenario dependencies span ten language ecosystems, so non-major
+    // updates and lock file maintenance are grouped per ecosystem: one
+    // failing ecosystem doesn't block the others, and `config:best-practices`
+    // (which enables weekly lock file maintenance) doesn't refresh every
+    // ecosystem's lock files in one unreviewable branch.
+    {
+      "matchManagers": ["pip_requirements", "pip-compile", "pep621"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "python-minor"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "js-minor"
+    },
+    {
+      "matchManagers": ["gradle", "gradle-wrapper"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "java-minor"
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "dotnet-minor"
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "go-minor"
+    },
+    {
+      "matchManagers": ["composer"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "php-minor"
+    },
+    {
+      "matchManagers": ["bundler"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "ruby-minor"
+    },
+    {
+      "matchManagers": ["mix"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "elixir-minor"
+    },
+    {
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "rust-minor"
+    },
+    {
+      "matchManagers": ["swift"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "swift-minor"
+    },
+    {
+      // The per-ecosystem groups above mix patch with minor updates, which
+      // would otherwise inherit the split patch/minor schedules above; give
+      // each group a single weekly schedule instead.
+      "matchManagers": [
+        "pip_requirements",
+        "pip-compile",
+        "pep621",
+        "npm",
+        "gradle",
+        "gradle-wrapper",
+        "nuget",
+        "gomod",
+        "composer",
+        "bundler",
+        "mix",
+        "cargo",
+        "swift"
+      ],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "schedule": ["before 8am on Monday"]
+    },
+    {
+      // The incubator artifact only publishes `-alpha` releases; with the
+      // default `ignoreUnstable: true` renovate would never propose an
+      // upgrade.
+      "matchPackageNames": [
+        "io.opentelemetry:opentelemetry-sdk-extension-incubator"
+      ],
+      "ignoreUnstable": false
+    },
     {
       // group all GitHub Actions updates into a single weekly PR
-      // (Renovate applies packageRules in order and later rules win)
       "groupName": "github actions",
       "matchManagers": [
         "github-actions"

@@ -1,0 +1,55 @@
+# Weaver results (generated under <domain>/<lang>/<lib>/results/<eco>/)
+results/
+
+# Rendered dashboards (`semconv-site --output-dir site`); anchored so it
+# doesn't also hide the src/semconv_conformance/site/ package data.
+/site/
+
+# Python
+__pycache__/
+.venv/
+*.egg-info/
+.ruff_cache/
+.mypy_cache/
+uv.lock
+
+# Node.js
+node_modules/
+.cache/
+
+# .NET
+bin/
+obj/
+# Visual Studio generates a *.sln on demand; we don't track it (the
+# per-project .csproj files + per-domain directory layout are the
+# source of truth).
+*.sln
+
+# Java
+build/
+.gradle/
+
+# PHP
+vendor/
+
+# Ruby
+/.bundle/
+**/.bundle/
+
+# Rust
+target/
+
+# Swift
+.build/
+
+# Elixir
+_build/
+deps/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local scratch
+.gh-artifacts-test/
