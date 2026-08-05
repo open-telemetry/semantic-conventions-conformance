@@ -12,8 +12,9 @@ Automated conformance validation of library instrumentations against the
 
 ## Domains
 
-Each top-level directory contains conformance scenarios for a specific
-semantic convention domain:
+Conformance scenarios live in one top-level directory per semantic convention
+domain. Both domains are still being migrated in, so neither directory is
+present yet:
 
 - `http/`: [HTTP](https://opentelemetry.io/docs/specs/semconv/http/) semantic conventions
 - `genai/`: [Generative AI](https://github.com/open-telemetry/semantic-conventions-genai) semantic conventions
