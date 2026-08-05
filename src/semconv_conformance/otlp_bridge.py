@@ -58,7 +58,16 @@ class OtlpHttpBridge:
                 self._send_response(HTTPStatus.OK, b"ok")
 
             def do_POST(self) -> None:
-                content_length = int(self.headers.get("Content-Length", "0"))
+                # A bad Content-Length would otherwise raise straight out of
+                # the handler, which the client sees as a connection reset
+                # rather than the 400 the other malformed-input paths return.
+                try:
+                    content_length = int(self.headers.get("Content-Length", "0"))
+                except ValueError:
+                    content_length = -1
+                if content_length < 0:
+                    self._send_response(HTTPStatus.BAD_REQUEST, b"invalid Content-Length")
+                    return
                 payload = self.rfile.read(content_length)
 
                 try:

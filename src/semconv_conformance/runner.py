@@ -117,8 +117,8 @@ def allocate_free_tcp_ports(count: int) -> list[int]:
 
 def is_healthy(url: str) -> bool:
     try:
-        urllib.request.urlopen(url, timeout=2)
-        return True
+        with urllib.request.urlopen(url, timeout=2):
+            return True
     except (urllib.error.URLError, urllib.error.HTTPError, OSError):
         # Expected during startup polling: connection refused, 503 while
         # warming up, socket timeout. Anything else should propagate.
@@ -206,7 +206,15 @@ def _stop_weaver(admin_port: int, weaver_proc: subprocess.Popen) -> int:
         except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
             logger.warning("Weaver admin /stop failed (%s); falling back to terminate().", e)
             weaver_proc.terminate()
-    return weaver_proc.wait(timeout=30)
+    try:
+        return weaver_proc.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        # Without this the timeout escapes main()'s handlers as a raw
+        # traceback. The outer `finally` still reaps the process, but the
+        # run reports no useful error.
+        logger.warning("Weaver did not exit within 30s of being asked to stop; killing.")
+        weaver_proc.kill()
+        return weaver_proc.wait()
 
 
 def _validate_weaver_output(
