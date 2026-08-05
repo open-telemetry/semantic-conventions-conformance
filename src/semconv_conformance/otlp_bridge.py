@@ -22,8 +22,11 @@ class OtlpHttpBridge:
 
     def __init__(self, listen_port: int, collector_endpoint: str) -> None:
         parsed = urlparse(collector_endpoint)
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-            raise ValueError(f"Invalid collector endpoint: {collector_endpoint}")
+        # Only plaintext: the forwarding channel below is always insecure, so
+        # accepting an https:// endpoint would quietly do something other than
+        # what the caller asked for.
+        if parsed.scheme != "http" or not parsed.netloc:
+            raise ValueError(f"Invalid collector endpoint (expected http://host:port): {collector_endpoint}")
 
         self.endpoint = f"http://127.0.0.1:{listen_port}"
         self.health_url = f"{self.endpoint}/health"

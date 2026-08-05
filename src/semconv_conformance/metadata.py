@@ -12,6 +12,29 @@ from pathlib import Path
 DependencyVersionReader = Callable[[Path, str], dict[str, str]]
 
 
+class MetadataError(Exception):
+    """Raised when a committed metadata file is unreadable, malformed, or the wrong shape."""
+
+
+def load_json_object(path: Path) -> dict[str, object]:
+    """Parse `path` as a JSON object, annotating every failure with the file name.
+
+    These files are hand-authored by contributors adding a scenario, so a bare
+    `JSONDecodeError` with no path is a poor first-run experience.
+    """
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError as e:
+        raise MetadataError(f"could not read {path}: {e}") from e
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise MetadataError(f"invalid JSON in {path}: {e}") from e
+    if not isinstance(data, dict):
+        raise MetadataError(f"{path} must contain a JSON object, got {type(data).__name__}")
+    return data
+
+
 def _read_python_dependency_versions(scenario_dir: Path, ecosystem: str) -> dict[str, str]:
     versions: dict[str, str] = {}
     req_file = scenario_dir / f"requirements-{ecosystem}.txt"
@@ -56,12 +79,22 @@ class DomainMetadata:
         if not eco_file.is_file():
             return {}, {}
 
-        data = json.loads(eco_file.read_text(encoding="utf-8"))
+        data = load_json_object(eco_file)
         display: dict[str, str] = {}
         repos: dict[tuple[str, str], str] = {}
         for eco, info in data.items():
-            display[eco] = info.get("display_name", eco)
-            for lang_slug, repo in info.get("repos", {}).items():
+            if not isinstance(info, dict):
+                raise MetadataError(f"{eco_file}: ecosystem {eco!r} must map to a JSON object")
+            display_name = info.get("display_name", eco)
+            display[eco] = display_name if isinstance(display_name, str) else eco
+            eco_repos = info.get("repos", {})
+            if not isinstance(eco_repos, dict):
+                raise MetadataError(f"{eco_file}: 'repos' for ecosystem {eco!r} must be a JSON object")
+            for lang_slug, repo in eco_repos.items():
+                if not isinstance(lang_slug, str) or not isinstance(repo, str):
+                    raise MetadataError(
+                        f"{eco_file}: 'repos' for ecosystem {eco!r} must map language slugs to repository strings"
+                    )
                 lang_display = self.language_display_names.get(lang_slug, lang_slug)
                 repos[(eco, lang_display)] = repo
         return display, repos
@@ -81,12 +114,18 @@ class DomainMetadata:
                 meta = lib_dir / "metadata.json"
                 if not meta.is_file():
                     continue
-                data = json.loads(meta.read_text(encoding="utf-8"))
+                data = load_json_object(meta)
                 slug = lib_dir.name
-                if slug not in names and "display_name" in data:
-                    names[slug] = data["display_name"]
-                if "repo" in data:
-                    repos[(lang_dir.name, slug)] = data["repo"]
+                display_name = data.get("display_name")
+                if display_name is not None and slug not in names:
+                    if not isinstance(display_name, str):
+                        raise MetadataError(f"{meta}: 'display_name' must be a string")
+                    names[slug] = display_name
+                repo = data.get("repo")
+                if repo is not None:
+                    if not isinstance(repo, str):
+                        raise MetadataError(f"{meta}: 'repo' must be a string")
+                    repos[(lang_dir.name, slug)] = repo
         return names, repos
 
     def library_display_name(self, slug: str) -> str:
@@ -99,7 +138,7 @@ class DomainMetadata:
             if not meta_file.is_file():
                 self._scenario_metadata_cache[key] = {}
             else:
-                self._scenario_metadata_cache[key] = json.loads(meta_file.read_text(encoding="utf-8"))
+                self._scenario_metadata_cache[key] = load_json_object(meta_file)
         return self._scenario_metadata_cache[key]
 
     def required_opt_in_env_var(self, lang: str, library: str, ecosystem: str) -> str:

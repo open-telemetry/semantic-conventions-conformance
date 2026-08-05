@@ -21,7 +21,7 @@ from semconv_conformance.attribute_spec import AttributeSpec
 from semconv_conformance.cli import make_run_scenario_entrypoint
 from semconv_conformance.data_files import DomainDataFiles
 from semconv_conformance.language_adapters import DomainLanguageAdapters, UvNotInstalledError
-from semconv_conformance.metadata import ALL_DEPENDENCY_VERSION_READERS, DomainMetadata
+from semconv_conformance.metadata import ALL_DEPENDENCY_VERSION_READERS, DomainMetadata, MetadataError
 from semconv_conformance.parse_results import DomainResultParser, IgnoreAdvice
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ class Domain:
     weaver_health_timeout: int = 30
     inactivity_timeout: int = 60
     hook: PipelineHook | None = None
-    extra_error_types: tuple[type[Exception], ...] = (UvNotInstalledError,)
+    extra_error_types: tuple[type[Exception], ...] = (UvNotInstalledError, MetadataError)
 
     @cached_property
     def metadata(self) -> DomainMetadata:

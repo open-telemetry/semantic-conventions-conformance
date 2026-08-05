@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from semconv_conformance.locations import ScenarioLocation
+from semconv_conformance.metadata import MetadataError, load_json_object
 from semconv_conformance.weaver import ensure_semconv_registry, ensure_weaver
 
 if TYPE_CHECKING:
@@ -299,7 +300,10 @@ def _load_metadata(domain_dir: Path, location: ScenarioLocation) -> dict[str, ob
     metadata_file = domain_dir / location.lang / location.library / "metadata.json"
     if not metadata_file.is_file():
         return {}
-    return json.loads(metadata_file.read_text(encoding="utf-8"))
+    try:
+        return load_json_object(metadata_file)
+    except MetadataError as e:
+        raise RunnerError(f"Invalid metadata for scenario {location.scenario_id}: {e}") from e
 
 
 def _write_generated_data(generate_fn: Callable, location: ScenarioLocation) -> None:
