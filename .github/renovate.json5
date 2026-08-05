@@ -28,8 +28,6 @@
   "pip_requirements": {
     "enabled": false
   },
-  // Renovate applies packageRules in order and later rules win, so the
-  // catch-all rules come first and the more specific ones follow.
   "packageRules": [
     {
       "groupName": "all patch versions",
@@ -60,6 +58,7 @@
     },
     {
       // group all GitHub Actions updates into a single weekly PR
+      // (Renovate applies packageRules in order and later rules win)
       "groupName": "github actions",
       "matchManagers": [
         "github-actions"
