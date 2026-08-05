@@ -1,0 +1,26 @@
+{
+  "metrics": {
+    "http.server.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ]
+  },
+  "spans": {
+    "server": [
+      "client.address",
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  }
+}

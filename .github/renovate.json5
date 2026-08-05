@@ -4,6 +4,32 @@
     "config:best-practices",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
+  "customManagers": [
+    {
+      // Tool versions shared by CI and the local tooling. Any `VAR=value`
+      // line immediately preceded by a `# renovate:` comment is picked up,
+      // so new entries in versions.env don't require a config change here.
+      "customType": "regex",
+      "managerFilePatterns": ["/^versions\\.env$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\r?\\n[A-Z][A-Z0-9_]*=(?<currentValue>\\S+)"
+      ]
+    }
+  ],
+  // Scenario lock files are `requirements-<eco>.lock`, which falls outside
+  // renovate's default `requirements.txt` / `.pip` patterns, so the pip-compile
+  // manager has to be pointed at them explicitly. Without this, renovate would
+  // bump the `.txt` while CI keeps installing the stale `.lock`.
+  "pip-compile": {
+    "managerFilePatterns": ["/(^|/)requirements-[^/]*\\.lock$/"]
+  },
+  // pip-compile updates each lock file's source `.txt` itself, so leaving
+  // pip_requirements enabled would manage the same dependencies twice.
+  "pip_requirements": {
+    "enabled": false
+  },
+  // Renovate applies packageRules in order and later rules win, so the
+  // catch-all rules come first and the more specific ones follow.
   "packageRules": [
     {
       "groupName": "all patch versions",
@@ -14,9 +40,26 @@
       "matchUpdateTypes": ["minor", "major"],
       "schedule": ["before 8am on Monday"]
     },
+    // Scenario dependencies are grouped per language ecosystem so that one
+    // failing ecosystem doesn't block the others, and so `config:best-practices`
+    // (which enables weekly lock file maintenance) doesn't refresh every
+    // ecosystem's lock files in one unreviewable branch. Python is the only
+    // ecosystem so far; each new language adds a group alongside this one.
+    {
+      "matchManagers": ["pip-compile", "pep621"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "groupName": "python-minor"
+    },
+    {
+      // The per-ecosystem groups above mix patch with minor updates, which
+      // would otherwise inherit the split patch/minor schedules above; give
+      // each group a single weekly schedule instead.
+      "matchManagers": ["pip-compile", "pep621"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "schedule": ["before 8am on Monday"]
+    },
     {
       // group all GitHub Actions updates into a single weekly PR
-      // (Renovate applies packageRules in order and later rules win)
       "groupName": "github actions",
       "matchManagers": [
         "github-actions"

@@ -1,0 +1,79 @@
+name: Run Language Scenarios
+
+on:
+  workflow_call:
+    inputs:
+      domain:
+        required: true
+        type: string
+      language:
+        required: true
+        type: string
+      lib:
+        required: true
+        type: string
+      eco:
+        required: true
+        type: string
+      runner:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: ${{ inputs.domain }} / ${{ inputs.language }} / ${{ inputs.lib }}-${{ inputs.eco }}
+    runs-on: ${{ inputs.runner }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.domain }}
+        shell: bash
+    env:
+      DOMAIN: ${{ inputs.domain }}
+      LANGUAGE: ${{ inputs.language }}
+      LIB: ${{ inputs.lib }}
+      ECO: ${{ inputs.eco }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-language
+        with:
+          language: ${{ inputs.language }}
+
+      - name: Install conformance framework
+        run: pip install -e '..[otlp-bridge]'
+
+      - name: Install Weaver
+        run: python -c "from semconv_conformance.weaver import ensure_weaver; print(ensure_weaver())"
+
+      - name: Run conformance scenario
+        run: "${DOMAIN}-run-scenario \"$LANGUAGE\" \"$LIB\" \"$ECO\""
+
+      # The scenario rewrites the committed data file in place, so any diff here
+      # means the recorded conformance results no longer match reality.
+      - name: Check data file is up to date
+        run: |
+          git diff --exit-code -- "$LANGUAGE/$LIB/data-*.json"
+          untracked=$(git ls-files --others --exclude-standard -- "$LANGUAGE/$LIB/data-*.json")
+          if [ -n "$untracked" ]; then
+            echo "Untracked data files: $untracked"
+            exit 1
+          fi
+
+      - name: Stage results for upload
+        if: always()
+        run: |
+          src="$LANGUAGE/$LIB/results/$ECO"
+          dest="ci-results/$LANGUAGE/$LIB/results/$ECO"
+          mkdir -p "$dest" && cp -r "$src/." "$dest/" 2>/dev/null || true
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: results-${{ inputs.domain }}-${{ inputs.language }}-${{ inputs.lib }}-${{ inputs.eco }}
+          path: ${{ inputs.domain }}/ci-results/

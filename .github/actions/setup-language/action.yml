@@ -1,0 +1,23 @@
+name: Setup language toolchain
+description: >
+  Install the toolchain for the given scenario language. Python and uv are
+  always installed because the conformance framework itself runs under Python.
+  As more languages land, each adds a step here guarded by
+  `if: inputs.language == '<lang>'`, which keeps the pinned action SHAs in one
+  file so Renovate PRs touch only this file.
+
+inputs:
+  language:
+    description: Scenario language key (matches `semconv_conformance.languages`).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # Python is always installed — the conformance framework itself runs
+    # under Python regardless of the scenario language.
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.12"
+
+    - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0

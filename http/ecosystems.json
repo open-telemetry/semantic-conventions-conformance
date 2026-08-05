@@ -1,0 +1,8 @@
+{
+  "otelcontrib": {
+    "display_name": "OTel Contrib",
+    "repos": {
+      "python": "open-telemetry/opentelemetry-python-contrib"
+    }
+  }
+}

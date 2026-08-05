@@ -1,0 +1,54 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python lint and type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+
+      # `uv run --extra dev` uses the ruff/mypy pins from pyproject.toml, so the
+      # versions CI enforces are the same ones contributors get locally.
+      # ruff also covers the scenario tree; mypy does not, because scenario code
+      # imports instrumentation packages that are only installed per-scenario.
+      - name: Lint Python
+        run: uv run --extra dev ruff check src http .github/scripts
+
+      - name: Check Python formatting
+        run: uv run --extra dev ruff format --check src http .github/scripts
+
+      - name: Type-check Python
+        run: uv run --extra dev mypy src .github/scripts
+
+  license-headers:
+    name: License headers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Check license headers
+        run: python .github/scripts/check-license-headers.py

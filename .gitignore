@@ -1,0 +1,20 @@
+# Raw Weaver output, written to <domain>/<lang>/<lib>/results/<eco>/ on every
+# scenario run. Only the derived data-<eco>.json files are committed.
+results/
+
+# Per-scenario dependency caches and build output created by the language
+# adapters, e.g. <domain>/.cache/python-test-envs/<lib>-<eco>/
+.cache/
+
+# Python
+__pycache__/
+.venv/
+*.egg-info/
+.ruff_cache/
+.mypy_cache/
+uv.lock
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,9 @@
+{
+  "display_name": "Flask",
+  "opt_in_env_vars": {
+    "otelcontrib": "OTEL_SEMCONV_STABILITY_OPT_IN=http"
+  },
+  "version_packages": {
+    "otelcontrib": "opentelemetry-instrumentation-flask"
+  }
+}

@@ -31,6 +31,8 @@ jobs:
         include:
           - language: actions
             build-mode: none
+          - language: python
+            build-mode: none
           # To analyze another language, add an entry here, for example:
           # - language: go
           #   build-mode: autobuild

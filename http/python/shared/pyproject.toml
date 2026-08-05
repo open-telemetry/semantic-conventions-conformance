@@ -1,0 +1,17 @@
+[project]
+name = "http-otel-setup"
+version = "0.1.0"
+description = "Shared OTel SDK setup and HTTP test harness for HTTP conformance scenarios"
+requires-python = ">=3.12"
+dependencies = [
+    "opentelemetry-exporter-otlp-proto-grpc==1.40.0",
+    "opentelemetry-sdk==1.40.0",
+]
+
+[tool.setuptools]
+py-modules = [
+    "otel_setup",
+    "http_conformance_client",
+    "http_conformance_server",
+    "scenario_harness",
+]
