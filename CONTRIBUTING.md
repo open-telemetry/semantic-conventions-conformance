@@ -62,12 +62,8 @@ Install the framework in editable mode:
 ```sh
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install -e '.[otlp-bridge]'
+pip install -e .
 ```
-
-The `otlp-bridge` extra pulls in `grpcio` and `opentelemetry-proto` so the
-runner can transcode OTLP HTTP/protobuf traffic from libraries that only speak
-HTTP to Weaver's gRPC endpoint. Install it unless you know you don't need it.
 
 Console entry points:
 
@@ -155,7 +151,6 @@ scenario shipping only a `.txt` would go unmanaged.
   "opt_in_env_vars": {                              // optional
     "otelcontrib": "OTEL_SEMCONV_STABILITY_OPT_IN=http"
   },
-  "otlp_protocol": "http/protobuf",                 // optional — "grpc" (default) or "http/protobuf"
   "ci_runs_on": "windows-latest"                    // optional — overrides the default runner
 }
 ```
@@ -168,9 +163,6 @@ scenario shipping only a `.txt` would go unmanaged.
   Scenarios must not set semconv opt-ins themselves — keeping the declaration
   here is what makes it visible which instrumentations still require an opt-in
   and which emit stable conventions on their own.
-- **`otlp_protocol`** — set to `"http/protobuf"` when the instrumentation
-  cannot export OTLP gRPC. The runner's OTLP bridge will transcode to gRPC
-  before forwarding to Weaver.
 - **`version_packages`** — the package name to read the installed
   instrumentation version from, per ecosystem.
 - **`ci_runs_on`** — override for the default GitHub runner (e.g.
@@ -262,8 +254,6 @@ Tips:
 
 - If the instrumentation requires an opt-in env var, declare it in
   `opt_in_env_vars` *before* running the scenario.
-- If the instrumentation can only speak OTLP HTTP/protobuf, set
-  `otlp_protocol: "http/protobuf"` in `metadata.json`.
 - If the scenario can only run on a specific OS, set `ci_runs_on` in
   `metadata.json` to override the default GitHub runner for that library.
 - Use an existing library directory in the same language as your template.

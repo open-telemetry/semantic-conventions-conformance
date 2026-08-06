@@ -45,7 +45,7 @@ jobs:
           language: ${{ inputs.language }}
 
       - name: Install conformance framework
-        run: pip install -e '..[otlp-bridge]'
+        run: pip install -e '..'
 
       - name: Install Weaver
         run: python -c "from semconv_conformance.weaver import ensure_weaver; print(ensure_weaver())"

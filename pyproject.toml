@@ -12,10 +12,6 @@ license = { file = "LICENSE" }
 dependencies = []
 
 [project.optional-dependencies]
-otlp-bridge = [
-  "grpcio",
-  "opentelemetry-proto",
-]
 dev = [
   "ruff==0.15.11",
   "mypy==1.20.1",

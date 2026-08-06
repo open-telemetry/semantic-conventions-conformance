@@ -27,7 +27,6 @@ from semconv_conformance.weaver import ensure_semconv_registry, ensure_weaver
 if TYPE_CHECKING:
     from semconv_conformance.data_files import GeneratedScenarioData
     from semconv_conformance.language_adapters import DomainLanguageAdapters
-    from semconv_conformance.otlp_bridge import OtlpHttpBridge
     from semconv_conformance.parse_results import ScenarioResult
 
 logger = logging.getLogger(__name__)
@@ -38,7 +37,7 @@ class PipelineHook(Protocol):
 
     `on_start` runs after dependency install but before Weaver launches and
     the scenario executes; `on_end` runs in the `finally` block of the
-    outer pipeline, after Weaver and the OTLP bridge (if any) are stopped.
+    outer pipeline, after Weaver is stopped.
     Domains use this to manage extra local infrastructure their scenarios
     depend on.
     """
@@ -64,7 +63,6 @@ class RunnerError(Exception):
 @dataclass
 class PipelineState:
     weaver_proc: subprocess.Popen | None = None
-    otlp_http_bridge: OtlpHttpBridge | None = None
     mock_proc: subprocess.Popen | None = None
 
 
@@ -245,7 +243,6 @@ def _build_test_environment(
     location: ScenarioLocation,
     otlp_protocol: str,
     weaver_port: int,
-    otlp_http_bridge: OtlpHttpBridge | None,
     extra_env: dict[str, str] | None,
     opt_in_env_var: str = "",
 ) -> dict[str, str]:
@@ -281,18 +278,8 @@ def _build_test_environment(
         )
         return env
 
-    if otlp_protocol == "http/protobuf" and otlp_http_bridge is not None:
-        env.update(
-            {
-                "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
-                "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_http_bridge.endpoint,
-                "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": f"{otlp_http_bridge.endpoint}/v1/traces",
-                "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": f"{otlp_http_bridge.endpoint}/v1/metrics",
-                "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT": f"{otlp_http_bridge.endpoint}/v1/logs",
-            }
-        )
-        return env
-
+    # Weaver only accepts OTLP gRPC. Other protocols need a local bridge in
+    # front of it, which no scenario requires yet.
     raise RunnerError(f"Unsupported otlp_protocol '{otlp_protocol}' for scenario: {location.scenario_id}")
 
 
@@ -355,34 +342,12 @@ def _start_weaver(
     )
 
 
-def _maybe_start_otlp_bridge(
-    state: PipelineState,
-    otlp_protocol: str,
-    weaver_port: int,
-    bridge_port: int,
-) -> None:
-    """Weaver only exposes OTLP gRPC; bridge HTTP/protobuf scenarios through a local proxy."""
-    if otlp_protocol != "http/protobuf":
-        return
-
-    from semconv_conformance.otlp_bridge import OtlpHttpBridge
-
-    logger.info("=== Starting OTLP HTTP bridge on port %d ===", bridge_port)
-    state.otlp_http_bridge = OtlpHttpBridge(
-        bridge_port,
-        f"http://127.0.0.1:{weaver_port}",
-    )
-    state.otlp_http_bridge.start()
-    wait_for_health(state.otlp_http_bridge.health_url, 10, "OTLP HTTP bridge")
-
-
 def run_pipeline(
     domain: DomainConfig,
     location: ScenarioLocation,
     extra_weaver_args: list[str],
     weaver_port: int,
     admin_port: int,
-    bridge_port: int,
     registry: str,
     state: PipelineState,
 ) -> None:
@@ -411,13 +376,10 @@ def run_pipeline(
     if not isinstance(otlp_protocol, str):
         raise RunnerError(f"Invalid otlp_protocol in metadata for {location.scenario_id}")
 
-    _maybe_start_otlp_bridge(state, otlp_protocol, weaver_port, bridge_port)
-
     env = _build_test_environment(
         location,
         otlp_protocol,
         weaver_port,
-        state.otlp_http_bridge,
         domain.extra_env,
         domain.required_opt_in_env_var(location.lang, location.library, location.ecosystem),
     )
@@ -480,7 +442,7 @@ def run_main(domain: DomainConfig) -> int:
     state = PipelineState()
 
     try:
-        weaver_port, admin_port, bridge_port = allocate_free_tcp_ports(3)
+        weaver_port, admin_port = allocate_free_tcp_ports(2)
         registry = ensure_semconv_registry()
         run_pipeline(
             domain,
@@ -488,7 +450,6 @@ def run_main(domain: DomainConfig) -> int:
             extra_weaver_args,
             weaver_port,
             admin_port,
-            bridge_port,
             registry,
             state,
         )
@@ -501,8 +462,6 @@ def run_main(domain: DomainConfig) -> int:
         logger.error("ERROR: %s", e)
         return 1
     finally:
-        if state.otlp_http_bridge is not None:
-            state.otlp_http_bridge.stop()
         stop_process(state.weaver_proc, "weaver")
         if domain.hook:
             domain.hook.on_end(state)
