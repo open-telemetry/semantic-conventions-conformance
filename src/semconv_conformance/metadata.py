@@ -35,6 +35,12 @@ def load_json_object(path: Path) -> dict[str, object]:
     return data
 
 
+def _require_str(value: object, path: Path, what: str) -> str:
+    if not isinstance(value, str):
+        raise MetadataError(f"{path}: {what} must be a string, got {type(value).__name__}")
+    return value
+
+
 def _read_python_dependency_versions(scenario_dir: Path, ecosystem: str) -> dict[str, str]:
     versions: dict[str, str] = {}
     req_file = scenario_dir / f"requirements-{ecosystem}.txt"
@@ -85,18 +91,14 @@ class DomainMetadata:
         for eco, info in data.items():
             if not isinstance(info, dict):
                 raise MetadataError(f"{eco_file}: ecosystem {eco!r} must map to a JSON object")
-            display_name = info.get("display_name", eco)
-            display[eco] = display_name if isinstance(display_name, str) else eco
+            display[eco] = _require_str(info.get("display_name", eco), eco_file, f"ecosystem {eco!r} 'display_name'")
             eco_repos = info.get("repos", {})
             if not isinstance(eco_repos, dict):
                 raise MetadataError(f"{eco_file}: 'repos' for ecosystem {eco!r} must be a JSON object")
             for lang_slug, repo in eco_repos.items():
-                if not isinstance(lang_slug, str) or not isinstance(repo, str):
-                    raise MetadataError(
-                        f"{eco_file}: 'repos' for ecosystem {eco!r} must map language slugs to repository strings"
-                    )
-                lang_display = self.language_display_names.get(lang_slug, lang_slug)
-                repos[(eco, lang_display)] = repo
+                slug = _require_str(lang_slug, eco_file, f"'repos' key for ecosystem {eco!r}")
+                lang_display = self.language_display_names.get(slug, slug)
+                repos[(eco, lang_display)] = _require_str(repo, eco_file, f"'repos.{slug}' for ecosystem {eco!r}")
         return display, repos
 
     def _discover_library_metadata(self) -> tuple[dict[str, str], dict[tuple[str, str], str]]:
@@ -116,16 +118,10 @@ class DomainMetadata:
                     continue
                 data = load_json_object(meta)
                 slug = lib_dir.name
-                display_name = data.get("display_name")
-                if display_name is not None and slug not in names:
-                    if not isinstance(display_name, str):
-                        raise MetadataError(f"{meta}: 'display_name' must be a string")
-                    names[slug] = display_name
-                repo = data.get("repo")
-                if repo is not None:
-                    if not isinstance(repo, str):
-                        raise MetadataError(f"{meta}: 'repo' must be a string")
-                    repos[(lang_dir.name, slug)] = repo
+                if "display_name" in data and slug not in names:
+                    names[slug] = _require_str(data["display_name"], meta, "'display_name'")
+                if "repo" in data:
+                    repos[(lang_dir.name, slug)] = _require_str(data["repo"], meta, "'repo'")
         return names, repos
 
     def library_display_name(self, slug: str) -> str:
