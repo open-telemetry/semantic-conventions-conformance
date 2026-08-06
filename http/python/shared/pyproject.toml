@@ -12,6 +12,5 @@ dependencies = [
 py-modules = [
     "otel_setup",
     "http_conformance_client",
-    "http_conformance_server",
     "scenario_harness",
 ]

@@ -43,42 +43,7 @@ def run_standard_scenarios(base_url: str) -> None:
     _run_sync_scenario("GET", "500 server error", f"{base_url}/status/500")
 
 
-async def run_standard_scenarios_async(base_url: str) -> None:
-    import aiohttp
-
-    timeout = aiohttp.ClientTimeout(total=5)
-    async with aiohttp.ClientSession(timeout=timeout, trust_env=False) as session:
-        await _run_async_scenario(session, "GET", "basic request", f"{base_url}/users/123")
-        await _run_async_scenario(
-            session,
-            "POST",
-            "create resource",
-            f"{base_url}/items",
-            STANDARD_POST_PAYLOAD,
-        )
-        await _run_async_scenario(session, "GET", "404 error", f"{base_url}/status/404")
-        await _run_async_scenario(session, "GET", "500 server error", f"{base_url}/status/500")
-
-
 def _run_sync_scenario(method: str, label: str, url: str, payload: str | None = None) -> None:
     print(f"  [{method}] {label}")
     status, body = request_url(method, url, payload)
     print(f"    -> {status}: {body[:60]}")
-
-
-async def _run_async_scenario(
-    session,
-    method: str,
-    label: str,
-    url: str,
-    payload: str | None = None,
-) -> None:
-    print(f"  [{method}] {label}")
-    kwargs = {}
-    if payload is not None:
-        kwargs = {
-            "data": payload.encode("utf-8"),
-            "headers": {"Content-Type": "application/json"},
-        }
-    async with session.request(method, url, **kwargs) as resp:
-        print(f"    -> {resp.status}: {(await resp.text())[:60]}")

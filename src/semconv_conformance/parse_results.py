@@ -184,9 +184,14 @@ class DomainResultParser:
         for attr in raw_attrs:
             if not isinstance(attr, dict):
                 continue
+            name = attr.get("name")
+            # Callers index these keys as strings, and the payload is machine
+            # generated, so drop anything unnamed rather than trusting it.
+            if not isinstance(name, str) or not name:
+                continue
             if include_attr is not None and not include_attr(attr):
                 continue
-            attrs[attr.get("name", "")] = attr.get("value")
+            attrs[name] = attr.get("value")
         return attrs
 
     def _span_attribute_names(
@@ -194,20 +199,7 @@ class DomainResultParser:
         span: dict[str, object],
         include_attr: Callable[[dict[str, object]], bool] | None = None,
     ) -> set[str]:
-        names: set[str] = set()
-        raw_attrs = span.get("attributes", [])
-        if not isinstance(raw_attrs, list):
-            return names
-        for attr in raw_attrs:
-            if not isinstance(attr, dict):
-                continue
-            name = attr.get("name")
-            if not isinstance(name, str) or not name:
-                continue
-            if include_attr is not None and not include_attr(attr):
-                continue
-            names.add(name)
-        return names
+        return set(self._span_attributes(span, include_attr))
 
     def _metric_attribute_names(
         self,

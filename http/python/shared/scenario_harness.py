@@ -5,7 +5,7 @@
 
 Most HTTP server scenarios share the same shape: bring up the SDK, spin up
 the app in a daemon thread, drive the standard client scenarios against it,
-then tear everything down. These helpers collapse that boilerplate so each
+then tear everything down. This helper collapses that boilerplate so each
 scenario's ``main()`` is a single call.
 
 Semantic-convention opt-in environment variables are deliberately *not* set
@@ -44,32 +44,5 @@ def serve_via_wsgiref(app_factory: Callable[[], Any], port: int) -> None:
         finally:
             server.shutdown()
             thread.join(timeout=5)
-    finally:
-        flush_and_shutdown(tp, lp, mp)
-
-
-def serve_via_uvicorn(app_factory: Callable[[], Any], port: int) -> None:
-    """Run an ASGI conformance scenario via uvicorn."""
-    import uvicorn
-
-    tp, lp, mp = setup_otel()
-    try:
-        server = uvicorn.Server(
-            uvicorn.Config(
-                app_factory(),
-                host=BASE_HOST,
-                port=port,
-                log_level="warning",
-            )
-        )
-        thread = threading.Thread(target=server.run, daemon=True)
-        thread.start()
-        try:
-            base_url = f"http://{BASE_HOST}:{port}"
-            wait_for_health(base_url)
-            run_standard_scenarios(base_url)
-        finally:
-            server.should_exit = True
-            thread.join(timeout=10)
     finally:
         flush_and_shutdown(tp, lp, mp)
