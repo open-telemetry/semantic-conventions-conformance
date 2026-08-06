@@ -154,7 +154,13 @@ def stop_process(proc: subprocess.Popen | None, label: str) -> None:
 # ── Pipeline ─────────────────────────────────────────────────────────
 
 
-def _prepare_results_dir(result_dir: Path) -> None:
+def _prepare_results_dir(result_dir: Path, domain_dir: Path) -> None:
+    # `result_dir` is resolved, so a symlink anywhere along the path would
+    # point `rmtree` at a directory outside the repo. Contain it here rather
+    # than at the call site so any future caller is covered too.
+    domain_root = domain_dir.resolve()
+    if not result_dir.is_relative_to(domain_root):
+        raise RunnerError(f"Refusing to clear results directory outside {domain_root}: {result_dir}")
     if result_dir.exists():
         shutil.rmtree(result_dir)
     result_dir.mkdir(parents=True, exist_ok=True)
@@ -368,7 +374,7 @@ def run_pipeline(
     adapter.prebuild_scenario(location.library)
 
     results_dir = location.results_dir(domain.domain_dir).resolve()
-    _prepare_results_dir(results_dir)
+    _prepare_results_dir(results_dir, domain.domain_dir)
 
     _start_weaver(domain, state, results_dir, registry, weaver_port, admin_port, extra_weaver_args)
 
