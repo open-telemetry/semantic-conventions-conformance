@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from opentelemetry.conformance._report import Observed, Signal, read
+from opentelemetry.conformance._report import Observed, read
 from opentelemetry.conformance._semconv import _reduce, semconv_coverage
 
 MODEL = {
@@ -75,10 +75,10 @@ def test_a_span_is_recorded_under_every_type_it_classifies_as(tmp_path) -> None:
     observed = read(tmp_path, by_kind)
 
     assert set(observed.spans) == {"http.server"}
-    assert observed.spans["http.server"].on_any == {"url.scheme"}
+    assert observed.spans["http.server"] == {"url.scheme"}
 
 
-def test_an_attribute_only_one_sample_carried_is_not_on_every(tmp_path) -> None:
+def test_a_span_type_carries_what_any_of_its_samples_had(tmp_path) -> None:
     write_report(
         tmp_path,
         "one",
@@ -92,11 +92,9 @@ def test_an_attribute_only_one_sample_carried_is_not_on_every(tmp_path) -> None:
         ],
     )
 
-    signal = read(tmp_path, by_kind).spans["http.server"]
+    carried = read(tmp_path, by_kind).spans["http.server"]
 
-    assert signal.on_every == {"http.request.method"}
-    assert signal.on_any == {"http.request.method", "http.route"}
-    assert signal.count == 2
+    assert carried == {"http.request.method", "http.route"}
 
 
 def test_an_attribute_weaver_rejected_did_not_really_arrive(tmp_path) -> None:
@@ -113,9 +111,9 @@ def test_an_attribute_weaver_rejected_did_not_really_arrive(tmp_path) -> None:
         ],
     )
 
-    signal = read(tmp_path, by_kind).spans["http.server"]
+    carried = read(tmp_path, by_kind).spans["http.server"]
 
-    assert signal.on_any == {"url.scheme"}
+    assert carried == {"url.scheme"}
 
 
 def test_a_metric_carries_the_attributes_of_all_its_data_points(
@@ -137,78 +135,26 @@ def test_a_metric_carries_the_attributes_of_all_its_data_points(
         ],
     )
 
-    signal = read(tmp_path, by_kind).metrics["http.server.request.duration"]
+    carried = read(tmp_path, by_kind).metrics["http.server.request.duration"]
 
-    assert signal.on_any == {"http.request.method", "error.type"}
-
-
-def test_a_signal_weaver_only_counted_is_still_recorded(tmp_path) -> None:
-    """Weaver keeps no sample of every signal it sees; it still happened."""
-    write_report(
-        tmp_path,
-        "one",
-        samples=[],
-        statistics={
-            "seen_registry_metrics": {
-                "http.server.request.duration": 3,
-                "http.client.request.duration": 0,
-            }
-        },
-    )
-
-    observed = read(tmp_path, by_kind)
-
-    assert set(observed.metrics) == {"http.server.request.duration"}
-    assert observed.metrics["http.server.request.duration"].on_every is None
-
-
-def test_counts_are_merged_across_a_run_s_reports(tmp_path) -> None:
-    """One report per scenario: the run saw a signal if any scenario did."""
-    write_report(
-        tmp_path,
-        "a",
-        samples=[],
-        statistics={"seen_registry_events": {"some.event": 0}},
-    )
-    write_report(
-        tmp_path,
-        "b",
-        samples=[],
-        statistics={"seen_registry_events": {"some.event": 2}},
-    )
-
-    assert read(tmp_path, by_kind).events["some.event"].count == 2
+    assert carried == {"http.request.method", "error.type"}
 
 
 # ── reducing against the model ─────────────────────────────────────
 
 
-def signal(*names: str, every: bool = True) -> Signal:
-    return Signal(
-        count=1, on_every=set(names) if every else set(), on_any=set(names)
-    )
+def signal(*names: str) -> set[str]:
+    return set(names)
 
 
-def test_a_required_attribute_counts_only_when_every_sample_had_it() -> None:
+def test_an_attribute_counts_when_any_sample_had_it() -> None:
+    """Including a required one — a sample missing it is a weaver violation."""
     data = _reduce(
-        Observed(
-            spans={
-                "http.server": signal("http.request.method", every=False)
-            }
-        ),
+        Observed(spans={"http.server": signal("http.request.method")}),
         MODEL,
     )
 
-    assert data["spans"] == {}
-
-
-def test_a_recommended_attribute_counts_when_any_sample_had_it() -> None:
-    data = _reduce(
-        Observed(spans={"http.server": signal("url.scheme", every=False)}),
-        MODEL,
-    )
-
-    assert data["spans"]["http.server"] == ["url.scheme"]
+    assert data["spans"]["http.server"] == ["http.request.method"]
 
 
 def test_an_attribute_the_registry_does_not_declare_is_not_coverage() -> None:
@@ -229,8 +175,8 @@ def test_a_metric_the_run_emitted_bare_is_still_recorded() -> None:
     """Emitting it is a fact; a span type recognised by nothing is not."""
     data = _reduce(
         Observed(
-            metrics={"http.server.request.duration": Signal(count=1)},
-            spans={"http.server": Signal(count=1)},
+            metrics={"http.server.request.duration": set()},
+            spans={"http.server": set()},
         ),
         MODEL,
     )

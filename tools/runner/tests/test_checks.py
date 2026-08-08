@@ -182,6 +182,26 @@ def test_present_false_passes_when_attribute_is_absent() -> None:
     assert check(scenario(spans=(expectation,)), report) == []
 
 
+def test_a_rejected_value_does_not_satisfy_an_expectation() -> None:
+    """Weaver rejected the value, so the attribute did not really arrive."""
+    expectation = SpanExpectation(
+        match=SpanMatch(attributes={"gen_ai.operation.name": "chat"}),
+        count=1,
+        attributes={"server.port": AttributeMatcher(present=True)},
+    )
+    sample = span_sample(**{"gen_ai.operation.name": "chat"})
+    sample["span"]["attributes"].append(
+        {
+            "name": "server.port",
+            "value": "8080",
+            "live_check_result": {"all_advice": [{"id": "type_mismatch"}]},
+        }
+    )
+
+    (failure,) = check(scenario(spans=(expectation,)), Report([sample]))
+    assert "server.port" in failure
+
+
 def test_list_valued_attributes_are_comparable() -> None:
     """Weaver reports list values; they must not blow up the distinct count."""
     expectation = SpanExpectation(
@@ -343,12 +363,15 @@ def test_coverage_reduces_a_run(tmp_path: Path) -> None:
     )
 
     assert coverage(tmp_path, spec) == {
-        "spans": {
-            '{"gen_ai.operation.name":"chat"}': [
-                "gen_ai.operation.name",
-                "gen_ai.request.model",
-            ]
-        },
+        "spans": [
+            {
+                "match": {"attributes": {"gen_ai.operation.name": "chat"}},
+                "attributes": [
+                    "gen_ai.operation.name",
+                    "gen_ai.request.model",
+                ],
+            }
+        ],
         "metrics": ["gen_ai.client.operation.duration"],
         "events": ["custom.event"],
     }
@@ -507,9 +530,9 @@ def test_coverage_records_spans_no_expectation_declared(
         )
     )
 
-    assert coverage(tmp_path, _package(tmp_path))["spans"] == {
-        '{"kind":"internal"}': ["llm.model_name"]
-    }
+    assert coverage(tmp_path, _package(tmp_path))["spans"] == [
+        {"match": {"kind": "internal"}, "attributes": ["llm.model_name"]}
+    ]
 
 
 def test_coverage_keeps_undeclared_spans_apart_from_declared_ones(
@@ -522,7 +545,10 @@ def test_coverage_keeps_undeclared_spans_apart_from_declared_ones(
         )
     )
 
-    assert coverage(tmp_path, _package(tmp_path, spans=(CHAT,)))["spans"] == {
-        '{"gen_ai.operation.name":"chat"}': ["gen_ai.operation.name"],
-        '{"kind":"internal"}': ["custom.attribute"],
-    }
+    assert coverage(tmp_path, _package(tmp_path, spans=(CHAT,)))["spans"] == [
+        {
+            "match": {"attributes": {"gen_ai.operation.name": "chat"}},
+            "attributes": ["gen_ai.operation.name"],
+        },
+        {"match": {"kind": "internal"}, "attributes": ["custom.attribute"]},
+    ]

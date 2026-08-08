@@ -137,16 +137,13 @@ jobs:
               --wildcards '*/weaver'
           weaver --version
 
+      # Only the pins: a resolved coverage model names the template that
+      # produced it, so editing one asks for a fresh model by itself.
       - name: Cache the semconv registries
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/otel-conformance/semconv
-          key: >-
-            semconv-${{ hashFiles(
-              'tools/**/versions.env',
-              'tools/runner/src/opentelemetry/conformance/weaver-templates/**',
-              'tools/runner/src/opentelemetry/conformance/collect-coverage-model.sh'
-            ) }}
+          key: semconv-${{ hashFiles('tools/**/versions.env') }}
 
       - name: Install
         run: |
@@ -155,12 +152,18 @@ jobs:
           python -m pip install \
             -e tools/runner \
             -e tools/gen-ai/mock-server \
-            -e tools/gen-ai/runner
+            -e tools/gen-ai/runner \
+            -e tools/http/runner
 
-      # Separate step: the tests below skip when the model won't resolve, which
+      # Separate step: the tests below skip when a model won't resolve, which
       # would leave this job green having checked nothing.
-      - name: Resolve the coverage model
-        run: python -c 'from genai_conformance import DOMAIN; DOMAIN.coverage_model'
+      - name: Resolve the coverage models
+        run: |
+          python -c 'from genai_conformance import DOMAIN; DOMAIN.coverage_model'
+          python -c 'from http_conformance import DOMAIN; DOMAIN.coverage_model'
 
-      - name: Test the GenAI coverage model
-        run: python -m pytest tools/gen-ai/runner/tests
+      - name: Test the coverage models
+        run: |
+          python -m pytest \
+            tools/gen-ai/runner/tests \
+            tools/http/runner/tests

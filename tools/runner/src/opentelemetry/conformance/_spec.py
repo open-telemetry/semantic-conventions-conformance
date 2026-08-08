@@ -55,9 +55,9 @@ class SpanMatch:
     def key(self) -> str:
         """A stable identifier for what this selects.
 
-        JSON rather than a joined string: these keys are written to the data
-        file, and a value containing the separator would otherwise read back
-        as a different selection — or collide with one.
+        JSON rather than a joined string: a value containing the separator
+        would otherwise read back as a different selection — or collide with
+        one. Used to group and order, never written out.
         """
         return json.dumps(
             dict(sorted(self._facets(), key=lambda facet: facet[0])),
@@ -65,6 +65,15 @@ class SpanMatch:
             separators=(",", ":"),
             default=repr,
         )
+
+    def as_dict(self) -> dict[str, object]:
+        """This selection the way ``conformance.yaml`` writes it."""
+        selection: dict[str, object] = {}
+        if self.attributes:
+            selection["attributes"] = dict(sorted(self.attributes.items()))
+        if self.kind is not None:
+            selection["kind"] = self.kind
+        return selection
 
     def describe(self) -> str:
         return ", ".join(f"{key}={value!r}" for key, value in self._facets())

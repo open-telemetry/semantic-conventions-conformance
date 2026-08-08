@@ -212,7 +212,12 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path("/absolute/model") == "/absolute/model"
 
 
-def test_a_missing_registry_is_a_spec_error(directory: Path) -> None:
+def test_a_missing_registry_is_a_spec_error(
+    directory: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Opening a session looks for weaver before it reads the registry, and
+    # this is the one test here that goes in through the front door.
+    monkeypatch.setattr(_session, "check_weaver", lambda: None)
     with pytest.raises(SpecError, match="no weaver registry"):
         with conformance_session(directory):
             pass

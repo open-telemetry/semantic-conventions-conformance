@@ -22,6 +22,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable
 
+from ._model import fingerprint as model_fingerprint
 from ._model import load as load_coverage_model
 from ._model import resolve as resolve_coverage_model
 from ._registry import cache_dir, check_weaver, provision
@@ -59,8 +60,10 @@ class Domain:
     registry_dir: str = "model"
     # Advice policies of this domain's own, loaded on top of the runner's.
     policies: Path | None = None
-    # A ``--advice-data`` glob, given the checkout. A callable because some
-    # registries need patching on the way — see the GenAI domain.
+    # A ``--advice-data`` glob, given the registry the run validates against.
+    # A callable because some registries need patching on the way — see the
+    # GenAI domain. It must not write into the registry it is given: that is
+    # somebody's working tree whenever the pin has been overridden.
     advice_data: Callable[[Path], str] | None = None
 
     @cached_property
@@ -81,10 +84,24 @@ class Domain:
 
     @cached_property
     def coverage_model(self) -> CoverageModel:
-        """What the pinned registry declares. Resolved once, next to it."""
-        model = self.checkout / "coverage-model.json"
+        """What the pinned registry declares. Resolved once per pin.
+
+        Cached under its pin rather than inside the checkout, so it survives a
+        re-fetch and doesn't depend on the registry being a local directory.
+        """
+        model = (
+            cache_dir()
+            / "coverage-models"
+            / f"{self._pin}-{model_fingerprint()}.json"
+        )
         resolve_coverage_model(self.registry, model)
         return load_coverage_model(model)
+
+    @property
+    def _pin(self) -> str:
+        """Everything that decides what a resolved model holds, as a name."""
+        label = self.repo.rpartition("/")[2]
+        return f"{label}-{self.ref}-{self.registry_dir.replace('/', '-')}"
 
     @cached_property
     def advice_policies(self) -> Path:
@@ -103,12 +120,19 @@ class Domain:
                 shutil.copy(policy, assembled / policy.name)
         return assembled
 
-    def weaver_defaults(self) -> WeaverSpec:
-        """This domain's registry and advice, as defaults for a package."""
+    def weaver_defaults(self, registry: Path | None = None) -> WeaverSpec:
+        """This domain's registry and advice, as defaults for a package.
+
+        ``registry`` is the one the run is checked against when the caller
+        brought their own; the pin is then never fetched. Advice data is read
+        from whichever registry that is, so a local checkout is checked
+        against its own schemas rather than the pinned ones.
+        """
+        registry = registry if registry is not None else self.registry
         return WeaverSpec(
-            registry=str(self.registry),
+            registry=str(registry),
             policies=str(self.advice_policies),
-            advice_data=self.advice_data(self.checkout)
+            advice_data=self.advice_data(registry)
             if self.advice_data
             else None,
         )
@@ -134,46 +158,49 @@ class Domain:
 
         Signature-compatible with ``conformance_session``, supplying this
         domain's wiring under whatever the caller passes. A caller's registry
-        wins outright — it is both validated and reduced against, so a
-        conventions repo checking its working tree sees its own span types in
-        the data file rather than the pinned registry's.
+        wins outright — it is validated against, reduced against and read for
+        advice data, and the pin is not fetched at all. A conventions repo
+        checking its working tree sees its own span types in the data file
+        rather than the pinned registry's, and needs no network to do it.
 
         No server is wired in; a scenario that needs one declares it.
         """
         # Up front: resolving the coverage model shells out to weaver too, and
         # a missing binary should be reported here rather than from there.
         check_weaver()
+        override = (
+            Path(weaver.registry) if weaver and weaver.registry else None
+        )
         with ExitStack() as stack:
             if build_data is None:
-                build_data = self._coverage(stack, weaver)
+                build_data = self._coverage(stack, override)
             with conformance_session(
                 directory,
                 report_dir=report_dir,
                 data_file=data_file,
                 variables=variables,
-                weaver=(weaver or WeaverSpec()).over(self.weaver_defaults()),
+                weaver=(weaver or WeaverSpec()).over(
+                    self.weaver_defaults(override)
+                ),
                 server=server,
                 env=env,
                 build_data=build_data,
             ) as session:
                 yield session
 
-    def _coverage(
-        self, stack: ExitStack, weaver: WeaverSpec | None
-    ) -> BuildData:
+    def _coverage(self, stack: ExitStack, override: Path | None) -> BuildData:
         """Reduce a run against whichever registry it is checked against.
 
-        The pinned one is resolved beside its checkout and reused. An
+        The pinned one is resolved into the cache and reused. An
         overriding one is somebody's working tree, so its model is resolved
         fresh for the session and thrown away with it.
         """
-        override = weaver.registry if weaver and weaver.registry else None
         if override is None:
             model = self.coverage_model
         else:
             scratch = Path(stack.enter_context(TemporaryDirectory()))
             resolved = scratch / "coverage-model.json"
-            resolve_coverage_model(Path(override), resolved)
+            resolve_coverage_model(override, resolved)
             model = load_coverage_model(resolved)
         return semconv_coverage(self.classifier(model), lambda: model)
 

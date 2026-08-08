@@ -3,11 +3,10 @@
 
 """A run's weaver reports, read as "what each signal carried".
 
-One :class:`Observed` over every report in a directory. Per span type, per
-metric and per event it records two attribute sets: those present on *every*
-sample of that signal, and those present on *any*. That distinction is what
-lets a reduction say "this implementation always sets the required ones"
-rather than "it set them once".
+One :class:`Observed` over every report in a directory: per span type, per
+metric and per event, the attribute names the run carried on it at least once.
+An attribute missing where the registry requires it is a weaver violation, not
+a coverage gap, so the union is all a reduction needs.
 
 A span becomes a span *type* through a ``classify`` callable — the registry
 declares what a type carries but not how to recognise one, so that knowledge
@@ -25,59 +24,40 @@ from typing import Callable, Mapping, cast
 ClassifySpan = Callable[[str, str, Mapping[str, object]], "set[str]"]
 
 _Json = Mapping[str, object]
-
-
-@dataclass
-class Signal:
-    """What one signal carried across every sample of it in a run."""
-
-    count: int = 0
-    # ``None`` until the first sample, which keeps "counted but never sampled"
-    # distinct from "sampled carrying nothing".
-    on_every: set[str] | None = None
-    on_any: set[str] = field(default_factory=set[str])
-
-    def add(self, attributes: set[str]) -> None:
-        self.count += 1
-        if self.on_every is None:
-            self.on_every = set(attributes)
-        else:
-            self.on_every &= attributes
-        self.on_any |= attributes
+Carried = dict[str, "set[str]"]
 
 
 @dataclass
 class Observed:
     """Every signal a run produced, keyed by span type, metric or event name."""
 
-    spans: dict[str, Signal] = field(default_factory=dict[str, Signal])
-    metrics: dict[str, Signal] = field(default_factory=dict[str, Signal])
-    events: dict[str, Signal] = field(default_factory=dict[str, Signal])
+    spans: Carried = field(default_factory=dict[str, "set[str]"])
+    metrics: Carried = field(default_factory=dict[str, "set[str]"])
+    events: Carried = field(default_factory=dict[str, "set[str]"])
 
 
 def read(report_dir: Path, classify: ClassifySpan) -> Observed:
     """Read every weaver report under ``report_dir`` into one :class:`Observed`."""
     observed = Observed()
-    counted: dict[str, dict[str, int]] = {}
+    counted: dict[str, set[str]] = {}
 
     for path in sorted(report_dir.glob("**/*.json")):
         report = cast("object", json.loads(path.read_text(encoding="utf-8")))
         if not isinstance(report, dict):
             continue
         document = cast(_Json, report)
-        _merge_counts(counted, _mapping(document.get("statistics")))
+        _merge_counted(counted, _mapping(document.get("statistics")))
         for sample in _list(document.get("samples")):
             _read_sample(observed, sample, classify)
 
-    # Weaver counts signals it kept no sample of. Record those too, with no
-    # attributes — there is nothing to read them off.
+    # Weaver counts signals it kept no sample of. Record those too, carrying
+    # nothing — there is nothing to read attributes off.
     for key, signals in (
         ("seen_registry_metrics", observed.metrics),
         ("seen_registry_events", observed.events),
     ):
-        for name, count in counted.get(key, {}).items():
-            signal = signals.setdefault(name, Signal())
-            signal.count = max(signal.count, count)
+        for name in counted.get(key, set()):
+            signals.setdefault(name, set())
 
     return observed
 
@@ -85,17 +65,17 @@ def read(report_dir: Path, classify: ClassifySpan) -> Observed:
 _COUNT_KEYS = ("seen_registry_metrics", "seen_registry_events")
 
 
-def _merge_counts(into: dict[str, dict[str, int]], statistics: _Json) -> None:
-    """Merge one report's non-zero counts, keeping the larger of each.
+def _merge_counted(into: dict[str, set[str]], statistics: _Json) -> None:
+    """Merge the signal names one report saw at least once.
 
-    A directory holds one report per scenario and a signal may appear in
-    several, so the run saw a signal if any scenario did.
+    A directory holds one report per scenario, so the run saw a signal if any
+    scenario did.
     """
     for key in _COUNT_KEYS:
-        merged = into.setdefault(key, {})
+        merged = into.setdefault(key, set())
         for name, count in _mapping(statistics.get(key)).items():
             if isinstance(count, int) and count > 0:
-                merged[name] = max(merged.get(name, 0), count)
+                merged.add(name)
 
 
 def _read_sample(
@@ -107,23 +87,23 @@ def _read_sample(
 
     span = _mapping(entry.get("span"))
     if span:
-        attributes = _attributes(span)
+        attributes = carried_attributes(span)
         names = set(attributes)
         for span_type in classify(
             str(span.get("name", "")), str(span.get("kind", "")), attributes
         ):
-            observed.spans.setdefault(span_type, Signal()).add(names)
+            observed.spans.setdefault(span_type, set()).update(names)
 
     metric = _mapping(entry.get("metric"))
     if metric.get("name"):
-        observed.metrics.setdefault(str(metric["name"]), Signal()).add(
+        observed.metrics.setdefault(str(metric["name"]), set()).update(
             _data_point_attributes(metric)
         )
 
     log = _mapping(entry.get("log"))
     if log.get("event_name"):
-        observed.events.setdefault(str(log["event_name"]), Signal()).add(
-            set(_attributes(log))
+        observed.events.setdefault(str(log["event_name"]), set()).update(
+            carried_attributes(log)
         )
 
 
@@ -136,11 +116,11 @@ def _data_point_attributes(metric: _Json) -> set[str]:
     return {
         name
         for point in _list(metric.get("data_points"))
-        for name in _attributes(_mapping(point))
+        for name in carried_attributes(_mapping(point))
     }
 
 
-def _attributes(owner: _Json) -> dict[str, object]:
+def carried_attributes(owner: _Json) -> dict[str, object]:
     """The owner's attributes by name, dropping any weaver rejected."""
     attributes: dict[str, object] = {}
     for record in _list(owner.get("attributes")):

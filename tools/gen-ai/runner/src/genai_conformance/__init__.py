@@ -12,32 +12,41 @@ The mock LLM server is not part of it: a directory declares the one it talks
 to under ``server:``.
 """
 
+import shutil
 from pathlib import Path
 
-from opentelemetry.conformance import Domain, require_pin
+from opentelemetry.conformance import Domain, cache_dir, require_pin
 
 from ._coverage import classifier
 
 _HERE = Path(__file__).parent
 
+_UNFETCHABLE_REF = '"$ref": "http://json-schema.org/draft-07/schema#"'
 
-def _advice_data(checkout: Path) -> str:
+
+def _advice_data(registry: Path) -> str:
     """A ``--advice-data`` glob of the GenAI content JSON schemas.
 
-    gen-ai-tool-definitions.json references the external draft-07 meta-schema,
-    which weaver's rego engine refuses to fetch at eval time; rewrite that one
-    $ref to a local object in place (idempotent).
+    The schemas are copied out of the registry before being handed to weaver,
+    because gen-ai-tool-definitions.json references the external draft-07
+    meta-schema, which weaver's rego engine refuses to fetch at eval time, and
+    the $ref has to be rewritten to a local object. The registry may be
+    somebody's working tree, which is not ours to edit — so the rewrite
+    happens on the copy. Rebuilt each time, since the source moves whenever
+    the registry does.
     """
-    source = checkout / "model" / "gen-ai"
-    schema = source / "gen-ai-tool-definitions.json"
-    text = schema.read_text(encoding="utf-8")
-    patched = text.replace(
-        '"$ref": "http://json-schema.org/draft-07/schema#"',
-        '"type": "object"',
-    )
-    if patched != text:
-        schema.write_text(patched, encoding="utf-8")
-    return str(source / "*.json")
+    source = registry / "gen-ai"
+    staged = cache_dir() / "advice-data" / "genai"
+    if staged.exists():
+        shutil.rmtree(staged)
+    staged.mkdir(parents=True)
+    for schema in sorted(source.glob("*.json")):
+        text = schema.read_text(encoding="utf-8")
+        (staged / schema.name).write_text(
+            text.replace(_UNFETCHABLE_REF, '"type": "object"'),
+            encoding="utf-8",
+        )
+    return str(staged / "*.json")
 
 
 DOMAIN = Domain(

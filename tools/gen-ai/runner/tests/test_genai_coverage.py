@@ -3,11 +3,11 @@
 
 """Classifying GenAI spans, and what the resolved coverage model holds.
 
-The model is what weaver resolved out of the pinned registry: provider
-refinements folded into the span type they refine — ``openai.inference.client``
-adds ``openai.*`` to ``gen_ai.inference.client`` — and every metric and event
-the registry declares. How a run is *reduced* against that model belongs to
-the runner; see ``tools/runner/tests/test_semconv.py``.
+The model is what weaver resolved out of the pinned registry: every span type,
+metric and event it declares, without provider refinements — what
+``openai.inference.client`` adds is not coverage of ``gen_ai.inference.client``.
+How a run is *reduced* against that model belongs to the runner; see
+``tools/runner/tests/test_semconv.py``.
 
 Needs the pinned registry and the model resolved out of it.
 """
@@ -17,7 +17,7 @@ from __future__ import annotations
 import pytest
 
 from genai_conformance import DOMAIN
-from opentelemetry.conformance._report import Observed, Signal
+from opentelemetry.conformance._report import Observed
 from opentelemetry.conformance._semconv import _reduce
 
 
@@ -41,11 +41,7 @@ def _reduce_for(model):
     def build(span_types=(), events=(), metrics=()):
         def signals(names, section):
             return {
-                name: Signal(
-                    count=1,
-                    on_every=set(model[section][name]["attributes"]),
-                    on_any=set(model[section][name]["attributes"]),
-                )
+                name: set(model[section][name]["attributes"])
                 for name in names
             }
 
@@ -110,19 +106,16 @@ def test_a_span_of_no_known_type_is_classified_as_nothing(
     )
 
 
-def test_provider_attributes_reach_the_span_type_they_refine(
-    reduce_for,
+def test_provider_attributes_are_not_coverage_of_the_type_they_refine(
+    model,
 ) -> None:
-    inference = reduce_for(span_types=["gen_ai.inference.client"])["spans"][
-        "gen_ai.inference.client"
-    ]
+    """openai.inference.client is a refinement, not part of the general type."""
+    inference = model["spans"]["gen_ai.inference.client"]["attributes"]
 
-    assert "openai.response.service_tier" in inference
-    assert "openai.request.service_tier" in inference
+    assert not [name for name in inference if name.startswith("openai.")]
 
 
-def test_the_base_conventions_come_through_too(reduce_for) -> None:
-    """Folding adds provider attributes; it must not drop gen_ai ones."""
+def test_the_base_conventions_come_through(reduce_for) -> None:
     data = reduce_for(span_types=["gen_ai.inference.client"])
 
     assert {"gen_ai.operation.name", "gen_ai.request.model"} <= set(

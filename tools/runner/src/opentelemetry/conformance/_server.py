@@ -144,7 +144,8 @@ class Server:
             try:
                 self._process.wait(timeout=timeout_seconds(*_STOP_TIMEOUT))
             except subprocess.TimeoutExpired:
-                self._signal(signal.SIGKILL)
+                # Windows has no SIGKILL; SIGTERM there is already a kill.
+                self._signal(getattr(signal, "SIGKILL", signal.SIGTERM))
                 self._process.wait()
             self._process = None
         if self._log is not None:

@@ -3,9 +3,9 @@
 
 """The coverage model: what a registry declares, per signal.
 
-Weaver resolves a registry — including provider refinements, so
-``openai.inference.client`` folds into the ``gen_ai.inference.client`` span
-type it refines — into one JSON file::
+Weaver resolves a registry into one JSON file. Provider refinements
+(``openai.inference.client`` refines ``gen_ai.inference.client``) are left out:
+a provider's attributes are not coverage of the general span type::
 
     {"spans":   {"http.server": {"kind": "server", "attributes": {name: level}}},
      "events":  {name: {"attributes": {name: level}}},
@@ -17,21 +17,38 @@ a run actually carried.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import subprocess
+from functools import cache
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 _SCRIPT = Path(__file__).parent / "collect-coverage-model.sh"
+_TEMPLATES = Path(__file__).parent / "weaver-templates"
+
+
+@cache
+def fingerprint() -> str:
+    """A digest of what turns a registry into a model.
+
+    Part of a cached model's name, so editing the template or the script asks
+    for a fresh model instead of reading back the old shape.
+    """
+    digest = hashlib.sha256()
+    for path in sorted(_TEMPLATES.rglob("*")) + [_SCRIPT]:
+        if path.is_file():
+            digest.update(path.read_bytes())
+    return digest.hexdigest()[:12]
 
 
 def resolve(registry: Path, output: Path) -> Path:
     """Resolve ``registry`` into a coverage model at ``output``, once.
 
-    Callers put the output next to the fetched registry, so moving a pin asks
+    ``output`` is expected to name the pin it belongs to, so moving a pin asks
     for a fresh model rather than silently reusing the old registry's.
     """
     if output.is_file():

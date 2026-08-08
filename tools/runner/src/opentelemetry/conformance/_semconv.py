@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Mapping
 
-from ._report import ClassifySpan, Observed, Signal, read
+from ._report import ClassifySpan, Observed, read
 
 if TYPE_CHECKING:
     from ._spec import PackageSpec
@@ -66,7 +66,7 @@ def _reduce(
 
 
 def _signals(
-    observed: Mapping[str, Signal],
+    observed: Mapping[str, "set[str]"],
     declared: Mapping[str, Any],
     *,
     bare: bool = True,
@@ -77,29 +77,10 @@ def _signals(
     coverage of it, and shows up as a weaver finding instead.
     """
     recorded: dict[str, list[str]] = {}
-    for name, signal in sorted(observed.items()):
+    for name, carried in sorted(observed.items()):
         if name not in declared:
             continue
-        present = _present(declared[name]["attributes"], signal)
+        present = sorted(declared[name]["attributes"].keys() & carried)
         if present or bare:
             recorded[name] = present
     return recorded
-
-
-def _present(declared: Mapping[str, str], signal: Signal) -> list[str]:
-    """The declared attributes this signal carried.
-
-    A ``required`` attribute counts only when *every* sample had it; the rest
-    count when any did. That is what makes a data file say "this
-    implementation always sets the required ones".
-
-    A signal weaver only counted, with no sample to read attributes off,
-    carries nothing: crediting it with what some other signal in the run
-    happened to set would overstate the coverage.
-    """
-    on_every = signal.on_every or set()
-    return sorted(
-        name
-        for name, level in declared.items()
-        if name in (on_every if level == "required" else signal.on_any)
-    )

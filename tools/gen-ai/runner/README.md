@@ -49,11 +49,7 @@ records which of that type's attributes were present.
 Two implementations of one library diff directly.
 
 What a span type declares comes from the registry — see the runner's
-[coverage model](../../runner/README.md#the-coverage-model). Weaver reports
-provider refinements alongside the span type they refine, so an implementation
-that emits `openai.*` exactly as `openai.inference.client` specifies records
-them on its inference spans.
-
+[coverage model](../../runner/README.md#the-coverage-model).
 Recognising a span is the one thing the registry can't answer — every span type
 carries the whole `gen_ai.operation.name` enum — so which operation names mean
 which span type is stated in `_coverage.py`. That, the pin and the policies are

@@ -28,6 +28,7 @@ from ._model import load as load_coverage_model
 from ._model import resolve as resolve_coverage_model
 from ._registry import (
     WeaverNotInstalledError,
+    cache_dir,
     check_weaver,
     provision,
     require_pin,
@@ -72,6 +73,7 @@ __all__ = [
     "SpanMatch",
     "SpecError",
     "WeaverSpec",
+    "cache_dir",
     "conformance_session",
     "load_coverage_model",
     "load_spec",

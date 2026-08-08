@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
+from ._report import carried_attributes
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
@@ -31,15 +32,18 @@ class ObservedSpan:
 
 
 def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
-    """One entry per span sample in the report."""
+    """One entry per span sample in the report.
+
+    Attributes weaver rejected are dropped, so an expectation cannot pass on a
+    value live-check refused — the same rule the coverage reduction applies.
+    """
     return [
         ObservedSpan(
             name=entry["span"].get("name", ""),
             kind=entry["span"].get("kind", ""),
-            attributes={
-                attr["name"]: attr["value"]
-                for attr in entry["span"]["attributes"]
-            },
+            attributes=carried_attributes(
+                cast("Mapping[str, object]", entry["span"])
+            ),
         )
         for entry in report["samples"]
         if "span" in entry
