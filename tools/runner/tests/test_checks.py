@@ -363,12 +363,15 @@ def test_coverage_reduces_a_run(tmp_path: Path) -> None:
     )
 
     assert coverage(tmp_path, spec) == {
-        "spans": {
-            '{"gen_ai.operation.name":"chat"}': [
-                "gen_ai.operation.name",
-                "gen_ai.request.model",
-            ]
-        },
+        "spans": [
+            {
+                "match": {"attributes": {"gen_ai.operation.name": "chat"}},
+                "attributes": [
+                    "gen_ai.operation.name",
+                    "gen_ai.request.model",
+                ],
+            }
+        ],
         "metrics": ["gen_ai.client.operation.duration"],
         "events": ["custom.event"],
     }
@@ -527,9 +530,9 @@ def test_coverage_records_spans_no_expectation_declared(
         )
     )
 
-    assert coverage(tmp_path, _package(tmp_path))["spans"] == {
-        '{"kind":"internal"}': ["llm.model_name"]
-    }
+    assert coverage(tmp_path, _package(tmp_path))["spans"] == [
+        {"match": {"kind": "internal"}, "attributes": ["llm.model_name"]}
+    ]
 
 
 def test_coverage_keeps_undeclared_spans_apart_from_declared_ones(
@@ -542,7 +545,10 @@ def test_coverage_keeps_undeclared_spans_apart_from_declared_ones(
         )
     )
 
-    assert coverage(tmp_path, _package(tmp_path, spans=(CHAT,)))["spans"] == {
-        '{"gen_ai.operation.name":"chat"}': ["gen_ai.operation.name"],
-        '{"kind":"internal"}': ["custom.attribute"],
-    }
+    assert coverage(tmp_path, _package(tmp_path, spans=(CHAT,)))["spans"] == [
+        {
+            "match": {"attributes": {"gen_ai.operation.name": "chat"}},
+            "attributes": ["gen_ai.operation.name"],
+        },
+        {"match": {"kind": "internal"}, "attributes": ["custom.attribute"]},
+    ]

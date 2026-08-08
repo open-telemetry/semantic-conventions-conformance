@@ -163,11 +163,19 @@ seen:
 
 ```json
 {
-  "spans": {"{\"gen_ai.operation.name\":\"chat\"}": ["gen_ai.input.messages", "…"]},
+  "spans": [
+    {
+      "match": {"attributes": {"gen_ai.operation.name": "chat"}},
+      "attributes": ["gen_ai.input.messages", "…"]
+    }
+  ],
   "metrics": ["gen_ai.client.operation.duration"],
   "events": []
 }
 ```
+
+Each entry pairs a `match` — written the way the scenario declared it — with
+the attributes the spans it selected carried.
 
 Diff it to notice an attribute quietly disappearing. `--data-command` replaces
 it when you want a different shape.
@@ -213,7 +221,8 @@ scenarios:
         expect:
           count: 2
           attributes:
-            gen_ai.tool.name: { distinct: 2 }
+            gen_ai.tool.name:
+              distinct: 2
 ```
 
 Each entry has two halves, declared separately so an attribute used to *find*
@@ -225,8 +234,8 @@ under `expect.attributes` takes one of three forms:
 | form | holds when |
 | --- | --- |
 | `gen_ai.request.stream: true` | every selected span carries the attribute, set to that value |
-| `{present: true}` | every selected span carries it, whatever the value (`false`: none does) |
-| `{distinct: 2}` | across the selected spans the attribute took exactly 2 different values |
+| `present: true` | every selected span carries it, whatever the value (`false`: none does) |
+| `distinct: 2` | across the selected spans the attribute took exactly 2 different values |
 
 So `gen_ai.tool.name: { distinct: 2 }` above says the two `execute_tool` spans
 called two *different* tools, without pinning down which.
