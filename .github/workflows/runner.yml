@@ -164,3 +164,103 @@ jobs:
 
       - name: Test the GenAI coverage model
         run: python -m pytest tools/gen-ai/runner/tests
+
+  # The heavy gate: installs every scenario's dependencies, runs the programs,
+  # and checks the committed data.json files still match what they emit.
+  scenarios:
+    name: Scenarios
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-scenarios-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      # Every scenario runs `uv run --project .` in its own directory, so uv,
+      # not pip, installs what the programs need.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install weaver
+        run: |
+          . tools/runner/src/opentelemetry/conformance/versions.env
+          url="https://github.com/open-telemetry/weaver/releases/download"
+          curl -fsSL \
+            "$url/$WEAVER_VERSION/weaver-x86_64-unknown-linux-gnu.tar.xz" \
+            | sudo tar -xJ -C /usr/local/bin --strip-components=1 \
+              --wildcards '*/weaver'
+          weaver --version
+
+      - name: Install the runner
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            -e tools/runner \
+            -e tools/gen-ai/mock-server \
+            -e tools/gen-ai/runner \
+            -e tools/http/runner \
+            -e tools/http/mock-server \
+            -e tools/http/test-client/python
+
+      # The pinned registries and the coverage models resolved from them,
+      # once, shared by every scenario directory.
+      - name: Cache the semconv registries
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/otel-conformance/semconv
+          key: >-
+            semconv-${{ hashFiles(
+              'tools/**/versions.env',
+              'tools/runner/src/opentelemetry/conformance/weaver-templates/**',
+              'tools/runner/src/opentelemetry/conformance/collect-coverage-model.sh'
+            ) }}
+
+      # Plain `otel-conformance`: each directory names the wrapper that
+      # supplies its registry and reduction, so one loop covers every domain.
+      #
+      # --report-only: a semconv finding is a result this repo records, not a
+      # build to break. What must not change silently is data.json, which the
+      # next step diffs.
+      - name: Run every scenario
+        env:
+          FORCE_COLOR: "1" # the log renders ANSI; the step's stdout is no tty
+        run: |
+          set -euo pipefail
+          mapfile -t directories < <(
+            find scenarios -name conformance.yaml -printf '%h\n' | sort
+          )
+          for directory in "${directories[@]}"; do
+            echo "::group::$directory"
+            otel-conformance "$directory" --report-only
+            echo "::endgroup::"
+          done
+
+      # A run rewrites each directory's data.json. Unchanged means the
+      # committed coverage still matches what the implementations emit;
+      # changed means either an implementation moved or a registry pin did,
+      # and the new file belongs in the PR.
+      - name: Check the committed coverage is up to date
+        run: |
+          # --intent-to-add first: a new scenario directory whose data.json
+          # was never `git add`ed is untracked, and `git diff` can't see it.
+          git add --intent-to-add -- scenarios
+          if ! git diff --exit-code -- scenarios; then
+            echo "::error::the committed data.json files are out of date — run the scenarios and commit the result"
+            exit 1
+          fi
+
+      - name: Upload the weaver reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: weaver-reports
+          path: scenarios/**/output/weaver-reports/*.json
+          if-no-files-found: warn

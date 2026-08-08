@@ -1,0 +1,16 @@
+# The client side of the HTTP conventions: the same requests the server
+# scenarios receive, sent by the library under test.
+runner: http-conformance
+instrumented_library: httpx
+instrumentation_library: opentelemetry-instrumentation-httpx
+
+server:
+  run: http-mock-server --port ${PORT}
+
+env:
+  # Contrib still emits the pre-stable HTTP attributes without this.
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
+
+scenarios:
+  requests:
+    run: uv run --frozen --project . opentelemetry-instrument python requests.py

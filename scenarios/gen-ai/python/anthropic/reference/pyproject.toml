@@ -1,0 +1,15 @@
+[project]
+name = "anthropic-reference-test"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic==0.120.2",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    "opentelemetry-distro==0.65b0",
+    "opentelemetry-util-genai==1.0b0",
+]
+
+[tool.uv]
+package = false

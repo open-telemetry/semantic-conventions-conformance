@@ -1,0 +1,23 @@
+# DEMO — illustrates the layout only. Not a maintained conformance result, and
+# nobody here maintains this instrumentation.
+#
+# The `native` flavor: the library instruments itself, so there is no
+# instrumentation package to install — only the SDK's own opt-in below.
+runner: genai-conformance
+instrumented_library: mistralai
+instrumentation_library: mistralai
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  MISTRAL_BASE_URL: ${MOCK_SERVER_URL}
+  # mistralai's tracing is opt-in and off by default. `global` attaches it to
+  # the provider zero-code installed; the alternative, `dedicated`, builds a
+  # provider of its own that ships to Mistral's endpoint, which would export
+  # nothing here.
+  MISTRAL_SDK_TELEMETRY: global
+
+scenarios:
+  inference:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/inference.py

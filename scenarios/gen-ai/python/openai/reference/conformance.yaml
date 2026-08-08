@@ -1,0 +1,20 @@
+# DEMO — illustrates the layout only. Copied from
+# semantic-conventions-genai/reference/scenarios/openai, which is still where
+# this implementation is maintained.
+#
+# `reference` runs its own program rather than ../scenarios: the
+# implementation *is* the instrumentation, written inline around the library
+# calls, so there is nothing to share.
+runner: genai-conformance
+instrumented_library: openai
+instrumentation_library: semconv-genai-reference
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  MOCK_LLM_URL: ${MOCK_SERVER_URL}
+
+scenarios:
+  scenario:
+    run: uv run --frozen --project . opentelemetry-instrument python scenario.py

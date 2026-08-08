@@ -1,0 +1,28 @@
+# DEMO — illustrates the layout only. Not a maintained conformance result, and
+# nobody here maintains this instrumentation.
+#
+# This file and pyproject.toml are the entire difference from the
+# `opentelemetry` implementation next door, which is what makes their
+# data.json comparable.
+runner: genai-conformance
+instrumented_library: openai
+instrumentation_library: openinference-instrumentation-openai
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  OPENAI_BASE_URL: ${MOCK_SERVER_URL}/v1
+  OPENAI_API_KEY: test_openai_api_key
+  # OpenInference emits `llm.*` / `input.*` by default; this asks for gen_ai.*
+  # alongside those. The env-var form of
+  # TraceConfig(enable_genai_semconv=True), so the shared program stays free of
+  # instrumentation-specific setup.
+  OPENINFERENCE_ENABLE_GENAI_SEMCONV: "true"
+
+scenarios:
+  inference:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/inference.py
+
+  tool_calling:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/tool_calling.py

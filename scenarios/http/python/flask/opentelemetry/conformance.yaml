@@ -1,0 +1,12 @@
+# The scenario is the server and drives itself, so no `server:` here.
+runner: http-conformance
+instrumented_library: flask
+instrumentation_library: opentelemetry-instrumentation-flask
+
+env:
+  # Contrib still emits the pre-stable HTTP attributes without this.
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
+
+scenarios:
+  requests:
+    run: uv run --frozen --project . opentelemetry-instrument python requests.py

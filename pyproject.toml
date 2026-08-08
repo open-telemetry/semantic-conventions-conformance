@@ -6,6 +6,7 @@
 target-version = "py310"
 line-length = 79
 output-format = "concise"
+extend-exclude = ["scenarios/**/uv.lock"]
 
 [tool.ruff.lint]
 select = [
@@ -22,6 +23,11 @@ select = [
 ignore = [
   "E501", # line-too-long
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# A scenario program imports the library under test inside a function, so the
+# SDK and its instrumentation are installed before the library is touched.
+"scenarios/**/requests.py" = ["PLC0415"]
 
 [tool.ruff.lint.isort]
 detect-same-package = false
