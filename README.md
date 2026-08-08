@@ -12,17 +12,20 @@ against expectations declared in YAML.
 | [`tools/runner/`](tools/runner) | the runner. Generic — it carries no semantic conventions of its own |
 | [`tools/gen-ai/`](tools/gen-ai) | what makes a run a *GenAI* run: the registry pin, the advice policies, and a mock LLM server so scenarios are deterministic without cassettes |
 | [`tools/http/`](tools/http) | the same for HTTP: the upstream registry pin, and the test client that drives both sides of the domain |
+| [`scenarios/`](scenarios) | the scenarios, by domain, language, library and instrumentation |
 
-A conformance directory names the wrapper it wants under `runner:`, so one
-command runs any of them:
+A scenario directory names the wrapper it wants under `runner:`, so one command
+runs any of them:
 
 ```sh
 pip install -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner
-otel-conformance path/to/directory --report-only
+otel-conformance scenarios/gen-ai/python/openai/opentelemetry --report-only
 ```
 
-See the [runner's README](tools/runner/README.md) for what a scenario and its
-`conformance.yaml` look like.
+Start with the [runner's README](tools/runner/README.md) for what a scenario and
+its `conformance.yaml` look like, then
+[`scenarios/gen-ai/`](scenarios/gen-ai/README.md) or
+[`scenarios/http/`](scenarios/http/README.md) for a domain.
 
 ## Maintainers
 

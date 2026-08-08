@@ -15,7 +15,7 @@ and three files:
 
 ```sh
 pip install -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner
-otel-conformance path/to/directory --report-only
+otel-conformance scenarios/gen-ai/python/openai/opentelemetry --report-only
 ```
 
 A directory declaring `runner: genai-conformance` gets the registry and the

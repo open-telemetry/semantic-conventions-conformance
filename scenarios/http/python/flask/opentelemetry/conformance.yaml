@@ -1,0 +1,23 @@
+# The scenario is the server and drives itself, so no `server:` here.
+runner: http-conformance
+instrumented_library: flask
+instrumentation_library: opentelemetry-instrumentation-flask
+
+env:
+  # Contrib still emits the pre-stable HTTP attributes without this.
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
+
+expected_violations:
+  # Every request in every scenario hits this, so it is declared once for the
+  # package rather than per scenario.
+  - id: required_attribute_not_present
+    context:
+      attribute_key: url.path
+      kind: server
+    reason: >-
+      opentelemetry-instrumentation-wsgi sets http.route and url.scheme but
+      never url.path, which the conventions make required on a server span.
+
+scenarios:
+  requests:
+    run: uv run --frozen --project . opentelemetry-instrument python requests.py
