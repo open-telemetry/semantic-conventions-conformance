@@ -29,6 +29,9 @@ known-first-party = [
   "opentelemetry",
   "genai_conformance",
   "genai_mock_server",
+  "http_conformance",
+  "http_mock_server",
+  "otel_http_test_client",
 ]
 known-third-party = ["pytest"]
 
@@ -43,4 +46,7 @@ pythonVersion = "3.10"
 include = [
   "tools/runner/src",
   "tools/gen-ai/runner/src",
+  "tools/http/runner/src",
+  "tools/http/mock-server/src",
+  "tools/http/test-client/python/src",
 ]

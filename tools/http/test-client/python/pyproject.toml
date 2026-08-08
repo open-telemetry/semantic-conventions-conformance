@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-http-test-client"
+version = "0.1.0.dev0"
+description = "Serves and drives an HTTP server conformance scenario: the requests every one of them sends."
+requires-python = ">=3.10"
+# Standard library only, deliberately: a third-party HTTP client would be
+# instrumented alongside the app and its spans would land in the report.
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_http_test_client"]

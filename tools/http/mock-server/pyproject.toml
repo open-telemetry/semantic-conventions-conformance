@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-http-mock-server"
+version = "0.1.0.dev0"
+description = "Serves the HTTP conformance route contract, for client-side scenarios to call."
+requires-python = ">=3.10"
+# Standard library only: it must stay uninstrumented, and a dependency of its
+# own could be picked up by zero-code instrumentation.
+dependencies = []
+
+[project.scripts]
+http-mock-server = "http_mock_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/http_mock_server"]
