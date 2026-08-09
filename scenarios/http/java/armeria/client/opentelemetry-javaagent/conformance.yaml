@@ -5,19 +5,6 @@ instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent:2.30
 env:
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
 
-expected_violations:
-  - id: missing_attribute
-    context:
-      attribute_key: processorType
-    reason: >-
-      OpenTelemetry SDK 1.64 emits its BatchSpanProcessor queueSize
-      self-telemetry with a pre-semconv processorType attribute.
-  - id: missing_metric
-    context: {}
-    reason: >-
-      OpenTelemetry SDK 1.64 emits the pre-semconv queueSize self-telemetry
-      metric while exporting this scenario.
-
 setup:
   - java
   - -Dorg.gradle.appname=gradlew

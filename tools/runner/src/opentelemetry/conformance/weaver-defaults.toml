@@ -16,3 +16,16 @@ exclude_samples = [
   "telemetry.sdk.version",
   "telemetry.auto.version",
 ]
+
+# Java SDK 1.64 has no switch to disable its legacy self-telemetry without also
+# disabling application metrics. Keep its pre-semconv metric out of every
+# domain's findings at the runner boundary instead.
+[[live-check.finding_filters]]
+signal_type = "metric"
+exclude = ["missing_metric"]
+sample_names = ["queueSize"]
+
+[[live-check.finding_filters]]
+signal_type = "metric"
+exclude = ["missing_attribute"]
+sample_names = ["processorType"]
