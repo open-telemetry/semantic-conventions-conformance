@@ -8,33 +8,15 @@ env:
 expected_violations:
   - id: missing_attribute
     context:
-      attribute_key: dropped
-    reason: >-
-      OpenTelemetry SDK 1.64 emits BatchSpanProcessor self-telemetry with
-      pre-semconv attribute names while exporting this scenario.
-  - id: missing_attribute
-    context:
       attribute_key: processorType
     reason: >-
-      OpenTelemetry SDK 1.64 emits BatchSpanProcessor self-telemetry with
-      pre-semconv attribute names while exporting this scenario.
-  - id: missing_attribute
-    context:
-      attribute_key: success
-    reason: >-
-      OpenTelemetry SDK 1.64 emits OTLP exporter self-telemetry with
-      pre-semconv attribute names while exporting this scenario.
-  - id: missing_attribute
-    context:
-      attribute_key: type
-    reason: >-
-      OpenTelemetry SDK 1.64 emits OTLP exporter self-telemetry with
-      pre-semconv attribute names while exporting this scenario.
+      OpenTelemetry SDK 1.64 emits its BatchSpanProcessor queueSize
+      self-telemetry with a pre-semconv processorType attribute.
   - id: missing_metric
     context: {}
     reason: >-
-      OpenTelemetry SDK 1.64 emits pre-semconv BatchSpanProcessor and OTLP
-      exporter self-telemetry metrics while exporting this scenario.
+      OpenTelemetry SDK 1.64 emits the pre-semconv queueSize self-telemetry
+      metric while exporting this scenario.
 
 setup:
   - java

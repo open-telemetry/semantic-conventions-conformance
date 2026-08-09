@@ -23,16 +23,21 @@ public final class ArmeriaClientScenario {
       throw new IllegalArgumentException("usage: ArmeriaClientScenario <agent|library>");
     }
     String baseUrl = ScenarioTelemetry.requireEnvironment("MOCK_SERVER_URL");
+    URI mockServerUri = URI.create(baseUrl);
+    if (!"http".equals(mockServerUri.getScheme()) || mockServerUri.getRawAuthority() == null) {
+      throw new IllegalArgumentException("MOCK_SERVER_URL must be an http:// URL: " + baseUrl);
+    }
+    String clientBaseUrl = "h1c://" + mockServerUri.getRawAuthority();
 
     try (ScenarioTelemetry telemetry = ScenarioTelemetry.initialize(args[0])) {
       WebClient client =
           telemetry.isLibrary()
-              ? WebClient.builder(baseUrl)
+              ? WebClient.builder(clientBaseUrl)
                   .decorator(
                       ArmeriaClientTelemetry.create(telemetry.openTelemetry())
                           .createDecorator())
                   .build()
-              : WebClient.of(baseUrl);
+              : WebClient.of(clientBaseUrl);
 
       HttpTestClient.drive(
           baseUrl,

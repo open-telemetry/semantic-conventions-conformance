@@ -76,7 +76,11 @@ public final class HttpTestClient {
       Thread.sleep(HEALTH_RETRY.toMillis());
     }
     throw new IOException(
-        "the scenario server did not answer " + baseUrl + "/health within 10 seconds",
+        "the scenario server did not become healthy at "
+            + baseUrl
+            + "/health within "
+            + REQUEST_TIMEOUT.toMillis()
+            + " ms",
         lastFailure);
   }
 
@@ -126,35 +130,80 @@ public final class HttpTestClient {
       output.write(headers.toString().getBytes(StandardCharsets.US_ASCII));
       output.write(content);
       output.flush();
+      socket.shutdownOutput();
 
-      byte[] response = readAll(socket.getInputStream());
-      return parseResponse(response);
+      return readResponse(socket.getInputStream());
     }
   }
 
-  private static byte[] readAll(InputStream input) throws IOException {
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
-    input.transferTo(output);
-    return output.toByteArray();
-  }
-
-  private static Response parseResponse(byte[] response) throws IOException {
-    String text = new String(response, StandardCharsets.UTF_8);
-    int firstLineEnd = text.indexOf("\r\n");
-    int headersEnd = text.indexOf("\r\n\r\n");
-    if (firstLineEnd < 0 || headersEnd < 0) {
-      throw new IOException("invalid HTTP response");
+  private static Response readResponse(InputStream input) throws IOException {
+    ByteArrayOutputStream headerBytes = new ByteArrayOutputStream();
+    int delimiterBytes = 0;
+    while (delimiterBytes < 4) {
+      int next = input.read();
+      if (next == -1) {
+        throw new IOException("unexpected EOF in HTTP response headers");
+      }
+      headerBytes.write(next);
+      delimiterBytes =
+          switch (delimiterBytes) {
+            case 0 -> next == '\r' ? 1 : 0;
+            case 1 -> next == '\n' ? 2 : next == '\r' ? 1 : 0;
+            case 2 -> next == '\r' ? 3 : 0;
+            case 3 -> next == '\n' ? 4 : next == '\r' ? 1 : 0;
+            default -> throw new IllegalStateException();
+          };
+      if (headerBytes.size() > 64 * 1024) {
+        throw new IOException("HTTP response headers exceed 64 KiB");
+      }
     }
 
-    String[] statusLine = text.substring(0, firstLineEnd).split(" ", 3);
+    String headers = headerBytes.toString(StandardCharsets.ISO_8859_1);
+    int firstLineEnd = headers.indexOf("\r\n");
+    String[] statusLine = headers.substring(0, firstLineEnd).split(" ", 3);
     if (statusLine.length < 2) {
-      throw new IOException("invalid HTTP status line: " + text.substring(0, firstLineEnd));
+      throw new IOException("invalid HTTP status line: " + headers.substring(0, firstLineEnd));
     }
+
+    int contentLength = -1;
+    for (String header :
+        headers.substring(firstLineEnd + 2, headers.length() - 4).split("\r\n")) {
+      int separator = header.indexOf(':');
+      if (separator > 0
+          && "content-length".equalsIgnoreCase(header.substring(0, separator).trim())) {
+        try {
+          contentLength = Integer.parseInt(header.substring(separator + 1).trim());
+        } catch (NumberFormatException exception) {
+          throw new IOException("invalid Content-Length header: " + header, exception);
+        }
+        if (contentLength < 0) {
+          throw new IOException("invalid Content-Length header: " + header);
+        }
+      }
+    }
+
+    byte[] body;
+    if (contentLength >= 0) {
+      body = input.readNBytes(contentLength);
+      if (body.length != contentLength) {
+        throw new IOException(
+            "unexpected EOF in HTTP response body: expected "
+                + contentLength
+                + " bytes, received "
+                + body.length);
+      }
+    } else {
+      ByteArrayOutputStream output = new ByteArrayOutputStream();
+      input.transferTo(output);
+      body = output.toByteArray();
+    }
+
     try {
       return new Response(
-          Integer.parseInt(statusLine[1]), text.substring(headersEnd + 4));
+          Integer.parseInt(statusLine[1]), new String(body, StandardCharsets.UTF_8));
     } catch (NumberFormatException exception) {
-      throw new IOException("invalid HTTP status line: " + text.substring(0, firstLineEnd), exception);
+      throw new IOException(
+          "invalid HTTP status line: " + headers.substring(0, firstLineEnd), exception);
     }
   }
 
