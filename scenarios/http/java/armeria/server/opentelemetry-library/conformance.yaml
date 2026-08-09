@@ -1,0 +1,54 @@
+runner: http-conformance
+instrumented_library: armeria
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-armeria-1.3:2.30.0-alpha
+
+expected_violations:
+  - id: missing_attribute
+    context:
+      attribute_key: dropped
+    reason: >-
+      OpenTelemetry SDK 1.64 emits BatchSpanProcessor self-telemetry with
+      pre-semconv attribute names while exporting this scenario.
+  - id: missing_attribute
+    context:
+      attribute_key: processorType
+    reason: >-
+      OpenTelemetry SDK 1.64 emits BatchSpanProcessor self-telemetry with
+      pre-semconv attribute names while exporting this scenario.
+  - id: missing_attribute
+    context:
+      attribute_key: success
+    reason: >-
+      OpenTelemetry SDK 1.64 emits OTLP exporter self-telemetry with
+      pre-semconv attribute names while exporting this scenario.
+  - id: missing_attribute
+    context:
+      attribute_key: type
+    reason: >-
+      OpenTelemetry SDK 1.64 emits OTLP exporter self-telemetry with
+      pre-semconv attribute names while exporting this scenario.
+  - id: missing_metric
+    context: {}
+    reason: >-
+      OpenTelemetry SDK 1.64 emits pre-semconv BatchSpanProcessor and OTLP
+      exporter self-telemetry metrics while exporting this scenario.
+
+setup:
+  - java
+  - -Dorg.gradle.appname=gradlew
+  - -classpath
+  - ../../../gradle/wrapper/gradle-wrapper.jar
+  - org.gradle.wrapper.GradleWrapperMain
+  - --no-daemon
+  - --project-dir
+  - ../../..
+  - prepareRuntime
+
+scenarios:
+  requests:
+    run:
+      - java
+      - -classpath
+      - ../../../runtime/lib/*
+      - io.opentelemetry.conformance.http.armeria.ArmeriaServerScenario
+      - library

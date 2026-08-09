@@ -29,9 +29,16 @@ def send(method, url, body):
 drive(os.environ["MOCK_SERVER_URL"], send=send)
 ```
 
-Each language gets its own implementation under this directory;
-[`python/`](python) is the only one so far. `serve_and_drive` is WSGI; an ASGI
-framework will need a sibling entry point, sharing `drive` and `REQUESTS`.
+Each language gets its own implementation under this directory. [`python/`](python)
+provides a WSGI server driver and [`java/`](java) provides the language-neutral
+request contract for JVM scenarios.
 
 The route contract and the request list are in
-[`__init__.py`](python/src/otel_http_test_client/__init__.py).
+[`__init__.py`](python/src/otel_http_test_client/__init__.py) and
+[`HttpTestClient.java`](java/src/main/java/io/opentelemetry/conformance/http/HttpTestClient.java).
+Both cover health, the templated user route with and without a query string,
+the item POST, and 404 and 500 responses.
+
+The Java helper exposes a `Sender` callback for client scenarios. Server
+scenarios use its raw HTTP/1.1 socket sender so an attached Java agent cannot
+instrument the driver and contaminate server-only coverage.

@@ -8,3 +8,8 @@ __pycache__/
 # reduction over the whole run (data.json) is committed.
 output/
 results/
+
+# Java scenario builds are prepared once per package, then executed directly.
+scenarios/http/java/.gradle/
+scenarios/http/java/build/
+scenarios/http/java/runtime/

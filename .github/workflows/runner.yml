@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+      # Temporary stacked-PR exception. Remove after the separate general
+      # stacked-CI PR is incorporated into this stack's base.
+      - lmolkova-conformance-scenarios
 
 permissions:
   contents: read
@@ -192,6 +195,18 @@ jobs:
       # not pip, installs what the programs need.
       - name: Set up uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Set up Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       - name: Install weaver
         run: |
