@@ -8,7 +8,6 @@ setup:
   - -classpath
   - ../../../gradle/wrapper/gradle-wrapper.jar
   - org.gradle.wrapper.GradleWrapperMain
-  - --no-daemon
   - --project-dir
   - ../../..
   - prepareRuntime

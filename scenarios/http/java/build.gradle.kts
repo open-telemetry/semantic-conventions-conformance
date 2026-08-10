@@ -1,5 +1,3 @@
-import org.gradle.api.artifacts.dsl.LockMode
-
 plugins {
     java
 }
@@ -46,13 +44,7 @@ sourceSets {
     }
 }
 
-dependencyLocking {
-    lockAllConfigurations()
-    lockMode = LockMode.STRICT
-}
-
 tasks.withType<JavaCompile>().configureEach {
-    options.release = 17
     options.encoding = "UTF-8"
 }
 
