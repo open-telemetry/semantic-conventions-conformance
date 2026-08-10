@@ -11,5 +11,8 @@ results/
 
 # Java scenario builds are prepared once per package, then executed directly.
 scenarios/http/java/.gradle/
-scenarios/http/java/build/
+scenarios/http/java/**/.gradle/
+scenarios/http/java/**/build/
 scenarios/http/java/runtime/
+scenarios/http/java/*/runtime/
+tools/http/test-client/java/build/

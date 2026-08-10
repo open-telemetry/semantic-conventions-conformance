@@ -6,6 +6,8 @@ env:
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
 
 setup:
+  # The runner executes argv directly, so invoke the wrapper main class instead
+  # of choosing between the platform-specific wrapper scripts.
   - java
   - -Dorg.gradle.appname=gradlew
   - -classpath
@@ -13,14 +15,14 @@ setup:
   - org.gradle.wrapper.GradleWrapperMain
   - --project-dir
   - ../../..
-  - prepareRuntime
+  - :armeria:prepareRuntime
 
 scenarios:
   requests:
     run:
       - java
-      - -javaagent:../../../runtime/agent/opentelemetry-javaagent.jar
+      - -javaagent:../../runtime/agent/opentelemetry-javaagent.jar
       - -classpath
-      - ../../../runtime/lib/*
+      - ../../runtime/lib/*
       - io.opentelemetry.conformance.http.armeria.ArmeriaServerScenario
       - agent
