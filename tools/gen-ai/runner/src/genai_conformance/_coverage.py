@@ -35,6 +35,7 @@ _OPERATION_NAMES = {
     },
     "gen_ai.plan.internal": {"plan"},
     "gen_ai.retrieval.client": {"retrieval"},
+    "gen_ai.run_step.internal": {"run_step"},
 }
 
 # What identifies a span that omits the operation name. create_agent and plan
@@ -53,6 +54,7 @@ _IDENTIFYING_ATTRIBUTES = {
     "gen_ai.invoke_agent.internal": {"gen_ai.agent.id", "gen_ai.agent.name"},
     "gen_ai.invoke_workflow.internal": {"gen_ai.workflow.name"},
     "gen_ai.retrieval.client": {"gen_ai.data_source.id"},
+    "gen_ai.run_step.internal": {"gen_ai.step.name"},
 }
 
 

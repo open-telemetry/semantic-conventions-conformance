@@ -73,6 +73,7 @@ _span_name_keyed_attr["invoke_agent"]      := "gen_ai.agent.name"
 _span_name_keyed_attr["create_agent"]      := "gen_ai.agent.name"
 _span_name_keyed_attr["invoke_workflow"]   := "gen_ai.workflow.name"
 _span_name_keyed_attr["retrieval"]         := "gen_ai.data_source.id"
+_span_name_keyed_attr["run_step"]          := "gen_ai.step.name"
 
 # Span name SHOULD be `{op}` (when the keyed attribute is absent) or
 # `{op} {value}` (when present). Mirrors the "SHOULD append when known"
@@ -243,6 +244,7 @@ _expected_kinds_for_op["text_completion"]  := {"client"}
 _expected_kinds_for_op["embeddings"]       := {"client"}
 _expected_kinds_for_op["execute_tool"]     := {"internal"}
 _expected_kinds_for_op["invoke_workflow"]  := {"internal"}
+_expected_kinds_for_op["run_step"]         := {"internal"}
 _expected_kinds_for_op["retrieval"]        := {"client"}
 _expected_kinds_for_op["invoke_agent"]     := {"internal", "client"}
 _expected_kinds_for_op["create_agent"]     := {"internal", "client"}
@@ -289,6 +291,7 @@ _known_operation_names := {
 	"invoke_agent",
 	"execute_tool",
 	"invoke_workflow",
+	"run_step",
 	"plan",
 }
 
