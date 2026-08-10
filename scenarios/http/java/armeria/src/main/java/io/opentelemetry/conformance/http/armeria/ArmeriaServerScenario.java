@@ -2,7 +2,6 @@
  * Copyright The OpenTelemetry Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package io.opentelemetry.conformance.http.armeria;
 
 import com.linecorp.armeria.common.HttpResponse;
@@ -32,8 +31,7 @@ public final class ArmeriaServerScenario {
               .service(
                   "/health",
                   (context, request) ->
-                      HttpResponse.of(
-                          HttpStatus.OK, MediaType.JSON_UTF_8, "{\"ok\":true}"))
+                      HttpResponse.of(HttpStatus.OK, MediaType.JSON_UTF_8, "{\"ok\":true}"))
               .service(
                   "/users/{userId}",
                   (context, request) ->
@@ -60,9 +58,7 @@ public final class ArmeriaServerScenario {
                   (context, request) -> {
                     int code = Integer.parseInt(context.pathParam("code"));
                     String message =
-                        code == 404
-                            ? "not found"
-                            : code == 500 ? "server error" : "ok";
+                        code == 404 ? "not found" : code == 500 ? "server error" : "ok";
                     return HttpResponse.of(
                         HttpStatus.valueOf(code),
                         MediaType.JSON_UTF_8,
@@ -72,8 +68,7 @@ public final class ArmeriaServerScenario {
 
       if (telemetry.isLibrary()) {
         builder.decorator(
-            ArmeriaServerTelemetry.create(telemetry.openTelemetry())
-                .createDecorator());
+            ArmeriaServerTelemetry.create(telemetry.openTelemetry()).createDecorator());
       }
 
       Server server = builder.build();
@@ -81,8 +76,7 @@ public final class ArmeriaServerScenario {
         server.start().join();
         int port = server.activeLocalPort();
         HttpTestClient.drive(
-            "http://" + loopback.getHostAddress() + ":" + port,
-            HttpTestClient::rawRequest);
+            "http://" + loopback.getHostAddress() + ":" + port, HttpTestClient::rawRequest);
       } finally {
         server.stop().join();
       }

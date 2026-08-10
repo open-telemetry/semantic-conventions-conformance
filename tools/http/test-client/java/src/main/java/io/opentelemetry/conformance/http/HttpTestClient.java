@@ -2,7 +2,6 @@
  * Copyright The OpenTelemetry Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package io.opentelemetry.conformance.http;
 
 import java.io.ByteArrayOutputStream;
@@ -47,14 +46,10 @@ public final class HttpTestClient {
     requireUrl(baseUrl);
     waitForHealth(baseUrl);
     for (Request request : REQUESTS) {
-      Response response =
-          sender.send(request.method(), baseUrl + request.path(), request.body());
+      Response response = sender.send(request.method(), baseUrl + request.path(), request.body());
       System.out.printf(
           "%s %s -> %d %s%n",
-          request.method(),
-          request.path(),
-          response.statusCode(),
-          abbreviate(response.body()));
+          request.method(), request.path(), response.statusCode(), abbreviate(response.body()));
     }
   }
 
@@ -68,8 +63,7 @@ public final class HttpTestClient {
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
           return;
         }
-        lastFailure =
-            new IOException("/health returned HTTP " + response.statusCode());
+        lastFailure = new IOException("/health returned HTTP " + response.statusCode());
       } catch (IOException exception) {
         lastFailure = exception;
       }
@@ -85,8 +79,7 @@ public final class HttpTestClient {
   }
 
   /** Sends a request without using an HTTP client API that a Java agent could instrument. */
-  public static Response rawRequest(String method, String url, String body)
-      throws IOException {
+  public static Response rawRequest(String method, String url, String body) throws IOException {
     URI uri = URI.create(url);
     if (!"http".equals(uri.getScheme()) || uri.getHost() == null) {
       throw new IllegalArgumentException("raw HTTP test requests require an http:// URL: " + url);
@@ -101,12 +94,10 @@ public final class HttpTestClient {
       target += "?" + uri.getRawQuery();
     }
 
-    byte[] content =
-        body == null ? new byte[0] : body.getBytes(StandardCharsets.UTF_8);
+    byte[] content = body == null ? new byte[0] : body.getBytes(StandardCharsets.UTF_8);
     try (Socket socket = new Socket()) {
       socket.connect(
-          new InetSocketAddress(uri.getHost(), port),
-          Math.toIntExact(CONNECT_TIMEOUT.toMillis()));
+          new InetSocketAddress(uri.getHost(), port), Math.toIntExact(CONNECT_TIMEOUT.toMillis()));
       socket.setSoTimeout(Math.toIntExact(REQUEST_TIMEOUT.toMillis()));
 
       OutputStream output = socket.getOutputStream();
@@ -166,8 +157,7 @@ public final class HttpTestClient {
     }
 
     int contentLength = -1;
-    for (String header :
-        headers.substring(firstLineEnd + 2, headers.length() - 4).split("\r\n")) {
+    for (String header : headers.substring(firstLineEnd + 2, headers.length() - 4).split("\r\n")) {
       int separator = header.indexOf(':');
       if (separator > 0
           && "content-length".equalsIgnoreCase(header.substring(0, separator).trim())) {

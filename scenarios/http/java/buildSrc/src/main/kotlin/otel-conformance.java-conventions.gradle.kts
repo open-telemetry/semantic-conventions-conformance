@@ -4,6 +4,7 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
     java
+    id("com.diffplug.spotless")
 }
 
 group = "io.opentelemetry.conformance"
@@ -21,6 +22,26 @@ java {
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+        licenseHeader(
+            """
+            /*
+             * Copyright The OpenTelemetry Authors
+             * SPDX-License-Identifier: Apache-2.0
+             */
+            """.trimIndent(),
+            "(package|import|public)",
+        )
+        toggleOffOn()
+        target("src/**/*.java")
+    }
+    kotlinGradle {
+        ktlint()
+    }
 }
 
 val javaAgent by configurations.creating {

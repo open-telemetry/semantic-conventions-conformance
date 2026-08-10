@@ -2,7 +2,6 @@
  * Copyright The OpenTelemetry Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package io.opentelemetry.conformance.http.armeria;
 
 import com.linecorp.armeria.client.WebClient;
@@ -34,8 +33,7 @@ public final class ArmeriaClientScenario {
           telemetry.isLibrary()
               ? WebClient.builder(clientBaseUrl)
                   .decorator(
-                      ArmeriaClientTelemetry.create(telemetry.openTelemetry())
-                          .createDecorator())
+                      ArmeriaClientTelemetry.create(telemetry.openTelemetry()).createDecorator())
                   .build()
               : WebClient.of(clientBaseUrl);
 
@@ -58,8 +56,7 @@ public final class ArmeriaClientScenario {
                     ? HttpRequest.of(headers)
                     : HttpRequest.of(headers, HttpData.ofUtf8(body));
             var response = client.execute(request).aggregate().join();
-            return new HttpTestClient.Response(
-                response.status().code(), response.contentUtf8());
+            return new HttpTestClient.Response(response.status().code(), response.contentUtf8());
           });
     }
   }

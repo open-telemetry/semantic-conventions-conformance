@@ -2,7 +2,6 @@
  * Copyright The OpenTelemetry Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package io.opentelemetry.conformance.http.armeria;
 
 import io.opentelemetry.api.OpenTelemetry;
@@ -19,8 +18,7 @@ final class ScenarioTelemetry implements AutoCloseable {
     requireEnvironment("OTEL_EXPORTER_OTLP_ENDPOINT");
     return switch (mode) {
       case "agent" -> new ScenarioTelemetry(null);
-      case "library" ->
-          new ScenarioTelemetry(AutoConfiguredOpenTelemetrySdk.initialize());
+      case "library" -> new ScenarioTelemetry(AutoConfiguredOpenTelemetrySdk.initialize());
       default ->
           throw new IllegalArgumentException(
               "instrumentation mode must be 'agent' or 'library', not: " + mode);
