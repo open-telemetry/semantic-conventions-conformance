@@ -24,6 +24,20 @@
       "schedule": [
         "before 8am on Tuesday"
       ]
+    },
+    {
+      "description": "Group all non-major Java dependency updates into a single PR",
+      "matchManagers": ["gradle"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "java-minor"
+    },
+    {
+      // The -alpha artifacts only publish `-alpha` releases; with the default
+      // `ignoreUnstable: true` Renovate would never propose an upgrade.
+      "matchPackageNames": [
+        "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha"
+      ],
+      "ignoreUnstable": false
     }
   ],
   "customManagers": [
@@ -36,6 +50,18 @@
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?)(?: packageName=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+[A-Z_]+=(?<currentValue>[^\\s]+)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      // Keep the runtime coordinates reported by each Java scenario aligned
+      // with the dependencies selected by its Gradle build.
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^scenarios/http/java/.+/conformance\\.yaml$/"
+      ],
+      "matchStrings": [
+        "instrumentation_library:\\s+(?<depName>[^\\s:]+:[^\\s:]+):(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "maven"
     }
   ],
   "labels": [
