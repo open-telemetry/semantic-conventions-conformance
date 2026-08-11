@@ -62,6 +62,7 @@ def _reduce(
         "events": _signals(observed.events, model.get("events", {})),
         "metrics": _signals(observed.metrics, model.get("metrics", {})),
         "findings": finding_list(observed.findings),
+        "entities": _entities(observed.resources, model.get("entities", {})),
     }
 
 
@@ -82,5 +83,23 @@ def _signals(
             continue
         present = sorted(declared[name]["attributes"].keys() & carried)
         if present or bare:
+            recorded[name] = present
+    return recorded
+
+
+def _entities(
+    resources: set[str],
+    declared: Mapping[str, Any],
+) -> dict[str, list[str]]:
+    """Which of each declared entity's attributes the run carried on its resources.
+
+    Only entities the registry declares are recorded — anything else is not
+    coverage of it. An entity is recorded only when at least one of its
+    declared attributes was present on a resource.
+    """
+    recorded: dict[str, list[str]] = {}
+    for name, entity in sorted(declared.items()):
+        present = sorted(entity.get("attributes", {}).keys() & resources)
+        if present:
             recorded[name] = present
     return recorded

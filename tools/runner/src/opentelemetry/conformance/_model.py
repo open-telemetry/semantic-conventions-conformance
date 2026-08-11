@@ -1,15 +1,16 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The coverage model: what a registry declares, per signal.
+"""The coverage model: what a registry declares, per signal and entity.
 
 Weaver resolves a registry into one JSON file. Provider refinements
 (``openai.inference.client`` refines ``gen_ai.inference.client``) are left out:
 a provider's attributes are not coverage of the general span type::
 
-    {"spans":   {"http.server": {"kind": "server", "attributes": {name: level}}},
-     "events":  {name: {"attributes": {name: level}}},
-     "metrics": {name: {"attributes": {name: level}}}}
+    {"spans":    {"http.server": {"kind": "server", "attributes": {name: level}}},
+     "events":   {name: {"attributes": {name: level}}},
+     "metrics":  {name: {"attributes": {name: level}}},
+     "entities": {name: {"attributes": {name: level}}}}
 
 That is what a reduction reads to say which of a signal's declared attributes
 a run actually carried.

@@ -28,20 +28,28 @@ templates:
           }
         ] | from_entries;
 
+      def entity_attributes:
+        [(.identity[]?, .description[]?, .attributes[]?) | {key: .key, value: (.requirement_level | level)}]
+        | from_entries;
+
       # A signal's own definition has id == the name it declares; anything
       # else under the same name is a refinement, and is dropped.
       {
-        spans: ([.refinements.spans[] | select(.id == .type)] | map({
+        spans: ([.refinements.spans[]? | select(.id == .type)] | map({
           key: .type,
           value: {kind: .kind, attributes: attributes},
         }) | from_entries),
-        events: ([.refinements.events[] | select(.id == .name)] | map({
+        events: ([.refinements.events[]? | select(.id == .name)] | map({
           key: .name,
           value: {attributes: attributes},
         }) | from_entries),
-        metrics: ([.refinements.metrics[] | select(.id == .name)] | map({
+        metrics: ([.refinements.metrics[]? | select(.id == .name)] | map({
           key: .name,
           value: {attributes: attributes},
         }) | from_entries),
         enums: enums,
+        entities: ([.refinements.entities[]? | select(.id == .type)] | map({
+          key: .type,
+          value: {attributes: entity_attributes},
+        }) | from_entries),
       }

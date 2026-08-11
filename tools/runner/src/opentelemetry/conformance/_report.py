@@ -75,6 +75,7 @@ class Observed:
     metrics: Carried = field(default_factory=dict[str, "set[str]"])
     events: Carried = field(default_factory=dict[str, "set[str]"])
     findings: "set[Finding]" = field(default_factory=set["Finding"])
+    resources: set[str] = field(default_factory=set[str])
 
 
 def collect_findings(document: object) -> set[Finding]:
@@ -173,6 +174,10 @@ def _read_sample(
     if not isinstance(sample, dict):
         return
     entry = cast(_Json, sample)
+
+    resource = _mapping(entry.get("resource"))
+    if resource:
+        observed.resources.update(carried_attributes(resource))
 
     span = _mapping(entry.get("span"))
     if span:
