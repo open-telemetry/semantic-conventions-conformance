@@ -117,5 +117,6 @@
         "operation": "chat"
       }
     }
-  ]
+  ],
+  "entities": {}
 }

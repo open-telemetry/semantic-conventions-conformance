@@ -23,5 +23,15 @@
       "server.port"
     ]
   },
-  "findings": []
+  "findings": [],
+  "entities": {
+    "service": [
+      "service.name"
+    ],
+    "telemetry.sdk": [
+      "telemetry.sdk.language",
+      "telemetry.sdk.name",
+      "telemetry.sdk.version"
+    ]
+  }
 }

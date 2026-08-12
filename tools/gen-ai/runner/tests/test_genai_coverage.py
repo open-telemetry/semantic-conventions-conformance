@@ -45,11 +45,12 @@ def _reduce_for(model):
                 for name in names
             }
 
-        resources: set[str] = set()
-        for name in entities:
-            resources.update(
-                model.get("entities", {}).get(name, {}).get("attributes", {})
-            )
+        resources = {
+            attr
+            for name in entities
+            for part in ("identity", "description")
+            for attr in model.get("entities", {}).get(name, {}).get(part, {})
+        }
 
         return _reduce(
             Observed(

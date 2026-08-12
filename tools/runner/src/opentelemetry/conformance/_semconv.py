@@ -94,12 +94,17 @@ def _entities(
     """Which of each declared entity's attributes the run carried on its resources.
 
     Only entities the registry declares are recorded — anything else is not
-    coverage of it. An entity is recorded only when at least one of its
-    declared attributes was present on a resource.
+    coverage of it. An entity is recognised by its identifying attributes; only
+    when all of its declared identifying attributes are present on a resource
+    are its carried attributes recorded.
     """
     recorded: dict[str, list[str]] = {}
     for name, entity in sorted(declared.items()):
-        present = sorted(entity.get("attributes", {}).keys() & resources)
-        if present:
-            recorded[name] = present
+        identity = entity.get("identity", {})
+        if not identity or not set(identity).issubset(resources):
+            continue
+        description = entity.get("description", {})
+        all_declared_attrs = identity.keys() | description.keys()
+        present = sorted(all_declared_attrs & resources)
+        recorded[name] = present
     return recorded

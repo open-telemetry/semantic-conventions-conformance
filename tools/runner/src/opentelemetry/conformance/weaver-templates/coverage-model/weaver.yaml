@@ -28,8 +28,12 @@ templates:
           }
         ] | from_entries;
 
-      def entity_attributes:
-        [(.identity[]?, .description[]?, .attributes[]?) | {key: .key, value: (.requirement_level | level)}]
+      def entity_identity:
+        [.identity[]? | {key: .key, value: (.requirement_level | level)}]
+        | from_entries;
+
+      def entity_description:
+        [.description[]? | {key: .key, value: (.requirement_level | level)}]
         | from_entries;
 
       # A signal's own definition has id == the name it declares; anything
@@ -50,6 +54,9 @@ templates:
         enums: enums,
         entities: ([.refinements.entities[]? | select(.id == .type)] | map({
           key: .type,
-          value: {attributes: entity_attributes},
+          value: {
+            identity: entity_identity,
+            description: entity_description,
+          },
         }) | from_entries),
       }

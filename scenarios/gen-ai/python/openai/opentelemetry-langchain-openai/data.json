@@ -95,5 +95,6 @@
         "operation": "invoke_workflow"
       }
     }
-  ]
+  ],
+  "entities": {}
 }

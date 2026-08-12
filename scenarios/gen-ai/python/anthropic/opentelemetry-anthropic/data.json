@@ -66,5 +66,6 @@
       "server.port"
     ]
   },
-  "findings": []
+  "findings": [],
+  "entities": {}
 }

@@ -127,5 +127,6 @@
         "operation": "generate_content"
       }
     }
-  ]
+  ],
+  "entities": {}
 }

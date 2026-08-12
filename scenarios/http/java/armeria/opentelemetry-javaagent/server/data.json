@@ -28,5 +28,27 @@
       "url.scheme"
     ]
   },
-  "findings": []
+  "findings": [],
+  "entities": {
+    "process.runtime": [
+      "process.runtime.description",
+      "process.runtime.name",
+      "process.runtime.version"
+    ],
+    "service": [
+      "service.name"
+    ],
+    "service.instance": [
+      "service.instance.id"
+    ],
+    "telemetry.distro": [
+      "telemetry.distro.name",
+      "telemetry.distro.version"
+    ],
+    "telemetry.sdk": [
+      "telemetry.sdk.language",
+      "telemetry.sdk.name",
+      "telemetry.sdk.version"
+    ]
+  }
 }

@@ -10,7 +10,7 @@ a provider's attributes are not coverage of the general span type::
     {"spans":    {"http.server": {"kind": "server", "attributes": {name: level}}},
      "events":   {name: {"attributes": {name: level}}},
      "metrics":  {name: {"attributes": {name: level}}},
-     "entities": {name: {"attributes": {name: level}}}}
+     "entities": {name: {"identity": {name: level}, "description": {name: level}}}}
 
 That is what a reduction reads to say which of a signal's declared attributes
 a run actually carried.
