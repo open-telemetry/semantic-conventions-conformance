@@ -1,0 +1,52 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Findings filtered out for the Java scenarios. A declared config replaces the
+# runner's weaver-defaults.toml outright rather than extending it, so the shared
+# resource filter is repeated below.
+
+# Resource attributes the OTel SDK sets, which belong to no domain registry —
+# see https://github.com/open-telemetry/weaver/issues/1456.
+[[live-check.finding_filters]]
+signal_type = "resource"
+exclude_samples = [
+  "service.name",
+  "service.instance.id",
+  "telemetry.sdk.language",
+  "telemetry.sdk.name",
+  "telemetry.sdk.version",
+  "telemetry.auto.version",
+]
+
+# The Java SDK reports its own export health through the application
+# MeterProvider, and autoconfigure 1.64 cannot be told not to: it reads only
+# `legacy` and `latest` from `otel.experimental.sdk.telemetry.version` and
+# defaults to `legacy`. The metrics describe the SDK rather than the
+# instrumented application, so filtering them is the only option. Everything
+# but `queueSize` is a counter that exists only once an export has happened,
+# which makes leaving them unfiltered fail runs unpredictably.
+[[live-check.finding_filters]]
+signal_type = "metric"
+exclude = ["missing_metric"]
+sample_names = [
+  "queueSize",
+  "processedSpans",
+  "otlp.exporter.seen",
+  "otlp.exporter.exported",
+]
+
+# Their attributes, filtered separately because `sample_names` scopes on the
+# sample a finding hangs off, and a `missing_attribute` finding hangs off the
+# attribute rather than the metric — so these name attribute keys, not the
+# metrics above. Weaver offers no way to narrow that to one metric, so `type`,
+# `success` and `dropped` are only tolerable because this file covers the Java
+# scenarios alone.
+[[live-check.finding_filters]]
+signal_type = "metric"
+exclude = ["missing_attribute"]
+sample_names = [
+  "processorType",
+  "dropped",
+  "type",
+  "success",
+]

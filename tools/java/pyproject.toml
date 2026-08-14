@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-conformance-java"
+version = "0.1.0.dev0"
+description = "Builds and runs JVM conformance scenarios, so no conformance.yaml restates the toolchain."
+requires-python = ">=3.10"
+# Standard library only: it starts the scenario process, so anything it
+# imported would be one more thing that could end up in a run.
+dependencies = []
+
+[project.scripts]
+otel-conformance-java = "otel_conformance_java:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_conformance_java"]

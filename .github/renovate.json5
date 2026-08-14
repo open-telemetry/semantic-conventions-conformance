@@ -24,6 +24,21 @@
       "schedule": [
         "before 8am on Tuesday"
       ]
+    },
+    {
+      "description": "Group all non-major Java dependency updates into a single PR",
+      "matchManagers": ["gradle"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "java-minor"
+    },
+    {
+      // Java library instrumentations remain `-alpha` across releases, which
+      // Renovate ignores by default. Opt in the group so current and future
+      // Gradle dependencies update without per-artifact rules.
+      "matchPackageNames": [
+        "io.opentelemetry.instrumentation:**"
+      ],
+      "ignoreUnstable": false
     }
   ],
   "customManagers": [
