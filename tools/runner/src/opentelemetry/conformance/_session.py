@@ -214,9 +214,11 @@ class ConformanceSession:
         A path in a config file reads as relative to that file, not to
         wherever the runner happens to be invoked from.
         """
-        resolved = self._resolve(value)
-        if Path(resolved).is_absolute():
-            return resolved
+        resolved = Path(self._resolve(value))
+        # Through Path either way: substituting into `${ROOT}/model` otherwise
+        # leaves whichever separator the config file was written with.
+        if resolved.is_absolute():
+            return str(resolved)
         return str(self._spec.directory / resolved)
 
     def _execute(

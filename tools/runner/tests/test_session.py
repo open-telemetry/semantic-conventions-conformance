@@ -207,9 +207,13 @@ def test_declared_paths_resolve_against_the_package(
     """A path in a config file reads as relative to that file."""
     opened = session(directory, tmp_path / "data.json")
 
+    # Rooted at the anchor, so this is absolute on Windows too, where a path
+    # is not absolute until it names a drive.
+    absolute = str(Path(tmp_path.anchor) / "absolute" / "model")
+
     assert opened._resolve_path("model") == str(directory / "model")
     assert opened._resolve_path("${ROOT}/model") == str(directory / "model")
-    assert opened._resolve_path("/absolute/model") == "/absolute/model"
+    assert opened._resolve_path(absolute) == absolute
 
 
 def test_a_missing_registry_is_a_spec_error(
