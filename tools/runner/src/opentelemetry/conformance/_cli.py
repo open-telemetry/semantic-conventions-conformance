@@ -11,6 +11,7 @@ environment, a server to run, and a command to reduce the reports afterwards.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import os
@@ -58,21 +59,37 @@ def _paint(text: str, colour: str) -> str:
     return f"\033[{_CODES[colour]}m{text}\033[0m"
 
 
-_OK = ("green", "✔ ")
-_WARN = ("yellow", "▲ ")
-_FAIL = ("red", "✖ ")
+# Colour, mark, and an ASCII stand-in for a console that cannot encode it.
+_OK = ("green", "\u2714 ", "+ ")
+_WARN = ("yellow", "\u25b2 ", "! ")
+_FAIL = ("red", "\u2716 ", "x ")
 
 
-def _status(mark: tuple[str, str], line: str) -> None:
-    colour, symbol = mark
-    print(_paint(f"{symbol}{line}", colour))
+def _symbol(mark: tuple[str, str, str]) -> str:
+    """The mark, or its stand-in where stdout is a legacy codepage.
+
+    Checked per call rather than once: what stdout is depends on how the CLI
+    was started, not on when this module happened to be imported.
+    """
+    _, symbol, plain = mark
+    try:
+        symbol.encode(sys.stdout.encoding or "ascii")
+    except (LookupError, UnicodeEncodeError):
+        return plain
+    return symbol
 
 
-def _findings(mark: tuple[str, str], title: str, texts: list[str]) -> None:
+def _status(mark: tuple[str, str, str], line: str) -> None:
+    print(_paint(f"{_symbol(mark)}{line}", mark[0]))
+
+
+def _findings(
+    mark: tuple[str, str, str], title: str, texts: list[str]
+) -> None:
     """A titled list under a scenario; anything multi-line reads as output."""
     if not texts:
         return
-    print(_paint(f"{mark[1]}{title}:", mark[0]))
+    print(_paint(f"{_symbol(mark)}{title}:", mark[0]))
     for text in texts:
         first, _, rest = text.partition("\n")
         print(f"  - {first}")
@@ -355,6 +372,11 @@ def _run(
 
 def cli() -> None:
     """Console-script entry point."""
+    # A finding carries whatever text weaver produced, which a legacy console
+    # codepage would raise on rather than print.
+    for stream in (sys.stdout, sys.stderr):
+        with contextlib.suppress(AttributeError, ValueError):
+            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
     sys.exit(main())
 
 

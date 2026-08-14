@@ -11,6 +11,7 @@ answers a health endpoint.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import signal
 import socket
@@ -152,7 +153,11 @@ class Server:
             self._log.close()
             self._log = None
         if self._log_path is not None:
-            self._log_path.unlink(missing_ok=True)
+            # A grandchild can still hold the handle just after the server
+            # exits, which on Windows fails the unlink. A file left in the
+            # system temp directory is not worth failing a run over.
+            with contextlib.suppress(OSError):
+                self._log_path.unlink(missing_ok=True)
             self._log_path = None
 
     def __enter__(self) -> Server:
