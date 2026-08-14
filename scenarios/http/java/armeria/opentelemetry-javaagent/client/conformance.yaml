@@ -1,0 +1,32 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: armeria
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+
+env:
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../weaver.toml
+
+# Every Java scenario is built and started the same way, so
+# `otel-conformance-java` holds the toolchain and this file names only what is
+# this scenario's own.
+setup:
+  - otel-conformance-java
+  - prepare
+  - armeria:opentelemetry-javaagent
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run:
+      - otel-conformance-java
+      - run
+      - --agent
+      - armeria:opentelemetry-javaagent
+      - io.opentelemetry.conformance.http.armeria.javaagent.ArmeriaJavaagentClientScenario

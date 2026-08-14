@@ -1,141 +1,286 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The requests every HTTP conformance scenario makes.
+"""The HTTP conformance exchanges a server answers or a client sends.
 
 Coverage files are only comparable if every scenario is exercised the same
-way, so the request sequence lives here once rather than in each scenario.
-Both sides of the domain use it:
+way, so both halves live in ``contract.json`` once rather than in each
+language. Both sides of the domain use it:
 
-- A **server** scenario is its own server. ``serve_and_drive`` brings the app
-  up and sends :data:`REQUESTS` at it with the standard library, which is
-  never the thing under test.
+- A **server** scenario is a plain server process. It declares matching routes
+    with the framework under test, listens on the port in
+    ``OTEL_HTTP_SCENARIO_PORT``, and stays up until its standard input closes;
+    ``otel-http-drive`` starts it, sends :data:`REQUESTS` at it from outside,
+    then closes standard input so it flushes and exits.
 - A **client** scenario is the sender. It passes its own library as ``send``
   to :func:`drive`, pointed at a server the runner started — see
-  ``tools/http/mock-server``, which answers the same routes.
+  ``tools/http/mock-server``, which answers :data:`EXCHANGES` from this module.
 
-**The route contract.** A scenario's app implements exactly these:
+Nothing under test ever drives a server scenario: the driver is a separate
+process, so no instrumentation loaded into the scenario can pick the driver up
+and record client spans the scenario never meant to produce.
 
-===========================  ======  ======================================
-route                        method  responds
-===========================  ======  ======================================
-``/health``                  GET     200
-``/users/<user_id>``         GET     200 JSON
-``/items``                   POST    201 JSON, echoing the body
-``/status/<code>``           GET     that status
-===========================  ======  ======================================
+:func:`drive` checks every response against its exchange. A server scenario
+declares routes in its framework's native form — that declaration is what an
+instrumentation reads a route from — but every status and body is a constant
+from the shared file because the requests are fixed.
 
-This package itself is standard library only. A third-party client here would
-be picked up by an HTTP client instrumentation the moment one is installed
-alongside, and its spans would land in the report as if the scenario had meant
-to produce them — which is exactly what a client scenario passes ``send`` for.
+This package is standard library only, so installing it next to a scenario
+drags no dependency into a run.
 """
 
 from __future__ import annotations
 
 import http.client
 import json
+import os
+import socket
+import sys
 import threading
 import time
 import urllib.error
 import urllib.request
-from typing import Callable, Sequence
+from pathlib import Path
+from typing import Callable, NamedTuple, Sequence
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 __all__ = [
+    "CONTRACT",
+    "EXCHANGES",
+    "PORT_VARIABLE",
     "REQUESTS",
-    "Request",
+    "USER_AGENT",
+    "ContractError",
+    "Exchange",
     "Send",
     "drive",
+    "is_healthy",
     "request",
-    "serve_and_drive",
+    "reserve_port",
+    "respond",
+    "scenario_port",
+    "serve",
+    "verify",
     "wait_for_health",
+    "wait_for_port",
 ]
 
-Request = tuple[str, str, "str | None"]
+
+class ContractError(AssertionError):
+    """A server answered something the contract does not describe."""
+
+
+class Exchange(NamedTuple):
+    """One concrete request and the answer the contract requires."""
+
+    method: str
+    path: str
+    body: str | None
+    status: int
+    response_body: str
+    readiness: bool
+    # What the request is in the sequence for — the attribute it should make
+    # an instrumentation record. Carried as data rather than as a comment so
+    # every language reading the contract has it too.
+    why: str
+
+
 # How one request is sent: method, absolute URL, body → status, response body.
 # A client scenario supplies its own so its library is the one instrumented.
 Send = Callable[[str, str, "str | None"], "tuple[int, str]"]
 
-# What every HTTP server scenario sends. Each one is here for an attribute it
-# makes the instrumentation set, so the coverage files say something.
-REQUESTS: Sequence[Request] = (
-    # A templated route: `http.route` should be the template, not the path,
-    # and the span name should be built from it.
-    ("GET", "/users/123", None),
-    # A query string, which is its own attribute (`url.query`) and must not
-    # leak into `http.route`, `url.path` or the span name.
-    ("GET", "/users/123?fields=name&verbose=true", None),
-    # A non-GET carrying a body.
-    ("POST", "/items", json.dumps({"name": "widget"})),
-    # Both error classes: `error.type` and a 4xx/5xx `http.response.status_code`,
-    # on the span and on the duration metric.
-    ("GET", "/status/404", None),
-    ("GET", "/status/500", None),
-)
+# The port a server scenario listens on. ``otel-http-drive`` chooses it, which
+# is what lets different scenarios run in parallel without colliding.
+PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
+
+# Fixed rather than the interpreter's default, so a server scenario is driven
+# by the same client whichever Python happens to be installed.
+USER_AGENT = "otel-http-conformance/1"
 
 _HEALTH_POLL_SECONDS = 0.05
 _REQUEST_TIMEOUT_SECONDS = 10
 
 
-class _QuietHandler(WSGIRequestHandler):
-    """The default handler logs every request to stderr; the driver already does."""
+def _contract() -> Path:
+    """Where ``contract.json`` is.
 
-    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
-        del format, args
-
-
-def serve_and_drive(
-    app_factory: Callable[[], object], *, host: str = "127.0.0.1"
-) -> None:
-    """Serve a WSGI app on a free port, drive it, and stop.
-
-    ``app_factory`` is a zero-argument callable rather than an app so the SDK
-    is fully installed before the instrumented framework constructs anything.
-
-    Port 0: the OS picks a free one, so parallel runs of different scenarios
-    can't collide on a hard-coded port.
+    Installed beside this module, or — in a checkout — above the Python
+    package, since the contract belongs to every language rather than to this
+    one.
     """
-    with make_server(host, 0, app_factory(), handler_class=_QuietHandler) as httpd:  # pyright: ignore[reportArgumentType]
-        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-        thread.start()
-        try:
-            drive(f"http://{host}:{httpd.server_port}")
-        finally:
-            httpd.shutdown()
-            thread.join(timeout=_REQUEST_TIMEOUT_SECONDS)
+    packaged = Path(__file__).parent / "contract.json"
+    if packaged.is_file():
+        return packaged
+    return Path(__file__).resolve().parents[3] / "contract.json"
+
+
+CONTRACT = _contract()
+
+_DOCUMENT = json.loads(CONTRACT.read_text(encoding="utf-8"))
+
+EXCHANGES: Sequence[Exchange] = tuple(
+    Exchange(
+        method=entry["method"],
+        path=entry["path"],
+        body=entry.get("body"),
+        status=entry["status"],
+        response_body=entry["responseBody"],
+        readiness=entry.get("readiness", False),
+        why=entry["why"],
+    )
+    for entry in _DOCUMENT["requests"]
+)
+
+REQUESTS: Sequence[Exchange] = tuple(
+    exchange for exchange in EXCHANGES if not exchange.readiness
+)
+_READINESS = next(exchange for exchange in EXCHANGES if exchange.readiness)
+
+# Every route answers JSON, so a scenario that reads the contract has one
+# content type to send rather than a rule per route.
+CONTENT_TYPE = "application/json"
+
+
+def _exchange_for(method: str, path: str) -> Exchange | None:
+    """The concrete exchange answering ``method path``, if there is one."""
+    path = path.split("?", 1)[0]
+    for exchange in EXCHANGES:
+        if (
+            exchange.method == method
+            and exchange.path.split("?", 1)[0] == path
+        ):
+            return exchange
+    return None
+
+
+def respond(
+    method: str, path: str, body: str | None = None
+) -> tuple[int, str]:
+    """What the contract answers to one request.
+
+    The whole answer contract in one function, so the mock server a client
+    scenario calls and any Python server scenario answer identically.
+    """
+    exchange = _exchange_for(method, path)
+    if exchange is None:
+        return 404, '{"message": "no such route"}'
+    return exchange.status, exchange.response_body.replace(
+        "${requestBody}", body or "{}"
+    )
 
 
 def drive(base_url: str, send: Send | None = None) -> None:
-    """Wait for the server, then send :data:`REQUESTS` in order.
+    """Send :data:`REQUESTS` at ``base_url`` in order, checking each answer.
 
     ``send`` defaults to the standard library. A client scenario passes its
     own library instead — that call is the thing being measured.
+
+    The server is assumed to be up: waiting is :func:`wait_for_health`, kept
+    separate because every extra request a driver makes while a server starts
+    is a span in that server's report.
     """
     sender = send or request
-    wait_for_health(base_url)
-    for method, path, body in REQUESTS:
-        status, response = sender(method, f"{base_url}{path}", body)
-        print(f"{method} {path} -> {status} {response[:60]}")
+    for exchange in REQUESTS:
+        status, response = sender(
+            exchange.method,
+            f"{base_url}{exchange.path}",
+            exchange.body,
+        )
+        print(
+            f"{exchange.method} {exchange.path} -> {status} {response[:60]}"
+        )
+        verify(exchange, status, response)
 
 
-def wait_for_health(base_url: str, timeout: float = 10.0) -> None:
-    """Block until the app answers ``/health``, or give up saying so."""
+def verify(exchange: Exchange, status: int, response: str) -> None:
+    """Check one answer against the exchange that describes it.
+
+    A server scenario declares routes in the framework under test, which is
+    the point — an instrumentation reads the route from that declaration.
+    Its answers stay common: a server returning different statuses or bodies
+    would otherwise silently make its coverage file incomparable.
+    """
+    expected_body = exchange.response_body.replace(
+        "${requestBody}", exchange.body or "{}"
+    )
+
+    if status != exchange.status:
+        raise ContractError(
+            f"{exchange.method} {exchange.path} answered {status}, but the "
+            f"contract's request answers {exchange.status}"
+        )
+
+    # Parsed, not compared as text: whitespace and key order are a language's
+    # choice of JSON writer, and neither is part of the contract.
+    try:
+        got, want = json.loads(response), json.loads(expected_body)
+    except json.JSONDecodeError as error:
+        raise ContractError(
+            f"{exchange.method} {exchange.path} answered {response[:200]!r}, "
+            "which is not the JSON the contract's request describes"
+        ) from error
+    if got != want:
+        raise ContractError(
+            f"{exchange.method} {exchange.path} answered {got!r}, but the "
+            f"contract's request answers {want!r}"
+        )
+
+
+def wait_for_port(
+    port: int, *, host: str = "127.0.0.1", timeout: float = 30.0
+) -> bool:
+    """Wait for something to accept connections on ``port``.
+
+    Readiness in two steps, and this is the first: a bare connect makes no
+    request, so it cannot leave a span behind however many times it is tried
+    while a server starts up.
+    """
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
-            with urllib.request.urlopen(  # noqa: S310
-                f"{base_url}/health", timeout=1
-            ):
-                return
-        except (OSError, http.client.HTTPException):
-            # Still starting: connection refused, reset, or a truncated
-            # response are all expected until it is listening.
+            with socket.create_connection((host, port), timeout=1):
+                return True
+        except OSError:
             time.sleep(_HEALTH_POLL_SECONDS)
-    raise RuntimeError(
-        f"the scenario's server did not answer {base_url}/health within "
-        f"{timeout}s"
-    )
+    return False
+
+
+def wait_for_health(base_url: str, timeout: float = 30.0) -> None:
+    """Block until the app answers the readiness exchange, or give up.
+
+    The second step of readiness, and the first request the app sees. Each
+    attempt waits as long as a real request may take rather than polling
+    impatiently: giving up on a response already on its way leaves the server
+    recording a failed request that nothing actually asked to fail.
+    """
+    deadline = time.monotonic() + timeout
+    while True:
+        if is_healthy(base_url):
+            return
+        if time.monotonic() >= deadline:
+            raise RuntimeError(
+                f"the scenario's server did not answer "
+                f"{base_url}{_READINESS.path} "
+                f"within {timeout}s"
+            )
+        time.sleep(_HEALTH_POLL_SECONDS)
+
+
+def is_healthy(base_url: str) -> bool:
+    """Whether the app answers the readiness exchange, waiting out a response."""
+    try:
+        with urllib.request.urlopen(  # noqa: S310
+            urllib.request.Request(  # noqa: S310
+                f"{base_url}{_READINESS.path}",
+                headers={"User-Agent": USER_AGENT},
+            ),
+            timeout=_REQUEST_TIMEOUT_SECONDS,
+        ):
+            return True
+    except (OSError, http.client.HTTPException):
+        # Still starting: connection refused, reset, or a truncated response
+        # are all expected until it is listening.
+        return False
 
 
 def request(method: str, url: str, body: str | None = None) -> tuple[int, str]:
@@ -144,7 +289,9 @@ def request(method: str, url: str, body: str | None = None) -> tuple[int, str]:
     A 404 or 500 is what the scenario asked for, so it comes back as a status
     rather than an exception.
     """
-    headers = {"Content-Type": "application/json"} if body is not None else {}
+    headers = {"User-Agent": USER_AGENT}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
     prepared = urllib.request.Request(  # noqa: S310
         url,
         data=None if body is None else body.encode("utf-8"),
@@ -158,3 +305,73 @@ def request(method: str, url: str, body: str | None = None) -> tuple[int, str]:
             return response.status, response.read().decode("utf-8")
     except urllib.error.HTTPError as error:
         return error.code, error.read().decode("utf-8")
+
+
+def serve(
+    app_factory: Callable[[], object], *, host: str = "127.0.0.1"
+) -> None:
+    """Serve a WSGI app until the driver closes standard input.
+
+    What every server scenario does, in the one language these tools are
+    written in: bind the port the driver chose, answer the exchanges, and
+    shut down on EOF so the SDK flushes before the process exits.
+
+    ``app_factory`` is a zero-argument callable rather than an app so the SDK
+    is fully installed before the instrumented framework constructs anything.
+    """
+    app = app_factory()
+    with make_server(
+        host,
+        scenario_port(),
+        app,  # pyright: ignore[reportArgumentType]
+        handler_class=_QuietHandler,
+    ) as httpd:
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+        try:
+            wait_for_eof()
+        finally:
+            httpd.shutdown()
+            thread.join(timeout=_REQUEST_TIMEOUT_SECONDS)
+
+
+def scenario_port() -> int:
+    """The port the driver told this scenario to listen on."""
+    raw = os.environ.get(PORT_VARIABLE)
+    if not raw:
+        raise RuntimeError(
+            f"{PORT_VARIABLE} is not set — a server scenario is started by "
+            "`otel-http-drive`, which chooses the port"
+        )
+    return int(raw)
+
+
+def wait_for_eof() -> None:
+    """Block until standard input closes, which is how the driver says stop.
+
+    A closed pipe rather than a signal: it means the same thing on every
+    platform, and it needs no extra route, which would show up as coverage the
+    scenario never meant to record.
+    """
+    while sys.stdin.buffer.read(1):
+        pass
+
+
+def reserve_port(host: str = "127.0.0.1") -> tuple[int, socket.socket]:
+    """Take a free port, held open until the server that wants it starts.
+
+    Releasing it any earlier would leave the port free for a parallel run to
+    take between the choice and the bind.
+    """
+    reservation = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    reservation.bind((host, 0))
+    return int(reservation.getsockname()[1]), reservation
+
+
+class _QuietHandler(WSGIRequestHandler):
+    """The default handler logs every request to stderr; the driver already
+    prints what it sent.
+    """
+
+    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+        del format, args

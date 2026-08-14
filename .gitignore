@@ -8,3 +8,7 @@ __pycache__/
 # reduction over the whole run (data.json) is committed.
 output/
 results/
+
+# Gradle: its caches, and everything a scenario's `setup` builds into them.
+.gradle/
+build/

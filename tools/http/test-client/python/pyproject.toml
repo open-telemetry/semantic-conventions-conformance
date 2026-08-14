@@ -5,11 +5,20 @@ build-backend = "hatchling.build"
 [project]
 name = "otel-http-test-client"
 version = "0.1.0.dev0"
-description = "Serves and drives an HTTP server conformance scenario: the requests every one of them sends."
+description = "The HTTP conformance exchanges a server answers or a client sends."
 requires-python = ">=3.10"
 # Standard library only, deliberately: a third-party HTTP client would be
-# instrumented alongside the app and its spans would land in the report.
+# instrumented alongside a scenario and its spans would land in the report.
 dependencies = []
+
+[project.scripts]
+otel-http-drive = "otel_http_test_client.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/otel_http_test_client"]
+
+# The contract belongs to every language, so it lives above this package
+# rather than inside it. A built wheel carries a copy; an editable install
+# reads it where it is, which is what ``_contract`` falls back to.
+[tool.hatch.build.targets.wheel.force-include]
+"../contract.json" = "otel_http_test_client/contract.json"

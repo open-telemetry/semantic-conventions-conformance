@@ -4,9 +4,10 @@
 """The server an HTTP *client* conformance scenario calls.
 
 A server scenario is its own server. A client scenario needs one to call, and
-it has to answer the same routes the server scenarios implement — otherwise
+it has to answer the same exchanges the server scenarios do — otherwise
 the two sides of the domain are measured against different traffic. So the
-contract lives once, in ``otel_http_test_client``, and this serves it.
+contract lives once, in ``otel_http_test_client``, and this serves it through
+that package's :func:`~otel_http_test_client.respond`, not a second copy here.
 
 Standard library only, and deliberately uninstrumented: it runs as a separate
 process the runner starts, and nothing it emits should reach the report.
@@ -15,30 +16,10 @@ process the runner starts, and nothing it emits should reach the report.
 from __future__ import annotations
 
 import argparse
-import json
-import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-# Digits only: the id is echoed back as a number, and anything else
-# should read as an unknown route rather than fail the handler.
-_USER = re.compile(r"^/users/(?P<user_id>[0-9]+)$")
-_STATUS = re.compile(r"^/status/(?P<code>\d+)$")
-
-
-def _respond(path: str, method: str, body: bytes) -> tuple[int, object]:
-    """The route contract, as one function. See ``otel_http_test_client``."""
-    if path == "/health" and method == "GET":
-        return 200, {"ok": True}
-    if (user := _USER.match(path)) and method == "GET":
-        return 200, {"id": int(user["user_id"]), "name": "Alice"}
-    if path == "/items" and method == "POST":
-        return 201, {"created": True, "payload": json.loads(body or b"{}")}
-    if status := _STATUS.match(path):
-        code = int(status["code"])
-        message = {404: "not found", 500: "server error"}.get(code, "ok")
-        return code, {"message": message}
-    return 404, {"message": "not found"}
+from otel_http_test_client import CONTENT_TYPE, respond
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -54,11 +35,11 @@ class _Handler(BaseHTTPRequestHandler):
 
     def _handle(self, method: str) -> None:
         length = int(self.headers.get("Content-Length") or 0)
-        body = self.rfile.read(length) if length else b""
-        status, payload = _respond(urlparse(self.path).path, method, body)
-        encoded = json.dumps(payload).encode()
+        body = self.rfile.read(length).decode("utf-8") if length else None
+        status, payload = respond(method, urlparse(self.path).path, body)
+        encoded = payload.encode("utf-8")
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", CONTENT_TYPE)
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
