@@ -341,11 +341,10 @@ That view is `weaver registry generate --v2` over the
 resolved once into the cache, under the pin it came from and the template that
 produced it. Starting a session resolves it if the pin hasn't got one, so the weaver run
 happens up front rather than after the scenarios have. To see what it
-resolved:
+resolved, read the one it cached:
 
 ```sh
-tools/runner/src/opentelemetry/conformance/collect-coverage-model.sh \
-    ~/.cache/otel-conformance/semconv/<pin>/model /tmp/model.json
+cat ~/.cache/otel-conformance/semconv/coverage-models/*.json
 ```
 
 An attribute counts as covered when any sample of that signal carried it,
