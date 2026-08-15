@@ -156,7 +156,7 @@ class Server:
             # A grandchild can still hold the handle just after the server
             # exits, which on Windows fails the unlink. A file left in the
             # system temp directory is not worth failing a run over.
-            with contextlib.suppress(OSError):
+            with contextlib.suppress(PermissionError):
                 self._log_path.unlink(missing_ok=True)
             self._log_path = None
 
