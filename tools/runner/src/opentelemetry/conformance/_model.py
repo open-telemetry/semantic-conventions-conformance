@@ -27,7 +27,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
-from ._registry import check_weaver
+from ._registry import check_weaver, weaver_version
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ def fingerprint() -> str:
     for path in sorted(_TEMPLATES.rglob("*")):
         if path.is_file():
             digest.update(path.read_bytes())
+    digest.update(weaver_version().encode())
     digest.update(Path(__file__).read_bytes())
     return digest.hexdigest()[:12]
 
