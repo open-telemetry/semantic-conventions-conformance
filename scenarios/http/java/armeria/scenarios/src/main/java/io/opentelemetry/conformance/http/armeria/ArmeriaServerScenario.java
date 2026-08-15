@@ -75,7 +75,9 @@ public final class ArmeriaServerScenario {
                                   HttpServerWorkload.respond(
                                       aggregated.method().name(),
                                       context.path(),
-                                      aggregated.contentUtf8());
+                                      aggregated.content().isEmpty()
+                                          ? null
+                                          : aggregated.contentUtf8());
                               return HttpResponse.of(
                                   HttpStatus.valueOf(answer.statusCode()),
                                   MediaType.parse(HttpContract.CONTENT_TYPE),
