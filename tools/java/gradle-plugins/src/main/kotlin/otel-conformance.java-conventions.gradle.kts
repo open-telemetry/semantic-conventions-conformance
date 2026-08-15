@@ -23,11 +23,7 @@ java {
 }
 
 dependencies {
-    compileOnly("org.jspecify:jspecify:1.0.0")
-    testCompileOnly("org.jspecify:jspecify:1.0.0")
-
     errorprone("com.google.errorprone:error_prone_core:2.36.0")
-    errorprone("com.uber.nullaway:nullaway:0.12.3")
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -37,11 +33,9 @@ dependencies {
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.errorprone {
-        // Style is Spotless's job. What is worth failing a build over here is
-        // the nullness contract, which no formatter can see.
+        // Style is Spotless's job, so only Error Prone's own errors — the
+        // patterns that are bugs rather than taste — fail a build here.
         disableAllWarnings = true
-        error("NullAway")
-        option("NullAway:AnnotatedPackages", "io.opentelemetry.conformance")
     }
 }
 

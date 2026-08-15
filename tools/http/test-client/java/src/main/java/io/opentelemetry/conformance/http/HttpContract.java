@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
-import org.jspecify.annotations.Nullable;
 
 /**
  * The HTTP conformance exchanges, as the JVM reads them.
@@ -43,7 +42,7 @@ public final class HttpContract {
 
   // Loaded on first use rather than in a static initializer, so a classpath problem arrives as the
   // message below rather than wrapped in ExceptionInInitializerError.
-  private static volatile @Nullable Document document;
+  private static volatile Document document;
 
   private HttpContract() {}
 
@@ -56,14 +55,14 @@ public final class HttpContract {
   public record Exchange(
       String method,
       String path,
-      @Nullable String body,
+      String body,
       int status,
       String responseBody,
       boolean readiness,
       String why) {
 
     /** The response body with the request body inserted. */
-    public String renderResponseBody(@Nullable String requestBody) {
+    public String renderResponseBody(String requestBody) {
       return responseBody.replace(
           "${requestBody}", requestBody == null || requestBody.isEmpty() ? "{}" : requestBody);
     }

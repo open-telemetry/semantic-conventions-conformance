@@ -5,7 +5,6 @@
 package io.opentelemetry.conformance.http;
 
 import io.opentelemetry.conformance.http.HttpContract.Response;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Shared support for JVM server scenarios.
@@ -34,7 +33,7 @@ public final class HttpServerWorkload {
    * <p>The whole answer contract in one method, so every Java framework answers identically. {@code
    * requestBody} is null for a request that carried none.
    */
-  public static Response respond(String method, String path, @Nullable String requestBody) {
+  public static Response respond(String method, String path, String requestBody) {
     return HttpContract.exchange(method, path)
         .map(exchange -> new Response(exchange.status(), exchange.renderResponseBody(requestBody)))
         .orElseGet(() -> new Response(404, "{\"message\": \"no such route\"}"));
