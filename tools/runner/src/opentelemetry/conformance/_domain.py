@@ -231,7 +231,7 @@ class Domain:
         """This domain's CLI: ``otel-conformance`` with the domain pinned."""
         from ._cli import main  # noqa: PLC0415  (cycle)
 
-        return main(argv, session=self.session)
+        return main(argv, session=self.session, prog=self.name)
 
     def cli(self) -> None:
         """Console-script entry point."""
