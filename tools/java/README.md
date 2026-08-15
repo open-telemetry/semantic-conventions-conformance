@@ -29,8 +29,8 @@ is an included build rather than a `buildSrc`, so a second domain's build root
 reuses it instead of restating any of it:
 
 - `otel-conformance.java-conventions` — toolchain, encoding, Spotless, JUnit,
-  and Error Prone with NullAway. Style is the formatter's job; what fails a
-  build here is the nullness contract, which no formatter can see.
+  and Error Prone. Style is the formatter's job, so only Error Prone's own
+  errors fail a build here: the patterns that are bugs rather than taste.
 - `otel-conformance.scenario-launcher` — the `javaAgent` configuration and
   `prepareRuntime`, applied only by the projects that are scenario entry
   points. Which projects those are is therefore visible in the build files.
@@ -64,24 +64,21 @@ how Java is built. A scenario names its Gradle project and main class, and opts
 into agent attachment when needed; nothing else about Java appears in the file.
 
 ```yaml
-setup:
-  - otel-conformance-java
-  - prepare
-  - armeria:opentelemetry-javaagent
+setup: otel-conformance-java prepare armeria:opentelemetry-javaagent
 
 scenarios:
   server:
-    run:
-      - otel-conformance-java
-      - run
-      - --agent
-      - armeria:opentelemetry-javaagent
-      - io.opentelemetry.conformance.http.armeria.javaagent.ArmeriaJavaagentServerScenario
+    run: otel-conformance-java run --agent armeria:opentelemetry-javaagent ArmeriaJavaagentServerScenario
 ```
 
 The project is a Gradle path, so everything belonging to one instrumented
 library can be grouped under it and two libraries can each have a `javaagent`
 project without colliding.
+
+The main class is unqualified because a scenario entry point sits in the
+default package. Nothing imports one — it is reached only by name from the
+command line — so a package would buy it no isolation and only lengthen the
+line above. Everything reusable stays packaged.
 
 `prepare` invokes the committed Gradle wrapper's `prepareRuntime`, which syncs
 the resolved classpath and the Java agent into the build root's

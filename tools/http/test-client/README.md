@@ -51,7 +51,7 @@ process:
 ```yaml
 scenarios:
   requests:
-    run: [otel-http-drive, --serve, <the server scenario command>]
+    run: otel-http-drive --serve <the server scenario command>
 ```
 
 The driver picks a free port, starts the command, waits on the request marked
