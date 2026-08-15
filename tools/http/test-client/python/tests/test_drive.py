@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import json
 import re
+import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -67,6 +69,66 @@ print(json.dumps(SEEN), file=sys.stderr)
 sys.exit(EXIT_CODE)
 """
 
+# A scenario command that is a launcher rather than the server itself, which
+# is the shape of every Java scenario: ``otel-conformance-java run ...`` starts
+# the JVM and waits for it, so the process the driver started is not the
+# process that has to stop.
+_LAUNCHER = """
+import subprocess
+import sys
+
+sys.exit(subprocess.call([sys.executable, *sys.argv[1:]]))
+"""
+
+# Behind that launcher, a server that answers but never stops on EOF, so the
+# driver has to kill it. It writes down the port it holds, which is how a test
+# sees whether it outlived the command that started it.
+_DEAF_SERVER = """
+import sys
+from wsgiref.simple_server import make_server
+
+from otel_http_test_client import CONTENT_TYPE, respond, scenario_port
+
+
+def app(environ, start_response):
+    length = int(environ.get("CONTENT_LENGTH") or 0)
+    request_body = environ["wsgi.input"].read(length).decode() or None
+    status, text = respond(
+        environ["REQUEST_METHOD"], environ["PATH_INFO"], request_body
+    )
+    body = text.encode()
+    start_response(
+        f"{status} Status",
+        [
+            ("Content-Type", CONTENT_TYPE),
+            ("Content-Length", str(len(body))),
+        ],
+    )
+    return [body]
+
+
+server = make_server("127.0.0.1", scenario_port(), app)
+with open(sys.argv[1], "w", encoding="utf-8") as handle:
+    handle.write(str(scenario_port()))
+server.serve_forever()
+"""
+
+# Behind that launcher, a server that never binds the port the driver chose,
+# which is what a JVM stuck on the way up looks like from the outside. It
+# accepts, so a test connecting to it is answered for as long as it lives.
+_DEAF_STARTER = """
+import socket
+import sys
+
+listener = socket.socket()
+listener.bind(("127.0.0.1", 0))
+listener.listen(8)
+with open(sys.argv[1], "w", encoding="utf-8") as handle:
+    handle.write(str(listener.getsockname()[1]))
+while True:
+    listener.accept()[0].close()
+"""
+
 
 def _scenario(
     tmp_path: Path,
@@ -104,6 +166,38 @@ def _drive(scenario: Path) -> subprocess.CompletedProcess[str]:
         check=False,
         timeout=180,
     )
+
+
+def _launched(tmp_path: Path, source: str) -> list[str]:
+    """A scenario command whose real server is its child, not itself."""
+    launcher = tmp_path / "launcher.py"
+    launcher.write_text(_LAUNCHER, encoding="utf-8")
+    server = tmp_path / "deaf.py"
+    server.write_text(source, encoding="utf-8")
+    return [
+        sys.executable,
+        str(launcher),
+        str(server),
+        str(tmp_path / "port"),
+    ]
+
+
+def _stopped_answering(port_file: Path, timeout: float = 30.0) -> bool:
+    """Whether the server behind the launcher let go of the port it held."""
+    deadline = time.monotonic() + timeout
+    while not port_file.exists():
+        if time.monotonic() > deadline:
+            pytest.fail("the server behind the launcher never started")
+        time.sleep(0.1)
+
+    port = int(port_file.read_text(encoding="utf-8"))
+    while time.monotonic() < deadline:
+        try:
+            socket.create_connection(("127.0.0.1", port), timeout=1.0).close()
+        except OSError:
+            return True
+        time.sleep(0.1)
+    return False
 
 
 class TestTheContract:
@@ -351,6 +445,37 @@ class TestDrivingAServerScenario:
 
         assert completed.returncode != 0
         assert "ContractError" in completed.stderr
+
+
+class TestStoppingWhatAScenarioStarted:
+    """A scenario command is often a launcher, so killing it is not enough.
+
+    Every Java scenario runs as ``otel-conformance-java run ...``, which
+    starts the JVM and waits for it. A JVM left behind holds the port the next
+    run wants and the pipe the runner is reading the scenario's output from,
+    which turns one scenario's failure into the runner's own much later
+    timeout, reported against the wrong thing.
+    """
+
+    def test_one_that_never_starts_takes_its_children_with_it(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(driver, "_STARTUP_TIMEOUT_SECONDS", 5)
+
+        with pytest.raises(RuntimeError, match="did not listen"):
+            driver._serve_and_drive(_launched(tmp_path, _DEAF_STARTER))
+
+        assert _stopped_answering(tmp_path / "port")
+
+    def test_one_that_never_stops_takes_its_children_with_it(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(driver, "_SHUTDOWN_TIMEOUT_SECONDS", 5)
+
+        with pytest.raises(RuntimeError, match="did not exit within"):
+            driver._serve_and_drive(_launched(tmp_path, _DEAF_SERVER))
+
+        assert _stopped_answering(tmp_path / "port")
 
 
 class TestTheCommandLine:

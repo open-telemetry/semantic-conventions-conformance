@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -36,6 +37,13 @@ from . import (
 _STARTUP_TIMEOUT_SECONDS = 60
 _SHUTDOWN_TIMEOUT_SECONDS = 30
 _POLL_INTERVAL_SECONDS = 0.1
+
+# Windows has no process groups to inherit, so a new one has to be asked for
+# at creation; POSIX gets the same isolation from ``start_new_session``.
+if sys.platform == "win32":
+    _NEW_PROCESS_GROUP = subprocess.CREATE_NEW_PROCESS_GROUP
+else:
+    _NEW_PROCESS_GROUP = 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -78,23 +86,69 @@ def _serve_and_drive(command: Sequence[str]) -> int:
 
     # Standard input is a pipe because closing it is the stop signal; output
     # is inherited so the scenario's own logging reaches the runner, which
-    # shows it when something fails.
+    # shows it when something fails. Its own process group, because a scenario
+    # command is often a launcher rather than the server itself: every Java
+    # scenario runs as `otel-conformance-java run ...`, which makes the JVM a
+    # grandchild, and killing the launcher alone would leave it running.
     reservation.close()
     process = subprocess.Popen(  # noqa: S603
         list(command),
         stdin=subprocess.PIPE,
         env={**os.environ, PORT_VARIABLE: str(port)},
+        start_new_session=True,
+        creationflags=_NEW_PROCESS_GROUP,
     )
 
     try:
         _wait_for_start(process, port, base_url, command)
         drive(base_url)
     except BaseException:
-        process.kill()
-        process.wait()
+        _kill_tree(process)
         raise
 
     return _stop(process)
+
+
+def _kill_tree(process: subprocess.Popen[bytes]) -> None:
+    """Kill the scenario and whatever it started, then reap it.
+
+    A scenario only reaches here when it did not stop on its own, so killing
+    the command alone can leave the real server alive: still holding the port
+    the next run wants, and still holding the output pipe the runner reads
+    until this process's own timeout is hit rather than the scenario's.
+    """
+    if process.poll() is None:
+        try:
+            if sys.platform == "win32":
+                _kill_windows_tree(process.pid)
+            else:
+                os.killpg(process.pid, signal.SIGKILL)
+        except OSError:
+            # Gone between the poll and the kill, or a group that can no
+            # longer be addressed; the direct child is still killable.
+            process.kill()
+    process.wait()
+
+
+def _kill_windows_tree(pid: int) -> None:
+    """Kill a tree the way Windows offers, since its groups are not killable.
+
+    Resolved rather than found on ``PATH`` so this cannot run something else
+    that happens to be named ``taskkill``.
+    """
+    system_root = os.environ.get("SystemRoot", r"C:\Windows")
+    subprocess.run(  # noqa: S603
+        [
+            os.path.join(system_root, "System32", "taskkill.exe"),
+            "/PID",
+            str(pid),
+            "/T",
+            "/F",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
 
 
 def _wait_for_start(
@@ -141,8 +195,7 @@ def _stop(process: subprocess.Popen[bytes]) -> int:
     try:
         return process.wait(timeout=_SHUTDOWN_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait()
+        _kill_tree(process)
         raise RuntimeError(
             "the server scenario did not exit within "
             f"{_SHUTDOWN_TIMEOUT_SECONDS}s of its standard input closing; "
