@@ -141,7 +141,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     run.add_argument(
         "arguments",
         nargs=argparse.REMAINDER,
-        help="arguments passed to the scenario after `--`",
+        help="arguments passed to the scenario, verbatim",
     )
 
     arguments = parser.parse_args(argv)

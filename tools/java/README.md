@@ -10,6 +10,7 @@ tools/java/gradle-plugins/    the convention plugins, as an included build
 tools/java/scenario-support/  what a scenario needs before any telemetry
 tools/java/scenario-sdk/      the SDK a library-instrumentation scenario owns
 tools/java/src/               `otel-conformance-java`, the launcher
+tools/java/tests/             the launcher's tests
 ```
 
 ## A build root per domain
@@ -18,11 +19,10 @@ A domain's Java scenarios are one Gradle build, rooted at its own
 `scenarios/<domain>/java` — today only
 [`scenarios/http/java`](../../scenarios/http/java). `otel-conformance-java`
 finds it by searching upwards from the scenario directory for
-`settings.gradle.kts`,
-so a scenario file says nothing about how deep it is nested. Within a build,
-projects are grouped by the library they instrument, so `:armeria:scenarios`
-and `:armeria:opentelemetry-javaagent` sit beside the Armeria scenario packages
-themselves.
+`settings.gradle.kts`, so a scenario file says nothing about how deep it is
+nested. Within a build, projects are grouped by the library they instrument,
+so `:armeria:scenarios` and `:armeria:opentelemetry-javaagent` sit beside the
+Armeria scenario packages themselves.
 
 What is not per domain is the build logic. [`gradle-plugins/`](gradle-plugins)
 is an included build rather than a `buildSrc`, so a second domain's build root
@@ -92,6 +92,6 @@ inherits the fresh OTLP endpoint the runner injected instead of whatever a
 long-lived Gradle daemon started with.
 
 `--agent` attaches the Java agent from the prepared runtime. It is a JVM launch
-option, not an application mode, and is not passed to the scenario. Any
-application arguments can follow the main class; use `--` first when an
-argument begins with `-`.
+option, not an application mode, and is not passed to the scenario, so it goes
+before the main class. Everything after the main class reaches the scenario
+verbatim, including arguments that begin with `-`.
