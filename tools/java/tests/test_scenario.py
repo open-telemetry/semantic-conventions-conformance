@@ -7,8 +7,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import otel_conformance_java
 import pytest
+
+import otel_conformance_java
 from otel_conformance_java import (
     BUILD_MARKER,
     LayoutError,
