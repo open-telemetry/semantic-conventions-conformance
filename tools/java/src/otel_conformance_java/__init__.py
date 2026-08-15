@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 """``otel-conformance-java``: builds and runs a JVM conformance scenario.
 
 Every Java scenario is prepared and started the same way — sync the resolved
