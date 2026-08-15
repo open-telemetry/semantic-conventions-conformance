@@ -253,7 +253,7 @@ class Domain:
         return build_data, model_path
 
     def main(self, argv: list[str] | None = None) -> int:
-        """This domain's CLI: ``otel-conformance`` with the domain pinned."""
+        """This domain's named CLI with the domain pinned."""
         from ._cli import main  # noqa: PLC0415  (cycle)
 
         return main(argv, session=self.session, prog=self.name)
