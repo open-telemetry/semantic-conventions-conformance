@@ -17,6 +17,7 @@ command rather than as the runner's ``server:``.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import signal
 import subprocess
@@ -37,6 +38,10 @@ from . import (
 _STARTUP_TIMEOUT_SECONDS = 60
 _SHUTDOWN_TIMEOUT_SECONDS = 30
 _POLL_INTERVAL_SECONDS = 0.1
+# A killed process is gone in an instant unless it is stuck in the kernel, so
+# this is only there to stop cleanup outlasting the failure it is cleaning up
+# after.
+_REAP_TIMEOUT_SECONDS = 10
 
 # Windows has no process groups to inherit, so a new one has to be asked for
 # at creation; POSIX gets the same isolation from ``start_new_session``.
@@ -116,6 +121,10 @@ def _kill_tree(process: subprocess.Popen[bytes]) -> None:
     the command alone can leave the real server alive: still holding the port
     the next run wants, and still holding the output pipe the runner reads
     until this process's own timeout is hit rather than the scenario's.
+
+    Every step is bounded and nothing here raises, because the caller has a
+    precise reason for this scenario's failure to report and waiting on
+    cleanup would replace it with the runner's much later, vaguer one.
     """
     if process.poll() is None:
         try:
@@ -123,18 +132,26 @@ def _kill_tree(process: subprocess.Popen[bytes]) -> None:
                 _kill_windows_tree(process.pid)
             else:
                 os.killpg(process.pid, signal.SIGKILL)
-        except OSError:
-            # Gone between the poll and the kill, or a group that can no
-            # longer be addressed; the direct child is still killable.
+        except (OSError, subprocess.SubprocessError):
+            # The kill would not run, or ran and reported that it did not
+            # kill; the direct child is still killable either way, and one
+            # that has already gone makes this a no-op.
             process.kill()
-    process.wait()
+    try:
+        process.wait(timeout=_REAP_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            process.wait(timeout=_REAP_TIMEOUT_SECONDS)
 
 
 def _kill_windows_tree(pid: int) -> None:
     """Kill a tree the way Windows offers, since its groups are not killable.
 
     Resolved rather than found on ``PATH`` so this cannot run something else
-    that happens to be named ``taskkill``.
+    that happens to be named ``taskkill``, and checked so that a ``taskkill``
+    which ran and refused is a failure the caller can fall back from rather
+    than silence.
     """
     system_root = os.environ.get("SystemRoot", r"C:\Windows")
     subprocess.run(  # noqa: S603
@@ -147,7 +164,7 @@ def _kill_windows_tree(pid: int) -> None:
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        check=False,
+        check=True,
     )
 
 
