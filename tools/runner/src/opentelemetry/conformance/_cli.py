@@ -251,6 +251,10 @@ def main(
     console script reuses this CLI. Left out, the directory's ``runner:`` key
     decides — so ``otel-conformance`` works for any directory whose wrapper is
     installed.
+
+    ``prog`` is the command name the usage line reports. A domain wrapper
+    passes its own console-script name, so ``--help`` names the command that
+    was run.
     """
     args = _parser(prog).parse_args(argv)
 
