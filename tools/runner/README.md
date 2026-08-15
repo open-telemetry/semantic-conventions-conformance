@@ -343,8 +343,8 @@ produced it. Starting a session resolves it if the pin hasn't got one, so the we
 happens up front rather than after the scenarios have. To see what it
 resolved, read the one it cached:
 
-```sh
-cat ~/.cache/otel-conformance/semconv/coverage-models/*.json
+```console
+python -c "from opentelemetry.conformance import cache_dir; print(*(path.read_text(encoding='utf-8') for path in (cache_dir() / 'coverage-models').glob('*.json')), sep='\n')"
 ```
 
 An attribute counts as covered when any sample of that signal carried it,
