@@ -131,6 +131,18 @@ def test_failures_become_a_non_zero_exit(directory: Path) -> None:
     )
 
 
+def test_the_header_names_the_declared_libraries(
+    directory: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A package's directory is not what it measured; its spec says that."""
+    assert main([str(directory)], session=factory([], [])) == 0
+
+    assert (
+        "==== instrumented: demo, instrumentation: demo-instrumentation, "
+        f"package: {directory.name}" in capsys.readouterr().out
+    )
+
+
 def test_report_only_warns_about_violations(
     directory: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
