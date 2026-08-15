@@ -7,7 +7,6 @@ package io.opentelemetry.conformance.http;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
 import io.opentelemetry.conformance.http.HttpContract.Response;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Shared support for JVM client scenarios: the request contract, sent by the library under test.
@@ -27,7 +26,8 @@ public final class HttpClientWorkload {
   /** Sends one request using the HTTP client library under test. */
   @FunctionalInterface
   public interface Sender {
-    Response send(String method, String url, @Nullable String body) throws Exception;
+    /** {@code body} is null for a request that carries none. */
+    Response send(String method, String url, String body) throws Exception;
   }
 
   /**
