@@ -27,6 +27,8 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from ._registry import check_weaver
+
 logger = logging.getLogger(__name__)
 
 _TEMPLATES = Path(__file__).parent / "weaver-templates"
@@ -56,19 +58,14 @@ def resolve(registry: Path, output: Path) -> Path:
     if output.is_file():
         return output
 
-    weaver = shutil.which("weaver")
-    if weaver is None:
-        raise RuntimeError(
-            "weaver is not on PATH — install it from "
-            "https://github.com/open-telemetry/weaver/releases"
-        )
+    check_weaver()
 
     logger.info("Resolving the coverage model into %s", output)
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as generated:
         completed = subprocess.run(  # noqa: S603
             [
-                weaver,
+                "weaver",
                 "registry",
                 "generate",
                 "--quiet",
