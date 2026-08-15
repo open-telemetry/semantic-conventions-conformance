@@ -96,3 +96,14 @@ def test_a_domain_config_is_filtered_on_top_of_the_runners(
 
 def test_a_domain_without_a_config_gets_the_runners(domain) -> None:
     assert signal_types(domain().weaver_config) == ["resource"]
+
+
+def test_the_cli_names_the_command_that_was_run(
+    domain, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A wrapper's usage line is its own console script, not the runner's."""
+    with pytest.raises(SystemExit) as exit_info:
+        domain().main(["--help"])
+
+    assert exit_info.value.code == 0
+    assert capsys.readouterr().out.startswith("usage: test-conformance ")
