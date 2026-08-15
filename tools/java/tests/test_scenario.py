@@ -17,10 +17,7 @@ from otel_conformance_java import (
     java_command,
 )
 
-MAIN = (
-    "io.opentelemetry.conformance.http.armeria.javaagent"
-    ".ArmeriaJavaagentServerScenario"
-)
+MAIN = "ArmeriaJavaagentServerScenario"
 PROJECT = "armeria:opentelemetry-javaagent"
 RUNTIME = "armeria-opentelemetry-javaagent"
 

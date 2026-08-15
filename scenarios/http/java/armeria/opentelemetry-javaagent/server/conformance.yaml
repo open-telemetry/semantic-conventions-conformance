@@ -14,21 +14,11 @@ weaver:
 # Every Java scenario is built and started the same way, so
 # `otel-conformance-java` holds the toolchain and this file names only what is
 # this scenario's own.
-setup:
-  - otel-conformance-java
-  - prepare
-  - armeria:opentelemetry-javaagent
+setup: otel-conformance-java prepare armeria:opentelemetry-javaagent
 
 scenarios:
   server:
     # The requests are sent from outside the scenario, so a server run holds
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
-    run:
-      - otel-http-drive
-      - --serve
-      - otel-conformance-java
-      - run
-      - --agent
-      - armeria:opentelemetry-javaagent
-      - io.opentelemetry.conformance.http.armeria.javaagent.ArmeriaJavaagentServerScenario
+    run: otel-http-drive --serve otel-conformance-java run --agent armeria:opentelemetry-javaagent ArmeriaJavaagentServerScenario

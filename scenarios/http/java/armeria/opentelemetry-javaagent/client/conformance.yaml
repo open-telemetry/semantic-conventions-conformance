@@ -14,19 +14,11 @@ weaver:
 # Every Java scenario is built and started the same way, so
 # `otel-conformance-java` holds the toolchain and this file names only what is
 # this scenario's own.
-setup:
-  - otel-conformance-java
-  - prepare
-  - armeria:opentelemetry-javaagent
+setup: otel-conformance-java prepare armeria:opentelemetry-javaagent
 
 server:
   run: http-mock-server --port ${PORT}
 
 scenarios:
   client:
-    run:
-      - otel-conformance-java
-      - run
-      - --agent
-      - armeria:opentelemetry-javaagent
-      - io.opentelemetry.conformance.http.armeria.javaagent.ArmeriaJavaagentClientScenario
+    run: otel-conformance-java run --agent armeria:opentelemetry-javaagent ArmeriaJavaagentClientScenario
