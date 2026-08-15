@@ -31,7 +31,6 @@ drags no dependency into a run.
 
 from __future__ import annotations
 
-import http.client
 import json
 import os
 import socket
@@ -54,7 +53,6 @@ __all__ = [
     "Exchange",
     "Send",
     "drive",
-    "is_healthy",
     "request",
     "reserve_port",
     "respond",
@@ -246,41 +244,20 @@ def wait_for_port(
 
 
 def wait_for_health(base_url: str, timeout: float = 30.0) -> None:
-    """Block until the app answers the readiness exchange, or give up.
+    """Ask once whether the app is ready, waiting up to ``timeout``.
 
     The second step of readiness, and the first request the app sees. Each
-    attempt waits as long as a real request may take rather than polling
-    impatiently: giving up on a response already on its way leaves the server
-    recording a failed request that nothing actually asked to fail.
+    server scenario request becomes telemetry, so a failed readiness exchange
+    is reported rather than retried and recorded again.
     """
-    deadline = time.monotonic() + timeout
-    while True:
-        if is_healthy(base_url):
-            return
-        if time.monotonic() >= deadline:
-            raise RuntimeError(
-                f"the scenario's server did not answer "
-                f"{base_url}{_READINESS.path} "
-                f"within {timeout}s"
-            )
-        time.sleep(_HEALTH_POLL_SECONDS)
-
-
-def is_healthy(base_url: str) -> bool:
-    """Whether the app answers the readiness exchange, waiting out a response."""
-    try:
-        with urllib.request.urlopen(  # noqa: S310
-            urllib.request.Request(  # noqa: S310
-                f"{base_url}{_READINESS.path}",
-                headers={"User-Agent": USER_AGENT},
-            ),
-            timeout=_REQUEST_TIMEOUT_SECONDS,
-        ):
-            return True
-    except (OSError, http.client.HTTPException):
-        # Still starting: connection refused, reset, or a truncated response
-        # are all expected until it is listening.
-        return False
+    with urllib.request.urlopen(  # noqa: S310
+        urllib.request.Request(  # noqa: S310
+            f"{base_url}{_READINESS.path}",
+            headers={"User-Agent": USER_AGENT},
+        ),
+        timeout=timeout,
+    ):
+        return
 
 
 def request(method: str, url: str, body: str | None = None) -> tuple[int, str]:
