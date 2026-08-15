@@ -114,9 +114,9 @@ def _absolute(value: str | None) -> str | None:
     return None if value is None else str(Path(value).absolute())
 
 
-def _parser() -> argparse.ArgumentParser:
+def _parser(prog: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="otel-conformance",
+        prog=prog,
         description="Run a package's conformance scenarios.",
     )
     parser.add_argument(
@@ -243,6 +243,7 @@ def main(
     argv: list[str] | None = None,
     *,
     session: SessionFactory | None = None,
+    prog: str = "otel-conformance",
 ) -> int:
     """Run a directory's scenarios.
 
@@ -251,7 +252,7 @@ def main(
     decides — so ``otel-conformance`` works for any directory whose wrapper is
     installed.
     """
-    args = _parser().parse_args(argv)
+    args = _parser(prog).parse_args(argv)
 
     logging.basicConfig(
         level=logging.WARNING if args.quiet else logging.INFO,
