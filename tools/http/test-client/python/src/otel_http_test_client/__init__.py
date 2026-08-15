@@ -335,10 +335,11 @@ def wait_for_eof() -> None:
 
 
 def reserve_port(host: str = "127.0.0.1") -> tuple[int, socket.socket]:
-    """Take a free port, held open until the server that wants it starts.
+    """Take a free port and return the socket currently holding it.
 
-    Releasing it any earlier would leave the port free for a parallel run to
-    take between the choice and the bind.
+    Keep the socket open until immediately before the server starts to narrow
+    the window in which a parallel run can take the port. The server must bind
+    the port itself, so closing the reservation still leaves a small race.
     """
     reservation = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     reservation.bind((host, 0))
