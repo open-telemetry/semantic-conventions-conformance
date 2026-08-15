@@ -339,7 +339,11 @@ def _run(
         print(
             _paint(
                 f"==== instrumented: {spec.instrumented_library}, "
-                f"instrumentation: {Path(spec.directory).name}",
+                f"instrumentation: {spec.instrumentation_library}, "
+                # The declared libraries name what was measured; the directory
+                # is which package measured it, and two of them can declare
+                # the same instrumentation.
+                f"package: {Path(spec.directory).name}",
                 "bold",
             )
         )
