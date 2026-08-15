@@ -184,9 +184,7 @@ def drive(base_url: str, send: Send | None = None) -> None:
             f"{base_url}{exchange.path}",
             exchange.body,
         )
-        print(
-            f"{exchange.method} {exchange.path} -> {status} {response[:60]}"
-        )
+        print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
         verify(exchange, status, response)
 
 
@@ -234,12 +232,17 @@ def wait_for_port(
     while a server starts up.
     """
     deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
         try:
-            with socket.create_connection((host, port), timeout=1):
+            with socket.create_connection((host, port), timeout=remaining):
                 return True
         except OSError:
-            time.sleep(_HEALTH_POLL_SECONDS)
+            time.sleep(
+                min(_HEALTH_POLL_SECONDS, max(0, deadline - time.monotonic()))
+            )
     return False
 
 

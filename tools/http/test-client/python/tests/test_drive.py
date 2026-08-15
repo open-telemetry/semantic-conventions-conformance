@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+import otel_http_test_client.__main__ as driver
 from otel_http_test_client import (
     CONTRACT,
     EXCHANGES,
@@ -23,6 +24,7 @@ from otel_http_test_client import (
     respond,
     verify,
     wait_for_health,
+    wait_for_port,
 )
 from otel_http_test_client.__main__ import main
 
@@ -135,6 +137,7 @@ class TestTheContract:
         assert placeholders
         assert set(placeholders) == {"${requestBody}"}
 
+
 class TestAnsweringTheExchanges:
     def test_a_path_parameter_reaches_the_response(self) -> None:
         status, body = respond("GET", "/users/123")
@@ -177,9 +180,7 @@ class TestVerifyingAnAnswer:
 
     def test_a_wrong_status_is_rejected(self) -> None:
         exchange = next(
-            exchange
-            for exchange in REQUESTS
-            if exchange.path == "/status/404"
+            exchange for exchange in REQUESTS if exchange.path == "/status/404"
         )
         _status, response = self._answer(exchange)
 
@@ -218,6 +219,54 @@ class TestVerifyingAnAnswer:
 
 
 class TestDrivingAServerScenario:
+    def test_port_wait_uses_its_timeout_as_the_connection_budget(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        connection_timeouts: list[float] = []
+
+        class Connection:
+            def __enter__(self) -> None:
+                return None
+
+            def __exit__(self, *_args: object) -> None:
+                return None
+
+        def connect(
+            _address: tuple[str, int], *, timeout: float
+        ) -> Connection:
+            connection_timeouts.append(timeout)
+            return Connection()
+
+        times = iter((100.0, 100.0))
+        monkeypatch.setattr(
+            "otel_http_test_client.time.monotonic", lambda: next(times)
+        )
+        monkeypatch.setattr(
+            "otel_http_test_client.socket.create_connection", connect
+        )
+
+        assert wait_for_port(1234, timeout=0.1)
+        assert connection_timeouts == [pytest.approx(0.1)]
+
+    def test_port_binding_at_the_deadline_reports_startup_timeout(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        times = iter((0.0, 0.0, 60.0))
+        monkeypatch.setattr(driver.time, "monotonic", lambda: next(times))
+        monkeypatch.setattr(
+            driver, "wait_for_port", lambda *_args, **_kwargs: True
+        )
+
+        def unexpected_health_check(*_args: object, **_kwargs: object) -> None:
+            pytest.fail("health check received a non-positive timeout")
+
+        monkeypatch.setattr(driver, "wait_for_health", unexpected_health_check)
+
+        with pytest.raises(RuntimeError, match="did not listen"):
+            driver._wait_for_start(
+                object(), 1234, "http://127.0.0.1:1234", ["scenario"]
+            )
+
     def test_it_sends_the_contract_in_order(self, tmp_path: Path) -> None:
         completed = _drive(_scenario(tmp_path))
 

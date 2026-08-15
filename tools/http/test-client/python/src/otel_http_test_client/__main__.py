@@ -112,7 +112,10 @@ def _wait_for_start(
     deadline = time.monotonic() + _STARTUP_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
         if wait_for_port(port, timeout=_POLL_INTERVAL_SECONDS):
-            wait_for_health(base_url, timeout=deadline - time.monotonic())
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            wait_for_health(base_url, timeout=remaining)
             return
         # After the check, so a scenario that binds and exits in the same
         # instant is reported as having exited rather than as never binding.
