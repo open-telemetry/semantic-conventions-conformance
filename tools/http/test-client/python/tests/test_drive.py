@@ -22,6 +22,7 @@ from otel_http_test_client import (
     Exchange,
     respond,
     verify,
+    wait_for_health,
 )
 from otel_http_test_client.__main__ import main
 
@@ -240,6 +241,26 @@ class TestDrivingAServerScenario:
 
         seen = json.loads(completed.stderr.strip().splitlines()[-1])
         assert seen.count("GET /health") == 1
+
+    def test_readiness_failure_is_not_retried(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        attempts = 0
+
+        def reset_connection(*_args: object, **kwargs: object) -> None:
+            nonlocal attempts
+            attempts += 1
+            assert kwargs["timeout"] == 17
+            raise ConnectionResetError
+
+        monkeypatch.setattr(
+            "otel_http_test_client.urllib.request.urlopen", reset_connection
+        )
+
+        with pytest.raises(ConnectionResetError):
+            wait_for_health("http://127.0.0.1:1", timeout=17)
+
+        assert attempts == 1
 
     def test_it_reports_what_each_request_came_back_as(
         self, tmp_path: Path
