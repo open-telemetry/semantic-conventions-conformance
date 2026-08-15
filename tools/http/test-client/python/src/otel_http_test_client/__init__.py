@@ -44,6 +44,7 @@ from typing import Callable, NamedTuple, Sequence
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 __all__ = [
+    "CONTENT_TYPE",
     "CONTRACT",
     "EXCHANGES",
     "PORT_VARIABLE",
