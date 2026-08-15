@@ -49,4 +49,5 @@ include = [
   "tools/http/runner/src",
   "tools/http/mock-server/src",
   "tools/http/test-client/python/src",
+  "tools/java/src",
 ]
