@@ -43,7 +43,7 @@ class TestFindingTheModule:
 
 
 class TestBuilding:
-    def test_it_builds_the_scenario_directorys_own_package(
+    def test_it_builds_the_package_in_the_scenario_directory(
         self, root: Path
     ) -> None:
         """A scenario's package is its directory, so there is nothing to name."""
