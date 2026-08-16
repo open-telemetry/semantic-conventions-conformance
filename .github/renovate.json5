@@ -33,8 +33,11 @@
     },
     {
       // group all non-major Python dependency updates into a single PR
-      // (`pep621` is the manager for pyproject.toml; it updates uv.lock too)
-      "matchManagers": ["pep621"],
+      // (two managers read pyproject.toml: `pep621` claims the ones with a
+      // `uv.lock` beside them and updates it too, `poetry` claims the rest, so
+      // naming only one would leave whichever packages lack a lock file
+      // arriving one PR per dependency)
+      "matchManagers": ["pep621", "poetry"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "python-minor"
     },
@@ -55,6 +58,7 @@
       "matchPackageNames": [
         "opentelemetry-distro",
         "opentelemetry-instrumentation-*",
+        "opentelemetry-test-utils",
         "opentelemetry-util-genai"
       ],
       "ignoreUnstable": false
