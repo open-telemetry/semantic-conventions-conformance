@@ -49,7 +49,9 @@
     {
       // These ship only `bN` prereleases and have never published a stable
       // release, so each minor is its own prerelease line and Renovate's
-      // default would never propose 0.65b0 to 0.66b0.
+      // default would never propose 0.65b0 to 0.66b0. Several are at `1.0bN`
+      // already; once one cuts a stable release it wants dropping from here,
+      // or Renovate will go on offering prereleases in preference to it.
       "matchPackageNames": [
         "opentelemetry-distro",
         "opentelemetry-instrumentation-*",
