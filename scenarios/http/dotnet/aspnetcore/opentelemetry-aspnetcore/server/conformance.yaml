@@ -17,24 +17,34 @@ scenarios:
     # name is `.exe` on Windows and extensionless elsewhere.
     run: otel-http-drive --serve dotnet ../../../build/scenario-runtime/OpenTelemetryAspNetCoreServer/OpenTelemetryAspNetCoreServer.dll
     expected_violations:
-      # The instrumentation reads what ASP.NET Core's own activity carries and
-      # does not go back to HttpContext.Connection for the peer, so no route
-      # records who called it. One entry covers all four routes: weaver's
-      # context names the attribute, not the span.
+      # Recorded rather than configured away: an enrichment callback could add
+      # client.address, but then the scenario would stop measuring what the
+      # instrumentation does by default.
+      #
+      # One entry covers all four routes — weaver's context names the
+      # attribute, not the span.
       - id: recommended_attribute_not_present
         context:
           attribute_key: client.address
           kind: server
         reason: >-
           OpenTelemetry.Instrumentation.AspNetCore never sets client.address on
-          a server span.
-      # The counterpart client scenario does set error.type to the status code
-      # on a failed request, so the two .NET instrumentations disagree about a
-      # 5xx that raised nothing.
+          a server span. It does record the socket that received the request —
+          server.address and server.port are both present — and it sets no
+          network.peer.address either, so a server run says what it listened on
+          but nothing about who called it. ASP.NET Core offers the peer on
+          HttpContext.Connection.RemoteIpAddress, so this is an omission rather
+          than something the framework cannot supply.
+      # The contract has one failing request, so this is seen once; the context
+      # matches on the status being an error rather than on which route it was.
       - id: error_type_missing_on_error
         context:
           status_code: error
         reason: >-
           OpenTelemetry.Instrumentation.AspNetCore marks a 5xx response's span
           an error without recording error.type, which semantic conventions
-          require whenever the request failed.
+          require whenever the request failed. The counterpart
+          OpenTelemetry.Instrumentation.Http client scenario does set it, to
+          the status code, so one run holds a client span that says why a
+          request failed beside a server span that says only that it did.
+          Nothing is left to group server-side failures by cause.
