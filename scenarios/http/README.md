@@ -4,7 +4,7 @@ What HTTP instrumentations emit, checked against the
 [HTTP semantic conventions][http] and recorded as committed coverage.
 
 ```text
-java/<library>/<instrumentation>/<side>/
+<language>/<library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
 ```
@@ -40,6 +40,11 @@ plain Armeria and attach the agent, while the library launchers use the shared
 install their framework-specific decorators. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
+
+Python has the same shape without a build step. Its workload is a module in
+`python/<library>/scenarios/`, and each instrumentation directory holds the
+`pyproject.toml` and `uv.lock` that pin one instrumentation, next to the script
+that turns it on before handing the workload to the harness.
 
 ## The scenario contract
 
@@ -98,6 +103,8 @@ otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
+otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
 ```
 
 Every Java package is built and started the same way, so

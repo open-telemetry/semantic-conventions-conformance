@@ -1,0 +1,23 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: flask
+instrumentation_library: opentelemetry-instrumentation-flask
+
+env:
+  # The workload every instrumentation of this library shares, which is beside
+  # them rather than in any one of them; a scenario's working directory is the
+  # one this file is in.
+  PYTHONPATH: ../../scenarios
+  # Python's HTTP instrumentations still emit the pre-stable attributes by
+  # default at 0.65b0 — `http.method`, `http.status_code`, `net.host.name` —
+  # so without this a run measures the old conventions.
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
+
+scenarios:
+  server:
+    # The requests are sent from outside the scenario, so a server run holds
+    # server telemetry only; the driver starts this command, chooses the port
+    # it binds, and closes its standard input when it is done.
+    run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
