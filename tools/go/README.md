@@ -36,10 +36,13 @@ and the flush that runs before the process exits. Go has no SDK
 autoconfiguration package, so this wiring is written down once rather than in
 each scenario.
 
-The separation is weaker than the JVM's, and deliberately so. Go's linker drops
-what a binary does not import, so a scenario that imports only `scenario` links
-no SDK whether or not the two are separate modules — the split records the
-boundary rather than enforcing it at run time.
+The mechanism differs from the JVM's, but the boundary is enforced just as
+firmly. Go's linker keeps whatever the import graph reaches, and an imported
+package is initialized even when nothing calls it, so the package boundary is
+what holds the exporters out: a binary importing only `scenario` links no SDK
+and no gRPC, while one package holding both would link both. The two halves
+ship in one module, because it is the import that decides this and not the
+module.
 
 ## `otel-conformance-go`
 
