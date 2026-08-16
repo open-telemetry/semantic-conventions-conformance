@@ -114,7 +114,8 @@ def _kill_tree(process: subprocess.Popen[bytes]) -> None:
     until this process's own timeout is hit rather than the scenario's.
 
     A group so a launcher passes it on; falling back to the direct child
-    covers a group that has already gone, and Windows, where there is none.
+    covers a group that has already gone. Windows has no killable process
+    group, so cleanup there is best effort and launcher descendants may live.
     """
     if process.poll() is None:
         try:
