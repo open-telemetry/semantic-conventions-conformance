@@ -110,11 +110,13 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js \
-  -e tools/dotnet
+  -e tools/dotnet -e tools/go
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/go/net-http/otelhttp/client
+otel-conformance scenarios/http/go/net-http/otelhttp/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/http/opentelemetry-http/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/server
