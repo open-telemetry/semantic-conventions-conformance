@@ -17,7 +17,6 @@ command rather than as the runner's ``server:``.
 from __future__ import annotations
 
 import argparse
-import contextlib
 import os
 import signal
 import subprocess
@@ -38,17 +37,6 @@ from . import (
 _STARTUP_TIMEOUT_SECONDS = 60
 _SHUTDOWN_TIMEOUT_SECONDS = 30
 _POLL_INTERVAL_SECONDS = 0.1
-# A killed process is gone in an instant unless it is stuck in the kernel, so
-# this is only there to stop cleanup outlasting the failure it is cleaning up
-# after.
-_REAP_TIMEOUT_SECONDS = 10
-
-# Windows has no process groups to inherit, so a new one has to be asked for
-# at creation; POSIX gets the same isolation from ``start_new_session``.
-if sys.platform == "win32":
-    _NEW_PROCESS_GROUP = subprocess.CREATE_NEW_PROCESS_GROUP
-else:
-    _NEW_PROCESS_GROUP = 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -105,7 +93,6 @@ def _serve_and_drive(command: Sequence[str]) -> int:
         stdin=subprocess.PIPE,
         env={**os.environ, PORT_VARIABLE: str(port)},
         start_new_session=True,
-        creationflags=_NEW_PROCESS_GROUP,
     )
 
     try:
@@ -119,57 +106,22 @@ def _serve_and_drive(command: Sequence[str]) -> int:
 
 
 def _kill_tree(process: subprocess.Popen[bytes]) -> None:
-    """Kill the scenario and whatever it started, then reap it.
+    """Kill the whole group the scenario was started in, then reap it.
 
     A scenario only reaches here when it did not stop on its own, so killing
     the command alone can leave the real server alive: still holding the port
     the next run wants, and still holding the output pipe the runner reads
     until this process's own timeout is hit rather than the scenario's.
 
-    Every step is bounded and nothing here raises, because the caller has a
-    precise reason for this scenario's failure to report and waiting on
-    cleanup would replace it with the runner's much later, vaguer one.
+    A group so a launcher passes it on; falling back to the direct child
+    covers a group that has already gone, and Windows, where there is none.
     """
     if process.poll() is None:
         try:
-            if sys.platform == "win32":
-                _kill_windows_tree(process.pid)
-            else:
-                os.killpg(process.pid, signal.SIGKILL)
-        except (OSError, subprocess.SubprocessError):
-            # The kill would not run, or ran and reported that it did not
-            # kill; the direct child is still killable either way, and one
-            # that has already gone makes this a no-op.
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+        except (AttributeError, OSError):
             process.kill()
-    try:
-        process.wait(timeout=_REAP_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        with contextlib.suppress(subprocess.TimeoutExpired):
-            process.wait(timeout=_REAP_TIMEOUT_SECONDS)
-
-
-def _kill_windows_tree(pid: int) -> None:
-    """Kill a tree the way Windows offers, since its groups are not killable.
-
-    Resolved rather than found on ``PATH`` so this cannot run something else
-    that happens to be named ``taskkill``, and checked so that a ``taskkill``
-    which ran and refused is a failure the caller can fall back from rather
-    than silence.
-    """
-    system_root = os.environ.get("SystemRoot", r"C:\Windows")
-    subprocess.run(  # noqa: S603
-        [
-            os.path.join(system_root, "System32", "taskkill.exe"),
-            "/PID",
-            str(pid),
-            "/T",
-            "/F",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=True,
-    )
+    process.wait()
 
 
 def _wait_for_start(

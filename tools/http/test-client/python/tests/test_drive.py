@@ -447,6 +447,10 @@ class TestDrivingAServerScenario:
         assert "ContractError" in completed.stderr
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="no killable process group, as in the runner's own server teardown",
+)
 class TestStoppingWhatAScenarioStarted:
     """A scenario command is often a launcher, so killing it is not enough.
 
@@ -476,84 +480,6 @@ class TestStoppingWhatAScenarioStarted:
             driver._serve_and_drive(_launched(tmp_path, _DEAF_SERVER))
 
         assert _stopped_answering(tmp_path / "port")
-
-
-class _UnreapableProcess:
-    """A process that will not go away, so cleanup can be tested without one.
-
-    Stands in for the thing the real fallbacks exist for, which cannot be
-    produced on demand and does not exist at all on the platform CI runs on.
-    """
-
-    def __init__(self, *, dies_when_killed: bool = True) -> None:
-        self.pid = 4321
-        self.kills = 0
-        self.waits: list[float | None] = []
-        self._alive = True
-        self._dies_when_killed = dies_when_killed
-
-    def poll(self) -> int | None:
-        return None if self._alive else 0
-
-    def kill(self) -> None:
-        self.kills += 1
-        if self._dies_when_killed:
-            self._alive = False
-
-    def wait(self, timeout: float | None = None) -> int:
-        self.waits.append(timeout)
-        if self._alive:
-            raise subprocess.TimeoutExpired("scenario", timeout or 0)
-        return 0
-
-
-class TestKillingWhatWillNotStop:
-    """Cleanup has to end, because the caller has the real failure to report.
-
-    The driver knows exactly why a scenario failed; the runner only knows that
-    the whole command overran, minutes later. Anything here that waits without
-    a limit throws away the better message for the worse one.
-    """
-
-    def _refuse(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Make the group kill fail the way each platform's can."""
-
-        def refuse(*_args: object, **_kwargs: object) -> None:
-            raise subprocess.CalledProcessError(1, "taskkill")
-
-        monkeypatch.setattr(driver, "_kill_windows_tree", refuse)
-        monkeypatch.setattr(driver.os, "killpg", refuse, raising=False)
-
-    def _succeed(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Make it report success without anything actually dying."""
-        monkeypatch.setattr(driver, "_kill_windows_tree", lambda *_args: None)
-        monkeypatch.setattr(
-            driver.os, "killpg", lambda *_args: None, raising=False
-        )
-
-    def test_a_kill_that_refuses_falls_back_to_the_child(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """`taskkill` reporting that it could not kill must not read as done."""
-        self._refuse(monkeypatch)
-        process = _UnreapableProcess()
-
-        driver._kill_tree(process)
-
-        assert process.kills == 1
-
-    def test_one_that_survives_everything_is_given_up_on(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        self._succeed(monkeypatch)
-        process = _UnreapableProcess(dies_when_killed=False)
-
-        driver._kill_tree(process)
-
-        assert process.kills == 1
-        assert process.waits and all(
-            timeout is not None for timeout in process.waits
-        )
 
 
 class TestTheCommandLine:
