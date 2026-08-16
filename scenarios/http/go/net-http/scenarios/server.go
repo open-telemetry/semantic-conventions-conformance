@@ -82,7 +82,24 @@ func RunServer(middleware Middleware) error {
 	served := make(chan error, 1)
 	go func() { served <- server.Serve(listener) }()
 
-	stopped := scenario.WaitForEOF()
+	stopping := make(chan error, 1)
+	go func() { stopping <- scenario.WaitForEOF() }()
+
+	var stopped error
+	select {
+	case err := <-served:
+		// Serve gave up before the driver said stop, so nothing was ever going
+		// to be measured. Reporting it here rather than going on to wait for
+		// standard input is what turns a hang into a message: otherwise the
+		// process would hold the port until the driver's timeout killed it,
+		// and the one line explaining why would go with it.
+		if err == nil {
+			err = errors.New("the server stopped accepting connections")
+		}
+		return err
+	case stopped = <-stopping:
+	}
+
 	if err := server.Shutdown(context.Background()); err != nil {
 		stopped = errors.Join(stopped, err)
 	}
