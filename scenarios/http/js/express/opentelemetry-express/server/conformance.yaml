@@ -1,0 +1,38 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: express
+instrumentation_library: "@opentelemetry/instrumentation-express"
+
+setup: otel-conformance-js install
+
+scenarios:
+  server:
+    # The requests are sent from outside the scenario, so a server run holds
+    # server telemetry only; the driver starts this command, chooses the port
+    # it binds, and closes its standard input when it is done.
+    run: otel-http-drive --serve node ../server.js
+    expected_violations:
+      - id: error_type_missing_on_error
+        context:
+          status_code: error
+        reason: >-
+          @opentelemetry/instrumentation-http sets a span's status to error for
+          a 5xx response but never sets error.type, which semantic conventions
+          require whenever an HTTP server span reports an error.
+      # One per middleware and route handler Express ran, which is why this
+      # appears many times over rather than once.
+      - id: missing_attribute
+        context:
+          attribute_key: express.name
+        reason: >-
+          @opentelemetry/instrumentation-express names each middleware and
+          route handler span with express.name and express.type, neither of
+          which semantic conventions define. Recorded rather than filtered out,
+          since an instrumentation's own attributes are part of what it emits.
+      - id: missing_attribute
+        context:
+          attribute_key: express.type
+        reason: >-
+          The other half of the same pair; see express.name above.

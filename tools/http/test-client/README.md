@@ -82,3 +82,7 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   looks up answers for any JVM framework, and `HttpClientWorkload.drive` sends
   the requests. The build copies `contract.json` onto the classpath, and its
   unit tests drive both halves against each other.
+- [`js/`](js) — the same three parts as Node modules: `contract` reads the file,
+  `respond` looks up answers for any Node framework, and `drive` sends the
+  requests through a caller-supplied sender. Its unit tests drive both halves
+  against each other.

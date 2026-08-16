@@ -1,0 +1,13 @@
+{
+  "name": "@otel-conformance/express-opentelemetry-express",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Express measured through @opentelemetry/instrumentation-express.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@otel-conformance/express-scenarios": "*",
+    "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
+    "@opentelemetry/instrumentation-express": "0.69.0",
+    "@opentelemetry/instrumentation-http": "0.221.0"
+  }
+}

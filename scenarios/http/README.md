@@ -9,6 +9,9 @@ java/<library>/<instrumentation>/<side>/
     data.json           the coverage it produced, committed
 ```
 
+Each language has its own build root directly under this one, with its own
+README: [`java/`](java) and [`js/`](js).
+
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
 the Gradle project that builds its `main` classes, while `scenarios/` holds

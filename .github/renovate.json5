@@ -32,6 +32,12 @@
       "groupName": "java-minor"
     },
     {
+      // group all non-major JavaScript dependency updates into a single PR
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "javascript-minor"
+    },
+    {
       // Everything under this Maven group ships only `-alpha` versions, so
       // Renovate's default of skipping unstable versions would never update it.
       "matchPackageNames": [

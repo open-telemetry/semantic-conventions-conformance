@@ -1,0 +1,26 @@
+{
+  "spans": {
+    "http.client": [
+      "http.request.method",
+      "http.request.method_original",
+      "http.response.status_code",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port",
+      "url.full",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.client.request.duration": [
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ]
+  }
+}
