@@ -74,14 +74,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     arguments = parser.parse_args(argv)
 
-    if bool(arguments.url) == bool(arguments.serve):
+    if arguments.url is None:
+        if arguments.serve is None:
+            parser.error("give either a base URL or --serve COMMAND")
+        if not arguments.serve:
+            parser.error("--serve requires COMMAND")
+        return _serve_and_drive(arguments.serve)
+    if arguments.serve is not None:
         parser.error("give either a base URL or --serve COMMAND, not both")
 
-    if arguments.url:
-        wait_for_health(arguments.url)
-        drive(arguments.url)
-        return 0
-    return _serve_and_drive(arguments.serve)
+    wait_for_health(arguments.url)
+    drive(arguments.url)
+    return 0
 
 
 def _serve_and_drive(command: Sequence[str]) -> int:

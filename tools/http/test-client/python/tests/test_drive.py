@@ -557,13 +557,29 @@ class TestKillingWhatWillNotStop:
 
 
 class TestTheCommandLine:
-    def test_it_wants_a_url_or_a_command(self) -> None:
+    def test_it_wants_a_url_or_a_command(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with pytest.raises(SystemExit):
             main([])
+        assert (
+            "give either a base URL or --serve COMMAND"
+            in capsys.readouterr().err
+        )
 
-    def test_it_will_not_take_both(self) -> None:
+    def test_it_will_not_take_both(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         with pytest.raises(SystemExit):
             main(["http://127.0.0.1:1", "--serve", "true"])
+        assert "not both" in capsys.readouterr().err
+
+    def test_serve_requires_a_command(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with pytest.raises(SystemExit):
+            main(["--serve"])
+        assert "--serve requires COMMAND" in capsys.readouterr().err
 
 
 def test_the_port_variable_is_documented() -> None:
