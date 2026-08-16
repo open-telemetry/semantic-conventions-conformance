@@ -12,3 +12,8 @@ results/
 # Gradle: its caches, and everything a scenario's `setup` builds into them.
 .gradle/
 build/
+
+# .NET: what a build and a scenario's `setup` compile into, anywhere in the
+# tree, which is where the SDK puts them and not something a project chooses.
+bin/
+obj/

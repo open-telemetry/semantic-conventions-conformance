@@ -1,0 +1,40 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: Microsoft.AspNetCore
+instrumentation_library: OpenTelemetry.Instrumentation.AspNetCore
+
+setup: dotnet publish ../OpenTelemetryAspNetCoreServer.csproj --configuration Release --nologo
+
+scenarios:
+  server:
+    # The requests are sent from outside the scenario, so a server run holds
+    # server telemetry only; the driver starts this command, chooses the port
+    # it binds, and closes its standard input when it is done.
+    #
+    # `dotnet <assembly>` rather than the published launcher executable, whose
+    # name is `.exe` on Windows and extensionless elsewhere.
+    run: otel-http-drive --serve dotnet ../../../build/scenario-runtime/OpenTelemetryAspNetCoreServer/OpenTelemetryAspNetCoreServer.dll
+    expected_violations:
+      # The instrumentation reads what ASP.NET Core's own activity carries and
+      # does not go back to HttpContext.Connection for the peer, so no route
+      # records who called it. One entry covers all four routes: weaver's
+      # context names the attribute, not the span.
+      - id: recommended_attribute_not_present
+        context:
+          attribute_key: client.address
+          kind: server
+        reason: >-
+          OpenTelemetry.Instrumentation.AspNetCore never sets client.address on
+          a server span.
+      # The counterpart client scenario does set error.type to the status code
+      # on a failed request, so the two .NET instrumentations disagree about a
+      # 5xx that raised nothing.
+      - id: error_type_missing_on_error
+        context:
+          status_code: error
+        reason: >-
+          OpenTelemetry.Instrumentation.AspNetCore marks a 5xx response's span
+          an error without recording error.type, which semantic conventions
+          require whenever the request failed.

@@ -1,0 +1,17 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+-->
+<Project>
+  <!-- The toolchain is not this domain's to own: a second domain's .NET
+       scenarios import the same file rather than restating any of it. -->
+  <Import Project="../../../tools/dotnet/Directory.Build.props" />
+
+  <PropertyGroup>
+    <!-- Everything a `setup:` builds lands under the build root, flattened to
+         one directory per project, so a scenario's `run:` names an assembly
+         rather than a configuration and a target framework — and so a stale
+         tree is one directory to delete. -->
+    <PublishDir>$(MSBuildThisFileDirectory)build/scenario-runtime/$(MSBuildProjectName)/</PublishDir>
+  </PropertyGroup>
+</Project>

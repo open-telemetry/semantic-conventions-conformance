@@ -1,0 +1,22 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+
+  The build conventions every .NET conformance project shares. MSBuild finds
+  this file by walking up from a project, so it reaches the projects here on
+  its own, and a domain's build root imports it — the same split as
+  `tools/java/gradle-plugins`, which a domain's Gradle build includes rather
+  than restating.
+-->
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Nothing here is published, so a package identity would only be noise. -->
+    <IsPackable>false</IsPackable>
+    <!-- The compiler's own diagnostics are defects rather than taste, so they
+         fail a build; formatting is left to whoever is reading the file. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

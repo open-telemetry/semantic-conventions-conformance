@@ -1,0 +1,11 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+
+  The conventions every .NET conformance project shares live with the rest of
+  the per-language scenario support, so this domain's helper reuses them
+  instead of restating a toolchain of its own.
+-->
+<Project>
+  <Import Project="../../../dotnet/Directory.Build.props" />
+</Project>

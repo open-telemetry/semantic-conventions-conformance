@@ -79,6 +79,19 @@ jobs:
       - name: Build Java
         run: scenarios/http/java/gradlew --project-dir scenarios/http/java build
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+
+      # Compiles and unit-tests every .NET project the HTTP scenarios use,
+      # including the ones shared with other domains. `dotnet test` alone would
+      # compile only the test projects, leaving a broken scenario undetected.
+      - name: Build .NET
+        run: |
+          dotnet build scenarios/http/dotnet/http-dotnet-conformance.slnx
+          dotnet test scenarios/http/dotnet/http-dotnet-conformance.slnx --no-build
+
   types:
     name: Types
     runs-on: ubuntu-latest
@@ -211,6 +224,12 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      # A .NET scenario builds itself from source in its `setup:` before it runs.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
 
       - name: Install weaver
         run: |

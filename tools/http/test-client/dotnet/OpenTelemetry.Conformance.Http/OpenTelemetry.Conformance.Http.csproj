@@ -1,0 +1,19 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The contract is shared with every other language, so it is embedded from
+       where it lives rather than copied into this project. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../contract.json" LogicalName="otel-http-contract.json" />
+  </ItemGroup>
+
+  <!-- The lookup and the JSON parsing are how this project reads the contract
+       rather than API a scenario reaches for, so the tests that cover them
+       reach in the way the Java tests do by sharing a package. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenTelemetry.Conformance.Http.Tests" />
+  </ItemGroup>
+
+</Project>

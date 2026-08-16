@@ -82,3 +82,7 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   looks up answers for any JVM framework, and `HttpClientWorkload.drive` sends
   the requests. The build copies `contract.json` onto the classpath, and its
   unit tests drive both halves against each other.
+- [`dotnet/`](dotnet) — `HttpContract`, `HttpServerWorkload.Respond` and
+  `HttpClientWorkload.DriveAsync`, the same three pieces for .NET. The build
+  embeds `contract.json` as a manifest resource, and its unit tests drive both
+  halves against each other.

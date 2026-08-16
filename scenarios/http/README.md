@@ -4,7 +4,7 @@ What HTTP instrumentations emit, checked against the
 [HTTP semantic conventions][http] and recorded as committed coverage.
 
 ```text
-java/<library>/<instrumentation>/<side>/
+<language>/<library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
 ```
@@ -40,6 +40,13 @@ plain Armeria and attach the agent, while the library launchers use the shared
 install their framework-specific decorators. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
+
+[`dotnet/`](dotnet) is the same shape without the second mechanism: an ASP.NET
+Core server package and a `System.Net.Http.HttpClient` client package, each
+with a `scenarios/` project holding what it does and a launcher project holding
+the instrumentation. Its build root is a solution rather than a Gradle build,
+and pulls in the shared projects under [`tools/dotnet`](../../tools/dotnet) the
+same way.
 
 ## The scenario contract
 
@@ -98,6 +105,8 @@ otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/dotnet/aspnetcore/opentelemetry-aspnetcore/server
+otel-conformance scenarios/http/dotnet/httpclient/opentelemetry-http/client
 ```
 
 Every Java package is built and started the same way, so

@@ -1,0 +1,21 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>OpenTelemetry.Conformance.Http.AspNetCore</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- A framework reference rather than Microsoft.NET.Sdk.Web: the workload
+         is a library, and none of the web SDK's publishing machinery applies
+         to it. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../../tools/dotnet/OpenTelemetry.Conformance.Scenario/OpenTelemetry.Conformance.Scenario.csproj" />
+    <ProjectReference Include="../../../../../tools/http/test-client/dotnet/OpenTelemetry.Conformance.Http/OpenTelemetry.Conformance.Http.csproj" />
+  </ItemGroup>
+</Project>

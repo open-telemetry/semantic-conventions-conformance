@@ -1,0 +1,64 @@
+{
+  "spans": {
+    "http.server": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.path",
+      "url.query",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "aspnetcore.memory_pool.allocated": [
+      "aspnetcore.memory_pool.owner"
+    ],
+    "aspnetcore.memory_pool.pooled": [
+      "aspnetcore.memory_pool.owner"
+    ],
+    "aspnetcore.memory_pool.rented": [
+      "aspnetcore.memory_pool.owner"
+    ],
+    "aspnetcore.routing.match_attempts": [
+      "aspnetcore.routing.is_fallback",
+      "aspnetcore.routing.match_status",
+      "http.route"
+    ],
+    "http.server.active_requests": [
+      "http.request.method",
+      "url.scheme"
+    ],
+    "http.server.request.duration": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ],
+    "kestrel.active_connections": [
+      "network.transport",
+      "network.type",
+      "server.address",
+      "server.port"
+    ],
+    "kestrel.connection.duration": [
+      "network.protocol.name",
+      "network.protocol.version",
+      "network.transport",
+      "network.type",
+      "server.address",
+      "server.port"
+    ],
+    "kestrel.queued_connections": [
+      "network.transport",
+      "network.type",
+      "server.address",
+      "server.port"
+    ]
+  }
+}
