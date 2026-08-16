@@ -4,7 +4,7 @@ What HTTP instrumentations emit, checked against the
 [HTTP semantic conventions][http] and recorded as committed coverage.
 
 ```text
-java/<library>/<instrumentation>/<side>/
+<language>/<library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
 ```
