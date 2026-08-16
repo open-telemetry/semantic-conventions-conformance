@@ -1,0 +1,34 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.client.request.body.size": [
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.name",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.client.request.duration": [
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.name",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ]
+  }
+}

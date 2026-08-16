@@ -90,3 +90,7 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   `HttpClientWorkload.DriveAsync` sends the requests through a caller-supplied
   sender. The build embeds `contract.json` as a manifest resource, and its unit
   tests drive both halves against each other.
+- [`go/`](go) — `httpcontract`: `Respond` looks up answers for any Go
+  framework and `Drive` sends the requests, with the same unit tests over both
+  halves. It finds `contract.json` in the checkout at run time, since Go has no
+  classpath to copy it onto.

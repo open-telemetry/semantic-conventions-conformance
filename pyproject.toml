@@ -58,4 +58,5 @@ include = [
   "tools/java/src",
   "tools/js/src",
   "tools/python/src",
+  "tools/go/src",
 ]

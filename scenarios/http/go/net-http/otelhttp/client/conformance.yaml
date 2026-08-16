@@ -1,0 +1,32 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: net/http
+instrumentation_library: go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
+
+# Compiling here rather than in `run:` keeps the toolchain out of the measured
+# process: `go run` would build on the clock and fork the scenario as a child.
+setup: otel-conformance-go build
+
+# The mock server answers the same contract the server scenarios serve, so the
+# two sides of the instrumentation are measured against identical traffic.
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-go run
+
+# No context: this is one gap — otelhttp's default transport span name
+# formatter returns "HTTP " + method regardless of the request — seen once per
+# method in the contract, so matching each concrete name would only record the
+# same deviation twice.
+expected_violations:
+  - id: http_span_name_format
+    reason: >-
+      otelhttp names client spans "HTTP {method}", not "{method}". The name is
+      still low-cardinality, so it does not have the problem the convention
+      exists to prevent, but it does not match what the HTTP conventions
+      require and a consumer keying on the span name sees a different value
+      than from every other language.

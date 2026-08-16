@@ -156,6 +156,10 @@ publishes that project and `run` starts what it published from
 `dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
 neither a configuration nor an assembly path.
 
+Go's build root is [`go/`](go), which works the same way through
+[`otel-conformance-go`](../../tools/go): `setup:` compiles the scenario and
+`run:` is the resulting binary, so the toolchain is not the measured process.
+
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
 complete run rewrites and CI diffs. A divergence someone has looked at goes in
