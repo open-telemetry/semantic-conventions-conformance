@@ -35,7 +35,8 @@ Span status and `error.type` aren't checked here: neither is HTTP-specific, so
 both live in [the runner's own policies](../../runner/README.md#advice-policies).
 
 Client scenarios call [`http-mock-server`](../mock-server), which installs
-with this package; server scenarios drive themselves. Both use the request
-sequence in [`tools/http/test-client`](../test-client).
+with this package. Server scenarios are driven from outside, by
+[`otel-http-drive --serve`](../test-client). Both use the request sequence
+in [`contract.json`](../test-client/contract.json).
 
 [http]: https://opentelemetry.io/docs/specs/semconv/http/
