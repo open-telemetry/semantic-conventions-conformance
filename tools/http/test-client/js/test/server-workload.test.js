@@ -49,4 +49,18 @@ describe("the port the driver chose", () => {
       }
     }
   });
+
+  it("names a value that is not a port", () => {
+    const previous = process.env[PORT_VARIABLE];
+    process.env[PORT_VARIABLE] = "not-a-port";
+    try {
+      assert.throws(() => scenarioPort(), /not-a-port/);
+    } finally {
+      if (previous === undefined) {
+        delete process.env[PORT_VARIABLE];
+      } else {
+        process.env[PORT_VARIABLE] = previous;
+      }
+    }
+  });
 });

@@ -50,7 +50,14 @@ function scenarioPort() {
         "`otel-http-drive`, which chooses the port",
     );
   }
-  return Number.parseInt(value, 10);
+  const port = Number.parseInt(value, 10);
+  if (!Number.isInteger(port)) {
+    // Naming the value here rather than letting `listen` reject a NaN port:
+    // the same hand-run mistake the check above describes reaches this line
+    // once the variable is set but set to something that is not a port.
+    throw new Error(`${PORT_VARIABLE} is not a port number: ${value}`);
+  }
+  return port;
 }
 
 module.exports = { PORT_VARIABLE, respond, scenarioPort };

@@ -70,7 +70,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     root = build_root()
     # From the build root, so every scenario in it installs the same tree
     # however deep its own directory sits.
-    return subprocess.call(npm_command(), cwd=root)  # noqa: S603
+    try:
+        return subprocess.call(npm_command(), cwd=root)  # noqa: S603
+    except FileNotFoundError:
+        # A `setup:` step reports what it printed, so what is missing should be
+        # the first line of it rather than the bottom of a traceback.
+        print(
+            "npm is not on PATH, and a Node scenario is built with it",
+            file=sys.stderr,
+        )
+        return 1
 
 
 if __name__ == "__main__":

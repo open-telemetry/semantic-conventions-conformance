@@ -39,7 +39,8 @@ function waitForEof() {
     };
     // Nothing arrives on standard input; only its close is the signal. `close`
     // as well as `end`, because a standard input that was never a pipe — a
-    // scenario started by hand — closes without ever ending.
+    // scenario started by hand — closes without ever ending. A pipe fires both,
+    // which is harmless: a promise settles once, and pausing twice is pausing.
     process.stdin.on("end", done);
     process.stdin.on("close", done);
     process.stdin.resume();
