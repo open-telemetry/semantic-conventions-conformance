@@ -33,10 +33,11 @@
     },
     {
       // group all non-major Python dependency updates into a single PR
-      // (two managers read pyproject.toml: `pep621` claims the ones with a
-      // `uv.lock` beside them and updates it too, `poetry` claims the rest, so
-      // naming only one would leave whichever packages lack a lock file
-      // arriving one PR per dependency)
+      // (two managers read pyproject.toml: `poetry` takes a file over from
+      // `pep621` whenever it can read dependencies out of it and no lock
+      // file sits beside it, which splits the packages under `tools/`
+      // across the two. That split follows how a package is laid out, not
+      // how its updates should arrive, so the rule has to name both.)
       "matchManagers": ["pep621", "poetry"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "python-minor"
