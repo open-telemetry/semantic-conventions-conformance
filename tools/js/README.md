@@ -28,7 +28,9 @@ for, and it is not a detail: npm links a local package by symlinking it, and
 Node then resolves that package's own imports from where it really lives —
 outside the build, where nothing is installed. Copies put a shared package and
 its dependencies in one tree. The cost is that editing a file here has no
-effect on a scenario until the build root is installed again.
+effect on a scenario until the build root is installed again — which a run
+always does, since every package's `setup:` installs before it runs, so a
+scenario cannot measure a stale copy of what is here.
 
 ## What a scenario shares
 

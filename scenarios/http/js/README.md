@@ -66,7 +66,8 @@ otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 Each package's `setup:` is `otel-conformance-js install`, which installs this
 whole workspace from the lockfile. Because the shared packages are installed as
 copies rather than links, editing one under `tools/` takes effect on the next
-install rather than immediately.
+install — which every run performs, so no run measures a stale copy, but an
+`npm ci` here is what makes an edit visible to anything else.
 
 The helper's own unit tests and the formatter run from here:
 
