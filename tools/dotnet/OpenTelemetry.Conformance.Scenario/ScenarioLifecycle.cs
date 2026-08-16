@@ -21,7 +21,7 @@ public static class ScenarioLifecycle
     /// </remarks>
     public static Task WaitForEofAsync() => Task.Run(() =>
     {
-        var input = Console.OpenStandardInput();
+        using var input = Console.OpenStandardInput();
         var discarded = new byte[1];
         while (input.Read(discarded, 0, 1) > 0)
         {

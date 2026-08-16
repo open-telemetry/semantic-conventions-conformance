@@ -27,7 +27,12 @@ public static class HttpServerWorkload
     /// <summary>What the contract answers to one request.</summary>
     /// <remarks>
     /// The whole answer contract in one method, so every .NET framework answers identically.
-    /// <paramref name="requestBody"/> is null for a request that carried none.
+    /// <para>
+    /// <paramref name="requestBody"/> is null or empty for a request that carried none: a
+    /// framework that hands over a body stream reports the absent body as an empty string, while
+    /// one that models it as optional reports null. Both mean the same thing here, so the answer
+    /// does not depend on which a framework chose.
+    /// </para>
     /// </remarks>
     public static HttpContract.Response Respond(string method, string path, string? requestBody)
     {

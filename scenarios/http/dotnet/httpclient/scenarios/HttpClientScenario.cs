@@ -27,6 +27,15 @@ public static class HttpClientScenario
     {
         var baseUrl = ScenarioEnvironment.Require("MOCK_SERVER_URL");
 
+        // The requests below concatenate this with each path, so a malformed value would otherwise
+        // surface as "an invalid request URI was provided" from deep in HttpClient, naming neither
+        // the variable nor what it held.
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var mockServerUri)
+            || mockServerUri.Scheme != Uri.UriSchemeHttp)
+        {
+            throw new ArgumentException($"MOCK_SERVER_URL must be an http:// URL: {baseUrl}");
+        }
+
         // One client for the whole sequence, which is how HttpClient is meant to be used and what
         // an instrumentation is written against.
         using var client = new HttpClient();

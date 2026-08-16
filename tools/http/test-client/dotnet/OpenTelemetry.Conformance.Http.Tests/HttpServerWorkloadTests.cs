@@ -33,6 +33,20 @@ public class HttpServerWorkloadTests
         Assert.Equal("{\"created\": true, \"payload\": {\"name\": \"widget\"}}", answer.Body);
     }
 
+    // A framework reporting an absent body as "" rather than null must not answer differently:
+    // the ASP.NET Core scenario reads a body stream, so it always reports the empty string, and
+    // every test above it passes null.
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void AnAbsentBodyIsTheSameWhicheverWayAFrameworkSpellsIt(string? requestBody)
+    {
+        var answer = HttpServerWorkload.Respond("POST", "/items", requestBody);
+
+        Assert.Equal(201, answer.StatusCode);
+        Assert.Equal("{\"created\": true, \"payload\": {}}", answer.Body);
+    }
+
     [Fact]
     public void TrafficTheContractDoesNotDescribeIsRefused()
     {
