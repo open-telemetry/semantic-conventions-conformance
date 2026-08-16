@@ -1,0 +1,39 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: net/http
+instrumentation_library: go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
+
+# Compiling here rather than in `run:` keeps the toolchain out of the measured
+# process: `go run` would build on the clock and fork the scenario as a child.
+setup: otel-conformance-go build
+
+scenarios:
+  server:
+    # The driver sends the requests from its own process and starts the server
+    # underneath it, so nothing this instrumentation loads into the server can
+    # reach the sender and record client spans a server run never meant to
+    # hold. It closes the server's standard input once the traffic is done.
+    run: otel-http-drive --serve otel-conformance-go run
+
+# Both are recorded rather than worked around: a scenario that configured its
+# way past them would stop measuring what otelhttp does by default.
+expected_violations:
+  # No context: one root cause, seen once per route in the contract.
+  - id: http_span_name_format
+    reason: >-
+      otelhttp does not put http.route on the server span, so the check falls
+      back to expecting a bare method. The names themselves are right —
+      "GET /users/{userId}" — because the handler re-derives them from
+      http.Request.Pattern after the mux has matched, but the attributes were
+      recorded at span start, before there was a pattern to read, and are never
+      revisited. Its metrics are read after the handler returns and do carry
+      http.route, so the same run reports the route on
+      http.server.request.duration and not on the span it came from.
+  - id: error_type_missing_on_error
+    reason: >-
+      otelhttp sets the span status to error for a 5xx but never sets
+      error.type on a server span; it derives error.type on the client side
+      only. A consumer counting server-side failures by cause has nothing to
+      group by.

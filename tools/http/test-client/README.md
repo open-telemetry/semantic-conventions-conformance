@@ -82,3 +82,7 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   looks up answers for any JVM framework, and `HttpClientWorkload.drive` sends
   the requests. The build copies `contract.json` onto the classpath, and its
   unit tests drive both halves against each other.
+- [`go/`](go) — `httpcontract`: `Respond` looks up answers for any Go
+  framework and `Drive` sends the requests, with the same unit tests over both
+  halves. It finds `contract.json` in the checkout at run time, since Go has no
+  classpath to copy it onto.
