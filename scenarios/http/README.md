@@ -9,8 +9,8 @@ java/<library>/<instrumentation>/<side>/
     data.json           the coverage it produced, committed
 ```
 
-Each language has its own build root directly under this one, with its own
-README: [`java/`](java) and [`js/`](js).
+Each language has its own build root directly under this one, whose README
+explains how that language builds a scenario.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
@@ -96,11 +96,13 @@ both sides could hide an unexpected client span in a server run or the reverse.
 
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
-  -e tools/http/test-client/python -e tools/java
+  -e tools/http/test-client/python -e tools/java -e tools/js
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/js/express/opentelemetry-express/server
+otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 ```
 
 Every Java package is built and started the same way, so
