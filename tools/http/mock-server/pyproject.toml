@@ -15,5 +15,9 @@ dependencies = ["otel-http-test-client"]
 [project.scripts]
 http-mock-server = "http_mock_server:main"
 
+# Not on PyPI; install it editable from a checkout.
+[tool.uv.sources]
+otel-http-test-client = { path = "../test-client/python", editable = true }
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/http_mock_server"]
