@@ -43,11 +43,16 @@ var routes = []string{
 	"GET /status/{code}",
 }
 
-// A server that never times out reading request headers is a lint finding in
-// its own right. It is the only timeout worth setting here: an idle keep-alive
-// connection needs no deadline of its own, because Shutdown closes the idle
-// ones when the driver says stop.
-const readHeaderTimeout = 10 * time.Second
+const (
+	// A server that never times out reading request headers is a lint finding
+	// in its own right. An idle keep-alive connection needs no deadline,
+	// because Shutdown closes idle connections when the driver says stop.
+	readHeaderTimeout = 10 * time.Second
+
+	// Leave enough time for the driver to report a shutdown error before its
+	// own process timeout expires.
+	shutdownTimeout = 10 * time.Second
+)
 
 // RunServer hosts the shared HTTP exchanges until the driver says stop.
 //
@@ -104,8 +109,14 @@ func RunServer(middleware Middleware) error {
 	case stopped = <-stopping:
 	}
 
-	if err := server.Shutdown(context.Background()); err != nil {
-		stopped = errors.Join(stopped, err)
+	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), shutdownTimeout)
+	err = server.Shutdown(shutdownContext)
+	cancelShutdown()
+	if err != nil {
+		stopped = errors.Join(stopped, fmt.Errorf("shutting down server: %w", err))
+		if err := server.Close(); err != nil {
+			stopped = errors.Join(stopped, fmt.Errorf("closing server: %w", err))
+		}
 	}
 	if err := <-served; err != nil && !errors.Is(err, http.ErrServerClosed) {
 		stopped = errors.Join(stopped, err)
