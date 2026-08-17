@@ -45,5 +45,11 @@
       "server.port",
       "url.scheme"
     ]
-  }
+  },
+  "findings": [
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry."
+    }
+  ]
 }
