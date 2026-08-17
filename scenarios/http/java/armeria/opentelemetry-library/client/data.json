@@ -22,5 +22,6 @@
       "server.address",
       "server.port"
     ]
-  }
+  },
+  "findings": []
 }

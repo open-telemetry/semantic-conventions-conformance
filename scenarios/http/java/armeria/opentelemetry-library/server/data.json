@@ -27,5 +27,6 @@
       "network.protocol.version",
       "url.scheme"
     ]
-  }
+  },
+  "findings": []
 }
