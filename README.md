@@ -13,7 +13,7 @@ against expectations declared in YAML.
 | [`tools/gen-ai/`](tools/gen-ai) | what makes a run a *GenAI* run: the registry pin, the advice policies, and a mock LLM server so scenarios are deterministic without cassettes |
 | [`tools/http/`](tools/http) | the same for HTTP: the upstream registry pin, and the test client that drives both sides of the domain |
 | [`tools/java/`](tools/java) | what every JVM scenario shares, in any domain: the launcher that builds and runs one, the Gradle convention plugins, and the SDK bootstrap |
-| [`tools/dotnet/`](tools/dotnet) | the same for .NET: the shutdown protocol every scenario needs, and the SDK bootstrap the ones measuring library instrumentation own |
+| [`tools/dotnet/`](tools/dotnet) | the same for .NET: the launcher that builds and runs one, the shutdown protocol every scenario needs, and the SDK bootstrap the ones measuring library instrumentation own |
 | [`scenarios/gen-ai/`](scenarios/gen-ai) | the GenAI scenarios and the coverage they produce |
 | [`scenarios/http/`](scenarios/http) | the HTTP scenarios and the coverage they produce |
 

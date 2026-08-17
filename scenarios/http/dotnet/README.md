@@ -60,7 +60,8 @@ otel-conformance scenarios/http/dotnet/aspnetcore/opentelemetry-aspnetcore/serve
 otel-conformance scenarios/http/dotnet/httpclient/opentelemetry-http/client
 ```
 
-A package's `setup:` publishes its launcher into `build/scenario-runtime/`, and
-its `run:` starts the published assembly, so the measured process is the
-scenario and not a toolchain wrapper that would restore and compile on the
-clock.
+A package's `setup:` is `otel-conformance-dotnet build` and its `run:` is
+`otel-conformance-dotnet run`, so the launcher publishes the project the
+scenario directory belongs to and then starts what it published. The measured
+process is the scenario and not a toolchain wrapper that would restore and
+compile on the clock. See [`tools/dotnet`](../../../tools/dotnet).

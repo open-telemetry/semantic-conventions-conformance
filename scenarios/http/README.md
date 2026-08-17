@@ -100,7 +100,7 @@ both sides could hide an unexpected client span in a server run or the reverse.
 
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
-  -e tools/http/test-client/python -e tools/java
+  -e tools/http/test-client/python -e tools/java -e tools/dotnet
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
@@ -120,6 +120,12 @@ dependency declarations to copy the resolved classpath and Java agent into
 `java/build/scenario-runtime/`. Its measured `run` is a direct `java`
 process, not Gradle, so every scenario inherits the fresh OTLP endpoint
 injected by the runner instead of a daemon's older environment.
+
+[`otel-conformance-dotnet`](../../tools/dotnet) does the same for .NET, and
+needs no arguments at all: a scenario directory sits inside the project that
+produces it, so `build` publishes that project and `run` starts what it
+published from `dotnet/build/scenario-runtime/`. A `conformance.yaml` therefore
+names neither a configuration nor an assembly path.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every

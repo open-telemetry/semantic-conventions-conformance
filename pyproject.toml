@@ -31,6 +31,7 @@ known-first-party = [
   "genai_mock_server",
   "http_conformance",
   "http_mock_server",
+  "otel_conformance_dotnet",
   "otel_conformance_java",
   "otel_http_test_client",
 ]
@@ -51,4 +52,5 @@ include = [
   "tools/http/mock-server/src",
   "tools/http/test-client/python/src",
   "tools/java/src",
+  "tools/dotnet/src",
 ]

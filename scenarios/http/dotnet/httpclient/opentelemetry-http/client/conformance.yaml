@@ -5,16 +5,16 @@ runner: http-conformance
 instrumented_library: System.Net.Http
 instrumentation_library: OpenTelemetry.Instrumentation.Http
 
-setup: dotnet publish ../OpenTelemetryHttpClient.csproj --configuration Release --nologo
+# Publishing here rather than in `run:` keeps the toolchain out of the measured
+# process: a `dotnet run` would restore and compile on the clock.
+setup: otel-conformance-dotnet build
 
 server:
   run: http-mock-server --port ${PORT}
 
 scenarios:
   client:
-    # `dotnet <assembly>` rather than the published launcher executable, whose
-    # name is `.exe` on Windows and extensionless elsewhere.
-    run: dotnet ../../../build/scenario-runtime/OpenTelemetryHttpClient/OpenTelemetryHttpClient.dll
+    run: otel-conformance-dotnet run
     expected_violations:
       # `System.Net.Http` publishes the runtime's meter whole rather than
       # choosing from it, so this arrives with the rest of the client metrics

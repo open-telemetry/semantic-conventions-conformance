@@ -8,6 +8,8 @@ build for themselves.
 scenarios/<domain>/dotnet/                   a domain's build root — the solution and its pins
 tools/dotnet/OpenTelemetry.Conformance.Scenario/      what a scenario needs before any telemetry
 tools/dotnet/OpenTelemetry.Conformance.Scenario.Sdk/  the SDK a library-instrumentation scenario owns
+tools/dotnet/src/                            `otel-conformance-dotnet`, the launcher
+tools/dotnet/tests/                          the launcher's tests
 ```
 
 ## A build root per domain
@@ -63,13 +65,33 @@ Both projects share the `OpenTelemetry.Conformance.Scenario` namespace: a
 namespace ending in `Sdk` would shadow `OpenTelemetry.Sdk` in every file that
 built a provider.
 
-## No launcher command
+## `otel-conformance-dotnet`
 
-There is no .NET counterpart to [`otel-conformance-java`](../java), because
-there is nothing for one to hide. A scenario builds with `dotnet publish` and
-runs with `dotnet`, and the runner's environment reaches it unchanged — .NET has
-no build daemon whose older environment a measured run could inherit.
+Builds and runs a .NET conformance scenario, so no `conformance.yaml` restates
+how .NET is built:
 
-`dotnet <assembly>` rather than the published launcher executable, whose name is
-`.exe` on Windows and extensionless everywhere else, so one `conformance.yaml`
-runs on either.
+```yaml
+setup: otel-conformance-dotnet build
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-dotnet run
+```
+
+Neither subcommand takes an argument. A scenario directory sits inside the
+project that produces it, so the project is the nearest `.csproj` at or above
+the directory the command runs in, and the build root is the nearest
+`Directory.Build.props` above that — the file that declares `PublishDir`, found
+the way MSBuild itself resolves it.
+
+`build` publishes that project. `run` starts what it published, from the build
+root's `build/scenario-runtime/<project>`, so a scenario file names neither a
+configuration nor an output path and a change to either is the build's to make.
+
+`run` executes `dotnet <assembly>` rather than the published launcher
+executable, whose name is `.exe` on Windows and extensionless everywhere else,
+so one `conformance.yaml` runs on either. Unlike
+[`otel-conformance-java`](../java) it runs `dotnet` for that reason alone: .NET
+has no build daemon whose older environment a measured run could inherit.
+Everything after `run` reaches the scenario verbatim, including arguments that
+begin with `-`.
