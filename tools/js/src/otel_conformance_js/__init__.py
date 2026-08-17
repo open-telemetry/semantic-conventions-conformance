@@ -67,7 +67,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     parser.parse_args(argv)
-    root = build_root()
+    try:
+        root = build_root()
+    except LayoutError as error:
+        print(error, file=sys.stderr)
+        return 1
     # From the build root, so every scenario in it installs the same tree
     # however deep its own directory sits.
     try:

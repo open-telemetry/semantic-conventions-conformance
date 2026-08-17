@@ -41,6 +41,23 @@ class TestFindingTheBuild:
 
 
 class TestInstalling:
+    def test_missing_build_root_is_reported(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        message = "no Node conformance build here"
+
+        def fail_to_find_build() -> Path:
+            raise LayoutError(message)
+
+        monkeypatch.setattr(
+            otel_conformance_js, "build_root", fail_to_find_build
+        )
+
+        assert otel_conformance_js.main(["install"]) == 1
+        assert capsys.readouterr().err == f"{message}\n"
+
     def test_it_installs_from_the_committed_lockfile(self) -> None:
         """`ci`, not `install`: a run measures the pinned versions."""
         assert npm_command()[-1] == "ci"
