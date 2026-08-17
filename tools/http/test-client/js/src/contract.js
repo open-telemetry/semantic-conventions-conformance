@@ -109,8 +109,11 @@ function exchangeFor(method, target) {
 
 /** An exchange's response body with the request body inserted. */
 function renderResponseBody(exchange, requestBody) {
-  return exchange.responseBody.replace(
-    "${requestBody}",
+  // A function rather than the body itself: a string replacement reads `$&`
+  // and its siblings as substitution patterns, so a body carrying one would be
+  // echoed differently here than by the Java and Python readers, which both
+  // substitute literally.
+  return exchange.responseBody.replace("${requestBody}", () =>
     requestBody ? requestBody : "{}",
   );
 }

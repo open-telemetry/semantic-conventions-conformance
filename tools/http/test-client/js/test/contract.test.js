@@ -74,4 +74,15 @@ describe("the contract", () => {
       '{"created": true, "payload": {}}',
     );
   });
+
+  // `$&` and its siblings are substitution patterns to a JavaScript string
+  // replacement, and to nothing at all in the readers the other languages use.
+  it("echoes a body the way every other language reads it", () => {
+    const items = exchangeFor("POST", "/items");
+
+    assert.equal(
+      renderResponseBody(items, '{"name": "a$&b$`c$\'d$$e"}'),
+      '{"created": true, "payload": {"name": "a$&b$`c$\'d$$e"}}',
+    );
+  });
 });
