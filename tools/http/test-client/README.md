@@ -82,3 +82,6 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   looks up answers for any JVM framework, and `HttpClientWorkload.drive` sends
   the requests. The build copies `contract.json` onto the classpath, and its
   unit tests drive both halves against each other.
+- [`rust/`](rust) — embeds this one `contract.json` with `include_str!`,
+  answers server requests, and drives clients through a caller-supplied async
+  sender. Its tests drive both halves against each other.

@@ -12,3 +12,6 @@ results/
 # Gradle: its caches, and everything a scenario's `setup` builds into them.
 .gradle/
 build/
+
+# Cargo: every workspace member shares this build directory.
+target/

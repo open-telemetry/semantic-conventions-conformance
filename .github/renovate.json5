@@ -32,6 +32,12 @@
       "groupName": "java-minor"
     },
     {
+      // group all non-major Rust dependency updates into a single PR
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "rust-minor"
+    },
+    {
       // Everything under this Maven group ships only `-alpha` versions, so
       // Renovate's default of skipping unstable versions would never update it.
       "matchPackageNames": [

@@ -7,6 +7,10 @@ What HTTP instrumentations emit, checked against the
 java/<library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
+rust/<library>/<instrumentation>/<side>/
+    Cargo.toml          the measured binary package
+    conformance.yaml    how to run it
+    data.json           the coverage it produced, committed
 ```
 
 An instrumentation's directory holds everything about it, the way a gen-ai
@@ -24,6 +28,13 @@ java/armeria/opentelemetry-library/      build.gradle.kts, src/, client/, server
 The `main` classes are per instrumentation because attaching library
 instrumentation is code rather than a command-line flag; everything they do
 beyond that is in `scenarios/`.
+
+Rust follows the same split. Its plain workload crates hold Actix Web's native
+routes and the awc request sequence without importing OpenTelemetry. The
+instrumentation-specific binary crates install
+`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
+workspace at `rust/` includes the shared crates under `tools/` and commits one
+lockfile for all of them.
 
 Armeria therefore has four isolated packages: client and server coverage for
 both the OpenTelemetry Java agent and explicit OpenTelemetry library
@@ -93,11 +104,13 @@ both sides could hide an unexpected client span in a server run or the reverse.
 
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
-  -e tools/http/test-client/python -e tools/java
+  -e tools/http/test-client/python -e tools/java -e tools/rust
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
+otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
 ```
 
 Every Java package is built and started the same way, so
@@ -111,6 +124,12 @@ dependency declarations to copy the resolved classpath and Java agent into
 `java/build/scenario-runtime/`. Its measured `run` is a direct `java`
 process, not Gradle, so every scenario inherits the fresh OTLP endpoint
 injected by the runner instead of a daemon's older environment.
+
+Rust uses the same two phases. `otel-conformance-rust build` compiles the
+current package in release mode, then `otel-conformance-rust run` starts the
+workspace's absolute release binary path. Cargo is not the measured process's
+parent, and the same package declaration works on Windows because the launcher
+adds `.exe` there.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
