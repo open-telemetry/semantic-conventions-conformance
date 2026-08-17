@@ -149,7 +149,7 @@ func load() ([]Exchange, error) {
 	if err != nil {
 		return nil, err
 	}
-	raw, err := os.ReadFile(path) //nolint:gosec // the contract is repository data
+	raw, err := os.ReadFile(path) //nolint:gosec // the local contract path is intentional
 	if err != nil {
 		return nil, fmt.Errorf("could not read %s: %w", path, err)
 	}
