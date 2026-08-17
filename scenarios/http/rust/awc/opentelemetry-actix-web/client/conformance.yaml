@@ -1,0 +1,37 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: awc
+instrumentation_library: opentelemetry-instrumentation-actix-web
+
+# Compiling before measurement keeps Cargo and rustc out of the scenario.
+setup: otel-conformance-rust build
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    # awc returns 4xx and 5xx responses normally; the workload verifies them
+    # as contract results instead of converting them into transport failures.
+    run: otel-conformance-rust run
+    expected_violations:
+      # No context: the default name formatter has one behavior, seen for both
+      # methods in the contract.
+      - id: http_span_name_format
+        reason: >-
+          opentelemetry-instrumentation-actix-web names an awc client span
+          "{method} {host}", such as "GET 127.0.0.1", instead of the required
+          bare method. The instrumentation exposes a custom span namer, but
+          using it here would stop measuring the default behavior applications
+          get and would hide the host cardinality it adds to the span name.
+      - id: recommended_attribute_not_present
+        context:
+          attribute_key: network.protocol.version
+          kind: client
+        reason: >-
+          The awc instrumentation records the request method, full URL, server
+          address and response status, but it never reads the negotiated HTTP
+          version from the ClientResponse. Consumers therefore cannot
+          distinguish HTTP/1.1 from HTTP/2 requests from these spans.
