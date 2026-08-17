@@ -64,6 +64,9 @@ func RunServer(middleware Middleware) error {
 	if err != nil {
 		return err
 	}
+	if _, err := httpcontract.Exchanges(); err != nil {
+		return err
+	}
 
 	mux := http.NewServeMux()
 	for _, pattern := range routes {
