@@ -11,6 +11,14 @@ public class HttpContractTests
     public void ItIsReadFromTheFileEveryLanguageReads() =>
         Assert.NotEmpty(HttpContract.Exchanges);
 
+    // A field nothing else reads: without this, the contract renaming it would bind null and
+    // every other test here would still pass.
+    [Fact]
+    public void EveryExchangeHasADescription() =>
+        Assert.DoesNotContain(
+            HttpContract.Exchanges,
+            exchange => string.IsNullOrWhiteSpace(exchange.Description));
+
     [Fact]
     public void ReadinessIsNotMeasured()
     {

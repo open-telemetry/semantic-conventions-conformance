@@ -58,7 +58,7 @@ public static class HttpContract
         int Status,
         string ResponseBody,
         bool Readiness,
-        string Why)
+        string Description)
     {
         /// <summary>The response body with the request body inserted.</summary>
         public string RenderResponseBody(string? requestBody) => this.ResponseBody.Replace(
