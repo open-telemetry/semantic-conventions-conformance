@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-conformance-rust"
+version = "0.1.0.dev0"
+description = "Builds and directly runs Rust conformance scenario binaries."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+otel-conformance-rust = "otel_conformance_rust:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_conformance_rust"]
