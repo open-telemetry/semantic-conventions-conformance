@@ -11,9 +11,17 @@ coverage is about that instrumentation alone.
 
 from __future__ import annotations
 
-from client import run
+import sys
+from pathlib import Path
 
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
+# The workload every instrumentation of this library shares, which is beside
+# them rather than in any one of them. Found from this file rather than from
+# `PYTHONPATH`, which a machine that already exports one would replace.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scenarios"))
+
+from client import run  # noqa: E402
 
 RequestsInstrumentor().instrument()
 run()

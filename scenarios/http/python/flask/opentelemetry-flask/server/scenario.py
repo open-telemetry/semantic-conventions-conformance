@@ -14,11 +14,20 @@ it from outside, so nothing loaded here can instrument the sender.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 from flask import Flask
-from server import create_app
 
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from otel_http_test_client import serve
+
+# The workload every instrumentation of this library shares, which is beside
+# them rather than in any one of them. Found from this file rather than from
+# `PYTHONPATH`, which a machine that already exports one would replace.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scenarios"))
+
+from server import create_app  # noqa: E402
 
 
 def instrumented() -> Flask:
