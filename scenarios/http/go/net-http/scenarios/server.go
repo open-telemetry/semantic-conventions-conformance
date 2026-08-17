@@ -121,7 +121,11 @@ func answer() http.Handler {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		response := httpcontract.Respond(request.Method, request.URL.Path, string(body))
+		response, err := httpcontract.Respond(request.Method, request.URL.Path, string(body))
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		writer.Header().Set("Content-Type", httpcontract.ContentType)
 		writer.WriteHeader(response.StatusCode)
 		_, _ = io.WriteString(writer, response.Body)

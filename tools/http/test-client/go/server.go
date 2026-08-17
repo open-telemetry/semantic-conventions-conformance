@@ -23,16 +23,20 @@ const PortVariable = "OTEL_HTTP_SCENARIO_PORT"
 // runtime model. requestBody is empty for a request that carried none.
 //
 // The requests are sent by otel-http-drive from another process, which checks
-// each answer against the same contract.
-func Respond(method, path, requestBody string) Response {
-	exchange, found := Lookup(method, path)
+// each answer against the same contract. Respond returns an error when that
+// contract cannot be loaded.
+func Respond(method, path, requestBody string) (Response, error) {
+	exchange, found, err := Lookup(method, path)
+	if err != nil {
+		return Response{}, err
+	}
 	if !found {
-		return Response{StatusCode: 404, Body: `{"message": "no such route"}`}
+		return Response{StatusCode: 404, Body: `{"message": "no such route"}`}, nil
 	}
 	return Response{
 		StatusCode: exchange.Status,
 		Body:       exchange.RenderResponseBody(requestBody),
-	}
+	}, nil
 }
 
 // ScenarioPort is the port the driver told this scenario to listen on.
