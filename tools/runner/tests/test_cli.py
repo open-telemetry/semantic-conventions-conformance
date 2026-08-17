@@ -10,6 +10,7 @@ and hand it everything it parsed.
 
 from __future__ import annotations
 
+import sys
 from contextlib import contextmanager
 from inspect import signature
 from pathlib import Path
@@ -34,6 +35,10 @@ from opentelemetry.conformance._session import ConformanceSession
 DATA_COMMAND = (
     r"""printf '{"library": "%s", "instrumentation": "%s", "reports": %s}' """
     r'"$2" "$3" "$(ls "$1"/*.json | wc -l)"'
+)
+POSIX_SHELL_ONLY = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="--data-command has a documented POSIX sh contract",
 )
 
 SPEC = """
@@ -229,6 +234,7 @@ def test_the_session_factory_chooses_the_reduction(directory: Path) -> None:
     )
 
 
+@POSIX_SHELL_ONLY
 def test_data_command_runs_in_a_shell(directory: Path, tmp_path: Path) -> None:
     """It is handed a directory, so it has to be able to glob it.
 
@@ -254,6 +260,7 @@ def test_data_command_runs_in_a_shell(directory: Path, tmp_path: Path) -> None:
     }
 
 
+@POSIX_SHELL_ONLY
 @pytest.mark.parametrize(
     ("command", "message"),
     [
@@ -275,6 +282,7 @@ def test_a_broken_data_command_is_reported(
         calls[0]["build_data"](Path("reports"), load_spec(directory))
 
 
+@POSIX_SHELL_ONLY
 def test_a_broken_data_command_fails_the_run(
     directory: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
