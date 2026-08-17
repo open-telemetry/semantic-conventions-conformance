@@ -39,12 +39,14 @@ public static class HttpContract
     // the message below rather than wrapped in TypeInitializationException.
     private static readonly Lazy<Document> Contract = new(Load);
 
+    private static readonly Lazy<IReadOnlyList<Exchange>> MeasuredRequests =
+        new(() => Contract.Value.Requests.Where(exchange => !exchange.Readiness).ToArray());
+
     /// <summary>Every exchange the contract describes, including readiness, in order.</summary>
     public static IReadOnlyList<Exchange> Exchanges => Contract.Value.Requests;
 
     /// <summary>The measured requests to send, in order.</summary>
-    public static IReadOnlyList<Exchange> Requests { get; } =
-        Contract.Value.Requests.Where(exchange => !exchange.Readiness).ToArray();
+    public static IReadOnlyList<Exchange> Requests => MeasuredRequests.Value;
 
     /// <summary>One concrete request and the answer the contract requires.</summary>
     /// <remarks>
