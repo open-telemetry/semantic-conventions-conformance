@@ -62,8 +62,8 @@ that version.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/js
-otel-conformance scenarios/http/js/express/opentelemetry-express/server
-otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
+otel-conformance domains/http/js/express/opentelemetry-express/server
+otel-conformance domains/http/js/undici/opentelemetry-undici/client
 ```
 
 Each package's `setup:` is `otel-conformance-js install`, which installs this
@@ -75,6 +75,6 @@ install — which every run performs, so no run measures a stale copy, but an
 The helper's own unit tests and the formatter run from here:
 
 ```sh
-npm --prefix scenarios/http/js test
-npm --prefix scenarios/http/js run format:check
+npm --prefix domains/http/js test
+npm --prefix domains/http/js run format:check
 ```

@@ -5,7 +5,7 @@ support every scenario needs whatever domain it measures, and the command that
 builds and runs one.
 
 ```text
-scenarios/<domain>/java/      a domain's Gradle build root — wrapper, settings, versions
+domains/<domain>/java/        a domain's Gradle build root — wrapper, settings, versions
 tools/java/gradle-plugins/    the convention plugins, as an included build
 tools/java/scenario-support/  what a scenario needs before any telemetry
 tools/java/scenario-sdk/      the SDK a library-instrumentation scenario owns
@@ -16,8 +16,8 @@ tools/java/tests/             the launcher's tests
 ## A build root per domain
 
 A domain's Java scenarios are one Gradle build, rooted at its own
-`scenarios/<domain>/java` — today only
-[`scenarios/http/java`](../../scenarios/http/java). `otel-conformance-java`
+`domains/<domain>/java` — today only
+[`domains/http/java`](../../domains/http/java). `otel-conformance-java`
 finds it by searching upwards from the scenario directory for
 `settings.gradle.kts`, so a scenario file says nothing about how deep it is
 nested. Within a build, projects are grouped by the library they instrument,

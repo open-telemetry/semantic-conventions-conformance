@@ -78,7 +78,7 @@ jobs:
       # Compiles, formats and unit-tests every Java module the HTTP scenarios
       # use, including the ones shared with other domains.
       - name: Build Java
-        run: scenarios/http/java/gradlew --project-dir scenarios/http/java build
+        run: domains/http/java/gradlew --project-dir domains/http/java build
 
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -89,9 +89,9 @@ jobs:
       # use, including the ones shared with other domains.
       - name: Build JavaScript
         run: |
-          npm --prefix scenarios/http/js ci
-          npm --prefix scenarios/http/js run format:check
-          npm --prefix scenarios/http/js test
+          npm --prefix domains/http/js ci
+          npm --prefix domains/http/js run format:check
+          npm --prefix domains/http/js test
 
   types:
     name: Types
@@ -215,7 +215,7 @@ jobs:
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
-          cache-dependency-glob: "scenarios/**/uv.lock"
+          cache-dependency-glob: "domains/**/uv.lock"
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
       - name: Set up Java
@@ -233,7 +233,7 @@ jobs:
         with:
           node-version: "22.19.0"
           cache: npm
-          cache-dependency-path: "scenarios/**/package-lock.json"
+          cache-dependency-path: "domains/**/package-lock.json"
 
       - name: Install weaver
         run: |
@@ -270,7 +270,7 @@ jobs:
         run: |
           set -uo pipefail
           mapfile -t directories < <(
-            find scenarios -name .venv -prune -o \
+            find domains -name .venv -prune -o \
               -name conformance.yaml -exec dirname {} \; | sort
           )
           status=0
@@ -284,8 +284,8 @@ jobs:
       - name: Check the committed coverage is up to date
         if: ${{ !cancelled() }}
         run: |
-          git add --intent-to-add -- scenarios
-          if ! git diff --exit-code -- scenarios; then
+          git add --intent-to-add -- domains
+          if ! git diff --exit-code -- domains; then
             echo "::error::the committed data.json files are out of date — run the scenarios and commit the result"
             exit 1
           fi
@@ -295,7 +295,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: weaver-reports
-          path: scenarios/**/output/weaver-reports/*.json
+          path: domains/**/output/weaver-reports/*.json
           if-no-files-found: warn
 
   required-status-check:

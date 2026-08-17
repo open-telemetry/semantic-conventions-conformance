@@ -14,8 +14,8 @@ against expectations declared in YAML.
 | [`tools/http/`](tools/http) | the same for HTTP: the upstream registry pin, and the test client that drives both sides of the domain |
 | [`tools/java/`](tools/java) | what every JVM scenario shares, in any domain: the launcher that builds and runs one, the Gradle convention plugins, and the SDK bootstrap |
 | [`tools/js/`](tools/js) | what every Node scenario shares: the launcher that installs a build, and the SDK bootstrap |
-| [`scenarios/gen-ai/`](scenarios/gen-ai) | the GenAI scenarios and the coverage they produce |
-| [`scenarios/http/`](scenarios/http) | the HTTP scenarios and the coverage they produce |
+| [`domains/gen-ai/`](domains/gen-ai) | the GenAI domain: its scenarios and the coverage they produce |
+| [`domains/http/`](domains/http) | the HTTP domain: its scenarios and the coverage they produce |
 
 A conformance directory names the wrapper it wants under `runner:`, so one
 command runs any of them:
