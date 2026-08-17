@@ -4,7 +4,7 @@
 [versions]
 armeria = "1.41.0"
 jackson = "2.22.2"
-opentelemetry = "1.65.0"
+opentelemetry = "1.64.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
