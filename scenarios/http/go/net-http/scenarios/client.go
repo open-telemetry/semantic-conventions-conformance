@@ -9,10 +9,13 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenario"
 	httpcontract "github.com/open-telemetry/semantic-conventions-conformance/tools/http/test-client/go"
 )
+
+const requestTimeout = 10 * time.Second
 
 // Transport wraps the round tripper a client scenario sends through, which is
 // where a net/http client instrumentation attaches.
@@ -33,7 +36,10 @@ func RunClient(transport Transport) error {
 		return err
 	}
 
-	client := &http.Client{Transport: transport(http.DefaultTransport)}
+	client := &http.Client{
+		Transport: transport(http.DefaultTransport),
+		Timeout:   requestTimeout,
+	}
 	return httpcontract.Drive(baseURL, func(method, url, body string) (httpcontract.Response, error) {
 		return send(client, method, url, body)
 	})
