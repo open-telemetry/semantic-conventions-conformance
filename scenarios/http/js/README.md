@@ -56,6 +56,9 @@ undici does not go through Node's `http` module, so its client spans come from
 
 ## Running one
 
+Use Node 22.19.0 or newer. The lockfile pins `undici@8.10.0`, which requires
+that version.
+
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/js
