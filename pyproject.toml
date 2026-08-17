@@ -34,6 +34,7 @@ known-first-party = [
   "http_mock_server",
   "otel_conformance_dotnet",
   "otel_conformance_java",
+  "otel_conformance_go",
   "otel_conformance_js",
   "otel_http_test_client",
 ]
