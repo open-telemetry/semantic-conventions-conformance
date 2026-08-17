@@ -7,6 +7,7 @@ import (
 	"errors"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -20,7 +21,7 @@ func driveAgainstTheContract(t *testing.T) []string {
 	err := Drive(baseURL, func(method, url, body string) (Response, error) {
 		path := strings.TrimPrefix(url, baseURL)
 		sent = append(sent, method+" "+path)
-		return Respond(method, path, body), nil
+		return Respond(method, path, body)
 	})
 	if err != nil {
 		t.Fatalf("driving the contract against itself failed: %v", err)
@@ -71,7 +72,10 @@ func TestReadinessIsNotMeasured(t *testing.T) {
 }
 
 func TestARequestBodyIsEchoedBack(t *testing.T) {
-	response := Respond("POST", "/items", `{"name": "widget"}`)
+	response, err := Respond("POST", "/items", `{"name": "widget"}`)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if response.StatusCode != 201 {
 		t.Errorf("POST /items answered %d, want 201", response.StatusCode)
@@ -82,14 +86,24 @@ func TestARequestBodyIsEchoedBack(t *testing.T) {
 }
 
 func TestAPathTheContractDoesNotDescribeIsNotFound(t *testing.T) {
-	if response := Respond("GET", "/nope", ""); response.StatusCode != 404 {
+	response, err := Respond("GET", "/nope", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != 404 {
 		t.Errorf("GET /nope answered %d, want 404", response.StatusCode)
 	}
 }
 
 func TestAQueryStringPicksTheSameAnswer(t *testing.T) {
-	plain := Respond("GET", "/users/123", "")
-	queried := Respond("GET", "/users/123?fields=name&verbose=true", "")
+	plain, err := Respond("GET", "/users/123", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	queried, err := Respond("GET", "/users/123?fields=name&verbose=true", "")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if plain != queried {
 		t.Errorf("a query string changed the answer: %v then %v", plain, queried)
@@ -97,12 +111,15 @@ func TestAQueryStringPicksTheSameAnswer(t *testing.T) {
 }
 
 func TestAWrongStatusFailsTheRun(t *testing.T) {
-	users, found := Lookup("GET", "/users/123")
+	users, found, err := Lookup("GET", "/users/123")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !found {
 		t.Fatal("the contract describes no GET /users/123")
 	}
 
-	err := Verify(users, Response{StatusCode: 500, Body: users.ResponseBody})
+	err = Verify(users, Response{StatusCode: 500, Body: users.ResponseBody})
 
 	if err == nil || !strings.Contains(err.Error(), "answered 500") {
 		t.Errorf("verifying a wrong status gave %v, want a failure naming it", err)
@@ -110,7 +127,10 @@ func TestAWrongStatusFailsTheRun(t *testing.T) {
 }
 
 func TestWhitespaceAndKeyOrderAreTheJSONWritersBusiness(t *testing.T) {
-	users, found := Lookup("GET", "/users/123")
+	users, found, err := Lookup("GET", "/users/123")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !found {
 		t.Fatal("the contract describes no GET /users/123")
 	}
@@ -122,16 +142,32 @@ func TestWhitespaceAndKeyOrderAreTheJSONWritersBusiness(t *testing.T) {
 }
 
 func TestAnAnswerThatIsNotJSONSaysSo(t *testing.T) {
-	users, found := Lookup("GET", "/users/123")
+	users, found, err := Lookup("GET", "/users/123")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !found {
 		t.Fatal("the contract describes no GET /users/123")
 	}
 
-	err := Verify(users, Response{StatusCode: users.Status, Body: "<html>"})
+	err = Verify(users, Response{StatusCode: users.Status, Body: "<html>"})
 
 	var contract *Error
 	if !errors.As(err, &contract) || !strings.HasPrefix(err.Error(), "not JSON") {
 		t.Errorf("verifying a non-JSON answer gave %v, want a contract failure saying so", err)
+	}
+}
+
+func TestRespondReportsAContractLoadFailure(t *testing.T) {
+	previous := loaded
+	t.Cleanup(func() { loaded = previous })
+	want := errors.New("contract load failed")
+	loaded = sync.OnceValues(func() ([]Exchange, error) {
+		return nil, want
+	})
+
+	if _, err := Respond("GET", "/users/123", ""); !errors.Is(err, want) {
+		t.Errorf("Respond() returned %v, want %v", err, want)
 	}
 }
 

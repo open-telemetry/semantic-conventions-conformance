@@ -113,19 +113,19 @@ func Requests() ([]Exchange, error) {
 }
 
 // Lookup is the exchange answering "method path", if the contract describes
-// one.
-func Lookup(method, path string) (Exchange, bool) {
+// one. It returns an error when the contract cannot be loaded.
+func Lookup(method, path string) (Exchange, bool, error) {
 	exchanges, err := Exchanges()
 	if err != nil {
-		return Exchange{}, false
+		return Exchange{}, false, err
 	}
 	path = withoutQuery(path)
 	for _, exchange := range exchanges {
 		if exchange.Method == method && withoutQuery(exchange.Path) == path {
-			return exchange, true
+			return exchange, true, nil
 		}
 	}
-	return Exchange{}, false
+	return Exchange{}, false, nil
 }
 
 func withoutQuery(path string) string {
@@ -175,6 +175,8 @@ func locate() (string, error) {
 		candidate := filepath.Join(directory, filepath.FromSlash(checkoutPath))
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate, nil
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return "", fmt.Errorf("could not inspect %s: %w", candidate, err)
 		}
 		parent := filepath.Dir(directory)
 		if parent == directory {
