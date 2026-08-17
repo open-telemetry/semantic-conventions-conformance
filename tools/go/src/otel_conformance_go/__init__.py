@@ -20,7 +20,8 @@ Two subcommands, matching the two phases a package has:
     command against the *calling* process's directory rather than the working
     directory it is given, and only there does the binary need an ``.exe``
     suffix. Naming the binary in a scenario file would make the file
-    platform-specific.
+    platform-specific. Everything after ``run`` is the scenario's own, passed
+    on verbatim.
 """
 
 from __future__ import annotations
@@ -43,6 +44,10 @@ MODULE_MARKER = "go.mod"
 BUILD_DIR = "build"
 
 BINARY = "scenario"
+
+# The subcommand whose remaining words belong to the scenario rather than to
+# this program.
+RUN = "run"
 
 
 class LayoutError(RuntimeError):
@@ -98,21 +103,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         "build", help="compile the scenario in the current directory"
     )
 
-    run = subcommands.add_parser("run", help="run the built scenario")
-    run.add_argument(
-        "arguments",
-        nargs=argparse.REMAINDER,
-        help="arguments passed to the scenario, verbatim",
+    subcommands.add_parser(
+        RUN,
+        help="run the built scenario; what follows is the scenario's own",
     )
 
-    arguments = parser.parse_args(argv)
+    # Split off rather than declared as a trailing positional: argparse reads
+    # a leading `-` as an option of this program whatever a positional's
+    # `nargs` says, so `run --flag` would be refused before the scenario ever
+    # saw it. `build` keeps being parsed strictly, so a typo there still says
+    # so.
+    words = list(sys.argv[1:] if argv is None else argv)
+    scenario_arguments: list[str] = []
+    if words and words[0] == RUN:
+        words, scenario_arguments = words[:1], words[1:]
+
+    arguments = parser.parse_args(words)
     directory = Path.cwd()
     module_root(directory)
 
-    if arguments.command == "build":
-        command = build_command(directory)
+    if arguments.command == RUN:
+        command = run_command(directory, scenario_arguments)
     else:
-        command = run_command(directory, arguments.arguments)
+        command = build_command(directory)
 
     return subprocess.call(command)  # noqa: S603
 
