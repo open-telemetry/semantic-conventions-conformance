@@ -30,5 +30,27 @@
       "server.port",
       "url.scheme"
     ]
-  }
+  },
+  "findings": [
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'HTTP GET' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "client"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'HTTP POST' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "POST"
+        ],
+        "kind": "client"
+      }
+    }
+  ]
 }

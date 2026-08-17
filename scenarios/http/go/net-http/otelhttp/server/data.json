@@ -48,5 +48,54 @@
       "server.port",
       "url.scheme"
     ]
-  }
+  },
+  "findings": [
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /health' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /status/{code}' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /users/{userId}' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'POST /items' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "POST"
+        ],
+        "kind": "server"
+      }
+    }
+  ]
 }
