@@ -35,9 +35,9 @@ mux.Handle("GET /users/{userId}", answer())
 ```
 
 Nothing is attached per route. `ServeMux` records the pattern it matched on the
-request, and `otelhttp` reads `http.route` and the span name from there after
-the handler returns, so the declaration above is the whole of what makes the
-route observable.
+request. After the handler returns, `otelhttp` v0.70.0 uses that pattern for the
+server span name and the metrics' `http.route`. It does not add `http.route` to
+the server span because it records the span attributes before the mux matches.
 
 ## Running one
 
