@@ -2,48 +2,48 @@
   "description": "The HTTP conformance exchanges, read by every language rather than restated in each. `requests` is the concrete traffic sent in order, each with the answer it must come back with. A server scenario declares matching routes in the framework's native form and answers these exchanges; a client scenario sends them with the library under test at a server answering them. Both sides are therefore measured against identical traffic, which is what makes their coverage files comparable. A response is a constant, because the requests are: the one placeholder is `${requestBody}`, for the body that arrived. See README.md.",
   "requests": [
     {
+      "description": "Sent once, before the sequence below, to learn the server is up. Not part of the measured sequence: a client scenario never sends it.",
       "method": "GET",
       "path": "/health",
       "readiness": true,
       "status": 200,
-      "responseBody": "{\"ok\": true}",
-      "description": "Sent once, before the sequence below, to learn the server is up. Not part of the measured sequence: a client scenario never sends it."
+      "responseBody": "{\"ok\": true}"
     },
     {
+      "description": "A parameterized server route: `http.route` should be the framework's route representation, not the concrete path, and the span name should be built from it.",
       "method": "GET",
       "path": "/users/123",
       "status": 200,
-      "responseBody": "{\"id\": 123, \"name\": \"Alice\"}",
-      "description": "A parameterized server route: `http.route` should be the framework's route representation, not the concrete path, and the span name should be built from it."
+      "responseBody": "{\"id\": 123, \"name\": \"Alice\"}"
     },
     {
+      "description": "A query string, which is its own attribute (`url.query`) and must not leak into `http.route`, `url.path` or the span name.",
       "method": "GET",
       "path": "/users/123?fields=name&verbose=true",
       "status": 200,
-      "responseBody": "{\"id\": 123, \"name\": \"Alice\"}",
-      "description": "A query string, which is its own attribute (`url.query`) and must not leak into `http.route`, `url.path` or the span name."
+      "responseBody": "{\"id\": 123, \"name\": \"Alice\"}"
     },
     {
+      "description": "A non-GET carrying a body. The answer echoes it, so a scenario that never reads the body fails rather than passing on a constant.",
       "method": "POST",
       "path": "/items",
       "body": "{\"name\": \"widget\"}",
       "status": 201,
-      "responseBody": "{\"created\": true, \"payload\": ${requestBody}}",
-      "description": "A non-GET carrying a body. The answer echoes it, so a scenario that never reads the body fails rather than passing on a constant."
+      "responseBody": "{\"created\": true, \"payload\": ${requestBody}}"
     },
     {
+      "description": "A 4xx: `error.type` and `http.response.status_code`, on the span and on the duration metric.",
       "method": "GET",
       "path": "/status/404",
       "status": 404,
-      "responseBody": "{\"message\": \"status 404\"}",
-      "description": "A 4xx: `error.type` and `http.response.status_code`, on the span and on the duration metric."
+      "responseBody": "{\"message\": \"status 404\"}"
     },
     {
+      "description": "A 5xx, which some instrumentations treat differently from a 4xx.",
       "method": "GET",
       "path": "/status/500",
       "status": 500,
-      "responseBody": "{\"message\": \"status 500\"}",
-      "description": "A 5xx, which some instrumentations treat differently from a 4xx."
+      "responseBody": "{\"message\": \"status 500\"}"
     }
   ]
 }
