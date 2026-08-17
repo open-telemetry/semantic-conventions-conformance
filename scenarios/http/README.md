@@ -9,8 +9,9 @@ What HTTP instrumentations emit, checked against the
     data.json           the coverage it produced, committed
 ```
 
-Each language has its own build root directly under this one, whose README
-explains how that language builds a scenario.
+A language that needs a build of its own has a build root directly under this
+one: Java's version-pinned Gradle build, described below, and
+[`js/`](js/README.md), whose README explains the npm workspace it roots.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is

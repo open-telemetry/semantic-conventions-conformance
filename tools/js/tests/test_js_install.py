@@ -7,8 +7,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import otel_conformance_js
 import pytest
+
+import otel_conformance_js
 from otel_conformance_js import (
     BUILD_MARKER,
     LayoutError,
