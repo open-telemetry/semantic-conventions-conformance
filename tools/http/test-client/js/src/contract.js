@@ -77,7 +77,7 @@ const EXCHANGES = Object.freeze(
       readiness: entry.readiness ?? false,
       // What the request is in the sequence for. Carried as data rather than
       // as a comment so every language reading the contract has it too.
-      why: entry.why,
+      description: entry.description,
     }),
   ),
 );

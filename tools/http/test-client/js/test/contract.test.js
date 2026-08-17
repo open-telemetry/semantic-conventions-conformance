@@ -24,6 +24,19 @@ describe("the contract", () => {
     assert.equal(requests().length, exchanges().length - 1);
   });
 
+  // A field this reader names but the contract does not is `undefined` here
+  // rather than an error, so only a check on the value catches a rename.
+  it("carries every field the contract names", () => {
+    for (const exchange of exchanges()) {
+      assert.equal(typeof exchange.description, "string");
+      assert.ok(exchange.description.trim().length > 0);
+      assert.equal(typeof exchange.method, "string");
+      assert.equal(typeof exchange.path, "string");
+      assert.equal(typeof exchange.status, "number");
+      assert.equal(typeof exchange.responseBody, "string");
+    }
+  });
+
   it("answers the same exchange with or without a query string", () => {
     const plain = exchangeFor("GET", "/users/123");
     const withQuery = exchangeFor("GET", "/users/123?fields=name&verbose=true");
