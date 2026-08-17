@@ -146,6 +146,7 @@ class TestTheCommandLine:
             lambda command: commands.append(command) or 0,
         )
         return commands
+
     def test_build_publishes_the_scenarios_project(
         self, calls: list[list[str]]
     ) -> None:
