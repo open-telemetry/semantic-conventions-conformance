@@ -354,7 +354,7 @@ class _QuietHandler(WSGIRequestHandler):
     prints what it sent.
     """
 
-    def get_environ(self) -> dict[str, object]:
+    def get_environ(self) -> dict[str, str]:
         """The environ, plus the two keys a real WSGI server also supplies.
 
         ``wsgiref.simple_server`` is PEP 3333 and no more, but a WSGI
