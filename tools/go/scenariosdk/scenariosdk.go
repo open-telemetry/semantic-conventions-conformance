@@ -64,8 +64,8 @@ func Initialize(ctx context.Context) (*SDK, error) {
 		tracerProvider: sdktrace.NewTracerProvider(
 			sdktrace.WithBatcher(spanExporter),
 		),
-		// The reader's interval comes from OTEL_METRIC_EXPORT_INTERVAL, which
-		// the runner sets so far out that only the flush below exports — one
+		// NewPeriodicReader reads OTEL_METRIC_EXPORT_INTERVAL itself. The
+		// runner sets it so far out that only the flush below exports — one
 		// scenario's metrics cannot be split across two reports.
 		meterProvider: sdkmetric.NewMeterProvider(
 			sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),
