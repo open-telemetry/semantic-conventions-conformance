@@ -43,9 +43,10 @@ var routes = []string{
 	"GET /status/{code}",
 }
 
-// Idle connections a driver leaves behind should not outlive the run, and a
-// server that never times out reading headers is a lint finding in its own
-// right.
+// A server that never times out reading request headers is a lint finding in
+// its own right. It is the only timeout worth setting here: an idle keep-alive
+// connection needs no deadline of its own, because Shutdown closes the idle
+// ones when the driver says stop.
 const readHeaderTimeout = 10 * time.Second
 
 // RunServer hosts the shared HTTP exchanges until the driver says stop.
