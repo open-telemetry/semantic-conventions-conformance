@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The Rust toolchain a scenario directory no longer has to restate."""
+"""The Rust toolchain that a scenario directory no longer has to restate."""
 
 from __future__ import annotations
 
