@@ -35,6 +35,7 @@ known-first-party = [
   "otel_conformance_dotnet",
   "otel_conformance_java",
   "otel_conformance_js",
+  "otel_conformance_rust",
   "otel_http_test_client",
 ]
 known-third-party = ["pytest"]
@@ -58,4 +59,5 @@ include = [
   "tools/java/src",
   "tools/js/src",
   "tools/python/src",
+  "tools/rust/src",
 ]
