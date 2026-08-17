@@ -24,9 +24,9 @@ const { parse, renderResponseBody, requests } = require("./contract");
 /**
  * Sends `requests()` at `baseUrl` through `send`.
  *
- * `send(method, url, body)` is the call being measured: a client scenario
- * passes its own library, and answers with `{ status, body }`. `body` is null
- * for a request that carries none.
+ * `send(method, url, requestBody)` is the call being measured: a client
+ * scenario passes its own library, and answers with `{ status, body }`.
+ * `requestBody` is null for a request that carries none.
  *
  * No health check: the runner starts the mock server a client scenario calls
  * and waits for it to answer before running the scenario at all.
