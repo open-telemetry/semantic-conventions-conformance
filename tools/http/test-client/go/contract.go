@@ -56,7 +56,7 @@ type Exchange struct {
 	// What the request is in the sequence for — the attribute it should make
 	// an instrumentation record. Carried as data rather than as a comment so
 	// every language reading the contract has it too.
-	Why string `json:"why"`
+	Description string `json:"description"`
 }
 
 // RenderResponseBody is the response body with the request body inserted.
