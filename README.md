@@ -28,6 +28,20 @@ otel-conformance path/to/directory --report-only
 See the [runner's README](tools/runner/README.md) for what a scenario and its
 `conformance.yaml` look like.
 
+## Terminology
+
+- **domain**: one area of the OpenTelemetry semantic conventions, for example
+  HTTP or GenAI. A domain is the first-level partition of this repository: each
+  domain is a directory directly under the top-level [`domains/`](domains)
+  directory. For example, [`domains/gen-ai/`](domains/gen-ai) is the GenAI domain.
+- **scenario**: a small workload program that exercises one library and produces
+  the telemetry to be checked, with no OpenTelemetry setup of its own. Scenarios
+  live in a `scenarios/` directory (for example the GenAI workload programs such
+  as `inference.py`), and each is declared as a named entry under the
+  `scenarios:` map in a `conformance.yaml`, which gives the command that runs it.
+  For example, the `inference` entry under `scenarios:` runs the `inference.py`
+  workload program.
+
 ## Maintainers
 
 - [Christophe Kamphaus](https://github.com/kamphaus), Independent
