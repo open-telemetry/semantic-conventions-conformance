@@ -20,6 +20,8 @@ import requests
 
 from otel_http_test_client import CONTENT_TYPE, USER_AGENT, drive
 
+_REQUEST_TIMEOUT_SECONDS = 10
+
 
 def run() -> None:
     """Send the contract at the server the runner started."""
@@ -45,6 +47,7 @@ def run() -> None:
                 url,
                 data=None if body is None else body.encode("utf-8"),
                 headers=headers,
+                timeout=_REQUEST_TIMEOUT_SECONDS,
             )
             return response.status_code, response.text
 
