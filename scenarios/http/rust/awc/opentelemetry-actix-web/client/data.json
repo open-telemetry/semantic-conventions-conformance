@@ -1,0 +1,53 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port",
+      "url.full",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "findings": [
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET 127.0.0.1' is missing recommended attribute 'network.protocol.version'",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET 127.0.0.1' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST 127.0.0.1' is missing recommended attribute 'network.protocol.version'",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'POST 127.0.0.1' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "POST"
+        ],
+        "kind": "client"
+      }
+    }
+  ]
+}
