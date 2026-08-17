@@ -75,8 +75,20 @@ class TestRunning:
 
         assert binary(client) != binary(server)
 
-    def test_arguments_reach_the_scenario(self, root: Path) -> None:
-        assert run_command(root, ["--flag"])[-1] == "--flag"
+    def test_arguments_reach_the_scenario(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Through `main`, because it is the parser a leading `-` trips up."""
+        commands: list[list[str]] = []
+        monkeypatch.chdir(root)
+        monkeypatch.setattr(
+            otel_conformance_go.subprocess,
+            "call",
+            lambda command: commands.append(command) or 0,
+        )
+
+        assert otel_conformance_go.main(["run", "--flag", "value"]) == 0
+        assert commands[0][1:] == ["--flag", "value"]
 
     def test_running_executes_what_building_produced(
         self, root: Path, monkeypatch: pytest.MonkeyPatch
