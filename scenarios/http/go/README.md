@@ -37,7 +37,9 @@ mux.Handle("GET /users/{userId}", answer())
 Nothing is attached per route. `ServeMux` records the pattern it matched on the
 request. After the handler returns, `otelhttp` v0.70.0 uses that pattern for the
 server span name and the metrics' `http.route`. It does not add `http.route` to
-the server span because it records the span attributes before the mux matches.
+the server span: it records the span's request attributes before the mux
+matches, and what it adds to the span afterwards is the status and the body
+sizes.
 
 ## Running one
 

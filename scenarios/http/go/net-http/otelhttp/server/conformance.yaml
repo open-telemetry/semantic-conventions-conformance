@@ -29,10 +29,12 @@ scenarios:
           otelhttp does not put http.route on the server span, so the check
           falls back to expecting a bare method. The names themselves are
           right — "GET /users/{userId}" — because the handler re-derives them
-          from http.Request.Pattern after the mux has matched, but the
-          attributes were recorded at span start, before there was a pattern to
-          read, and are never revisited. Its metrics are read after the handler
-          returns and do carry http.route, so the same run reports the route on
+          from http.Request.Pattern after the mux has matched, but the request
+          attributes were recorded at span start, before there was a pattern
+          to read, and are never recomputed. What it adds to the span after
+          the handler returns is the status and the body sizes, never
+          http.route. Its metrics are read after the handler returns and do
+          carry http.route, so the same run reports the route on
           http.server.request.duration and not on the span it came from.
       - id: error_type_missing_on_error
         reason: >-
