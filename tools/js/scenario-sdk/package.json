@@ -8,6 +8,9 @@
   "files": [
     "index.js"
   ],
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
     "@otel-conformance/scenario-support": "file:../scenario-support",
     "@opentelemetry/sdk-node": "0.221.0"

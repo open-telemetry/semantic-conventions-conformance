@@ -26,22 +26,24 @@ const { requireEnv } = require("@otel-conformance/scenario-support");
  * patch a module as it is required, and one required earlier is never patched.
  *
  * Shutting the SDK down is what flushes, so it happens whether the workload
- * finished or threw — and a workload that threw fails the run, because the
- * runner reads a scenario's result from its exit code.
+ * finished or threw. Any SDK lifecycle or workload failure fails the run,
+ * because the runner reads a scenario's result from its exit code.
  */
 async function runScenario({ instrumentations = [] } = {}, workload) {
-  // Failing here rather than exporting nowhere: a scenario that quietly
-  // dropped its telemetry would be reported as producing none.
-  requireEnv("OTEL_EXPORTER_OTLP_ENDPOINT");
-  const sdk = new NodeSDK({ instrumentations });
-  sdk.start();
   try {
-    await workload();
+    // Failing here rather than exporting nowhere: a scenario that quietly
+    // dropped its telemetry would be reported as producing none.
+    requireEnv("OTEL_EXPORTER_OTLP_ENDPOINT");
+    const sdk = new NodeSDK({ instrumentations });
+    sdk.start();
+    try {
+      await workload();
+    } finally {
+      await sdk.shutdown();
+    }
   } catch (error) {
     console.error(error);
     process.exitCode = 1;
-  } finally {
-    await sdk.shutdown();
   }
 }
 

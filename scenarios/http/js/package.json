@@ -9,7 +9,7 @@
     "undici/*"
   ],
   "scripts": {
-    "test": "npm --prefix ../../../tools/http/test-client/js test",
+    "test": "npm --prefix ../../../tools/http/test-client/js test && npm --prefix ../../../tools/js/scenario-sdk test",
     "format": "prettier --write . ../../../tools/js ../../../tools/http/test-client/js",
     "format:check": "prettier --check . ../../../tools/js ../../../tools/http/test-client/js"
   },
