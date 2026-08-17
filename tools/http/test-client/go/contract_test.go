@@ -41,6 +41,20 @@ func TestBothSidesOfTheContractAgree(t *testing.T) {
 	}
 }
 
+// A renamed contract key binds to the zero value rather than failing, so an
+// empty description is how that arrives here.
+func TestEveryExchangeSaysWhatItIsFor(t *testing.T) {
+	exchanges, err := Exchanges()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, exchange := range exchanges {
+		if strings.TrimSpace(exchange.Description) == "" {
+			t.Errorf("%s %s has no description", exchange.Method, exchange.Path)
+		}
+	}
+}
+
 func TestReadinessIsNotMeasured(t *testing.T) {
 	exchanges, err := Exchanges()
 	if err != nil {
