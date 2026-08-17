@@ -20,6 +20,12 @@ class HttpContractTest {
   }
 
   @Test
+  void everyExchangeHasADescription() {
+    assertTrue(
+        HttpContract.exchanges().stream().map(Exchange::description).noneMatch(String::isBlank));
+  }
+
+  @Test
   void readinessIsNotMeasured() {
     List<Exchange> requests = HttpContract.requests();
 

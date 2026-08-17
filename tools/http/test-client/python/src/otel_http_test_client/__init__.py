@@ -78,10 +78,9 @@ class Exchange(NamedTuple):
     status: int
     response_body: str
     readiness: bool
-    # What the request is in the sequence for — the attribute it should make
-    # an instrumentation record. Carried as data rather than as a comment so
-    # every language reading the contract has it too.
-    why: str
+    # The request's role in the contract, including readiness or the telemetry
+    # behavior it exercises. Shared so every language reads the same description.
+    description: str
 
 
 # How one request is sent: method, absolute URL, body → status, response body.
@@ -125,7 +124,7 @@ EXCHANGES: Sequence[Exchange] = tuple(
         status=entry["status"],
         response_body=entry["responseBody"],
         readiness=entry.get("readiness", False),
-        why=entry["why"],
+        description=entry["description"],
     )
     for entry in _DOCUMENT["requests"]
 )

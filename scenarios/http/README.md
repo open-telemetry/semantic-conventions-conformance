@@ -45,9 +45,9 @@ under [`tools/java`](../../tools/java) that any domain's scenarios share.
 
 [`contract.json`](../../tools/http/test-client/contract.json) is the concrete
 traffic every HTTP scenario is measured against, written down once and read by
-every language, so a client's and a server's coverage are comparable. Each
-entry carries its own `why`: what it is in the sequence for, and therefore what
-dropping it would stop measuring.
+every language, so a client's and a server's coverage are comparable. The
+document and each request carry a `description`; each request's description
+says what it is in the sequence for and what dropping it would stop measuring.
 
 | Request | What it is there for |
 | --- | --- |

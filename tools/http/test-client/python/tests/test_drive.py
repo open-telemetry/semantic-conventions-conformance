@@ -204,11 +204,12 @@ class TestTheContract:
     def test_it_is_read_from_the_shared_file(self) -> None:
         assert CONTRACT.name == "contract.json"
         declared = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        assert declared["description"]
         assert len(EXCHANGES) == len(declared["requests"])
         assert len(REQUESTS) == len(EXCHANGES) - 1
 
-    def test_every_request_says_what_it_is_for(self) -> None:
-        assert all(exchange.why for exchange in EXCHANGES)
+    def test_every_request_has_a_description(self) -> None:
+        assert all(exchange.description for exchange in EXCHANGES)
 
     def test_it_covers_both_error_classes(self) -> None:
         paths = [request.path for request in REQUESTS]

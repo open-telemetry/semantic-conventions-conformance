@@ -24,8 +24,9 @@ Each request carries its answer literally. `${requestBody}` is the one
 substitution, used to prove that a scenario read the body that arrived; there
 is no path-parameter template language for every language to reimplement.
 
-Each entry also carries a `why`: what it is in the contract for, and therefore
-what dropping it would stop measuring.
+The document and each request carry a `description`. The top-level description
+explains the contract, and each request's description says what it is in the
+contract for and therefore what dropping it would stop measuring.
 
 ### It is checked, not just written down
 

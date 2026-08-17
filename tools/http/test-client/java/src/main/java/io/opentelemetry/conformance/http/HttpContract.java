@@ -59,7 +59,7 @@ public final class HttpContract {
       int status,
       String responseBody,
       boolean readiness,
-      String why) {
+      String description) {
 
     /** The response body with the request body inserted. */
     public String renderResponseBody(String requestBody) {
