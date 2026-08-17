@@ -32,6 +32,7 @@ known-first-party = [
   "http_conformance",
   "http_mock_server",
   "otel_conformance_java",
+  "otel_conformance_go",
   "otel_http_test_client",
 ]
 known-third-party = ["pytest"]

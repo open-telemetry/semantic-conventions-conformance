@@ -8,8 +8,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import otel_conformance_go
 import pytest
+
+import otel_conformance_go
 from otel_conformance_go import (
     MODULE_MARKER,
     LayoutError,
