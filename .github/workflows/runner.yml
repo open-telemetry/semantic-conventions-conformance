@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
@@ -250,3 +251,21 @@ jobs:
           name: weaver-reports
           path: scenarios/**/output/weaver-reports/*.json
           if-no-files-found: warn
+
+  required-status-check:
+    needs:
+      - test
+      - lint
+      - types
+      - coverage-model
+      - scenarios
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+      - if: |
+          needs.test.result != 'success' ||
+          needs.lint.result != 'success' ||
+          needs.types.result != 'success' ||
+          needs.coverage-model.result != 'success' ||
+          needs.scenarios.result != 'success'
+        run: exit 1
