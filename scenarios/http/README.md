@@ -42,9 +42,9 @@ they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
 
 Python has the same shape without a build step. Its workload is a module in
-`python/<library>/scenarios/`, and each instrumentation directory holds the
-`pyproject.toml` and `uv.lock` that pin one instrumentation, next to the script
-that turns it on before handing the workload to the harness.
+`python/<library>/scenarios/`, and each `<side>/` directory holds the
+`pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
+`scenario.py` that turns it on before handing the workload to the harness.
 
 ## The scenario contract
 
