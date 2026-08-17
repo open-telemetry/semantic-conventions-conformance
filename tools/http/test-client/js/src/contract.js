@@ -39,7 +39,7 @@ const USER_AGENT = "otel-http-conformance/1";
  * tree first. One lookup that walks up is less machinery than that.
  */
 function contractPath() {
-  const beside = path.join(__dirname, "..", "..", "..", "contract.json");
+  const beside = path.join(__dirname, "..", "..", "contract.json");
   if (fs.existsSync(beside)) {
     return beside;
   }
