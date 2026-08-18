@@ -26,10 +26,8 @@ walking up from each project, and `tools/` is not under any build root, so the
 projects here read [`Directory.Packages.props`](Directory.Packages.props) beside
 them while a domain's scenarios read their own. The SDK release is therefore
 pinned once for every domain, and the instrumentation releases a domain measures
-are pinned with that domain — which is the opposite direction from a Gradle
-version catalog, where a build root pins everything it includes.
-[`Directory.Build.props`](Directory.Build.props) carries the settings that are
-not versions, and a build root imports it.
+are pinned with that domain. [`Directory.Build.props`](Directory.Build.props)
+carries the settings that are not versions, and a build root imports it.
 
 ## What a scenario shares
 
@@ -90,8 +88,7 @@ configuration nor an output path and a change to either is the build's to make.
 
 `run` executes `dotnet <assembly>` rather than the published launcher
 executable, whose name is `.exe` on Windows and extensionless everywhere else,
-so one `conformance.yaml` runs on either. Unlike
-[`otel-conformance-java`](../java) it runs `dotnet` for that reason alone: .NET
-has no build daemon whose older environment a measured run could inherit.
-Everything after `run` reaches the scenario verbatim, including arguments that
-begin with `-`.
+so one `conformance.yaml` runs on either. That is the only reason: .NET has no
+build daemon whose older environment a measured run could inherit. Everything
+after `run` reaches the scenario verbatim, including arguments that begin with
+`-`.

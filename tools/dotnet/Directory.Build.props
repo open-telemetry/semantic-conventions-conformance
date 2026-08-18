@@ -4,9 +4,7 @@
 
   The build conventions every .NET conformance project shares. MSBuild finds
   this file by walking up from a project, so it reaches the projects here on
-  its own, and a domain's build root imports it — the same split as
-  `tools/java/gradle-plugins`, which a domain's Gradle build includes rather
-  than restating.
+  its own, and a domain's build root imports it.
 -->
 <Project>
   <PropertyGroup>

@@ -32,10 +32,10 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-# The file that marks the root of a language's build, as `settings.gradle.kts`
-# does for Java. It is also where a build root declares `PublishDir`, and
-# MSBuild resolves it the same way this does — the nearest one at or above the
-# project — so both agree on where a published scenario lands.
+# The file that marks the root of a .NET build. It is also where a build root
+# declares `PublishDir`, and MSBuild resolves it the same way this does — the
+# nearest one at or above the project — so both agree on where a published
+# scenario lands.
 BUILD_MARKER = "Directory.Build.props"
 
 PROJECT_SUFFIX = ".csproj"

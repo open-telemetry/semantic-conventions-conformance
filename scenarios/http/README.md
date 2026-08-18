@@ -44,9 +44,8 @@ under [`tools/java`](../../tools/java) that any domain's scenarios share.
 [`dotnet/`](dotnet) is the same shape without the second mechanism: an ASP.NET
 Core server package and a `System.Net.Http.HttpClient` client package, each
 with a `scenarios/` project holding what it does and a launcher project holding
-the instrumentation. Its build root is a solution rather than a Gradle build,
-and pulls in the shared projects under [`tools/dotnet`](../../tools/dotnet) the
-same way.
+the instrumentation. Its build root is a solution, which also lists the shared
+projects under [`tools/dotnet`](../../tools/dotnet).
 
 ## The scenario contract
 
