@@ -42,7 +42,7 @@ contract's.
 ## Finding the contract
 
 `contract.json` is one directory above this package, and npm packs only a
-package's own directory. Rather than generating a copy into the source tree —
-which is what the Python wheel and the Java jar each carry — the lookup walks up
-from this module until it finds the file at its place in the repository. That
-works both where this package lives and where npm installed a copy of it.
+package's own directory. Rather than generating a copy into the source tree,
+the lookup walks up from this module until it finds the file at its place in
+the repository. That works both where this package lives and where npm
+installed a copy of it.

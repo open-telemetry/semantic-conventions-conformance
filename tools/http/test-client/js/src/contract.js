@@ -33,10 +33,9 @@ const USER_AGENT = "otel-http-conformance/1";
  * has installed this package as a copy in a dependency tree — at its place in
  * the repository above that tree.
  *
- * Searched for rather than packaged, unlike the Python wheel and the Java jar,
- * which each carry a copy: npm packs a package's own directory and has no way
- * to reach outside it, so a copy would have to be generated into the source
- * tree first. One lookup that walks up is less machinery than that.
+ * Searched for rather than packaged: npm packs a package's own directory and
+ * has no way to reach outside it, so a copy would have to be generated into
+ * the source tree first. One lookup that walks up is less machinery than that.
  */
 function contractPath() {
   const beside = path.join(__dirname, "..", "..", "contract.json");
@@ -110,9 +109,8 @@ function exchangeFor(method, target) {
 /** An exchange's response body with the request body inserted. */
 function renderResponseBody(exchange, requestBody) {
   // A function rather than the body itself: a string replacement reads `$&`
-  // and its siblings as substitution patterns, so a body carrying one would be
-  // echoed differently here than by the Java and Python readers, which both
-  // substitute literally.
+  // and its siblings as substitution patterns, so a body carrying one would
+  // not be echoed literally.
   return exchange.responseBody.replace("${requestBody}", () =>
     requestBody ? requestBody : "{}",
   );

@@ -24,9 +24,8 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-# The file that marks the root of a language's build, as `settings.gradle.kts`
-# does for Java. Searched for upwards from the scenario directory, so a
-# scenario says nothing about how deep it is nested.
+# The file that marks the root of the Node build. Searched for upwards from the
+# scenario directory, so a scenario says nothing about how deep it is nested.
 BUILD_MARKER = "package-lock.json"
 
 

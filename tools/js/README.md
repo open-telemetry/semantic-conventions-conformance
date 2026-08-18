@@ -39,8 +39,7 @@ all, which is the point: a scenario measuring an auto-instrumentation runtime
 must load only what that runtime brings, so what every scenario needs — the
 runner's environment, and the driver's shutdown protocol — cannot live beside
 the SDK. Node has such a runtime in `@opentelemetry/auto-instrumentations-node`,
-so the split earns itself here for the same reason it does on the JVM even
-though nothing measures that runtime yet.
+so the split earns itself here even though nothing measures that runtime yet.
 
 [`scenario-sdk/`](scenario-sdk) is the other half: the SDK, the OTLP exporter
 and the flush on shutdown, for scenarios measuring explicit library
