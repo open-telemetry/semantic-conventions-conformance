@@ -33,7 +33,10 @@ scenarios:
           network.peer.address either, so a server run says what it listened on
           but nothing about who called it. ASP.NET Core offers the peer on
           HttpContext.Connection.RemoteIpAddress, so this is an omission rather
-          than something the framework cannot supply.
+          than something the framework cannot supply. ASP.NET Core 11 does not
+          add it either; dotnet/aspnetcore#65873 collects what that release
+          still misses against the HTTP span conventions, and this is not on
+          it yet.
       # The contract has one failing request, so this is seen once; the context
       # matches on the status being an error rather than on which route it was.
       - id: error_type_missing_on_error
@@ -46,4 +49,6 @@ scenarios:
           OpenTelemetry.Instrumentation.Http client scenario does set it, to
           the status code, so one run holds a client span that says why a
           request failed beside a server span that says only that it did.
-          Nothing is left to group server-side failures by cause.
+          Nothing is left to group server-side failures by cause. ASP.NET Core
+          11 records it — dotnet/aspnetcore#64851 landed in preview 2 — so this
+          expectation ends when these scenarios move to that release.
