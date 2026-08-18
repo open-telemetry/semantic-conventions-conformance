@@ -3,6 +3,12 @@
 Two packages: an ASP.NET Core server and a `System.Net.Http.HttpClient` client,
 each measured with the OpenTelemetry instrumentation written for it.
 
+On .NET 10 those instrumentations are mostly subscriptions rather than
+implementations. `System.Net.Http` and ASP.NET Core emit the spans and metrics
+themselves, and a package here turns that on and exports it. So a divergence a
+scenario records is usually the platform's to close rather than the package's,
+and its `conformance.yaml` says which.
+
 ```text
 aspnetcore/scenarios/                    what the server does, no OTel
 aspnetcore/opentelemetry-aspnetcore/     the launcher, and server/
