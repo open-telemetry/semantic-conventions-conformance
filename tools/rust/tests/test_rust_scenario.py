@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -18,6 +20,7 @@ from otel_conformance_rust import (
     build_command,
     package_manifest,
     run_command,
+    target_directory,
     workspace_root,
 )
 
@@ -81,16 +84,46 @@ class TestRunning:
         self, root: Path
     ) -> None:
         manifest = root / "server" / MANIFEST
-        path = binary(root, manifest)
+        path = binary(root / "custom-target", manifest)
 
         assert path.is_absolute()
         assert path.name == f"rust-server{'.exe' if os.name == 'nt' else ''}"
+
+    def test_the_target_directory_comes_from_cargo(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        manifest = root / "server" / MANIFEST
+        expected = root / "custom-target"
+        commands: list[list[str]] = []
+
+        def metadata(
+            command: list[str], **_: object
+        ) -> subprocess.CompletedProcess[str]:
+            commands.append(command)
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                stdout=json.dumps({"target_directory": str(expected)}),
+            )
+
+        monkeypatch.setattr(otel_conformance_rust.subprocess, "run", metadata)
+
+        assert target_directory(manifest) == expected
+        assert commands[0][0:2] == ["cargo", "metadata"]
+        assert commands[0][commands[0].index("--manifest-path") + 1] == str(
+            manifest
+        )
 
     def test_arguments_reach_the_scenario(
         self, root: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         commands: list[list[str]] = []
         monkeypatch.chdir(root / "server")
+        monkeypatch.setattr(
+            otel_conformance_rust,
+            "target_directory",
+            lambda _: root / "custom-target",
+        )
         monkeypatch.setattr(
             otel_conformance_rust.subprocess,
             "call",
@@ -102,5 +135,6 @@ class TestRunning:
 
     def test_running_executes_what_building_produced(self, root: Path) -> None:
         manifest = root / "server" / MANIFEST
+        target = root / "custom-target"
 
-        assert run_command(root, manifest)[0] == str(binary(root, manifest))
+        assert run_command(target, manifest)[0] == str(binary(target, manifest))
