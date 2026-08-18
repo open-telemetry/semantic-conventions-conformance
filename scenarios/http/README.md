@@ -41,11 +41,11 @@ install their framework-specific decorators. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
 
-[`dotnet/`](dotnet) is the same shape without the second mechanism: an ASP.NET
-Core server package and a `System.Net.Http.HttpClient` client package, each
-with a `scenarios/` project holding what it does and a launcher project holding
-the instrumentation. Its build root is a solution, which also lists the shared
-projects under [`tools/dotnet`](../../tools/dotnet).
+[`dotnet/`](dotnet) measures one mechanism: an ASP.NET Core server package and
+a `System.Net.Http.HttpClient` client package, each with a `scenarios/` project
+holding what it does and a launcher project holding the instrumentation. Its
+build root is a solution, which also lists the shared projects under
+[`tools/dotnet`](../../tools/dotnet).
 
 ## The scenario contract
 
@@ -120,11 +120,11 @@ dependency declarations to copy the resolved classpath and Java agent into
 process, not Gradle, so every scenario inherits the fresh OTLP endpoint
 injected by the runner instead of a daemon's older environment.
 
-[`otel-conformance-dotnet`](../../tools/dotnet) does the same for .NET, and
-needs no arguments at all: a scenario directory sits inside the project that
-produces it, so `build` publishes that project and `run` starts what it
-published from `dotnet/build/scenario-runtime/`. A `conformance.yaml` therefore
-names neither a configuration nor an assembly path.
+[`otel-conformance-dotnet`](../../tools/dotnet) needs no arguments at all: a
+scenario directory sits inside the project that produces it, so `build`
+publishes that project and `run` starts what it published from
+`dotnet/build/scenario-runtime/`. A `conformance.yaml` therefore names neither
+a configuration nor an assembly path.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
