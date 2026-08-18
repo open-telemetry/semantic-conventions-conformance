@@ -68,6 +68,27 @@ def test_install_runs_from_the_package(
     assert calls[0][0][1] == "install"
 
 
+def test_install_reports_missing_composer(
+    package: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def composer_missing(command: list[str], cwd: Path) -> int:
+        raise FileNotFoundError(command[0])
+
+    monkeypatch.chdir(package)
+    monkeypatch.setattr(
+        otel_conformance_php.subprocess,
+        "call",
+        composer_missing,
+    )
+
+    assert otel_conformance_php.main(["install"]) == 1
+    assert capsys.readouterr().err == (
+        "composer is not on PATH, and a PHP scenario is installed with it\n"
+    )
+
+
 def test_php_server_binds_loopback(package: Path) -> None:
     router = package / "router.php"
 
