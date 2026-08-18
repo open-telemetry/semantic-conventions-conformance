@@ -6,15 +6,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, cast
 
 MANIFEST = "Cargo.toml"
-TARGET = "target"
 PROFILE = "release"
 RUN = "run"
 
@@ -57,10 +57,36 @@ def package_name(manifest: Path) -> str:
     return name
 
 
-def binary(root: Path, manifest: Path) -> Path:
+def target_directory(manifest: Path) -> Path:
+    """Return the target directory Cargo resolves for ``manifest``."""
+    result = subprocess.run(
+        [
+            "cargo",
+            "metadata",
+            "--format-version",
+            "1",
+            "--no-deps",
+            "--locked",
+            "--manifest-path",
+            str(manifest),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    metadata = cast(dict[str, object], json.loads(result.stdout))
+    target = metadata.get("target_directory")
+    if not isinstance(target, str):
+        raise LayoutError(
+            f"cargo metadata for {manifest} has no target_directory"
+        )
+    return Path(target)
+
+
+def binary(target: Path, manifest: Path) -> Path:
     """Return the absolute release binary path for ``manifest``."""
     suffix = ".exe" if os.name == "nt" else ""
-    return (root / TARGET / PROFILE / f"{package_name(manifest)}{suffix}").resolve()
+    return (target / PROFILE / f"{package_name(manifest)}{suffix}").resolve()
 
 
 def build_command(manifest: Path) -> list[str]:
@@ -76,10 +102,10 @@ def build_command(manifest: Path) -> list[str]:
 
 
 def run_command(
-    root: Path, manifest: Path, arguments: Sequence[str] = ()
+    target: Path, manifest: Path, arguments: Sequence[str] = ()
 ) -> list[str]:
     """Execute the binary produced by :func:`build_command`."""
-    return [str(binary(root, manifest)), *arguments]
+    return [str(binary(target, manifest)), *arguments]
 
 
 def _has_section(manifest: Path, section: str) -> bool:
@@ -127,9 +153,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     arguments = parser.parse_args(words)
     manifest = package_manifest()
-    root = workspace_root(manifest.parent)
+    workspace_root(manifest.parent)
     command = (
-        run_command(root, manifest, scenario_arguments)
+        run_command(target_directory(manifest), manifest, scenario_arguments)
         if arguments.command == RUN
         else build_command(manifest)
     )
