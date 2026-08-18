@@ -32,8 +32,8 @@ from . import (
     wait_for_port,
 )
 
-# Generous: a cold JVM with a Java agent attached is slow to reach its first
-# request, and a loaded CI machine slower still.
+# Generous: a cold runtime with instrumentation attached is slow to reach its
+# first request, and a loaded CI machine slower still.
 _STARTUP_TIMEOUT_SECONDS = 60
 _SHUTDOWN_TIMEOUT_SECONDS = 30
 _POLL_INTERVAL_SECONDS = 0.1
@@ -84,9 +84,9 @@ def _serve_and_drive(command: Sequence[str]) -> int:
     # Standard input is a pipe because closing it is the stop signal; output
     # is inherited so the scenario's own logging reaches the runner, which
     # shows it when something fails. Its own process group, because a scenario
-    # command is often a launcher rather than the server itself: every Java
-    # scenario runs as `otel-conformance-java run ...`, which makes the JVM a
-    # grandchild, and killing the launcher alone would leave it running.
+    # command is often a launcher rather than the server itself: it starts the
+    # real server as a child and waits for it, so killing the launcher alone
+    # would leave the server running.
     reservation.close()
     process = subprocess.Popen(  # noqa: S603
         list(command),
