@@ -34,9 +34,8 @@ scenarios:
           but nothing about who called it. ASP.NET Core offers the peer on
           HttpContext.Connection.RemoteIpAddress, so this is an omission rather
           than something the framework cannot supply. ASP.NET Core 11 does not
-          add it either; dotnet/aspnetcore#65873 collects what that release
-          still misses against the HTTP span conventions, and this is not on
-          it yet.
+          add it either; dotnet/aspnetcore#65873 tracks it against that
+          release.
       # The contract has one failing request, so this is seen once; the context
       # matches on the status being an error rather than on which route it was.
       - id: error_type_missing_on_error
