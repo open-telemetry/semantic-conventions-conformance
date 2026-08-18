@@ -43,12 +43,12 @@ scenarios:
         context:
           status_code: error
         reason: >-
-          OpenTelemetry.Instrumentation.AspNetCore marks a 5xx response's span
-          an error without recording error.type, which semantic conventions
-          require whenever the request failed. The counterpart
-          OpenTelemetry.Instrumentation.Http client scenario does set it, to
-          the status code, so one run holds a client span that says why a
-          request failed beside a server span that says only that it did.
-          Nothing is left to group server-side failures by cause. ASP.NET Core
-          11 records it — dotnet/aspnetcore#64851 landed in preview 2 — so this
-          expectation ends when these scenarios move to that release.
+          The server span for a 5xx response is marked an error without
+          error.type, which semantic conventions require whenever the request
+          failed. The counterpart OpenTelemetry.Instrumentation.Http client
+          scenario does set it, to the status code, so one run holds a client
+          span that says why a request failed beside a server span that says
+          only that it did. Nothing is left to group server-side failures by
+          cause. ASP.NET Core sets error.type itself from 11 preview 2 on —
+          dotnet/aspnetcore#64851 — so this expectation ends when these
+          scenarios move to that release.
