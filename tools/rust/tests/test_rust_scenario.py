@@ -50,6 +50,15 @@ class TestFindingTheWorkspace:
 
         assert package_manifest(scenario) == root / "server" / MANIFEST
 
+    def test_literal_package_name_is_supported(self, root: Path) -> None:
+        manifest = root / "server" / MANIFEST
+        manifest.write_text(
+            "[package]\nname = 'rust-server'\nversion = '0.1.0'\n",
+            encoding="utf-8",
+        )
+
+        assert package_manifest(root / "server") == manifest
+
     def test_being_outside_a_workspace_says_so(self, tmp_path: Path) -> None:
         with pytest.raises(LayoutError, match="workspace"):
             workspace_root(tmp_path)
