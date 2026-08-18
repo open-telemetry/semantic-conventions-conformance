@@ -34,9 +34,9 @@ The `main` classes are per instrumentation because attaching library
 instrumentation is code rather than a command-line flag; everything they do
 beyond that is in `scenarios/`.
 
-Rust follows the same split. Its plain workload crates hold Actix Web's native
-routes and the awc request sequence without importing OpenTelemetry. The
-instrumentation-specific binary crates install
+In Rust the split is between crates. Its plain workload crates hold Actix
+Web's native routes and the awc request sequence without importing
+OpenTelemetry. The instrumentation-specific binary crates install
 `opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
 workspace at `rust/` includes the shared crates under `tools/` and commits one
 lockfile for all of them.
@@ -169,11 +169,11 @@ publishes that project and `run` starts what it published from
 `dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
 neither a configuration nor an assembly path.
 
-Rust uses the same two phases. `otel-conformance-rust build` compiles the
-current package in release mode, then `otel-conformance-rust run` starts the
-workspace's absolute release binary path. Cargo is not the measured process's
-parent, and the same package declaration works on Windows because the launcher
-adds `.exe` there.
+Rust separates the build from the measured run. `otel-conformance-rust build`
+compiles the current package in release mode, then `otel-conformance-rust run`
+starts the workspace's absolute release binary path. Cargo is not the measured
+process's parent, and the same package declaration works on Windows because
+the launcher adds `.exe` there.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
