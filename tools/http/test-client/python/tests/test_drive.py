@@ -70,8 +70,8 @@ sys.exit(EXIT_CODE)
 """
 
 # A scenario command that is a launcher rather than the server itself: it
-# starts the real server as a child and waits for it, so the process the
-# driver started is not the process that has to stop.
+# starts the real server as a descendant and waits for it, so the process
+# the driver started is not the process that has to stop.
 _LAUNCHER = """
 import subprocess
 import sys
@@ -454,11 +454,11 @@ class TestDrivingAServerScenario:
 class TestStoppingWhatAScenarioStarted:
     """A scenario command is often a launcher, so killing it is not enough.
 
-    A launcher starts the real server as a child and waits for it. A server
-    left behind holds the port the next run wants and the pipe the runner is
-    reading the scenario's output from, which turns one scenario's failure
-    into the runner's own much later timeout, reported against the wrong
-    thing.
+    A launcher starts the real server as a descendant and waits for it. A
+    server left behind holds the port the next run wants and the pipe the
+    runner is reading the scenario's output from, which turns one scenario's
+    failure into the runner's own much later timeout, reported against the
+    wrong thing.
     """
 
     def test_one_that_never_starts_takes_its_children_with_it(
