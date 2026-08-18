@@ -74,7 +74,7 @@ public static class HttpClientWorkload
 
     private static string Abbreviate(string value)
     {
-        var singleLine = value.Replace('\r', ' ').Replace('\n', ' ');
+        var singleLine = value.ReplaceLineEndings(" ");
         return singleLine.Length <= 60 ? singleLine : singleLine[..60];
     }
 }
