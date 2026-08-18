@@ -85,8 +85,8 @@ def _serve_and_drive(command: Sequence[str]) -> int:
     # is inherited so the scenario's own logging reaches the runner, which
     # shows it when something fails. Its own process group, because a scenario
     # command is often a launcher rather than the server itself: it starts the
-    # real server as a descendant and waits for it, so killing the launcher
-    # alone would leave the server running.
+    # real server process, directly or indirectly, and waits for it, so killing
+    # the launcher alone would leave the server running.
     reservation.close()
     process = subprocess.Popen(  # noqa: S603
         list(command),
