@@ -114,8 +114,8 @@ dependency declarations to copy the resolved classpath and Java agent into
 process, not Gradle, so every scenario inherits the fresh OTLP endpoint
 injected by the runner instead of a daemon's older environment.
 
-Go's build root is [`go/`](go), which works the same way through
-[`otel-conformance-go`](../../tools/go): `setup:` compiles the scenario and
+Go's build root is [`go/`](go), and [`otel-conformance-go`](../../tools/go)
+holds how a Go package is built and started: `setup:` compiles the scenario and
 `run:` is the resulting binary, so the toolchain is not the measured process.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
