@@ -9,9 +9,11 @@ src/            the `otel-conformance-rust` build and run command
 tests/          launcher tests
 ```
 
-Each domain owns one Cargo workspace and lockfile. The workspace includes these
-shared crates as members, so one root build, Clippy run, and test run covers the
-scenario binaries and all Rust support they use.
+These crates are members of the one Rust workspace, `scenarios/http/rust`, and
+say so in their own manifests, so one root build, Clippy run, and test run
+covers the scenario binaries and all Rust support they use. Cargo lets a
+package belong to a single workspace, so a second domain adding Rust decides
+then whether to join this workspace or own these crates a different way.
 
 Rust has no SDK autoconfiguration crate. `scenario-sdk` therefore requires the
 collector endpoint, creates tonic gRPC trace and metric exporters, installs the
