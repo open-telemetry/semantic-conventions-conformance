@@ -21,7 +21,7 @@ published before a scenario can use it.
 
 One module for a whole domain rather than one per scenario: Go links only what
 a binary imports, so two instrumentations sharing a module do not end up in
-each other's builds the way two Java projects sharing a classpath would.
+each other's builds.
 
 ## What a scenario shares
 
@@ -36,13 +36,11 @@ and the flush that runs before the process exits. Go has no SDK
 autoconfiguration package, so this wiring is written down once rather than in
 each scenario.
 
-The mechanism differs from the JVM's, but the boundary is enforced just as
-firmly. Go's linker keeps whatever the import graph reaches, and an imported
-package is initialized even when nothing calls it, so the package boundary is
-what holds the exporters out: a binary importing only `scenario` links no SDK
-and no gRPC, while one package holding both would link both. The two halves
-ship in one module, because it is the import that decides this and not the
-module.
+Go's linker keeps whatever the import graph reaches, and an imported package is
+initialized even when nothing calls it, so the package boundary is what holds
+the exporters out: a binary importing only `scenario` links no SDK and no gRPC,
+while one package holding both would link both. The two halves ship in one
+module, because it is the import that decides this and not the module.
 
 ## `otel-conformance-go`
 

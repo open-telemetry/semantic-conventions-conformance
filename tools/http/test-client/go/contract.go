@@ -31,10 +31,9 @@ const ContentType = "application/json"
 // scenario sees the same client whichever language sent the requests.
 const UserAgent = "otel-http-conformance/1"
 
-// PathVariable names the contract explicitly. Go has no classpath to copy the
-// file onto and //go:embed cannot reach outside its own package directory, so
-// the contract is found at run time; this is the escape hatch for a binary run
-// away from the checkout it was built in.
+// PathVariable names the contract explicitly. //go:embed cannot reach outside
+// its own package directory, so the contract is found at run time; this is the
+// escape hatch for a binary run away from the checkout it was built in.
 const PathVariable = "OTEL_HTTP_CONTRACT"
 
 // checkoutPath is where the contract sits in a checkout, searched for upwards

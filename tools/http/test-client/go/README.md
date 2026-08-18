@@ -22,10 +22,9 @@ into a run.
 
 ## Finding the contract
 
-Java copies `contract.json` onto the classpath and Python installs it beside
-its package. Go has neither, and `//go:embed` cannot reach outside the package
-directory it appears in — so rather than commit a second copy of the traffic,
-this package finds the one copy at run time, searching upwards from the working
+`//go:embed` cannot reach outside the package directory it appears in, so this
+package cannot build the contract in. Rather than commit a second copy of the
+traffic, it finds the one copy at run time, searching upwards from the working
 directory for `tools/http/test-client/contract.json`. That is the scenario
 directory under the runner and the package's own directory under `go test`,
 both inside a checkout. `OTEL_HTTP_CONTRACT` names the file outright, for a

@@ -7,19 +7,18 @@
     data.json           the coverage it produced, committed
 ```
 
-This directory is the Go build root for the HTTP domain, the way
-[`java/`](../java) is the Gradle one. It is a single module, so one
-`go build ./...` covers every scenario and one `go.sum` pins what they all
-resolve to. The shared projects under [`tools/`](../../../tools) are reached
-through `replace` directives rather than published versions, because they
-belong to this repository: a scenario should measure the helper in the checkout
-it was built from, not a release of it.
+This directory is the Go build root for the HTTP domain. It is a single module,
+so one `go build ./...` covers every scenario and one `go.sum` pins what they
+all resolve to. The shared projects under [`tools/`](../../../tools) are
+reached through `replace` directives rather than published versions, because
+they belong to this repository: a scenario should measure the helper in the
+checkout it was built from, not a release of it.
 
 `net-http/scenarios/` is the workload, and it imports no OpenTelemetry at all.
 The per-instrumentation `main` packages under `net-http/otelhttp/` are what
-attach `otelhttp` and start the SDK, which is the same split Java uses — the
-difference between two instrumentations of one library should be visible as the
-code that differs, and nothing else.
+attach `otelhttp` and start the SDK. The difference between two
+instrumentations of one library should be visible as the code that differs, and
+nothing else.
 
 Go's `main` package is a directory, so a launch package and its
 `conformance.yaml` land in the same directory naturally, and `<side>` is that

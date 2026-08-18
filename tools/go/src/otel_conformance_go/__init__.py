@@ -39,8 +39,8 @@ from typing import Sequence
 MODULE_MARKER = "go.mod"
 
 # Where the binary goes, relative to the scenario directory. Beside the
-# scenario rather than under the module root: unlike a Gradle project, a Go
-# scenario's package *is* its directory, so there is nothing to flatten.
+# scenario rather than under the module root: a Go scenario's package *is* its
+# directory, so there is nothing to flatten.
 BUILD_DIR = "build"
 
 BINARY = "scenario"
