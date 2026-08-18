@@ -90,3 +90,6 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   `HttpClientWorkload.DriveAsync` sends the requests through a caller-supplied
   sender. The build embeds `contract.json` as a manifest resource, and its unit
   tests drive both halves against each other.
+- [`php/`](php) — the same contract, response lookup, caller-supplied sender,
+  and exact response verification as a Composer package. Its unit tests drive
+  both halves against each other.

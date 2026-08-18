@@ -36,6 +36,7 @@ from . import (
 # first request, and a loaded CI machine slower still.
 _STARTUP_TIMEOUT_SECONDS = 60
 _SHUTDOWN_TIMEOUT_SECONDS = 30
+_ERROR_SHUTDOWN_TIMEOUT_SECONDS = 5
 _POLL_INTERVAL_SECONDS = 0.1
 
 
@@ -99,10 +100,20 @@ def _serve_and_drive(command: Sequence[str]) -> int:
         _wait_for_start(process, port, base_url, command)
         drive(base_url)
     except BaseException:
-        _kill_tree(process)
+        _stop_after_error(process)
         raise
 
     return _stop(process)
+
+
+def _stop_after_error(process: subprocess.Popen[bytes]) -> None:
+    """Deliver the EOF protocol before force-killing a failed scenario."""
+    if process.stdin is not None:
+        process.stdin.close()
+    try:
+        process.wait(timeout=_ERROR_SHUTDOWN_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        _kill_tree(process)
 
 
 def _kill_tree(process: subprocess.Popen[bytes]) -> None:

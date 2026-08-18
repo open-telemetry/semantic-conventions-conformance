@@ -1,0 +1,55 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: slim
+instrumentation_library: open-telemetry/opentelemetry-auto-slim
+
+env:
+  OTEL_PHP_AUTOLOAD_ENABLED: "true"
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: none
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+setup: otel-conformance-php install
+
+scenarios:
+  server:
+    # The launcher owns the driver's stdin protocol while php -S keeps PHP's
+    # real request-scoped lifecycle and flushes telemetry at request shutdown.
+    run: otel-http-drive --serve otel-conformance-php serve ../router.php
+    expected_violations:
+      - id: error_type_missing_on_error
+        context:
+          status_code: error
+        reason: >-
+          opentelemetry-auto-slim marks a 5xx server span as an error but does
+          not set error.type, which semantic conventions require whenever an
+          HTTP server span reports an error.
+      - id: recommended_attribute_not_present
+        context:
+          attribute_key: client.address
+          kind: server
+        reason: >-
+          The PHP SDK's auto-created server span does not read the client
+          address from the request, and opentelemetry-auto-slim does not add it
+          when it updates that span after routing.
+      - id: type_mismatch
+        context:
+          attribute_key: http.request.body.size
+          attribute_type: string
+          expected: int
+        reason: >-
+          opentelemetry-auto-slim passes the PSR-7 Content-Length header
+          directly to the span. PSR-7 exposes header values as strings, while
+          http.request.body.size is an integer.
+      - id: type_mismatch
+        context:
+          attribute_key: http.response.body.size
+          attribute_type: string
+          expected: int
+        reason: >-
+          opentelemetry-auto-slim also passes the response Content-Length
+          header directly to the span instead of converting it to the integer
+          type required by http.response.body.size.
