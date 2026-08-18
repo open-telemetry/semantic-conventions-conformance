@@ -97,7 +97,7 @@ def _section_value(
         rf"^\s*\[{re.escape(section)}\]\s*(?:#.*)?$"
     )
     key_pattern = re.compile(
-        rf'^\s*{re.escape(key)}\s*=\s*"([^"]+)"\s*(?:#.*)?$'
+        rf"""^\s*{re.escape(key)}\s*=\s*(?:"([^"]+)"|'([^']+)')\s*(?:#.*)?$"""
     )
     in_section = False
     for line in manifest.read_text(encoding="utf-8").splitlines():
@@ -105,7 +105,7 @@ def _section_value(
             in_section = bool(section_pattern.match(line))
             continue
         if in_section and (match := key_pattern.match(line)):
-            return match.group(1)
+            return match.group(1) or match.group(2)
     return None
 
 
