@@ -32,11 +32,15 @@ where
     drive(base_url, |exchange, url| {
         let method = Method::from_bytes(exchange.method.as_bytes())
             .expect("the committed contract contains a valid HTTP method");
-        let request = client
-            .request(method, url)
-            .insert_header(("content-type", CONTENT_TYPE))
-            .insert_header(("user-agent", USER_AGENT));
         let body = (!exchange.body.is_empty()).then_some(exchange.body);
+        let mut request = client
+            .request(method, url)
+            .insert_header(("user-agent", USER_AGENT));
+        // Only a request that carries a body describes its type, matching how
+        // the Python and Java clients send this same contract.
+        if body.is_some() {
+            request = request.insert_header(("content-type", CONTENT_TYPE));
+        }
         send(request, body)
     })
     .await
