@@ -10,10 +10,8 @@ using OpenTelemetry.Trace;
 // provider is already listening to its ActivitySource and its meters.
 using var sdk = ScenarioSdk.Initialize(
     tracing => tracing.AddAspNetCoreInstrumentation(),
-    // AddAspNetCoreInstrumentation() listens to every built-in ASP.NET Core meter, because the
-    // package instruments the framework rather than HTTP alone, and a run then reports Kestrel,
-    // routing and memory-pool metrics beside the ones under test. The hosting meter is the one
-    // carrying the HTTP server metrics, so listening to it alone keeps this report about HTTP.
+    // AddAspNetCoreInstrumentation() would report Kestrel, routing and memory-pool metrics too:
+    // it instruments ASP.NET Core, not HTTP. The hosting meter carries the HTTP server metrics.
     metrics => metrics.AddMeter("Microsoft.AspNetCore.Hosting"));
 
 await AspNetCoreServerScenario.RunAsync().ConfigureAwait(false);
