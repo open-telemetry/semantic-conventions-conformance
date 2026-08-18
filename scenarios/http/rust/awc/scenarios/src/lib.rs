@@ -37,7 +37,7 @@ where
             .request(method, url)
             .insert_header(("user-agent", USER_AGENT));
         // Only a request that carries a body describes its type, matching how
-        // the Python and Java clients send this same contract.
+        // every language's client sends this same contract.
         if body.is_some() {
             request = request.insert_header(("content-type", CONTENT_TYPE));
         }
