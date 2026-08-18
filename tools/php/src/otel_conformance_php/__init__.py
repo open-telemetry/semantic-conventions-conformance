@@ -124,8 +124,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return serve(arguments.router)
 
         root = package_root()
-        return subprocess.call(composer_command(), cwd=root)  # noqa: S603
-    except (LayoutError, FileNotFoundError) as error:
+        try:
+            return subprocess.call(composer_command(), cwd=root)  # noqa: S603
+        except FileNotFoundError as error:
+            raise LayoutError(
+                "composer is not on PATH, and a PHP scenario is installed with it"
+            ) from error
+    except LayoutError as error:
         print(error, file=sys.stderr)
         return 1
 
