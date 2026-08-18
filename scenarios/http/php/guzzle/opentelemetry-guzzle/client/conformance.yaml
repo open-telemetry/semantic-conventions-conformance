@@ -1,0 +1,50 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: guzzle
+instrumentation_library: open-telemetry/opentelemetry-auto-guzzle
+
+env:
+  OTEL_PHP_AUTOLOAD_ENABLED: "true"
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: none
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+setup: otel-conformance-php install
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    # Guzzle reports 4xx and 5xx as responses because the workload disables
+    # http_errors; both statuses are measured and checked like every other.
+    run: php ../client.php
+    expected_violations:
+      - id: error_type_missing_on_error
+        context:
+          status_code: error
+        reason: >-
+          opentelemetry-auto-guzzle marks 4xx and 5xx client spans as errors
+          but does not set error.type, which semantic conventions require
+          whenever an HTTP client span reports an error.
+      - id: type_mismatch
+        context:
+          attribute_key: http.request.body.size
+          attribute_type: string
+          expected: int
+        reason: >-
+          opentelemetry-auto-guzzle passes the PSR-7 Content-Length header
+          directly to the span. PSR-7 exposes header values as strings, while
+          http.request.body.size is an integer.
+      - id: type_mismatch
+        context:
+          attribute_key: http.response.body.size
+          attribute_type: string
+          expected: int
+        reason: >-
+          opentelemetry-auto-guzzle also passes the response Content-Length
+          header directly to the span instead of converting it to the integer
+          type required by http.response.body.size.

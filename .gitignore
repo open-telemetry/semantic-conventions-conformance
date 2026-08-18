@@ -12,3 +12,6 @@ results/
 # Gradle: its caches, and everything a scenario's `setup` builds into them.
 .gradle/
 build/
+
+# Composer: installed dependencies. Every package's lockfile is committed.
+vendor/

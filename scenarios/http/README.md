@@ -4,21 +4,22 @@ What HTTP instrumentations emit, checked against the
 [HTTP semantic conventions][http] and recorded as committed coverage.
 
 ```text
-java/<library>/<instrumentation>/<side>/
+<language>/<library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
 ```
 
 An instrumentation's directory holds everything about it, the way a gen-ai
-one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
-the Gradle project that builds its `main` classes, while `scenarios/` holds
-what both of them run — the same sharing `gen-ai/python/<library>/scenarios/`
-has, where one program is run by every instrumentation of that library:
+one holds its `pyproject.toml` beside its `conformance.yaml`. Java uses a
+Gradle project and PHP uses one locked Composer package per side.
+`scenarios/` holds telemetry-free workload code:
 
 ```text
 java/armeria/scenarios/                  what the client and server do, no OTel
 java/armeria/opentelemetry-javaagent/    build.gradle.kts, src/, client/, server/
 java/armeria/opentelemetry-library/      build.gradle.kts, src/, client/, server/
+php/slim/scenarios/                      Slim routes and responses, no OTel
+php/slim/opentelemetry-slim/             composer.json, lock, server/
 ```
 
 The `main` classes are per instrumentation because attaching library
@@ -93,11 +94,13 @@ both sides could hide an unexpected client span in a server run or the reverse.
 
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
-  -e tools/http/test-client/python -e tools/java
+  -e tools/http/test-client/python -e tools/java -e tools/php
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
+otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 ```
 
 Every Java package is built and started the same way, so
@@ -111,6 +114,12 @@ dependency declarations to copy the resolved classpath and Java agent into
 `java/build/scenario-runtime/`. Its measured `run` is a direct `java`
 process, not Gradle, so every scenario inherits the fresh OTLP endpoint
 injected by the runner instead of a daemon's older environment.
+
+PHP packages use `otel-conformance-php install` to install their own committed
+lockfile. A Slim server runs through `otel-conformance-php serve`, which owns
+the driver's shutdown protocol while `php -S` keeps PHP's request-scoped
+lifecycle and flushes telemetry at each request shutdown. See
+[`php/`](php/README.md).
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every

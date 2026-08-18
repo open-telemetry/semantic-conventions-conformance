@@ -1,0 +1,16 @@
+{
+  "name": "open-telemetry-conformance/http-test-client",
+  "description": "The HTTP conformance exchanges a PHP scenario answers or sends.",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "OpenTelemetry\\Conformance\\Http\\": "src/"
+    }
+  },
+  "scripts": {
+    "test": "@php tests/run.php"
+  }
+}

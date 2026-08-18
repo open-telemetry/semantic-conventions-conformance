@@ -82,3 +82,6 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   looks up answers for any JVM framework, and `HttpClientWorkload.drive` sends
   the requests. The build copies `contract.json` onto the classpath, and its
   unit tests drive both halves against each other.
+- [`php/`](php) — the same contract, response lookup, caller-supplied sender,
+  and exact response verification as a Composer package. Its unit tests drive
+  both halves against each other.
