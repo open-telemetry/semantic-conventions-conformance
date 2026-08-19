@@ -59,6 +59,11 @@ coverage from two different releases. The SDK they export through is pinned in
 [`tools/dotnet`](../../../tools/dotnet) instead, because MSBuild resolves those
 pins per directory tree and `tools/` is outside this one.
 
+[`global.json`](global.json) pins the .NET SDK that builds all of it. `dotnet`
+reads it from the working directory upward rather than from a project's path,
+so it holds for a scenario run and for `dotnet build` here, and a build started
+from outside this directory does not see it.
+
 ## Running one
 
 ```sh

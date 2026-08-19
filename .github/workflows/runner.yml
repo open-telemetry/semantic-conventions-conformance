@@ -82,15 +82,18 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: scenarios/http/dotnet/global.json
 
       # Compiles and unit-tests every .NET project the HTTP scenarios use,
       # including the ones shared with other domains. `dotnet test` alone would
       # compile only the test projects, leaving a broken scenario undetected.
+      # Run from the build root, which is where `global.json` pins the SDK: the
+      # version a project builds against follows the working directory.
       - name: Build .NET
+        working-directory: scenarios/http/dotnet
         run: |
-          dotnet build scenarios/http/dotnet/http-dotnet-conformance.slnx
-          dotnet test scenarios/http/dotnet/http-dotnet-conformance.slnx --no-build
+          dotnet build http-dotnet-conformance.slnx
+          dotnet test http-dotnet-conformance.slnx --no-build
 
   types:
     name: Types
@@ -226,11 +229,13 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      # A .NET scenario builds itself from source in its `setup:` before it runs.
+      # A .NET scenario builds itself from source in its `setup:` before it
+      # runs, from its own directory, which is inside the build root the
+      # `global.json` pins.
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: scenarios/http/dotnet/global.json
 
       - name: Install weaver
         run: |
