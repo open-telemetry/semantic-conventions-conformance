@@ -1,0 +1,12 @@
+{
+  "name": "@otel-conformance/undici-opentelemetry-undici",
+  "version": "0.1.0",
+  "private": true,
+  "description": "undici measured through @opentelemetry/instrumentation-undici.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
+    "@otel-conformance/undici-scenarios": "*",
+    "@opentelemetry/instrumentation-undici": "0.31.0"
+  }
+}

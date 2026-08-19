@@ -1,0 +1,19 @@
+{
+  "name": "@otel-conformance/http-js",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The JavaScript build root for the HTTP conformance domain.",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "express/*",
+    "undici/*"
+  ],
+  "scripts": {
+    "test": "npm --prefix ../../../tools/http/test-client/js test && npm --prefix ../../../tools/js/scenario-sdk test",
+    "format": "prettier --write . ../../../tools/js ../../../tools/http/test-client/js",
+    "format:check": "prettier --check . ../../../tools/js ../../../tools/http/test-client/js"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6"
+  }
+}

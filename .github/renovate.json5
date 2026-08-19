@@ -32,6 +32,12 @@
       "groupName": "java-minor"
     },
     {
+      // group all non-major JavaScript dependency updates into a single PR
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "javascript-minor"
+    },
+    {
       // group all non-major Rust dependency updates into a single PR
       "matchManagers": ["cargo"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],

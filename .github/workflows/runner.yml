@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
@@ -43,10 +44,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml flask
-          python -m pip install --no-deps -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/java -e tools/rust
+          python -m pip install --no-deps -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/java -e tools/js -e tools/rust
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/rust/tests
+        run: python -m pytest tools/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/rust/tests
 
   lint:
     name: Lint
@@ -78,6 +79,19 @@ jobs:
       # use, including the ones shared with other domains.
       - name: Build Java
         run: scenarios/http/java/gradlew --project-dir scenarios/http/java build
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.19.0"
+
+      # Installs, formats and unit-tests every Node package the HTTP scenarios
+      # use, including the ones shared with other domains.
+      - name: Build JavaScript
+        run: |
+          npm --prefix scenarios/http/js ci
+          npm --prefix scenarios/http/js run format:check
+          npm --prefix scenarios/http/js test
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
@@ -128,6 +142,7 @@ jobs:
             -e tools/http/mock-server \
             -e tools/http/test-client/python \
             -e tools/java \
+            -e tools/js \
             -e tools/rust
 
       - name: Run pyright
@@ -213,7 +228,7 @@ jobs:
           python-version: "3.14"
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
           cache-dependency-glob: "scenarios/**/uv.lock"
@@ -227,6 +242,14 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      # A Node scenario installs its workspace from the lockfile in its `setup:`.
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.19.0"
+          cache: npm
+          cache-dependency-path: "scenarios/**/package-lock.json"
 
       # A Rust scenario compiles itself in its `setup:` before it runs.
       - name: Set up Rust
@@ -255,6 +278,7 @@ jobs:
             -e tools/http/runner \
             -e tools/http/test-client/python \
             -e tools/java \
+            -e tools/js \
             -e tools/rust
 
       - name: Cache the semconv registries
@@ -296,3 +320,21 @@ jobs:
           name: weaver-reports
           path: scenarios/**/output/weaver-reports/*.json
           if-no-files-found: warn
+
+  required-status-check:
+    needs:
+      - test
+      - lint
+      - types
+      - coverage-model
+      - scenarios
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+      - if: |
+          needs.test.result != 'success' ||
+          needs.lint.result != 'success' ||
+          needs.types.result != 'success' ||
+          needs.coverage-model.result != 'success' ||
+          needs.scenarios.result != 'success'
+        run: exit 1
