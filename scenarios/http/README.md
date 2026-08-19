@@ -52,6 +52,11 @@ holding what it does and a launcher project holding the instrumentation. Its
 solution also lists the shared projects under
 [`tools/dotnet`](../../tools/dotnet).
 
+A Python instrumentation has nothing to build. Its workload is a module in
+`python/<library>/scenarios/`, and each `<side>/` directory holds the
+`pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
+`scenario.py` that turns it on before handing the workload to the harness.
+
 ## The scenario contract
 
 [`contract.json`](../../tools/http/test-client/contract.json) is the concrete
@@ -113,6 +118,8 @@ otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 otel-conformance scenarios/http/dotnet/aspnetcore/opentelemetry-aspnetcore/server
 otel-conformance scenarios/http/dotnet/httpclient/opentelemetry-http/client
+otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
+otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
 ```
 
 Every Java package is built and started the same way, so

@@ -1,0 +1,23 @@
+[project]
+name = "requests-opentelemetry-conformance-client"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "requests==2.34.2",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    "opentelemetry-instrumentation-requests==0.65b0",
+    # `otel-conformance-python` installs the SDK providers and loads no
+    # instrumentation, which is what leaves the one above the only one
+    # measured; the contract is what the workload sends.
+    "opentelemetry-conformance[python]",
+    "otel-http-test-client",
+]
+
+[tool.uv.sources]
+opentelemetry-conformance = { path = "../../../../../../tools/runner", editable = true }
+otel-http-test-client = { path = "../../../../../../tools/http/test-client/python", editable = true }
+
+[tool.uv]
+package = false
