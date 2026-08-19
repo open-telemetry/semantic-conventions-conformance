@@ -15,19 +15,3 @@ server:
 scenarios:
   client:
     run: otel-conformance-dotnet run
-    expected_violations:
-      # `System.Net.Http` publishes the runtime's meter whole rather than
-      # choosing from it, so this arrives with the rest of the client metrics
-      # and cannot be dropped without dropping the ones being measured.
-      #
-      # `context: {}` matches the finding weaver reports, which carries none —
-      # it therefore accepts any metric outside the registry, not this one by
-      # name. Weaver gives `missing_metric` nothing narrower to match on.
-      - id: missing_metric
-        context: {}
-        reason: >-
-          http.client.request.time_in_queue is a .NET runtime metric that no
-          semantic convention describes. It measures how long a request waited
-          for a connection from the pool, which is a real thing to want, but
-          without a registry entry weaver cannot check its attributes and a
-          consumer cannot expect the same measurement from any other language.

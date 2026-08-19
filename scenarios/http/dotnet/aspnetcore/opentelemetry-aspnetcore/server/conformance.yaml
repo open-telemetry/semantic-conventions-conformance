@@ -15,39 +15,3 @@ scenarios:
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-dotnet run
-    expected_violations:
-      # Recorded rather than configured away: an enrichment callback could add
-      # client.address, but then the scenario would stop measuring what the
-      # instrumentation does by default.
-      #
-      # One entry covers all four routes — weaver's context names the
-      # attribute, not the span.
-      - id: recommended_attribute_not_present
-        context:
-          attribute_key: client.address
-          kind: server
-        reason: >-
-          OpenTelemetry.Instrumentation.AspNetCore never sets client.address on
-          a server span. It does record the socket that received the request —
-          server.address and server.port are both present — and it sets no
-          network.peer.address either, so a server run says what it listened on
-          but nothing about who called it. ASP.NET Core offers the peer on
-          HttpContext.Connection.RemoteIpAddress, so this is an omission rather
-          than something the framework cannot supply. ASP.NET Core 11 does not
-          add it either; dotnet/aspnetcore#65873 tracks it against that
-          release.
-      # The contract has one failing request, so this is seen once; the context
-      # matches on the status being an error rather than on which route it was.
-      - id: error_type_missing_on_error
-        context:
-          status_code: error
-        reason: >-
-          The server span for a 5xx response is marked an error without
-          error.type, which semantic conventions require whenever the request
-          failed. The counterpart OpenTelemetry.Instrumentation.Http client
-          scenario does set it, to the status code, so one run holds a client
-          span that says why a request failed beside a server span that says
-          only that it did. Nothing is left to group server-side failures by
-          cause. ASP.NET Core sets error.type itself from 11 preview 2 on —
-          dotnet/aspnetcore#64851 — so this expectation ends when these
-          scenarios move to that release.
