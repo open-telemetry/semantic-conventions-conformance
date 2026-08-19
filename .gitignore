@@ -12,3 +12,6 @@ results/
 # Gradle: its caches, and everything a scenario's `setup` builds into them.
 .gradle/
 build/
+
+# npm: the dependency tree a scenario's `setup` installs. The lockfile is committed.
+node_modules/

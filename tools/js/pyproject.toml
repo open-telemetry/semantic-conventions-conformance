@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-conformance-js"
+version = "0.1.0.dev0"
+description = "Installs Node conformance builds, so no conformance.yaml has to name npm portably."
+requires-python = ">=3.10"
+# Standard library only: it runs before the scenario it prepares, so anything
+# it imported would be one more thing that could end up in a run.
+dependencies = []
+
+[project.scripts]
+otel-conformance-js = "otel_conformance_js:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_conformance_js"]
