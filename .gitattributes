@@ -2,3 +2,12 @@
 # rebuilt nightly by `.github/workflows/report.yml`. Marking it generated
 # collapses it in pull request diffs and keeps it out of language stats.
 docs/data/conformance.json linguist-generated=true
+
+# Git stores every text file with LF and checks it out with LF. A file written
+# on Windows is normalized on commit, so CRLF never reaches the repository and
+# no language needs its own line-ending setting.
+* text=auto eol=lf
+
+# Gradle generates gradlew.bat with CRLF. Leave batch files exactly as they are
+# so Git rewrites neither the stored file nor the checkout.
+*.bat -text
