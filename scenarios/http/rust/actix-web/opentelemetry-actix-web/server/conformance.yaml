@@ -13,14 +13,3 @@ scenarios:
     # The driver owns the sender, chooses the port, and closes stdin after the
     # measured traffic, so this process emits server telemetry only.
     run: otel-http-drive --serve otel-conformance-rust run
-    expected_violations:
-      - id: error_type_without_error_status
-        context:
-          status_code: unset
-        reason: >-
-          opentelemetry-instrumentation-actix-web records error.type for every
-          response at or above 400, including the contract's 404, while its
-          server span status follows the HTTP rule that only 5xx responses are
-          errors. The result is a 404 span with error.type="404" and an unset
-          status. This is the instrumentation's default response handling, not
-          something the workload can correct without changing what is measured.
