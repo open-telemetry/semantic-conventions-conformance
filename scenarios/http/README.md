@@ -129,8 +129,8 @@ injected by the runner instead of a daemon's older environment.
 [`otel-conformance-dotnet`](../../tools/dotnet) needs no arguments at all: a
 scenario directory sits inside the project that produces it, so `build`
 publishes that project and `run` starts what it published from
-`dotnet/build/scenario-runtime/`. A `conformance.yaml` therefore names neither
-a configuration nor an assembly path.
+`dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
+neither a configuration nor an assembly path.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
