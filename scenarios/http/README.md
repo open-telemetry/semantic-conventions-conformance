@@ -10,8 +10,9 @@ What HTTP instrumentations emit, checked against the
 ```
 
 A language that needs a build of its own has a build root directly under this
-one: Java's version-pinned Gradle build, described below, and
-[`js/`](js/README.md), whose README explains the npm workspace it roots.
+one: the version-pinned Gradle build under `java/` and the solution under
+`dotnet/`, both described below, and [`js/`](js/README.md), whose README
+explains the npm workspace it roots.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
@@ -48,7 +49,7 @@ under [`tools/java`](../../tools/java) that any domain's scenarios share.
 [`dotnet/`](dotnet) measures one mechanism: an ASP.NET Core server package and
 a `System.Net.Http.HttpClient` client package, each with a `scenarios/` project
 holding what it does and a launcher project holding the instrumentation. Its
-build root is a solution, which also lists the shared projects under
+solution also lists the shared projects under
 [`tools/dotnet`](../../tools/dotnet).
 
 ## The scenario contract
