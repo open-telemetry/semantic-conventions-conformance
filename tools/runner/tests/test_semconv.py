@@ -340,7 +340,22 @@ def test_an_entity_is_recorded_when_its_identity_attribute_is_present() -> None:
         MODEL,
     )
 
-    assert data["entities"]["k8s.pod"] == ["k8s.pod.name", "k8s.pod.uid"]
+    assert data["entities"]["k8s.pod"] == {
+        "identity": ["k8s.pod.uid"],
+        "description": ["k8s.pod.name"],
+    }
+
+
+def test_an_entity_with_no_description_attributes_records_empty_description() -> None:
+    data = _reduce(
+        Observed(resources={"k8s.pod.uid"}),
+        MODEL,
+    )
+
+    assert data["entities"]["k8s.pod"] == {
+        "identity": ["k8s.pod.uid"],
+        "description": [],
+    }
 
 
 def test_an_entity_is_not_recorded_if_only_descriptive_attributes_are_present() -> None:
@@ -382,11 +397,15 @@ def test_an_entity_with_multiple_identity_attributes_requires_all_of_them() -> N
         ),
         model,
     )
-    assert complete["entities"]["service.instance"] == [
-        "service.instance.id",
-        "service.name",
-        "service.version",
-    ]
+    assert complete["entities"]["service.instance"] == {
+        "identity": [
+            "service.instance.id",
+            "service.name",
+        ],
+        "description": [
+            "service.version",
+        ],
+    }
 
 
 def test_an_entity_the_run_did_not_emit_attributes_for_is_dropped() -> None:
@@ -430,9 +449,11 @@ def test_the_file_is_written_in_a_stable_order() -> None:
     assert data["spans"]["http.server"] == sorted(
         data["spans"]["http.server"]
     )
-    assert data["entities"]["k8s.pod"] == sorted(
-        data["entities"]["k8s.pod"]
-    )
+    assert data["entities"]["k8s.pod"] == {
+        "identity": ["k8s.pod.uid"],
+        "description": ["k8s.pod.name"],
+    }
+    assert list(data["entities"]["k8s.pod"]) == ["identity", "description"]
 
 
 def test_a_run_that_produced_no_reports_is_an_error(tmp_path) -> None:

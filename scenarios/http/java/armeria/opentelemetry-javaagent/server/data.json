@@ -30,25 +30,43 @@
   },
   "findings": [],
   "entities": {
-    "process.runtime": [
-      "process.runtime.description",
-      "process.runtime.name",
-      "process.runtime.version"
-    ],
-    "service": [
-      "service.name"
-    ],
-    "service.instance": [
-      "service.instance.id"
-    ],
-    "telemetry.distro": [
-      "telemetry.distro.name",
-      "telemetry.distro.version"
-    ],
-    "telemetry.sdk": [
-      "telemetry.sdk.language",
-      "telemetry.sdk.name",
-      "telemetry.sdk.version"
-    ]
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": [
+        "process.runtime.description"
+      ]
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
   }
 }

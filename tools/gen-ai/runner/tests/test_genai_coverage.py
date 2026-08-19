@@ -160,3 +160,6 @@ def test_every_declared_entity_is_recordable(model, reduce_for) -> None:
     recorded = reduce_for(entities=declared)["entities"]
 
     assert set(recorded) == set(declared)
+    for name in declared:
+        assert "identity" in recorded[name]
+        assert "description" in recorded[name]

@@ -90,21 +90,22 @@ def _signals(
 def _entities(
     resources: set[str],
     declared: Mapping[str, Any],
-) -> dict[str, list[str]]:
-    """Which of each declared entity's attributes the run carried on its resources.
+) -> dict[str, dict[str, list[str]]]:
+    """Which of each declared entity's identity and description attributes the run carried on its resources.
 
     Only entities the registry declares are recorded — anything else is not
     coverage of it. An entity is recognised by its identifying attributes; only
     when all of its declared identifying attributes are present on a resource
     are its carried attributes recorded.
     """
-    recorded: dict[str, list[str]] = {}
+    recorded: dict[str, dict[str, list[str]]] = {}
     for name, entity in sorted(declared.items()):
         identity = entity.get("identity", {})
         if not identity or not set(identity).issubset(resources):
             continue
         description = entity.get("description", {})
-        all_declared_attrs = identity.keys() | description.keys()
-        present = sorted(all_declared_attrs & resources)
-        recorded[name] = present
+        recorded[name] = {
+            "identity": sorted(identity.keys() & resources),
+            "description": sorted(description.keys() & resources),
+        }
     return recorded
