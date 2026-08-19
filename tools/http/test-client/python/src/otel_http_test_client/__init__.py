@@ -354,5 +354,21 @@ class _QuietHandler(WSGIRequestHandler):
     prints what it sent.
     """
 
+    def get_environ(self):
+        """The environ, plus the two keys a real WSGI server also supplies.
+
+        ``wsgiref.simple_server`` is PEP 3333 and no more, but a WSGI
+        instrumentation reads ``url.path`` and ``url.query`` from ``RAW_URI``
+        and ``client.port`` from ``REMOTE_PORT`` — neither of which PEP 3333
+        defines, and both of which gunicorn, uWSGI and Werkzeug set. Without
+        them the harness, not the instrumentation, would be the reason those
+        attributes are missing from a coverage file.
+        """
+        environ = super().get_environ()
+        # The raw request target, before wsgiref splits and unquotes it.
+        environ["RAW_URI"] = self.path
+        environ["REMOTE_PORT"] = str(self.client_address[1])
+        return environ
+
     def log_message(self, format: str, *args: object) -> None:  # noqa: A002
         del format, args

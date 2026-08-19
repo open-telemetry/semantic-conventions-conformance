@@ -32,10 +32,41 @@
       "groupName": "java-minor"
     },
     {
+      // group all non-major JavaScript dependency updates into a single PR
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "javascript-minor"
+    },
+    {
+      // group all non-major Python dependency updates into a single PR
+      // (two managers read pyproject.toml: `poetry` takes a file over from
+      // `pep621` whenever it can read dependencies out of it and no lock
+      // file sits beside it, which splits the packages under `tools/`
+      // across the two. That split follows how a package is laid out, not
+      // how its updates should arrive, so the rule has to name both.)
+      "matchManagers": ["pep621", "poetry"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "python-minor"
+    },
+    {
       // Everything under this Maven group ships only `-alpha` versions, so
       // Renovate's default of skipping unstable versions would never update it.
       "matchPackageNames": [
         "io.opentelemetry.instrumentation:**"
+      ],
+      "ignoreUnstable": false
+    },
+    {
+      // These ship only `bN` prereleases and have never published a stable
+      // release, so each minor is its own prerelease line and Renovate's
+      // default would never propose 0.65b0 to 0.66b0. Several are at `1.0bN`
+      // already; once one cuts a stable release it wants dropping from here,
+      // or Renovate will go on offering prereleases in preference to it.
+      "matchPackageNames": [
+        "opentelemetry-distro",
+        "opentelemetry-instrumentation-*",
+        "opentelemetry-test-utils",
+        "opentelemetry-util-genai"
       ],
       "ignoreUnstable": false
     }

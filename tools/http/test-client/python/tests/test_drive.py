@@ -69,6 +69,43 @@ print(json.dumps(SEEN), file=sys.stderr)
 sys.exit(EXIT_CODE)
 """
 
+# The same scenario, reporting what its environ held rather than what it was
+# asked for.
+_ENVIRON_SCENARIO = """
+import json
+import sys
+
+from otel_http_test_client import CONTENT_TYPE, respond, serve
+
+SEEN = []
+
+
+def app(environ, start_response):
+    SEEN.append(
+        {key: environ.get(key) for key in ("RAW_URI", "REMOTE_PORT")}
+    )
+
+    length = int(environ.get("CONTENT_LENGTH") or 0)
+    request_body = environ["wsgi.input"].read(length).decode() or None
+    status, text = respond(
+        environ["REQUEST_METHOD"], environ["PATH_INFO"], request_body
+    )
+    body = text.encode()
+
+    start_response(
+        f"{status} Status",
+        [
+            ("Content-Type", CONTENT_TYPE),
+            ("Content-Length", str(len(body))),
+        ],
+    )
+    return [body]
+
+
+serve(lambda: app)
+print(json.dumps(SEEN), file=sys.stderr)
+"""
+
 # A scenario command that is a launcher rather than the server itself: it
 # starts the real server process, directly or indirectly, and waits for it, so
 # the process the driver started is not the process that has to stop.
@@ -480,6 +517,28 @@ class TestStoppingWhatAScenarioStarted:
             driver._serve_and_drive(_launched(tmp_path, _DEAF_SERVER))
 
         assert _stopped_answering(tmp_path / "port")
+
+
+class TestWhatAServerScenarioIsGiven:
+    """``serve()`` is the harness, so what it puts in the environ decides what
+    an instrumentation *can* record."""
+
+    def test_it_supplies_what_a_real_wsgi_server_does(
+        self, tmp_path: Path
+    ) -> None:
+        """A WSGI instrumentation reads ``url.path`` and ``url.query`` from
+        ``RAW_URI`` and ``client.port`` from ``REMOTE_PORT``. PEP 3333 defines
+        neither, so a bare reference server would be the reason they are
+        missing from a coverage file.
+        """
+        completed = _drive(_scenario(tmp_path, _ENVIRON_SCENARIO))
+
+        assert completed.returncode == 0, completed.stderr
+        seen = json.loads(completed.stderr.strip().splitlines()[-1])
+        assert "/users/123?fields=name&verbose=true" in [
+            request["RAW_URI"] for request in seen
+        ]
+        assert all(request["REMOTE_PORT"] for request in seen)
 
 
 class TestTheCommandLine:
