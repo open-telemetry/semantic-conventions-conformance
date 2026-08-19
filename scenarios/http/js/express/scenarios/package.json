@@ -1,0 +1,13 @@
+{
+  "name": "@otel-conformance/express-scenarios",
+  "version": "0.1.0",
+  "private": true,
+  "description": "What every Express HTTP conformance scenario does, with no OpenTelemetry in it.",
+  "license": "Apache-2.0",
+  "main": "server.js",
+  "dependencies": {
+    "@otel-conformance/http-test-client": "file:../../../../../tools/http/test-client/js",
+    "@otel-conformance/scenario-support": "file:../../../../../tools/js/scenario-support",
+    "express": "5.2.1"
+  }
+}

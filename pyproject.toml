@@ -33,6 +33,7 @@ known-first-party = [
   "http_mock_server",
   "otel_conformance_dotnet",
   "otel_conformance_java",
+  "otel_conformance_js",
   "otel_http_test_client",
 ]
 known-third-party = ["pytest"]
@@ -51,6 +52,7 @@ include = [
   "tools/http/runner/src",
   "tools/http/mock-server/src",
   "tools/http/test-client/python/src",
-  "tools/java/src",
   "tools/dotnet/src",
+  "tools/java/src",
+  "tools/js/src",
 ]
