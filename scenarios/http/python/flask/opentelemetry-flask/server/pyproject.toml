@@ -1,0 +1,23 @@
+[project]
+name = "flask-opentelemetry-conformance-server"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "flask==3.1.3",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    "opentelemetry-instrumentation-flask==0.65b0",
+    # `otel-conformance-python` installs the SDK providers and loads no
+    # instrumentation, which is what leaves the one above the only one
+    # measured; the contract is what the app answers.
+    "opentelemetry-conformance[python]",
+    "otel-http-test-client",
+]
+
+[tool.uv.sources]
+opentelemetry-conformance = { path = "../../../../../../tools/runner", editable = true }
+otel-http-test-client = { path = "../../../../../../tools/http/test-client/python", editable = true }
+
+[tool.uv]
+package = false
