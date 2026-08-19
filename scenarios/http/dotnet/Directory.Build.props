@@ -12,6 +12,6 @@
          one directory per project, so a scenario's `run:` names an assembly
          rather than a configuration and a target framework — and so a stale
          tree is one directory to delete. -->
-    <PublishDir>$(MSBuildThisFileDirectory)build/scenario-runtime/$(MSBuildProjectName)/</PublishDir>
+    <PublishDir>$(ArtifactsPath)/scenario-runtime/$(MSBuildProjectName)/</PublishDir>
   </PropertyGroup>
 </Project>

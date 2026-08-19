@@ -42,7 +42,7 @@ PROJECT_SUFFIX = ".csproj"
 
 # Where `PublishDir` collects what `build` published, relative to the build
 # root and flattened to one directory per project.
-RUNTIME = Path("build") / "scenario-runtime"
+RUNTIME = Path("artifacts") / "scenario-runtime"
 
 CONFIGURATION = "Release"
 

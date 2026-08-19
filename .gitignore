@@ -13,7 +13,6 @@ results/
 .gradle/
 build/
 
-# .NET: what a build and a scenario's `setup` compile into, anywhere in the
-# tree, which is where the SDK puts them and not something a project chooses.
-bin/
-obj/
+# .NET: what a build writes, which the artifacts output layout collects into
+# one directory per build root.
+artifacts/

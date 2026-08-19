@@ -97,7 +97,7 @@ class TestRunning:
             "dotnet",
             str(
                 root
-                / "build"
+                / "artifacts"
                 / "scenario-runtime"
                 / PROJECT
                 / f"{PROJECT}.dll"
@@ -113,7 +113,7 @@ class TestRunning:
         command = run_command(root, project_file(scenario))
 
         assert command[1].startswith(
-            str(root / "build" / "scenario-runtime" / PROJECT)
+            str(root / "artifacts" / "scenario-runtime" / PROJECT)
         )
 
     def test_it_runs_the_assembly_rather_than_the_executable(
