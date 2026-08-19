@@ -1,0 +1,11 @@
+{
+  "name": "@otel-conformance/scenario-support",
+  "version": "0.1.0",
+  "private": true,
+  "description": "What a Node conformance scenario needs before any telemetry.",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ]
+}

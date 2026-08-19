@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: express
+instrumentation_library: "@opentelemetry/instrumentation-express"
+
+setup: otel-conformance-js install
+
+scenarios:
+  server:
+    # The requests are sent from outside the scenario, so a server run holds
+    # server telemetry only; the driver starts this command, chooses the port
+    # it binds, and closes its standard input when it is done.
+    run: otel-http-drive --serve node ../server.js
