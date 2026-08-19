@@ -1,0 +1,19 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: requests
+instrumentation_library: opentelemetry-instrumentation-requests
+
+env:
+  # Python's HTTP instrumentations still emit the pre-stable attributes by
+  # default at 0.65b0 — `http.method`, `http.status_code`, `net.peer.name` —
+  # so without this a run measures the old conventions.
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: uv run --frozen --project . otel-conformance-python scenario.py

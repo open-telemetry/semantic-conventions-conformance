@@ -46,6 +46,11 @@ install their framework-specific decorators. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
 
+A Python instrumentation has nothing to build. Its workload is a module in
+`python/<library>/scenarios/`, and each `<side>/` directory holds the
+`pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
+`scenario.py` that turns it on before handing the workload to the harness.
+
 ## The scenario contract
 
 [`contract.json`](../../tools/http/test-client/contract.json) is the concrete
@@ -107,6 +112,8 @@ otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
 otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
+otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
+otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
 ```
 
 Every Java package is built and started the same way, so
