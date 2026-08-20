@@ -15,3 +15,6 @@ build/
 
 # npm: the dependency tree a scenario's `setup` installs. The lockfile is committed.
 node_modules/
+
+# Cargo: every workspace member shares this build directory.
+target/

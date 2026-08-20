@@ -1,0 +1,65 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "error.type",
+      "http.request.body.size",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.path",
+      "url.query",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.server.active_requests": [
+      "http.request.method",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.server.request.body.size": [
+      "http.request.method",
+      "http.route",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.server.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.server.response.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ]
+  },
+  "findings": [
+    {
+      "id": "error_type_without_error_status",
+      "message": "Span 'GET /status/{status}' sets 'error.type'='404' but status.code is 'unset', not 'error'.",
+      "context": {
+        "status_code": "unset"
+      }
+    }
+  ]
+}

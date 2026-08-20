@@ -85,3 +85,6 @@ answers, and none needs an HTTP client of its own beyond the one under test.
 - [`js/`](js) — three Node modules: `contract` reads the file, `respond` looks
   up answers for any Node framework, and `drive` sends the requests through a
   caller-supplied sender. Its unit tests drive both halves against each other.
+- [`rust/`](rust) — embeds this one `contract.json` with `include_str!`,
+  answers server requests, and drives clients through a caller-supplied async
+  sender. Its tests drive both halves against each other.
