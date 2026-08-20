@@ -12,13 +12,13 @@ the responses come from the
 about the scenarios themselves.
 
 ```sh
-otel-conformance scenarios/gen-ai/python/openai/opentelemetry-openai --report-only
+otel-conformance domains/gen-ai/python/openai/opentelemetry-openai --report-only
 ```
 
 ## The scenario tree
 
 ```
-scenarios/gen-ai/<language>/<library>/
+domains/gen-ai/<language>/<library>/
     scenarios/              the programs, one copy, shared
     <instrumentation>/      conformance.yaml, pyproject.toml, uv.lock, data.json
 ```

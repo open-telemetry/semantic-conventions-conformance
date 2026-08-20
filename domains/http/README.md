@@ -103,14 +103,14 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/java -e tools/js
-otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
-otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
-otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
-otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
-otel-conformance scenarios/http/js/express/opentelemetry-express/server
-otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
-otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
-otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
+otel-conformance domains/http/java/armeria/opentelemetry-javaagent/client
+otel-conformance domains/http/java/armeria/opentelemetry-javaagent/server
+otel-conformance domains/http/java/armeria/opentelemetry-library/client
+otel-conformance domains/http/java/armeria/opentelemetry-library/server
+otel-conformance domains/http/js/express/opentelemetry-express/server
+otel-conformance domains/http/js/undici/opentelemetry-undici/client
+otel-conformance domains/http/python/flask/opentelemetry-flask/server
+otel-conformance domains/http/python/requests/opentelemetry-requests/client
 ```
 
 Every Java package is built and started the same way, so

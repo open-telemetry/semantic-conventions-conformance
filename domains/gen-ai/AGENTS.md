@@ -1,4 +1,4 @@
-# Working in `scenarios/gen-ai`
+# Working in `domains/gen-ai`
 
 Read [README.md](README.md) first. It holds the scenario contract, and this
 file is only the rules for changing the tree.
@@ -6,7 +6,7 @@ file is only the rules for changing the tree.
 ## Adding a library
 
 ```
-scenarios/gen-ai/<language>/<library>/
+domains/gen-ai/<language>/<library>/
     scenarios/<class>.py     one file per scenario class
     <instrumentation>/       conformance.yaml, pyproject.toml, uv.lock, data.json
 ```
@@ -46,7 +46,7 @@ reproducible.
 ## Before opening a PR
 
 ```sh
-otel-conformance scenarios/gen-ai/python/<library>/<instrumentation> --report-only
+otel-conformance domains/gen-ai/python/<library>/<instrumentation> --report-only
 ```
 
 - Commit the regenerated `data.json`. CI runs every directory and fails on any

@@ -1,13 +1,13 @@
 ---
-applyTo: "scenarios/gen-ai/**,tools/gen-ai/mock-server/**"
+applyTo: "domains/gen-ai/**,tools/gen-ai/mock-server/**"
 ---
 
 # Reviewing GenAI conformance scenarios
 
 The contract these have to obey is in
-[`scenarios/gen-ai/README.md`](../../scenarios/gen-ai/README.md). The rules for
+[`domains/gen-ai/README.md`](../../domains/gen-ai/README.md). The rules for
 changing the tree are in
-[`scenarios/gen-ai/AGENTS.md`](../../scenarios/gen-ai/AGENTS.md). Review
+[`domains/gen-ai/AGENTS.md`](../../domains/gen-ai/AGENTS.md). Review
 against those, and check:
 
 - **Comparability.** Does the scenario make the exchange its class defines, in
