@@ -15,3 +15,6 @@ build/
 
 # npm: the dependency tree a scenario's `setup` installs. The lockfile is committed.
 node_modules/
+
+# Composer: installed dependencies. Every package's lockfile is committed.
+vendor/

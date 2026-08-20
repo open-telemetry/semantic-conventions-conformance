@@ -85,3 +85,7 @@ answers, and none needs an HTTP client of its own beyond the one under test.
 - [`js/`](js) — three Node modules: `contract` reads the file, `respond` looks
   up answers for any Node framework, and `drive` sends the requests through a
   caller-supplied sender. Its unit tests drive both halves against each other.
+- [`php/`](php) — `Contract` reads the file, `ServerWorkload::respond` looks up
+  answers, and `ClientWorkload::drive` sends the requests through a
+  caller-supplied function and verifies each response as parsed JSON. Its unit
+  tests drive both halves against each other.

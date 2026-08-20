@@ -483,6 +483,28 @@ class TestDrivingAServerScenario:
         assert completed.returncode != 0
         assert "ContractError" in completed.stderr
 
+    def test_an_error_delivers_eof_before_force_killing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        events: list[str] = []
+
+        class Input:
+            def close(self) -> None:
+                events.append("closed")
+
+        class Process:
+            stdin = Input()
+
+            def wait(self, *, timeout: float) -> int:
+                events.append(f"waited {timeout}")
+                return 0
+
+        monkeypatch.setattr(driver, "_ERROR_SHUTDOWN_TIMEOUT_SECONDS", 3)
+
+        driver._stop_after_error(Process())  # type: ignore[arg-type]
+
+        assert events == ["closed", "waited 3"]
+
 
 @pytest.mark.skipif(
     sys.platform == "win32",
