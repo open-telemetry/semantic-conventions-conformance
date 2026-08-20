@@ -1,0 +1,19 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: net/http
+instrumentation_library: go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
+
+# Compiling here rather than in `run:` keeps the toolchain out of the measured
+# process: `go run` would build on the clock and fork the scenario as a child.
+setup: otel-conformance-go build
+
+# The mock server answers the same contract the server scenarios serve, so the
+# two sides of the instrumentation are measured against identical traffic.
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-go run

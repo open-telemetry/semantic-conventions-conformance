@@ -85,3 +85,7 @@ answers, and none needs an HTTP client of its own beyond the one under test.
 - [`js/`](js) — three Node modules: `contract` reads the file, `respond` looks
   up answers for any Node framework, and `drive` sends the requests through a
   caller-supplied sender. Its unit tests drive both halves against each other.
+- [`go/`](go) — `httpcontract`: `Respond` looks up answers for any Go
+  framework and `Drive` sends the requests, with unit tests over both halves.
+  It finds `contract.json` in the checkout at run time, because `//go:embed`
+  cannot reach outside its own package directory.

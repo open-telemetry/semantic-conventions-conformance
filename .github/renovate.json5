@@ -38,6 +38,12 @@
       "groupName": "javascript-minor"
     },
     {
+      // group all non-major Go dependency updates into a single PR
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "go-minor"
+    },
+    {
       // group all non-major Python dependency updates into a single PR
       // (two managers read pyproject.toml: `poetry` takes a file over from
       // `pep621` whenever it can read dependencies out of it and no lock

@@ -10,8 +10,9 @@ What HTTP instrumentations emit, checked against the
 ```
 
 A language that needs a build of its own has a build root directly under this
-one: Java's version-pinned Gradle build, described below, and
-[`js/`](js/README.md), whose README explains the npm workspace it roots.
+one: Java's version-pinned Gradle build, described below, [`js/`](js/README.md),
+whose README explains the npm workspace it roots, and [`go/`](go/README.md),
+whose README explains the single Go module it roots.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
@@ -102,13 +103,15 @@ both sides could hide an unexpected client span in a server run or the reverse.
 
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
-  -e tools/http/test-client/python -e tools/java -e tools/js
+  -e tools/http/test-client/python -e tools/java -e tools/js -e tools/go
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
+otel-conformance scenarios/http/go/net-http/otelhttp/client
+otel-conformance scenarios/http/go/net-http/otelhttp/server
 otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
 otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
 ```
@@ -124,6 +127,10 @@ dependency declarations to copy the resolved classpath and Java agent into
 `java/build/scenario-runtime/`. Its measured `run` is a direct `java`
 process, not Gradle, so every scenario inherits the fresh OTLP endpoint
 injected by the runner instead of a daemon's older environment.
+
+[`otel-conformance-go`](../../tools/go) holds how a Go package is built and
+started: `setup:` compiles the scenario and `run:` is the resulting binary, so
+the toolchain is not the measured process.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
