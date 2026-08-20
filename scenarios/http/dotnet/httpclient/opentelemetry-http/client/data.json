@@ -1,0 +1,55 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "dns.lookup.duration": [
+      "dns.question.name"
+    ],
+    "http.client.active_requests": [
+      "http.request.method",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.client.connection.duration": [
+      "network.peer.address",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.client.open_connections": [
+      "http.connection.state",
+      "network.peer.address",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.client.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ]
+  },
+  "findings": [
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry."
+    }
+  ]
+}

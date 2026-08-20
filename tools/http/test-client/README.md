@@ -85,3 +85,8 @@ answers, and none needs an HTTP client of its own beyond the one under test.
 - [`js/`](js) — three Node modules: `contract` reads the file, `respond` looks
   up answers for any Node framework, and `drive` sends the requests through a
   caller-supplied sender. Its unit tests drive both halves against each other.
+- [`dotnet/`](dotnet) — `HttpContract` reads the file,
+  `HttpServerWorkload.Respond` looks up answers for any .NET framework, and
+  `HttpClientWorkload.DriveAsync` sends the requests through a caller-supplied
+  sender. The build embeds `contract.json` as a manifest resource, and its unit
+  tests drive both halves against each other.

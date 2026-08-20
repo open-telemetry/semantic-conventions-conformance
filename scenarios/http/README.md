@@ -10,8 +10,9 @@ What HTTP instrumentations emit, checked against the
 ```
 
 A language that needs a build of its own has a build root directly under this
-one: Java's version-pinned Gradle build, described below, and
-[`js/`](js/README.md), whose README explains the npm workspace it roots.
+one: the version-pinned Gradle build under `java/` and the solution under
+`dotnet/`, both described below, and [`js/`](js/README.md), whose README
+explains the npm workspace it roots.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
@@ -44,6 +45,12 @@ plain Armeria and attach the agent, while the library launchers use the shared
 install their framework-specific decorators. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
+
+[`dotnet/`](dotnet) measures one mechanism: an ASP.NET Core server package and
+a `System.Net.Http.HttpClient` client package, each with a `scenarios/` project
+holding what it does and a launcher project holding the instrumentation. Its
+solution also lists the shared projects under
+[`tools/dotnet`](../../tools/dotnet).
 
 A Python instrumentation has nothing to build. Its workload is a module in
 `python/<library>/scenarios/`, and each `<side>/` directory holds the
@@ -102,13 +109,15 @@ both sides could hide an unexpected client span in a server run or the reverse.
 
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
-  -e tools/http/test-client/python -e tools/java -e tools/js
+  -e tools/http/test-client/python -e tools/java -e tools/js -e tools/dotnet
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
+otel-conformance scenarios/http/dotnet/aspnetcore/opentelemetry-aspnetcore/server
+otel-conformance scenarios/http/dotnet/httpclient/opentelemetry-http/client
 otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
 otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
 ```
@@ -124,6 +133,12 @@ dependency declarations to copy the resolved classpath and Java agent into
 `java/build/scenario-runtime/`. Its measured `run` is a direct `java`
 process, not Gradle, so every scenario inherits the fresh OTLP endpoint
 injected by the runner instead of a daemon's older environment.
+
+[`otel-conformance-dotnet`](../../tools/dotnet) needs no arguments at all: a
+scenario directory sits inside the project that produces it, so `build`
+publishes that project and `run` starts what it published from
+`dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
+neither a configuration nor an assembly path.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every

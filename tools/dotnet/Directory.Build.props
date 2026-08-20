@@ -1,0 +1,27 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+
+  The build conventions every .NET conformance project shares. MSBuild finds
+  this file by walking up from a project, so it reaches the projects here on
+  its own, and a domain's build root imports it.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- One directory per build root rather than a `bin` and an `obj` beside
+         every project. `GetDirectoryNameOfFileAbove` finds the build root the
+         way MSBuild found this file, so a domain collects its own output and
+         the repository root stays free of any one language's. -->
+    <ArtifactsPath>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'Directory.Build.props'))/artifacts</ArtifactsPath>
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Nothing here is published, so a package identity would only be noise. -->
+    <IsPackable>false</IsPackable>
+    <!-- The compiler's own diagnostics are defects rather than taste, so they
+         fail a build; formatting is left to whoever is reading the file. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
