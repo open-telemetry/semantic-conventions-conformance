@@ -76,15 +76,12 @@ async function proxyContract(request, response, mockServerUrl) {
   response.end(payload);
 }
 
-function page(title, includeResource) {
+function page(title) {
   const configuration = JSON.stringify({
     doneEndpoint: "/__done",
     tracesEndpoint: "/v1/traces",
     requests: requests(),
   }).replaceAll("<", "\\u003c");
-  const resource = includeResource
-    ? '<img alt="contract resource" src="/users/123">'
-    : "";
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -93,15 +90,11 @@ function page(title, includeResource) {
   <script>window.__OTEL_HTTP_CONFORMANCE__ = ${configuration};</script>
   <script src="/app.js"></script>
 </head>
-<body>${resource}</body>
+<body></body>
 </html>`;
 }
 
-async function runBrowserScenario({
-  entry,
-  title,
-  includeContractResource = false,
-}) {
+async function runBrowserScenario({ entry, title }) {
   const bundle = await build({
     entryPoints: [entry],
     bundle: true,
@@ -123,7 +116,7 @@ async function runBrowserScenario({
     try {
       const url = new URL(request.url, "http://127.0.0.1");
       if (request.method === "GET" && url.pathname === "/") {
-        const payload = Buffer.from(page(title, includeContractResource));
+        const payload = Buffer.from(page(title));
         response.writeHead(200, {
           "content-type": "text/html; charset=utf-8",
           "content-length": payload.length,
