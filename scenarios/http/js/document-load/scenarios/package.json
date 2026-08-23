@@ -1,0 +1,8 @@
+{
+  "name": "@otel-conformance/document-load-scenarios",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The document loaded by every browser document-load conformance scenario.",
+  "license": "Apache-2.0",
+  "main": "client.js"
+}

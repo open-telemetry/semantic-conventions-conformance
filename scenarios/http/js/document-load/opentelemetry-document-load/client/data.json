@@ -1,0 +1,33 @@
+{
+  "spans": {},
+  "events": {},
+  "metrics": {},
+  "findings": [
+    {
+      "id": "deprecated",
+      "message": "Attribute 'http.response_content_length' is deprecated; reason = 'uncategorized', note = 'Replaced by `http.response.header.content-length`.'.",
+      "context": {
+        "attribute_key": "http.response_content_length",
+        "deprecation_note": "Replaced by `http.response.header.content-length`.",
+        "deprecation_reason": "uncategorized"
+      }
+    }
+  ],
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
+}

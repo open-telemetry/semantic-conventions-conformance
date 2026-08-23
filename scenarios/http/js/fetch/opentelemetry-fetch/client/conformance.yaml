@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: fetch
+instrumentation_library: "@opentelemetry/instrumentation-fetch"
+
+setup: otel-conformance-js install --browser chromium
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: node ../client.js

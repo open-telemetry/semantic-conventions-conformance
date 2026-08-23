@@ -108,7 +108,12 @@ otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
+otel-conformance scenarios/http/js/document-load/opentelemetry-document-load/client
+otel-conformance scenarios/http/js/fetch/opentelemetry-fetch/client
+otel-conformance scenarios/http/js/http/opentelemetry-http/client
+otel-conformance scenarios/http/js/http/opentelemetry-http/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
+otel-conformance scenarios/http/js/xml-http-request/opentelemetry-xml-http-request/client
 otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
 otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
 ```

@@ -15,6 +15,7 @@ from otel_conformance_js import (
     LayoutError,
     build_root,
     npm_command,
+    playwright_command,
 )
 
 
@@ -87,3 +88,30 @@ class TestInstalling:
 
         assert otel_conformance_js.main(["install"]) == 0
         assert calls[0][1] == root
+
+    def test_it_installs_the_pinned_browser_after_the_workspace(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        calls: list[tuple[list[str], Path]] = []
+        monkeypatch.setattr(otel_conformance_js, "build_root", lambda: root)
+        monkeypatch.setattr(
+            otel_conformance_js.subprocess,
+            "call",
+            lambda command, cwd: calls.append((command, cwd)) or 0,
+        )
+
+        assert otel_conformance_js.main(["install", "--browser", "chromium"]) == 0
+        assert calls == [
+            (npm_command(), root),
+            (playwright_command(root, "chromium"), root),
+        ]
+
+    def test_linux_installs_the_browser_system_dependencies(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(otel_conformance_js.sys, "platform", "linux")
+
+        assert playwright_command(root, "chromium")[-2:] == [
+            "--with-deps",
+            "chromium",
+        ]

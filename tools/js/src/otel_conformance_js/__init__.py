@@ -12,7 +12,8 @@ the install. That step is here instead.
 ``install``
     What a package's ``setup:`` runs. Installs the whole npm workspace from
     its committed lockfile, so a scenario gets the versions the lockfile pins
-    rather than whatever resolves today.
+    rather than whatever resolves today. With ``--browser chromium``, it also
+    installs the pinned Playwright browser used by browser scenarios.
 """
 
 from __future__ import annotations
@@ -54,6 +55,15 @@ def npm_command() -> list[str]:
     return [shutil.which("npm") or "npm", "ci"]
 
 
+def playwright_command(root: Path, browser: str) -> list[str]:
+    """The workspace's pinned Playwright CLI, without relying on a shell shim."""
+    executable = root / "node_modules" / "playwright" / "cli.js"
+    command = [shutil.which("node") or "node", str(executable), "install"]
+    if sys.platform == "linux":
+        command.append("--with-deps")
+    return [*command, browser]
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="otel-conformance-js",
@@ -61,11 +71,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subcommands = parser.add_subparsers(dest="command", required=True)
-    subcommands.add_parser(
+    install = subcommands.add_parser(
         "install", help="install the workspace from its committed lockfile"
     )
+    install.add_argument(
+        "--browser",
+        choices=("chromium",),
+        help="also install the workspace's pinned Playwright browser",
+    )
 
-    parser.parse_args(argv)
+    arguments = parser.parse_args(argv)
     try:
         root = build_root()
     except LayoutError as error:
@@ -74,7 +89,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     # From the build root, so every scenario in it installs the same tree
     # however deep its own directory sits.
     try:
-        return subprocess.call(npm_command(), cwd=root)  # noqa: S603
+        result = subprocess.call(npm_command(), cwd=root)  # noqa: S603
+        if result != 0 or arguments.browser is None:
+            return result
+        return subprocess.call(  # noqa: S603
+            playwright_command(root, arguments.browser), cwd=root
+        )
     except FileNotFoundError:
         # A `setup:` step reports what it printed, so what is missing should be
         # the first line of it rather than the bottom of a traceback.
