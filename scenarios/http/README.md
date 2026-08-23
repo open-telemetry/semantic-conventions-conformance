@@ -45,7 +45,12 @@ install their framework-specific decorators. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
 
-### The Java libraries
+A Python instrumentation has nothing to build. Its workload is a module in
+`python/<library>/scenarios/`, and each `<side>/` directory holds the
+`pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
+`scenario.py` that turns it on before handing the workload to the harness.
+
+## The Java libraries
 
 Each is a directory under [`java/`](java) with a package per side it has, and
 every one of them is covered by the OpenTelemetry Java agent. Armeria is the
@@ -65,11 +70,6 @@ A library that does both, such as Netty or Spring WebFlux, gets a package for
 each. Several receive over a container they do not own — JAX-RS resources and
 plain Servlets are both deployed into embedded Tomcat — because what a package
 measures is the instrumentation it names, not the socket underneath it.
-
-A Python instrumentation has nothing to build. Its workload is a module in
-`python/<library>/scenarios/`, and each `<side>/` directory holds the
-`pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
-`scenario.py` that turns it on before handing the workload to the harness.
 
 ## The scenario contract
 
