@@ -21,7 +21,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
  * Hosts the shared HTTP exchanges on JAX-RS resource methods until the driver says stop.
  *
  * <p>The routes are {@code @Path} annotations, which is where a JAX-RS instrumentation reads {@code
- * http.route} from. Jersey and Tomcat are only what the resource is deployed into.
+ * http.route} from. Jersey runs the resource, and Tomcat hosts the servlet container.
  */
 public final class JaxRsServerScenario {
   private JaxRsServerScenario() {}

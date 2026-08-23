@@ -20,8 +20,7 @@ import org.apache.catalina.startup.Tomcat;
  * Hosts the shared HTTP exchanges in plain Servlets until the driver says stop.
  *
  * <p>The routes are Servlet mappings, which is what the Servlet API has in place of the contract's
- * parameterized routes. Tomcat is only the container the Servlets are deployed into; what this
- * package measures is the Servlet instrumentation, and the container is interchangeable.
+ * parameterized routes. Tomcat hosts the Servlets.
  */
 public final class ServletServerScenario {
   private ServletServerScenario() {}
