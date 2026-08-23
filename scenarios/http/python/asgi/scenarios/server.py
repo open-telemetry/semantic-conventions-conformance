@@ -27,11 +27,8 @@ async def application(scope, receive, send) -> None:
             "status": status,
             "headers": [
                 (b"content-type", CONTENT_TYPE.encode()),
-                # The length an ASGI framework always sends and a bare
-                # application may omit. The instrumentation reads
-                # `http.server.response.body.size` from this header, so
-                # leaving it out would make the workload rather than the
-                # instrumentation the reason that metric is missing.
+                # The instrumentation derives `http.server.response.body.size`
+                # from this header.
                 (b"content-length", str(len(encoded)).encode()),
             ],
         }
