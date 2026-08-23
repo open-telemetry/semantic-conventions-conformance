@@ -61,15 +61,9 @@ undici does not go through Node's `http` module, so its client spans come from
 ## Browser clients
 
 Fetch and XMLHttpRequest send the shared contract in a real headless Chromium
-page. Document Load records the page and a contract-backed resource load. The
-shared browser test client bundles each browser entry, proxies contract traffic
-to the same mock server as every other client, and forwards the browser's
-OTLP/HTTP payload unchanged to the runner's OTLP/gRPC collector.
-
-Document Load asserts the instrumentation's four native `INTERNAL` spans. Those
-spans do not carry `http.request.method`, so they are not credited as HTTP
-client/server coverage; its committed artifact instead records the Weaver
-findings produced by those spans.
+page. The shared browser test client bundles each browser entry, proxies
+contract traffic to the same mock server as every other client, and forwards
+the browser's OTLP/HTTP payload unchanged to the runner's OTLP/gRPC collector.
 
 Playwright and Chromium are pinned by the workspace. Browser packages use
 `otel-conformance-js install --browser chromium`, so CI does not depend on a
@@ -84,7 +78,6 @@ that version.
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/js
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
-otel-conformance scenarios/http/js/document-load/opentelemetry-document-load/client
 otel-conformance scenarios/http/js/fetch/opentelemetry-fetch/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/server

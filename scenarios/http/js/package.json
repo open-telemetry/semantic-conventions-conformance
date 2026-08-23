@@ -5,7 +5,6 @@
   "description": "The JavaScript build root for the HTTP conformance domain.",
   "license": "Apache-2.0",
   "workspaces": [
-    "document-load/*",
     "express/*",
     "fetch/*",
     "http/*",
