@@ -57,9 +57,9 @@
       "ignoreUnstable": false
     },
     {
-      // Akka stops at 2.6 and Akka HTTP at 10.2 here: both moved to the
-      // Business Source License in the release after, so an update past
-      // either would put a non-open-source dependency in this repository.
+      // Akka 2.7 and later use the Business Source License. Keep the actor
+      // and stream dependencies below 2.7 so this repository depends only
+      // on open-source releases.
       "matchPackageNames": [
         "com.typesafe.akka:akka-actor{,_*}",
         "com.typesafe.akka:akka-stream{,_*}"
@@ -67,7 +67,8 @@
       "allowedVersions": "<2.7"
     },
     {
-      // The other half of the rule above; Akka HTTP versions its own way.
+      // Akka HTTP 10.3 and later use the Business Source License. Keep Akka
+      // HTTP below 10.3 so this repository depends only on open-source releases.
       "matchPackageNames": [
         "com.typesafe.akka:akka-http{,_*}"
       ],
