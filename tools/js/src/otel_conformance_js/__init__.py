@@ -95,11 +95,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         return subprocess.call(  # noqa: S603
             playwright_command(root, arguments.browser), cwd=root
         )
-    except FileNotFoundError:
+    except FileNotFoundError as error:
         # A `setup:` step reports what it printed, so what is missing should be
         # the first line of it rather than the bottom of a traceback.
         print(
-            "npm is not on PATH, and a Node scenario is built with it",
+            f"{error.filename} is not available, and a Node scenario requires it",
             file=sys.stderr,
         )
         return 1

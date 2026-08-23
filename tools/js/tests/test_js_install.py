@@ -106,6 +106,32 @@ class TestInstalling:
             (playwright_command(root, "chromium"), root),
         ]
 
+    def test_a_missing_browser_executable_is_reported(
+        self,
+        root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        def call(command: list[str], cwd: Path) -> int:
+            assert cwd == root
+            if command == npm_command():
+                return 0
+            raise FileNotFoundError(2, "No such file or directory", command[0])
+
+        monkeypatch.setattr(otel_conformance_js, "build_root", lambda: root)
+        monkeypatch.setattr(otel_conformance_js.subprocess, "call", call)
+        monkeypatch.setattr(
+            otel_conformance_js.shutil,
+            "which",
+            lambda name: None if name == "node" else f"/usr/bin/{name}",
+        )
+
+        assert otel_conformance_js.main(["install", "--browser", "chromium"]) == 1
+        assert (
+            capsys.readouterr().err
+            == "node is not available, and a Node scenario requires it\n"
+        )
+
     def test_linux_installs_the_browser_system_dependencies(
         self, root: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
