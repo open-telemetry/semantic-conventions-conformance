@@ -1,0 +1,23 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from opentelemetry.instrumentation.pyramid import PyramidInstrumentor
+from otel_http_test_client import serve
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scenarios"))
+
+from server import create_config  # noqa: E402
+
+
+def instrumented() -> object:
+    config = create_config()
+    PyramidInstrumentor().instrument_config(config)
+    return config.make_wsgi_app()
+
+
+serve(instrumented)

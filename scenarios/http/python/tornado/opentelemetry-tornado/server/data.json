@@ -1,0 +1,125 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.peer.address",
+      "network.protocol.version",
+      "server.address",
+      "url.path",
+      "url.query",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.server.active_requests": [
+      "http.request.method",
+      "url.scheme"
+    ],
+    "http.server.request.body.size": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ],
+    "http.server.request.duration": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ],
+    "http.server.response.body.size": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ]
+  },
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tornado.handler' does not exist in the registry.",
+      "context": {
+        "attribute_key": "tornado.handler"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /health' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /status/{code}' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /users/{user_id}' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'POST /items' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "POST"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "unit_mismatch",
+      "message": "Unit should be '{request}', but found 'requests'.",
+      "context": {
+        "expected": "{request}",
+        "unit": "requests"
+      }
+    }
+  ],
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
+}

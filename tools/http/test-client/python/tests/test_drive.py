@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import socket
@@ -23,6 +24,7 @@ from otel_http_test_client import (
     REQUESTS,
     ContractError,
     Exchange,
+    drive_async,
     respond,
     verify,
     wait_for_health,
@@ -259,6 +261,22 @@ class TestTheContract:
                 exchange.method, exchange.path, exchange.body
             )
             verify(exchange, status, body)
+
+    def test_the_async_driver_sends_the_same_contract(self) -> None:
+        seen: list[str] = []
+
+        async def send(
+            method: str, url: str, body: str | None
+        ) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return respond(method, url.removeprefix("http://server"), body)
+
+        asyncio.run(drive_async("http://server", send))
+
+        assert seen == [
+            f"{exchange.method} http://server{exchange.path}"
+            for exchange in REQUESTS
+        ]
 
     def test_request_body_is_the_only_response_placeholder(self) -> None:
         placeholders = re.findall(

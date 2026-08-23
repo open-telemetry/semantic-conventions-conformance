@@ -39,6 +39,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Awaitable
 from pathlib import Path
 from typing import Callable, NamedTuple, Sequence
 from wsgiref.simple_server import WSGIRequestHandler, make_server
@@ -50,10 +51,12 @@ __all__ = [
     "PORT_VARIABLE",
     "REQUESTS",
     "USER_AGENT",
+    "AsyncSend",
     "ContractError",
     "Exchange",
     "Send",
     "drive",
+    "drive_async",
     "request",
     "reserve_port",
     "respond",
@@ -86,6 +89,7 @@ class Exchange(NamedTuple):
 # How one request is sent: method, absolute URL, body → status, response body.
 # A client scenario supplies its own so its library is the one instrumented.
 Send = Callable[[str, str, "str | None"], "tuple[int, str]"]
+AsyncSend = Callable[[str, str, "str | None"], Awaitable["tuple[int, str]"]]
 
 # The port a server scenario listens on. ``otel-http-drive`` chooses it, which
 # is what lets different scenarios run in parallel without colliding.
@@ -180,6 +184,18 @@ def drive(base_url: str, send: Send | None = None) -> None:
     sender = send or request
     for exchange in REQUESTS:
         status, response = sender(
+            exchange.method,
+            f"{base_url}{exchange.path}",
+            exchange.body,
+        )
+        print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
+        verify(exchange, status, response)
+
+
+async def drive_async(base_url: str, send: AsyncSend) -> None:
+    """Asynchronously send :data:`REQUESTS` and check every answer."""
+    for exchange in REQUESTS:
+        status, response = await send(
             exchange.method,
             f"{base_url}{exchange.path}",
             exchange.body,

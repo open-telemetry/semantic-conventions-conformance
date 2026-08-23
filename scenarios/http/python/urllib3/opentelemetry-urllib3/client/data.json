@@ -1,0 +1,110 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.client.request.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port"
+    ],
+    "http.client.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port"
+    ],
+    "http.client.response.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "findings": [
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET' is missing required attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET' is missing required attribute 'server.port'",
+      "context": {
+        "attribute_key": "server.port",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'POST' is missing required attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'POST' is missing required attribute 'server.port'",
+      "context": {
+        "attribute_key": "server.port",
+        "kind": "client"
+      }
+    }
+  ],
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
+}
