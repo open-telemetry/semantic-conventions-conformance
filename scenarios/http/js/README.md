@@ -66,6 +66,11 @@ shared browser test client bundles each browser entry, proxies contract traffic
 to the same mock server as every other client, and forwards the browser's
 OTLP/HTTP payload unchanged to the runner's OTLP/gRPC collector.
 
+Document Load asserts the instrumentation's four native `INTERNAL` spans. Those
+spans do not carry `http.request.method`, so they are not credited as HTTP
+client/server coverage; its committed artifact instead records the Weaver
+findings produced by those spans.
+
 Playwright and Chromium are pinned by the workspace. Browser packages use
 `otel-conformance-js install --browser chromium`, so CI does not depend on a
 system browser.
