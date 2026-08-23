@@ -116,7 +116,9 @@ class TestInstalling:
             assert cwd == root
             if command == npm_command():
                 return 0
-            raise FileNotFoundError(2, "No such file or directory", command[0])
+            # Without a filename, the way Windows raises it: there the name
+            # can only come from the command that was about to run.
+            raise FileNotFoundError(2, "No such file or directory")
 
         monkeypatch.setattr(otel_conformance_js, "build_root", lambda: root)
         monkeypatch.setattr(otel_conformance_js.subprocess, "call", call)
@@ -130,6 +132,27 @@ class TestInstalling:
         assert (
             capsys.readouterr().err
             == "node is not available, and a Node scenario requires it\n"
+        )
+
+    def test_a_missing_npm_is_reported(
+        self,
+        root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        def call(command: list[str], cwd: Path) -> int:
+            raise FileNotFoundError(2, "No such file or directory")
+
+        monkeypatch.setattr(otel_conformance_js, "build_root", lambda: root)
+        monkeypatch.setattr(otel_conformance_js.subprocess, "call", call)
+        monkeypatch.setattr(
+            otel_conformance_js.shutil, "which", lambda name: None
+        )
+
+        assert otel_conformance_js.main(["install"]) == 1
+        assert (
+            capsys.readouterr().err
+            == "npm is not available, and a Node scenario requires it\n"
         )
 
     def test_linux_installs_the_browser_system_dependencies(

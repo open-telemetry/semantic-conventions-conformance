@@ -64,6 +64,25 @@ def playwright_command(root: Path, browser: str) -> list[str]:
     return [*command, browser]
 
 
+def run_command(command: Sequence[str], root: Path) -> int:
+    """Runs ``command`` from ``root``, naming it when it is not there to run.
+
+    A ``setup:`` step reports what it printed, so a missing executable should
+    be the first line of that rather than the bottom of a traceback. The name
+    comes from the command itself: on Windows the raised
+    ``FileNotFoundError`` carries no ``filename``, so the exception alone
+    cannot say what was missing.
+    """
+    try:
+        return subprocess.call(command, cwd=root)  # noqa: S603
+    except FileNotFoundError:
+        print(
+            f"{command[0]} is not available, and a Node scenario requires it",
+            file=sys.stderr,
+        )
+        return 1
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="otel-conformance-js",
@@ -88,21 +107,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     # From the build root, so every scenario in it installs the same tree
     # however deep its own directory sits.
-    try:
-        result = subprocess.call(npm_command(), cwd=root)  # noqa: S603
-        if result != 0 or arguments.browser is None:
-            return result
-        return subprocess.call(  # noqa: S603
-            playwright_command(root, arguments.browser), cwd=root
-        )
-    except FileNotFoundError as error:
-        # A `setup:` step reports what it printed, so what is missing should be
-        # the first line of it rather than the bottom of a traceback.
-        print(
-            f"{error.filename} is not available, and a Node scenario requires it",
-            file=sys.stderr,
-        )
-        return 1
+    result = run_command(npm_command(), root)
+    if result != 0 or arguments.browser is None:
+        return result
+    return run_command(playwright_command(root, arguments.browser), root)
 
 
 if __name__ == "__main__":
