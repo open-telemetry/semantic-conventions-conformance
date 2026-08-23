@@ -33,6 +33,13 @@
       "http.response.status_code",
       "network.protocol.version",
       "url.scheme"
+    ],
+    "http.server.response.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "url.scheme"
     ]
   },
   "findings": [

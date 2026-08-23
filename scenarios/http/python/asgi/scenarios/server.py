@@ -20,13 +20,20 @@ async def application(scope, receive, send) -> None:
         more_body = message.get("more_body", False)
     body = b"".join(chunks).decode() or None
     status, payload = respond(scope["method"], scope["path"], body)
+    encoded = payload.encode()
     await send(
         {
             "type": "http.response.start",
             "status": status,
             "headers": [
                 (b"content-type", CONTENT_TYPE.encode()),
+                # The length an ASGI framework always sends and a bare
+                # application may omit. The instrumentation reads
+                # `http.server.response.body.size` from this header, so
+                # leaving it out would make the workload rather than the
+                # instrumentation the reason that metric is missing.
+                (b"content-length", str(len(encoded)).encode()),
             ],
         }
     )
-    await send({"type": "http.response.body", "body": payload.encode()})
+    await send({"type": "http.response.body", "body": encoded})
