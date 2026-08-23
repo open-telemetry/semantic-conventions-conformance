@@ -9,6 +9,7 @@ const {
 } = require("@opentelemetry/exporter-trace-otlp-proto");
 const { SimpleSpanProcessor } = require("@opentelemetry/sdk-trace-base");
 const { WebTracerProvider } = require("@opentelemetry/sdk-trace-web");
+const { verify } = require("./verify");
 
 function config() {
   const value = window.__OTEL_HTTP_CONFORMANCE__;
@@ -53,23 +54,7 @@ async function drive(send) {
       `${window.location.origin}${exchange.path}`,
       exchange.body,
     );
-    const expected = JSON.parse(
-      exchange.responseBody.replace(
-        "${requestBody}",
-        exchange.body === null ? "{}" : exchange.body,
-      ),
-    );
-    const actual = JSON.parse(response.body);
-    if (response.status !== exchange.status) {
-      throw new Error(
-        `${exchange.method} ${exchange.path} answered ${response.status}, expected ${exchange.status}`,
-      );
-    }
-    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-      throw new Error(
-        `${exchange.method} ${exchange.path} answered ${JSON.stringify(actual)}, expected ${JSON.stringify(expected)}`,
-      );
-    }
+    verify(exchange, response);
   }
 }
 
