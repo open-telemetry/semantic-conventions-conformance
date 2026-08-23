@@ -57,6 +57,23 @@
       "ignoreUnstable": false
     },
     {
+      // Akka stops at 2.6 and Akka HTTP at 10.2 here: both moved to the
+      // Business Source License in the release after, so an update past
+      // either would put a non-open-source dependency in this repository.
+      "matchPackageNames": [
+        "com.typesafe.akka:akka-actor{,_*}",
+        "com.typesafe.akka:akka-stream{,_*}"
+      ],
+      "allowedVersions": "<2.7"
+    },
+    {
+      // The other half of the rule above; Akka HTTP versions its own way.
+      "matchPackageNames": [
+        "com.typesafe.akka:akka-http{,_*}"
+      ],
+      "allowedVersions": "<10.3"
+    },
+    {
       // These ship only `bN` prereleases and have never published a stable
       // release, so each minor is its own prerelease line and Renovate's
       // default would never propose 0.65b0 to 0.66b0. Several are at `1.0bN`

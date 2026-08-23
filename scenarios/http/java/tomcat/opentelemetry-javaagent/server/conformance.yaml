@@ -1,0 +1,22 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: tomcat
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+
+env:
+  # Keep Java runtime metrics out of this HTTP-only conformance report.
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare tomcat:opentelemetry-javaagent
+
+scenarios:
+  server:
+    # The requests are sent from outside the scenario, so a server run holds
+    # server telemetry only; the driver starts this command, chooses the port
+    # it binds, and closes its standard input when it is done.
+    run: otel-http-drive --serve otel-conformance-java run --agent tomcat:opentelemetry-javaagent TomcatJavaagentServerScenario

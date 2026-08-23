@@ -45,6 +45,27 @@ install their framework-specific decorators. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
 
+### The Java libraries
+
+Each is a directory under [`java/`](java) with a package per side it has, and
+every one of them is covered by the OpenTelemetry Java agent. Armeria is the
+only one also covered by explicit library instrumentation, which is why it is
+the example above. Their versions are pinned together in
+[`java/gradle/libs.versions.toml`](java/gradle/libs.versions.toml).
+
+**Sending** — Apache HttpAsyncClient, Apache HttpClient, Armeria, Async HTTP
+Client, HttpURLConnection, Java HTTP Client, Jetty HttpClient, Jodd HTTP,
+Netty, OkHttp, Ratpack, Reactor Netty, Spring WebFlux, Vert.x HTTP Client.
+
+**Receiving** — Akka HTTP, Armeria, Grizzly, Helidon, Java HTTP Server, JAX-RS,
+Netty, Pekko HTTP, Ratpack, Restlet, Servlet, Spring Web MVC, Spring WebFlux,
+Tomcat, Undertow, Vert.x Web.
+
+A library that does both, such as Netty or Spring WebFlux, gets a package for
+each. Several receive over a container they do not own — JAX-RS resources and
+plain Servlets are both deployed into embedded Tomcat — because what a package
+measures is the instrumentation it names, not the socket underneath it.
+
 A Python instrumentation has nothing to build. Its workload is a module in
 `python/<library>/scenarios/`, and each `<side>/` directory holds the
 `pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
@@ -100,13 +121,16 @@ both sides could hide an unexpected client span in a server run or the reverse.
 
 ## Running one
 
+A package is a directory holding a `conformance.yaml`, and every one of them
+runs the same way:
+
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/java -e tools/js
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
-otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
-otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/java/okhttp/opentelemetry-javaagent/client
+otel-conformance scenarios/http/java/tomcat/opentelemetry-javaagent/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
