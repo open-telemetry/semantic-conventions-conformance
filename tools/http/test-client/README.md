@@ -85,3 +85,9 @@ answers, and none needs an HTTP client of its own beyond the one under test.
 - [`js/`](js) — three Node modules: `contract` reads the file, `respond` looks
   up answers for any Node framework, and `drive` sends the requests through a
   caller-supplied sender. Its unit tests drive both halves against each other.
+- [`browser-js/`](browser-js) — the browser half of JavaScript, which cannot
+  read the file at all: `runner` bundles a scenario's browser entry, serves it
+  to headless Chromium with the exchanges in the page, proxies the contract
+  traffic to the mock server, and forwards the page's OTLP/HTTP traces to the
+  runner's OTLP/gRPC collector. `verify` restates the same answer checks for
+  the bundle, and its unit tests pin them.

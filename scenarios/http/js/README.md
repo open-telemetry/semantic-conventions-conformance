@@ -1,6 +1,6 @@
 # HTTP conformance scenarios in JavaScript
 
-Node's HTTP instrumentations, measured against
+Node.js and browser HTTP instrumentations, measured against
 [the same contract](../../../tools/http/test-client/contract.json) as every
 other language.
 
@@ -17,9 +17,10 @@ undici/opentelemetry-undici/          client.js, client/
 
 This directory is the build root: one npm workspace, whose `package.json` and
 `package-lock.json` are committed so a run measures pinned versions. It pulls
-in the shared packages under [`tools/js`](../../../tools/js) and
-[`tools/http/test-client/js`](../../../tools/http/test-client/js) by path rather
-than restating them.
+in the shared packages under [`tools/js`](../../../tools/js),
+[`tools/http/test-client/js`](../../../tools/http/test-client/js) and
+[`tools/http/test-client/browser-js`](../../../tools/http/test-client/browser-js)
+by path rather than restating them.
 
 A `<library>/scenarios` package is the workload with no OpenTelemetry in it at
 all, so a second instrumentation of the same library measures the same
