@@ -7,8 +7,12 @@
   "main": "runner.js",
   "files": [
     "browser.js",
+    "forward.js",
     "runner.js"
   ],
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
     "@grpc/grpc-js": "1.14.4",
     "@otel-conformance/http-test-client": "file:../js",

@@ -10,6 +10,7 @@ const { build } = require("esbuild");
 const { chromium } = require("playwright");
 const { requests } = require("@otel-conformance/http-test-client");
 const { requireEnv } = require("@otel-conformance/scenario-support");
+const { forwardTraces } = require("./forward");
 
 const EXPORT_TRACES =
   "/opentelemetry.proto.collector.trace.v1.TraceService/Export";
@@ -136,8 +137,11 @@ async function runBrowserScenario({
         response.end(script);
       } else if (request.method === "POST" && url.pathname === "/v1/traces") {
         const payload = await collect(request);
-        exportedBytes += payload.length;
-        await exportTraces(collector, payload);
+        exportedBytes += await forwardTraces(
+          (value) => exportTraces(collector, value),
+          payload,
+          complete,
+        );
         response.writeHead(200, { "content-type": "application/x-protobuf" });
         response.end();
       } else if (request.method === "POST" && url.pathname === "/__done") {
