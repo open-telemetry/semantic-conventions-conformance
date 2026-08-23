@@ -19,15 +19,15 @@ def run() -> None:
     if not base_url:
         raise RuntimeError("MOCK_SERVER_URL is not set")
 
-    with urllib3.PoolManager(
-        headers={"User-Agent": USER_AGENT},
-        timeout=_REQUEST_TIMEOUT_SECONDS,
-    ) as pool:
+    with urllib3.PoolManager(timeout=_REQUEST_TIMEOUT_SECONDS) as pool:
 
         def send(method: str, url: str, body: str | None) -> tuple[int, str]:
-            headers = (
-                {"Content-Type": CONTENT_TYPE} if body is not None else {}
-            )
+            # urllib3 falls back to the pool's own headers only when this
+            # argument is None, so every header the request needs has to be
+            # named here.
+            headers = {"User-Agent": USER_AGENT}
+            if body is not None:
+                headers["Content-Type"] = CONTENT_TYPE
             response = pool.request(
                 method,
                 url,
