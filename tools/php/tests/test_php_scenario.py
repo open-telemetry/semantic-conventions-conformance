@@ -119,7 +119,7 @@ def test_serve_stops_the_server_at_eof(
             self.returncode = 0
 
         def wait(self, timeout: int | None = None) -> int:
-            assert timeout == 10
+            assert timeout == otel_conformance_php._SHUTDOWN_TIMEOUT_SECONDS
             return self.returncode or 0
 
     process = Process()

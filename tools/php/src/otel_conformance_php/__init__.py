@@ -16,6 +16,9 @@ from typing import BinaryIO, Sequence
 
 BUILD_MARKER = "composer.json"
 PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
+_READ_BUFFER_SIZE = 8192
+_POLL_INTERVAL_SECONDS = 0.05
+_SHUTDOWN_TIMEOUT_SECONDS = 10
 
 
 class LayoutError(RuntimeError):
@@ -80,14 +83,14 @@ def serve(
 
     def wait_for_eof() -> None:
         stream = input_stream or sys.stdin.buffer
-        while stream.read(8192):
+        while stream.read(_READ_BUFFER_SIZE):
             pass
         closed.set()
 
     reader = threading.Thread(target=wait_for_eof, daemon=True)
     reader.start()
 
-    while not closed.wait(0.05):
+    while not closed.wait(_POLL_INTERVAL_SECONDS):
         status = process.poll()
         if status is not None:
             return status if status != 0 else 1
@@ -97,7 +100,7 @@ def serve(
 
     process.terminate()
     try:
-        process.wait(timeout=10)
+        process.wait(timeout=_SHUTDOWN_TIMEOUT_SECONDS)
         return 0
     except subprocess.TimeoutExpired:
         process.kill()
