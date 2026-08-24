@@ -199,3 +199,16 @@ func TestTheScenarioPortIsANumber(t *testing.T) {
 		t.Errorf("ScenarioPort() = %d, %v, want 38217", port, err)
 	}
 }
+
+func TestTheScenarioPortIsInTheTCPPortRange(t *testing.T) {
+	for _, value := range []string{"-1", "0", "65536"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv(PortVariable, value)
+
+			if _, err := ScenarioPort(); err == nil ||
+				!strings.Contains(err.Error(), "between 1 and 65535") {
+				t.Errorf("ScenarioPort() accepted %s or returned unclear error %v", value, err)
+			}
+		})
+	}
+}

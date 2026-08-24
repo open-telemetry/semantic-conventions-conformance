@@ -51,5 +51,8 @@ func ScenarioPort() (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("%s is not a port number: %w", PortVariable, err)
 	}
+	if port < 1 || port > 65535 {
+		return 0, fmt.Errorf("%s must be between 1 and 65535", PortVariable)
+	}
 	return port, nil
 }
