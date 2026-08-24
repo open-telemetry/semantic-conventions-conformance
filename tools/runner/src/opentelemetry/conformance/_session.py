@@ -20,7 +20,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from string import Template
 from types import TracebackType
-from typing import TYPE_CHECKING, Callable, Generator, Mapping, Protocol
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Generator,
+    Mapping,
+    Protocol,
+    TypeVar,
+)
 
 from ._checks import check
 from ._coverage import coverage
@@ -43,6 +50,8 @@ from ._spec import (
 if TYPE_CHECKING:
     from opentelemetry.test.weaver_live_check import LiveCheckReport
 
+logger = logging.getLogger(__name__)
+
 # Generous: a cold scenario subprocess can spend a while importing a large
 # framework before it emits anything. Overridable through the environment.
 _WEAVER_INACTIVITY_TIMEOUT = (
@@ -63,6 +72,15 @@ RUNNER_WEAVER_DEFAULTS = WeaverSpec(
 )
 
 
+class _WeaverProcess(Protocol):
+    def start(self) -> _WeaverProcess: ...
+
+    def close(self) -> None: ...
+
+
+_TWeaver = TypeVar("_TWeaver", bound=_WeaverProcess)
+
+
 @contextmanager
 def _quiet_connection_retries() -> Generator[None, None, None]:
     """Silence urllib3's per-retry warning while weaver is coming up.
@@ -78,6 +96,31 @@ def _quiet_connection_retries() -> Generator[None, None, None]:
         yield
     finally:
         logger.setLevel(previous)
+
+
+@contextmanager
+def _start_weaver(
+    factory: Callable[[], _TWeaver],
+) -> Generator[_TWeaver, None, None]:
+    """Start weaver, retrying once if its fixed readiness window expires."""
+    for attempt in range(2):
+        weaver = factory()
+        try:
+            weaver.start()
+        except TimeoutError:
+            weaver.close()
+            if attempt == 1:
+                raise
+            logger.warning("Weaver live-check startup timed out; retrying")
+            continue
+
+        try:
+            yield weaver
+        finally:
+            weaver.close()
+        return
+
+    raise AssertionError("unreachable")
 
 
 class SessionFactory(Protocol):
@@ -171,14 +214,22 @@ class ConformanceSession:
                 self._resolve_path(weaver_spec.advice_data),
             ]
 
-        with _quiet_connection_retries(), WeaverLiveCheck(
-            inactivity_timeout=int(timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)),
-            registry=self._resolve_path(self._registry),
-            policies_dir=self._resolve_path(weaver_spec.policies)
-            if weaver_spec.policies
-            else None,
-            extra_args=extra_args,
-        ) as weaver:
+        def start_weaver() -> WeaverLiveCheck:
+            return WeaverLiveCheck(
+                inactivity_timeout=int(
+                    timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
+                ),
+                registry=self._resolve_path(self._registry),
+                policies_dir=self._resolve_path(weaver_spec.policies)
+                if weaver_spec.policies
+                else None,
+                extra_args=extra_args,
+            )
+
+        with (
+            _quiet_connection_retries(),
+            _start_weaver(start_weaver) as weaver,
+        ):
             completed = self._execute(scenario, weaver.otlp_endpoint)
             report = weaver.end(
                 timeout=int(timeout_seconds(*_WEAVER_STOP_TIMEOUT))

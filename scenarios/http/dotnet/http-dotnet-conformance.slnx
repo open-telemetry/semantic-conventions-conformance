@@ -1,0 +1,23 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+
+  Every .NET project the HTTP scenarios use, including the ones shared with
+  other domains: `dotnet build` here is the whole language's build.
+-->
+<Solution>
+  <Folder Name="/aspnetcore/">
+    <Project Path="aspnetcore/scenarios/AspNetCoreScenarios.csproj" />
+    <Project Path="aspnetcore/opentelemetry-aspnetcore/OpenTelemetryAspNetCoreServer.csproj" />
+  </Folder>
+  <Folder Name="/httpclient/">
+    <Project Path="httpclient/scenarios/HttpClientScenarios.csproj" />
+    <Project Path="httpclient/opentelemetry-http/OpenTelemetryHttpClient.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="../../../tools/dotnet/OpenTelemetry.Conformance.Scenario/OpenTelemetry.Conformance.Scenario.csproj" />
+    <Project Path="../../../tools/dotnet/OpenTelemetry.Conformance.Scenario.Sdk/OpenTelemetry.Conformance.Scenario.Sdk.csproj" />
+    <Project Path="../../../tools/http/test-client/dotnet/OpenTelemetry.Conformance.Http/OpenTelemetry.Conformance.Http.csproj" />
+    <Project Path="../../../tools/http/test-client/dotnet/OpenTelemetry.Conformance.Http.Tests/OpenTelemetry.Conformance.Http.Tests.csproj" />
+  </Folder>
+</Solution>

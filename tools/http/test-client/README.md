@@ -91,3 +91,8 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   traffic to the mock server, and forwards the page's OTLP/HTTP traces to the
   runner's OTLP/gRPC collector. `verify` restates the same answer checks for
   the bundle, and its unit tests pin them.
+- [`dotnet/`](dotnet) — `HttpContract` reads the file,
+  `HttpServerWorkload.Respond` looks up answers for any .NET framework, and
+  `HttpClientWorkload.DriveAsync` sends the requests through a caller-supplied
+  sender. The build embeds `contract.json` as a manifest resource, and its unit
+  tests drive both halves against each other.

@@ -44,10 +44,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml flask
-          python -m pip install --no-deps -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/java -e tools/js
+          python -m pip install --no-deps -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/java -e tools/js -e tools/dotnet
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests
+        run: python -m pytest tools/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
 
   lint:
     name: Lint
@@ -93,6 +93,22 @@ jobs:
           npm --prefix scenarios/http/js run format:check
           npm --prefix scenarios/http/js test
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: scenarios/http/dotnet/global.json
+
+      # Compiles and unit-tests every .NET project the HTTP scenarios use,
+      # including the ones shared with other domains. `dotnet test` alone would
+      # compile only the test projects, leaving a broken scenario undetected.
+      # Run from the build root, which is where `global.json` pins the SDK: the
+      # version a project builds against follows the working directory.
+      - name: Build .NET
+        working-directory: scenarios/http/dotnet
+        run: |
+          dotnet build http-dotnet-conformance.slnx
+          dotnet test http-dotnet-conformance.slnx --no-build
+
   types:
     name: Types
     runs-on: cncf-ubuntu-2-8-x86
@@ -127,7 +143,8 @@ jobs:
             -e tools/http/mock-server \
             -e tools/http/test-client/python \
             -e tools/java \
-            -e tools/js
+            -e tools/js \
+            -e tools/dotnet
 
       - name: Run pyright
         run: python -m pyright
@@ -235,6 +252,14 @@ jobs:
           cache: npm
           cache-dependency-path: "scenarios/**/package-lock.json"
 
+      # A .NET scenario builds itself from source in its `setup:` before it
+      # runs, from its own directory, which is inside the build root the
+      # `global.json` pins.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: scenarios/http/dotnet/global.json
+
       - name: Install weaver
         run: |
           . tools/runner/src/opentelemetry/conformance/versions.env
@@ -256,7 +281,8 @@ jobs:
             -e tools/http/runner \
             -e tools/http/test-client/python \
             -e tools/java \
-            -e tools/js
+            -e tools/js \
+            -e tools/dotnet
 
       - name: Cache the semconv registries
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

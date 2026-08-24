@@ -29,6 +29,7 @@ from opentelemetry.conformance import (
 from opentelemetry.conformance._session import (
     ConformanceSession,
     _run_command,
+    _start_weaver,
 )
 
 SPEC = """
@@ -73,6 +74,52 @@ def test_a_command_that_overruns(
 
     assert completed.returncode == 1
     assert "did not finish within" in completed.stderr
+
+
+def test_weaver_startup_retries_after_a_timeout() -> None:
+    attempts: list[_FakeWeaver] = []
+
+    def factory() -> _FakeWeaver:
+        weaver = _FakeWeaver(fail_start=not attempts)
+        attempts.append(weaver)
+        return weaver
+
+    with _start_weaver(factory) as weaver:
+        assert weaver is attempts[1]
+
+    assert [attempt.starts for attempt in attempts] == [1, 1]
+    assert [attempt.closes for attempt in attempts] == [1, 1]
+
+
+def test_weaver_startup_stops_after_the_retry() -> None:
+    attempts: list[_FakeWeaver] = []
+
+    def factory() -> _FakeWeaver:
+        weaver = _FakeWeaver(fail_start=True)
+        attempts.append(weaver)
+        return weaver
+
+    with pytest.raises(TimeoutError), _start_weaver(factory):
+        pass
+
+    assert len(attempts) == 2
+    assert [attempt.closes for attempt in attempts] == [1, 1]
+
+
+class _FakeWeaver:
+    def __init__(self, *, fail_start: bool) -> None:
+        self.fail_start = fail_start
+        self.starts = 0
+        self.closes = 0
+
+    def start(self) -> _FakeWeaver:
+        self.starts += 1
+        if self.fail_start:
+            raise TimeoutError
+        return self
+
+    def close(self) -> None:
+        self.closes += 1
 
 
 def test_the_scenario_gets_exactly_the_environment_it_was_given(
