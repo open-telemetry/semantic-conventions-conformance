@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -19,7 +20,7 @@ namespace OpenTelemetry.Conformance.Scenario;
 /// </remarks>
 public sealed class ScenarioSdk : IDisposable
 {
-    private const int FlushTimeoutMilliseconds = 30_000;
+    private const int TotalFlushTimeoutMilliseconds = 15_000;
 
     private readonly TracerProvider tracerProvider;
     private readonly MeterProvider meterProvider;
@@ -62,14 +63,44 @@ public sealed class ScenarioSdk : IDisposable
     /// The flush is explicit rather than left to the providers' own shutdown because the runner
     /// sets an effectively infinite metric export interval: without it a scenario's metrics would
     /// never leave the process.
+    /// The signals share one budget so application and provider shutdown also fit inside the
+    /// driver's process timeout.
     /// </remarks>
     public void Dispose()
     {
-        this.tracerProvider.ForceFlush(FlushTimeoutMilliseconds);
-        this.meterProvider.ForceFlush(FlushTimeoutMilliseconds);
-        this.tracerProvider.Dispose();
-        this.meterProvider.Dispose();
+        var elapsed = Stopwatch.StartNew();
+        var tracingFlushed = false;
+        var metricsFlushed = false;
+
+        try
+        {
+            tracingFlushed =
+                this.tracerProvider.ForceFlush(RemainingFlushTimeoutMilliseconds(elapsed));
+            metricsFlushed =
+                this.meterProvider.ForceFlush(RemainingFlushTimeoutMilliseconds(elapsed));
+        }
+        finally
+        {
+            try
+            {
+                this.tracerProvider.Dispose();
+            }
+            finally
+            {
+                this.meterProvider.Dispose();
+            }
+        }
+
+        if (!tracingFlushed || !metricsFlushed)
+        {
+            throw new InvalidOperationException(
+                "the OpenTelemetry SDK did not flush completely within its shutdown budget "
+                + $"(tracing: {tracingFlushed}, metrics: {metricsFlushed})");
+        }
     }
+
+    private static int RemainingFlushTimeoutMilliseconds(Stopwatch elapsed) =>
+        Math.Max(0, TotalFlushTimeoutMilliseconds - (int)elapsed.ElapsedMilliseconds);
 
     private static T Built<T>(T? provider, string what)
         where T : class =>
