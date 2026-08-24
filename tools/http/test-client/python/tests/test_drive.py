@@ -553,6 +553,32 @@ class TestDrivingAServerScenario:
 
         assert events == ["closed", "waited 3"]
 
+    def test_cleanup_failure_does_not_mask_the_original_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class Reservation:
+            def close(self) -> None:
+                pass
+
+        original = RuntimeError("startup failed")
+        monkeypatch.setattr(driver, "reserve_port", lambda: (1234, Reservation()))
+        monkeypatch.setattr(driver.subprocess, "Popen", lambda *_args, **_kwargs: object())
+        monkeypatch.setattr(
+            driver,
+            "_wait_for_start",
+            lambda *_args: (_ for _ in ()).throw(original),
+        )
+        monkeypatch.setattr(
+            driver,
+            "_stop_after_error",
+            lambda _process: (_ for _ in ()).throw(OSError("cleanup failed")),
+        )
+
+        with pytest.raises(RuntimeError, match="startup failed") as raised:
+            driver._serve_and_drive(["scenario"])
+
+        assert raised.value is original
+
 
 @pytest.mark.skipif(
     sys.platform == "win32",

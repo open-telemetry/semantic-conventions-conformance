@@ -17,6 +17,7 @@ command rather than as the runner's ``server:``.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import signal
 import subprocess
@@ -100,7 +101,8 @@ def _serve_and_drive(command: Sequence[str]) -> int:
         _wait_for_start(process, port, base_url, command)
         drive(base_url)
     except BaseException:
-        _stop_after_error(process)
+        with contextlib.suppress(Exception):
+            _stop_after_error(process)
         raise
 
     return _stop(process)
