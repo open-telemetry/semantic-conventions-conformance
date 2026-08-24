@@ -15,7 +15,8 @@ A server scenario declares routes in the framework under test, because that
 declaration is what an instrumentation reads `http.route` from. Everything
 downstream is shared: `Respond` is an exact lookup by concrete method and path,
 so every Go framework agrees on the statuses and bodies. `Drive` takes the
-sender as a function so the requests leave the library being measured.
+progress output as an `io.Writer` and the sender as a function, so callers
+control the logs and requests leave the library being measured.
 
 Standard library only, so importing it next to a scenario drags no dependency
 into a run.

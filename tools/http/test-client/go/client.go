@@ -5,6 +5,7 @@ package httpcontract
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 )
@@ -13,7 +14,8 @@ import (
 // empty for a request that carries none.
 type Sender func(method, url, body string) (Response, error)
 
-// Drive sends Requests at baseURL through send, checking every answer.
+// Drive sends Requests at baseURL through send, checking every answer and
+// writing one progress line per response to output.
 //
 // Only a client scenario needs this: it is the sender, so the requests have to
 // leave the library under test. A server scenario is driven from outside its
@@ -21,9 +23,12 @@ type Sender func(method, url, body string) (Response, error)
 //
 // No health check: the runner starts the mock server a client scenario calls
 // and waits for it to answer before running the scenario at all.
-func Drive(baseURL string, send Sender) error {
+func Drive(baseURL string, output io.Writer, send Sender) error {
 	if strings.TrimSpace(baseURL) == "" {
 		return contractError("base URL must not be blank")
+	}
+	if output == nil {
+		return contractError("output must not be nil")
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
 	requests, err := Requests()
@@ -35,8 +40,11 @@ func Drive(baseURL string, send Sender) error {
 		if err != nil {
 			return fmt.Errorf("%s %s: %w", exchange.Method, exchange.Path, err)
 		}
-		fmt.Printf("%s %s -> %d %s\n",
-			exchange.Method, exchange.Path, response.StatusCode, abbreviate(response.Body))
+		if _, err := fmt.Fprintf(output, "%s %s -> %d %s\n",
+			exchange.Method, exchange.Path, response.StatusCode, abbreviate(response.Body)); err != nil {
+			return fmt.Errorf("writing result for %s %s: %w",
+				exchange.Method, exchange.Path, err)
+		}
 		if err := Verify(exchange, response); err != nil {
 			return err
 		}

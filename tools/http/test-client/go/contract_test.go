@@ -5,6 +5,7 @@ package httpcontract
 
 import (
 	"errors"
+	"io"
 	"reflect"
 	"strings"
 	"sync"
@@ -15,10 +16,10 @@ const baseURL = "http://127.0.0.1:0"
 
 // driveAgainstTheContract answers with the other side of the same contract,
 // which is what a run measures.
-func driveAgainstTheContract(t *testing.T) []string {
+func driveAgainstTheContract(t *testing.T, output io.Writer) []string {
 	t.Helper()
 	var sent []string
-	err := Drive(baseURL, func(method, url, body string) (Response, error) {
+	err := Drive(baseURL, output, func(method, url, body string) (Response, error) {
 		path := strings.TrimPrefix(url, baseURL)
 		sent = append(sent, method+" "+path)
 		return Respond(method, path, body)
@@ -37,8 +38,18 @@ func TestBothSidesOfTheContractAgree(t *testing.T) {
 		"GET /status/404",
 		"GET /status/500",
 	}
-	if got := driveAgainstTheContract(t); !reflect.DeepEqual(got, want) {
+	if got := driveAgainstTheContract(t, io.Discard); !reflect.DeepEqual(got, want) {
 		t.Errorf("sent %v, want %v", got, want)
+	}
+}
+
+func TestDriveWritesProgressToItsOutput(t *testing.T) {
+	var output strings.Builder
+
+	driveAgainstTheContract(t, &output)
+
+	if !strings.Contains(output.String(), "GET /users/123 -> 200") {
+		t.Errorf("Drive() wrote %q, want request progress", output.String())
 	}
 }
 
@@ -172,7 +183,7 @@ func TestRespondReportsAContractLoadFailure(t *testing.T) {
 }
 
 func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
-	err := Drive("  ", func(string, string, string) (Response, error) {
+	err := Drive("  ", io.Discard, func(string, string, string) (Response, error) {
 		t.Error("a request was sent despite a blank base URL")
 		return Response{}, nil
 	})
@@ -184,7 +195,7 @@ func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
 
 func TestATrailingSlashOnTheBaseURLIsNotRepeated(t *testing.T) {
 	var firstURL string
-	err := Drive(baseURL+"/", func(method, url, body string) (Response, error) {
+	err := Drive(baseURL+"/", io.Discard, func(method, url, body string) (Response, error) {
 		if firstURL == "" {
 			firstURL = url
 		}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -40,9 +41,13 @@ func RunClient(transport Transport) error {
 		Transport: transport(http.DefaultTransport),
 		Timeout:   requestTimeout,
 	}
-	return httpcontract.Drive(baseURL, func(method, url, body string) (httpcontract.Response, error) {
-		return send(client, method, url, body)
-	})
+	return httpcontract.Drive(
+		baseURL,
+		os.Stdout,
+		func(method, url, body string) (httpcontract.Response, error) {
+			return send(client, method, url, body)
+		},
+	)
 }
 
 func send(
