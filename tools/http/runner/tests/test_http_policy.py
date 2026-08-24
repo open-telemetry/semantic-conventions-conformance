@@ -33,18 +33,17 @@ def _server_span(name: str, route: str | None = None) -> dict[str, Any]:
     return _span(name, "server", attributes)
 
 
-def _client_span(name: str) -> dict[str, Any]:
-    return _span(
-        name,
-        "client",
-        {
-            "http.request.method": "GET",
-            "network.protocol.version": "1.1",
-            "server.address": "example.com",
-            "server.port": 443,
-            "url.full": "https://example.com/health",
-        },
-    )
+def _client_span(name: str, template: str | None = None) -> dict[str, Any]:
+    attributes: dict[str, object] = {
+        "http.request.method": "GET",
+        "network.protocol.version": "1.1",
+        "server.address": "example.com",
+        "server.port": 443,
+        "url.full": "https://example.com/health",
+    }
+    if template is not None:
+        attributes["url.template"] = template
+    return _span(name, "client", attributes)
 
 
 def _span(
@@ -86,6 +85,14 @@ def policy_advice(
                 _server_span("GET"),
                 _client_span("HTTP GET"),
                 _server_span("POST /wrong-method"),
+                _server_span(
+                    "GET /users/123",
+                    route="/users/{id}",
+                ),
+                _client_span(
+                    "GET /users/123",
+                    template="/users/{id}",
+                ),
             ]
         ),
         encoding="utf-8",
@@ -167,5 +174,21 @@ def test_wrong_method_prefix_reports_span_name(
     policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
 ) -> None:
     assert set(policy_advice[("server", "POST /wrong-method")]) == {
+        "http_span_name_format"
+    }
+
+
+def test_server_target_mismatch_reports_span_name(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+) -> None:
+    assert set(policy_advice[("server", "GET /users/123")]) == {
+        "http_span_name_format"
+    }
+
+
+def test_client_target_mismatch_reports_span_name(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+) -> None:
+    assert set(policy_advice[("client", "GET /users/123")]) == {
         "http_span_name_format"
     }
