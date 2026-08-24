@@ -1,7 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Command server hosts the HTTP contract with otelhttp's server handler.
+// Command server runs the net/http server scenario with otelhttp
+// instrumentation.
 package main
 
 import (

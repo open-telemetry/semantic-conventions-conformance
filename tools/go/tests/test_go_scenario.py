@@ -1,8 +1,6 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The Go toolchain a scenario directory no longer has to restate."""
-
 from __future__ import annotations
 
 import os
@@ -29,7 +27,6 @@ def root(tmp_path: Path) -> Path:
 
 class TestFindingTheModule:
     def test_it_is_found_from_a_scenario_directory(self, root: Path) -> None:
-        """How deep a scenario sits is the layout's business, not its own."""
         scenario = root / "net-http" / "otelhttp" / "server"
         scenario.mkdir(parents=True)
 
@@ -47,7 +44,6 @@ class TestBuilding:
     def test_it_builds_the_package_in_the_scenario_directory(
         self, root: Path
     ) -> None:
-        """A scenario's package is its directory, so there is nothing to name."""
         assert build_command(root)[-1] == "."
 
     def test_it_names_where_the_binary_goes(self, root: Path) -> None:

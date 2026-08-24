@@ -73,8 +73,8 @@ func Initialize(ctx context.Context) (*SDK, error) {
 	}
 	otel.SetTracerProvider(sdk.tracerProvider)
 	otel.SetMeterProvider(sdk.meterProvider)
-	// What a real deployment runs with, so a client scenario sends the headers
-	// an instrumentation is expected to inject.
+	// Install standard W3C propagation so client scenarios exercise header
+	// injection.
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{}, propagation.Baggage{},
 	))

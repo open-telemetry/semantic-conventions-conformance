@@ -16,7 +16,7 @@ import (
 	"os"
 )
 
-// Require is the value of name, or a failure naming what was missing.
+// Require returns the environment variable named by name or an error.
 func Require(name string) (string, error) {
 	value := os.Getenv(name)
 	if value == "" {
@@ -33,7 +33,6 @@ func Require(name string) (string, error) {
 // scenario that exits any other way reports less than it produced. The
 // protocol is the same in every domain.
 func WaitForEOF() error {
-	// Nothing arrives on standard input; only its close is the signal.
 	if _, err := io.Copy(io.Discard, os.Stdin); err != nil {
 		return fmt.Errorf("reading standard input: %w", err)
 	}

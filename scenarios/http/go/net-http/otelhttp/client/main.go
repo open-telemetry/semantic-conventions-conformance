@@ -1,7 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Command client sends the HTTP contract through otelhttp's round tripper.
+// Command client runs the net/http client scenario with otelhttp
+// instrumentation.
 package main
 
 import (

@@ -52,10 +52,7 @@ type Exchange struct {
 	Status       int    `json:"status"`
 	ResponseBody string `json:"responseBody"`
 	Readiness    bool   `json:"readiness"`
-	// What the request is in the sequence for — the attribute it should make
-	// an instrumentation record. Carried as data rather than as a comment so
-	// every language reading the contract has it too.
-	Description string `json:"description"`
+	Description  string `json:"description"`
 }
 
 // RenderResponseBody is the response body with the request body inserted.
@@ -66,14 +63,13 @@ func (e Exchange) RenderResponseBody(requestBody string) string {
 	return strings.ReplaceAll(e.ResponseBody, "${requestBody}", requestBody)
 }
 
-// Response is a status and a body: what a request came back as, and what a
-// route answers. One type for both directions, because they are the same pair.
+// Response is the status and body returned by a request or route.
 type Response struct {
 	StatusCode int
 	Body       string
 }
 
-// Error is a server answering something the contract does not describe.
+// Error reports a contract validation failure.
 type Error struct {
 	message string
 	cause   error
@@ -139,7 +135,6 @@ func withoutQuery(path string) string {
 	return path
 }
 
-// parse reads json so two bodies compare by structure rather than by spacing.
 func parse(body string) (any, error) {
 	var parsed any
 	if err := json.Unmarshal([]byte(body), &parsed); err != nil {

@@ -23,10 +23,6 @@ const requestTimeout = 10 * time.Second
 type Transport func(http.RoundTripper) http.RoundTripper
 
 // RunClient sends the shared request contract through a net/http client.
-//
-// The mock server it calls is started by the runner and answers the same
-// exchanges a server scenario would, so both sides are measured against
-// identical traffic.
 func RunClient(transport Transport) error {
 	if transport == nil {
 		transport = func(base http.RoundTripper) http.RoundTripper { return base }

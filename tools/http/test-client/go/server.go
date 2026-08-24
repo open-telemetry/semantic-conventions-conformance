@@ -16,15 +16,8 @@ const PortVariable = "OTEL_HTTP_SCENARIO_PORT"
 
 // Respond is what the contract answers to one request.
 //
-// A server scenario declares routes with the framework under test — that
-// declaration is what an instrumentation reads http.route from — and then asks
-// this function what to answer. Every Go framework therefore agrees on the
-// statuses and bodies without forcing its route construction into a shared
-// runtime model. requestBody is empty for a request that carried none.
-//
-// The requests are sent by otel-http-drive from another process, which checks
-// each answer against the same contract. Respond returns an error when that
-// contract cannot be loaded.
+// requestBody is empty for a request that carried none. Respond returns an
+// error when the contract cannot be loaded.
 func Respond(method, path, requestBody string) (Response, error) {
 	exchange, found, err := Lookup(method, path)
 	if err != nil {

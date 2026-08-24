@@ -115,9 +115,8 @@ jobs:
         with:
           go-version-file: scenarios/http/go/go.mod
 
-      # Vets and unit-tests every Go module the HTTP scenarios use, including
-      # the ones shared with other domains. Each is its own module, so this
-      # walks them rather than relying on one root to reach them all.
+      # Each directory is a separate Go module, so check and test them
+      # independently.
       - name: Build Go
         run: |
           for module in tools/go tools/http/test-client/go scenarios/http/go; do
@@ -336,7 +335,6 @@ jobs:
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
-      # A Go scenario compiles itself in its `setup:` before it runs.
       - name: Set up Go
         if: matrix.language == 'go'
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0

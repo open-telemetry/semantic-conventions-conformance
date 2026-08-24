@@ -1,13 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package scenarios is what the net/http client and server scenarios do, with
-// no OpenTelemetry in it.
+// Package scenarios defines net/http workloads independently of instrumentation.
 //
-// Every instrumentation of net/http runs this same traffic; what differs is
-// only how it is attached, which each launch package supplies as the hooks
-// below. Whether an instrumentation is code or an out-of-process agent is
-// therefore not something the workload knows about.
+// Instrumentation-specific commands supply the client transport or server
+// middleware.
 package scenarios
 
 import (
@@ -28,14 +25,8 @@ import (
 // that starts server spans attaches.
 type Middleware func(http.Handler) http.Handler
 
-// routes are the framework-native declaration of the contract's paths.
-//
-// Go 1.22's ServeMux takes the method and the path template in the pattern
-// itself, so this is the route in net/http's own model rather than a shape
-// invented for the conformance run. ServeMux reports back the pattern a
-// request matched, on the request, which is where an instrumentation reads
-// http.route from — so the declaration below is the whole of what makes the
-// route observable, with nothing to attach per route.
+// routes declare the contract with ServeMux's method-and-template patterns.
+// ServeMux records the matched pattern on the request for instrumentation.
 var routes = []string{
 	"GET /health",
 	"GET /users/{userId}",
@@ -44,9 +35,8 @@ var routes = []string{
 }
 
 const (
-	// A server that never times out reading request headers is a lint finding
-	// in its own right. An idle keep-alive connection needs no deadline,
-	// because Shutdown closes idle connections when the driver says stop.
+	// Bound header reads without timing out idle keep-alive connections, which
+	// Shutdown closes.
 	readHeaderTimeout = 10 * time.Second
 
 	// Leave enough time for the driver to report a shutdown error before its
@@ -56,11 +46,8 @@ const (
 
 // RunServer hosts the shared HTTP exchanges until the driver says stop.
 //
-// The requests are sent by otel-http-drive from another process, so nothing
-// this binary links can instrument the sender and record client spans in a
-// server scenario's report. It listens on the port the driver chose and shuts
-// down when the driver closes its standard input, which is what gives the SDK
-// a chance to flush.
+// The external driver prevents client spans in this server run. Closing stdin
+// stops the server and gives the SDK a chance to flush.
 func RunServer(middleware Middleware) error {
 	if middleware == nil {
 		middleware = func(handler http.Handler) http.Handler { return handler }
@@ -97,11 +84,8 @@ func RunServer(middleware Middleware) error {
 	var stopped error
 	select {
 	case err := <-served:
-		// Serve gave up before the driver said stop, so nothing was ever going
-		// to be measured. Reporting it here rather than going on to wait for
-		// standard input is what turns a hang into a message: otherwise the
-		// process would hold the port until the driver's timeout killed it,
-		// and the one line explaining why would go with it.
+		// Return immediately if Serve fails; waiting for stdin would leave the
+		// process hung until the driver's timeout.
 		if err == nil {
 			err = errors.New("the server stopped accepting connections")
 		}
@@ -124,8 +108,6 @@ func RunServer(middleware Middleware) error {
 	return stopped
 }
 
-// answer looks the concrete request up in the contract. Identical for every Go
-// framework, which is why only the route declaration above is net/http's.
 func answer() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		body, err := io.ReadAll(request.Body)

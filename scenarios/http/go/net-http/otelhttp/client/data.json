@@ -34,7 +34,7 @@
   "findings": [
     {
       "id": "http_span_name_format",
-      "message": "Span 'HTTP GET' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "message": "Span 'HTTP GET' should be named one of [\"GET\"] according to HTTP span naming conventions.",
       "context": {
         "expected": [
           "GET"
@@ -44,7 +44,7 @@
     },
     {
       "id": "http_span_name_format",
-      "message": "Span 'HTTP POST' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
+      "message": "Span 'HTTP POST' should be named one of [\"POST\"] according to HTTP span naming conventions.",
       "context": {
         "expected": [
           "POST"

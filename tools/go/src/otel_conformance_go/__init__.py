@@ -45,8 +45,6 @@ BUILD_DIR = "build"
 
 BINARY = "scenario"
 
-# The subcommand whose remaining words belong to the scenario rather than to
-# this program.
 RUN = "run"
 
 
@@ -80,14 +78,12 @@ def binary(directory: Path) -> Path:
 
 
 def build_command(directory: Path) -> list[str]:
-    """The ``go build`` invocation for the scenario in ``directory``."""
     return ["go", "build", "-o", str(binary(directory)), "."]
 
 
 def run_command(
     directory: Path, arguments: Sequence[str] = ()
 ) -> list[str]:
-    """The invocation of what :func:`build_command` produced."""
     return [str(binary(directory)), *arguments]
 
 
