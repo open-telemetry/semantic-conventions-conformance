@@ -34,22 +34,18 @@
   "findings": [
     {
       "id": "http_span_name_format",
-      "message": "Span 'HTTP GET' should be named one of [\"GET\"] according to HTTP span naming conventions.",
+      "message": "Span 'HTTP GET' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
       "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "client"
+        "kind": "client",
+        "expected_method": "GET"
       }
     },
     {
       "id": "http_span_name_format",
-      "message": "Span 'HTTP POST' should be named one of [\"POST\"] according to HTTP span naming conventions.",
+      "message": "Span 'HTTP POST' should use HTTP method name 'POST', either alone or followed by a non-empty target.",
       "context": {
-        "expected": [
-          "POST"
-        ],
-        "kind": "client"
+        "kind": "client",
+        "expected_method": "POST"
       }
     }
   ]

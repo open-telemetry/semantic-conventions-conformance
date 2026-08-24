@@ -51,13 +51,11 @@
   },
   "findings": [
     {
-      "id": "http_span_name_format",
-      "message": "Span 'GET /health' should be named one of [\"GET\"] according to HTTP span naming conventions.",
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /health' uses target '/health' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
       "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "server"
+        "kind": "server",
+        "target": "/health"
       }
     },
     {
@@ -68,33 +66,27 @@
       }
     },
     {
-      "id": "http_span_name_format",
-      "message": "Span 'GET /status/{code}' should be named one of [\"GET\"] according to HTTP span naming conventions.",
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /status/{code}' uses target '/status/{code}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
       "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "server"
+        "kind": "server",
+        "target": "/status/{code}"
       }
     },
     {
-      "id": "http_span_name_format",
-      "message": "Span 'GET /users/{userId}' should be named one of [\"GET\"] according to HTTP span naming conventions.",
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /users/{userId}' uses target '/users/{userId}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
       "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "server"
+        "kind": "server",
+        "target": "/users/{userId}"
       }
     },
     {
-      "id": "http_span_name_format",
-      "message": "Span 'POST /items' should be named one of [\"POST\"] according to HTTP span naming conventions.",
+      "id": "http_route_not_present",
+      "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
       "context": {
-        "expected": [
-          "POST"
-        ],
-        "kind": "server"
+        "kind": "server",
+        "target": "/items"
       }
     }
   ]
