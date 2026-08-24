@@ -24,6 +24,20 @@ public class HttpClientWorkloadTests
     }
 
     [Fact]
+    public async Task ATrailingSlashDoesNotCreateADoubleSlash()
+    {
+        string? firstUrl = null;
+        await HttpClientWorkload.DriveAsync($"{BaseUrl}/", (method, url, body) =>
+        {
+            firstUrl ??= url;
+            var path = $"/{new Uri(url).PathAndQuery.TrimStart('/')}";
+            return Task.FromResult(HttpServerWorkload.Respond(method, path, body));
+        });
+
+        Assert.Equal($"{BaseUrl}/users/123", firstUrl);
+    }
+
+    [Fact]
     public void AWrongStatusFailsTheRun()
     {
         var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));

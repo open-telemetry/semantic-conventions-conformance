@@ -37,9 +37,11 @@ public static class HttpClientWorkload
         ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);
         ArgumentNullException.ThrowIfNull(send);
 
+        var normalizedBaseUrl = baseUrl.TrimEnd('/');
         foreach (var exchange in HttpContract.Requests)
         {
-            var response = await send(exchange.Method, baseUrl + exchange.Path, exchange.Body)
+            var response = await send(
+                    exchange.Method, normalizedBaseUrl + exchange.Path, exchange.Body)
                 .ConfigureAwait(false);
             Console.WriteLine(
                 $"{exchange.Method} {exchange.Path} -> {response.StatusCode} {Abbreviate(response.Body)}");
