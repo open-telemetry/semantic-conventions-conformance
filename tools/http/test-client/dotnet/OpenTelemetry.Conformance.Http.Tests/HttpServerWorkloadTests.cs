@@ -8,6 +8,46 @@ namespace OpenTelemetry.Conformance.Http.Tests;
 public class HttpServerWorkloadTests
 {
     [Fact]
+    public void TheScenarioPortComesFromTheDriver()
+    {
+        var previous = Environment.GetEnvironmentVariable(HttpServerWorkload.PortVariable);
+        try
+        {
+            Environment.SetEnvironmentVariable(HttpServerWorkload.PortVariable, "4317");
+
+            Assert.Equal(4317, HttpServerWorkload.ScenarioPort());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(HttpServerWorkload.PortVariable, previous);
+        }
+    }
+
+    [Theory]
+    [InlineData("not-a-port")]
+    [InlineData("0")]
+    [InlineData("65536")]
+    public void AnInvalidScenarioPortNamesTheVariableAndValue(string value)
+    {
+        var previous = Environment.GetEnvironmentVariable(HttpServerWorkload.PortVariable);
+        try
+        {
+            Environment.SetEnvironmentVariable(HttpServerWorkload.PortVariable, value);
+
+            var error = Assert.Throws<InvalidOperationException>(
+                () => HttpServerWorkload.ScenarioPort());
+
+            Assert.Equal(
+                $"{HttpServerWorkload.PortVariable} value '{value}' must be an integer from 1 through 65535",
+                error.Message);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(HttpServerWorkload.PortVariable, previous);
+        }
+    }
+
+    [Fact]
     public void AnAnswerComesFromTheContract()
     {
         var answer = HttpServerWorkload.Respond("GET", "/status/500", null);

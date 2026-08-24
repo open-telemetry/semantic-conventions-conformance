@@ -54,6 +54,14 @@ public static class HttpServerWorkload
                 + "which chooses the port");
         }
 
-        return int.Parse(value, CultureInfo.InvariantCulture);
+        if (!int.TryParse(
+                value, NumberStyles.None, CultureInfo.InvariantCulture, out var port)
+            || port is < 1 or > 65535)
+        {
+            throw new InvalidOperationException(
+                $"{PortVariable} value '{value}' must be an integer from 1 through 65535");
+        }
+
+        return port;
     }
 }
