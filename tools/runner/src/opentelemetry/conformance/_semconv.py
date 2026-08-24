@@ -62,6 +62,7 @@ def _reduce(
         "events": _signals(observed.events, model.get("events", {})),
         "metrics": _signals(observed.metrics, model.get("metrics", {})),
         "findings": finding_list(observed.findings),
+        "entities": _entities(observed.resources, model.get("entities", {})),
     }
 
 
@@ -83,4 +84,28 @@ def _signals(
         present = sorted(declared[name]["attributes"].keys() & carried)
         if present or bare:
             recorded[name] = present
+    return recorded
+
+
+def _entities(
+    resources: set[str],
+    declared: Mapping[str, Any],
+) -> dict[str, dict[str, list[str]]]:
+    """Which of each declared entity's identity and description attributes the run carried on its resources.
+
+    Only entities the registry declares are recorded — anything else is not
+    coverage of it. An entity is recognised by its identifying attributes; only
+    when all of its declared identifying attributes are present on a resource
+    are its carried attributes recorded.
+    """
+    recorded: dict[str, dict[str, list[str]]] = {}
+    for name, entity in sorted(declared.items()):
+        identity = entity.get("identity", {})
+        if not identity or not set(identity).issubset(resources):
+            continue
+        description = entity.get("description", {})
+        recorded[name] = {
+            "identity": sorted(identity.keys() & resources),
+            "description": sorted(description.keys() & resources),
+        }
     return recorded

@@ -22,7 +22,7 @@ jobs:
       matrix:
         include:
           # Test the runner on each supported operating system.
-          - os: ubuntu-latest
+          - os: cncf-ubuntu-2-8-x86
             python-version: "3.14"
           # A native PowerShell run for the supported Windows path.
           - os: windows-latest
@@ -51,7 +51,7 @@ jobs:
 
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: cncf-ubuntu-2-8-x86
     concurrency:
       group: ${{ github.workflow }}-lint-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -111,7 +111,7 @@ jobs:
 
   types:
     name: Types
-    runs-on: ubuntu-latest
+    runs-on: cncf-ubuntu-2-8-x86
     concurrency:
       group: ${{ github.workflow }}-types-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -152,7 +152,7 @@ jobs:
   # Separate from `test` because it needs weaver and the fetched registry.
   coverage-model:
     name: Coverage model
-    runs-on: ubuntu-latest
+    runs-on: cncf-ubuntu-2-8-x86
     concurrency:
       group: ${{ github.workflow }}-coverage-model-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -212,7 +212,7 @@ jobs:
 
   scenarios:
     name: Scenarios
-    runs-on: ubuntu-latest
+    runs-on: cncf-ubuntu-2-8-x86
     timeout-minutes: 45
     concurrency:
       group: ${{ github.workflow }}-scenarios-${{ github.event.pull_request.number || github.ref }}
@@ -331,7 +331,7 @@ jobs:
       - types
       - coverage-model
       - scenarios
-    runs-on: ubuntu-latest
+    runs-on: cncf-ubuntu-2-8-x86
     if: ${{ always() }}
     steps:
       - if: |

@@ -47,5 +47,6 @@
         "operation": "invoke_agent"
       }
     }
-  ]
+  ],
+  "entities": {}
 }

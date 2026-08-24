@@ -38,18 +38,26 @@ def _classify_span(model):
 def _reduce_for(model):
     """Reduce a run that emitted the given signals carrying every attribute."""
 
-    def build(span_types=(), events=(), metrics=()):
+    def build(span_types=(), events=(), metrics=(), entities=()):
         def signals(names, section):
             return {
                 name: set(model[section][name]["attributes"])
                 for name in names
             }
 
+        resources = {
+            attr
+            for name in entities
+            for part in ("identity", "description")
+            for attr in model.get("entities", {}).get(name, {}).get(part, {})
+        }
+
         return _reduce(
             Observed(
                 spans=signals(span_types, "spans"),
                 events=signals(events, "events"),
                 metrics=signals(metrics, "metrics"),
+                resources=resources,
             ),
             model,
         )
@@ -142,3 +150,16 @@ def test_every_declared_event_is_recordable(model, reduce_for) -> None:
 
     assert set(recorded) == set(declared)
     assert "gen_ai.client.operation.exception" in recorded
+
+
+def test_every_declared_entity_is_recordable(model, reduce_for) -> None:
+    declared = [
+        name for name in model.get("entities", {}) if name.startswith("gen_ai.")
+    ]
+
+    recorded = reduce_for(entities=declared)["entities"]
+
+    assert set(recorded) == set(declared)
+    for name in declared:
+        assert "identity" in recorded[name]
+        assert "description" in recorded[name]

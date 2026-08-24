@@ -106,10 +106,9 @@ serve(lambda: app)
 print(json.dumps(SEEN), file=sys.stderr)
 """
 
-# A scenario command that is a launcher rather than the server itself, which
-# is the shape of every Java scenario: ``otel-conformance-java run ...`` starts
-# the JVM and waits for it, so the process the driver started is not the
-# process that has to stop.
+# A scenario command that is a launcher rather than the server itself: it
+# starts the real server process, directly or indirectly, and waits for it, so
+# the process the driver started is not the process that has to stop.
 _LAUNCHER = """
 import subprocess
 import sys
@@ -151,7 +150,7 @@ server.serve_forever()
 """
 
 # Behind that launcher, a server that never binds the port the driver chose,
-# which is what a JVM stuck on the way up looks like from the outside. It
+# which is what a server stuck on the way up looks like from the outside. It
 # accepts, so a test connecting to it is answered for as long as it lives.
 _DEAF_STARTER = """
 import socket
@@ -492,11 +491,11 @@ class TestDrivingAServerScenario:
 class TestStoppingWhatAScenarioStarted:
     """A scenario command is often a launcher, so killing it is not enough.
 
-    Every Java scenario runs as ``otel-conformance-java run ...``, which
-    starts the JVM and waits for it. A JVM left behind holds the port the next
-    run wants and the pipe the runner is reading the scenario's output from,
-    which turns one scenario's failure into the runner's own much later
-    timeout, reported against the wrong thing.
+    A launcher starts the real server as a descendant and waits for it. A
+    server left behind holds the port the next run wants and the pipe the
+    runner is reading the scenario's output from, which turns one scenario's
+    failure into the runner's own much later timeout, reported against the
+    wrong thing.
     """
 
     def test_one_that_never_starts_takes_its_children_with_it(

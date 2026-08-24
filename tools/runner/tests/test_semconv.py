@@ -41,6 +41,12 @@ MODEL = {
         }
     },
     "events": {"some.event": {"attributes": {"a": "recommended"}}},
+    "entities": {
+        "k8s.pod": {
+            "identity": {"k8s.pod.uid": "required"},
+            "description": {"k8s.pod.name": "recommended"},
+        }
+    },
 }
 
 
@@ -63,6 +69,10 @@ def write_report(directory: Path, name: str, **report: object) -> None:
 
 def span_sample(kind: str = "server", *attributes: object) -> dict:
     return {"span": {"name": "GET /", "kind": kind, "attributes": list(attributes)}}
+
+
+def resource_sample(*attributes: object) -> dict:
+    return {"resource": {"attributes": list(attributes)}}
 
 
 # ── reading reports ────────────────────────────────────────────────
@@ -263,6 +273,22 @@ def test_the_reduction_records_the_findings_a_run_drew(tmp_path) -> None:
     ]
 
 
+def test_a_resource_carries_its_valid_attributes(tmp_path) -> None:
+    write_report(
+        tmp_path,
+        "one",
+        samples=[
+            resource_sample(
+                attribute("k8s.pod.uid"),
+                attribute("k8s.pod.name"),
+                attribute("bad.attr", advice="type_mismatch"),
+            )
+        ],
+    )
+
+    resources = read(tmp_path, by_kind).resources
+
+    assert resources == {"k8s.pod.uid", "k8s.pod.name"}
 # ── reducing against the model ─────────────────────────────────────
 
 
@@ -308,6 +334,89 @@ def test_a_metric_the_run_emitted_bare_is_still_recorded() -> None:
     assert data["spans"] == {}
 
 
+def test_an_entity_is_recorded_when_its_identity_attribute_is_present() -> None:
+    data = _reduce(
+        Observed(resources={"k8s.pod.uid", "k8s.pod.name"}),
+        MODEL,
+    )
+
+    assert data["entities"]["k8s.pod"] == {
+        "identity": ["k8s.pod.uid"],
+        "description": ["k8s.pod.name"],
+    }
+
+
+def test_an_entity_with_no_description_attributes_records_empty_description() -> None:
+    data = _reduce(
+        Observed(resources={"k8s.pod.uid"}),
+        MODEL,
+    )
+
+    assert data["entities"]["k8s.pod"] == {
+        "identity": ["k8s.pod.uid"],
+        "description": [],
+    }
+
+
+def test_an_entity_is_not_recorded_if_only_descriptive_attributes_are_present() -> None:
+    """An entity is recognised by its identifying attributes; description alone is not presence."""
+    data = _reduce(
+        Observed(resources={"k8s.pod.name"}),
+        MODEL,
+    )
+
+    assert data["entities"] == {}
+
+
+def test_an_entity_with_multiple_identity_attributes_requires_all_of_them() -> None:
+    model = {
+        "entities": {
+            "service.instance": {
+                "identity": {
+                    "service.name": "required",
+                    "service.instance.id": "required",
+                },
+                "description": {"service.version": "recommended"},
+            }
+        }
+    }
+
+    partial = _reduce(
+        Observed(resources={"service.name", "service.version"}),
+        model,
+    )
+    assert partial["entities"] == {}
+
+    complete = _reduce(
+        Observed(
+            resources={
+                "service.name",
+                "service.instance.id",
+                "service.version",
+            }
+        ),
+        model,
+    )
+    assert complete["entities"]["service.instance"] == {
+        "identity": [
+            "service.instance.id",
+            "service.name",
+        ],
+        "description": [
+            "service.version",
+        ],
+    }
+
+
+def test_an_entity_the_run_did_not_emit_attributes_for_is_dropped() -> None:
+    data = _reduce(
+        Observed(resources={"unrelated.resource.attr"}),
+        MODEL,
+    )
+
+    assert data["entities"] == {}
+
+
 def test_every_section_is_present_even_when_empty() -> None:
     """A reader can tell "emitted none" from a file that says so."""
     assert _reduce(Observed(), MODEL) == {
@@ -315,6 +424,7 @@ def test_every_section_is_present_even_when_empty() -> None:
         "events": {},
         "metrics": {},
         "findings": [],
+        "entities": {},
     }
 
 
@@ -328,16 +438,22 @@ def test_the_file_is_written_in_a_stable_order() -> None:
                 )
             },
             metrics={"http.server.request.duration": signal("error.type")},
+            resources={"k8s.pod.name", "k8s.pod.uid"},
         ),
         MODEL,
     )
 
-    assert list(data) == ["spans", "events", "metrics", "findings"]
-    for section in (data["spans"], data["events"], data["metrics"]):
+    assert list(data) == ["spans", "events", "metrics", "findings", "entities"]
+    for section in (data["spans"], data["events"], data["metrics"], data["entities"]):
         assert list(section) == sorted(section)
     assert data["spans"]["http.server"] == sorted(
         data["spans"]["http.server"]
     )
+    assert data["entities"]["k8s.pod"] == {
+        "identity": ["k8s.pod.uid"],
+        "description": ["k8s.pod.name"],
+    }
+    assert list(data["entities"]["k8s.pod"]) == ["identity", "description"]
 
 
 def test_a_run_that_produced_no_reports_is_an_error(tmp_path) -> None:
