@@ -8,8 +8,8 @@ dependencies = [
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
     "opentelemetry-distro==0.65b0",
-    "opentelemetry-util-genai==1.0b0",
-    "opentelemetry-instrumentation-google-genai==1.0b1",
+    "opentelemetry-util-genai==1.1b0",
+    "opentelemetry-instrumentation-google-genai==1.1b1",
 ]
 
 [tool.uv]

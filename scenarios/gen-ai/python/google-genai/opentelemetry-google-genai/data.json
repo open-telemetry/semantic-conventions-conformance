@@ -32,6 +32,7 @@
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.response.time_to_first_chunk",
       "gen_ai.system_instructions",
       "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
@@ -59,6 +60,7 @@
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.response.time_to_first_chunk",
       "gen_ai.system_instructions",
       "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
@@ -74,6 +76,18 @@
       "gen_ai.provider.name",
       "gen_ai.request.model",
       "gen_ai.response.model",
+      "server.address"
+    ],
+    "gen_ai.client.operation.time_per_output_chunk": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "server.address"
+    ],
+    "gen_ai.client.operation.time_to_first_chunk": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
       "server.address"
     ],
     "gen_ai.client.token.usage": [
