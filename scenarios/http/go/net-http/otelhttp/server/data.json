@@ -59,13 +59,6 @@
       }
     },
     {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "context": {
-        "status_code": "error"
-      }
-    },
-    {
       "id": "http_route_not_present",
       "message": "Server span 'GET /status/{code}' uses target '/status/{code}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
       "context": {
@@ -88,6 +81,30 @@
         "kind": "server",
         "target": "/items"
       }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "context": {
+        "status_code": "error"
+      }
     }
-  ]
+  ],
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
 }

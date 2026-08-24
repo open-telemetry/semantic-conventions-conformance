@@ -36,17 +36,34 @@
       "id": "http_span_name_format",
       "message": "Span 'HTTP GET' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
       "context": {
-        "kind": "client",
-        "expected_method": "GET"
+        "expected_method": "GET",
+        "kind": "client"
       }
     },
     {
       "id": "http_span_name_format",
       "message": "Span 'HTTP POST' should use HTTP method name 'POST', either alone or followed by a non-empty target.",
       "context": {
-        "kind": "client",
-        "expected_method": "POST"
+        "expected_method": "POST",
+        "kind": "client"
       }
     }
-  ]
+  ],
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
 }
