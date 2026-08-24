@@ -118,8 +118,8 @@ otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 otel-conformance scenarios/http/dotnet/aspnetcore/opentelemetry-aspnetcore/server
 otel-conformance scenarios/http/dotnet/httpclient/opentelemetry-http/client
-otel-conformance scenarios/http/python/aiohttp-client/opentelemetry-aiohttp-client/client
-otel-conformance scenarios/http/python/aiohttp-server/opentelemetry-aiohttp-server/server
+otel-conformance scenarios/http/python/aiohttp/opentelemetry-aiohttp-client/client
+otel-conformance scenarios/http/python/aiohttp/opentelemetry-aiohttp-server/server
 otel-conformance scenarios/http/python/asgi/opentelemetry-asgi/server
 otel-conformance scenarios/http/python/django/opentelemetry-django/server
 otel-conformance scenarios/http/python/falcon/opentelemetry-falcon/server
