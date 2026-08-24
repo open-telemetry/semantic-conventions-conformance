@@ -125,6 +125,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if arguments.command == RUN:
         command = run_command(directory, scenario_arguments)
     else:
+        binary(directory).parent.mkdir(parents=True, exist_ok=True)
         command = build_command(directory)
 
     return subprocess.call(command)  # noqa: S603

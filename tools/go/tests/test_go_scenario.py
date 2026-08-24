@@ -55,6 +55,15 @@ class TestBuilding:
 
         assert command[command.index("-o") + 1] == str(binary(root))
 
+    def test_it_creates_the_binary_directory(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(root)
+        monkeypatch.setattr(otel_conformance_go.subprocess, "call", lambda _: 0)
+
+        assert otel_conformance_go.main(["build"]) == 0
+        assert binary(root).parent.is_dir()
+
 
 class TestRunning:
     def test_the_binary_is_named_absolutely(self, root: Path) -> None:
