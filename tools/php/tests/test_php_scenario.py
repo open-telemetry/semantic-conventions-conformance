@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import io
+import threading
 from pathlib import Path
 
 import pytest
@@ -131,6 +132,38 @@ def test_serve_stops_the_server_at_eof(
 
     assert serve(router, input_stream=io.BytesIO()) == 0
     assert process.terminated
+
+
+def test_serve_reports_server_that_exits_cleanly_before_eof(
+    package: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = package / "router.php"
+    router.write_text("<?php", encoding="utf-8")
+    monkeypatch.setenv("OTEL_HTTP_SCENARIO_PORT", "8080")
+    release = threading.Event()
+
+    class Input:
+        def read(self, size: int = -1) -> bytes:
+            release.wait()
+            return b""
+
+    class Process:
+        returncode = 0
+
+        def poll(self) -> int:
+            return self.returncode
+
+    monkeypatch.setattr(
+        otel_conformance_php.subprocess,
+        "Popen",
+        lambda command, stdin: Process(),
+    )
+
+    try:
+        assert serve(router, input_stream=Input()) == 1  # type: ignore[arg-type]
+    finally:
+        release.set()
 
 
 def test_missing_router_fails_tightly(
