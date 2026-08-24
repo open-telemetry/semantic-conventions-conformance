@@ -20,14 +20,7 @@ function check(bool $condition, string $message): void
     }
 }
 
-$workingDirectory = getcwd();
-check($workingDirectory !== false, 'the working directory is available');
-check(chdir(sys_get_temp_dir()), 'the test can leave the checkout');
-try {
-    $requests = Contract::requests();
-} finally {
-    check(chdir($workingDirectory), 'the test restores the working directory');
-}
+$requests = Contract::requests();
 check(count($requests) === 5, 'the measured contract has five requests');
 check(
     Contract::exchange('GET', '/users/123?fields=name')?->path

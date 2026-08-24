@@ -129,7 +129,7 @@ final class Contract
             return $declared;
         }
 
-        $beside = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'contract.json';
+        $beside = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'contract.json';
         if (is_file($beside)) {
             return $beside;
         }
