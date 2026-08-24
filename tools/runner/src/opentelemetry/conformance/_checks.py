@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
-from ._report import carried_attributes
+from ._report import span_attributes
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 class ObservedSpan:
     name: str
     kind: str
+    scope: str | None
     attributes: Mapping[str, object]
 
 
@@ -37,17 +38,21 @@ def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
     Attributes weaver rejected are dropped, so an expectation cannot pass on a
     value live-check refused — the same rule the coverage reduction applies.
     """
-    return [
-        ObservedSpan(
-            name=entry["span"].get("name", ""),
-            kind=entry["span"].get("kind", ""),
-            attributes=carried_attributes(
-                cast("Mapping[str, object]", entry["span"])
-            ),
+    spans: list[ObservedSpan] = []
+    for entry in report["samples"]:
+        if "span" not in entry:
+            continue
+        span = cast("Mapping[str, object]", entry["span"])
+        attributes, scope = span_attributes(span)
+        spans.append(
+            ObservedSpan(
+                name=str(span.get("name", "")),
+                kind=str(span.get("kind", "")),
+                scope=scope,
+                attributes=attributes,
+            )
         )
-        for entry in report["samples"]
-        if "span" in entry
-    ]
+    return spans
 
 
 def _seen(statistics: Mapping[str, object], *keys: str) -> set[str]:
@@ -130,7 +135,9 @@ def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
     return all(
         span.attributes.get(attribute) == value
         for attribute, value in match.attributes.items()
-    ) and (match.kind is None or span.kind == match.kind)
+    ) and (match.kind is None or span.kind == match.kind) and (
+        match.scope is None or span.scope == match.scope
+    )
 
 
 def _check_spans(

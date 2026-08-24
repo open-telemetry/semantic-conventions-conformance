@@ -116,6 +116,7 @@ def test_span_expectation(tmp_path: Path) -> None:
           attributes:
             gen_ai.operation.name: chat
           kind: CLIENT
+          scope: io.opentelemetry.openai
         expect:
           count: 2
           attributes:
@@ -131,6 +132,7 @@ def test_span_expectation(tmp_path: Path) -> None:
     (expectation,) = spans
     assert expectation.count == 2
     assert expectation.match.kind == "CLIENT"
+    assert expectation.match.scope == "io.opentelemetry.openai"
     assert expectation.match.attributes == {"gen_ai.operation.name": "chat"}
     assert expectation.attributes["gen_ai.tool.name"].distinct == 2
     assert expectation.attributes["server.address"].present is True
@@ -150,6 +152,9 @@ def test_span_keys_survive_separators_in_a_value() -> None:
     assert SpanMatch(attributes={"b": "2", "a": "1"}).key() == (
         SpanMatch(attributes={"a": "1", "b": "2"}).key()
     )
+    assert json.loads(SpanMatch(attributes={}, scope="scope").key()) == {
+        "scope": "scope"
+    }
 
 
 @pytest.mark.parametrize(

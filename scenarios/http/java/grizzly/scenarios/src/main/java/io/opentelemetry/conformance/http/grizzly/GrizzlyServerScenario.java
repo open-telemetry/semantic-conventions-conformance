@@ -21,9 +21,9 @@ public final class GrizzlyServerScenario {
     HttpServer server =
         HttpServer.createSimpleServer(null, "127.0.0.1", HttpServerWorkload.scenarioPort());
     server.getServerConfiguration().addHttpHandler(new ConformanceHandler(), "/health");
-    server.getServerConfiguration().addHttpHandler(new ConformanceHandler(), "/users");
+    server.getServerConfiguration().addHttpHandler(new ConformanceHandler(), "/users/*");
     server.getServerConfiguration().addHttpHandler(new ConformanceHandler(), "/items");
-    server.getServerConfiguration().addHttpHandler(new ConformanceHandler(), "/status");
+    server.getServerConfiguration().addHttpHandler(new ConformanceHandler(), "/status/*");
 
     server.start();
     try {

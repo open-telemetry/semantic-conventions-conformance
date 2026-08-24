@@ -16,3 +16,8 @@ scenarios:
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-java run armeria:opentelemetry-library ArmeriaLibraryServerScenario
+    spans:
+      - match:
+          scope: io.opentelemetry.armeria-1.3
+        expect:
+          count: 6

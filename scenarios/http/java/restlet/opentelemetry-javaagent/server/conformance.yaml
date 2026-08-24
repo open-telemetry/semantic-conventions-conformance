@@ -8,6 +8,8 @@ instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
 env:
   # Keep Java runtime metrics out of this HTTP-only conformance report.
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+  # The JDK HTTP server creates the server span before Restlet can.
+  OTEL_INSTRUMENTATION_JAVA_HTTP_SERVER_ENABLED: "false"
 
 weaver:
   config: ../../../weaver.toml
@@ -20,3 +22,8 @@ scenarios:
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-java run --agent restlet:opentelemetry-javaagent RestletJavaagentServerScenario
+    spans:
+      - match:
+          scope: io.opentelemetry.restlet-2.0
+        expect:
+          count: 6

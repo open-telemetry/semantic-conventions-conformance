@@ -72,6 +72,15 @@ class TestRunning:
             f"{root / 'build' / 'scenario-runtime' / RUNTIME / 'agent'}"
         )
         assert any(argument.startswith(agent) for argument in command)
+        extension = (
+            root
+            / "build"
+            / "scenario-runtime"
+            / RUNTIME
+            / "agent"
+            / "conformance-javaagent-extension.jar"
+        )
+        assert f"-Dotel.javaagent.extensions={extension}" in command
 
     def test_a_nested_project_gets_its_own_runtime(self, root: Path) -> None:
         """Two libraries can both have a project called `javaagent`."""
@@ -100,6 +109,10 @@ class TestRunning:
 
         assert not any(
             argument.startswith("-javaagent:") for argument in command
+        )
+        assert not any(
+            argument.startswith("-Dotel.javaagent.extensions=")
+            for argument in command
         )
 
     def test_it_runs_java_rather_than_gradle(self, root: Path) -> None:

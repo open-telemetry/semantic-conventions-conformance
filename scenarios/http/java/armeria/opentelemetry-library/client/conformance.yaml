@@ -16,3 +16,8 @@ server:
 scenarios:
   client:
     run: otel-conformance-java run armeria:opentelemetry-library ArmeriaLibraryClientScenario
+    spans:
+      - match:
+          scope: io.opentelemetry.armeria-1.3
+        expect:
+          count: 5

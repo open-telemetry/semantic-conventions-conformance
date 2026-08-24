@@ -8,6 +8,7 @@ dependencies {
     api(libs.opentelemetry.api)
 
     implementation(project(":scenario-support"))
+    implementation(project(":javaagent-test-extension"))
     implementation(libs.opentelemetry.exporter.otlp)
     implementation(libs.opentelemetry.sdk.extension.autoconfigure)
 }

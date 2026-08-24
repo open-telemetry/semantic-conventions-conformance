@@ -16,12 +16,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Hosts the shared HTTP exchanges in the JDK's {@link HttpServer} until the driver says stop.
- *
- * <p>The JDK server routes by context path prefix rather than by template, so {@code /users/} and
- * {@code /status/} are the closest thing it has to the contract's parameterized routes.
- */
+/** Hosts the shared HTTP exchanges in the JDK's {@link HttpServer} until the driver says stop. */
 public final class JavaHttpServerServerScenario {
   private JavaHttpServerServerScenario() {}
 
@@ -30,10 +25,7 @@ public final class JavaHttpServerServerScenario {
     HttpServer server =
         HttpServer.create(new InetSocketAddress(loopback, HttpServerWorkload.scenarioPort()), 0);
 
-    server.createContext("/health", JavaHttpServerServerScenario::answer);
-    server.createContext("/users/", JavaHttpServerServerScenario::answer);
-    server.createContext("/items", JavaHttpServerServerScenario::answer);
-    server.createContext("/status/", JavaHttpServerServerScenario::answer);
+    server.createContext("/", JavaHttpServerServerScenario::answer);
 
     server.start();
     try {

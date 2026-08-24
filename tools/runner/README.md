@@ -216,6 +216,7 @@ scenarios:
       - match:
           attributes:
             gen_ai.operation.name: chat
+          scope: opentelemetry.instrumentation.openai
         expect:
           count: 1
     metrics:
@@ -241,10 +242,14 @@ scenarios:
 ```
 
 Each entry has two halves, declared separately so an attribute used to *find*
-a span never reads like one being *checked* on it. `match` selects — by
-attribute value or span `kind`. `expect` then asserts over what it selected:
-`count` is exact, and a span no entry selects fails as undeclared. Each entry
-under `expect.attributes` takes one of three forms:
+a span never reads like one being *checked* on it. `match` selects by attribute
+value, span `kind`, or instrumentation `scope`. `expect` then asserts over what
+it selected: `count` is exact, and a span no entry selects fails as undeclared.
+Each entry under `expect.attributes` takes one of three forms:
+
+The runner reads `scope` from the `otel.scope.name` span attribute and removes
+that attribute before it records coverage. A harness that needs scope matching
+must expose the span's instrumentation scope under that standard name.
 
 | form | holds when |
 | --- | --- |
@@ -431,9 +436,10 @@ that file, paths on the command line to your shell.
   variables and names its own `run` command, so another language only needs
   its own adapter.
 - **Weaver live-check is the only backend**, so what it can't observe can't be
-  checked. Expectations select spans only, by attribute value or kind — not by
-  name, status or parent — and add count and attribute assertions on top of
-  weaver's own conformance checks. Metrics and events are matched by name.
+  checked. Expectations select spans only, by attribute value, kind, or
+  instrumentation scope, not by name, status, or parent. They add count and
+  attribute assertions on top of weaver's own conformance checks. Metrics and
+  events are matched by name.
   Content isn't checked: whether a tool call round-tripped through the
   messages belongs in unit tests.
 - **Servers are started, not managed.** A declared `server` must listen on

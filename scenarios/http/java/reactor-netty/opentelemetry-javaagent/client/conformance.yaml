@@ -20,3 +20,8 @@ server:
 scenarios:
   client:
     run: otel-conformance-java run --agent reactor-netty:opentelemetry-javaagent ReactorNettyJavaagentClientScenario
+    spans:
+      - match:
+          scope: io.opentelemetry.reactor-netty-1.0
+        expect:
+          count: 5

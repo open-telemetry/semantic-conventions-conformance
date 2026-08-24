@@ -51,6 +51,7 @@ class SpanMatch:
 
     attributes: Mapping[str, object]
     kind: str | None = None
+    scope: str | None = None
     type: str | None = None
 
     def key(self) -> str:
@@ -74,6 +75,8 @@ class SpanMatch:
             selection["attributes"] = dict(sorted(self.attributes.items()))
         if self.kind is not None:
             selection["kind"] = self.kind
+        if self.scope is not None:
+            selection["scope"] = self.scope
         if self.type is not None:
             selection["type"] = self.type
         return selection
@@ -85,6 +88,8 @@ class SpanMatch:
         facets: list[tuple[str, object]] = list(self.attributes.items())
         if self.kind is not None:
             facets.append(("kind", self.kind))
+        if self.scope is not None:
+            facets.append(("scope", self.scope))
         if self.type is not None:
             facets.append(("type", self.type))
         return facets
@@ -317,15 +322,16 @@ def _parse_matcher(value: object, where: str) -> AttributeMatcher:
 
 def _parse_match(value: object, where: str) -> SpanMatch:
     match = _require_mapping(value or {}, where)
-    _check_keys(match, ("attributes", "kind", "type"), where)
+    _check_keys(match, ("attributes", "kind", "scope", "type"), where)
     attributes = _require_mapping(
         match.get("attributes") or {}, f"{where}.attributes"
     )
-    if not attributes and "kind" not in match:
+    if not attributes and "kind" not in match and "scope" not in match:
         raise SpecError(f"{where}: declare at least one thing to match on")
     return SpanMatch(
         attributes=dict(attributes),
         kind=_optional_string(match, "kind", where),
+        scope=_optional_string(match, "scope", where),
         type=_optional_string(match, "type", where),
     )
 
