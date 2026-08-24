@@ -9,6 +9,7 @@ import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
@@ -40,7 +41,10 @@ public final class ApacheHttpAsyncClientClientScenario {
                       ContentType.create(HttpContract.CONTENT_TYPE)));
             }
 
-            HttpResponse response = client.execute(request.build(), null).get();
+            HttpResponse response =
+                client
+                    .execute(request.build(), null)
+                    .get(HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             HttpEntity entity = response.getEntity();
             return new HttpContract.Response(
                 response.getStatusLine().getStatusCode(),

@@ -50,7 +50,11 @@ public final class VertxHttpClientClientScenario {
                   .get(HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
     } finally {
       client.close();
-      vertx.close().toCompletionStage().toCompletableFuture().get();
+      vertx
+          .close()
+          .toCompletionStage()
+          .toCompletableFuture()
+          .get(HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
     }
   }
 }

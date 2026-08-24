@@ -24,6 +24,9 @@ public final class HttpUrlConnectionClientScenario {
           HttpURLConnection connection =
               (HttpURLConnection) URI.create(url).toURL().openConnection();
           try {
+            int timeoutMillis = Math.toIntExact(HttpClientWorkload.REQUEST_TIMEOUT.toMillis());
+            connection.setConnectTimeout(timeoutMillis);
+            connection.setReadTimeout(timeoutMillis);
             connection.setRequestMethod(method);
             connection.setRequestProperty("user-agent", HttpContract.USER_AGENT);
             if (body != null) {

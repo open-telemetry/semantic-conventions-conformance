@@ -69,7 +69,8 @@ public final class NettyClientScenario {
 
             channel.writeAndFlush(request(HttpMethod.valueOf(method), uri, body)).sync();
             try {
-              return answer.get(30, TimeUnit.SECONDS);
+              return answer.get(
+                  HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             } finally {
               channel.close().sync();
             }

@@ -7,6 +7,7 @@ package io.opentelemetry.conformance.http.asynchttpclient;
 import io.opentelemetry.conformance.http.HttpClientWorkload;
 import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import java.util.concurrent.TimeUnit;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.RequestBuilder;
@@ -30,7 +31,10 @@ public final class AsyncHttpClientClientScenario {
               request.setBody(body);
             }
 
-            Response response = client.executeRequest(request.build()).get();
+            Response response =
+                client
+                    .executeRequest(request.build())
+                    .get(HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             return new HttpContract.Response(response.getStatusCode(), response.getResponseBody());
           });
     }
