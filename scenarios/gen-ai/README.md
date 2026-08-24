@@ -112,6 +112,8 @@ and the gap lands in `data.json`.
 | `bedrock/opentelemetry-botocore` | `…-botocore` | Bedrock Converse: inference, streaming, tool_calling |
 | `langchain/opentelemetry-langchain` | `…-genai-langchain` | workflow, invoke_agent, automatic_tool_calling |
 | `openai-agents/opentelemetry-openai-agents` | `…-genai-openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own |
+| `agno/opentelemetry-agno` | `…-genai-agno` | invoke_agent, automatic_tool_calling |
+| `qwen-agent/opentelemetry-qwen-agent` | `…-genai-qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span |
 
 The conventions also cover retrieval, memory and planning. No instrumentation
 here emits them, so there is no class for them yet.
