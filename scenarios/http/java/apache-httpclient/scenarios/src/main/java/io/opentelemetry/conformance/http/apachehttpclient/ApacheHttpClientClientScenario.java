@@ -7,12 +7,13 @@ package io.opentelemetry.conformance.http.apachehttpclient;
 import io.opentelemetry.conformance.http.HttpClientWorkload;
 import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import java.nio.charset.StandardCharsets;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.io.entity.StringEntity;
 
 /** Runs the shared request contract through Apache HttpClient 5's classic API. */
 public final class ApacheHttpClientClientScenario {
@@ -26,7 +27,10 @@ public final class ApacheHttpClientClientScenario {
             HttpUriRequestBase request = new HttpUriRequestBase(method, java.net.URI.create(url));
             request.addHeader("user-agent", HttpContract.USER_AGENT);
             if (body != null) {
-              request.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
+              request.setEntity(
+                  new ByteArrayEntity(
+                      body.getBytes(StandardCharsets.UTF_8),
+                      ContentType.parse(HttpContract.CONTENT_TYPE)));
             }
             return client.execute(
                 request,

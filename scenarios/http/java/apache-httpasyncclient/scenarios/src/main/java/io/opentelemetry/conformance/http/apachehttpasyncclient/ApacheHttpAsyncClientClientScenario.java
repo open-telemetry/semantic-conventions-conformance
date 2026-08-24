@@ -12,7 +12,8 @@ import java.nio.charset.StandardCharsets;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.util.EntityUtils;
@@ -33,8 +34,10 @@ public final class ApacheHttpAsyncClientClientScenario {
                     .setUri(URI.create(url))
                     .setHeader("user-agent", HttpContract.USER_AGENT);
             if (body != null) {
-              request.setHeader("content-type", HttpContract.CONTENT_TYPE);
-              request.setEntity(new StringEntity(body, StandardCharsets.UTF_8));
+              request.setEntity(
+                  new ByteArrayEntity(
+                      body.getBytes(StandardCharsets.UTF_8),
+                      ContentType.create(HttpContract.CONTENT_TYPE)));
             }
 
             HttpResponse response = client.execute(request.build(), null).get();
