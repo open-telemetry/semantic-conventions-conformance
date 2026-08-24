@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Net.Http.Headers;
 using System.Text;
 using OpenTelemetry.Conformance.Scenario;
 
@@ -49,7 +48,7 @@ public static class HttpClientScenario
                 if (body is not null)
                 {
                     request.Content = new StringContent(
-                        body, Encoding.UTF8, new MediaTypeHeaderValue(HttpContract.ContentType));
+                        body, Encoding.UTF8, HttpContract.ContentType);
                 }
 
                 using var response = await client.SendAsync(request).ConfigureAwait(false);
