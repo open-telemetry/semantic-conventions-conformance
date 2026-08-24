@@ -133,7 +133,7 @@ func answer() http.Handler {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		response, err := httpcontract.Respond(request.Method, request.URL.Path, string(body))
+		response, err := httpcontract.Respond(request.Method, requestTarget(request), string(body))
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
@@ -142,4 +142,8 @@ func answer() http.Handler {
 		writer.WriteHeader(response.StatusCode)
 		_, _ = io.WriteString(writer, response.Body)
 	})
+}
+
+func requestTarget(request *http.Request) string {
+	return request.URL.RequestURI()
 }
