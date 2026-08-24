@@ -83,7 +83,7 @@ the directory the command runs in, and the build root is the nearest
 the way MSBuild itself resolves it.
 
 `build` publishes that project. `run` starts what it published, from the build
-root's `build/scenario-runtime/<project>`, so a scenario file names neither a
+root's `artifacts/scenario-runtime/<project>`, so a scenario file names neither a
 configuration nor an output path and a change to either is the build's to make.
 
 `run` executes `dotnet <assembly>` rather than the published launcher
