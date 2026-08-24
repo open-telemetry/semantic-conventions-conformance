@@ -25,6 +25,7 @@ func Drive(baseURL string, send Sender) error {
 	if strings.TrimSpace(baseURL) == "" {
 		return contractError("base URL must not be blank")
 	}
+	baseURL = strings.TrimRight(baseURL, "/")
 	requests, err := Requests()
 	if err != nil {
 		return err

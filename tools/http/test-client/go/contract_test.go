@@ -182,6 +182,23 @@ func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
 	}
 }
 
+func TestATrailingSlashOnTheBaseURLIsNotRepeated(t *testing.T) {
+	var firstURL string
+	err := Drive(baseURL+"/", func(method, url, body string) (Response, error) {
+		if firstURL == "" {
+			firstURL = url
+		}
+		return Respond(method, strings.TrimPrefix(url, baseURL), body)
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := baseURL + "/users/123"; firstURL != want {
+		t.Errorf("first request URL = %s, want %s", firstURL, want)
+	}
+}
+
 func TestTheScenarioPortSaysWhoSetsIt(t *testing.T) {
 	t.Setenv(PortVariable, "")
 
