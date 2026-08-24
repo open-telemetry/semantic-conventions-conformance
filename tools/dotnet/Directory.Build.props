@@ -24,4 +24,12 @@
          fail a build; formatting is left to whoever is reading the file. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+
+  <!-- The launcher derives the published DLL name from the project file, so
+       reject a build that would produce an assembly it cannot start. -->
+  <Target Name="ValidateConformanceAssemblyName" BeforeTargets="Build;Publish">
+    <Error
+        Condition="'$(AssemblyName)' != '$(MSBuildProjectName)'"
+        Text="AssemblyName must match MSBuildProjectName because otel-conformance-dotnet runs published assemblies by project name." />
+  </Target>
 </Project>
