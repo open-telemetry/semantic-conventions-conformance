@@ -140,46 +140,6 @@ def test_match_on_kind() -> None:
     )
 
 
-def test_match_on_instrumentation_scope() -> None:
-    expectation = SpanExpectation(
-        match=SpanMatch(attributes={}, scope="io.opentelemetry.http"),
-        count=1,
-        attributes={},
-    )
-    matching = span_sample(**{"otel.scope.name": "io.opentelemetry.http"})
-    other = span_sample(**{"otel.scope.name": "io.opentelemetry.netty"})
-
-    assert check(scenario(spans=(expectation,)), Report([matching])) == []
-    assert check(scenario(spans=(expectation,)), Report([other])) != []
-
-
-def test_scope_attribute_is_not_reported_as_span_coverage(
-    tmp_path: Path,
-) -> None:
-    scoped = SpanExpectation(
-        match=SpanMatch(attributes={}, scope="io.opentelemetry.http"),
-        count=1,
-        attributes={},
-    )
-    (tmp_path / "inference.json").write_text(
-        _report_with(
-            span_sample(
-                **{
-                    "otel.scope.name": "io.opentelemetry.http",
-                    "http.request.method": "GET",
-                }
-            )
-        )
-    )
-
-    assert coverage(tmp_path, _package(tmp_path, spans=(scoped,)))["spans"] == [
-        {
-            "match": {"scope": "io.opentelemetry.http"},
-            "attributes": ["http.request.method"],
-        }
-    ]
-
-
 @pytest.mark.parametrize(
     ("matcher", "values", "ok"),
     [

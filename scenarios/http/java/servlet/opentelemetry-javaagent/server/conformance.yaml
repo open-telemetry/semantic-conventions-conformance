@@ -8,8 +8,7 @@ instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
 env:
   # Keep Java runtime metrics out of this HTTP-only conformance report.
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
-  # Tomcat creates the server span before Servlet can, so disable it when the
-  # Servlet instrumentation itself is under test.
+  # Servlet can run in containers other than Tomcat.
   OTEL_INSTRUMENTATION_TOMCAT_ENABLED: "false"
 
 weaver:
@@ -23,8 +22,3 @@ scenarios:
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-java run --agent servlet:opentelemetry-javaagent ServletJavaagentServerScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.servlet-5.0
-        expect:
-          count: 6

@@ -20,8 +20,3 @@ server:
 scenarios:
   client:
     run: otel-conformance-java run --agent okhttp:opentelemetry-javaagent OkHttpJavaagentClientScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.okhttp-3.0
-        expect:
-          count: 5

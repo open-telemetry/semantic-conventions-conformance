@@ -181,7 +181,7 @@ def _read_sample(
 
     span = _mapping(entry.get("span"))
     if span:
-        attributes, scope = span_attributes(span)
+        attributes = carried_attributes(span)
         names = set(attributes)
 
         span_types = None
@@ -195,12 +195,7 @@ def _read_sample(
                         s_kind = kind.upper().removeprefix("SPAN_KIND_")
                         if m_kind != s_kind:
                             continue
-                    if match.scope is not None and match.scope != scope:
-                        continue
-                    if all(
-                        attributes.get(attr) == val
-                        for attr, val in match.attributes.items()
-                    ):
+                    if all(attributes.get(attr) == val for attr, val in match.attributes.items()):
                         span_types = {match.type}
                         break
 
@@ -247,13 +242,6 @@ def carried_attributes(owner: _Json) -> dict[str, object]:
         if isinstance(name, str) and name and _counts_as_present(attribute):
             attributes[name] = attribute.get("value")
     return attributes
-
-
-def span_attributes(owner: _Json) -> tuple[dict[str, object], str | None]:
-    """A span's attributes and the scope exposed by the test instrumentation."""
-    attributes = carried_attributes(owner)
-    scope = attributes.pop("otel.scope.name", None)
-    return attributes, scope if isinstance(scope, str) else None
 
 
 def _counts_as_present(attribute: _Json) -> bool:

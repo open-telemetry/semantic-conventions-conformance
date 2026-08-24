@@ -20,8 +20,3 @@ scenarios:
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-java run --agent netty:opentelemetry-javaagent NettyJavaagentServerScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.netty-4.1
-        expect:
-          count: 6

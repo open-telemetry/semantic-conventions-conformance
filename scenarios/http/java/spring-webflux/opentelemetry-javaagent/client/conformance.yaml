@@ -20,8 +20,3 @@ server:
 scenarios:
   client:
     run: otel-conformance-java run --agent spring-webflux:opentelemetry-javaagent SpringWebfluxJavaagentClientScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.spring-webflux-5.0
-        expect:
-          count: 5

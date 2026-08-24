@@ -7,7 +7,6 @@ builds and runs one.
 ```text
 scenarios/<domain>/java/      a domain's Gradle build root — wrapper, settings, versions
 tools/java/gradle-plugins/    the convention plugins, as an included build
-tools/java/javaagent-test-extension/  exposes span scope names to the runner
 tools/java/scenario-support/  what a scenario needs before any telemetry
 tools/java/scenario-sdk/      the SDK a library-instrumentation scenario owns
 tools/java/src/               `otel-conformance-java`, the launcher
@@ -34,8 +33,7 @@ reuses it instead of restating any of it:
   errors fail a build here: the patterns that are bugs rather than taste.
 - `otel-conformance.scenario-launcher` — the `javaAgent` configuration and
   `prepareRuntime`, applied only by the projects that are scenario entry
-  points. It also packages the test extension that copies each span's
-  instrumentation scope name to `otel.scope.name`.
+  points. Which projects those are is therefore visible in the build files.
 
 The projects under `tools/java` are shared the same way: a build root includes
 them by directory, so both a `scenario-support` and a domain's own framework

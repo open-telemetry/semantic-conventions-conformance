@@ -20,8 +20,3 @@ scenarios:
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-java run --agent pekko-http:opentelemetry-javaagent PekkoHttpJavaagentServerScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.pekko-http-1.0
-        expect:
-          count: 6

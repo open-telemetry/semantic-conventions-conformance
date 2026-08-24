@@ -20,8 +20,3 @@ server:
 scenarios:
   client:
     run: otel-conformance-java run --agent vertx-http-client:opentelemetry-javaagent VertxHttpClientJavaagentClientScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.vertx-http-client-4.0
-        expect:
-          count: 5

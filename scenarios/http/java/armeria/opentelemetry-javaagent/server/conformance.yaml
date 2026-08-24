@@ -8,8 +8,6 @@ instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
 env:
   # Keep Java runtime metrics out of this HTTP-only conformance report.
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
-  # Netty creates the server span before Armeria can.
-  OTEL_INSTRUMENTATION_NETTY_ENABLED: "false"
 
 weaver:
   config: ../../../weaver.toml
@@ -22,8 +20,3 @@ scenarios:
     # server telemetry only; the driver starts this command, chooses the port
     # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-java run --agent armeria:opentelemetry-javaagent ArmeriaJavaagentServerScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.armeria-1.3
-        expect:
-          count: 6

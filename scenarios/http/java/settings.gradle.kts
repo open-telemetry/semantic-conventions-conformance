@@ -66,5 +66,4 @@ fun shared(name: String, directory: String) {
 
 shared("scenario-support", "../../../tools/java/scenario-support")
 shared("scenario-sdk", "../../../tools/java/scenario-sdk")
-shared("javaagent-test-extension", "../../../tools/java/javaagent-test-extension")
 shared("http-test-client", "../../../tools/http/test-client/java")

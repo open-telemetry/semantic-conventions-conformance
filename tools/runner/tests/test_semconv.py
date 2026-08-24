@@ -468,7 +468,6 @@ def test_read_uses_declared_match_type(tmp_path) -> None:
     match = SimpleNamespace(
         attributes={"gen_ai.operation.name": "run_step"},
         kind="internal",
-        scope="io.opentelemetry.genai",
         type="gen_ai.run_step.internal",
     )
     expectation = SimpleNamespace(match=match)
@@ -483,7 +482,6 @@ def test_read_uses_declared_match_type(tmp_path) -> None:
                 "internal",
                 attribute("gen_ai.operation.name", "run_step"),
                 attribute("gen_ai.step.name", "step1"),
-                attribute("otel.scope.name", "io.opentelemetry.genai"),
             )
         ],
     )

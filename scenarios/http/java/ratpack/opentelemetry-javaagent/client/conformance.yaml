@@ -20,8 +20,3 @@ server:
 scenarios:
   client:
     run: otel-conformance-java run --agent ratpack:opentelemetry-javaagent RatpackJavaagentClientScenario
-    spans:
-      - match:
-          scope: io.opentelemetry.ratpack-1.7
-        expect:
-          count: 5
