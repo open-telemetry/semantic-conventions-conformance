@@ -8,7 +8,11 @@ const http = require("node:http");
 const grpc = require("@grpc/grpc-js");
 const { build } = require("esbuild");
 const { chromium } = require("playwright");
-const { requests } = require("@otel-conformance/http-test-client");
+const {
+  CONTENT_TYPE,
+  USER_AGENT,
+  requests,
+} = require("@otel-conformance/http-test-client");
 const { requireEnv } = require("@otel-conformance/scenario-support");
 const { forwardTraces } = require("./forward");
 
@@ -63,14 +67,14 @@ async function proxyContract(request, response, mockServerUrl) {
   const upstream = await fetch(new URL(request.url, mockServerUrl), {
     method: request.method,
     headers: {
-      "content-type": request.headers["content-type"] ?? "application/json",
-      "user-agent": request.headers["user-agent"] ?? "otel-http-conformance/1",
+      "content-type": request.headers["content-type"] ?? CONTENT_TYPE,
+      "user-agent": request.headers["user-agent"] ?? USER_AGENT,
     },
     body,
   });
   const payload = Buffer.from(await upstream.arrayBuffer());
   response.writeHead(upstream.status, {
-    "content-type": upstream.headers.get("content-type") ?? "application/json",
+    "content-type": upstream.headers.get("content-type") ?? CONTENT_TYPE,
     "content-length": payload.length,
   });
   response.end(payload);
