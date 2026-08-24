@@ -82,15 +82,6 @@ That is the only Node step a scenario file cannot name portably. Running one is
 Windows, and the runner starts a declared command directly rather than through
 a shell, so a bare `npm ci` in `setup:` fails there.
 
-Browser scenarios use the same command with the browser they need:
-
-```yaml
-setup: otel-conformance-js install --browser chromium
-```
-
-This installs the Playwright browser pinned by the workspace after `npm ci`;
-the scenario never depends on whichever browser happens to be on the host.
-
 `install` runs `npm ci` at the build root, so a scenario gets the versions the
 committed lockfile pins rather than whatever resolves today, and every package
 in the build is installed once however deep its own directory sits.

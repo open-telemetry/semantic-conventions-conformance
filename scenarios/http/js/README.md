@@ -1,6 +1,6 @@
 # HTTP conformance scenarios in JavaScript
 
-Node.js and browser HTTP instrumentations, measured against
+Node's HTTP instrumentations, measured against
 [the same contract](../../../tools/http/test-client/contract.json) as every
 other language.
 
@@ -11,16 +11,13 @@ http/scenarios/                       built-in client and server, no OTel
 http/opentelemetry-http/              client.js, server.js, client/, server/
 undici/scenarios/                     what the client does, no OTel
 undici/opentelemetry-undici/          client.js, client/
-<browser>/scenarios/                  browser workload, no OTel
-<browser>/<instrumentation>/          browser.js, client.js, client/
 ```
 
 This directory is the build root: one npm workspace, whose `package.json` and
 `package-lock.json` are committed so a run measures pinned versions. It pulls
-in the shared packages under [`tools/js`](../../../tools/js),
-[`tools/http/test-client/js`](../../../tools/http/test-client/js) and
-[`tools/http/test-client/browser-js`](../../../tools/http/test-client/browser-js)
-by path rather than restating them.
+in the shared packages under [`tools/js`](../../../tools/js) and
+[`tools/http/test-client/js`](../../../tools/http/test-client/js) by path rather
+than restating them.
 
 A `<library>/scenarios` package is the workload with no OpenTelemetry in it at
 all, so a second instrumentation of the same library measures the same
@@ -59,17 +56,6 @@ undici does not go through Node's `http` module, so its client spans come from
 `undici.request`, which reports every status rather than throwing on 4xx and
 5xx: the contract's failing statuses are traffic to be measured like any other.
 
-## Browser clients
-
-Fetch and XMLHttpRequest send the shared contract in a real headless Chromium
-page. The shared browser test client bundles each browser entry, proxies
-contract traffic to the same mock server as every other client, and forwards
-the browser's OTLP/HTTP payload unchanged to the runner's OTLP/gRPC collector.
-
-Playwright and Chromium are pinned by the workspace. Browser packages use
-`otel-conformance-js install --browser chromium`, so CI does not depend on a
-system browser.
-
 ## Running one
 
 Use Node 22.19.0 or newer. The lockfile pins `undici@8.10.0`, which requires
@@ -79,19 +65,16 @@ that version.
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/js
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
-otel-conformance scenarios/http/js/fetch/opentelemetry-fetch/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
-otel-conformance scenarios/http/js/xml-http-request/opentelemetry-xml-http-request/client
 ```
 
-Each package's `setup:` installs this whole workspace from the lockfile through
-`otel-conformance-js`; browser packages also ask it for pinned Chromium. Because
-the shared packages are installed as copies rather than links, editing one under
-`tools/` takes effect on the next install — which every run performs, so no run
-measures a stale copy, but an `npm ci` here is what makes an edit visible to
-anything else.
+Each package's `setup:` is `otel-conformance-js install`, which installs this
+whole workspace from the lockfile. Because the shared packages are installed as
+copies rather than links, editing one under `tools/` takes effect on the next
+install — which every run performs, so no run measures a stale copy, but an
+`npm ci` here is what makes an edit visible to anything else.
 
 The helper's own unit tests and the formatter run from here:
 
