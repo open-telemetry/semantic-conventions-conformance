@@ -1,0 +1,17 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: System.Net.Http
+instrumentation_library: OpenTelemetry.Instrumentation.Http
+
+# Publishing here rather than in `run:` keeps the toolchain out of the measured
+# process: a `dotnet run` would restore and compile on the clock.
+setup: otel-conformance-dotnet build
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-dotnet run

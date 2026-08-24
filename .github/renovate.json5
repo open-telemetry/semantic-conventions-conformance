@@ -38,6 +38,12 @@
       "groupName": "javascript-minor"
     },
     {
+      // group all non-major .NET dependency updates into a single PR
+      "matchManagers": ["nuget"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "dotnet-minor"
+    },
+    {
       // group all non-major Python dependency updates into a single PR
       // (two managers read pyproject.toml: `poetry` takes a file over from
       // `pep621` whenever it can read dependencies out of it and no lock

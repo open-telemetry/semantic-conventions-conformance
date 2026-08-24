@@ -1,0 +1,10 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Carries no OpenTelemetry package, deliberately: see README.md. -->
+    <RootNamespace>OpenTelemetry.Conformance.Scenario</RootNamespace>
+  </PropertyGroup>
+</Project>

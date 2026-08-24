@@ -4,12 +4,12 @@
 [versions]
 armeria = "1.41.0"
 jackson = "2.22.2"
-opentelemetry = "1.64.0"
+opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
-opentelemetry-instrumentation = "2.30.0"
-opentelemetry-instrumentation-alpha = "2.30.0-alpha"
+opentelemetry-instrumentation = "2.31.1"
+opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 
 [libraries]
 armeria = { module = "com.linecorp.armeria:armeria", version.ref = "armeria" }

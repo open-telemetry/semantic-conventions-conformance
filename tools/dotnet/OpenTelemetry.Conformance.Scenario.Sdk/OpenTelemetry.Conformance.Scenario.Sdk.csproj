@@ -1,0 +1,22 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Not `OpenTelemetry.Conformance.Scenario.Sdk`: a namespace segment named
+         `Sdk` would shadow `OpenTelemetry.Sdk`, the type this project's whole
+         job is to call. The assembly still carries the longer name, so which
+         package a scenario referenced stays visible. -->
+    <RootNamespace>OpenTelemetry.Conformance.Scenario</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../OpenTelemetry.Conformance.Scenario/OpenTelemetry.Conformance.Scenario.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+  </ItemGroup>
+</Project>

@@ -15,3 +15,7 @@ build/
 
 # npm: the dependency tree a scenario's `setup` installs. The lockfile is committed.
 node_modules/
+
+# .NET: what a build writes, which the artifacts output layout collects into
+# one directory per build root.
+artifacts/

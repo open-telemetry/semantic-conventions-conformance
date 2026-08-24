@@ -1,0 +1,14 @@
+<!--
+  Copyright The OpenTelemetry Authors
+  SPDX-License-Identifier: Apache-2.0
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>OpenTelemetry.Conformance.Http.SystemNetHttp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../../../tools/dotnet/OpenTelemetry.Conformance.Scenario/OpenTelemetry.Conformance.Scenario.csproj" />
+    <ProjectReference Include="../../../../../tools/http/test-client/dotnet/OpenTelemetry.Conformance.Http/OpenTelemetry.Conformance.Http.csproj" />
+  </ItemGroup>
+</Project>
