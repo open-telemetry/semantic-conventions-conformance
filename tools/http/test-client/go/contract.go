@@ -74,9 +74,14 @@ type Response struct {
 }
 
 // Error is a server answering something the contract does not describe.
-type Error struct{ message string }
+type Error struct {
+	message string
+	cause   error
+}
 
 func (e *Error) Error() string { return e.message }
+
+func (e *Error) Unwrap() error { return e.cause }
 
 func contractError(format string, arguments ...any) error {
 	return &Error{message: fmt.Sprintf(format, arguments...)}
@@ -138,7 +143,10 @@ func withoutQuery(path string) string {
 func parse(body string) (any, error) {
 	var parsed any
 	if err := json.Unmarshal([]byte(body), &parsed); err != nil {
-		return nil, contractError("not JSON: %s", body)
+		return nil, &Error{
+			message: fmt.Sprintf("not JSON: %s: %v", abbreviate(body), err),
+			cause:   err,
+		}
 	}
 	return parsed, nil
 }

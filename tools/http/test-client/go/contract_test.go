@@ -4,6 +4,7 @@
 package httpcontract
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
@@ -163,11 +164,19 @@ func TestAnAnswerThatIsNotJSONSaysSo(t *testing.T) {
 		t.Fatal("the contract describes no GET /users/123")
 	}
 
-	err = Verify(users, Response{StatusCode: users.Status, Body: "<html>"})
+	body := "<html>" + strings.Repeat("x", 1000)
+	err = Verify(users, Response{StatusCode: users.Status, Body: body})
 
 	var contract *Error
 	if !errors.As(err, &contract) || !strings.HasPrefix(err.Error(), "not JSON") {
 		t.Errorf("verifying a non-JSON answer gave %v, want a contract failure saying so", err)
+	}
+	var syntax *json.SyntaxError
+	if !errors.As(err, &syntax) {
+		t.Errorf("verifying a non-JSON answer gave %v, want the JSON syntax error", err)
+	}
+	if strings.Contains(err.Error(), body) {
+		t.Error("the JSON error contains the full response body")
 	}
 }
 
