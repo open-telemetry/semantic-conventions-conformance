@@ -19,9 +19,11 @@ _POLICIES = Path(__file__).parents[1] / "src/http_conformance/policies"
 _HTTP_POLICY_IDS = {"http_route_not_present", "http_span_name_format"}
 
 
-def _server_span(name: str, route: str | None = None) -> dict[str, Any]:
+def _server_span(
+    name: str, route: str | None = None, method: str = "GET"
+) -> dict[str, Any]:
     attributes: dict[str, object] = {
-        "http.request.method": "GET",
+        "http.request.method": method,
         "url.path": "/health",
         "url.scheme": "http",
         "client.address": "127.0.0.1",
@@ -83,6 +85,11 @@ def policy_advice(
                     route="/users/{id}",
                 ),
                 _server_span("GET"),
+                _server_span(
+                    "POST",
+                    route="/users/{id}",
+                    method="POST",
+                ),
                 _client_span("HTTP GET"),
                 _server_span("POST /wrong-method"),
                 _server_span(
@@ -160,6 +167,19 @@ def test_server_method_without_route_has_no_finding(
     policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
 ) -> None:
     assert policy_advice[("server", "GET")] == {}
+
+
+def test_server_method_with_route_reports_the_missing_target(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+) -> None:
+    """A matched route is the target the name is meant to carry."""
+    advice = policy_advice[("server", "POST")]
+
+    assert set(advice) == {"http_span_name_format"}
+    assert (
+        "should be named 'POST /users/{id}'"
+        in advice["http_span_name_format"]["message"]
+    )
 
 
 def test_client_wrong_method_token_reports_span_name(

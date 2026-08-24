@@ -203,6 +203,30 @@ deny contains _http_span_finding(
 	expected_list := sort([name | some name in expected])
 }
 
+# A name of the method alone says no route matched. When `http.route` is
+# there, one did, and the name is meant to carry it. Anchored on the bare
+# expected name rather than on a missing target, so a name the method-token
+# rule already rejects isn't reported twice.
+deny contains _http_span_finding(
+	"http_span_name_format",
+	"violation",
+	input.sample.span,
+	{
+		"kind":           "server",
+		"expected_route": route,
+	},
+	sprintf(
+		"Server span '%v' has no target, but 'http.route' is '%v'; the span should be named '%v %v'.",
+		[input.sample.span.name, route, input.sample.span.name, route],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "server"
+	input.sample.span.name == _http_expected_method(input.sample.span)
+	route := _http_attr_value(input.sample.span, "http.route")
+	is_string(route)
+	trim_space(route) != ""
+}
+
 deny contains _http_span_finding(
 	"http_route_not_present",
 	"violation",
