@@ -8,6 +8,8 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
@@ -91,8 +93,12 @@ public final class NettyServerScenario {
               HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(answer.statusCode()), content);
       response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpContract.CONTENT_TYPE);
       HttpUtil.setContentLength(response, content.readableBytes());
-      HttpUtil.setKeepAlive(response, HttpUtil.isKeepAlive(request));
-      context.writeAndFlush(response);
+      boolean keepAlive = HttpUtil.isKeepAlive(request);
+      HttpUtil.setKeepAlive(response, keepAlive);
+      ChannelFuture write = context.writeAndFlush(response);
+      if (!keepAlive) {
+        write.addListener(ChannelFutureListener.CLOSE);
+      }
     }
 
     @Override
