@@ -25,12 +25,14 @@ public final class SpringWebfluxClientScenario {
                   .method(HttpMethod.valueOf(method))
                   .uri(url)
                   .header("user-agent", HttpContract.USER_AGENT);
+          WebClient.RequestHeadersSpec<?> requestHeaders = request;
           if (body != null) {
-            request.header("content-type", HttpContract.CONTENT_TYPE).bodyValue(body);
+            requestHeaders =
+                request.header("content-type", HttpContract.CONTENT_TYPE).bodyValue(body);
           }
 
           HttpContract.Response response =
-              request
+              requestHeaders
                   .exchangeToMono(
                       received ->
                           received
