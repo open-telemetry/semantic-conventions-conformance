@@ -76,7 +76,7 @@ def serve(
         )
     except FileNotFoundError as error:
         raise LayoutError(
-            "php is not on PATH, and a PHP scenario is served with it"
+            "serving a PHP scenario requires php to be available on PATH"
         ) from error
 
     closed = threading.Event()

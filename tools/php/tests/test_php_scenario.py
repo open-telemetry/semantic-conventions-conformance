@@ -100,6 +100,30 @@ def test_php_server_binds_loopback(package: Path) -> None:
     ]
 
 
+def test_serve_reports_missing_php(
+    package: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    router = package / "router.php"
+    router.write_text("<?php", encoding="utf-8")
+    monkeypatch.setenv("OTEL_HTTP_SCENARIO_PORT", "8080")
+
+    def php_missing(command: list[str], *, stdin: int) -> None:
+        raise FileNotFoundError(command[0])
+
+    monkeypatch.setattr(
+        otel_conformance_php.subprocess,
+        "Popen",
+        php_missing,
+    )
+
+    assert otel_conformance_php.main(["serve", str(router)]) == 1
+    assert capsys.readouterr().err == (
+        "serving a PHP scenario requires php to be available on PATH\n"
+    )
+
+
 def test_serve_stops_the_server_at_eof(
     package: Path,
     monkeypatch: pytest.MonkeyPatch,
