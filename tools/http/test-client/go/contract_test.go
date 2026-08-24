@@ -6,6 +6,8 @@ package httpcontract
 import (
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -179,6 +181,53 @@ func TestRespondReportsAContractLoadFailure(t *testing.T) {
 
 	if _, err := Respond("GET", "/users/123", ""); !errors.Is(err, want) {
 		t.Errorf("Respond() returned %v, want %v", err, want)
+	}
+}
+
+func TestADeclaredContractOverridesDiscovery(t *testing.T) {
+	declared := filepath.Join(t.TempDir(), "declared.json")
+	t.Setenv(PathVariable, declared)
+
+	path, err := locate()
+
+	if err != nil || path != declared {
+		t.Errorf("locate() = %q, %v, want %q", path, err, declared)
+	}
+}
+
+func TestTheContractIsFoundAboveTheWorkingDirectory(t *testing.T) {
+	root := t.TempDir()
+	contract := filepath.Join(root, filepath.FromSlash(checkoutPath))
+	if err := os.MkdirAll(filepath.Dir(contract), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(contract, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	nested := filepath.Join(root, "nested", "scenario")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(PathVariable, "")
+	t.Chdir(nested)
+
+	path, err := locate()
+
+	if err != nil || path != contract {
+		t.Errorf("locate() = %q, %v, want %q", path, err, contract)
+	}
+}
+
+func TestMissingContractSaysHowToDeclareIt(t *testing.T) {
+	t.Setenv(PathVariable, "")
+	t.Chdir(t.TempDir())
+
+	_, err := locate()
+
+	if err == nil ||
+		!strings.Contains(err.Error(), checkoutPath) ||
+		!strings.Contains(err.Error(), PathVariable) {
+		t.Errorf("locate() returned %v, want a diagnostic naming the contract and override", err)
 	}
 }
 
