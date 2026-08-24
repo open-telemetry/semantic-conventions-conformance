@@ -42,7 +42,7 @@ public final class SpringWebfluxClientScenario {
                                   text ->
                                       new HttpContract.Response(
                                           received.statusCode().value(), text)))
-                  .block();
+                  .block(HttpClientWorkload.REQUEST_TIMEOUT);
           if (response == null) {
             throw new IllegalStateException("the WebClient completed without a response");
           }

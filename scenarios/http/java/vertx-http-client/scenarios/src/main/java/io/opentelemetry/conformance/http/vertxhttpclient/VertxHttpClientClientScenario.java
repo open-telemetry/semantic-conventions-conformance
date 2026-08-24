@@ -11,6 +11,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.RequestOptions;
+import java.util.concurrent.TimeUnit;
 
 /** Runs the shared request contract through the Vert.x HTTP client. */
 public final class VertxHttpClientClientScenario {
@@ -46,7 +47,7 @@ public final class VertxHttpClientClientScenario {
                       })
                   .toCompletionStage()
                   .toCompletableFuture()
-                  .get());
+                  .get(HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
     } finally {
       client.close();
       vertx.close().toCompletionStage().toCompletableFuture().get();

@@ -45,7 +45,7 @@ public final class ReactorNettyClientScenario {
                               .asString()
                               .defaultIfEmpty("")
                               .map(text -> new HttpContract.Response(status.status().code(), text)))
-                  .block();
+                  .block(HttpClientWorkload.REQUEST_TIMEOUT);
           if (response == null) {
             throw new IllegalStateException(
                 "the Reactor Netty client completed without a response");
