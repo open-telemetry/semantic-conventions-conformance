@@ -33,6 +33,10 @@ import java.util.concurrent.TimeUnit;
 
 /** Runs the shared request contract through a raw Netty client pipeline. */
 public final class NettyClientScenario {
+  // Contract payloads are under 1 KiB; this leaves room for future cases without unbounded
+  // buffering.
+  private static final int MAX_AGGREGATED_CONTENT_LENGTH = 64 * 1024;
+
   private NettyClientScenario() {}
 
   public static void run() throws Exception {
@@ -55,7 +59,7 @@ public final class NettyClientScenario {
                             socketChannel
                                 .pipeline()
                                 .addLast(new HttpClientCodec())
-                                .addLast(new HttpObjectAggregator(65_536))
+                                .addLast(new HttpObjectAggregator(MAX_AGGREGATED_CONTENT_LENGTH))
                                 .addLast(new ResponseHandler(answer));
                           }
                         })

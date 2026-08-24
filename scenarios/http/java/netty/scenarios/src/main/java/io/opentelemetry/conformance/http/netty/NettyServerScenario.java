@@ -42,6 +42,10 @@ import java.nio.charset.StandardCharsets;
  * therefore has no route to read.
  */
 public final class NettyServerScenario {
+  // Contract payloads are under 1 KiB; this leaves room for future cases without unbounded
+  // buffering.
+  private static final int MAX_AGGREGATED_CONTENT_LENGTH = 64 * 1024;
+
   private NettyServerScenario() {}
 
   public static void run() throws Exception {
@@ -58,7 +62,7 @@ public final class NettyServerScenario {
                       socketChannel
                           .pipeline()
                           .addLast(new HttpServerCodec())
-                          .addLast(new HttpObjectAggregator(65_536))
+                          .addLast(new HttpObjectAggregator(MAX_AGGREGATED_CONTENT_LENGTH))
                           .addLast(new ConformanceHandler());
                     }
                   })
