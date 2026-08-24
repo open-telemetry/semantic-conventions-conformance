@@ -91,4 +91,4 @@ function verify(exchange, response) {
   }
 }
 
-module.exports = { expectedBody, sameJson, verify };
+module.exports = { expectedBody, verify };
