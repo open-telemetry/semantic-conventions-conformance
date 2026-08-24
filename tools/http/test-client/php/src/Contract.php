@@ -15,6 +15,7 @@ final class Contract
     public const USER_AGENT = 'otel-http-conformance/1';
     public const PATH_VARIABLE = 'OTEL_HTTP_CONTRACT';
 
+    private const ABBREVIATION_BYTES = 60;
     private const CHECKOUT_PATH = 'tools/http/test-client/contract.json';
 
     /** @var list<Exchange>|null */
@@ -59,8 +60,23 @@ final class Contract
         try {
             return json_decode($json, false, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new ContractException("not JSON: {$json}", 0, $exception);
+            throw new ContractException(
+                'not JSON: ' . self::abbreviate($json),
+                0,
+                $exception,
+            );
         }
+    }
+
+    public static function abbreviate(string $value): string
+    {
+        $singleLine = str_replace(["\r", "\n"], ' ', $value);
+        $length = strlen($singleLine);
+
+        return $length <= self::ABBREVIATION_BYTES
+            ? $singleLine
+            : substr($singleLine, 0, self::ABBREVIATION_BYTES)
+                . "... ({$length} bytes total)";
     }
 
     private static function withoutQuery(string $target): string

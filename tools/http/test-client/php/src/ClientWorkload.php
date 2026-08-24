@@ -33,7 +33,7 @@ final class ClientWorkload
                 $exchange->method,
                 $exchange->path,
                 $response->statusCode,
-                self::abbreviate($response->body),
+                Contract::abbreviate($response->body),
             );
             self::verify($exchange, $response);
         }
@@ -107,14 +107,5 @@ final class ClientWorkload
         }
 
         return $actual === $expected;
-    }
-
-    private static function abbreviate(string $value): string
-    {
-        $singleLine = str_replace(["\r", "\n"], ' ', $value);
-
-        return strlen($singleLine) <= 60
-            ? $singleLine
-            : substr($singleLine, 0, 60);
     }
 }

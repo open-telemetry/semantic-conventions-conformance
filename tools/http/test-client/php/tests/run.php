@@ -86,4 +86,20 @@ try {
     );
 }
 
+$invalidJson = str_repeat('x', 80);
+try {
+    Contract::parse($invalidJson);
+    throw new RuntimeException('invalid JSON should fail');
+} catch (ContractException $exception) {
+    check(
+        $exception->getMessage()
+            === 'not JSON: ' . str_repeat('x', 60) . '... (80 bytes total)',
+        'invalid JSON is abbreviated in the failure',
+    );
+    check(
+        $exception->getPrevious() instanceof JsonException,
+        'the JSON parser failure is preserved',
+    );
+}
+
 fwrite(STDOUT, "PHP HTTP contract tests passed\n");
