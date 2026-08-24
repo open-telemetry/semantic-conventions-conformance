@@ -48,7 +48,7 @@ public final class VertxHttpClientClientScenario {
                   .toCompletableFuture()
                   .get());
     } finally {
-      client.close().toCompletionStage().toCompletableFuture().get();
+      client.close();
       vertx.close().toCompletionStage().toCompletableFuture().get();
     }
   }
