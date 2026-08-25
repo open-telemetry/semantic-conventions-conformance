@@ -22,6 +22,7 @@ public final class JoddHttpClientScenario {
               new HttpRequest()
                   .method(method)
                   .set(url)
+                  .timeout(Math.toIntExact(HttpClientWorkload.REQUEST_TIMEOUT.toMillis()))
                   .header("user-agent", HttpContract.USER_AGENT);
           if (body != null) {
             request.contentType(HttpContract.CONTENT_TYPE).bodyText(body);

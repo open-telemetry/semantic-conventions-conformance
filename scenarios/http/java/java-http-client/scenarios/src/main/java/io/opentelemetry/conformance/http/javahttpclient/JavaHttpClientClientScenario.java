@@ -23,7 +23,9 @@ public final class JavaHttpClientClientScenario {
         ScenarioEnvironment.require("MOCK_SERVER_URL"),
         (method, url, body) -> {
           HttpRequest.Builder request =
-              HttpRequest.newBuilder(URI.create(url)).header("user-agent", HttpContract.USER_AGENT);
+              HttpRequest.newBuilder(URI.create(url))
+                  .timeout(HttpClientWorkload.REQUEST_TIMEOUT)
+                  .header("user-agent", HttpContract.USER_AGENT);
           if (body == null) {
             request.method(method, HttpRequest.BodyPublishers.noBody());
           } else {
