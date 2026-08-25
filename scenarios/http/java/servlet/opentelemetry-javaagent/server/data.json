@@ -28,7 +28,6 @@
       "url.scheme"
     ]
   },
-  "findings": [],
   "entities": {
     "process.runtime": {
       "identity": [
@@ -68,5 +67,6 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": []
 }

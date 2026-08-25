@@ -21,7 +21,6 @@
       "server.port"
     ]
   },
-  "findings": [],
   "entities": {
     "process.runtime": {
       "identity": [
@@ -61,5 +60,6 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": []
 }
