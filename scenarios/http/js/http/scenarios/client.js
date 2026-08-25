@@ -36,6 +36,7 @@ function send(method, url, body) {
     });
     request.on("response", (response) => {
       const chunks = [];
+      response.once("error", reject);
       response.on("data", (chunk) => chunks.push(chunk));
       response.on("end", () =>
         resolve({

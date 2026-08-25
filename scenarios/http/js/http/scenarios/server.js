@@ -28,8 +28,14 @@ const {
 const { waitForEof } = require("@otel-conformance/scenario-support");
 
 async function serve() {
+  let failExchange;
+  const exchangeFailed = new Promise((_, reject) => {
+    failExchange = reject;
+  });
   const server = http.createServer((request, response) => {
     const chunks = [];
+    request.once("error", failExchange);
+    response.once("error", failExchange);
     request.on("data", (chunk) => chunks.push(chunk));
     request.on("end", () => {
       // `respond` documents `null` as the value for a request with no body.
@@ -42,11 +48,20 @@ async function serve() {
     });
   });
   await new Promise((resolve, reject) => {
-    server.listen(scenarioPort(), "127.0.0.1", resolve);
-    server.once("error", reject);
+    const onError = (error) => {
+      server.off("listening", onListening);
+      reject(error);
+    };
+    const onListening = () => {
+      server.off("error", onError);
+      resolve();
+    };
+    server.once("error", onError);
+    server.once("listening", onListening);
+    server.listen(scenarioPort(), "127.0.0.1");
   });
   try {
-    await waitForEof();
+    await Promise.race([waitForEof(), exchangeFailed]);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
