@@ -32,9 +32,7 @@ async function serve() {
     const chunks = [];
     request.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
     request.on("end", () => {
-      // Null rather than an empty string, which is how the shared contract
-      // tells a request that carried no body from one that carried an empty
-      // one.
+      // `respond` documents `null` as the value for a request with no body.
       const body = chunks.length
         ? Buffer.concat(chunks).toString("utf8")
         : null;
