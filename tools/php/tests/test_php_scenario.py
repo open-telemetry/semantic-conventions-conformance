@@ -86,7 +86,7 @@ def test_install_reports_missing_composer(
 
     assert otel_conformance_php.main(["install"]) == 1
     assert capsys.readouterr().err == (
-        "composer is not on PATH, and a PHP scenario is installed with it\n"
+        "installing PHP scenario dependencies requires composer on PATH\n"
     )
 
 
