@@ -25,7 +25,10 @@ public final class JavaHttpServerServerScenario {
     HttpServer server =
         HttpServer.create(new InetSocketAddress(loopback, HttpServerWorkload.scenarioPort()), 0);
 
-    server.createContext("/", JavaHttpServerServerScenario::answer);
+    server.createContext("/health", JavaHttpServerServerScenario::answer);
+    server.createContext("/users/", JavaHttpServerServerScenario::answer);
+    server.createContext("/items", JavaHttpServerServerScenario::answer);
+    server.createContext("/status/", JavaHttpServerServerScenario::answer);
 
     server.start();
     try {
