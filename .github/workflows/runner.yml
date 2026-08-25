@@ -307,7 +307,7 @@ jobs:
         if: matrix.language == 'dotnet'
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          global-json-file: scenarios/http/dotnet/global.json
+          global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
       - name: Install weaver
         run: |
