@@ -67,7 +67,7 @@ jobs:
           args: check .
 
       - name: Set up Java
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: temurin
           java-version: "21"
@@ -83,7 +83,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.23.2"
+          node-version: "24.19.0"
 
       # Installs, formats and unit-tests every Node package the HTTP scenarios
       # use, including the ones shared with other domains.
@@ -236,7 +236,7 @@ jobs:
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
       - name: Set up Java
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: temurin
           java-version: "21"
@@ -248,7 +248,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.23.2"
+          node-version: "24.19.0"
           cache: npm
           cache-dependency-path: "scenarios/**/package-lock.json"
 
