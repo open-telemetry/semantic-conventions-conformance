@@ -1,0 +1,521 @@
+{
+  "spans": {
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.id",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.agent.name",
+      "gen_ai.operation.name",
+      "gen_ai.request.model",
+      "gen_ai.tool.definitions",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event_loop_cycle_id' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.cycle_count",
+      "context": {
+        "attribute_key": "event_loop_cycle_id"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.cycle_count"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event_loop_cycle_id' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.cycle_duration",
+      "context": {
+        "attribute_key": "event_loop_cycle_id"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.cycle_duration"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event_loop_cycle_id' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.end_cycle",
+      "context": {
+        "attribute_key": "event_loop_cycle_id"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.end_cycle"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.input.tokens"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.latency"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.output.tokens"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event_loop_cycle_id' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.start_cycle",
+      "context": {
+        "attribute_key": "event_loop_cycle_id"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.event_loop.start_cycle"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.model.time_to_first_token"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool_name' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.call_count",
+      "context": {
+        "attribute_key": "tool_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool_use_id' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.call_count",
+      "context": {
+        "attribute_key": "tool_use_id"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.call_count"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool_name' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.duration",
+      "context": {
+        "attribute_key": "tool_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool_use_id' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.duration",
+      "context": {
+        "attribute_key": "tool_use_id"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.duration"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool_name' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.success_count",
+      "context": {
+        "attribute_key": "tool_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool_use_id' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.success_count",
+      "context": {
+        "attribute_key": "tool_use_id"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "strands.tool.success_count"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.end_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "attribute_key": "gen_ai.event.end_time"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.start_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "attribute_key": "gen_ai.event.start_time"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.server.time_to_first_token' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "attribute_key": "gen_ai.server.time_to_first_token"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.completion_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "attribute_key": "gen_ai.usage.completion_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.prompt_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "attribute_key": "gen_ai.usage.prompt_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat' (operation 'chat') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "missing_attribute": "gen_ai.response.id",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'chat' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'chat'",
+      "signal_type": "span",
+      "signal_name": "chat",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event_loop.cycle_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_event_loop_cycle",
+      "context": {
+        "attribute_key": "event_loop.cycle_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event_loop.parent_cycle_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_event_loop_cycle",
+      "context": {
+        "attribute_key": "event_loop.parent_cycle_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.end_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_event_loop_cycle",
+      "context": {
+        "attribute_key": "gen_ai.event.end_time"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.start_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_event_loop_cycle",
+      "context": {
+        "attribute_key": "gen_ai.event.start_time"
+      }
+    },
+    {
+      "id": "genai_operation_name_unknown",
+      "message": "Span 'execute_event_loop_cycle' has gen_ai.operation.name='execute_event_loop_cycle' which is not a documented enum value",
+      "signal_type": "span",
+      "signal_name": "execute_event_loop_cycle",
+      "context": {
+        "operation": "execute_event_loop_cycle"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'execute_event_loop_cycle' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "execute_event_loop_cycle",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.end_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "gen_ai.event.end_time"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.start_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "gen_ai.event.start_time"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.output.messages' value does not conform to the GenAI schema: \"finish_reason\" is a required property",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute": "gen_ai.output.messages",
+        "errors": "\"finish_reason\" is a required property"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.tool.json_schema' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "gen_ai.tool.json_schema"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.tool.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "gen_ai.tool.status"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'execute_tool get_current_weather' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.agent.tools' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.agent.tools"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.end_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.event.end_time"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.event.start_time' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.event.start_time"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"description\":\"Get the current weather in a given location.\",\"inputSchema\":{\"json\":{\"properties\":{\"location\":{\"description\":\"Parameter location\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}},\"name\":\"get_current_weather\",\"outputSchema\":null} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"description\":\"Get the current weather in a given location.\",\"inputSchema\":{\"json\":{\"properties\":{\"location\":{\"description\":\"Parameter location\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}},\"name\":\"get_current_weather\",\"outputSchema\":null} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_read_input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_read_input_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_write_input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_write_input_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.completion_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.usage.completion_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.prompt_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.usage.prompt_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'system_prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "system_prompt"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'invoke_agent weather_assistant' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "status_code": "ok"
+      }
+    }
+  ]
+}

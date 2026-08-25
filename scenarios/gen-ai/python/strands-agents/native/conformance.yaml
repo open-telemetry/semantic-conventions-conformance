@@ -1,0 +1,24 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: genai-conformance
+instrumented_library: strands-agents
+instrumentation_library: strands-agents
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  OPENAI_BASE_URL: ${MOCK_SERVER_URL}/v1
+  OPENAI_API_KEY: test_openai_api_key
+  # Strands emits the GenAI conventions only under this opt-in, and puts tool
+  # definitions behind a token of its own. Message content is recorded unless
+  # a redaction allowlist is opted into, so there is no capture switch here.
+  OTEL_SEMCONV_STABILITY_OPT_IN: gen_ai_latest_experimental,gen_ai_tool_definitions
+
+scenarios:
+  invoke_agent:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/invoke_agent.py
+
+  automatic_tool_calling:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/automatic_tool_calling.py

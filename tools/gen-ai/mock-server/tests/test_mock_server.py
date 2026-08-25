@@ -522,6 +522,67 @@ def test_chat_streams_when_asked(client):
     assert chunks.rstrip().endswith("data: [DONE]")
 
 
+def test_streaming_chat_calls_an_offered_tool(client):
+    """A framework that only streams still has to see the tool exchange."""
+    tool = {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "parameters": {
+                "type": "object",
+                "properties": {"location": {"type": "string"}},
+            },
+        },
+    }
+    response = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [tool],
+            "stream": True,
+        },
+    )
+    deltas = [
+        json.loads(line[len("data: ") :])
+        for line in response.get_data(as_text=True).splitlines()
+        if line.startswith("data: ") and line != "data: [DONE]"
+    ]
+    calls = [
+        call
+        for chunk in deltas
+        for call in chunk["choices"][0]["delta"].get("tool_calls", [])
+    ]
+    assert [call["function"].get("name") for call in calls] == [
+        "get_current_weather",
+        None,
+    ]
+    assert json.loads("".join(call["function"]["arguments"] for call in calls)) == {
+        "location": "Seattle"
+    }
+    assert deltas[-1]["choices"][0]["finish_reason"] == "tool_calls"
+
+
+def test_streaming_chat_answers_once_the_tool_has_replied(client):
+    """The second round trip is an answer, not the same call again."""
+    response = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "assistant", "tool_calls": []},
+                {"role": "tool", "content": "70 degrees", "tool_call_id": "call_mock_001"},
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+            "stream": True,
+        },
+    )
+    body = response.get_data(as_text=True)
+    assert "tool_calls" not in body
+    assert '"finish_reason": "stop"' in body
+
+
 # Azure routes the same operation under a deployment path; instrumentations
 # read the URL, so the alias has to serve the identical body.
 def test_azure_deployment_path_matches_the_plain_one(client):
