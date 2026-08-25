@@ -129,7 +129,8 @@ Each class is one file, and each file gets its own weaver report.
 An implementation directory is named after whatever produced the telemetry:
 
 - `opentelemetry-…` for an OpenTelemetry instrumentation, after its package
-  with the `instrumentation` and `genai` parts dropped.
+  with the `instrumentation` and `genai` parts dropped, plus the provider when
+  it is reached through another package: `opentelemetry-langchain-openai`.
 - `openinference` or `openllmetry` for a third-party suite, after the project
   rather than its package.
 - `native` for the library itself.
