@@ -116,7 +116,7 @@ classes than the row, the row says so.
 | `google-genai` | every client class, plus automatic_tool_calling | `opentelemetry-google-genai` |
 | `langchain` | workflow, invoke_agent, automatic_tool_calling | `opentelemetry-langchain` |
 | `openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
-| `openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own | `opentelemetry-openai-agents` |
+| `openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own | `opentelemetry-openai-agents`, `openinference`, `openllmetry` |
 | `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent` |
 
 The conventions also cover retrieval, memory and planning. No instrumentation
