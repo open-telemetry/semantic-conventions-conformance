@@ -17,5 +17,3 @@ jobs:
       id-token: write # for Scorecard to publish results
       security-events: write # for the SARIF upload to code scanning
     uses: open-telemetry/shared-workflows/.github/workflows/scorecard.yml@d9b812f9924a121c6a8276ea2f9e6f5b622cdd4d # v0.10.0
-    with:
-      use-cncf-hosted-runner: true
