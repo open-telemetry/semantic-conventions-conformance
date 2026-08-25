@@ -82,7 +82,7 @@ def serve(
     closed = threading.Event()
 
     def wait_for_eof() -> None:
-        stream = input_stream or sys.stdin.buffer
+        stream = sys.stdin.buffer if input_stream is None else input_stream
         while stream.read(_READ_BUFFER_SIZE):
             pass
         closed.set()
