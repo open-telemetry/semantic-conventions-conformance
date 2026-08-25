@@ -12,6 +12,7 @@ import pytest
 import otel_conformance_php
 from otel_conformance_php import (
     BUILD_MARKER,
+    PORT_VARIABLE,
     LayoutError,
     composer_command,
     package_root,
@@ -121,6 +122,23 @@ def test_serve_reports_missing_php(
     assert otel_conformance_php.main(["serve", str(router)]) == 1
     assert capsys.readouterr().err == (
         "serving a PHP scenario requires php to be available on PATH\n"
+    )
+
+
+@pytest.mark.parametrize("port", ["-1", "0", "65536", "not-a-port"])
+def test_serve_reports_invalid_port(
+    package: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    port: str,
+) -> None:
+    router = package / "router.php"
+    router.write_text("<?php", encoding="utf-8")
+    monkeypatch.setenv(PORT_VARIABLE, port)
+
+    assert otel_conformance_php.main(["serve", str(router)]) == 1
+    assert capsys.readouterr().err == (
+        f"{PORT_VARIABLE} must be an integer from 1 to 65535: {port}\n"
     )
 
 

@@ -64,7 +64,7 @@ def serve(
     input_stream: BinaryIO | None = None,
 ) -> int:
     """Serve until the driver's standard input closes."""
-    port = _required_env(PORT_VARIABLE)
+    port = _required_port(PORT_VARIABLE)
     resolved = router.resolve()
     if not resolved.is_file():
         raise LayoutError(f"PHP router does not exist: {resolved}")
@@ -142,6 +142,22 @@ def _required_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
         raise LayoutError(f"required environment variable is missing: {name}")
+
+    return value
+
+
+def _required_port(name: str) -> str:
+    value = _required_env(name)
+    if not value.isascii() or not value.isdecimal():
+        raise LayoutError(
+            f"{name} must be an integer from 1 to 65535: {value}"
+        )
+
+    port = int(value)
+    if not 1 <= port <= 65535:
+        raise LayoutError(
+            f"{name} must be an integer from 1 to 65535: {value}"
+        )
 
     return value
 
