@@ -12,6 +12,11 @@ instruction and one user turn, carrying every sampling option the conventions
 have an attribute for and Anthropic accepts. There is no seed and there are no
 penalties in this API, so those are absent from the request rather than
 silently missing from the coverage.
+
+The sampling options go through ``extra_body`` because anthropic 1.0 dropped
+them from the method signatures. They are still model-level REST parameters,
+merged into the request body as-is, so the request is unchanged from 0.x and
+the conventions still expect the attributes.
 """
 
 from anthropic import Anthropic
@@ -21,8 +26,6 @@ Anthropic().messages.create(
     system="You are a helpful assistant.",
     messages=[{"role": "user", "content": "Say this is a test"}],
     max_tokens=100,
-    temperature=0.5,
-    top_p=0.9,
-    top_k=10,
     stop_sequences=["\n\n"],
+    extra_body={"temperature": 0.5, "top_p": 0.9, "top_k": 10},
 )
