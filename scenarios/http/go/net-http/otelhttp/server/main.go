@@ -10,20 +10,25 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/open-telemetry/semantic-conventions-conformance/scenarios/http/go/net-http/scenarios"
+	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenario"
 	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenariosdk"
 )
 
 func main() {
-	if err := run(context.Background()); err != nil {
+	stopping := make(chan error, 1)
+	go func() { stopping <- scenario.WaitForEOF(os.Stdin) }()
+
+	if err := run(context.Background(), stopping); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(ctx context.Context) (err error) {
+func run(ctx context.Context, stopping <-chan error) (err error) {
 	sdk, err := scenariosdk.Initialize(ctx)
 	if err != nil {
 		return err
@@ -35,5 +40,5 @@ func run(ctx context.Context) (err error) {
 		// ignores it and names the span from the request method and the
 		// route ServeMux reports.
 		return otelhttp.NewHandler(handler, "")
-	})
+	}, stopping)
 }

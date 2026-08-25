@@ -18,7 +18,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenario"
 	httpcontract "github.com/open-telemetry/semantic-conventions-conformance/tools/http/test-client/go"
 )
 
@@ -45,11 +44,12 @@ const (
 	shutdownTimeout = 10 * time.Second
 )
 
-// RunServer hosts the shared HTTP exchanges until the driver says stop.
+// RunServer hosts the shared HTTP exchanges until stopping reports that the
+// driver said stop.
 //
-// The external driver prevents client spans in this server run. Closing stdin
-// stops the server and gives the SDK a chance to flush.
-func RunServer(middleware Middleware) error {
+// The caller owns the stop source. Command entry points can wait on standard
+// input, while in-process callers can use a channel they control.
+func RunServer(middleware Middleware, stopping <-chan error) error {
 	if middleware == nil {
 		middleware = func(handler http.Handler) http.Handler { return handler }
 	}
@@ -79,14 +79,11 @@ func RunServer(middleware Middleware) error {
 	served := make(chan error, 1)
 	go func() { served <- server.Serve(listener) }()
 
-	stopping := make(chan error, 1)
-	go func() { stopping <- scenario.WaitForEOF() }()
-
 	var stopped error
 	select {
 	case err := <-served:
-		// Return immediately if Serve fails; waiting for stdin would leave the
-		// process hung until the driver's timeout.
+		// Return immediately if Serve fails; waiting for a stop signal would
+		// leave the process hung until the driver's timeout.
 		if err == nil {
 			err = errors.New("the server stopped accepting connections")
 		}

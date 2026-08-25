@@ -25,16 +25,15 @@ func Require(name string) (string, error) {
 	return value, nil
 }
 
-// WaitForEOF blocks until standard input closes, which is how the driver says
-// stop.
+// WaitForEOF blocks until input closes.
 //
 // A closed pipe rather than a signal: it means the same thing on every
 // platform, and returning is what gives an SDK the chance to flush, so a
 // scenario that exits any other way reports less than it produced. The
 // protocol is the same in every domain.
-func WaitForEOF() error {
-	if _, err := io.Copy(io.Discard, os.Stdin); err != nil {
-		return fmt.Errorf("reading standard input: %w", err)
+func WaitForEOF(input io.Reader) error {
+	if _, err := io.Copy(io.Discard, input); err != nil {
+		return fmt.Errorf("reading stop input: %w", err)
 	}
 	return nil
 }
