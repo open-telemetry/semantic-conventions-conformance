@@ -29,52 +29,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "http_span_name_format",
-      "message": "Span '/health' should be named one of [\"GET\", \"GET /health\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "GET",
-          "GET /health"
-        ],
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span '/items' should be named one of [\"POST\", \"POST /items\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "POST",
-          "POST /items"
-        ],
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span '/status/{code}' should be named one of [\"GET\", \"GET /status/{code}\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "GET",
-          "GET /status/{code}"
-        ],
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span '/users/{user_id}' should be named one of [\"GET\", \"GET /users/{user_id}\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "GET",
-          "GET /users/{user_id}"
-        ],
-        "kind": "server"
-      }
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -97,5 +51,47 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "http_span_name_format",
+      "message": "Span '/health' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
+      "signal_type": "span",
+      "signal_name": "/health",
+      "context": {
+        "expected_method": "GET",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span '/items' should use HTTP method name 'POST', either alone or followed by a non-empty target.",
+      "signal_type": "span",
+      "signal_name": "/items",
+      "context": {
+        "expected_method": "POST",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span '/status/{code}' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
+      "signal_type": "span",
+      "signal_name": "/status/{code}",
+      "context": {
+        "expected_method": "GET",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span '/users/{user_id}' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
+      "signal_type": "span",
+      "signal_name": "/users/{user_id}",
+      "context": {
+        "expected_method": "GET",
+        "kind": "server"
+      }
+    }
+  ]
 }

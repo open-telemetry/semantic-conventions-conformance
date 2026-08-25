@@ -61,8 +61,8 @@ def _reduce(
         "spans": _signals(observed.spans, model.get("spans", {}), bare=False),
         "events": _signals(observed.events, model.get("events", {})),
         "metrics": _signals(observed.metrics, model.get("metrics", {})),
-        "findings": finding_list(observed.findings),
         "entities": _entities(observed.resources, model.get("entities", {})),
+        "findings": finding_list(observed.findings),
     }
 
 

@@ -102,27 +102,46 @@ and the gap lands in `data.json`.
 
 ## What is covered
 
-| Directory | Instrumentation | Classes |
+Each row is one library and the classes it covers. Implementations that call
+the same client package run the same programs; one that reaches the library
+through a different package runs its own, making the same exchanges. Either
+way the `data.json` files compare. Where an implementation covers fewer
+classes than the row, the row says so.
+
+| Library | Classes | Implementations |
 | --- | --- | --- |
-| `openai/opentelemetry-openai` | `…-genai-openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings |
-| `openai/opentelemetry-langchain-openai` | `…-genai-langchain` | the same, through `langchain-openai` |
-| `anthropic/opentelemetry-anthropic` | `…-genai-anthropic` | inference, streaming, tool_calling, automatic_tool_calling, multimodal |
-| `anthropic/opentelemetry-langchain-anthropic` | `…-genai-langchain` | the same, through `langchain-anthropic`, minus automatic_tool_calling: langchain binds tools but does not run them outside an agent |
-| `google-genai/opentelemetry-google-genai` | `…-google-genai` | every client class, plus automatic_tool_calling |
-| `bedrock/opentelemetry-botocore` | `…-botocore` | Bedrock Converse: inference, streaming, tool_calling |
-| `langchain/opentelemetry-langchain` | `…-genai-langchain` | workflow, invoke_agent, automatic_tool_calling |
-| `openai-agents/opentelemetry-openai-agents` | `…-genai-openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own |
+| `agno` | invoke_agent, automatic_tool_calling | `opentelemetry-agno` |
+| `anthropic` | inference, streaming, tool_calling, automatic_tool_calling, multimodal | `opentelemetry-anthropic`, `opentelemetry-langchain-anthropic`<br>no automatic_tool_calling in `opentelemetry-langchain-anthropic`: langchain binds tools but does not run them outside an agent |
+| `bedrock` | Bedrock Converse: inference, streaming, tool_calling | `opentelemetry-botocore` |
+| `google-genai` | every client class, plus automatic_tool_calling | `opentelemetry-google-genai` |
+| `langchain` | workflow, invoke_agent, automatic_tool_calling | `opentelemetry-langchain` |
+| `openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
+| `openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own | `opentelemetry-openai-agents` |
+| `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent` |
 
 The conventions also cover retrieval, memory and planning. No instrumentation
 here emits them, so there is no class for them yet.
 
 Each class is one file, and each file gets its own weaver report.
 
+## Third-party and native instrumentations
+
+An implementation directory is named after whatever produced the telemetry:
+
+- `opentelemetry-…` for an OpenTelemetry instrumentation, after its package
+  with the `instrumentation` and `genai` parts dropped, plus the provider when
+  it is reached through another package: `opentelemetry-langchain-openai`.
+- `openinference` or `openllmetry` for a third-party suite, after the project
+  rather than its package.
+- `native` for the library itself.
+
 ## Content capture
 
-Every directory turns content capture on with
-`OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT`, so one run covers
-content on spans and the `gen_ai.client.inference.operation.details` event.
+Every directory turns content capture on, so one run covers content on spans
+and the `gen_ai.client.inference.operation.details` event. The OpenTelemetry
+instrumentations read `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT`;
+third-party and native ones come with their own configuration options, or
+record content unconditionally.
 
 Set it per directory, never per scenario. `data.json` is a union across the
 directory's scenarios, so a directory mixing capture modes records the union

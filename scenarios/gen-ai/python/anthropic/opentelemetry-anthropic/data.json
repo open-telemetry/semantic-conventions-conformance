@@ -8,12 +8,14 @@
       "gen_ai.request.max_tokens",
       "gen_ai.request.model",
       "gen_ai.request.stop_sequences",
+      "gen_ai.request.stream",
       "gen_ai.request.temperature",
       "gen_ai.request.top_k",
       "gen_ai.request.top_p",
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.response.time_to_first_chunk",
       "gen_ai.system_instructions",
       "gen_ai.usage.cache_creation.input_tokens",
       "gen_ai.usage.cache_read.input_tokens",
@@ -32,12 +34,14 @@
       "gen_ai.request.max_tokens",
       "gen_ai.request.model",
       "gen_ai.request.stop_sequences",
+      "gen_ai.request.stream",
       "gen_ai.request.temperature",
       "gen_ai.request.top_k",
       "gen_ai.request.top_p",
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.response.time_to_first_chunk",
       "gen_ai.system_instructions",
       "gen_ai.usage.cache_creation.input_tokens",
       "gen_ai.usage.cache_read.input_tokens",
@@ -56,6 +60,20 @@
       "server.address",
       "server.port"
     ],
+    "gen_ai.client.operation.time_per_output_chunk": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "server.address",
+      "server.port"
+    ],
+    "gen_ai.client.operation.time_to_first_chunk": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "server.address",
+      "server.port"
+    ],
     "gen_ai.client.token.usage": [
       "gen_ai.operation.name",
       "gen_ai.provider.name",
@@ -66,6 +84,6 @@
       "server.port"
     ]
   },
-  "findings": [],
-  "entities": {}
+  "entities": {},
+  "findings": []
 }

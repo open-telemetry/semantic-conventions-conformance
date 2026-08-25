@@ -29,58 +29,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "http_span_name_format",
-      "message": "Span 'GET /health' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span 'GET /status/404' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span 'GET /status/500' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span 'GET /users/123' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "GET"
-        ],
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span 'POST /items' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "POST"
-        ],
-        "kind": "server"
-      }
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -103,5 +51,57 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /health' uses target '/health' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "kind": "server",
+        "target": "/health"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /status/404' uses target '/status/404' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /status/404",
+      "context": {
+        "kind": "server",
+        "target": "/status/404"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /status/500' uses target '/status/500' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /status/500",
+      "context": {
+        "kind": "server",
+        "target": "/status/500"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /users/123' uses target '/users/123' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /users/123",
+      "context": {
+        "kind": "server",
+        "target": "/users/123"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "kind": "server",
+        "target": "/items"
+      }
+    }
+  ]
 }

@@ -175,6 +175,8 @@ seen, plus what weaver said about them:
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat gpt-4o-mini' … is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
       "context": {"missing_attribute": "server.address", "operation": "chat"}
     }
   ]
@@ -184,13 +186,18 @@ seen, plus what weaver said about them:
 Each span entry pairs a `match` — written the way the scenario declared it —
 with the attributes the spans it selected carried.
 
-`findings` is every violation weaver reported over the run, deduplicated on
-id, message and context. Weaver's lesser advice — `improvement`,
+`findings` is every
+violation weaver reported over it, deduplicated on id, message, context and
+the signal it was reported on. Weaver's lesser advice — `improvement`,
 `information` — is left out: it says what could be better, not what an
-implementation got wrong. One gap reported on each of a
-hundred spans is one entry; how often it was tripped over is not recorded,
-because a coverage file is about what is true of an implementation, not about
-how much traffic a run happened to send.
+implementation got wrong. `signal_type` and `signal_name` say which signal
+weaver was looking at — `span`, `metric` or `log`, an event being a log record
+— including when the advice was about one of its attributes; a field weaver
+reported nothing for is left out, as it is for advice about the resource. The same
+gap on the same signal a hundred times is one entry — how often a run tripped
+over it says more about the traffic than about the implementation — while the
+same gap on two signals is two, because an implementation can fix one and
+leave the other.
 
 Diff it to notice an attribute quietly disappearing. `--data-command` replaces
 it when you want a different shape.

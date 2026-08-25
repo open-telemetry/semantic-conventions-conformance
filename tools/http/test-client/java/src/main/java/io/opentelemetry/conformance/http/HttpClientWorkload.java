@@ -7,6 +7,7 @@ package io.opentelemetry.conformance.http;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
 import io.opentelemetry.conformance.http.HttpContract.Response;
+import java.time.Duration;
 
 /**
  * Shared support for JVM client scenarios: the request contract, sent by the library under test.
@@ -20,6 +21,9 @@ import io.opentelemetry.conformance.http.HttpContract.Response;
  * others.
  */
 public final class HttpClientWorkload {
+
+  /** Maximum time a client scenario waits for one request to finish. */
+  public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
   private HttpClientWorkload() {}
 

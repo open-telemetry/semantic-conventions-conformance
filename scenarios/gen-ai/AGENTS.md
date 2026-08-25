@@ -16,7 +16,11 @@ Name `<instrumentation>` after the instrumentation, dropping the
 `opentelemetry-instrumentation-genai-openai` becomes `opentelemetry-openai`.
 When the instrumentation reaches the provider through another package, add it:
 the langchain instrumentation over `langchain-openai` is
-`opentelemetry-langchain-openai`.
+`opentelemetry-langchain-openai`. A third-party suite is named after the
+project — `openinference`, `openllmetry` — and a library that emits
+OpenTelemetry itself gets `native`. See
+[Third-party and native instrumentations](README.md#third-party-and-native-instrumentations)
+for what else changes in those directories.
 
 - **One file per class**, named after the class, covering exactly the exchange
   the README defines for it. Do not merge two classes into one program, and do

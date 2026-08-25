@@ -26,7 +26,9 @@
     ],
     "gen_ai.invoke_workflow.internal": [
       "gen_ai.input.messages",
-      "gen_ai.operation.name"
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.workflow.name"
     ]
   },
   "events": {
@@ -61,24 +63,17 @@
       "gen_ai.token.type"
     ]
   },
+  "entities": {},
   "findings": [
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
       "context": {
         "missing_attribute": "server.address",
         "operation": "chat"
       }
-    },
-    {
-      "id": "genai_span_name_format",
-      "message": "invoke_workflow span name should be 'invoke_workflow' or 'invoke_workflow <value of gen_ai.workflow.name>', got 'invoke_workflow conformance_workflow'",
-      "context": {
-        "expected_form": "invoke_workflow or 'invoke_workflow <gen_ai.workflow.name>'",
-        "keyed_attr": "gen_ai.workflow.name",
-        "operation": "invoke_workflow"
-      }
     }
-  ],
-  "entities": {}
+  ]
 }

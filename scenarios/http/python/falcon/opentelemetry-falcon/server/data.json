@@ -31,23 +31,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'falcon.resource' does not exist in the registry.",
-      "context": {
-        "attribute_key": "falcon.resource"
-      }
-    },
-    {
-      "id": "unit_mismatch",
-      "message": "Unit should be '{request}', but found 'requests'.",
-      "context": {
-        "expected": "{request}",
-        "unit": "requests"
-      }
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -70,5 +53,53 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "unit_mismatch",
+      "message": "Unit should be '{request}', but found 'requests'.",
+      "signal_type": "metric",
+      "signal_name": "http.server.active_requests",
+      "context": {
+        "expected": "{request}",
+        "unit": "requests"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'falcon.resource' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "attribute_key": "falcon.resource"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'falcon.resource' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code}",
+      "context": {
+        "attribute_key": "falcon.resource"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'falcon.resource' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id}",
+      "context": {
+        "attribute_key": "falcon.resource"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'falcon.resource' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "attribute_key": "falcon.resource"
+      }
+    }
+  ]
 }

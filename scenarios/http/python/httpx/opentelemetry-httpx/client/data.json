@@ -23,7 +23,6 @@
       "server.port"
     ]
   },
-  "findings": [],
   "entities": {
     "service": {
       "identity": [
@@ -46,5 +45,6 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": []
 }

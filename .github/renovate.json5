@@ -63,6 +63,24 @@
       "ignoreUnstable": false
     },
     {
+      // Akka 2.7 and later use the Business Source License. Keep the actor
+      // and stream dependencies below 2.7 so this repository depends only
+      // on open-source releases.
+      "matchPackageNames": [
+        "com.typesafe.akka:akka-actor{,_*}",
+        "com.typesafe.akka:akka-stream{,_*}"
+      ],
+      "allowedVersions": "<2.7"
+    },
+    {
+      // Akka HTTP 10.3 and later use the Business Source License. Keep Akka
+      // HTTP below 10.3 so this repository depends only on open-source releases.
+      "matchPackageNames": [
+        "com.typesafe.akka:akka-http{,_*}"
+      ],
+      "allowedVersions": "<10.3"
+    },
+    {
       // These ship only `bN` prereleases and have never published a stable
       // release, so each minor is its own prerelease line and Renovate's
       // default would never propose 0.65b0 to 0.66b0. Several are at `1.0bN`

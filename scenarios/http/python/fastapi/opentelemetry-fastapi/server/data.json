@@ -46,15 +46,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
-      "context": {
-        "attribute_key": "asgi.event.type"
-      }
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -77,5 +68,79 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /health http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /health http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code} http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code} http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id} http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id} http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "POST /items http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "POST /items http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    }
+  ]
 }

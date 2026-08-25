@@ -13,9 +13,10 @@ declares what a type carries but not how to recognise one, so that knowledge
 belongs to the conventions, not here.
 
 Alongside what a run carried, what weaver found wrong with it: the violations
-the reports hold, deduplicated. The same gap is reported once per signal it
-appears on, and a coverage file records the gap, not how many times a run
-tripped over it.
+the reports hold, deduplicated on what they say and on the signal they say it
+about. A coverage file records the gap, not how many times a run tripped over
+it — but the same gap on two different spans is two gaps, because an
+implementation can fix one and not the other.
 """
 
 from __future__ import annotations
@@ -41,26 +42,43 @@ _RECORDED_LEVEL = "violation"
 
 @dataclass(frozen=True)
 class Finding:
-    """One thing weaver said, independent of how often it said it.
+    """One thing weaver said about one signal, however often it said it.
 
     ``context`` is kept serialised so two findings with the same message about
     different attributes stay apart, and so a finding is hashable.
+
+    ``signal_type`` and ``signal_name`` are what weaver stamps on every piece
+    of advice — the ``span``, ``metric`` or ``log`` it was checking, an event
+    being a log record. Advice about an attribute carries the signal that held
+    it, so a finding says where to go and look.
     """
 
     id: str
     message: str
     context: str
+    signal_type: str = ""
+    signal_name: str = ""
 
-    def sort_key(self) -> tuple[str, str, str]:
-        return (self.message, self.id, self.context)
+    def sort_key(self) -> tuple[str, str, str, str, str]:
+        return (
+            self.signal_type,
+            self.signal_name,
+            self.message,
+            self.id,
+            self.context,
+        )
 
     def as_dict(self) -> dict[str, object]:
         """The finding as a coverage file records it.
 
-        ``context`` is left out when weaver reported none, rather than
-        committed as a null.
+        A key weaver reported nothing for is left out rather than committed as
+        a null: a resource-level finding names no signal.
         """
         recorded: dict[str, object] = {"id": self.id, "message": self.message}
+        if self.signal_type:
+            recorded["signal_type"] = self.signal_type
+        if self.signal_name:
+            recorded["signal_name"] = self.signal_name
         context = cast("object", json.loads(self.context))
         if context is not None:
             recorded["context"] = context
@@ -99,6 +117,8 @@ def collect_findings(document: object) -> set[Finding]:
                     context=json.dumps(
                         cast("object", advice.get("context")), sort_keys=True
                     ),
+                    signal_type=str(advice.get("signal_type") or ""),
+                    signal_name=str(advice.get("signal_name") or ""),
                 )
             )
         for value in owner.values():
