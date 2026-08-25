@@ -110,6 +110,7 @@ classes than the row, the row says so.
 
 | Library | Classes | Implementations |
 | --- | --- | --- |
+| `agent-framework` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `agno` | invoke_agent, automatic_tool_calling | `opentelemetry-agno` |
 | `anthropic` | inference, streaming, tool_calling, automatic_tool_calling, multimodal | `opentelemetry-anthropic`, `opentelemetry-langchain-anthropic`, `openinference`, `openllmetry`<br>no automatic_tool_calling in `opentelemetry-langchain-anthropic`: langchain binds tools but does not run them outside an agent |
 | `autogen` | invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry` for this library |
