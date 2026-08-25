@@ -1,0 +1,528 @@
+{
+  "spans": {
+    "gen_ai.create_agent.client": [
+      "gen_ai.agent.description",
+      "gen_ai.agent.name",
+      "gen_ai.operation.name"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.id",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.request.model",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.invoke_agent.client": [
+      "gen_ai.agent.description",
+      "gen_ai.agent.name",
+      "gen_ai.operation.name"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.operation.name"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.token_count.completion"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.token_count.prompt"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.token_count.total"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChatCompletionClient.create' (operation 'chat') is missing expected attribute 'gen_ai.provider.name'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "missing_attribute": "gen_ai.provider.name",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChatCompletionClient.create' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "missing_attribute": "gen_ai.response.id",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChatCompletionClient.create' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChatCompletionClient.create' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIChatCompletionClient.create' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAIChatCompletionClient.create'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "create_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'create_agent weather_assistant' (operation 'create_agent') is missing expected attribute 'gen_ai.provider.name'",
+      "signal_type": "span",
+      "signal_name": "create_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.provider.name",
+        "operation": "create_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'create_agent weather_assistant' (operation 'create_agent') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "create_agent weather_assistant",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "create_agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.provider.name'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.provider.name",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.description' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "tool.description"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "tool.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "attribute_key": "tool.parameters"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'weather_assistant.get_current_weather' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "execute_tool span name should be 'execute_tool' or 'execute_tool <value of gen_ai.tool.name>', got 'weather_assistant.get_current_weather'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.get_current_weather",
+      "context": {
+        "expected_form": "execute_tool or 'execute_tool <gen_ai.tool.name>'",
+        "keyed_attr": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'exception.escaped' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "attribute_key": "exception.escaped"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "attribute_key": "graph.node.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.parent_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "attribute_key": "graph.node.parent_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.on_messages_stream' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.on_messages_stream' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.on_messages_stream' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'weather_assistant.on_messages_stream' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'weather_assistant.on_messages_stream'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.on_messages_stream",
+      "context": {
+        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    }
+  ]
+}
