@@ -116,6 +116,7 @@ classes than the row, the row says so.
 | `bedrock` | Bedrock Converse: inference, streaming, tool_calling | `opentelemetry-botocore`, `openinference`, `openllmetry` |
 | `google-adk` | invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry` for this library |
 | `google-genai` | every client class, plus automatic_tool_calling | `opentelemetry-google-genai`, `openinference`, `openllmetry` |
+| `haystack` | workflow, invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry`: does not support Haystack 3 |
 | `langchain` | workflow, invoke_agent, automatic_tool_calling | `opentelemetry-langchain`, `openinference`, `openllmetry` |
 | `litellm` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `native`, `openinference`, `openllmetry` |
 | `openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
@@ -136,7 +137,9 @@ An implementation directory is named after whatever produced the telemetry:
   it is reached through another package: `opentelemetry-langchain-openai`.
 - `openinference` or `openllmetry` for a third-party suite, after the project
   rather than its package.
-- `native` for the library itself.
+- `native` for the library itself. `haystack/native` is the exception:
+  its `instrumentation_library` is `opentelemetry-haystack`, because
+  deepset ships its tracer as a package of its own.
 
 Telemetry that needs programmatic configuration rather than an environment
 variable gets an entry program beside `conformance.yaml`, one per scenario,

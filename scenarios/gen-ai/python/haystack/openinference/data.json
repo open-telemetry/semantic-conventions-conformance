@@ -1,0 +1,384 @@
+{
+  "spans": {
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Agent.run",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Agent.run",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Agent.run",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Agent.run",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Agent.run",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Agent.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Agent.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatPromptBuilder.run",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatPromptBuilder.run",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatPromptBuilder.run",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatPromptBuilder.run",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatPromptBuilder.run",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'ChatPromptBuilder.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "ChatPromptBuilder.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.token_count.completion"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.token_count.prompt"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "llm.token_count.total"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChatGenerator.run' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "missing_attribute": "gen_ai.response.id",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChatGenerator.run' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChatGenerator.run' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIChatGenerator.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAIChatGenerator.run'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatGenerator.run",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Pipeline.run",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Pipeline.run",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Pipeline.run",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Pipeline.run",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Pipeline.run",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Pipeline.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Pipeline.run",
+      "context": {
+        "status_code": "ok"
+      }
+    }
+  ]
+}

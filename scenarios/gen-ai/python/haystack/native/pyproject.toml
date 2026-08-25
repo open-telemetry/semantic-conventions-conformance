@@ -1,0 +1,23 @@
+[project]
+name = "haystack-native-conformance"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "haystack-ai==3.1.0",
+    # deepset's own OpenTelemetry integration: the tracer Haystack documents,
+    # not a third-party instrumentation of it.
+    "opentelemetry-haystack==1.0.0",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    # `otel-conformance-python` installs the SDK providers and loads no
+    # instrumentation, which is what leaves the library's own telemetry the
+    # only thing measured.
+    "otel-conformance-python",
+]
+
+[tool.uv.sources]
+otel-conformance-python = { path = "../../../../../tools/python", editable = true }
+
+[tool.uv]
+package = false
