@@ -1,0 +1,1077 @@
+{
+  "spans": {
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.stop_sequences",
+      "gen_ai.request.stream",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_p",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.response.id",
+      "gen_ai.response.model",
+      "gen_ai.tool.definitions",
+      "gen_ai.usage.cache_creation.input_tokens",
+      "gen_ai.usage.cache_read.input_tokens",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.finish_reason"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.tool_call_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.invocation_parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.token_count.completion"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.token_count.prompt"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt_details.cache_read' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.token_count.prompt_details.cache_read"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt_details.cache_write' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.token_count.prompt_details.cache_write"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.token_count.total"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.tools.0.tool.json_schema"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'beta.messages.parse' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'beta.messages.parse' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'beta.messages.parse'",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "gen_ai.request.top_k",
+        "attribute_type": "double",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.finish_reason"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.contents.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.contents.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.tool_call_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.invocation_parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.token_count.completion"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.token_count.prompt"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt_details.cache_read' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.token_count.prompt_details.cache_read"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt_details.cache_write' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.token_count.prompt_details.cache_write"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.token_count.total"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.tools.0.tool.json_schema"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'messages.create' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'messages.create' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'messages.create'",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "gen_ai.request.top_k",
+        "attribute_type": "double",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.finish_reason"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.invocation_parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.token_count.completion"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.token_count.prompt"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.token_count.total"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'messages.stream' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'messages.stream' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'messages.stream'",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    }
+  ]
+}

@@ -111,7 +111,7 @@ classes than the row, the row says so.
 | Library | Classes | Implementations |
 | --- | --- | --- |
 | `agno` | invoke_agent, automatic_tool_calling | `opentelemetry-agno` |
-| `anthropic` | inference, streaming, tool_calling, automatic_tool_calling, multimodal | `opentelemetry-anthropic`, `opentelemetry-langchain-anthropic`<br>no automatic_tool_calling in `opentelemetry-langchain-anthropic`: langchain binds tools but does not run them outside an agent |
+| `anthropic` | inference, streaming, tool_calling, automatic_tool_calling, multimodal | `opentelemetry-anthropic`, `opentelemetry-langchain-anthropic`, `openinference`, `openllmetry`<br>no automatic_tool_calling in `opentelemetry-langchain-anthropic`: langchain binds tools but does not run them outside an agent |
 | `bedrock` | Bedrock Converse: inference, streaming, tool_calling | `opentelemetry-botocore` |
 | `google-genai` | every client class, plus automatic_tool_calling | `opentelemetry-google-genai` |
 | `langchain` | workflow, invoke_agent, automatic_tool_calling | `opentelemetry-langchain` |
