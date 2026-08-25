@@ -101,8 +101,11 @@ def _serve_and_drive(command: Sequence[str]) -> int:
         _wait_for_start(process, port, base_url, command)
         drive(base_url)
     except BaseException:
-        with contextlib.suppress(Exception):
+        try:
             _stop_after_error(process)
+        except Exception:
+            with contextlib.suppress(Exception):
+                _kill_tree(process)
         raise
 
     return _stop(process)

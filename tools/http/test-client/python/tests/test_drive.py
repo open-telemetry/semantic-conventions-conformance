@@ -561,23 +561,38 @@ class TestDrivingAServerScenario:
                 pass
 
         original = RuntimeError("startup failed")
-        monkeypatch.setattr(driver, "reserve_port", lambda: (1234, Reservation()))
-        monkeypatch.setattr(driver.subprocess, "Popen", lambda *_args, **_kwargs: object())
+        process = object()
+        cleanup: list[str] = []
+
+        def stop_after_error(received: object) -> None:
+            assert received is process
+            cleanup.append("stop")
+            raise OSError("cleanup failed")
+
+        def kill_tree(received: object) -> None:
+            assert received is process
+            cleanup.append("kill")
+            raise ValueError("fallback failed")
+
+        monkeypatch.setattr(
+            driver, "reserve_port", lambda: (1234, Reservation())
+        )
+        monkeypatch.setattr(
+            driver.subprocess, "Popen", lambda *_args, **_kwargs: process
+        )
         monkeypatch.setattr(
             driver,
             "_wait_for_start",
             lambda *_args: (_ for _ in ()).throw(original),
         )
-        monkeypatch.setattr(
-            driver,
-            "_stop_after_error",
-            lambda _process: (_ for _ in ()).throw(OSError("cleanup failed")),
-        )
+        monkeypatch.setattr(driver, "_stop_after_error", stop_after_error)
+        monkeypatch.setattr(driver, "_kill_tree", kill_tree)
 
         with pytest.raises(RuntimeError, match="startup failed") as raised:
             driver._serve_and_drive(["scenario"])
 
         assert raised.value is original
+        assert cleanup == ["stop", "kill"]
 
 
 @pytest.mark.skipif(
