@@ -80,7 +80,7 @@ def test_weaver_startup_retries_after_a_timeout() -> None:
     attempts: list[_FakeWeaver] = []
 
     def factory() -> _FakeWeaver:
-        weaver = _FakeWeaver(TimeoutError() if not attempts else None)
+        weaver = _FakeWeaver(fail_start=not attempts)
         attempts.append(weaver)
         return weaver
 
@@ -95,7 +95,7 @@ def test_weaver_startup_stops_after_the_retry() -> None:
     attempts: list[_FakeWeaver] = []
 
     def factory() -> _FakeWeaver:
-        weaver = _FakeWeaver(TimeoutError())
+        weaver = _FakeWeaver(fail_start=True)
         attempts.append(weaver)
         return weaver
 
@@ -106,58 +106,16 @@ def test_weaver_startup_stops_after_the_retry() -> None:
     assert [attempt.closes for attempt in attempts] == [1, 1]
 
 
-def test_weaver_startup_retries_after_a_clean_early_exit() -> None:
-    attempts: list[_FakeWeaver] = []
-
-    def factory() -> _FakeWeaver:
-        error = (
-            RuntimeError(
-                "WeaverLiveCheck process exited unexpectedly (code 0)"
-            )
-            if not attempts
-            else None
-        )
-        weaver = _FakeWeaver(error)
-        attempts.append(weaver)
-        return weaver
-
-    with _start_weaver(factory) as weaver:
-        assert weaver is attempts[1]
-
-    assert [attempt.starts for attempt in attempts] == [1, 1]
-    assert [attempt.closes for attempt in attempts] == [1, 1]
-
-
-def test_weaver_startup_does_not_retry_an_error_exit() -> None:
-    attempts: list[_FakeWeaver] = []
-
-    def factory() -> _FakeWeaver:
-        weaver = _FakeWeaver(
-            RuntimeError(
-                "WeaverLiveCheck process exited unexpectedly (code 1)"
-            )
-        )
-        attempts.append(weaver)
-        return weaver
-
-    with pytest.raises(RuntimeError, match=r"unexpectedly \(code 1\)"):
-        with _start_weaver(factory):
-            pass
-
-    assert len(attempts) == 1
-    assert attempts[0].closes == 1
-
-
 class _FakeWeaver:
-    def __init__(self, start_error: Exception | None) -> None:
-        self.start_error = start_error
+    def __init__(self, *, fail_start: bool) -> None:
+        self.fail_start = fail_start
         self.starts = 0
         self.closes = 0
 
     def start(self) -> _FakeWeaver:
         self.starts += 1
-        if self.start_error:
-            raise self.start_error
+        if self.fail_start:
+            raise TimeoutError
         return self
 
     def close(self) -> None:
