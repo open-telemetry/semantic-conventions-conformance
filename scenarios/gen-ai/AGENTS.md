@@ -27,7 +27,8 @@ for what else changes in those directories.
   not add a class the README does not list without adding it there first.
 - **A program never imports OpenTelemetry** and never names an
   instrumentation. Instrumentation is zero-code, from the packages the
-  implementation directory's `pyproject.toml` installs.
+  implementation directory's `pyproject.toml` installs. A `native` directory
+  is the one place a program may call the library's own telemetry switch.
 - **A program reads no configuration of its own.** It reaches the mock server
   through the client library's own base-URL environment variable, which
   `conformance.yaml` maps from `${MOCK_SERVER_URL}`.

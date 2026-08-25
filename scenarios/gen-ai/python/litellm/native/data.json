@@ -1,0 +1,1819 @@
+{
+  "spans": {
+    "gen_ai.embeddings.client": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "gen_ai.response.model",
+      "gen_ai.usage.input_tokens"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.frequency_penalty",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.presence_penalty",
+      "gen_ai.request.seed",
+      "gen_ai.request.stop_sequences",
+      "gen_ai.request.stream",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_p",
+      "gen_ai.response.id",
+      "gen_ai.response.model",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "gen_ai.client.operation.duration": [
+      "gen_ai.operation.name",
+      "gen_ai.request.model"
+    ],
+    "gen_ai.client.token.usage": [
+      "gen_ai.operation.name",
+      "gen_ai.request.model",
+      "gen_ai.token.type"
+    ],
+    "gen_ai.server.time_per_output_token": [
+      "gen_ai.operation.name",
+      "gen_ai.request.model"
+    ],
+    "gen_ai.server.time_to_first_token": [
+      "gen_ai.operation.name",
+      "gen_ai.request.model"
+    ]
+  },
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event_name' does not exist in the registry.",
+      "signal_type": "log",
+      "context": {
+        "attribute_key": "event_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.framework' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.duration",
+      "context": {
+        "attribute_key": "gen_ai.framework"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.duration",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.duration",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.duration",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.framework' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.response.duration",
+      "context": {
+        "attribute_key": "gen_ai.framework"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.response.duration",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.response.duration",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.response.duration",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.response.duration"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.framework' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.framework"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.provider.name' is not present.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.provider.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.framework' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_per_output_token",
+      "context": {
+        "attribute_key": "gen_ai.framework"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_per_output_token",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_per_output_token",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_per_output_token",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.provider.name' is not present.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_per_output_token",
+      "context": {
+        "attribute_key": "gen_ai.provider.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.framework' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_to_first_token",
+      "context": {
+        "attribute_key": "gen_ai.framework"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_to_first_token",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_to_first_token",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_to_first_token",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.provider.name' is not present.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.server.time_to_first_token",
+      "context": {
+        "attribute_key": "gen_ai.provider.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.framework' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.usage.cost",
+      "context": {
+        "attribute_key": "gen_ai.framework"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.usage.cost",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.usage.cost",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.usage.cost",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.usage.cost"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.discount_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.discount_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.discount_percent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.discount_percent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.input_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.input_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_fixed_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_fixed_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_percent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_percent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_total_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_total_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.original_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.original_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.output_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.output_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.service_tier' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.service_tier"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.tool_usage_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.tool_usage_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.total_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.cost.total_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.openai.response.service_tier' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.openai.response.service_tier"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'gen_ai.response.finish_reasons' has type 'string'. Type should be 'string[]'.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.response.finish_reasons",
+        "attribute_type": "string",
+        "expected": "string[]"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'litellm.call_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "litellm.call_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'litellm.provider.model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "litellm.provider.model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.request.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "llm.request.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.cold_storage_object_key' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.cold_storage_object_key"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.mcp_tool_call_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.mcp_tool_call_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.prompt_management_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.prompt_management_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_custom_headers' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.requester_custom_headers"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_ip_address' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.requester_ip_address"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.requester_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.routing_decision' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.routing_decision"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.spend_logs_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.spend_logs_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.team_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.team_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.team_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.team_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.usage_object' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_agent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_auth_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_auth_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_budget_reset_at' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_budget_reset_at"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_end_user_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_end_user_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_hash' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_hash"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_org_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_org_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_org_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_org_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_project_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_project_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_project_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_project_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_request_route' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_request_route"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_email' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_email"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.vector_store_request_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.vector_store_request_metadata"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat gpt-4o-audio-preview' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'chat gpt-4o-audio-preview' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.completion.0.function_call.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.completion.0.function_call.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.completion.0.function_call.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.completion.0.function_call.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.discount_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.discount_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.discount_percent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.discount_percent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.input_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.input_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_fixed_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_fixed_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_percent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_percent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_total_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_total_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.original_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.original_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.output_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.output_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.service_tier' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.service_tier"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.tool_usage_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.tool_usage_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.total_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.cost.total_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.openai.response.service_tier' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.openai.response.service_tier"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'gen_ai.response.finish_reasons' has type 'string'. Type should be 'string[]'.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.response.finish_reasons",
+        "attribute_type": "string",
+        "expected": "string[]"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'litellm.call_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "litellm.call_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'litellm.provider.model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "litellm.provider.model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.request.functions.0.description' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "llm.request.functions.0.description"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.request.functions.0.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "llm.request.functions.0.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.request.functions.0.parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "llm.request.functions.0.parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.request.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "llm.request.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.cold_storage_object_key' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.cold_storage_object_key"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.mcp_tool_call_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.mcp_tool_call_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.prompt_management_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.prompt_management_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_custom_headers' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.requester_custom_headers"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_ip_address' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.requester_ip_address"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.requester_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.routing_decision' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.routing_decision"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.spend_logs_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.spend_logs_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.team_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.team_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.team_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.team_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.usage_object' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_agent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_auth_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_auth_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_budget_reset_at' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_budget_reset_at"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_end_user_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_end_user_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_hash' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_hash"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_org_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_org_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_org_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_org_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_project_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_project_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_project_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_project_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_request_route' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_request_route"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_email' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_email"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.vector_store_request_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.vector_store_request_metadata"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'chat gpt-4o-mini' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.discount_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.discount_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.discount_percent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.discount_percent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.input_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.input_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_fixed_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_fixed_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_percent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_percent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.margin_total_amount' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.margin_total_amount"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.original_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.original_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.output_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.output_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.tool_usage_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.tool_usage_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.cost.total_cost' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.cost.total_cost"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'hidden_params' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "hidden_params"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'litellm.call_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "litellm.call_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'litellm.provider.model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "litellm.provider.model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.request.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "llm.request.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.applied_guardrails' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.applied_guardrails"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.cold_storage_object_key' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.cold_storage_object_key"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.mcp_tool_call_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.mcp_tool_call_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.prompt_management_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.prompt_management_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_custom_headers' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.requester_custom_headers"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_ip_address' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.requester_ip_address"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.requester_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.requester_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.routing_decision' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.routing_decision"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.spend_logs_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.spend_logs_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.team_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.team_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.team_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.team_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.usage_object' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_agent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_auth_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_auth_metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_budget_reset_at' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_budget_reset_at"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_end_user_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_end_user_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_hash' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_hash"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_org_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_org_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_org_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_org_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_project_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_project_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_project_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_project_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_request_route' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_request_route"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_alias' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_alias"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_team_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_team_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_email' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_email"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_max_budget' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_max_budget"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.user_api_key_user_spend' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.user_api_key_user_spend"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.vector_store_request_metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.vector_store_request_metadata"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'gen_ai.embeddings.dimension.count'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "gen_ai.embeddings.dimension.count",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'gen_ai.request.encoding_formats'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "gen_ai.request.encoding_formats",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'embeddings text-embedding-3-small' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "status_code": "ok"
+      }
+    }
+  ]
+}

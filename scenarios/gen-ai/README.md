@@ -115,6 +115,7 @@ classes than the row, the row says so.
 | `bedrock` | Bedrock Converse: inference, streaming, tool_calling | `opentelemetry-botocore`, `openinference`, `openllmetry` |
 | `google-genai` | every client class, plus automatic_tool_calling | `opentelemetry-google-genai`, `openinference`, `openllmetry` |
 | `langchain` | workflow, invoke_agent, automatic_tool_calling | `opentelemetry-langchain`, `openinference`, `openllmetry` |
+| `litellm` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `native`, `openinference`, `openllmetry` |
 | `openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
 | `openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own | `opentelemetry-openai-agents`, `openinference`, `openllmetry` |
 | `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent` |
@@ -134,6 +135,11 @@ An implementation directory is named after whatever produced the telemetry:
 - `openinference` or `openllmetry` for a third-party suite, after the project
   rather than its package.
 - `native` for the library itself.
+
+Where a library's telemetry has to be turned on from the program rather than
+from the environment, that program cannot be shared with one that instruments
+the same library from the outside, so it lives in the implementation's own
+`scenarios/`.
 
 ## Content capture
 
