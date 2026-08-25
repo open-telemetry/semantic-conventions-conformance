@@ -101,6 +101,21 @@ def test_php_server_binds_loopback(package: Path) -> None:
     ]
 
 
+def test_serve_reports_missing_port(
+    package: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    router = package / "router.php"
+    router.write_text("<?php", encoding="utf-8")
+    monkeypatch.delenv(PORT_VARIABLE, raising=False)
+
+    assert otel_conformance_php.main(["serve", str(router)]) == 1
+    assert capsys.readouterr().err == (
+        f"required environment variable is missing: {PORT_VARIABLE}\n"
+    )
+
+
 def test_serve_reports_missing_php(
     package: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -108,7 +123,7 @@ def test_serve_reports_missing_php(
 ) -> None:
     router = package / "router.php"
     router.write_text("<?php", encoding="utf-8")
-    monkeypatch.setenv("OTEL_HTTP_SCENARIO_PORT", "8080")
+    monkeypatch.setenv(PORT_VARIABLE, "8080")
 
     def php_missing(command: list[str], *, stdin: int) -> None:
         raise FileNotFoundError(command[0])
@@ -148,7 +163,7 @@ def test_serve_stops_the_server_at_eof(
 ) -> None:
     router = package / "router.php"
     router.write_text("<?php", encoding="utf-8")
-    monkeypatch.setenv("OTEL_HTTP_SCENARIO_PORT", "8080")
+    monkeypatch.setenv(PORT_VARIABLE, "8080")
 
     class Process:
         returncode: int | None = None
@@ -182,7 +197,7 @@ def test_serve_reports_server_that_exits_cleanly_before_eof(
 ) -> None:
     router = package / "router.php"
     router.write_text("<?php", encoding="utf-8")
-    monkeypatch.setenv("OTEL_HTTP_SCENARIO_PORT", "8080")
+    monkeypatch.setenv(PORT_VARIABLE, "8080")
     release = threading.Event()
 
     class Input:
@@ -212,7 +227,7 @@ def test_missing_router_fails_tightly(
     package: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("OTEL_HTTP_SCENARIO_PORT", "8080")
+    monkeypatch.setenv(PORT_VARIABLE, "8080")
 
     with pytest.raises(LayoutError, match="router does not exist"):
         serve(package / "missing.php", input_stream=io.BytesIO())
