@@ -257,6 +257,8 @@ jobs:
     name: Scenarios (${{ matrix.domain }}, ${{ matrix.language }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SCENARIO_ROOT: scenarios/${{ matrix.domain }}/${{ matrix.language }}
     concurrency:
       group: ${{ github.workflow }}-scenarios-${{ matrix.domain }}-${{ matrix.language }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -348,7 +350,6 @@ jobs:
       - name: Run scenarios
         env:
           FORCE_COLOR: "1" # the log renders ANSI; the step's stdout is no tty
-          SCENARIO_ROOT: scenarios/${{ matrix.domain }}/${{ matrix.language }}
         run: |
           set -uo pipefail
           mapfile -t directories < <(
@@ -365,8 +366,6 @@ jobs:
 
       - name: Check the committed coverage is up to date
         if: ${{ !cancelled() }}
-        env:
-          SCENARIO_ROOT: scenarios/${{ matrix.domain }}/${{ matrix.language }}
         run: |
           git add --intent-to-add -- "$SCENARIO_ROOT"
           if ! git diff --exit-code -- "$SCENARIO_ROOT"; then
