@@ -24,7 +24,9 @@ from otel_http_test_client import (
     REQUESTS,
     ContractError,
     Exchange,
+    client_headers,
     drive_async,
+    mock_server_url,
     respond,
     verify,
     wait_for_health,
@@ -285,6 +287,34 @@ class TestTheContract:
 
         assert placeholders
         assert set(placeholders) == {"${requestBody}"}
+
+
+class TestClientWorkloads:
+    def test_mock_server_url_comes_from_the_runner(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("MOCK_SERVER_URL", "http://mock-server")
+
+        assert mock_server_url() == "http://mock-server"
+
+    def test_missing_mock_server_url_explains_who_sets_it(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("MOCK_SERVER_URL", raising=False)
+
+        with pytest.raises(RuntimeError, match="the runner publishes it"):
+            mock_server_url()
+
+    def test_every_request_has_the_fixed_user_agent(self) -> None:
+        assert client_headers(None) == {
+            "User-Agent": "otel-http-conformance/1"
+        }
+
+    def test_a_request_body_adds_its_content_type(self) -> None:
+        assert client_headers("{}") == {
+            "User-Agent": "otel-http-conformance/1",
+            "Content-Type": "application/json",
+        }
 
 
 class TestAnsweringTheExchanges:
