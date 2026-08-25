@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from http import HTTPStatus
+from typing import BinaryIO, cast
 
 from otel_http_test_client import CONTENT_TYPE, respond
 
@@ -18,14 +19,15 @@ def application(
     method = str(environ["REQUEST_METHOD"])
     path = str(environ["PATH_INFO"])
     length = int(environ.get("CONTENT_LENGTH") or 0)
-    stream = environ["wsgi.input"]
+    stream = cast(BinaryIO, environ["wsgi.input"])
     body = stream.read(length).decode() if length else None
     status, payload = respond(method, path, body)
+    payload_bytes = payload.encode()
     start_response(
         f"{status} {HTTPStatus(status).phrase}",
         [
             ("Content-Type", CONTENT_TYPE),
-            ("Content-Length", str(len(payload.encode()))),
+            ("Content-Length", str(len(payload_bytes))),
         ],
     )
-    return [payload.encode()]
+    return [payload_bytes]
