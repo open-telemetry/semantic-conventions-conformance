@@ -41,9 +41,13 @@ async def _wait_for_eof() -> None:
         # Proactor loops cannot watch stdin. An unbuffered daemon reader can
         # be abandoned safely if uvicorn exits before the driver closes stdin.
         def wait() -> None:
-            while os.read(stdin, 4096):
+            try:
+                while os.read(stdin, 4096):
+                    pass
+            except OSError:
                 pass
-            loop.call_soon_threadsafe(finish)
+            finally:
+                loop.call_soon_threadsafe(finish)
 
         threading.Thread(target=wait, daemon=True).start()
     else:
