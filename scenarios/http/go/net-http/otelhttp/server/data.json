@@ -49,47 +49,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "http_route_not_present",
-      "message": "Server span 'GET /health' uses target '/health' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
-      "context": {
-        "kind": "server",
-        "target": "/health"
-      }
-    },
-    {
-      "id": "http_route_not_present",
-      "message": "Server span 'GET /status/{code}' uses target '/status/{code}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
-      "context": {
-        "kind": "server",
-        "target": "/status/{code}"
-      }
-    },
-    {
-      "id": "http_route_not_present",
-      "message": "Server span 'GET /users/{userId}' uses target '/users/{userId}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
-      "context": {
-        "kind": "server",
-        "target": "/users/{userId}"
-      }
-    },
-    {
-      "id": "http_route_not_present",
-      "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
-      "context": {
-        "kind": "server",
-        "target": "/items"
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "context": {
-        "status_code": "error"
-      }
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -106,5 +65,56 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /health' uses target '/health' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "kind": "server",
+        "target": "/health"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /status/{code}' uses target '/status/{code}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code}",
+      "context": {
+        "kind": "server",
+        "target": "/status/{code}"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code}",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /users/{userId}' uses target '/users/{userId}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{userId}",
+      "context": {
+        "kind": "server",
+        "target": "/users/{userId}"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "kind": "server",
+        "target": "/items"
+      }
+    }
+  ]
 }
