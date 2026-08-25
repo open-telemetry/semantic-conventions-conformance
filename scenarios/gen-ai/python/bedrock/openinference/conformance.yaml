@@ -1,0 +1,28 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: genai-conformance
+instrumented_library: bedrock
+instrumentation_library: openinference-instrumentation-bedrock
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  AWS_ENDPOINT_URL_BEDROCK_RUNTIME: ${MOCK_SERVER_URL}
+  AWS_ACCESS_KEY_ID: test_access_key_id
+  AWS_SECRET_ACCESS_KEY: test_secret_access_key
+  AWS_DEFAULT_REGION: us-east-1
+  # OpenInference records its own `llm.*` attributes by default;
+  # this is the switch that adds the GenAI conventions beside them.
+  OPENINFERENCE_ENABLE_GENAI_SEMCONV: "true"
+
+scenarios:
+  inference:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/inference.py
+
+  streaming:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/streaming.py
+
+  tool_calling:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/tool_calling.py
