@@ -1,0 +1,16 @@
+[project]
+name = "agno-openinference-conformance"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "agno==2.9.0",
+    "openai==2.54.0",
+    "openinference-instrumentation-agno==1.0.4",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    "opentelemetry-distro==0.65b0",
+]
+
+[tool.uv]
+package = false

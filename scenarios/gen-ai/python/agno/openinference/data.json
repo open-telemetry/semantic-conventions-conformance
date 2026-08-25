@@ -1,0 +1,587 @@
+{
+  "spans": {
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.temperature",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.tool.definitions",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.agent.name",
+      "gen_ai.conversation.id",
+      "gen_ai.operation.name"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.tool_call_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.invocation_parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.token_count.completion"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.token_count.prompt"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "llm.tools.0.tool.json_schema"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChat.invoke' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "missing_attribute": "gen_ai.response.id",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChat.invoke' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'OpenAIChat.invoke' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIChat.invoke' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAIChat.invoke'",
+      "signal_type": "span",
+      "signal_name": "OpenAIChat.invoke",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.description' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "tool.description"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "tool.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "attribute_key": "tool.parameters"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'get_current_weather' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "execute_tool span name should be 'execute_tool' or 'execute_tool <value of gen_ai.tool.name>', got 'get_current_weather'",
+      "signal_type": "span",
+      "signal_name": "get_current_weather",
+      "context": {
+        "expected_form": "execute_tool or 'execute_tool <gen_ai.tool.name>'",
+        "keyed_attr": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agent.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "agent.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.agent' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "agno.agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.agent.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "agno.agent.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.run.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "agno.run.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.tools' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "agno.tools"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "graph.node.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "graph.node.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'session.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "attribute_key": "session.id"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.run' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.run' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.run' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'weather_assistant.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'weather_assistant.run'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.run",
+      "context": {
+        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    }
+  ]
+}
