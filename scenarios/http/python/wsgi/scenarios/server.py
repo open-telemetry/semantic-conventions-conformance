@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from http import HTTPStatus
 
 from otel_http_test_client import CONTENT_TYPE, respond
 
@@ -21,19 +22,10 @@ def application(
     body = stream.read(length).decode() if length else None
     status, payload = respond(method, path, body)
     start_response(
-        f"{status} {_status_text(status)}",
+        f"{status} {HTTPStatus(status).phrase}",
         [
             ("Content-Type", CONTENT_TYPE),
             ("Content-Length", str(len(payload.encode()))),
         ],
     )
     return [payload.encode()]
-
-
-def _status_text(status: int) -> str:
-    return {
-        200: "OK",
-        201: "Created",
-        404: "Not Found",
-        500: "Internal Server Error",
-    }[status]
