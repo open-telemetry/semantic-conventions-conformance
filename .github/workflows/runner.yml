@@ -228,30 +228,21 @@ jobs:
         id: matrix
         shell: bash
         run: |
-          scenario_paths="$(git ls-files 'scenarios/**/conformance.yaml')"
-          if [[ -z "$scenario_paths" ]]; then
-            echo "::error::no conformance scenarios found"
-            exit 1
-          fi
           matrix="$(
-            printf '%s\n' "$scenario_paths" |
-              jq -Rsc '
-                split("\n") |
-                map(select(length > 0) | split("/")) |
-                map(
-                  if length < 4 or
-                    .[0] != "scenarios" or
-                    .[1] == "" or
-                    .[2] == "" or
-                    .[-1] != "conformance.yaml"
-                  then
-                    error("unexpected conformance scenario path: " + join("/"))
-                  else
-                    {domain: .[1], language: .[2]}
-                  end
-                ) |
-                unique |
-                {include: .}
+            git ls-files -z 'scenarios/**/conformance.yaml' |
+              jq -Rsc --exit-status '
+                [
+                  splits("\u0000") |
+                  select(length > 0) |
+                  . as $path |
+                  capture("^scenarios/(?<domain>[^/]+)/(?<language>[^/]+)(?:/[^/]+)*/conformance[.]yaml$") //
+                    error("unexpected conformance scenario path: " + $path)
+                ] |
+                if length == 0 then
+                  error("no conformance scenarios found")
+                else
+                  unique | {include: .}
+                end
               '
           )"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
