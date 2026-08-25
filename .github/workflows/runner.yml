@@ -250,7 +250,7 @@ jobs:
                 {include: .}
               '
           )"
-          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
 
   scenarios:
     needs: discover-scenarios
