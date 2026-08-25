@@ -1,0 +1,1197 @@
+{
+  "spans": {
+    "gen_ai.create_agent.client": [
+      "gen_ai.agent.name",
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.system_instructions"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.temperature",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.response.id",
+      "gen_ai.response.model",
+      "gen_ai.system_instructions",
+      "gen_ai.tool.definitions",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.agent.name",
+      "gen_ai.operation.name"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "gen_ai.client.operation.duration": [
+      "gen_ai.provider.name",
+      "gen_ai.response.model"
+    ],
+    "gen_ai.client.token.usage": [
+      "gen_ai.provider.name",
+      "gen_ai.response.model",
+      "gen_ai.token.type"
+    ]
+  },
+  "entities": {},
+  "findings": [
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.operation.name' is not present.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.duration",
+      "context": {
+        "attribute_key": "gen_ai.operation.name"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.operation.name' is not present.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.operation.name"
+      }
+    },
+    {
+      "id": "unit_mismatch",
+      "message": "Unit should be '{token}', but found 'token'.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "expected": "{token}",
+        "unit": "token"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"description\":\"Get the current weather in a given location.\",\"name\":\"get_current_weather\",\"parameters\":{\"properties\":{\"location\":{\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"description\":\"Get the current weather in a given location.\",\"name\":\"get_current_weather\",\"parameters\":{\"properties\":{\"location\":{\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.checkpoint_ns' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.checkpoint_ns"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_checkpoint_ns' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_checkpoint_ns"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_node' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_node"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_step' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_step"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_triggers' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_triggers"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.lc_agent_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.lc_agent_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.lc_versions' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.lc_versions"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_integration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_integration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_max_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_max_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_model_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_model_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_temperature' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_temperature"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'ChatOpenAI.chat' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'ChatOpenAI.chat'",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "gen_ai.task.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "gen_ai.task.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "gen_ai.task.status"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "traceloop.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'conformance_workflow.workflow' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'conformance_workflow.workflow' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'conformance_workflow.workflow' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'conformance_workflow.workflow'",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.workflow",
+      "context": {
+        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.system_instructions' value is not JSON, so it cannot carry the GenAI content schema",
+      "signal_type": "span",
+      "signal_name": "create_agent weather_assistant",
+      "context": {
+        "attribute": "gen_ai.system_instructions",
+        "errors": "value is not JSON"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "gen_ai.task.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "gen_ai.task.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "gen_ai.task.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "gen_ai.task.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.parent.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "gen_ai.task.parent.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "gen_ai.task.status"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "traceloop.entity.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "traceloop.entity.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "traceloop.entity.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "traceloop.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "genai_operation_name_unknown",
+      "message": "Span 'execute_task ChatPromptTemplate' has gen_ai.operation.name='execute_task' which is not a documented enum value",
+      "signal_type": "span",
+      "signal_name": "execute_task ChatPromptTemplate",
+      "context": {
+        "operation": "execute_task"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "gen_ai.task.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "gen_ai.task.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "gen_ai.task.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "gen_ai.task.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.parent.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "gen_ai.task.parent.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "gen_ai.task.status"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_checkpoint_ns' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_checkpoint_ns"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_node' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_node"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_step' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_step"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_triggers' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_triggers"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.lc_agent_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.lc_agent_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_integration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_integration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.entity.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.entity.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.entity.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "genai_operation_name_unknown",
+      "message": "Span 'execute_task model' has gen_ai.operation.name='execute_task' which is not a documented enum value",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "operation": "execute_task"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "gen_ai.task.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "gen_ai.task.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "gen_ai.task.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "gen_ai.task.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.parent.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "gen_ai.task.parent.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "gen_ai.task.status"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_checkpoint_ns' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_checkpoint_ns"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_node' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_node"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_step' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_step"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_triggers' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_triggers"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.lc_agent_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.association.properties.lc_agent_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_integration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_integration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.entity.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.entity.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.entity.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "genai_operation_name_unknown",
+      "message": "Span 'execute_task tools' has gen_ai.operation.name='execute_task' which is not a documented enum value",
+      "signal_type": "span",
+      "signal_name": "execute_task tools",
+      "context": {
+        "operation": "execute_task"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "gen_ai.task.status"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.checkpoint_ns' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.checkpoint_ns"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_checkpoint_ns' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_checkpoint_ns"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_node' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_node"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_step' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_step"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.langgraph_triggers' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.langgraph_triggers"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.lc_agent_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.lc_agent_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_integration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_integration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.entity.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.entity.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.entity.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.workflow.edges' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.workflow.edges"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.workflow.nodes' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gen_ai.workflow.nodes"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "gen_ai.task.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "gen_ai.task.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "gen_ai.task.status"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.lc_agent_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.association.properties.lc_agent_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_integration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_integration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.workflow' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.workflow' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant.workflow' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'weather_assistant.workflow'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    }
+  ]
+}

@@ -30,6 +30,7 @@ deny contains result if {
 	# `gen_ai.tool.definitions` before upstream ships the schema.
 	schema := data[key]
 
+	json.is_valid(attr_value)
 	parsed := json.unmarshal(attr_value)
 
 	[matched, errors] := json.match_schema(parsed, schema)
@@ -37,8 +38,10 @@ deny contains result if {
 
 	# PolicyFinding format per
 	# https://github.com/open-telemetry/weaver/blob/main/crates/weaver_live_check/README.md#policyfinding
-	# (id / level / context / message; signal_* omitted because the sample
-	# is attribute-level and weaver doesn't surface the parent span here).
+	# (id / level / context / message). `signal_type` and `signal_name` are
+	# left to weaver, which stamps the signal the sample came from — for an
+	# attribute-level sample that is the span or event holding it, which is
+	# what a reader of the finding needs and what this rule cannot see.
 	result := {
 		"id":    "genai_content_schema",
 		"level": "violation",
@@ -49,6 +52,34 @@ deny contains result if {
 		"message": sprintf(
 			"Attribute '%v' value does not conform to the GenAI schema: %v",
 			[attr_name, errors],
+		),
+	}
+}
+
+# An implementation that puts something other than JSON in a content attribute
+# fails the same check, one step earlier: the schema cannot be applied to a
+# value that never parsed.
+deny contains result if {
+	input.sample.attribute
+	attr_name := input.sample.attribute.name
+	attr_value := input.sample.attribute.value
+	is_string(attr_value)
+
+	key := _genai_content_schema_keys[attr_name]
+	data[key]
+
+	not json.is_valid(attr_value)
+
+	result := {
+		"id":    "genai_content_schema",
+		"level": "violation",
+		"context": {
+			"attribute": attr_name,
+			"errors":    "value is not JSON",
+		},
+		"message": sprintf(
+			"Attribute '%v' value is not JSON, so it cannot carry the GenAI content schema",
+			[attr_name],
 		),
 	}
 }
