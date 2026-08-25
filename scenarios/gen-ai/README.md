@@ -121,6 +121,7 @@ classes than the row, the row says so.
 | `litellm` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `native`, `openinference`, `openllmetry` |
 | `openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
 | `openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own | `opentelemetry-openai-agents`, `openinference`, `openllmetry` |
+| `pydantic-ai` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent` |
 
 The conventions also cover retrieval, memory and planning. No instrumentation
