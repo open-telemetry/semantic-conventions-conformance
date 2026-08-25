@@ -83,7 +83,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.19.0"
+          node-version: "22.23.2"
 
       # Installs, formats and unit-tests every Node package the HTTP scenarios
       # use, including the ones shared with other domains.
@@ -248,7 +248,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.19.0"
+          node-version: "22.23.2"
           cache: npm
           cache-dependency-path: "scenarios/**/package-lock.json"
 
