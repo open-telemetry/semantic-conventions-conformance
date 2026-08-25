@@ -36,7 +36,7 @@ function send(method, url, body) {
     });
     request.on("response", (response) => {
       const chunks = [];
-      response.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      response.on("data", (chunk) => chunks.push(chunk));
       response.on("end", () =>
         resolve({
           status: response.statusCode,

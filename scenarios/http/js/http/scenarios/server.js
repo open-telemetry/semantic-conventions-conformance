@@ -30,7 +30,7 @@ const { waitForEof } = require("@otel-conformance/scenario-support");
 async function serve() {
   const server = http.createServer((request, response) => {
     const chunks = [];
-    request.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    request.on("data", (chunk) => chunks.push(chunk));
     request.on("end", () => {
       // `respond` documents `null` as the value for a request with no body.
       const body = chunks.length
