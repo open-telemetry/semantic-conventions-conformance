@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const progressBodyLimit = 60
+
 // Sender sends one request using the HTTP client library under test. body is
 // empty for a request that carries none.
 type Sender func(method, url, body string) (Response, error)
@@ -83,8 +85,12 @@ func Verify(exchange Exchange, response Response) error {
 
 func abbreviate(value string) string {
 	singleLine := strings.NewReplacer("\r", " ", "\n", " ").Replace(value)
-	if len(singleLine) <= 60 {
+	if len(singleLine) <= progressBodyLimit {
 		return singleLine
 	}
-	return singleLine[:60]
+	runes := []rune(singleLine)
+	if len(runes) <= progressBodyLimit {
+		return singleLine
+	}
+	return string(runes[:progressBodyLimit])
 }

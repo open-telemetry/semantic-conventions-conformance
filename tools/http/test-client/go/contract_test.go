@@ -56,6 +56,15 @@ func TestDriveWritesProgressToItsOutput(t *testing.T) {
 	}
 }
 
+func TestProgressAbbreviationDoesNotSplitUTF8(t *testing.T) {
+	prefix := strings.Repeat("x", progressBodyLimit-1)
+	got := abbreviate(prefix + "\u00e9\u00e9")
+	want := prefix + "\u00e9"
+	if got != want {
+		t.Errorf("abbreviate() = %q, want %q", got, want)
+	}
+}
+
 // A renamed contract key binds to the zero value rather than failing, so an
 // empty description is how that arrives here.
 func TestEveryExchangeSaysWhatItIsFor(t *testing.T) {
