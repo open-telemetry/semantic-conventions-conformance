@@ -102,16 +102,23 @@ def _quiet_connection_retries() -> Generator[None, None, None]:
 def _start_weaver(
     factory: Callable[[], _TWeaver],
 ) -> Generator[_TWeaver, None, None]:
-    """Start weaver, retrying once if its fixed readiness window expires."""
+    """Start weaver, retrying once after a transient startup failure."""
     for attempt in range(2):
         weaver = factory()
         try:
             weaver.start()
-        except TimeoutError:
+        except (RuntimeError, TimeoutError) as error:
+            retryable = isinstance(error, TimeoutError) or str(error) == (
+                "WeaverLiveCheck process exited unexpectedly (code 0)"
+            )
+            if not retryable:
+                raise
             weaver.close()
             if attempt == 1:
                 raise
-            logger.warning("Weaver live-check startup timed out; retrying")
+            logger.warning(
+                "Weaver live-check startup failed; retrying: %s", error
+            )
             continue
 
         try:
