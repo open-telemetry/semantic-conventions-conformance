@@ -235,7 +235,7 @@ jobs:
           fi
           matrix="$(
             printf '%s\n' "$scenario_paths" |
-              jq -cRsc '
+              jq -Rsc '
                 split("\n") |
                 map(
                   select(length > 0) |
