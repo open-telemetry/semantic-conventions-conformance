@@ -1,0 +1,18 @@
+[project]
+name = "google-adk-native-conformance"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "google-adk==2.7.1",
+    # ADK caps the SDK below what the runner's own package resolves to, so
+    # these scenarios take the zero-code agent instead of
+    # `otel-conformance-python`. Nothing else here is instrumented, so the
+    # agent finds no instrumentation to load and only sets the SDK up.
+    "opentelemetry-api==1.42.0",
+    "opentelemetry-sdk==1.42.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.42.0",
+    "opentelemetry-distro==0.63b0",
+]
+
+[tool.uv]
+package = false
