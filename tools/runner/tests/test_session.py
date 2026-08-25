@@ -145,6 +145,7 @@ def test_weaver_startup_does_not_retry_an_error_exit() -> None:
             pass
 
     assert len(attempts) == 1
+    assert attempts[0].closes == 1
 
 
 class _FakeWeaver:

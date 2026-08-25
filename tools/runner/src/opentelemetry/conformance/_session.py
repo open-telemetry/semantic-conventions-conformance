@@ -111,9 +111,9 @@ def _start_weaver(
             retryable = isinstance(error, TimeoutError) or str(error) == (
                 "WeaverLiveCheck process exited unexpectedly (code 0)"
             )
+            weaver.close()
             if not retryable:
                 raise
-            weaver.close()
             if attempt == 1:
                 raise
             logger.warning(
