@@ -283,8 +283,8 @@ jobs:
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
-          # Only this leg's lockfiles, so the two Python legs cache their own
-          # package sets under their own key instead of sharing one.
+          # Scope lockfiles to this matrix job so each Python matrix job caches
+          # its own package set instead of sharing one.
           cache-dependency-glob: "scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/uv.lock"
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
@@ -341,8 +341,8 @@ jobs:
             -e tools/js \
             -e tools/dotnet
 
-      # Keyed by domain too: a leg fetches only the registry its own domain
-      # pins, so one key per domain keeps every cache complete.
+      # Keyed by domain too: a matrix job fetches only the registry its own
+      # domain pins, so one key per domain keeps every cache complete.
       - name: Cache the semconv registries
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
