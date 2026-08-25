@@ -11,7 +11,7 @@ use OpenTelemetry\Conformance\Scenario\Lifecycle;
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 putenv('OTEL_CONFORMANCE_PHP_TEST=value');
-if (Environment::require('OTEL_CONFORMANCE_PHP_TEST') !== 'value') {
+if (Environment::requireValue('OTEL_CONFORMANCE_PHP_TEST') !== 'value') {
     throw new RuntimeException('the required environment value was not read');
 }
 putenv('OTEL_CONFORMANCE_PHP_TEST');

@@ -16,7 +16,7 @@ function driveGuzzleScenario(): void
 {
     $client = new Client(['http_errors' => false]);
     ClientWorkload::drive(
-        Environment::require('MOCK_SERVER_URL'),
+        Environment::requireValue('MOCK_SERVER_URL'),
         static function (
             string $method,
             string $url,

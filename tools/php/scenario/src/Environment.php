@@ -15,7 +15,7 @@ final class Environment
     {
     }
 
-    public static function require(string $name): string
+    public static function requireValue(string $name): string
     {
         $value = getenv($name);
         if ($value === false || $value === '') {
