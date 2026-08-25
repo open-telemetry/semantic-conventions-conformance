@@ -28,7 +28,6 @@
       "url.scheme"
     ]
   },
-  "findings": [],
   "entities": {
     "service": {
       "identity": [
@@ -45,5 +44,6 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": []
 }

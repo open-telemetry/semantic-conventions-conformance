@@ -27,47 +27,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "context": {
-        "status_code": "error"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /status/{code}' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /users/{userId}' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -84,5 +43,56 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code}",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /status/{code}' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code}",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /users/{userId}' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "GET /users/{userId}",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    }
+  ]
 }

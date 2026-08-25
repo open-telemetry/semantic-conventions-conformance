@@ -99,10 +99,13 @@
       "server.address"
     ]
   },
+  "entities": {},
   "findings": [
     {
       "id": "type_mismatch",
       "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.client.inference.operation.details",
       "context": {
         "attribute_key": "gen_ai.request.top_k",
         "attribute_type": "double",
@@ -112,6 +115,8 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'embeddings text-embedding-004' (operation 'embeddings') is missing expected attribute 'gen_ai.request.encoding_formats'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-004",
       "context": {
         "missing_attribute": "gen_ai.request.encoding_formats",
         "operation": "embeddings"
@@ -120,14 +125,29 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'embeddings text-embedding-004' (operation 'embeddings') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-004",
       "context": {
         "missing_attribute": "gen_ai.response.model",
         "operation": "embeddings"
       }
     },
     {
+      "id": "type_mismatch",
+      "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-2.0-flash",
+      "context": {
+        "attribute_key": "gen_ai.request.top_k",
+        "attribute_type": "double",
+        "expected": "int"
+      }
+    },
+    {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-2.0-flash",
       "context": {
         "missing_attribute": "gen_ai.response.id",
         "operation": "generate_content"
@@ -136,11 +156,12 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-2.0-flash",
       "context": {
         "missing_attribute": "gen_ai.response.model",
         "operation": "generate_content"
       }
     }
-  ],
-  "entities": {}
+  ]
 }

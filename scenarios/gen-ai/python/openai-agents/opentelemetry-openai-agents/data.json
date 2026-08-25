@@ -22,10 +22,13 @@
       "gen_ai.provider.name"
     ]
   },
+  "entities": {},
   "findings": [
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
       "context": {
         "missing_attribute": "gen_ai.response.finish_reasons",
         "operation": "invoke_agent"
@@ -34,6 +37,8 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
       "context": {
         "missing_attribute": "gen_ai.usage.input_tokens",
         "operation": "invoke_agent"
@@ -42,11 +47,12 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
       "context": {
         "missing_attribute": "gen_ai.usage.output_tokens",
         "operation": "invoke_agent"
       }
     }
-  ],
-  "entities": {}
+  ]
 }

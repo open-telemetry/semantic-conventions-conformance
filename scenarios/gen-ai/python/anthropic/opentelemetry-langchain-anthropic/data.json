@@ -56,10 +56,13 @@
       "gen_ai.token.type"
     ]
   },
+  "entities": {},
   "findings": [
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat claude-sonnet-4-20250514' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "chat claude-sonnet-4-20250514",
       "context": {
         "missing_attribute": "gen_ai.response.id",
         "operation": "chat"
@@ -68,6 +71,8 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat claude-sonnet-4-20250514' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "chat claude-sonnet-4-20250514",
       "context": {
         "missing_attribute": "gen_ai.response.model",
         "operation": "chat"
@@ -76,11 +81,12 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat claude-sonnet-4-20250514' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat claude-sonnet-4-20250514",
       "context": {
         "missing_attribute": "server.address",
         "operation": "chat"
       }
     }
-  ],
-  "entities": {}
+  ]
 }

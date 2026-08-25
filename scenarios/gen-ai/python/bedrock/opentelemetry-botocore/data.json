@@ -30,10 +30,115 @@
       "server.port"
     ]
   },
+  "entities": {},
   "findings": [
     {
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.assistant.message",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_event",
+      "message": "Event 'gen_ai.assistant.message' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.assistant.message"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.choice",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_event",
+      "message": "Event 'gen_ai.choice' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.choice"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.system.message",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_event",
+      "message": "Event 'gen_ai.system.message' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.system.message"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.tool.message",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_event",
+      "message": "Event 'gen_ai.tool.message' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.tool.message"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.user.message",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_event",
+      "message": "Event 'gen_ai.user.message' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.user.message"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.duration",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.provider.name' is not present.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.provider.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "attribute_key": "gen_ai.system"
       }
@@ -41,6 +146,8 @@
     {
       "id": "missing_attribute",
       "message": "Attribute 'http.status_code' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "attribute_key": "http.status_code"
       }
@@ -48,6 +155,8 @@
     {
       "id": "missing_attribute",
       "message": "Attribute 'retry_attempts' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "attribute_key": "retry_attempts"
       }
@@ -55,6 +164,8 @@
     {
       "id": "missing_attribute",
       "message": "Attribute 'rpc.service' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "attribute_key": "rpc.service"
       }
@@ -62,40 +173,17 @@
     {
       "id": "missing_attribute",
       "message": "Attribute 'rpc.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "attribute_key": "rpc.system"
       }
     },
     {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.assistant.message' does not exist in the registry."
-    },
-    {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.choice' does not exist in the registry."
-    },
-    {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.system.message' does not exist in the registry."
-    },
-    {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.tool.message' does not exist in the registry."
-    },
-    {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.user.message' does not exist in the registry."
-    },
-    {
-      "id": "required_attribute_not_present",
-      "message": "Required attribute 'gen_ai.provider.name' is not present.",
-      "context": {
-        "attribute_key": "gen_ai.provider.name"
-      }
-    },
-    {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat anthropic.claude-3-5-sonnet-20240620-v1:0' (operation 'chat') is missing expected attribute 'gen_ai.provider.name'",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "missing_attribute": "gen_ai.provider.name",
         "operation": "chat"
@@ -104,6 +192,8 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat anthropic.claude-3-5-sonnet-20240620-v1:0' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "missing_attribute": "gen_ai.response.id",
         "operation": "chat"
@@ -112,11 +202,12 @@
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat anthropic.claude-3-5-sonnet-20240620-v1:0' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
       "context": {
         "missing_attribute": "gen_ai.response.model",
         "operation": "chat"
       }
     }
-  ],
-  "entities": {}
+  ]
 }
