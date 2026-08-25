@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -122,7 +123,9 @@ func answer() http.Handler {
 		}
 		writer.Header().Set("Content-Type", httpcontract.ContentType)
 		writer.WriteHeader(response.StatusCode)
-		_, _ = io.WriteString(writer, response.Body)
+		if _, err := io.WriteString(writer, response.Body); err != nil {
+			log.Printf("writing response body: %v", err)
+		}
 	})
 }
 
