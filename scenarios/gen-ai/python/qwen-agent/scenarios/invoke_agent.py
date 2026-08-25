@@ -3,8 +3,9 @@
 
 """Conformance scenario: a single qwen-agent agent run.
 
-No tools, so the run is the agent and the model call it makes and nothing
-else. That is what makes the agent span readable on its own.
+No tools, so the run is the agent and the model call it makes. That is what
+makes the agent span readable on its own. `Assistant` still runs its Memory
+sub-agent, so a second agent span comes with it.
 
 The `oai` model type is an OpenAI-compatible client, which is what lets the
 run reach the mock server.
