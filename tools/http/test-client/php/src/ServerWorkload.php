@@ -41,12 +41,18 @@ final class ServerWorkload
                 . '`otel-http-drive`, which chooses the port',
             );
         }
-        if (filter_var($value, FILTER_VALIDATE_INT) === false) {
+        $port = filter_var(
+            $value,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1, 'max_range' => 65535]],
+        );
+        if ($port === false) {
             throw new ContractException(
-                self::PORT_VARIABLE . " is not an integer: {$value}",
+                self::PORT_VARIABLE
+                . " must be an integer from 1 to 65535: {$value}",
             );
         }
 
-        return (int) $value;
+        return $port;
     }
 }
