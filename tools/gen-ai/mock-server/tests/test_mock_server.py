@@ -115,6 +115,27 @@ ENDPOINTS = [
         "/v2/chat",
         {"model": "command-r", "messages": [{"role": "user", "content": "hi"}]},
     ),
+    (
+        "mistral-chat",
+        "post",
+        "/mistral/v1/chat/completions",
+        {
+            "model": "mistral-small-latest",
+            "messages": [{"role": "user", "content": "hi"}],
+        },
+    ),
+    (
+        "mistral-fim",
+        "post",
+        "/mistral/v1/fim/completions",
+        {"model": "codestral-latest", "prompt": "def add(a, b):"},
+    ),
+    (
+        "mistral-embeddings",
+        "post",
+        "/mistral/v1/embeddings",
+        {"model": "mistral-embed", "inputs": ["hi", "there"]},
+    ),
 ]
 
 # Resource-creating endpoints mint a fresh id per call, so only the shape is
@@ -581,6 +602,117 @@ def test_streaming_chat_answers_once_the_tool_has_replied(client):
     body = response.get_data(as_text=True)
     assert "tool_calls" not in body
     assert '"finish_reason": "stop"' in body
+
+
+def test_mistral_chat_calls_an_offered_tool(client):
+    """The id has to be nine alphanumerics or Mistral rejects it coming back."""
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "mistral-medium-latest",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["choices"][0]["message"]["tool_calls"][0]
+    assert len(call["id"]) == 9
+    assert call["function"]["name"] == "get_current_weather"
+    assert json.loads(call["function"]["arguments"]) == {"location": "Seattle"}
+    assert response.json["choices"][0]["finish_reason"] == "tool_calls"
+    assert response.json["model"] == "mistral-medium-latest"
+
+
+def test_mistral_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "mistral-small-latest",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {
+                    "role": "tool",
+                    "name": "get_current_weather",
+                    "content": "70 degrees",
+                    "tool_call_id": "call_mock",
+                },
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert response.json["choices"][0]["message"]["tool_calls"] is None
+    assert response.json["choices"][0]["finish_reason"] == "stop"
+
+
+def test_mistral_chat_streams_the_same_answer_it_would_return(client):
+    """Streamed and non-streamed are one response, so they cannot drift."""
+    body = {
+        "model": "mistral-small-latest",
+        "messages": [{"role": "user", "content": "hi"}],
+    }
+    complete = client.post("/mistral/v1/chat/completions", json=body)
+    streamed = client.post("/mistral/v1/chat/completions", json={**body, "stream": True})
+    chunks = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.get_data(as_text=True).splitlines()
+        if line.startswith("data: ") and line != "data: [DONE]"
+    ]
+    content = "".join(
+        chunk["choices"][0]["delta"].get("content", "") for chunk in chunks
+    )
+    assert content.strip() == complete.json["choices"][0]["message"]["content"]
+    assert chunks[-1]["usage"] == complete.json["usage"]
+    assert streamed.get_data(as_text=True).rstrip().endswith("data: [DONE]")
+
+
+def test_mistral_answers_a_json_schema_request_with_that_schema(client):
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "mistral-small-latest",
+            "messages": [{"role": "user", "content": "weather?"}],
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "forecast",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": {"type": "string"},
+                            "temperature": {"type": "integer"},
+                        },
+                        "required": ["location", "temperature"],
+                    },
+                },
+            },
+        },
+    )
+    answer = json.loads(response.json["choices"][0]["message"]["content"])
+    assert answer == {"location": "Seattle", "temperature": 1}
+
+
+def test_mistral_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/mistral/v1/embeddings",
+        json={
+            "model": "mistral-embed",
+            "inputs": ["one", "two", "three"],
+            "output_dimension": 8,
+        },
+    )
+    data = response.json["data"]
+    assert [entry["index"] for entry in data] == [0, 1, 2]
+    assert all(len(entry["embedding"]) == 8 for entry in data)
 
 
 # Azure routes the same operation under a deployment path; instrumentations

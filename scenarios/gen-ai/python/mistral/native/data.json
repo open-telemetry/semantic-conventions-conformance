@@ -1,0 +1,121 @@
+{
+  "spans": {
+    "gen_ai.embeddings.client": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "gen_ai.response.model",
+      "gen_ai.usage.input_tokens",
+      "server.address",
+      "server.port"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.frequency_penalty",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.presence_penalty",
+      "gen_ai.request.seed",
+      "gen_ai.request.stop_sequences",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_p",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.response.id",
+      "gen_ai.response.model",
+      "gen_ai.tool.definitions",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agent.trace.public' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat mistral-small-latest",
+      "context": {
+        "attribute_key": "agent.trace.public"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'http.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat mistral-small-latest",
+      "context": {
+        "attribute_key": "http.url"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'chat mistral-small-latest' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "chat mistral-small-latest",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agent.trace.public' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat pixtral-12b-latest",
+      "context": {
+        "attribute_key": "agent.trace.public"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'http.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat pixtral-12b-latest",
+      "context": {
+        "attribute_key": "http.url"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'chat pixtral-12b-latest' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "chat pixtral-12b-latest",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agent.trace.public' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings mistral-embed",
+      "context": {
+        "attribute_key": "agent.trace.public"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'http.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings mistral-embed",
+      "context": {
+        "attribute_key": "http.url"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'embeddings mistral-embed' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "embeddings mistral-embed",
+      "context": {
+        "status_code": "ok"
+      }
+    }
+  ]
+}

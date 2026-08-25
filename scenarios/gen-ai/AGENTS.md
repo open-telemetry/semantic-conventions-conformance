@@ -32,7 +32,8 @@ for what else changes in those directories.
   importing the shared scenario.
 - **A program reads no configuration of its own.** It reaches the mock server
   through the client library's own base-URL environment variable, which
-  `conformance.yaml` maps from `${MOCK_SERVER_URL}`.
+  `conformance.yaml` maps from `${MOCK_SERVER_URL}`. Where an SDK has no such
+  variable the program reads one and passes it.
 - **One instrumentation per environment.** An implementation directory's
   dependencies must hold only its own instrumentation. A neighbour's would put
   someone else's spans in the results.

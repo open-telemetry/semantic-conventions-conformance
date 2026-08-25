@@ -1,0 +1,39 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: genai-conformance
+instrumented_library: mistralai
+instrumentation_library: mistralai
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  # The mock serves Mistral under /mistral: its chat completions path is the
+  # same one OpenAI uses, and one path cannot answer as two providers. The SDK
+  # has no base-URL variable of its own, so the scenarios pass this one to the
+  # constructor.
+  MISTRAL_SERVER_URL: ${MOCK_SERVER_URL}/mistral
+  MISTRAL_API_KEY: test_mistral_api_key
+  # The SDK's own switch: `global` sends its spans to the process's tracer
+  # provider instead of an SDK-owned one aimed at Mistral's collector.
+  MISTRAL_SDK_TELEMETRY: global
+
+scenarios:
+  inference:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/inference.py
+
+  streaming:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/streaming.py
+
+  tool_calling:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/tool_calling.py
+
+  structured_output:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/structured_output.py
+
+  multimodal:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/multimodal.py
+
+  embeddings:
+    run: uv run --frozen --project . otel-conformance-python ../scenarios/embeddings.py

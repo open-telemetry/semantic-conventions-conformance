@@ -28,6 +28,7 @@ from . import (
     bedrock_agentcore,
     cohere,
     google_genai,
+    mistral,
     mistral_agents,
     openai,
 )
@@ -44,6 +45,7 @@ for module in (
     bedrock_agentcore,
     cohere,
     assistants,
+    mistral,
     mistral_agents,
 ):
     app.register_blueprint(module.bp)

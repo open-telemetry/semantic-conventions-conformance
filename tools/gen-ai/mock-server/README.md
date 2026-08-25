@@ -18,14 +18,15 @@ The conformance runner starts it for you: a directory declares it under
 
 | Blueprint | Endpoints |
 | --- | --- |
-| `openai` | chat completions, embeddings and the Responses API, under `/v1/…`, the Azure `/openai/deployments/<deployment>/…` paths, and bare paths |
 | `anthropic` | `/v1/messages`, including tool use, streaming and compaction |
 | `anthropic_agents`, `mistral_agents` | hosted-agent creation |
-| `google_genai` | Gemini `generateContent` / streaming, and the Vertex `projects/…` paths |
+| `assistants` | OpenAI Assistants, threads and runs |
 | `bedrock` | `converse`, `converse-stream`, `invoke` |
 | `bedrock_agent`, `bedrock_agentcore` | agent invocation and the memory APIs |
 | `cohere` | `/v1` and `/v2` chat and embed |
-| `assistants` | OpenAI Assistants, threads and runs |
+| `google_genai` | Gemini `generateContent` / streaming, and the Vertex `projects/…` paths |
+| `mistral` | chat completions, FIM and embeddings, under `/mistral/v1/…` |
+| `openai` | chat completions, embeddings and the Responses API, under `/v1/…`, the Azure `/openai/deployments/<deployment>/…` paths, and bare paths |
 
 Behaviour follows the request rather than configuration: `stream: true` gets an
 SSE response, offered `tools` get a tool call, and the requested model is
