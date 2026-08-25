@@ -14,6 +14,10 @@ reached through `replace` directives rather than published versions, because
 they belong to this repository: a scenario should measure the helper in the
 checkout it was built from, not a release of it.
 
+All Go modules in this repository require Go 1.25. Their current OpenTelemetry
+dependencies require the same version, and CI selects the toolchain from this
+directory's `go.mod`.
+
 `net-http/scenarios/` is the workload, and it imports no OpenTelemetry at all.
 The per-instrumentation `main` packages under `net-http/otelhttp/` are what
 attach `otelhttp` and start the SDK. The difference between two
