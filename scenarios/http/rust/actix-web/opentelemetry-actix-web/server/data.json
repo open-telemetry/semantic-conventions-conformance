@@ -53,15 +53,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "error_type_without_error_status",
-      "message": "Span 'GET /status/{status}' sets 'error.type'='404' but status.code is 'unset', not 'error'.",
-      "context": {
-        "status_code": "unset"
-      }
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -78,5 +69,16 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "error_type_without_error_status",
+      "message": "Span 'GET /status/{status}' sets 'error.type'='404' but status.code is 'unset', not 'error'.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{status}",
+      "context": {
+        "status_code": "unset"
+      }
+    }
+  ]
 }
