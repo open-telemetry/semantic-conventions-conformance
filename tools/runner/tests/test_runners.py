@@ -6,10 +6,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from opentelemetry.conformance import _runners
+from opentelemetry.conformance._domain import Domain
 from opentelemetry.conformance._session import conformance_session
 from opentelemetry.conformance._spec import SpecError
 
@@ -32,6 +34,7 @@ class _Entry:
     def __init__(self, name: str, factory: object) -> None:
         self.name = name
         self.value = f"test:{name}"
+        self.module = name
         self._factory = factory
 
     def load(self) -> object:
@@ -49,6 +52,18 @@ def _registered(monkeypatch):
         )
 
     return register
+
+
+@pytest.fixture(name="exporting")
+def _exporting(monkeypatch):
+    """Say what each wrapper's module exports, without importing one."""
+
+    def export(**modules: object):
+        monkeypatch.setattr(
+            _runners, "import_module", lambda name: modules[name]
+        )
+
+    return export
 
 
 def test_a_directory_naming_no_runner_gets_the_plain_session(
@@ -108,3 +123,37 @@ def test_the_runner_is_read_without_validating_the_rest(
 def test_a_directory_with_no_spec_file_says_so(tmp_path) -> None:
     with pytest.raises(SpecError, match="not found"):
         _runners.resolve(tmp_path)
+
+
+def test_a_wrapper_gives_up_the_domain_it_is_built_from(
+    registered, exporting
+) -> None:
+    demo = Domain(
+        name="demo-conformance",
+        repo="open-telemetry/demo",
+        ref="v1.0.0",
+        classifier=lambda model: lambda name, kind, attributes: set(),
+    )
+    registered(**{"demo-conformance": object()})
+    exporting(**{"demo-conformance": SimpleNamespace(DOMAIN=demo)})
+
+    assert _runners.domain("demo-conformance") is demo
+
+
+def test_a_wrapper_assembled_some_other_way_has_no_domain(
+    registered, exporting
+) -> None:
+    """No ``DOMAIN`` is an answer, not a failure — the name still resolved."""
+    registered(**{"demo-conformance": object()})
+    exporting(**{"demo-conformance": SimpleNamespace()})
+
+    assert _runners.domain("demo-conformance") is None
+
+
+def test_an_unknown_name_raises_rather_than_having_no_domain(
+    registered,
+) -> None:
+    registered(**{"demo-conformance": object()})
+
+    with pytest.raises(SpecError, match="installed: demo-conformance"):
+        _runners.domain("absent-conformance")
