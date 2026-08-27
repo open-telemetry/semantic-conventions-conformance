@@ -44,10 +44,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml flask
-          python -m pip install --no-deps -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet
+          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
+        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
 
   lint:
     name: Lint
@@ -75,10 +75,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      # Compiles, formats and unit-tests every Java module the HTTP scenarios
-      # use, including the ones shared with other domains.
+      # Compiles, formats and unit-tests every Java scenario build.
       - name: Build Java
-        run: scenarios/http/java/gradlew --project-dir scenarios/http/java build
+        run: |
+          scenarios/database/java/gradlew --project-dir scenarios/database/java build
+          scenarios/http/java/gradlew --project-dir scenarios/http/java build
 
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -137,6 +138,7 @@ jobs:
             opentelemetry-test-utils
           python -m pip install --no-deps \
             -e tools/runner \
+            -e tools/database/runner \
             -e tools/gen-ai/mock-server \
             -e tools/gen-ai/runner \
             -e tools/http/runner \
@@ -192,6 +194,7 @@ jobs:
           python -m pip install pytest
           python -m pip install \
             -e tools/runner \
+            -e tools/database/runner \
             -e tools/gen-ai/mock-server \
             -e tools/gen-ai/runner \
             -e tools/http/test-client/python \
@@ -202,12 +205,14 @@ jobs:
       # would leave this job green having checked nothing.
       - name: Resolve the coverage models
         run: |
+          python -c 'from database_conformance import DOMAIN; DOMAIN.coverage_model'
           python -c 'from genai_conformance import DOMAIN; DOMAIN.coverage_model'
           python -c 'from http_conformance import DOMAIN; DOMAIN.coverage_model'
 
       - name: Test the coverage models
         run: |
           python -m pytest \
+            tools/database/runner/tests \
             tools/gen-ai/runner/tests \
             tools/http/runner/tests
 
@@ -331,6 +336,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install \
             -e tools/runner \
+            -e tools/database/runner \
             -e tools/gen-ai/mock-server \
             -e tools/gen-ai/runner \
             -e tools/http/mock-server \

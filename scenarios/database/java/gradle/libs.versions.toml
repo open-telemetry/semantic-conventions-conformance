@@ -1,0 +1,10 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+[versions]
+opentelemetry-instrumentation = "2.31.1"
+postgresql = "42.7.13"
+
+[libraries]
+opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
