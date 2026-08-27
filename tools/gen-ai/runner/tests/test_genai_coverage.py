@@ -71,6 +71,20 @@ def test_the_operation_name_names_the_span_type(classify_span) -> None:
     ) == {"gen_ai.inference.client"}
 
 
+def test_the_live_voice_operations_name_their_span_types(classify_span) -> None:
+    """generate_live_content and user_input carry inference-like message
+    attributes, so only the operation name tells them apart from a chat."""
+    assert classify_span(
+        "generate_live_content gpt-4o-realtime",
+        "client",
+        {"gen_ai.operation.name": "generate_live_content"},
+    ) == {"gen_ai.generate_live_content.client"}
+
+    assert classify_span(
+        "user_input", "client", {"gen_ai.operation.name": "user_input"}
+    ) == {"gen_ai.user_input.client"}
+
+
 def test_a_span_without_an_operation_name_is_identified_by_its_attributes(
     classify_span,
 ) -> None:
