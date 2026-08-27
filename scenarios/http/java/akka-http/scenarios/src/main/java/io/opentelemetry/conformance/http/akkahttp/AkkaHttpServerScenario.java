@@ -17,7 +17,6 @@ import akka.http.javadsl.unmarshalling.Unmarshaller;
 import io.opentelemetry.conformance.http.HttpContract.Response;
 import io.opentelemetry.conformance.http.HttpServerWorkload;
 import io.opentelemetry.conformance.scenario.ScenarioLifecycle;
-import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -29,9 +28,6 @@ import java.util.concurrent.TimeoutException;
  * segment matchers below are where an instrumentation reads a route from.
  */
 public final class AkkaHttpServerScenario {
-  /** How long the actor system gets to terminate before the scenario leaves without it. */
-  private static final Duration TERMINATION_TIMEOUT = Duration.ofSeconds(10);
-
   private AkkaHttpServerScenario() {}
 
   public static void run() throws Exception {
@@ -50,38 +46,19 @@ public final class AkkaHttpServerScenario {
         binding.unbind().toCompletableFuture().get();
       }
     } finally {
-      terminate(system);
+      // Akka's shutdown has been seen to abort partway, leaving non-daemon threads that keep the
+      // JVM alive. Bound the wait and leave through System.exit below instead — that still runs the
+      // agent's shutdown hook, and it is that flush which exports the metrics.
+      system.terminate();
+      try {
+        system.getWhenTerminated().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException | TimeoutException e) {
+        System.err.println("the actor system did not terminate cleanly: " + e);
+      }
     }
-    // Reached only once the scenario itself has finished, and deliberately: see terminate().
     System.exit(0);
-  }
-
-  /**
-   * Ends the actor system, tolerating a termination that never finishes.
-   *
-   * <p>Akka's shutdown has been seen to abort partway — its scheduler's close interrupted, the
-   * {@code actor-system-terminate} phase reported as failed — which leaves non-daemon threads
-   * behind. The JVM then never exits on its own, so the driver kills it 30s after closing standard
-   * input and the agent's shutdown hook never runs. Metrics are exported only by that flush, which
-   * makes such a run report every span and no metric at all: coverage the instrumentation looks to
-   * have lost, rather than a scenario that failed to stop.
-   *
-   * <p>Neither the interruption nor the threads are this scenario's to fix, so the wait is bounded
-   * and {@link #run} leaves through {@link System#exit} instead. That still runs the shutdown hook,
-   * which is the part the report depends on.
-   */
-  private static void terminate(ActorSystem system) {
-    system.terminate();
-    try {
-      system
-          .getWhenTerminated()
-          .toCompletableFuture()
-          .get(TERMINATION_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException | TimeoutException e) {
-      System.err.println("the actor system did not terminate cleanly: " + e);
-    }
   }
 
   /** The contract's exchanges, composed as Akka HTTP directives. */
