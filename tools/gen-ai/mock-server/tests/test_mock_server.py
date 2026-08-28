@@ -9,6 +9,7 @@ cassette replay — so each case asserts the shape a scenario reads, not just a
 """
 
 import json
+import re
 
 import pytest
 
@@ -626,7 +627,7 @@ def test_mistral_chat_calls_an_offered_tool(client):
         },
     )
     call = response.json["choices"][0]["message"]["tool_calls"][0]
-    assert len(call["id"]) == 9
+    assert re.fullmatch(r"[A-Za-z0-9]{9}", call["id"])
     assert call["function"]["name"] == "get_current_weather"
     assert json.loads(call["function"]["arguments"]) == {"location": "Seattle"}
     assert response.json["choices"][0]["finish_reason"] == "tool_calls"
@@ -644,7 +645,7 @@ def test_mistral_chat_answers_once_the_tool_has_replied(client):
                     "role": "tool",
                     "name": "get_current_weather",
                     "content": "70 degrees",
-                    "tool_call_id": "call_mock",
+                    "tool_call_id": "callmock1",
                 },
             ],
             "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
@@ -652,6 +653,26 @@ def test_mistral_chat_answers_once_the_tool_has_replied(client):
     )
     assert response.json["choices"][0]["message"]["tool_calls"] is None
     assert response.json["choices"][0]["finish_reason"] == "stop"
+
+
+def test_mistral_chat_meters_audio_input_in_seconds(client):
+    """Mistral has no audio token count: the usage figure is a duration."""
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "voxtral-mini-latest",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "what do you hear?"},
+                        {"type": "input_audio", "input_audio": "bW9jaw=="},
+                    ],
+                }
+            ],
+        },
+    )
+    assert response.json["usage"]["prompt_audio_seconds"] > 0
 
 
 def test_mistral_chat_streams_the_same_answer_it_would_return(client):

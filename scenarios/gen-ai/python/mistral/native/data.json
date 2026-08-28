@@ -94,6 +94,33 @@
       "id": "missing_attribute",
       "message": "Attribute 'agent.trace.public' does not exist in the registry.",
       "signal_type": "span",
+      "signal_name": "chat voxtral-mini-latest",
+      "context": {
+        "attribute_key": "agent.trace.public"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'http.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat voxtral-mini-latest",
+      "context": {
+        "attribute_key": "http.url"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'chat voxtral-mini-latest' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "chat voxtral-mini-latest",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agent.trace.public' does not exist in the registry.",
+      "signal_type": "span",
       "signal_name": "embeddings mistral-embed",
       "context": {
         "attribute_key": "agent.trace.public"

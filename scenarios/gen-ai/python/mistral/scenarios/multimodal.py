@@ -1,13 +1,15 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Conformance scenario: a Mistral chat completion carrying an image.
+"""Conformance scenario: Mistral chat completions carrying non-text content.
 
-One exchange, because an image is the only non-text content the chat API
-takes: Mistral has no audio input or output on this route. Coverage records
-attribute names only, so what this scenario is really checking is the *shape*
-of the recorded content: whether the message parts an instrumentation writes
-into ``gen_ai.input.messages`` validate against the registry schemas.
+Two exchanges, one per non-text content kind the chat API takes: an image and
+audio, both on the way in. Mistral has no audio output on this route.
+Coverage records attribute names only, so what this scenario is really
+checking is the *shape* of the recorded content: whether the message parts an
+instrumentation writes into ``gen_ai.input.messages`` validate against the
+registry schemas. Mistral reports audio input as seconds rather than tokens,
+so that is the usage figure the audio exchange carries.
 """
 
 import os
@@ -20,8 +22,11 @@ IMAGE = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk"
     "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 )
+AUDIO = "bW9jaw=="
 
-Mistral(server_url=os.environ.get("MISTRAL_SERVER_URL")).chat.complete(
+client = Mistral(server_url=os.environ.get("MISTRAL_SERVER_URL"))
+
+client.chat.complete(
     model="pixtral-12b-latest",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
@@ -30,6 +35,22 @@ Mistral(server_url=os.environ.get("MISTRAL_SERVER_URL")).chat.complete(
             "content": [
                 {"type": "text", "text": "What is in this image?"},
                 {"type": "image_url", "image_url": IMAGE},
+            ],
+        },
+    ],
+    max_tokens=100,
+    temperature=0.5,
+)
+
+client.chat.complete(
+    model="voxtral-mini-latest",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What do you hear?"},
+                {"type": "input_audio", "input_audio": AUDIO},
             ],
         },
     ],

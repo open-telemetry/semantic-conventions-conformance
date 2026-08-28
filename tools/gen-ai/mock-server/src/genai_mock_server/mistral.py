@@ -40,7 +40,7 @@ CHAT_RESPONSE = {
 
 # Mistral validates a tool call id as exactly nine alphanumeric characters,
 # and rejects the result message that carries it back otherwise.
-TOOL_CALL_ID = "call_mock"
+TOOL_CALL_ID = "callmock1"
 
 
 def _tool_call_response(body):
@@ -87,12 +87,25 @@ def _wants_tool_call(body):
     )
 
 
+def _has_audio_input(body):
+    for message in body.get("messages", []):
+        content = message.get("content")
+        if isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict) and part.get("type") == "input_audio":
+                    return True
+    return False
+
+
 def _chat_response(body):
     if _wants_tool_call(body):
         return _tool_call_response(body)
 
     resp = copy.deepcopy(CHAT_RESPONSE)
     resp["model"] = body.get("model", resp["model"])
+    # Mistral meters audio input in seconds, not tokens.
+    if _has_audio_input(body):
+        resp["usage"]["prompt_audio_seconds"] = 3
     response_format = body.get("response_format") or {}
     if response_format.get("type") == "json_schema":
         content = _structured_content(response_format)
