@@ -152,15 +152,6 @@ wheels = [
 ]
 
 [[package]]
-name = "asgiref"
-version = "3.12.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e6/26/3b59f2bdae5f640389becb1f673cded775287f5fc4f816309d9ca9a3f93d/asgiref-3.12.1.tar.gz", hash = "sha256:59dcb51c272ad209d59bed5708a64a333083e86017d7fcdd67498eeab7784340", size = 42378, upload-time = "2026-07-14T09:56:18.087Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/1b/54f4ad77cd8a584fa70746c47df988e002cf1ee1eba43364d46f87803647/asgiref-3.12.1-py3-none-any.whl", hash = "sha256:fe386d1c2bff7259ea95929266d12a8cf9a8b5a1c2598402967d8792e7a7c094", size = 25478, upload-time = "2026-07-14T09:56:16.926Z" },
-]
-
-[[package]]
 name = "attrs"
 version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -824,18 +815,18 @@ source = { virtual = "." }
 dependencies = [
     { name = "litellm" },
     { name = "opentelemetry-api" },
-    { name = "opentelemetry-conformance", extra = ["python"] },
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-sdk" },
+    { name = "otel-conformance-python" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "litellm", specifier = "==1.98.0" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
-    { name = "opentelemetry-conformance", extras = ["python"], editable = "../../../../../tools/runner" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
     { name = "opentelemetry-sdk", specifier = "==1.44.0" },
+    { name = "otel-conformance-python", editable = "../../../../../tools/python" },
 ]
 
 [[package]]
@@ -1032,33 +1023,6 @@ wheels = [
 ]
 
 [[package]]
-name = "opentelemetry-conformance"
-version = "0.1.0.dev0"
-source = { editable = "../../../../../tools/runner" }
-dependencies = [
-    { name = "opentelemetry-test-utils" },
-    { name = "pyyaml" },
-]
-
-[package.optional-dependencies]
-python = [
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp-proto-grpc" },
-    { name = "opentelemetry-sdk" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "opentelemetry-api", marker = "extra == 'python'", specifier = "~=1.43" },
-    { name = "opentelemetry-exporter-otlp-proto-grpc", marker = "extra == 'python'", specifier = "~=1.43" },
-    { name = "opentelemetry-sdk", marker = "extra == 'python'", specifier = "~=1.43" },
-    { name = "opentelemetry-test-utils", specifier = ">=0.65b0,<1" },
-    { name = "pytest", marker = "extra == 'pytest'", specifier = ">=8" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-]
-provides-extras = ["pytest", "python"]
-
-[[package]]
 name = "opentelemetry-exporter-otlp-proto-common"
 version = "1.44.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1128,18 +1092,20 @@ wheels = [
 ]
 
 [[package]]
-name = "opentelemetry-test-utils"
-version = "0.65b0"
-source = { registry = "https://pypi.org/simple" }
+name = "otel-conformance-python"
+version = "0.1.0.dev0"
+source = { editable = "../../../../../tools/python" }
 dependencies = [
-    { name = "asgiref" },
     { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-sdk" },
-    { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3a/02/67602bb3d4a07ff22172f62e67411b6b893ab3abaec71867fda2e882d0b5/opentelemetry_test_utils-0.65b0.tar.gz", hash = "sha256:f52a5182ea869a2c85f8ce1e7da80ada0327a361a57d0962a4504c36a3272884", size = 15476, upload-time = "2026-07-16T15:25:47.685Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/b1/eeec73da32ce6c2091defa7ce4d4688731fd217e9c6b8189a2212df62756/opentelemetry_test_utils-0.65b0-py3-none-any.whl", hash = "sha256:61fcda742aa0c9535b056b4f64bb02db921ff52ea2bbc4cd8cd25f1e65d71c37", size = 20551, upload-time = "2026-07-16T15:25:31.774Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "opentelemetry-api", specifier = "~=1.43" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "~=1.43" },
+    { name = "opentelemetry-sdk", specifier = "~=1.43" },
 ]
 
 [[package]]

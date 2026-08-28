@@ -12,6 +12,7 @@ that exchange is visible here and nowhere else.
 import json
 
 import litellm
+from litellm.litellm_core_utils.thread_pool_executor import executor
 
 MODEL = "openai/gpt-4o-mini"
 TOOL = {
@@ -33,36 +34,44 @@ TOOL = {
     },
 }
 
-messages = [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "What's the weather in Seattle today?"},
-]
 
-first = litellm.completion(
-    model=MODEL,
-    messages=messages,
-    tools=[TOOL],
-    tool_choice="auto",
-    max_tokens=100,
-    temperature=0.5,
-)
+def run() -> None:
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What's the weather in Seattle today?"},
+    ]
 
-assistant_message = first.choices[0].message
-messages.append(assistant_message.model_dump(exclude_none=True))
-for tool_call in assistant_message.tool_calls or []:
-    location = json.loads(tool_call.function.arguments)["location"]
-    messages.append(
-        {
-            "role": "tool",
-            "content": f"70 degrees and sunny in {location}",
-            "tool_call_id": tool_call.id,
-        }
+    first = litellm.completion(
+        model=MODEL,
+        messages=messages,
+        tools=[TOOL],
+        tool_choice="auto",
+        max_tokens=100,
+        temperature=0.5,
     )
 
-litellm.completion(
-    model=MODEL,
-    messages=messages,
-    tools=[TOOL],
-    max_tokens=100,
-    temperature=0.5,
-)
+    assistant_message = first.choices[0].message
+    messages.append(assistant_message.model_dump(exclude_none=True))
+    for tool_call in assistant_message.tool_calls or []:
+        location = json.loads(tool_call.function.arguments)["location"]
+        messages.append(
+            {
+                "role": "tool",
+                "content": f"70 degrees and sunny in {location}",
+                "tool_call_id": tool_call.id,
+            }
+        )
+
+    litellm.completion(
+        model=MODEL,
+        messages=messages,
+        tools=[TOOL],
+        max_tokens=100,
+        temperature=0.5,
+    )
+    # shut down the thread pool executor to ensure all logging callbacks are completed
+    executor.shutdown(wait=True)
+
+
+if __name__ == "__main__":
+    run()

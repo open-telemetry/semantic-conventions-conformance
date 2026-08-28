@@ -20,8 +20,8 @@ against those, and check:
   first.
 - **No OpenTelemetry import and no instrumentation named** in a scenario
   program, and no configuration read beyond the client library's own
-  environment variables. A `native` directory may call the library's own
-  telemetry switch, and only that.
+  environment variables. Telemetry needing programmatic configuration gets an
+  entry program beside `conformance.yaml`, importing the shared scenario.
 - **One instrumentation per implementation environment.** A second one in
   `pyproject.toml` puts another library's spans in the results.
 - **`data.json` regenerated and committed**, matching the scenarios as

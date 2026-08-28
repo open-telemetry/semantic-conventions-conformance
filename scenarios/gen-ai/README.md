@@ -136,10 +136,11 @@ An implementation directory is named after whatever produced the telemetry:
   rather than its package.
 - `native` for the library itself.
 
-Where a library's telemetry has to be turned on from the program rather than
-from the environment, that program cannot be shared with one that instruments
-the same library from the outside, so it lives in the implementation's own
-`scenarios/`.
+Telemetry that needs programmatic configuration rather than an environment
+variable gets an entry program beside `conformance.yaml`, one per scenario,
+which makes that call, imports the shared program and waits for whatever the
+library flushes in the background. The scenarios stay shared, so the
+directory compares with the ones beside it.
 
 ## Content capture
 

@@ -55,4 +55,5 @@ include = [
   "tools/dotnet/src",
   "tools/java/src",
   "tools/js/src",
+  "tools/python/src",
 ]

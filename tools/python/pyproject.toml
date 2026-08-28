@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-conformance-python"
+version = "0.1.0.dev0"
+description = "Runs a Python scenario program with the SDK installed and no instrumentation loaded."
+requires-python = ">=3.10"
+# The SDK and one exporter, and nothing else: this is what a scenario
+# measuring a library's own telemetry installs beside the library, so anything
+# more here would be one more thing that could end up in a run.
+dependencies = [
+  "opentelemetry-api ~= 1.43",
+  "opentelemetry-sdk ~= 1.43",
+  "opentelemetry-exporter-otlp-proto-grpc ~= 1.43",
+]
+
+[project.scripts]
+otel-conformance-python = "otel_conformance_python:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_conformance_python"]

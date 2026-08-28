@@ -86,11 +86,6 @@ Installing into whatever environment happened to be active instead — the
 runner's own, say — puts every implementation in one environment, which is
 exactly the case above.
 
-If you'd rather set the SDK up in the program itself, this package also ships
-`otel-conformance-python <script>`, which installs the global providers and
-nothing else — no instrumentation is loaded, so the scenario must turn on its
-own.
-
 A directory can also declare one `setup` command, run once before any
 scenario:
 

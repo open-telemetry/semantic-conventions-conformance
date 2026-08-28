@@ -27,7 +27,11 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
-from ._env import METRIC_EXPORT_INTERVAL_MILLIS
+# Effectively infinite, so a periodic export can't split a scenario's metrics
+# across reports — the flush at the end of a run exports them. The runner sets
+# OTEL_METRIC_EXPORT_INTERVAL to the same value for every language; this is
+# only the fallback for running a scenario by hand, outside a session.
+METRIC_EXPORT_INTERVAL_MILLIS = 2**31 - 1
 
 
 def _install_providers(
@@ -52,8 +56,6 @@ def _install_providers(
         metric_readers=[
             PeriodicExportingMetricReader(
                 OTLPMetricExporter(endpoint=endpoint, insecure=True),
-                # The runner sets OTEL_METRIC_EXPORT_INTERVAL; the fallback
-                # only covers running a scenario by hand, outside a session.
                 export_interval_millis=int(
                     os.environ.get(
                         "OTEL_METRIC_EXPORT_INTERVAL",

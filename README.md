@@ -12,6 +12,7 @@ against expectations declared in YAML.
 | [`tools/runner/`](tools/runner) | the runner. Generic — it carries no semantic conventions of its own |
 | [`tools/gen-ai/`](tools/gen-ai) | what makes a run a *GenAI* run: the registry pin, the advice policies, and a mock LLM server so scenarios are deterministic without cassettes |
 | [`tools/http/`](tools/http) | the same for HTTP: the upstream registry pin, and the test client that drives both sides of the domain |
+| [`tools/python/`](tools/python) | the launcher a Python scenario runs under when programmatic configuration is needed for a scenario |
 | [`tools/java/`](tools/java) | what every JVM scenario shares, in any domain: the launcher that builds and runs one, the Gradle convention plugins, and the SDK bootstrap |
 | [`tools/js/`](tools/js) | what every Node scenario shares: the launcher that installs a build, and the SDK bootstrap |
 | [`tools/dotnet/`](tools/dotnet) | what every .NET scenario shares: the launcher that builds and runs one, the shutdown protocol every scenario needs, and the SDK bootstrap the ones measuring library instrumentation own |

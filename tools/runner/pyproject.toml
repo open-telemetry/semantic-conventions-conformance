@@ -17,12 +17,6 @@ dependencies = [
 pytest = [
   "pytest >= 8",
 ]
-# For `otel-conformance-python` only; the runner drives scenarios as subprocesses.
-python = [
-  "opentelemetry-api ~= 1.43",
-  "opentelemetry-sdk ~= 1.43",
-  "opentelemetry-exporter-otlp-proto-grpc ~= 1.43",
-]
 
 # Lets `pytest` collect conformance.yaml files and run their scenarios.
 [project.entry-points.pytest11]
@@ -30,7 +24,6 @@ conformance = "opentelemetry.conformance.pytest_plugin"
 
 [project.scripts]
 otel-conformance = "opentelemetry.conformance._cli:cli"
-otel-conformance-python = "opentelemetry.conformance.python_runner:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/opentelemetry"]

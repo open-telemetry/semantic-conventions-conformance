@@ -14,18 +14,27 @@ instrumentation. OpenAI has no top-k.
 """
 
 import litellm
+from litellm.litellm_core_utils.thread_pool_executor import executor
 
-litellm.completion(
-    model="openai/gpt-4o-mini",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Say this is a test"},
-    ],
-    max_tokens=100,
-    temperature=0.5,
-    top_p=0.9,
-    frequency_penalty=0.1,
-    presence_penalty=0.2,
-    stop=["\n\n"],
-    seed=42,
-)
+
+def run() -> None:
+    litellm.completion(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Say this is a test"},
+        ],
+        max_tokens=100,
+        temperature=0.5,
+        top_p=0.9,
+        frequency_penalty=0.1,
+        presence_penalty=0.2,
+        stop=["\n\n"],
+        seed=42,
+    )
+    # shut down the thread pool executor to ensure all logging callbacks are completed
+    executor.shutdown(wait=True)
+
+
+if __name__ == "__main__":
+    run()

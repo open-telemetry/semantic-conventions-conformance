@@ -13,6 +13,7 @@ reports back.
 """
 
 import litellm
+from litellm.litellm_core_utils.thread_pool_executor import executor
 
 # A 1x1 transparent PNG; nothing under test decodes it.
 IMAGE = (
@@ -22,39 +23,47 @@ IMAGE = (
 )
 AUDIO = "bW9jaw=="
 
-litellm.completion(
-    model="openai/gpt-4o-mini",
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "What is in this image?"},
-                {"type": "image_url", "image_url": {"url": IMAGE}},
-            ],
-        },
-    ],
-    max_tokens=100,
-    temperature=0.5,
-)
 
-litellm.completion(
-    model="openai/gpt-4o-audio-preview",
-    modalities=["text", "audio"],
-    audio={"voice": "alloy", "format": "wav"},
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "Repeat what you hear."},
-                {
-                    "type": "input_audio",
-                    "input_audio": {"data": AUDIO, "format": "wav"},
-                },
-            ],
-        },
-    ],
-    max_tokens=100,
-    temperature=0.5,
-)
+def run() -> None:
+    litellm.completion(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "What is in this image?"},
+                    {"type": "image_url", "image_url": {"url": IMAGE}},
+                ],
+            },
+        ],
+        max_tokens=100,
+        temperature=0.5,
+    )
+
+    litellm.completion(
+        model="openai/gpt-4o-audio-preview",
+        modalities=["text", "audio"],
+        audio={"voice": "alloy", "format": "wav"},
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Repeat what you hear."},
+                    {
+                        "type": "input_audio",
+                        "input_audio": {"data": AUDIO, "format": "wav"},
+                    },
+                ],
+            },
+        ],
+        max_tokens=100,
+        temperature=0.5,
+    )
+    # shut down the thread pool executor to ensure all logging callbacks are completed
+    executor.shutdown(wait=True)
+
+
+if __name__ == "__main__":
+    run()
