@@ -1,0 +1,117 @@
+name: Report
+
+# Rebuilds `docs/data/conformance.json` — the aggregate the site reads — and
+# opens a pull request when it moved.
+#
+# Nightly rather than per-pull-request: rebuilding needs weaver and a fetched
+# registry, which no scenario change should have to wait on. The trade is that
+# the committed report, and so the site, can be a day behind the tree. The
+# `Runner` workflow still gates the reductions themselves.
+on:
+  schedule:
+    # Off the hour: GitHub's scheduler is busiest at :00 and queues runs.
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One rebuild at a time. Two runs would race on the same branch, and the loser
+# would force-push a report built from the older tree.
+concurrency:
+  group: report
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to push the branch the pull request is opened from
+      pull-requests: write # to open it
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Install weaver
+        run: |
+          . tools/runner/src/opentelemetry/conformance/versions.env
+          url="https://github.com/open-telemetry/weaver/releases/download"
+          curl -fsSL \
+            "$url/$WEAVER_VERSION/weaver-x86_64-unknown-linux-gnu.tar.xz" \
+            | sudo tar -xJ -C /usr/local/bin --strip-components=1 \
+              --wildcards '*/weaver'
+          weaver --version
+
+      - name: Cache the semconv registries
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/otel-conformance/semconv
+          key: semconv-${{ hashFiles('tools/**/versions.env') }}
+
+      # Only the two domain wrappers: the report resolves a `runner:` and never
+      # builds or runs a scenario, so the per-language launchers are not needed.
+      - name: Install the report tool
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            -e tools/runner \
+            -e tools/gen-ai/mock-server \
+            -e tools/gen-ai/runner \
+            -e tools/http/mock-server \
+            -e tools/http/test-client/python \
+            -e tools/http/runner \
+            -e tools/report
+
+      # Kept before the rebuild overwrites it, so the summary below can say
+      # what moved rather than only where things stand.
+      - name: Keep the committed report to diff against
+        run: cp docs/data/conformance.json "$RUNNER_TEMP/base.json"
+
+      - name: Rebuild the report
+        run: otel-conformance-report build
+
+      # `markdown` rebuilds rather than reading the file above; the registry is
+      # cached by now. The same text becomes the pull request body.
+      - name: Summarise
+        run: |
+          otel-conformance-report markdown \
+            --against "$RUNNER_TEMP/base.json" \
+            | tee "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # A pull request opened with GITHUB_TOKEN does not trigger workflows, so
+      # `Runner` would never go green on it. Without otelbot installed here the
+      # pull request still opens, but a maintainer must close and reopen it.
+      # https://github.com/open-telemetry/admin/blob/main/scripts/create_otelbot_app.py
+      - name: Mint an otelbot token
+        id: otelbot
+        if: vars.OTELBOT_SEMANTIC_CONVENTIONS_CONFORMANCE_CLIENT_ID != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.OTELBOT_SEMANTIC_CONVENTIONS_CONFORMANCE_CLIENT_ID }}
+          private-key: ${{ secrets.OTELBOT_SEMANTIC_CONVENTIONS_CONFORMANCE_PRIVATE_KEY }}
+          # Narrowed from the app's blanket install permissions; without these
+          # the token can do anything the app can, in every repo it is on.
+          permission-contents: write
+          permission-pull-requests: write
+
+      # No-ops when the rebuild matched what was committed. One long-lived
+      # branch, force-pushed, so a night landing on an unmerged report replaces
+      # it instead of opening a second pull request.
+      - name: Open a pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.otelbot.outputs.token || secrets.GITHUB_TOKEN }}
+          add-paths: docs/data/conformance.json
+          branch: chore/conformance-report
+          delete-branch: true
+          commit-message: "chore: update the conformance report"
+          title: "chore: update the conformance report"
+          body-path: ${{ runner.temp }}/summary.md

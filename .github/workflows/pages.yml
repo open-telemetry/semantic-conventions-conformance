@@ -1,0 +1,50 @@
+name: Pages
+
+on:
+  push:
+    branches:
+      - main
+  # So a site fix can be published without a commit that touches the report.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a deploy mid-flight: it can leave the site on a half-uploaded
+# artifact, and the queued run carries the newer content anyway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Published verbatim, with nothing rebuilt here: the site has to show the
+      # same `docs/data/conformance.json` the ecosystem registry ingests. The
+      # `Report` workflow keeps it current — see the note at the top of it.
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: docs
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write # to publish to Pages
+      id-token: write # to prove to Pages the artifact came from this run
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

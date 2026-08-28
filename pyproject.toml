@@ -27,6 +27,8 @@ ignore = [
 detect-same-package = false
 known-first-party = [
   "opentelemetry",
+  "conformance_report",
+  "conftest",
   "genai_conformance",
   "genai_mock_server",
   "http_conformance",
@@ -48,6 +50,7 @@ pythonVersion = "3.10"
 # nothing the JSON literals next to them don't.
 include = [
   "tools/runner/src",
+  "tools/report/src",
   "tools/gen-ai/runner/src",
   "tools/http/runner/src",
   "tools/http/mock-server/src",

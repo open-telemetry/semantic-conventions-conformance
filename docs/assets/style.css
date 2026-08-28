@@ -1,0 +1,267 @@
+/* Copyright The OpenTelemetry Authors
+   SPDX-License-Identifier: Apache-2.0 */
+
+/* Light is the base; dark redefines only the tokens, so no colour has its
+   only definition inside a media query. */
+:root {
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --line: #e2e4e9;
+  --line-strong: #c8ccd4;
+  --ink: #16181d;
+  --ink-2: #5b616e;
+  --ink-3: #878d99;
+  --accent: #4338ca;
+  --accent-soft: #eeecfb;
+
+  /* Requirement levels. Ordered by how much an absence means, not by hue
+     family, so the legend reads as a scale. */
+  --required: #b4295c;
+  --recommended: #1d6fa5;
+  --conditional: #7a6a9e;
+  --optin: #8a8f9a;
+
+  --good: #1a7f5a;
+  --miss: #e7e9ee;
+
+  /* Languages. A separate scale from the requirement levels on purpose: it
+     only ever appears on labels — a band, a pill, a group heading — and never
+     on a cell, so the two never have to be told apart in the same place. */
+  --lang-1: #0f7d8c;
+  --lang-2: #b5730f;
+  --lang-3: #7c4bb0;
+  --lang-4: #a33a6e;
+  --lang-5: #3a6ea3;
+  --lang-6: #4f7a2b;
+
+  --radius: 6px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1014;
+    --surface: #16191f;
+    --surface-2: #1d2128;
+    --line: #282d36;
+    --line-strong: #3a4049;
+    --ink: #e7e9ee;
+    --ink-2: #a0a6b2;
+    --ink-3: #6f7682;
+    --accent: #a5a0f5;
+    --accent-soft: #23213a;
+
+    --required: #f07fa5;
+    --recommended: #6fb6e0;
+    --conditional: #b0a2d4;
+    --optin: #7d838f;
+
+    --good: #4fc294;
+    --miss: #262b33;
+
+    --lang-1: #52c3d1;
+    --lang-2: #e0a95a;
+    --lang-3: #b596e6;
+    --lang-4: #e58ab5;
+    --lang-5: #79aede;
+    --lang-6: #a2c96e;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+
+.skip {
+  position: absolute; left: -9999px;
+  background: var(--surface); padding: .6rem 1rem; z-index: 10;
+}
+.skip:focus { left: 1rem; top: 1rem; }
+
+/* --- masthead ------------------------------------------------------------ */
+
+.masthead {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 5;
+}
+.masthead-row {
+  max-width: 1400px; margin: 0 auto; padding: 1.1rem 1.5rem .55rem;
+}
+.masthead h1 {
+  margin: 0; font-size: 1.06rem; font-weight: 620; letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: .55rem;
+}
+.mark {
+  width: 12px; height: 12px; border-radius: 3px; flex: none;
+  background: linear-gradient(135deg, var(--required), var(--recommended));
+}
+.tagline {
+  margin: .3rem 0 0 1.75rem; color: var(--ink-2); font-size: .855rem;
+  max-width: 62ch;
+}
+
+main {
+  max-width: 1400px; margin: 0 auto; padding: 1.6rem 1.5rem 4rem;
+}
+
+footer {
+  border-top: 1px solid var(--line);
+  max-width: 1400px; margin: 0 auto; padding: 1.2rem 1.5rem 2.5rem;
+  color: var(--ink-3); font-size: .8rem;
+}
+footer p { margin: .2rem 0; }
+
+/* --- shared chrome ------------------------------------------------------- */
+
+h2 { font-size: 1.15rem; font-weight: 620; margin: 0 0 .2rem; letter-spacing: -0.01em; }
+.lede { color: var(--ink-2); margin: 0 0 1.2rem; max-width: 76ch; font-size: .9rem; }
+
+.loading, .empty {
+  color: var(--ink-3); padding: 2.5rem 0; text-align: center; font-size: .9rem;
+}
+
+.toolbar {
+  display: flex; flex-direction: column; gap: .45rem; align-items: stretch;
+  margin: 0 0 1rem; padding: .7rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius);
+}
+.toolbar-row { display: flex; gap: .5rem; align-items: center; }
+.toolbar input[type="search"], .toolbar select {
+  font: inherit; font-size: .875rem; padding: .34rem .5rem;
+  border: 1px solid var(--line-strong); border-radius: 4px;
+  background: var(--bg); color: var(--ink);
+}
+.toolbar input[type="search"] { flex: 1 1 auto; min-width: 9rem; }
+.toolbar label {
+  font-size: .8rem; color: var(--ink-2);
+  display: flex; gap: .5rem; align-items: center;
+}
+/* One column for the names, so the selects line up down the left edge. */
+.toolbar label > span { flex: 0 0 4.5rem; }
+.toolbar label select { flex: 1 1 auto; min-width: 0; max-width: 26rem; }
+.count { color: var(--ink-3); font-size: .8rem; margin-left: auto; white-space: nowrap; }
+
+.scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+/* A grid of fixed-width cells has a natural width, and stretching it to the
+   page pours the slack into the label column — which pushes the matrix right,
+   away from the row it belongs to. Let it be as wide as it is. */
+.scroller.fit { width: max-content; max-width: 100%; }
+
+table { border-collapse: collapse; width: 100%; font-size: .87rem; }
+th, td { text-align: left; padding: .45rem .7rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+thead th {
+  position: sticky; top: 0; background: var(--surface-2); z-index: 1;
+  font-size: .76rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--ink-2); white-space: nowrap;
+}
+tbody tr:hover { background: var(--surface-2); }
+/* The last row of the table, not of every row group: the heatmap gives each
+   requirement level its own <tbody>, and the line before the next level's
+   heading has to stay. */
+tbody:last-child tr:last-child td { border-bottom: none; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.ver { color: var(--ink-3); font-size: .8em; }
+
+.legend { display: flex; gap: .9rem; flex-wrap: wrap; font-size: .78rem; color: var(--ink-2); margin: .5rem 0 0; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: .3rem; }
+
+/* --- heatmap ------------------------------------------------------------- */
+
+.heatmap { width: auto; font-size: .8rem; border-collapse: separate; border-spacing: 0; }
+.heatmap th.attr {
+  position: sticky; left: 0; background: var(--surface); z-index: 2;
+  font-family: var(--mono); font-size: .78rem; font-weight: 400;
+  text-transform: none; letter-spacing: 0; white-space: nowrap;
+  border-right: 1px solid var(--line-strong); color: var(--ink);
+}
+.heatmap thead th.attr { z-index: 3; background: var(--surface-2); }
+.heatmap thead th.col {
+  height: 11.5rem; padding: .3rem 0; vertical-align: bottom;
+  background: var(--surface-2); text-transform: none; letter-spacing: 0;
+}
+/* Rotated, and two blocks rather than one string: in vertical writing the block
+   axis runs across the screen, so the lines sit side by side and the height is
+   the longer one rather than their sum. `overflow` is a backstop. */
+.heatmap thead th.col > span {
+  display: block; writing-mode: vertical-rl; transform: rotate(180deg);
+  font-family: var(--mono); font-weight: 400; white-space: nowrap;
+  max-height: 11rem; overflow: hidden; margin: 0 auto;
+  color: var(--ink);
+}
+.heatmap thead th.col b { display: block; font-weight: 400; font-size: .74rem; }
+.heatmap thead th.col i {
+  display: block; font-style: normal; font-size: .68rem;
+  color: var(--ink-3); margin-right: .12rem;
+}
+/* The one horizontal header: a count column reads as a count column, not as
+   another rotated name. */
+.heatmap thead th.tally {
+  vertical-align: bottom; text-align: right; white-space: nowrap;
+  background: var(--surface-2); padding: .3rem .5rem;
+  width: 6rem; min-width: 6rem;
+}
+.heatmap thead tr.band th.band-cell {
+  height: 1.5rem; padding: 0 .3rem; text-align: center;
+  background: var(--surface-2); color: var(--ink-2);
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .05em;
+  border-left: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
+}
+/* Two header rows, so the second one has to start where the first one ends. */
+.heatmap.banded thead th.col,
+.heatmap.banded thead th.tally,
+.heatmap.banded thead th.attr { top: 1.5rem; }
+.heatmap.banded thead tr.band th { top: 0; }
+.heatmap td.cell {
+  width: 1.9rem; min-width: 1.9rem; padding: 0; text-align: center;
+  border-left: 1px solid var(--line);
+}
+.heatmap td.cell > span {
+  display: block; width: 100%; height: 1.55rem; line-height: 1.55rem;
+  font-size: .7rem;
+}
+.cell-yes > span { background: var(--good); color: var(--bg); }
+.cell-no > span { background: var(--miss); color: var(--ink-3); }
+.heatmap tr.level-head th {
+  background: var(--surface-2); font-size: .72rem; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--ink-2); position: sticky; left: 0;
+}
+.heatmap tr.level-head i {
+  display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+  margin-right: .4rem;
+}
+.rowcount { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.caption { font-size: .8rem; color: var(--ink-3); margin: 0 0 .5rem; }
+
+.note {
+  border-left: 3px solid var(--accent); background: var(--accent-soft);
+  padding: .7rem .9rem; border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: .855rem; margin: 0 0 1.3rem; color: var(--ink);
+}
+.note p { margin: .25rem 0; }
+.note p:first-child { margin-top: 0; }
+.note p:last-child { margin-bottom: 0; }
+
+@media (max-width: 720px) {
+  .masthead-row { padding: .9rem 1rem .5rem; }
+  main { padding: 1.2rem 1rem 3rem; }
+  .tagline { margin-left: 0; }
+}
