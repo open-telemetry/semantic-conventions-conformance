@@ -27,6 +27,7 @@ def run() -> None:
         presence_penalty=0.2,
         stop=["\n\n"],
         seed=42,
+        service_tier="default",
         stream=True,
         stream_options={"include_usage": True},
     )

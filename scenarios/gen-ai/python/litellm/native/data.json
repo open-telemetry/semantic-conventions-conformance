@@ -920,6 +920,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.openai.request.service_tier' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.openai.request.service_tier"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.openai.response.service_tier' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-mini",

@@ -31,6 +31,7 @@ def run() -> None:
         presence_penalty=0.2,
         stop=["\n\n"],
         seed=42,
+        service_tier="default",
     )
     # shut down the thread pool executor to ensure all instrumentation callbacks are completed
     executor.shutdown(wait=True)
