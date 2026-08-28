@@ -7,6 +7,8 @@ other language.
 ```text
 express/scenarios/                    what the server does, no OTel
 express/opentelemetry-express/        server.js, server/
+http/scenarios/                       built-in client and server, no OTel
+http/opentelemetry-http/              client.js, server.js, client/, server/
 undici/scenarios/                     what the client does, no OTel
 undici/opentelemetry-undici/          client.js, client/
 ```
@@ -63,6 +65,8 @@ that version.
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/js
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
+otel-conformance scenarios/http/js/http/opentelemetry-http/client
+otel-conformance scenarios/http/js/http/opentelemetry-http/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 ```
 

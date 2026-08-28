@@ -1,0 +1,21 @@
+[project]
+name = "fastapi-opentelemetry-conformance-server"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.141.1",
+    "uvicorn==0.52.4",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    "opentelemetry-instrumentation-fastapi==0.65b0",
+    "opentelemetry-conformance[python]",
+    "otel-http-test-client",
+]
+
+[tool.uv.sources]
+opentelemetry-conformance = { path = "../../../../../../tools/runner", editable = true }
+otel-http-test-client = { path = "../../../../../../tools/http/test-client/python", editable = true }
+
+[tool.uv]
+package = false

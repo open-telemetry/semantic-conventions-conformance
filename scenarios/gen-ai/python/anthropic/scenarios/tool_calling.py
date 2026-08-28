@@ -37,7 +37,7 @@ first = client.messages.create(
     messages=messages,
     tools=[TOOL],
     max_tokens=100,
-    temperature=0.5,
+    extra_body={"temperature": 0.5},
 )
 
 messages.append({"role": "assistant", "content": first.content})
@@ -62,5 +62,5 @@ client.messages.create(
     messages=messages,
     tools=[TOOL],
     max_tokens=100,
-    temperature=0.5,
+    extra_body={"temperature": 0.5},
 )

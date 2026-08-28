@@ -1,0 +1,22 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: vertx-http-client
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+
+env:
+  # Keep Java runtime metrics out of this HTTP-only conformance report.
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare vertx-http-client:opentelemetry-javaagent
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-java run --agent vertx-http-client:opentelemetry-javaagent VertxHttpClientJavaagentClientScenario

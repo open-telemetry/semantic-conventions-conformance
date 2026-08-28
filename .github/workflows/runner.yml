@@ -210,13 +210,61 @@ jobs:
             tools/gen-ai/runner/tests \
             tools/http/runner/tests
 
+  discover-scenarios:
+    name: Discover scenarios
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-discover-scenarios-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Generate matrix
+        id: matrix
+        shell: bash
+        run: |
+          scenario_paths="$(git ls-files 'scenarios/**/conformance.yaml')"
+          if [[ -z "$scenario_paths" ]]; then
+            echo "::error::no conformance scenarios found"
+            exit 1
+          fi
+          matrix="$(
+            printf '%s\n' "$scenario_paths" |
+              jq -Rsc '
+                split("\n") |
+                map(
+                  select(length > 0) |
+                  split("/") |
+                  if length < 4 then
+                    error("unexpected conformance scenario path: " + join("/"))
+                  else
+                    {domain: .[1], language: .[2]}
+                  end
+                ) |
+                unique |
+                {include: .}
+              '
+          )"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   scenarios:
-    name: Scenarios
+    needs: discover-scenarios
+    name: Scenarios (${{ matrix.domain }}, ${{ matrix.language }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SCENARIO_ROOT: scenarios/${{ matrix.domain }}/${{ matrix.language }}
     concurrency:
-      group: ${{ github.workflow }}-scenarios-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ github.workflow }}-scenarios-${{ matrix.domain }}-${{ matrix.language }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover-scenarios.outputs.matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -229,23 +277,29 @@ jobs:
           python-version: "3.14"
 
       - name: Set up uv
+        if: matrix.language == 'python'
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
-          cache-dependency-glob: "scenarios/**/uv.lock"
+          # Scope lockfiles to this matrix job so each Python matrix job caches
+          # its own package set instead of sharing one.
+          cache-dependency-glob: "scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/uv.lock"
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
       - name: Set up Java
+        if: matrix.language == 'java'
         uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: temurin
           java-version: "21"
 
       - name: Set up Gradle
+        if: matrix.language == 'java'
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
       # A Node scenario installs its workspace from the lockfile in its `setup:`.
       - name: Set up Node
+        if: matrix.language == 'js'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24.19.0"
@@ -256,9 +310,10 @@ jobs:
       # runs, from its own directory, which is inside the build root the
       # `global.json` pins.
       - name: Set up .NET
+        if: matrix.language == 'dotnet'
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          global-json-file: scenarios/http/dotnet/global.json
+          global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
       - name: Install weaver
         run: |
@@ -284,19 +339,21 @@ jobs:
             -e tools/js \
             -e tools/dotnet
 
+      # Keyed by domain too: a matrix job fetches only the registry its own
+      # domain pins, so one key per domain keeps every cache complete.
       - name: Cache the semconv registries
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/otel-conformance/semconv
-          key: semconv-${{ hashFiles('tools/**/versions.env') }}
+          key: semconv-${{ matrix.domain }}-${{ hashFiles('tools/**/versions.env') }}
 
-      - name: Run every scenario
+      - name: Run scenarios
         env:
           FORCE_COLOR: "1" # the log renders ANSI; the step's stdout is no tty
         run: |
           set -uo pipefail
           mapfile -t directories < <(
-            find scenarios -name .venv -prune -o \
+            find "$SCENARIO_ROOT" -name .venv -prune -o \
               -name conformance.yaml -exec dirname {} \; | sort
           )
           status=0
@@ -310,8 +367,8 @@ jobs:
       - name: Check the committed coverage is up to date
         if: ${{ !cancelled() }}
         run: |
-          git add --intent-to-add -- scenarios
-          if ! git diff --exit-code -- scenarios; then
+          git add --intent-to-add -- "$SCENARIO_ROOT"
+          if ! git diff --exit-code -- "$SCENARIO_ROOT"; then
             echo "::error::the committed data.json files are out of date — run the scenarios and commit the result"
             exit 1
           fi
@@ -320,8 +377,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: weaver-reports
-          path: scenarios/**/output/weaver-reports/*.json
+          name: weaver-reports-${{ matrix.domain }}-${{ matrix.language }}
+          path: scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/output/weaver-reports/*.json
           if-no-files-found: warn
 
   required-status-check:
@@ -330,6 +387,7 @@ jobs:
       - lint
       - types
       - coverage-model
+      - discover-scenarios
       - scenarios
     runs-on: ubuntu-latest
     if: ${{ always() }}
@@ -339,5 +397,6 @@ jobs:
           needs.lint.result != 'success' ||
           needs.types.result != 'success' ||
           needs.coverage-model.result != 'success' ||
+          needs.discover-scenarios.result != 'success' ||
           needs.scenarios.result != 'success'
         run: exit 1

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 runner: genai-conformance
-instrumented_library: bedrock
+instrumented_library: botocore
 instrumentation_library: openinference-instrumentation-bedrock
 
 server:
