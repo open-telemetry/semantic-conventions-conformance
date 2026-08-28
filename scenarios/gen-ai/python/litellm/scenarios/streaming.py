@@ -33,7 +33,7 @@ def run() -> None:
 
     for _ in stream:
         pass
-    # shut down the thread pool executor to ensure all logging callbacks are completed
+    # shut down the thread pool executor to ensure all instrumentation callbacks are completed
     executor.shutdown(wait=True)
 
 

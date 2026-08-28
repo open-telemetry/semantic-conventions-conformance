@@ -32,7 +32,7 @@ def run() -> None:
         stop=["\n\n"],
         seed=42,
     )
-    # shut down the thread pool executor to ensure all logging callbacks are completed
+    # shut down the thread pool executor to ensure all instrumentation callbacks are completed
     executor.shutdown(wait=True)
 
 

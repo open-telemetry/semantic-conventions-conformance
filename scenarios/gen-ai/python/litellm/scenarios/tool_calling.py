@@ -69,7 +69,7 @@ def run() -> None:
         max_tokens=100,
         temperature=0.5,
     )
-    # shut down the thread pool executor to ensure all logging callbacks are completed
+    # shut down the thread pool executor to ensure all instrumentation callbacks are completed
     executor.shutdown(wait=True)
 
 

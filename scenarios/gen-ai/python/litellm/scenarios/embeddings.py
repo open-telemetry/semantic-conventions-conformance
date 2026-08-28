@@ -20,7 +20,7 @@ def run() -> None:
         encoding_format="float",
         dimensions=256,
     )
-    # shut down the thread pool executor to ensure all logging callbacks are completed
+    # shut down the thread pool executor to ensure all instrumentation callbacks are completed
     executor.shutdown(wait=True)
 
 
