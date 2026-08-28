@@ -26,6 +26,9 @@ agent = AssistantAgent(
     ),
     system_message="You are a helpful assistant.",
     tools=[get_current_weather],
+    # Off by default, which would end the run at the tool result and never
+    # send it back to the model.
+    reflect_on_tool_use=True,
 )
 
 asyncio.run(agent.run(task="What's the weather in Seattle today?"))

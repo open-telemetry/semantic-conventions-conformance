@@ -63,6 +63,60 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.function.0' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.3.function.0"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIChatCompletionClient.create",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.model_name' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "OpenAIChatCompletionClient.create",
