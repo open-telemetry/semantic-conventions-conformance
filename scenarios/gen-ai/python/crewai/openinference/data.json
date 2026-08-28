@@ -1,0 +1,450 @@
+{
+  "spans": {
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.operation.name"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_agents' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "crew_agents"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "crew_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_inputs' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "crew_inputs"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_key' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "crew_key"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_tasks' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "crew_tasks"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_agents' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "crew_agents"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "crew_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_inputs' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "crew_inputs"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_key' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "crew_key"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_tasks' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "crew_tasks"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.cache_function' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "tool.cache_function"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.current_usage_count' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "tool.current_usage_count"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.description' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "tool.description"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.description_updated' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "tool.description_updated"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "tool.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "tool.parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tool.result_as_answer' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "attribute_key": "tool.result_as_answer"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'get_current_weather.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "execute_tool span name should be 'execute_tool' or 'execute_tool <value of gen_ai.tool.name>', got 'get_current_weather.run'",
+      "signal_type": "span",
+      "signal_name": "get_current_weather.run",
+      "context": {
+        "expected_form": "execute_tool or 'execute_tool <gen_ai.tool.name>'",
+        "keyed_attr": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "crew_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'crew_key' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "crew_key"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "graph.node.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'task_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "task_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'task_key' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "attribute_key": "task_key"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant._execute_core' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant._execute_core' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'weather_assistant._execute_core' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'weather_assistant._execute_core' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'weather_assistant._execute_core'",
+      "signal_type": "span",
+      "signal_name": "weather_assistant._execute_core",
+      "context": {
+        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    }
+  ]
+}
