@@ -13,9 +13,6 @@ env:
   OPENAI_API_KEY: test_openai_api_key
   # No content-capture variable here: Pydantic AI records message content by
   # default and its switch is a constructor argument, not an environment one.
-  # The shared programs, imported by the entry programs here the way a Java or
-  # Node scenario imports the package holding them.
-  PYTHONPATH: ..
 
 scenarios:
   invoke_agent:
