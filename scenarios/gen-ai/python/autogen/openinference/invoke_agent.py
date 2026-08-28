@@ -3,6 +3,13 @@
 
 import contextlib
 import importlib
+import sys
+from pathlib import Path
+
+# The shared programs, which sit beside the implementation directories rather
+# than in any one of them. Found from this file rather than from `PYTHONPATH`,
+# which a machine that already exports one would replace.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from autogen_agentchat.agents import _base_chat_agent
 from autogen_core.tools import _base as _tool_base
