@@ -137,9 +137,7 @@ An implementation directory is named after whatever produced the telemetry:
   it is reached through another package: `opentelemetry-langchain-openai`.
 - `openinference` or `openllmetry` for a third-party suite, after the project
   rather than its package.
-- `native` for the library itself. `haystack/native` is the exception:
-  its `instrumentation_library` is `opentelemetry-haystack`, because
-  deepset ships its tracer as a package of its own.
+- `native` for the library and its first-party plugins.
 
 Telemetry that needs programmatic configuration rather than an environment
 variable gets an entry program beside `conformance.yaml`, one per scenario,
