@@ -126,6 +126,7 @@ classes than the row, the row says so.
 | `pydantic-ai` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent`<br>no `openinference` or `openllmetry` for this library |
 | `strands-agents` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
+| `together` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`<br>no `openllmetry`: it wraps `together.resources.chat.completions.ChatCompletions`, renamed in together 2, so it records nothing |
 
 The conventions also cover retrieval, memory and planning. No instrumentation
 here emits them, so there is no class for them yet.
