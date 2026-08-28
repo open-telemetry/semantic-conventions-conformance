@@ -25,6 +25,7 @@ pipeline.add_component(
     ),
 )
 
+
 def run() -> None:
     pipeline.run(
         {

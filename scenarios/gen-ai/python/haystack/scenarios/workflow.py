@@ -28,6 +28,7 @@ pipeline.add_component(
 )
 pipeline.connect("prompt_builder.prompt", "llm.messages")
 
+
 def run() -> None:
     pipeline.run(
         {
