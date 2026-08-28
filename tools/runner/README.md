@@ -5,7 +5,9 @@ Runs scenario programs, collects what they emit through
 against expectations declared in YAML. It carries no semantic conventions of
 its own — you tell it which registry and policies to validate against.
 
-Not on PyPI yet — install it from a checkout: `pip install -e tools/runner[python]`.
+Not on PyPI yet — install it from a checkout: `pip install -e tools/runner`.
+A Python scenario also wants [`tools/python`](../python), the launcher its
+`run` command names.
 
 A *wrapper* supplies those for one set of conventions;
 [`gen-ai/runner`](../gen-ai/runner) is one. A directory names the wrapper it

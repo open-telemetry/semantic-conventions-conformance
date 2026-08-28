@@ -17,9 +17,6 @@ env:
   OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: SPAN_AND_EVENT
   LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "true"
   LITELLM_OTEL_INTEGRATION_ENABLE_EVENTS: "true"
-  # The shared programs, imported by the entry programs here the way a Java or
-  # Node scenario imports the package holding them.
-  PYTHONPATH: ..
 
 scenarios:
   inference:
