@@ -14,13 +14,13 @@ env:
   # OpenInference records its own `llm.*` attributes by default;
   # this is the switch that adds the GenAI conventions beside them.
   OPENINFERENCE_ENABLE_GENAI_SEMCONV: "true"
-  # autogen-core emits its own create_agent, invoke_agent and execute_tool
-  # spans whenever a tracer provider is set, with no switch to turn them
-  # off, so this report carries them beside OpenInference's.
+  # The shared programs, imported by the entry programs here the way a Java or
+  # Node scenario imports the package holding them.
+  PYTHONPATH: ..
 
 scenarios:
   invoke_agent:
-    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/invoke_agent.py
+    run: uv run --frozen --project . opentelemetry-instrument python invoke_agent.py
 
   automatic_tool_calling:
-    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/automatic_tool_calling.py
+    run: uv run --frozen --project . opentelemetry-instrument python automatic_tool_calling.py
