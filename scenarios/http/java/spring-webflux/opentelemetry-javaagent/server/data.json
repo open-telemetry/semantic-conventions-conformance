@@ -1,0 +1,72 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.peer.address",
+      "network.peer.port",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.path",
+      "url.query",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.server.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ]
+  },
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": [
+        "process.runtime.description"
+      ]
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": []
+}

@@ -39,6 +39,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Awaitable
 from pathlib import Path
 from typing import Callable, NamedTuple, Sequence
 from wsgiref.simple_server import WSGIRequestHandler, make_server
@@ -48,12 +49,17 @@ __all__ = [
     "CONTRACT",
     "EXCHANGES",
     "PORT_VARIABLE",
+    "REQUEST_TIMEOUT_SECONDS",
     "REQUESTS",
     "USER_AGENT",
+    "AsyncSend",
     "ContractError",
     "Exchange",
     "Send",
+    "client_headers",
     "drive",
+    "drive_async",
+    "mock_server_url",
     "request",
     "reserve_port",
     "respond",
@@ -86,6 +92,7 @@ class Exchange(NamedTuple):
 # How one request is sent: method, absolute URL, body → status, response body.
 # A client scenario supplies its own so its library is the one instrumented.
 Send = Callable[[str, str, "str | None"], "tuple[int, str]"]
+AsyncSend = Callable[[str, str, "str | None"], Awaitable["tuple[int, str]"]]
 
 # The port a server scenario listens on. ``otel-http-drive`` chooses it, which
 # is what lets different scenarios run in parallel without colliding.
@@ -96,7 +103,7 @@ PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
 USER_AGENT = "otel-http-conformance/1"
 
 _HEALTH_POLL_SECONDS = 0.05
-_REQUEST_TIMEOUT_SECONDS = 10
+REQUEST_TIMEOUT_SECONDS = 10
 
 
 def _contract() -> Path:
@@ -137,6 +144,25 @@ _READINESS = next(exchange for exchange in EXCHANGES if exchange.readiness)
 # Every route answers JSON, so a scenario that reads the contract has one
 # content type to send rather than a rule per route.
 CONTENT_TYPE = "application/json"
+
+
+def mock_server_url() -> str:
+    """The mock server URL the runner gave a client scenario."""
+    base_url = os.environ.get("MOCK_SERVER_URL")
+    if not base_url:
+        raise RuntimeError(
+            "MOCK_SERVER_URL is not set — the runner publishes it for the "
+            "server the package declares"
+        )
+    return base_url
+
+
+def client_headers(body: str | None) -> dict[str, str]:
+    """The fixed headers every client workload sends."""
+    headers = {"User-Agent": USER_AGENT}
+    if body is not None:
+        headers["Content-Type"] = CONTENT_TYPE
+    return headers
 
 
 def _exchange_for(method: str, path: str) -> Exchange | None:
@@ -180,6 +206,18 @@ def drive(base_url: str, send: Send | None = None) -> None:
     sender = send or request
     for exchange in REQUESTS:
         status, response = sender(
+            exchange.method,
+            f"{base_url}{exchange.path}",
+            exchange.body,
+        )
+        print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
+        verify(exchange, status, response)
+
+
+async def drive_async(base_url: str, send: AsyncSend) -> None:
+    """Asynchronously send :data:`REQUESTS` and check every answer."""
+    for exchange in REQUESTS:
+        status, response = await send(
             exchange.method,
             f"{base_url}{exchange.path}",
             exchange.body,
@@ -256,7 +294,7 @@ def wait_for_health(base_url: str, timeout: float = 30.0) -> None:
     with urllib.request.urlopen(  # noqa: S310
         urllib.request.Request(  # noqa: S310
             f"{base_url}{_READINESS.path}",
-            headers={"User-Agent": USER_AGENT},
+            headers=client_headers(None),
         ),
         timeout=timeout,
     ):
@@ -269,18 +307,15 @@ def request(method: str, url: str, body: str | None = None) -> tuple[int, str]:
     A 404 or 500 is what the scenario asked for, so it comes back as a status
     rather than an exception.
     """
-    headers = {"User-Agent": USER_AGENT}
-    if body is not None:
-        headers["Content-Type"] = "application/json"
     prepared = urllib.request.Request(  # noqa: S310
         url,
         data=None if body is None else body.encode("utf-8"),
         method=method,
-        headers=headers,
+        headers=client_headers(body),
     )
     try:
         with urllib.request.urlopen(  # noqa: S310
-            prepared, timeout=_REQUEST_TIMEOUT_SECONDS
+            prepared, timeout=REQUEST_TIMEOUT_SECONDS
         ) as response:
             return response.status, response.read().decode("utf-8")
     except urllib.error.HTTPError as error:
@@ -312,7 +347,7 @@ def serve(
             wait_for_eof()
         finally:
             httpd.shutdown()
-            thread.join(timeout=_REQUEST_TIMEOUT_SECONDS)
+            thread.join(timeout=REQUEST_TIMEOUT_SECONDS)
 
 
 def scenario_port() -> int:

@@ -14,41 +14,32 @@ scenario would have answered.
 
 from __future__ import annotations
 
-import os
-
 import requests
 
-from otel_http_test_client import CONTENT_TYPE, USER_AGENT, drive
-
-_REQUEST_TIMEOUT_SECONDS = 10
+from otel_http_test_client import (
+    REQUEST_TIMEOUT_SECONDS,
+    client_headers,
+    drive,
+    mock_server_url,
+)
 
 
 def run() -> None:
     """Send the contract at the server the runner started."""
-    base_url = os.environ.get("MOCK_SERVER_URL")
-    if not base_url:
-        raise RuntimeError(
-            "MOCK_SERVER_URL is not set — the runner publishes it for the "
-            "server the package declares"
-        )
-
     # One session for the whole sequence, so the requests share a connection
     # the way an application's would.
     with requests.Session() as session:
 
         def send(method: str, url: str, body: str | None) -> tuple[int, str]:
-            headers = {"User-Agent": USER_AGENT}
-            if body is not None:
-                headers["Content-Type"] = CONTENT_TYPE
             # A 4xx or 5xx is what the contract asked for, so it comes back as
             # a status: requests raises for one only when told to.
             response = session.request(
                 method,
                 url,
                 data=None if body is None else body.encode("utf-8"),
-                headers=headers,
-                timeout=_REQUEST_TIMEOUT_SECONDS,
+                headers=client_headers(body),
+                timeout=REQUEST_TIMEOUT_SECONDS,
             )
             return response.status_code, response.text
 
-        drive(base_url, send)
+        drive(mock_server_url(), send)

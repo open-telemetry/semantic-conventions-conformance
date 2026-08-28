@@ -34,6 +34,7 @@ from ._registry import (
     require_pin,
 )
 from ._report import ClassifySpan
+from ._runners import domain
 from ._semconv import semconv_coverage
 from ._session import (
     ConformanceSession,
@@ -75,6 +76,7 @@ __all__ = [
     "WeaverSpec",
     "cache_dir",
     "conformance_session",
+    "domain",
     "load_coverage_model",
     "load_spec",
     "main",
