@@ -5,7 +5,7 @@ import litellm
 
 from scenarios import tool_calling
 
-# Enable LiteLLM's own OTel logger
+# Enable LiteLLM's built-in OpenTelemetry instrumentation
 litellm.callbacks = ["otel"]
 
 tool_calling.run()
