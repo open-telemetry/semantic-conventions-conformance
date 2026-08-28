@@ -115,11 +115,26 @@ otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
+otel-conformance scenarios/http/js/http/opentelemetry-http/client
+otel-conformance scenarios/http/js/http/opentelemetry-http/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
 otel-conformance scenarios/http/dotnet/aspnetcore/opentelemetry-aspnetcore/server
 otel-conformance scenarios/http/dotnet/httpclient/opentelemetry-http/client
+otel-conformance scenarios/http/python/aiohttp/opentelemetry-aiohttp-client/client
+otel-conformance scenarios/http/python/aiohttp/opentelemetry-aiohttp-server/server
+otel-conformance scenarios/http/python/asgi/opentelemetry-asgi/server
+otel-conformance scenarios/http/python/django/opentelemetry-django/server
+otel-conformance scenarios/http/python/falcon/opentelemetry-falcon/server
+otel-conformance scenarios/http/python/fastapi/opentelemetry-fastapi/server
 otel-conformance scenarios/http/python/flask/opentelemetry-flask/server
+otel-conformance scenarios/http/python/httpx/opentelemetry-httpx/client
+otel-conformance scenarios/http/python/pyramid/opentelemetry-pyramid/server
 otel-conformance scenarios/http/python/requests/opentelemetry-requests/client
+otel-conformance scenarios/http/python/starlette/opentelemetry-starlette/server
+otel-conformance scenarios/http/python/tornado/opentelemetry-tornado/server
+otel-conformance scenarios/http/python/urllib/opentelemetry-urllib/client
+otel-conformance scenarios/http/python/urllib3/opentelemetry-urllib3/client
+otel-conformance scenarios/http/python/wsgi/opentelemetry-wsgi/server
 ```
 
 Every Java package is built and started the same way, so

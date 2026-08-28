@@ -16,6 +16,7 @@ the wrapper's console script, so what a file says is what you would type.
 
 from __future__ import annotations
 
+from importlib import import_module
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -23,6 +24,7 @@ from typing import TYPE_CHECKING
 from ._spec import SpecError, declared_runner
 
 if TYPE_CHECKING:
+    from ._domain import Domain
     from ._session import SessionFactory
 
 GROUP = "opentelemetry_conformance_runners"
@@ -65,3 +67,25 @@ def load(name: str) -> SessionFactory:
             else " — none are installed; `pip install -e tools/<domain>/runner`"
         )
     )
+
+
+def domain(name: str) -> Domain | None:
+    """The :class:`Domain` a wrapper is built from, if it has one.
+
+    :func:`load` gives back a session factory, which is all running a scenario
+    needs. Reading what a registry declares, or which pin it resolved at,
+    needs the domain behind it — and opening a session to reach one would
+    fetch a registry and start weaver to answer a question about neither.
+
+    ``None`` means the wrapper is assembled some other way; an unknown name
+    still raises from :func:`load`.
+    """
+    from ._domain import Domain as _Domain  # noqa: PLC0415  (cycle)
+
+    for entry in entry_points(group=GROUP):
+        if entry.name == name:
+            found = getattr(import_module(entry.module), "DOMAIN", None)
+            return found if isinstance(found, _Domain) else None
+
+    load(name)  # raises, saying which names are installed
+    return None

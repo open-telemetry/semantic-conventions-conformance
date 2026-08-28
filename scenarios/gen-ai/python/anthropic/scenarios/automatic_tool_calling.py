@@ -34,7 +34,7 @@ runner = Anthropic().beta.messages.tool_runner(
     ],
     tools=[get_current_weather],
     max_tokens=100,
-    temperature=0.5,
+    extra_body={"temperature": 0.5},
 )
 
 for _ in runner:

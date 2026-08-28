@@ -21,8 +21,8 @@ import sys
 from pathlib import Path
 from typing import Callable
 
-from . import _runners
 from ._registry import WeaverNotInstalledError
+from ._runners import resolve as resolve_runner
 from ._session import (
     DEFAULT_DATA_FILE,
     DEFAULT_REPORT_DIR,
@@ -265,7 +265,7 @@ def main(
     )
 
     try:
-        factory = session or _runners.resolve(args.directory)
+        factory = session or resolve_runner(args.directory)
     except SpecError as error:
         _status(_FAIL, f"FAIL {error}")
         return 1

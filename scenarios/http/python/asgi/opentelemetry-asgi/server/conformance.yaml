@@ -1,0 +1,13 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: asgi
+instrumentation_library: opentelemetry-instrumentation-asgi
+
+env:
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
+
+scenarios:
+  server:
+    run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
