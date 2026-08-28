@@ -20,8 +20,7 @@ _genai_content_schema_keys := {
 
 # The sample under check, when it is a content attribute with a schema to check
 # it against. Undefined (so every rule below skips the sample) when the schema
-# isn't loaded for the pinned semconv version yet — e.g. forward-looking
-# attributes like `gen_ai.tool.definitions` before upstream ships the schema.
+# isn't loaded for the pinned semconv version yet.
 _content_sample := {"name": attr_name, "value": attr_value, "schema": data[key]} if {
 	input.sample.attribute
 	attr_name := input.sample.attribute.name
@@ -65,10 +64,6 @@ deny contains _content_finding(
 
 # PolicyFinding format per
 # https://github.com/open-telemetry/weaver/blob/main/crates/weaver_live_check/README.md#policyfinding
-# (id / level / context / message). `signal_type` and `signal_name` are left to
-# weaver, which stamps the signal the sample came from — for an attribute-level
-# sample that is the span or event holding it, which is what a reader of the
-# finding needs and what this rule cannot see.
 _content_finding(attr_name, errors, message) := {
 	"id":    "genai_content_schema",
 	"level": "violation",
