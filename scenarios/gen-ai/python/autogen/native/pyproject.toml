@@ -11,11 +11,11 @@ dependencies = [
     # `otel-conformance-python` installs the SDK providers and loads no
     # instrumentation, which is what leaves the library's own telemetry the
     # only thing measured.
-    "opentelemetry-conformance[python]",
+    "otel-conformance-python",
 ]
 
 [tool.uv.sources]
-opentelemetry-conformance = { path = "../../../../../tools/runner", editable = true }
+otel-conformance-python = { path = "../../../../../tools/python", editable = true }
 
 [tool.uv]
 package = false

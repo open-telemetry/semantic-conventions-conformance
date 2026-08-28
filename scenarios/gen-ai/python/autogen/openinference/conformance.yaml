@@ -14,6 +14,9 @@ env:
   # OpenInference records its own `llm.*` attributes by default;
   # this is the switch that adds the GenAI conventions beside them.
   OPENINFERENCE_ENABLE_GENAI_SEMCONV: "true"
+  # autogen-core emits its own create_agent, invoke_agent and execute_tool
+  # spans whenever a tracer provider is set, with no switch to turn them
+  # off, so this report carries them beside OpenInference's.
 
 scenarios:
   invoke_agent:
