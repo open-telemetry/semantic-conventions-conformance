@@ -20,7 +20,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'crew_agents' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "crew_agents"
       }
@@ -29,7 +29,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'crew_id' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "crew_id"
       }
@@ -38,7 +38,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'crew_inputs' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "crew_inputs"
       }
@@ -47,7 +47,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'crew_key' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "crew_key"
       }
@@ -56,7 +56,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'crew_tasks' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "crew_tasks"
       }
@@ -65,7 +65,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "openinference.span.kind"
       }
@@ -74,7 +74,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'output.mime_type' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "output.mime_type"
       }
@@ -83,97 +83,16 @@
       "id": "missing_attribute",
       "message": "Attribute 'output.value' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "attribute_key": "output.value"
       }
     },
     {
       "id": "span_status_ok_set_by_instrumentation",
-      "message": "Span 'Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "message": "Span 'Crew_<id>.kickoff' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
       "signal_type": "span",
-      "signal_name": "Crew_8041d7e6-d0fd-42b9-9e60-4004ce2e02f3.kickoff",
-      "context": {
-        "status_code": "ok"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'crew_agents' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "crew_agents"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'crew_id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "crew_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'crew_inputs' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "crew_inputs"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'crew_key' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "crew_key"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'crew_tasks' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "crew_tasks"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "openinference.span.kind"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.mime_type' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "output.mime_type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.value' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
-      "context": {
-        "attribute_key": "output.value"
-      }
-    },
-    {
-      "id": "span_status_ok_set_by_instrumentation",
-      "message": "Span 'Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
-      "signal_type": "span",
-      "signal_name": "Crew_9cf894ed-0bcd-44d0-9524-36f5ef5402d5.kickoff",
+      "signal_name": "Crew_<id>.kickoff",
       "context": {
         "status_code": "ok"
       }
