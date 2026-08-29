@@ -117,6 +117,12 @@ ENDPOINTS = [
         {"model": "command-r", "messages": [{"role": "user", "content": "hi"}]},
     ),
     (
+        "cohere-embed",
+        "post",
+        "/v2/embed",
+        {"model": "embed-v4.0", "texts": ["hi", "there"], "input_type": "search_document"},
+    ),
+    (
         "mistral-chat",
         "post",
         "/mistral/v1/chat/completions",
@@ -1040,3 +1046,109 @@ def test_ollama_embeddings_answer_one_vector_per_input(client):
     assert len(response.json["embeddings"]) == 2
     assert len(response.json["embeddings"][0]) == 64
     assert response.json["prompt_eval_count"] == 16
+
+
+def test_cohere_chat_calls_an_offered_tool(client):
+    """Cohere narrates the call in a tool_plan field of its own."""
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_current_weather"
+    assert json.loads(call["function"]["arguments"]) == {"location": "Seattle"}
+    assert response.json["message"]["tool_plan"]
+    assert response.json["finish_reason"] == "TOOL_CALL"
+
+
+def test_cohere_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "tool", "tool_call_id": "x", "content": "70 degrees"},
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert "tool_calls" not in response.json["message"]
+    assert response.json["finish_reason"] == "COMPLETE"
+
+
+def test_cohere_chat_streams_the_same_answer_it_would_return(client):
+    streamed = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": True,
+        },
+    ).get_data(as_text=True)
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.splitlines()
+        if line.startswith("data: ")
+    ]
+    text = "".join(
+        event["delta"]["message"]["content"]["text"]
+        for event in events
+        if event["type"] == "content-delta"
+    ).strip()
+    assert text == "This is a response from the mock server."
+    assert events[-1]["delta"]["finish_reason"] == "COMPLETE"
+
+
+def test_cohere_answers_a_json_object_request_with_its_schema(client):
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "response_format": {
+                "type": "json_object",
+                "json_schema": {
+                    "type": "object",
+                    "properties": {
+                        "location": {"type": "string"},
+                        "temperature": {"type": "integer"},
+                    },
+                },
+            },
+        },
+    )
+    assert json.loads(response.json["message"]["content"][0]["text"]) == {
+        "location": "Seattle",
+        "temperature": 1,
+    }
+
+
+def test_cohere_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/v2/embed",
+        json={
+            "model": "embed-v4.0",
+            "texts": ["one", "two"],
+            "input_type": "search_document",
+            "output_dimension": 64,
+        },
+    )
+    vectors = response.json["embeddings"]["float"]
+    assert len(vectors) == 2
+    assert len(vectors[0]) == 64
