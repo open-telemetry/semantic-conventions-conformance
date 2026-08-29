@@ -37,6 +37,9 @@ connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
 
+The HBase scenarios use the latest client in each API range covered by the
+agent's dedicated instrumentation: 1.7.x and 2.4.x.
+
 Run one package from the repository root:
 
 ```sh

@@ -30,6 +30,12 @@ def test_redis_client_span_uses_the_vendor_refinement() -> None:
     }
 
 
+def test_hbase_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "Get items", "CLIENT", {"db.system.name": "hbase"}
+    ) == {"db.hbase.client"}
+
+
 def test_an_unsupported_database_system_is_not_classified() -> None:
     assert (
         classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"}) == set()
