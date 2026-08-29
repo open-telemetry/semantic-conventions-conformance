@@ -43,7 +43,7 @@ class HBase(DatabaseContainer):
         self._image = DockerImage(
             path=image_context,
             tag=image_name,
-            clean_up=False,
+            clean_up=True,
             buildargs={
                 "HBASE_VERSION": version,
                 "HBASE_SHA512": checksum,
