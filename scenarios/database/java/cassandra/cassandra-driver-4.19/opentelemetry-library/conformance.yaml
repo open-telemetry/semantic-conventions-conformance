@@ -1,0 +1,89 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+instrumented_library: cassandra-driver-4.19
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-cassandra-4.4
+
+env:
+  CASSANDRA_HOST: ${DATABASE_HOST}
+  CASSANDRA_PORT: ${DATABASE_PORT}
+  CASSANDRA_LOCAL_DATACENTER: ${DATABASE_LOCAL_DATACENTER}
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare shared:cassandra44:opentelemetry-library
+
+scenarios:
+  query:
+    run: otel-conformance-java run shared:cassandra44:opentelemetry-library Cassandra44LibraryScenario query
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: SELECT
+            db.collection.name: conformance.items
+            db.query.summary: SELECT conformance.items
+            db.query.text: SELECT name FROM conformance.items WHERE id = ?
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    events: []
+
+  prepared:
+    run: otel-conformance-java run shared:cassandra44:opentelemetry-library Cassandra44LibraryScenario prepared
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: SELECT
+            db.collection.name: conformance.items
+            db.query.summary: SELECT conformance.items
+            db.query.text: SELECT name FROM conformance.items WHERE id = ?
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    events: []
+
+  batch:
+    run: otel-conformance-java run shared:cassandra44:opentelemetry-library Cassandra44LibraryScenario batch
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: BATCH INSERT
+            db.operation.batch.size: 2
+            db.collection.name: conformance.items
+            db.query.summary: BATCH INSERT conformance.items
+            db.query.text: INSERT INTO conformance.items (id, name) VALUES (?, ?)
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    events: []
+
+  error:
+    run: otel-conformance-java run shared:cassandra44:opentelemetry-library Cassandra44LibraryScenario error
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: SELECT
+            db.collection.name: conformance.missing_table
+            db.query.summary: SELECT conformance.missing_table
+            db.query.text: SELECT * FROM conformance.missing_table
+            error.type: {present: true}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    events: []
