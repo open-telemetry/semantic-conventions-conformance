@@ -22,11 +22,18 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql` or `mariadb`.
-Each session starts one pinned container, applies that backend's packaged SQL
-schema, and removes the container when the session closes. The schemas create
-the same logical objects but no rows; scenarios own any data their operations
-need.
+The supported values are `hbase-1`, `hbase-2`, `mariadb`, and `postgresql`.
+Each session starts one pinned container fixture, applies that backend's
+packaged schema, and removes the container when the session closes. PostgreSQL
+and MariaDB create the same empty logical objects. HBase creates its table and
+one deterministic row for read scenarios.
+
+The HBase fixtures build cached local images from checksum-verified Apache
+HBase 1.7.2 and 2.4.18 binary distributions and a digest-pinned Eclipse Temurin
+base. Each client runs against its matching server API line. HBase advertises
+fixed ZooKeeper, master, and region-server ports, so only one HBase conformance
+session can run on a host at a time. Startup failures include the fixture's
+container logs.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -44,7 +51,8 @@ JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
-backend also requires adding its span classification and conformance scenarios.
+use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and HBase
+spans use `db.hbase.client`. Adding a backend also requires adding its span
+classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

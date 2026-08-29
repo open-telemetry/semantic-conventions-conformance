@@ -1,0 +1,132 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  get:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Get
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            server.address: localhost
+            server.port: 16020
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: localhost
+            server.port: 16020
+    metrics:
+      - db.client.operation.duration
+      - otlp.exporter.exported
+      - otlp.exporter.seen
+      - processedLogs
+      - queueSize
+    events: []
+
+  put:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Mutate
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            server.address: localhost
+            server.port: 16020
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: localhost
+            server.port: 16020
+    metrics:
+      - db.client.operation.duration
+      - otlp.exporter.exported
+      - otlp.exporter.seen
+      - processedLogs
+      - queueSize
+    events: []
+
+  scan:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            server.address: localhost
+            server.port: 16020
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: localhost
+            server.port: 16020
+    metrics:
+      - db.client.operation.duration
+      - otlp.exporter.exported
+      - otlp.exporter.seen
+      - processedLogs
+      - queueSize
+    events: []
+
+  batch:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: BATCH Mutate
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.operation.batch.size: 2
+            server.address: localhost
+            server.port: 16020
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: localhost
+            server.port: 16020
+    metrics:
+      - db.client.operation.duration
+      - otlp.exporter.exported
+      - otlp.exporter.seen
+      - processedLogs
+      - queueSize
+    events: []

@@ -32,6 +32,19 @@
       "groupName": "java-minor"
     },
     {
+      // The agent has distinct instrumentation for the HBase 1.x and 2.0-2.4
+      // client APIs. Keep each representative client inside its API line and
+      // aligned with the matching fixture version.
+      "matchPackageNames": ["org.apache.hbase:hbase-client"],
+      "matchCurrentVersion": "/^1\\./",
+      "allowedVersions": ">=1.7.2 <2.0.0"
+    },
+    {
+      "matchPackageNames": ["org.apache.hbase:hbase-client"],
+      "matchCurrentVersion": "/^2\\.4\\./",
+      "allowedVersions": ">=2.4.18 <2.5.0"
+    },
+    {
       // group all non-major JavaScript dependency updates into a single PR
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
