@@ -1,0 +1,65 @@
+{
+  "spans": {
+    "db.postgresql.client": [
+      "db.namespace",
+      "db.operation.batch.size",
+      "db.query.summary",
+      "db.query.text",
+      "error.type",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "db.client.operation.duration": [
+      "db.namespace",
+      "db.query.summary",
+      "db.system.name",
+      "error.type",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": [
+        "process.runtime.description"
+      ]
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": []
+}
