@@ -86,12 +86,11 @@ and starts its entry point with `bundle exec ruby`. Repository helpers resolve
 through path dependencies, and neither package writes to the user-wide gem
 installation.
 
-In Rust the split is between crates. Its plain workload crates hold Actix
-Web's native routes and the awc request sequence without importing
-OpenTelemetry. The instrumentation-specific binary crates install
-`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
-workspace at `rust/` includes the shared crates under `tools/` and commits one
-lockfile for all of them.
+In Rust the split is between crates. Its plain workload crates hold native
+Actix Web and Axum/Tower routes and the awc request sequence without importing
+OpenTelemetry. The instrumentation-specific binary crates install their
+middleware around those workloads. One Cargo workspace at `rust/` includes the
+shared crates under `tools/` and commits one lockfile for all of them.
 
 ## The scenario contract
 
@@ -184,6 +183,7 @@ otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
 otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
 otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
+otel-conformance scenarios/http/rust/tower/opentelemetry-instrumentation-tower/server
 ```
 
 Every Java package is built and started the same way, so
