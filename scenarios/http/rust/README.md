@@ -10,7 +10,7 @@ actix-web/opentelemetry-actix-web/server/      traced and measured server binary
 awc/scenarios/                                 plain awc client workload
 awc/opentelemetry-actix-web/client/            traced client binary
 tower/scenarios/                               plain Axum/Tower server workload
-tower/opentelemetry-instrumentation-tower/     traced and measured server binary
+tower/opentelemetry-instrumentation-tower/server/ traced and measured server binary
 ../../../tools/http/test-client/rust/          shared HTTP contract
 ../../../tools/rust/scenario/                  environment and shutdown protocol
 ../../../tools/rust/scenario-sdk/              OTLP gRPC SDK bootstrap
