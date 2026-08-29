@@ -11,7 +11,7 @@ from database_conformance import classify_span
 
 
 @pytest.mark.parametrize("kind", ["client", "CLIENT", "SPAN_KIND_CLIENT"])
-def test_a_sql_client_span_has_general_and_sql_types(kind: str) -> None:
+def test_postgresql_client_span_uses_the_vendor_refinement(kind: str) -> None:
     assert classify_span("SELECT", kind, {"db.system.name": "postgresql"}) == {
         "db.postgresql.client"
     }

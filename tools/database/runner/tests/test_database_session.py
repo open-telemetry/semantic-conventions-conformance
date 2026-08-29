@@ -89,7 +89,7 @@ def test_database_session_injects_backend_variables(
     ]
 
 
-def test_database_session_closes_postgres_after_an_error(
+def test_database_session_closes_mariadb_after_an_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
