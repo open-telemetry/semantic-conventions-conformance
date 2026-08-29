@@ -31,4 +31,7 @@ against those, and check:
   fix.
 - **No expectations declared.** No `expected_violations`, and no `spans`,
   `metrics` or `events` blocks. Scenarios here measure; a finding is a result
-  this repo exists to record, so anything that quiets one is a defect.
+  this repo exists to record, so anything that quiets one is a defect. One
+  exception: a `match` with `type` and no `expect` places a span the reduction
+  cannot recognise, and quiets nothing. Check it is commented, that the span
+  really carries nothing identifying, and that no `expect` crept in beside it.
