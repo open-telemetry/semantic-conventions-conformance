@@ -767,7 +767,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "input.mime_type"
       }
@@ -776,16 +776,52 @@
       "id": "missing_attribute",
       "message": "Attribute 'input.value' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "input.value"
       }
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "llm.invocation_parameters"
       }
@@ -794,25 +830,34 @@
       "id": "missing_attribute",
       "message": "Attribute 'llm.model_name' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "llm.model_name"
       }
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'llm.prompts' does not exist in the registry.",
+      "message": "Attribute 'llm.output_messages.0.message.content' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
-        "attribute_key": "llm.prompts"
+        "attribute_key": "llm.output_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
       }
     },
     {
       "id": "missing_attribute",
       "message": "Attribute 'llm.provider' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "llm.provider"
       }
@@ -821,7 +866,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'llm.system' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "llm.system"
       }
@@ -830,7 +875,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "llm.token_count.completion"
       }
@@ -839,7 +884,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "llm.token_count.prompt"
       }
@@ -848,7 +893,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "llm.token_count.total"
       }
@@ -857,7 +902,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "openinference.span.kind"
       }
@@ -866,69 +911,59 @@
       "id": "missing_attribute",
       "message": "Attribute 'output.value' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "attribute_key": "output.value"
       }
     },
     {
       "id": "genai_expected_attribute_missing",
-      "message": "Span 'OpenAI.acomplete' (operation 'text_completion') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "message": "Span 'OpenAI.achat' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
-      "context": {
-        "missing_attribute": "gen_ai.response.finish_reasons",
-        "operation": "text_completion"
-      }
-    },
-    {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'OpenAI.acomplete' (operation 'text_completion') is missing expected attribute 'gen_ai.response.id'",
-      "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "missing_attribute": "gen_ai.response.id",
-        "operation": "text_completion"
+        "operation": "chat"
       }
     },
     {
       "id": "genai_expected_attribute_missing",
-      "message": "Span 'OpenAI.acomplete' (operation 'text_completion') is missing expected attribute 'gen_ai.response.model'",
+      "message": "Span 'OpenAI.achat' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "missing_attribute": "gen_ai.response.model",
-        "operation": "text_completion"
+        "operation": "chat"
       }
     },
     {
       "id": "genai_expected_attribute_missing",
-      "message": "Span 'OpenAI.acomplete' (operation 'text_completion') is missing expected attribute 'server.address'",
+      "message": "Span 'OpenAI.achat' (operation 'chat') is missing expected attribute 'server.address'",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "missing_attribute": "server.address",
-        "operation": "text_completion"
+        "operation": "chat"
       }
     },
     {
       "id": "span_status_ok_set_by_instrumentation",
-      "message": "Span 'OpenAI.acomplete' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "message": "Span 'OpenAI.achat' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
         "status_code": "ok"
       }
     },
     {
       "id": "genai_span_name_format",
-      "message": "text_completion span name should be 'text_completion' or 'text_completion <value of gen_ai.request.model>', got 'OpenAI.acomplete'",
+      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAI.achat'",
       "signal_type": "span",
-      "signal_name": "OpenAI.acomplete",
+      "signal_name": "OpenAI.achat",
       "context": {
-        "expected_form": "text_completion or 'text_completion <gen_ai.request.model>'",
+        "expected_form": "chat or 'chat <gen_ai.request.model>'",
         "keyed_attr": "gen_ai.request.model",
-        "operation": "text_completion"
+        "operation": "chat"
       }
     },
     {
