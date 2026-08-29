@@ -11,8 +11,6 @@ scenarios:
           count: 1
           attributes:
             db.operation.name: SearchAction
-            network.peer.address: {present: true}
-            network.peer.port: {present: true}
     metrics:
       - db.client.operation.duration
       - queueSize
