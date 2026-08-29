@@ -7,11 +7,7 @@ from __future__ import annotations
 
 from testcontainers.core.container import DockerContainer
 
-from ._container import (
-    BackendSpec,
-    DatabaseBackendError,
-    DatabaseContainer,
-)
+from ._container import BackendSpec, DatabaseContainer
 
 POSTGRES_DATABASE = "conformance"
 POSTGRES_USER = "conformance"
@@ -71,6 +67,3 @@ class Postgres(DatabaseContainer):
             POSTGRES,
             container_factory=DockerContainer,
         )
-
-
-PostgresError = DatabaseBackendError
