@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [versions]
+elasticsearch-api-client = "7.17.19"
+elasticsearch-clients = "7.17.29"
+jackson = "2.20.1"
+log4j = "2.25.3"
 mariadb = "3.5.10"
 opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
@@ -12,6 +16,13 @@ opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 postgresql = "42.7.13"
 
 [libraries]
+elasticsearch-api-client = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch-api-client" }
+elasticsearch-rest-client = { module = "org.elasticsearch.client:elasticsearch-rest-client", version.ref = "elasticsearch-clients" }
+elasticsearch-transport-client = { module = "org.elasticsearch.client:transport", version.ref = "elasticsearch-clients" }
+elasticsearch-transport-netty4 = { module = "org.elasticsearch.plugin:transport-netty4-client", version.ref = "elasticsearch-clients" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }

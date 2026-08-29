@@ -22,11 +22,12 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql` or `mariadb`.
-Each session starts one pinned container, applies that backend's packaged SQL
-schema, and removes the container when the session closes. The schemas create
-the same logical objects but no rows; scenarios own any data their operations
-need.
+`runner_config` must contain only `backend`, set to `elasticsearch`, `mariadb`,
+or `postgresql`. Each
+session starts one digest-pinned container, applies that backend's packaged
+schema file, and removes the container when the session closes. PostgreSQL
+and MariaDB get the same empty table and stored procedure. Elasticsearch gets a
+fixed `conformance` index with one shard, no replicas, and refreshes disabled.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -39,12 +40,16 @@ environment declarations:
 | `DATABASE_USER` | Test user |
 | `DATABASE_PASSWORD` | Test-only password |
 
+Elasticsearch also provides `DATABASE_TRANSPORT_PORT`. Its user and password
+variables are empty because the disposable 7.17 node has security disabled.
+
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
-backend also requires adding its span classification and conformance scenarios.
+use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and
+Elasticsearch spans use `db.elasticsearch.client`. Adding a backend also
+requires adding its span classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
