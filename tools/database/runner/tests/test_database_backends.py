@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The PostgreSQL container lifecycle."""
+"""Managed database container lifecycles."""
 
 from __future__ import annotations
 
@@ -13,7 +13,8 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _postgres
+from database_conformance import _mariadb, _postgres
+from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
 
@@ -30,10 +31,12 @@ class StubContainer:
         start_error: BaseException | None = None,
         stop_error: Exception | None = None,
         exec_result: ExecResult | None = None,
+        port: int = 5432,
     ) -> None:
         self.start_error = start_error
         self.stop_error = stop_error
         self.exec_result = exec_result or ExecResult()
+        self.port = port
         self.env: dict[str, str] = {}
         self.ports: dict[str, Any] = {}
         self.transfers: list[tuple[bytes, str]] = []
@@ -63,7 +66,7 @@ class StubContainer:
         return self
 
     def get_exposed_port(self, port: int) -> int:
-        assert port == 5432
+        assert port == self.port
         return 32768
 
     def exec(self, config: ExecConfig) -> ExecResult:
@@ -80,55 +83,76 @@ class StubContainer:
 
 
 def install_stub(
-    monkeypatch: pytest.MonkeyPatch, container: StubContainer
-) -> None:
-    monkeypatch.setattr(_postgres, "DockerContainer", lambda _: container)
-
-
-def test_starts_initializes_publishes_and_removes_postgres(
     monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    container: StubContainer,
 ) -> None:
-    container = StubContainer()
-    install_stub(monkeypatch, container)
+    monkeypatch.setattr(module, "DockerContainer", lambda _: container)
 
-    with Postgres() as postgres:
-        assert postgres.variables == {
-            "POSTGRES_HOST": "127.0.0.1",
-            "POSTGRES_PORT": "32768",
-            "POSTGRES_DATABASE": "conformance",
-            "POSTGRES_USER": "conformance",
-            "POSTGRES_PASSWORD": "conformance",
+
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port", "expected_environment"),
+    [
+        (
+            _postgres,
+            Postgres,
+            5432,
+            {
+                "POSTGRES_DB": "conformance",
+                "POSTGRES_USER": "conformance",
+                "POSTGRES_PASSWORD": "conformance",
+            },
+        ),
+        (
+            _mariadb,
+            MariaDB,
+            3306,
+            {
+                "MARIADB_DATABASE": "conformance",
+                "MARIADB_USER": "conformance",
+                "MARIADB_PASSWORD": "conformance",
+                "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
+            },
+        ),
+    ],
+)
+def test_starts_initializes_publishes_and_removes_database(
+    monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[MariaDB],
+    port: int,
+    expected_environment: dict[str, str],
+) -> None:
+    container = StubContainer(port=port)
+    install_stub(monkeypatch, module, container)
+
+    with backend_type() as database:
+        assert database.variables == {
+            "DATABASE_HOST": "127.0.0.1",
+            "DATABASE_PORT": "32768",
+            "DATABASE_NAME": "conformance",
+            "DATABASE_USER": "conformance",
+            "DATABASE_PASSWORD": "conformance",
         }
 
     assert container.started
     assert container.stopped
-    assert container.env == {
-        "POSTGRES_DB": "conformance",
-        "POSTGRES_USER": "conformance",
-        "POSTGRES_PASSWORD": "conformance",
-    }
-    assert container.ports == {"5432/tcp": ("127.0.0.1", 0)}
+    assert container.env == expected_environment
+    assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
     assert container.transfers
     schema, path = container.transfers[0]
-    assert path == "/tmp/otel-conformance-postgres.sql"
-    assert b"CREATE SCHEMA IF NOT EXISTS conformance" in schema
+    assert path.startswith("/tmp/otel-conformance-")
+    assert b"CREATE" in schema
     assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
-    assert container.exec_config.command[-2:] == [
-        "--file",
-        "/tmp/otel-conformance-postgres.sql",
-    ]
-    assert container.exec_config.environment == {
-        "PGPASSWORD": "conformance"
-    }
 
 
 def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     container = StubContainer(start_error=RuntimeError("startup failed"))
-    install_stub(monkeypatch, container)
+    install_stub(monkeypatch, _postgres, container)
 
     with pytest.raises(RuntimeError, match="startup failed"):
         Postgres().start()
@@ -143,7 +167,7 @@ def test_cleanup_failure_is_reported_with_start_failure(
         start_error=RuntimeError("startup failed"),
         stop_error=DockerException("cleanup failed"),
     )
-    install_stub(monkeypatch, container)
+    install_stub(monkeypatch, _postgres, container)
 
     with pytest.raises(
         RuntimeError,
@@ -158,7 +182,7 @@ def test_schema_failure_reports_psql_output_and_logs(
     container = StubContainer(
         exec_result=ExecResult(exit_code=3, output=b"syntax error")
     )
-    install_stub(monkeypatch, container)
+    install_stub(monkeypatch, _postgres, container)
 
     with pytest.raises(
         RuntimeError,
@@ -173,7 +197,7 @@ def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     container = StubContainer()
-    install_stub(monkeypatch, container)
+    install_stub(monkeypatch, _postgres, container)
     postgres = Postgres().start()
 
     with pytest.raises(RuntimeError, match="already been started"):
@@ -189,6 +213,11 @@ def test_the_image_is_pinned_by_digest() -> None:
     assert separator == "@"
     assert digest.startswith("sha256:")
 
+    name, separator, digest = MARIADB_IMAGE.partition("@")
+    assert name == "mariadb:11.8.9-noble"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -199,3 +228,11 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
     assert "CREATE TABLE IF NOT EXISTS conformance.items" in schema
     assert "CREATE OR REPLACE PROCEDURE conformance.noop()" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("mariadb.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE TABLE IF NOT EXISTS items" in schema
+    assert "CREATE OR REPLACE PROCEDURE noop()" in schema

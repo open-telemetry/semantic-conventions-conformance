@@ -1,16 +1,6 @@
 {
   "spans": {
-    "db.client": [
-      "db.namespace",
-      "db.operation.batch.size",
-      "db.query.summary",
-      "db.query.text",
-      "db.stored_procedure.name",
-      "db.system.name",
-      "server.address",
-      "server.port"
-    ],
-    "db.sql.client": [
+    "db.mariadb.client": [
       "db.namespace",
       "db.operation.batch.size",
       "db.query.summary",

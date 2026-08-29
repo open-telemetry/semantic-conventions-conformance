@@ -4,6 +4,5 @@ plugins {
 }
 
 dependencies {
-    api(libs.postgresql)
     implementation(project(":scenario-support"))
 }

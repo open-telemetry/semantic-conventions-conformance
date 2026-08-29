@@ -6,9 +6,8 @@
 # the levels are for readers of the model, since a missing required attribute
 # is a weaver violation rather than a coverage gap.
 #
-# Provider refinements (openai.inference.client refines gen_ai.inference.client)
-# are ignored: only a signal's own definition is modelled, so a provider's
-# attributes are not coverage of the general span type.
+# Refinements keep their own ids. A classifier can select the most specific
+# applicable definition without attributing its fields to the base signal.
 templates:
   - template: "coverage-model.json.j2"
     application_mode: single
@@ -36,11 +35,9 @@ templates:
         [.description[]? | {key: .key, value: (.requirement_level | level)}]
         | from_entries;
 
-      # A signal's own definition has id == the name it declares; anything
-      # else under the same name is a refinement, and is dropped.
       {
-        spans: ([.refinements.spans[]? | select(.id == .type)] | map({
-          key: .type,
+        spans: ([.refinements.spans[]?] | map({
+          key: .id,
           value: {kind: .kind, attributes: attributes},
         }) | from_entries),
         events: ([.refinements.events[]? | select(.id == .name)] | map({

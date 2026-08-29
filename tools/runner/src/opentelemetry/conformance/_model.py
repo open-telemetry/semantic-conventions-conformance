@@ -3,9 +3,8 @@
 
 """The coverage model: what a registry declares, per signal and entity.
 
-Weaver resolves a registry into one JSON file. Provider refinements
-(``openai.inference.client`` refines ``gen_ai.inference.client``) are left out:
-a provider's attributes are not coverage of the general span type::
+Weaver resolves a registry into one JSON file. Refinements keep their own ids, so a classifier can select a provider-specific
+definition without counting its attributes as coverage of the base signal::
 
     {"spans":    {"http.server": {"kind": "server", "attributes": {name: level}}},
      "events":   {name: {"attributes": {name: level}}},

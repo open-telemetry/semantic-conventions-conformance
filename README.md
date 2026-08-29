@@ -11,7 +11,7 @@ against expectations declared in YAML.
 | --- | --- |
 | [`tools/runner/`](tools/runner) | the runner. Generic — it carries no semantic conventions of its own |
 | [`tools/gen-ai/`](tools/gen-ai) | what makes a run a *GenAI* run: the registry pin, the advice policies, and a mock LLM server so scenarios are deterministic without cassettes |
-| [`tools/database/`](tools/database) | what makes a run a *database* run: the upstream registry pin, database span classification, and ephemeral PostgreSQL backend |
+| [`tools/database/`](tools/database) | what makes a run a *database* run: the upstream registry pin, database span classification, and ephemeral database backends |
 | [`tools/http/`](tools/http) | the same for HTTP: the upstream registry pin, and the test client that drives both sides of the domain |
 | [`tools/python/`](tools/python) | the launcher a Python scenario runs under when programmatic configuration is needed for a scenario |
 | [`tools/java/`](tools/java) | what every JVM scenario shares, in any domain: the launcher that builds and runs one, the Gradle convention plugins, and the SDK bootstrap |

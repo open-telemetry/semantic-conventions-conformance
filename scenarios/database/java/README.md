@@ -1,21 +1,23 @@
 # Database conformance scenarios in Java
 
-Java database instrumentations, beginning with JDBC through the OpenTelemetry
-Java agent and the PostgreSQL backend managed by the database runner.
+Java JDBC conformance for PostgreSQL and MariaDB, tested through the OpenTelemetry
+Java agent and the OpenTelemetry JDBC library instrumentation.
 
-The `jdbc:scenarios` Gradle project owns the instrumentation-independent
-workload. Its `jdbc:opentelemetry-javaagent` sibling supplies the Java agent and
-launches that workload.
+The `shared:jdbc:scenarios` Gradle project owns the
+instrumentation-independent workload. Its launcher projects configure either
+the Java agent or `opentelemetry-jdbc`. Vendor directories contain the
+conformance configuration and coverage, so another PostgreSQL client such as
+Vert.x SQL can sit beside JDBC without duplicating the shared JDBC code.
 
-The Java code only connects and performs measured operations. PostgreSQL
-lifecycle and schema creation stay in the Python database runner so later
-languages can use the same backend.
+The Java code only connects and performs measured operations. Database
+lifecycle and schema creation stay in the Python runner, where later languages
+can reuse them.
 
 Run the package from the repository root:
 
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
-otel-conformance scenarios/database/java/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 ```
 
 Docker must be installed and running.

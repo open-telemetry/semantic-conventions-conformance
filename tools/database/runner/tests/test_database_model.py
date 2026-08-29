@@ -28,9 +28,8 @@ def test_the_registry_declares_the_span_types_we_classify(model) -> None:
         "SELECT", "client", {"db.system.name": "postgresql"}
     )
 
-    assert classified == {"db.client", "db.sql.client"}
-    assert model["spans"]["db.client"]["kind"] == "client"
-    assert model["spans"]["db.sql.client"]["kind"] == "client"
+    assert classified == {"db.postgresql.client"}
+    assert model["spans"]["db.postgresql.client"]["kind"] == "client"
 
 
 def test_the_general_type_declares_the_database_system(model) -> None:

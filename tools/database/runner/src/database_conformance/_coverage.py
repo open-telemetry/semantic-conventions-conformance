@@ -28,6 +28,11 @@ _SQL_SYSTEMS = frozenset(
     }
 )
 
+_SYSTEM_SPAN_TYPES = {
+    "mariadb": "db.mariadb.client",
+    "postgresql": "db.postgresql.client",
+}
+
 
 def classify_span(
     span_name: str, span_kind: str, attributes: Mapping[str, object]
@@ -42,10 +47,12 @@ def classify_span(
     if not isinstance(system, str):
         return set()
 
-    span_types = {"db.client"}
-    if kind == "CLIENT" and system in _SQL_SYSTEMS:
-        span_types.add("db.sql.client")
-    return span_types
+    if kind == "CLIENT":
+        if specific := _SYSTEM_SPAN_TYPES.get(system):
+            return {specific}
+        if system in _SQL_SYSTEMS:
+            return {"db.sql.client"}
+    return {"db.client"}
 
 
 def classifier(

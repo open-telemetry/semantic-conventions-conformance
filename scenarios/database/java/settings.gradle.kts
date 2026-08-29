@@ -11,8 +11,9 @@ plugins {
 
 rootProject.name = "database-java-conformance"
 
-include("jdbc:scenarios")
-include("jdbc:opentelemetry-javaagent")
+include("shared:jdbc:scenarios")
+include("shared:jdbc:opentelemetry-javaagent")
+include("shared:jdbc:opentelemetry-library")
 
 fun shared(name: String, directory: String) {
     include(name)
@@ -20,3 +21,4 @@ fun shared(name: String, directory: String) {
 }
 
 shared("scenario-support", "../../../tools/java/scenario-support")
+shared("scenario-sdk", "../../../tools/java/scenario-sdk")

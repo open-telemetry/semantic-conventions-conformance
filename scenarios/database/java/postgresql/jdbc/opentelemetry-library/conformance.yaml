@@ -3,23 +3,23 @@
 
 runner: database-conformance
 instrumented_library: jdbc
-instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-jdbc
 
 env:
-  JDBC_URL: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
-  JDBC_USER: ${POSTGRES_USER}
-  JDBC_PASSWORD: ${POSTGRES_PASSWORD}
+  JDBC_URL: jdbc:otel:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+  JDBC_USER: ${DATABASE_USER}
+  JDBC_PASSWORD: ${DATABASE_PASSWORD}
   OTEL_SEMCONV_STABILITY_OPT_IN: database
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
 
 weaver:
-  config: ../../weaver.toml
+  config: ../../../weaver.toml
 
-setup: otel-conformance-java prepare jdbc:opentelemetry-javaagent
+setup: otel-conformance-java prepare shared:jdbc:opentelemetry-library
 
 scenarios:
   statement:
-    run: otel-conformance-java run --agent jdbc:opentelemetry-javaagent JdbcJavaagentScenario statement
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario statement
     spans:
       - match:
           attributes:
@@ -38,7 +38,7 @@ scenarios:
     events: []
 
   prepared_statement:
-    run: otel-conformance-java run --agent jdbc:opentelemetry-javaagent JdbcJavaagentScenario prepared_statement
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario prepared_statement
     spans:
       - match:
           attributes:
@@ -57,7 +57,7 @@ scenarios:
     events: []
 
   batch:
-    run: otel-conformance-java run --agent jdbc:opentelemetry-javaagent JdbcJavaagentScenario batch
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario batch
     spans:
       - match:
           attributes:
@@ -76,7 +76,7 @@ scenarios:
     events: []
 
   stored_procedure:
-    run: otel-conformance-java run --agent jdbc:opentelemetry-javaagent JdbcJavaagentScenario stored_procedure
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario stored_procedure
     spans:
       - match:
           attributes:

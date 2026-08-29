@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":jdbc:scenarios"))
+    implementation(project(":shared:jdbc:scenarios"))
+    runtimeOnly(libs.mariadb)
+    runtimeOnly(libs.postgresql)
     add("javaAgent", libs.opentelemetry.javaagent)
 }

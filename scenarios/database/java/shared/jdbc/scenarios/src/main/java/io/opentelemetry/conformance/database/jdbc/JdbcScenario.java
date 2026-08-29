@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 
-/** Exercises individual JDBC execution paths against PostgreSQL. */
+/** Exercises individual JDBC execution paths against a relational database. */
 public final class JdbcScenario {
   private JdbcScenario() {}
 

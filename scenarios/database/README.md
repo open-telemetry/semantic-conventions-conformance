@@ -3,13 +3,16 @@
 What database instrumentations emit, checked against the
 [database semantic conventions][database] and recorded as committed coverage.
 
-Initial support is Java-only and exercises JDBC through the OpenTelemetry Java
-agent. The database runner starts an ephemeral PostgreSQL Docker container and
-applies the shared schema before any measured process starts.
+Initial support is Java-only and exercises PostgreSQL and MariaDB through JDBC.
+Each vendor runs against the OpenTelemetry Java agent and the OpenTelemetry JDBC
+library instrumentation. The database runner starts the selected Docker
+container and applies its shared schema before any measured process starts.
 
 ```text
-java/jdbc/scenarios/                  the JDBC workload, with no OpenTelemetry
-java/jdbc/opentelemetry-javaagent/    the launcher and conformance package
+java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
+java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
+java/shared/jdbc/opentelemetry-library/     the shared library launcher
+java/{postgresql,mariadb}/jdbc/             vendor conformance packages
 ```
 
 Each operation is a separate scenario so a missing or malformed span identifies
@@ -26,17 +29,22 @@ the JDBC path that produced it:
 
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
-otel-conformance scenarios/database/java/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-library
+otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-library
 ```
 
-Docker must be installed and running. One PostgreSQL container serves the whole
-package run, then is removed. Its
-[`postgres.sql`](../../tools/database/runner/src/database_conformance/postgres.sql)
-schema contains empty tables and the stored procedure the workloads call; it
-does not seed data.
+Docker must be installed and running. One database container serves the whole
+package run, then is removed. The runner owns the
+[PostgreSQL](../../tools/database/runner/src/database_conformance/postgres.sql)
+and
+[MariaDB](../../tools/database/runner/src/database_conformance/mariadb.sql)
+schemas. Both contain the empty table and stored procedure used by the shared
+workload. Neither seeds data.
 
-The run opts into the Java agent's stable database semantic conventions. The
-agent otherwise emits the legacy database attributes during its migration
-period, which cannot be checked against the stable registry pinned here.
+The runs opt into stable database semantic conventions. Java instrumentation
+otherwise emits legacy database attributes during the migration period, which
+cannot be checked against the stable registry pinned here.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

@@ -12,15 +12,27 @@ from database_conformance import classify_span
 
 @pytest.mark.parametrize("kind", ["client", "CLIENT", "SPAN_KIND_CLIENT"])
 def test_a_sql_client_span_has_general_and_sql_types(kind: str) -> None:
+    assert classify_span("SELECT", kind, {"db.system.name": "postgresql"}) == {
+        "db.postgresql.client"
+    }
+
+
+def test_mariadb_client_span_uses_the_vendor_refinement() -> None:
     assert classify_span(
-        "SELECT", kind, {"db.system.name": "postgresql"}
-    ) == {"db.client", "db.sql.client"}
+        "SELECT", "CLIENT", {"db.system.name": "mariadb"}
+    ) == {"db.mariadb.client"}
+
+
+def test_other_sql_client_span_uses_the_sql_definition() -> None:
+    assert classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"}) == {
+        "db.sql.client"
+    }
 
 
 def test_a_non_sql_database_span_has_the_general_type() -> None:
-    assert classify_span(
-        "find", "CLIENT", {"db.system.name": "mongodb"}
-    ) == {"db.client"}
+    assert classify_span("find", "CLIENT", {"db.system.name": "mongodb"}) == {
+        "db.client"
+    }
 
 
 def test_an_in_memory_database_call_may_be_internal() -> None:
@@ -31,10 +43,7 @@ def test_an_in_memory_database_call_may_be_internal() -> None:
 
 def test_a_span_without_a_database_system_is_not_a_database_span() -> None:
     assert (
-        classify_span(
-            "GET", "CLIENT", {"http.request.method": "GET"}
-        )
-        == set()
+        classify_span("GET", "CLIENT", {"http.request.method": "GET"}) == set()
     )
 
 
