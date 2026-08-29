@@ -137,6 +137,18 @@ ENDPOINTS = [
         "/mistral/v1/embeddings",
         {"model": "mistral-embed", "inputs": ["hi", "there"]},
     ),
+    (
+        "ollama-chat",
+        "post",
+        "/api/chat",
+        {"model": "llama3.2", "messages": [{"role": "user", "content": "hi"}]},
+    ),
+    (
+        "ollama-embed",
+        "post",
+        "/api/embed",
+        {"model": "nomic-embed-text", "input": ["hi", "there"]},
+    ),
 ]
 
 # Resource-creating endpoints mint a fresh id per call, so only the shape is
@@ -930,3 +942,93 @@ def test_google_breaks_usage_down_by_input_and_output_modality(client):
     assert [d["modality"] for d in usage["candidatesTokensDetails"]] == ["TEXT", "IMAGE"]
     assert sum(d["tokenCount"] for d in usage["candidatesTokensDetails"]) == usage["candidatesTokenCount"]
     assert usage["cachedContentTokenCount"] < usage["promptTokenCount"]
+
+
+def test_ollama_chat_calls_an_offered_tool(client):
+    """Ollama carries the arguments as an object, not as a JSON string."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_current_weather"
+    assert call["function"]["arguments"] == {"location": "Seattle"}
+
+
+def test_ollama_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "tool", "content": "70 degrees"},
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert "tool_calls" not in response.json["message"]
+    assert response.json["done_reason"] == "stop"
+
+
+def test_ollama_streams_newline_delimited_json(client):
+    """Ollama streams NDJSON, not SSE, and only the last line is done."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": True,
+        },
+    )
+    lines = [json.loads(line) for line in response.get_data(as_text=True).splitlines()]
+    assert [line["done"] for line in lines] == [False] * (len(lines) - 1) + [True]
+    streamed = "".join(line["message"]["content"] for line in lines).strip()
+    assert streamed == "This is a response from the mock server."
+    assert lines[-1]["eval_count"] == 12
+
+
+def test_ollama_answers_a_format_request_with_that_schema(client):
+    """`format` carries the schema itself, so the answer is built from it."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "format": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string"},
+                    "temperature": {"type": "integer"},
+                },
+            },
+        },
+    )
+    assert json.loads(response.json["message"]["content"]) == {
+        "location": "Seattle",
+        "temperature": 1,
+    }
+
+
+def test_ollama_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/api/embed",
+        json={"model": "nomic-embed-text", "input": ["one", "two"]},
+    )
+    assert len(response.json["embeddings"]) == 2
+    assert response.json["prompt_eval_count"] == 16

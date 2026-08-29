@@ -26,6 +26,7 @@ The conformance runner starts it for you: a directory declares it under
 | `cohere` | `/v1` and `/v2` chat and embed |
 | `google_genai` | Gemini `generateContent` / streaming, and the Vertex `projects/…` paths |
 | `mistral` | chat completions, FIM and embeddings, under `/mistral/v1/…` |
+| `ollama` | `/api/chat`, including tool use and NDJSON streaming, and `/api/embed` |
 | `openai` | chat completions, embeddings and the Responses API, under `/v1/…`, the Azure `/openai/deployments/<deployment>/…` paths, and bare paths |
 
 Behaviour follows the request rather than configuration: `stream: true` gets an
