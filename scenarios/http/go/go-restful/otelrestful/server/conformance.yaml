@@ -1,0 +1,12 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: github.com/emicklei/go-restful/v3
+instrumentation_library: go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful
+
+setup: otel-conformance-go build
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-go run
