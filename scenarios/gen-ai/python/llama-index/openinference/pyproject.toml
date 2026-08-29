@@ -4,9 +4,10 @@ version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
     "llama-index-core==0.14.24",
-    "llama-index-llms-openai==0.6.26",
-    # The instrumentation declares this among its instruments, and
-    # zero-code skips an instrumentation whose dependencies are not met.
+    "llama-index-llms-openai==0.7.10",
+    # The instrumentation declares this among its instruments, and zero-code
+    # skips an instrumentation whose dependencies are not met. Nothing here
+    # imports it, so its own cap on the LLM binding is overridden below.
     "llama-index-multi-modal-llms-openai==0.6.2",
     "openinference-instrumentation-llama-index==4.4.8",
     "opentelemetry-api==1.44.0",
@@ -17,3 +18,4 @@ dependencies = [
 
 [tool.uv]
 package = false
+override-dependencies = ["llama-index-llms-openai==0.7.10"]
