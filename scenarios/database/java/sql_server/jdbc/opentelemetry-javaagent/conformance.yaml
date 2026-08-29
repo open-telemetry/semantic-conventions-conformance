@@ -1,0 +1,36 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: sql_server
+instrumented_library: jdbc
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+scenario_contract: ../../../../contracts/sql_server.yaml
+
+env:
+  JDBC_URL: jdbc:sqlserver://${DATABASE_HOST}:${DATABASE_PORT};databaseName=${DATABASE_NAME};encrypt=true;trustServerCertificate=true
+  JDBC_USER: ${DATABASE_USER}
+  JDBC_PASSWORD: ${DATABASE_PASSWORD}
+  JDBC_STATEMENT_QUERY: SELECT CASE WHEN count(*) >= 0 THEN CAST(1 AS bit) ELSE CAST(0 AS bit) END FROM conformance.items
+  JDBC_STORED_PROCEDURE_CALL: "{call conformance.noop}"
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:jdbc:opentelemetry-javaagent
+
+scenarios:
+  statement:
+    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario statement
+
+  prepared_statement:
+    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario prepared_statement
+
+  batch:
+    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario batch
+
+  stored_procedure:
+    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario stored_procedure

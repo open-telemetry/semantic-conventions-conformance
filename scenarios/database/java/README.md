@@ -1,7 +1,8 @@
 # Database conformance scenarios in Java
 
-Java JDBC conformance for PostgreSQL and MariaDB, tested through the OpenTelemetry
-Java agent and the OpenTelemetry JDBC library instrumentation.
+Java JDBC conformance for PostgreSQL, MariaDB, and Microsoft SQL Server, tested
+through the OpenTelemetry Java agent and the OpenTelemetry JDBC library
+instrumentation.
 
 The `shared:jdbc:scenarios` Gradle project owns the
 instrumentation-independent workload. Its launcher projects configure either
@@ -20,4 +21,5 @@ pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 ```
 
+Replace `postgresql` with `mariadb` or `sql_server` to run the other backends.
 Docker must be installed and running.
