@@ -1,0 +1,137 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+instrumented_library: couchbase-2
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+
+env:
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_COUCHBASE_EXPERIMENTAL_SPAN_ATTRIBUTES: "false"
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare shared:couchbase-2:opentelemetry-javaagent
+
+scenarios:
+  upsert:
+    run: otel-conformance-java run --agent shared:couchbase-2:opentelemetry-javaagent Couchbase2JavaagentScenario upsert
+    spans:
+      - match:
+          attributes:
+            db.operation.name: Cluster.openBucket
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+      - match:
+          attributes:
+            db.operation.name: Bucket.upsert
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+            db.namespace: conformance
+            network.peer.address: 127.0.0.1
+            network.peer.port: {present: true}
+      - match:
+          attributes:
+            db.operation.name: Bucket.close
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+            db.namespace: conformance
+      - match:
+          attributes:
+            db.operation.name: Cluster.disconnect
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+    events: []
+  get:
+    run: otel-conformance-java run --agent shared:couchbase-2:opentelemetry-javaagent Couchbase2JavaagentScenario get
+    spans:
+      - match:
+          attributes:
+            db.operation.name: Cluster.openBucket
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+      - match:
+          attributes:
+            db.operation.name: Bucket.upsert
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+            db.namespace: conformance
+            network.peer.address: 127.0.0.1
+            network.peer.port: {present: true}
+      - match:
+          attributes:
+            db.operation.name: Bucket.get
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+            db.namespace: conformance
+            network.peer.address: 127.0.0.1
+            network.peer.port: {present: true}
+      - match:
+          attributes:
+            db.operation.name: Bucket.close
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+            db.namespace: conformance
+      - match:
+          attributes:
+            db.operation.name: Cluster.disconnect
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+    events: []
+  get_missing:
+    run: otel-conformance-java run --agent shared:couchbase-2:opentelemetry-javaagent Couchbase2JavaagentScenario get_missing
+    spans:
+      - match:
+          attributes:
+            db.operation.name: Cluster.openBucket
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+      - match:
+          attributes:
+            db.operation.name: Bucket.remove
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+            db.namespace: conformance
+            network.peer.address: 127.0.0.1
+            network.peer.port: {present: true}
+            error.type: com.couchbase.client.java.error.DocumentDoesNotExistException
+      - match:
+          attributes:
+            db.operation.name: Bucket.close
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+            db.namespace: conformance
+      - match:
+          attributes:
+            db.operation.name: Cluster.disconnect
+        expect:
+          count: 1
+          attributes:
+            db.system.name: couchbase
+    events: []

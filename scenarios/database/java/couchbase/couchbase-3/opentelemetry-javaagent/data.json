@@ -1,0 +1,65 @@
+{
+  "spans": {
+    "db.client": [
+      "db.collection.name",
+      "db.namespace",
+      "db.operation.name",
+      "db.system.name",
+      "network.peer.address",
+      "network.peer.port"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": [
+        "process.runtime.description"
+      ]
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'get' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "get",
+      "context": {
+        "status_code": "error"
+      }
+    }
+  ]
+}

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
 from types import TracebackType
-from typing import TypeVar, cast
+from typing import Protocol, TypeVar, cast
 
 from docker.errors import DockerException
 from testcontainers.core.container import DockerContainer, ExecConfig
@@ -28,6 +28,22 @@ _DatabaseContainerT = TypeVar("_DatabaseContainerT", bound="DatabaseContainer")
 
 class DatabaseBackendError(RuntimeError):
     """A managed database could not be started or initialized."""
+
+
+class DatabaseBackend(Protocol):
+    """A database lifecycle that supplies scenario variables."""
+
+    @property
+    def variables(self) -> Mapping[str, str]: ...
+
+    def __enter__(self) -> DatabaseBackend: ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None: ...
 
 
 @dataclass(frozen=True)

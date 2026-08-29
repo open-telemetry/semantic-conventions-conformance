@@ -63,6 +63,14 @@
       "ignoreUnstable": false
     },
     {
+      // Keep the compatibility scenario on the final Couchbase 2.x API line.
+      // Couchbase 3.x is covered independently by the other version-catalog pin.
+      "matchManagers": ["gradle"],
+      "matchPackageNames": ["com.couchbase.client:java-client"],
+      "matchCurrentVersion": "/^2\\./",
+      "allowedVersions": "<3"
+    },
+    {
       // Akka 2.7 and later use the Business Source License. Keep the actor
       // and stream dependencies below 2.7 so this repository depends only
       // on open-source releases.
@@ -110,7 +118,7 @@
       // The database runner invokes these images directly rather than through
       // Dockerfiles or Compose files, so Renovate needs their Python assignments.
       "customType": "regex",
-      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb)\\.py$/"],
+      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:couchbase|postgres|mariadb)\\.py$/"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?) versioning=(?<versioning>[^\\s]+?)\\s+[A-Z_]+_IMAGE = \"[^:\"]+:(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
       ]

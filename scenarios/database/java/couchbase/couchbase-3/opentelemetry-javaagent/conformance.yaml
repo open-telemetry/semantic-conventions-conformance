@@ -1,0 +1,112 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+instrumented_library: couchbase-3
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+
+env:
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_COUCHBASE_EXPERIMENTAL_SPAN_ATTRIBUTES: "false"
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare shared:couchbase-3:opentelemetry-javaagent
+
+scenarios:
+  upsert:
+    run: otel-conformance-java run --agent shared:couchbase-3:opentelemetry-javaagent Couchbase3JavaagentScenario upsert
+    spans:
+      - match:
+          kind: client
+          attributes:
+            db.system.name: couchbase
+        expect:
+          count: 3
+      - match:
+          attributes:
+            db.operation.name: upsert
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+      - match:
+          attributes:
+            network.peer.address: 127.0.0.1
+        expect:
+          count: 1
+          attributes:
+            network.peer.port: {present: true}
+            db.namespace: conformance
+            db.collection.name: items
+    events: []
+  get:
+    run: otel-conformance-java run --agent shared:couchbase-3:opentelemetry-javaagent Couchbase3JavaagentScenario get
+    spans:
+      - match:
+          kind: client
+          attributes:
+            db.system.name: couchbase
+        expect:
+          count: 5
+      - match:
+          attributes:
+            db.operation.name: upsert
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+      - match:
+          attributes:
+            db.operation.name: get
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+      - match:
+          attributes:
+            network.peer.address: 127.0.0.1
+        expect:
+          count: 2
+          attributes:
+            network.peer.port: {present: true}
+            db.namespace: conformance
+            db.collection.name: items
+    events: []
+  get_missing:
+    run: otel-conformance-java run --agent shared:couchbase-3:opentelemetry-javaagent Couchbase3JavaagentScenario get_missing
+    spans:
+      - match:
+          kind: client
+          attributes:
+            db.system.name: couchbase
+        expect:
+          count: 2
+      - match:
+          attributes:
+            db.operation.name: get
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+      - match:
+          attributes:
+            network.peer.address: 127.0.0.1
+        expect:
+          count: 1
+          attributes:
+            network.peer.port: {present: true}
+            db.namespace: conformance
+            db.collection.name: items
+    events: []
+    expected_violations:
+      - id: error_type_missing_on_error
+        context:
+          status_code: error
+        reason: The upstream Couchbase 3.x request-tracing bridge records error status but does not emit error.type.

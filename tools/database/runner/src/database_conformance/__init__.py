@@ -22,7 +22,8 @@ from opentelemetry.conformance import (
     require_pin,
 )
 
-from ._container import DatabaseContainer
+from ._container import DatabaseBackend
+from ._couchbase import Couchbase
 from ._coverage import classifier, classify_span
 from ._mariadb import MariaDB
 from ._postgres import Postgres
@@ -36,7 +37,8 @@ DOMAIN = Domain(
     classifier=classifier,
 )
 
-_BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
+_BACKENDS: dict[str, Callable[[], DatabaseBackend]] = {
+    "couchbase": Couchbase,
     "mariadb": MariaDB,
     "postgresql": Postgres,
 }

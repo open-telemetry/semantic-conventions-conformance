@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [versions]
+couchbase2 = "2.7.23"
+couchbase3 = "3.12.2"
 mariadb = "3.5.10"
 opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
@@ -12,6 +14,8 @@ opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 postgresql = "42.7.13"
 
 [libraries]
+couchbase2 = { module = "com.couchbase.client:java-client", version.ref = "couchbase2" }
+couchbase3 = { module = "com.couchbase.client:java-client", version.ref = "couchbase3" }
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }

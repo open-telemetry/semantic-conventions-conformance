@@ -14,6 +14,7 @@ from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
 from database_conformance import _mariadb, _postgres
+from database_conformance._couchbase import COUCHBASE_IMAGE, Couchbase
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
@@ -31,17 +32,21 @@ class StubContainer:
         start_error: BaseException | None = None,
         stop_error: Exception | None = None,
         exec_result: ExecResult | None = None,
+        exec_results: list[ExecResult] | None = None,
         port: int = 5432,
+        published_ports: dict[int, int] | None = None,
     ) -> None:
         self.start_error = start_error
         self.stop_error = stop_error
         self.exec_result = exec_result or ExecResult()
+        self.exec_results = list(exec_results or [])
         self.port = port
+        self.published_ports = published_ports or {}
         self.env: dict[str, str] = {}
         self.ports: dict[str, Any] = {}
         self.transfers: list[tuple[bytes, str]] = []
         self.wait_strategy: object | None = None
-        self.exec_config: ExecConfig | None = None
+        self.exec_configs: list[ExecConfig] = []
         self.started = False
         self.stopped = False
 
@@ -66,11 +71,15 @@ class StubContainer:
         return self
 
     def get_exposed_port(self, port: int) -> int:
+        if port in self.published_ports:
+            return self.published_ports[port]
         assert port == self.port
         return 32768
 
     def exec(self, config: ExecConfig) -> ExecResult:
-        self.exec_config = config
+        self.exec_configs.append(config)
+        if self.exec_results:
+            return self.exec_results.pop(0)
         return self.exec_result
 
     def get_logs(self) -> tuple[bytes, bytes]:
@@ -145,7 +154,64 @@ def test_starts_initializes_publishes_and_removes_database(
     assert b"CREATE" in schema
     assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
-    assert container.exec_config is not None
+    assert container.exec_configs
+
+
+def test_starts_initializes_publishes_and_removes_couchbase() -> None:
+    container = StubContainer(
+        published_ports={
+            8091: 32768,
+            11210: 32769,
+        }
+    )
+
+    with Couchbase(container_factory=lambda _: container) as database:
+        assert database.variables == {
+            "DATABASE_HOST": "127.0.0.1",
+            "DATABASE_PORT": "32769",
+            "DATABASE_NAME": "conformance",
+            "DATABASE_USER": "Administrator",
+            "DATABASE_PASSWORD": "conformance-password",
+            "COUCHBASE_MANAGEMENT_PORT": "32768",
+            "COUCHBASE_KV_PORT": "32769",
+            "COUCHBASE_CONNECTION_STRING": "couchbase://127.0.0.1:32769",
+            "COUCHBASE_SCOPE": "conformance",
+            "COUCHBASE_COLLECTION": "items",
+        }
+
+    assert container.started
+    assert container.stopped
+    assert container.ports == {
+        "8091/tcp": ("127.0.0.1", 0),
+        "11210/tcp": ("127.0.0.1", 0),
+    }
+    assert container.wait_strategy is not None
+    commands = [config.command for config in container.exec_configs]
+    assert [command[:2] for command in commands] == [
+        ["couchbase-cli", "cluster-init"],
+        ["couchbase-cli", "bucket-create"],
+        ["couchbase-cli", "collection-manage"],
+        ["couchbase-cli", "collection-manage"],
+        ["curl", "--fail"],
+    ]
+    assert "conformance.items" in commands[3]
+    assert "mgmt=32768" in commands[4]
+    assert "kv=32769" in commands[4]
+
+
+def test_couchbase_bootstrap_failure_reports_output_and_cleans_up() -> None:
+    container = StubContainer(
+        exec_results=[ExecResult(exit_code=1, output=b"cluster init failed")],
+        published_ports={8091: 32768, 11210: 32769},
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)cluster init failed.*ready to accept connections",
+    ):
+        Couchbase(container_factory=lambda _: container).start()
+
+    assert container.stopped
 
 
 def test_start_failure_cleans_up_the_container(
@@ -207,6 +273,11 @@ def test_cannot_start_postgres_twice(
 
 
 def test_the_image_is_pinned_by_digest() -> None:
+    name, separator, digest = COUCHBASE_IMAGE.partition("@")
+    assert name == "couchbase/server:community-7.6.2"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
     name, separator, digest = POSTGRES_IMAGE.partition("@")
 
     assert name == "postgres:18.6-bookworm"

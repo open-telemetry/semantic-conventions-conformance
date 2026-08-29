@@ -35,6 +35,12 @@ def test_a_non_sql_database_span_has_the_general_type() -> None:
     }
 
 
+def test_couchbase_uses_the_general_database_type() -> None:
+    assert classify_span(
+        "upsert", "CLIENT", {"db.system.name": "couchbase"}
+    ) == {"db.client"}
+
+
 def test_an_in_memory_database_call_may_be_internal() -> None:
     assert classify_span(
         "SELECT", "INTERNAL", {"db.system.name": "h2database"}
