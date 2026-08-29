@@ -207,6 +207,7 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
     assert image.built
     assert image.removed
     assert image_arguments["tag"] == HBASE_1_IMAGE
+    assert image_arguments["clean_up"] is True
     assert image_arguments["buildargs"] == {
         "HBASE_VERSION": "1.7.2",
         "HBASE_SHA512": (
