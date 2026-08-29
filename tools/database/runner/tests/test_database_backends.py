@@ -348,7 +348,6 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
-<<<<<<< HEAD
 def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -363,7 +362,10 @@ def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
         match=r"(?s)Incorrect syntax.*ready to accept connections",
     ):
         SQLServer().start()
-=======
+
+    assert container.stopped
+
+
 def test_cassandra_schema_failure_reports_cqlsh_output_and_logs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -378,12 +380,10 @@ def test_cassandra_schema_failure_reports_cqlsh_output_and_logs(
         match=r"(?s)invalid CQL.*ready to accept connections",
     ):
         Cassandra().start()
->>>>>>> bb8fb59c (Add Java Cassandra conformance)
 
     assert container.stopped
 
 
-<<<<<<< HEAD
 def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
@@ -403,8 +403,6 @@ def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     assert container.stopped
 
 
-=======
->>>>>>> bb8fb59c (Add Java Cassandra conformance)
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -423,18 +421,13 @@ def test_cannot_start_postgres_twice(
     [
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
+        (CASSANDRA_IMAGE, "cassandra"),
         (REDIS_IMAGE, "redis"),
         (SQL_SERVER_IMAGE, "mcr.microsoft.com/mssql/server"),
     ],
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
-
-    name, separator, digest = CASSANDRA_IMAGE.partition("@")
-    assert name == "cassandra:5.0.9"
-    assert separator == "@"
-    assert digest.startswith("sha256:")
-
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -456,17 +449,17 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
     schema = (
         resources.files("database_conformance")
-<<<<<<< HEAD
         .joinpath("sql_server.sql")
         .read_text(encoding="utf-8")
     )
     assert "CREATE TABLE [conformance].[items]" in schema
     assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
-=======
+
+    schema = (
+        resources.files("database_conformance")
         .joinpath("cassandra.cql")
         .read_text(encoding="utf-8")
     )
     assert "CREATE KEYSPACE conformance" in schema
     assert "CREATE TABLE conformance.items" in schema
     assert "INSERT INTO" not in schema
->>>>>>> bb8fb59c (Add Java Cassandra conformance)

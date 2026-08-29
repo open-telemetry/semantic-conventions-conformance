@@ -33,6 +33,14 @@ scenarios:
             db.query.text: SELECT name FROM conformance.items WHERE id = ?
             server.address: 127.0.0.1
             server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
     events: []
 
   prepared:
@@ -50,6 +58,14 @@ scenarios:
             db.query.text: SELECT name FROM conformance.items WHERE id = ?
             server.address: 127.0.0.1
             server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
     events: []
 
   batch:
@@ -68,6 +84,14 @@ scenarios:
             db.query.text: INSERT INTO conformance.items (id, name) VALUES (?, ?)
             server.address: 127.0.0.1
             server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
     events: []
 
   error:
@@ -86,4 +110,12 @@ scenarios:
             error.type: {present: true}
             server.address: 127.0.0.1
             server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
     events: []
