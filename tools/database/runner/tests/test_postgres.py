@@ -5,62 +5,93 @@
 
 from __future__ import annotations
 
-import subprocess
+from dataclasses import dataclass
 from importlib import resources
 from typing import Any
 
 import pytest
+from docker.errors import DockerException
+from testcontainers.core.container import ExecConfig
 
 from database_conformance import _postgres
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
-_CONTAINER_ID = "a" * 64
+
+@dataclass
+class ExecResult:
+    exit_code: int | None = 0
+    output: bytes = b""
 
 
-def completed(
-    returncode: int = 0, stdout: str = "", stderr: str = ""
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.CompletedProcess(
-        args=["docker"],
-        returncode=returncode,
-        stdout=stdout,
-        stderr=stderr,
-    )
-
-
-class StubPostgres(Postgres):
+class StubContainer:
     def __init__(
-        self, responses: list[subprocess.CompletedProcess[str] | Exception]
+        self,
+        *,
+        start_error: BaseException | None = None,
+        stop_error: Exception | None = None,
+        exec_result: ExecResult | None = None,
     ) -> None:
-        super().__init__()
-        self.responses = responses
-        self.commands: list[tuple[tuple[str, ...], str | None]] = []
+        self.start_error = start_error
+        self.stop_error = stop_error
+        self.exec_result = exec_result or ExecResult()
+        self.env: dict[str, str] = {}
+        self.ports: dict[str, Any] = {}
+        self.transfers: list[tuple[bytes, str]] = []
+        self.wait_strategy: object | None = None
+        self.exec_config: ExecConfig | None = None
+        self.started = False
+        self.stopped = False
 
-    def _docker(
-        self, *arguments: str, stdin: str | None = None
-    ) -> subprocess.CompletedProcess[str]:
-        self.commands.append((arguments, stdin))
-        response = self.responses.pop(0)
-        if isinstance(response, Exception):
-            raise response
-        return response
+    def with_env(self, key: str, value: str) -> StubContainer:
+        self.env[key] = value
+        return self
+
+    def with_copy_into_container(
+        self, source: bytes, destination: str
+    ) -> StubContainer:
+        self.transfers.append((source, destination))
+        return self
+
+    def waiting_for(self, strategy: object) -> StubContainer:
+        self.wait_strategy = strategy
+        return self
+
+    def start(self) -> StubContainer:
+        if self.start_error is not None:
+            raise self.start_error
+        self.started = True
+        return self
+
+    def get_exposed_port(self, port: int) -> int:
+        assert port == 5432
+        return 32768
+
+    def exec(self, config: ExecConfig) -> ExecResult:
+        self.exec_config = config
+        return self.exec_result
+
+    def get_logs(self) -> tuple[bytes, bytes]:
+        return b"ready to accept connections\n", b""
+
+    def stop(self) -> None:
+        self.stopped = True
+        if self.stop_error is not None:
+            raise self.stop_error
 
 
-def ready_responses() -> list[subprocess.CompletedProcess[str]]:
-    return [
-        completed(stdout=f"{_CONTAINER_ID}\n"),
-        completed(stdout="127.0.0.1:32768\n"),
-        completed(stdout="true\n"),
-        completed(),
-        completed(),
-        completed(),
-    ]
+def install_stub(
+    monkeypatch: pytest.MonkeyPatch, container: StubContainer
+) -> None:
+    monkeypatch.setattr(_postgres, "DockerContainer", lambda _: container)
 
 
-def test_starts_initializes_publishes_and_removes_postgres() -> None:
-    postgres = StubPostgres(ready_responses())
+def test_starts_initializes_publishes_and_removes_postgres(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer()
+    install_stub(monkeypatch, container)
 
-    with postgres:
+    with Postgres() as postgres:
         assert postgres.variables == {
             "POSTGRES_HOST": "127.0.0.1",
             "POSTGRES_PORT": "32768",
@@ -69,149 +100,94 @@ def test_starts_initializes_publishes_and_removes_postgres() -> None:
             "POSTGRES_PASSWORD": "conformance",
         }
 
-    run, schema, remove = (
-        postgres.commands[0],
-        postgres.commands[4],
-        postgres.commands[5],
-    )
-    assert run[0] == (
-        "run",
-        "--detach",
-        "--rm",
-        "--publish",
-        "127.0.0.1::5432",
-        "--env",
-        "POSTGRES_DB=conformance",
-        "--env",
-        "POSTGRES_USER=conformance",
-        "--env",
-        "POSTGRES_PASSWORD=conformance",
-        POSTGRES_IMAGE,
-    )
-    assert schema[0][:6] == (
-        "exec",
-        "--interactive",
-        "--env",
-        "PGPASSWORD=conformance",
-        _CONTAINER_ID,
-        "psql",
-    )
-    assert schema[1] is not None
-    assert "CREATE SCHEMA IF NOT EXISTS conformance" in schema[1]
-    assert "INSERT INTO" not in schema[1]
-    assert remove[0] == ("rm", "--force", _CONTAINER_ID)
+    assert container.started
+    assert container.stopped
+    assert container.env == {
+        "POSTGRES_DB": "conformance",
+        "POSTGRES_USER": "conformance",
+        "POSTGRES_PASSWORD": "conformance",
+    }
+    assert container.ports == {"5432/tcp": ("127.0.0.1", 0)}
+    assert container.transfers
+    schema, path = container.transfers[0]
+    assert path == "/tmp/otel-conformance-postgres.sql"
+    assert b"CREATE SCHEMA IF NOT EXISTS conformance" in schema
+    assert b"INSERT INTO" not in schema
+    assert container.wait_strategy is not None
+    assert container.exec_config is not None
+    assert container.exec_config.command[-2:] == [
+        "--file",
+        "/tmp/otel-conformance-postgres.sql",
+    ]
+    assert container.exec_config.environment == {
+        "PGPASSWORD": "conformance"
+    }
 
 
-def test_retries_readiness_until_postgres_answers(
+def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(_postgres.time, "sleep", lambda _: None)
-    postgres = StubPostgres(
-        [
-            completed(stdout=f"{_CONTAINER_ID}\n"),
-            completed(stdout="127.0.0.1:32768\n"),
-            completed(stdout="true\n"),
-            completed(returncode=1),
-            completed(stdout="true\n"),
-            completed(),
-            completed(),
-            completed(),
-        ]
+    container = StubContainer(start_error=RuntimeError("startup failed"))
+    install_stub(monkeypatch, container)
+
+    with pytest.raises(RuntimeError, match="startup failed"):
+        Postgres().start()
+
+    assert container.stopped
+
+
+def test_cleanup_failure_is_reported_with_start_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        start_error=RuntimeError("startup failed"),
+        stop_error=DockerException("cleanup failed"),
     )
-
-    with postgres:
-        pass
-
-    readiness = [
-        arguments
-        for arguments, _ in postgres.commands
-        if arguments[:2] == ("exec", _CONTAINER_ID)
-    ]
-    assert len(readiness) == 2
-
-
-def test_an_invalid_port_mapping_cleans_up_the_container() -> None:
-    postgres = StubPostgres(
-        [
-            completed(stdout=f"{_CONTAINER_ID}\n"),
-            completed(stdout="not-a-port\n"),
-            completed(),
-        ]
-    )
-
-    with pytest.raises(RuntimeError, match="invalid PostgreSQL port mapping"):
-        postgres.start()
-
-    assert postgres.commands[-1][0] == ("rm", "--force", _CONTAINER_ID)
-
-
-def test_an_early_exit_reports_logs_and_cleans_up() -> None:
-    postgres = StubPostgres(
-        [
-            completed(stdout=f"{_CONTAINER_ID}\n"),
-            completed(stdout="127.0.0.1:32768\n"),
-            completed(stdout="false\n"),
-            completed(stdout="database system is shut down\n"),
-            completed(),
-        ]
-    )
+    install_stub(monkeypatch, container)
 
     with pytest.raises(
-        RuntimeError, match="database system is shut down"
+        RuntimeError,
+        match="startup failed\nPostgreSQL cleanup also failed: cleanup failed",
     ):
-        postgres.start()
-
-    assert postgres.commands[-1][0] == ("rm", "--force", _CONTAINER_ID)
-
-
-def test_a_readiness_timeout_reports_logs_and_cleans_up(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(_postgres, "timeout_seconds", lambda *_: 0)
-    postgres = StubPostgres(
-        [
-            completed(stdout=f"{_CONTAINER_ID}\n"),
-            completed(stdout="127.0.0.1:32768\n"),
-            completed(stdout="still starting\n"),
-            completed(),
-        ]
-    )
-
-    with pytest.raises(RuntimeError, match="did not become ready"):
-        postgres.start()
-
-    assert postgres.commands[-1][0] == ("rm", "--force", _CONTAINER_ID)
-
-
-def test_a_schema_failure_reports_logs_and_cleans_up() -> None:
-    postgres = StubPostgres(
-        [
-            completed(stdout=f"{_CONTAINER_ID}\n"),
-            completed(stdout="127.0.0.1:32768\n"),
-            completed(stdout="true\n"),
-            completed(),
-            completed(returncode=3, stderr="syntax error"),
-            completed(stdout="ready to accept connections\n"),
-            completed(),
-        ]
-    )
-
-    with pytest.raises(RuntimeError, match="syntax error"):
-        postgres.start()
-
-    assert postgres.commands[-1][0] == ("rm", "--force", _CONTAINER_ID)
-
-
-def test_missing_docker_is_reported(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def missing(*args: Any, **kwargs: Any) -> None:
-        raise FileNotFoundError
-
-    monkeypatch.setattr(subprocess, "run", missing)
-
-    with pytest.raises(RuntimeError, match="docker command was not found"):
         Postgres().start()
+
+
+def test_schema_failure_reports_psql_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=3, output=b"syntax error")
+    )
+    install_stub(monkeypatch, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)syntax error.*ready to accept connections",
+    ):
+        Postgres().start()
+
+    assert container.stopped
+
+
+def test_cannot_start_postgres_twice(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer()
+    install_stub(monkeypatch, container)
+    postgres = Postgres().start()
+
+    with pytest.raises(RuntimeError, match="already been started"):
+        postgres.start()
+
+    postgres.close()
+
+
+def test_the_image_is_pinned_by_digest() -> None:
+    name, separator, digest = POSTGRES_IMAGE.partition("@")
+
+    assert name == "postgres:18.6-bookworm"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
 
 
 def test_the_schema_is_packaged_with_the_runner() -> None:

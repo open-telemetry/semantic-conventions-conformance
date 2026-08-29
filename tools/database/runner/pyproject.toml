@@ -7,7 +7,11 @@ name = "database-conformance"
 version = "0.1.0.dev0"
 description = "Conformance runs against the OpenTelemetry database semantic conventions."
 requires-python = ">=3.10"
-dependencies = ["opentelemetry-conformance"]
+dependencies = [
+  "docker >= 7, < 8",
+  "opentelemetry-conformance",
+  "testcontainers >= 4.15, < 5",
+]
 
 [project.entry-points.opentelemetry_conformance_runners]
 database-conformance = "database_conformance:database_session"
