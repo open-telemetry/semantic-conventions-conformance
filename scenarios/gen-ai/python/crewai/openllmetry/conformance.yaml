@@ -17,6 +17,9 @@ env:
   TRACELOOP_METRICS_ENABLED: "true"
 
 scenarios:
+  workflow:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/workflow.py
+
   invoke_agent:
     run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/invoke_agent.py
 

@@ -99,6 +99,114 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'flow.node.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.answer",
+      "context": {
+        "attribute_key": "flow.node.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'flow.node.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.answer",
+      "context": {
+        "attribute_key": "flow.node.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.answer",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.answer",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.answer",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Flow_<id>.answer' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.answer",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'flow_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.kickoff",
+      "context": {
+        "attribute_key": "flow_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'flow_inputs' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.kickoff",
+      "context": {
+        "attribute_key": "flow_inputs"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.kickoff",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.kickoff",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.kickoff",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Flow_<id>.kickoff' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Flow_<id>.kickoff",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "get_current_weather.run",

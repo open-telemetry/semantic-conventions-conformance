@@ -21,6 +21,9 @@ env:
   OTEL_TRACES_EXPORTER: otlp-strip-run-ids
 
 scenarios:
+  workflow:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/workflow.py
+
   invoke_agent:
     run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/invoke_agent.py
 
