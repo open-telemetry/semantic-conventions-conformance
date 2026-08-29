@@ -14,6 +14,9 @@ rootProject.name = "database-java-conformance"
 include("shared:jdbc:scenarios")
 include("shared:jdbc:opentelemetry-javaagent")
 include("shared:jdbc:opentelemetry-library")
+include("opensearch:rest-1.0:opentelemetry-javaagent")
+include("opensearch:rest-3.0:opentelemetry-javaagent")
+include("opensearch:java-3.0:opentelemetry-javaagent")
 
 fun shared(name: String, directory: String) {
     include(name)

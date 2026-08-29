@@ -13,8 +13,14 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _mariadb, _opensearch, _postgres
+from database_conformance._container import _pull_reference
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
+from database_conformance._opensearch import (
+    OPENSEARCH,
+    OPENSEARCH_IMAGE,
+    OpenSearch,
+)
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
 
@@ -91,7 +97,15 @@ def install_stub(
 
 
 @pytest.mark.parametrize(
-    ("module", "backend_type", "port", "expected_environment"),
+    (
+        "module",
+        "backend_type",
+        "port",
+        "expected_environment",
+        "bootstrap_marker",
+        "expected_user",
+        "expected_password",
+    ),
     [
         (
             _postgres,
@@ -102,6 +116,9 @@ def install_stub(
                 "POSTGRES_USER": "conformance",
                 "POSTGRES_PASSWORD": "conformance",
             },
+            b"CREATE",
+            "conformance",
+            "conformance",
         ),
         (
             _mariadb,
@@ -113,15 +130,37 @@ def install_stub(
                 "MARIADB_PASSWORD": "conformance",
                 "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
             },
+            b"CREATE",
+            "conformance",
+            "conformance",
+        ),
+        (
+            _opensearch,
+            OpenSearch,
+            9200,
+            {
+                "discovery.type": "single-node",
+                "DISABLE_INSTALL_DEMO_CONFIG": "true",
+                "DISABLE_SECURITY_PLUGIN": "true",
+                "OPENSEARCH_JAVA_OPTS": (
+                    "-Xms512m -Xmx512m -Dlog4j2.disable.jmx=true"
+                ),
+            },
+            b'"number_of_shards": 1',
+            "",
+            "",
         ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB],
+    backend_type: type[Postgres] | type[MariaDB] | type[OpenSearch],
     port: int,
     expected_environment: dict[str, str],
+    bootstrap_marker: bytes,
+    expected_user: str,
+    expected_password: str,
 ) -> None:
     container = StubContainer(port=port)
     install_stub(monkeypatch, module, container)
@@ -131,8 +170,8 @@ def test_starts_initializes_publishes_and_removes_database(
             "DATABASE_HOST": "127.0.0.1",
             "DATABASE_PORT": "32768",
             "DATABASE_NAME": "conformance",
-            "DATABASE_USER": "conformance",
-            "DATABASE_PASSWORD": "conformance",
+            "DATABASE_USER": expected_user,
+            "DATABASE_PASSWORD": expected_password,
         }
 
     assert container.started
@@ -140,10 +179,11 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.env == expected_environment
     assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
     assert container.transfers
-    schema, path = container.transfers[0]
+    bootstrap, path = container.transfers[0]
     assert path.startswith("/tmp/otel-conformance-")
-    assert b"CREATE" in schema
-    assert b"INSERT INTO" not in schema
+    assert bootstrap_marker in bootstrap
+    assert b"\r\n" not in bootstrap
+    assert b"INSERT INTO" not in bootstrap
     assert container.wait_strategy is not None
     assert container.exec_config is not None
 
@@ -176,19 +216,32 @@ def test_cleanup_failure_is_reported_with_start_failure(
         Postgres().start()
 
 
-def test_schema_failure_reports_psql_output_and_logs(
+@pytest.mark.parametrize(
+    ("module", "backend_type", "backend_name", "port"),
+    [
+        (_postgres, Postgres, "PostgreSQL", 5432),
+        (_opensearch, OpenSearch, "OpenSearch", 9200),
+    ],
+)
+def test_bootstrap_failure_reports_client_output_and_logs(
     monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[OpenSearch],
+    backend_name: str,
+    port: int,
 ) -> None:
     container = StubContainer(
-        exec_result=ExecResult(exit_code=3, output=b"syntax error")
+        exec_result=ExecResult(exit_code=3, output=b"syntax error"),
+        port=port,
     )
-    install_stub(monkeypatch, _postgres, container)
+    install_stub(monkeypatch, module, container)
 
     with pytest.raises(
         RuntimeError,
-        match=r"(?s)syntax error.*ready to accept connections",
+        match=rf"(?s)Could not bootstrap {backend_name}.*syntax error.*"
+        r"ready to accept connections",
     ):
-        Postgres().start()
+        backend_type().start()
 
     assert container.stopped
 
@@ -213,13 +266,27 @@ def test_the_image_is_pinned_by_digest() -> None:
     assert separator == "@"
     assert digest.startswith("sha256:")
 
+    name, separator, digest = OPENSEARCH_IMAGE.partition("@")
+    assert name == "opensearchproject/opensearch:3.8.0"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
     name, separator, digest = MARIADB_IMAGE.partition("@")
     assert name == "mariadb:11.8.9-noble"
     assert separator == "@"
     assert digest.startswith("sha256:")
 
 
-def test_the_schema_is_packaged_with_the_runner() -> None:
+def test_digest_pull_reference_omits_the_display_tag() -> None:
+    assert (
+        _pull_reference(
+            "registry.example.test:5000/database:3.8.0@sha256:1234"
+        )
+        == "registry.example.test:5000/database@sha256:1234"
+    )
+
+
+def test_the_bootstrap_resources_are_packaged_with_the_runner() -> None:
     schema = (
         resources.files("database_conformance")
         .joinpath("postgres.sql")
@@ -236,3 +303,25 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+
+    bootstrap = (
+        resources.files("database_conformance")
+        .joinpath("opensearch-bootstrap.sh")
+        .read_text(encoding="utf-8")
+    )
+    assert '"number_of_shards": 1' in bootstrap
+    assert '{"name":"alpha","description":"first conformance document"}' in (
+        bootstrap
+    )
+
+
+def test_opensearch_waits_for_cluster_health_before_bootstrap() -> None:
+    assert OPENSEARCH.ready_command == (
+        "curl",
+        "--fail",
+        "--silent",
+        "--show-error",
+        "http://127.0.0.1:9200/_cluster/health"
+        "?wait_for_status=yellow&timeout=1s",
+    )
+    assert OPENSEARCH.startup_timeout_seconds == 180.0

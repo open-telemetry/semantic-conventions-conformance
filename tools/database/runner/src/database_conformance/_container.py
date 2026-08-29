@@ -19,11 +19,19 @@ from testcontainers.core.wait_strategies import ExecWaitStrategy
 from opentelemetry.conformance._env import timeout_seconds
 
 DATABASE_HOST = "127.0.0.1"
-_STARTUP_TIMEOUT = ("OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", 60.0)
+_STARTUP_TIMEOUT_VARIABLE = "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT"
 _POLL_INTERVAL_SECONDS = 0.25
 
 _PortBinding = int | tuple[str, int] | None
 _DatabaseContainerT = TypeVar("_DatabaseContainerT", bound="DatabaseContainer")
+
+
+def _pull_reference(image: str) -> str:
+    tagged, separator, digest = image.partition("@")
+    if not separator:
+        return image
+    repository, tag_separator, _ = tagged.rpartition(":")
+    return f"{repository if tag_separator else tagged}@{digest}"
 
 
 class DatabaseBackendError(RuntimeError):
@@ -42,14 +50,15 @@ class BackendSpec:
     password: str
     environment: tuple[tuple[str, str], ...]
     ready_command: tuple[str, ...]
-    schema_resource: str
-    schema_path: str
-    schema_command: tuple[str, ...]
-    schema_environment: tuple[tuple[str, str], ...] = ()
+    bootstrap_resource: str
+    bootstrap_path: str
+    bootstrap_command: tuple[str, ...]
+    bootstrap_environment: tuple[tuple[str, str], ...] = ()
+    startup_timeout_seconds: float = 60.0
 
 
 class DatabaseContainer:
-    """Own one disposable database initialized from a packaged schema."""
+    """Own one disposable database initialized from a packaged resource."""
 
     def __init__(
         self,
@@ -82,22 +91,30 @@ class DatabaseContainer:
                 f"{self._spec.name} has already been started"
             )
 
-        schema = (
+        bootstrap = (
             resources.files("database_conformance")
-            .joinpath(self._spec.schema_resource)
+            .joinpath(self._spec.bootstrap_resource)
             .read_bytes()
+            .replace(b"\r\n", b"\n")
         )
         ready = (
             ExecWaitStrategy(list(self._spec.ready_command))
             .with_startup_timeout(
-                timedelta(seconds=timeout_seconds(*_STARTUP_TIMEOUT))
+                timedelta(
+                    seconds=timeout_seconds(
+                        _STARTUP_TIMEOUT_VARIABLE,
+                        self._spec.startup_timeout_seconds,
+                    )
+                )
             )
             .with_poll_interval(_POLL_INTERVAL_SECONDS)
         )
-        container = self._container_factory(self._spec.image)
+        container = self._container_factory(_pull_reference(self._spec.image))
         for key, value in self._spec.environment:
             container.with_env(key, value)
-        container.with_copy_into_container(schema, self._spec.schema_path)
+        container.with_copy_into_container(
+            bootstrap, self._spec.bootstrap_path
+        )
         container.waiting_for(ready)
 
         port_bindings = cast(dict[str, _PortBinding], container.ports)
@@ -107,7 +124,7 @@ class DatabaseContainer:
         try:
             container.start()
             self._published_port = container.get_exposed_port(self._spec.port)
-            self._apply_schema(container)
+            self._bootstrap(container)
         except BaseException as error:
             try:
                 self.close()
@@ -119,11 +136,11 @@ class DatabaseContainer:
             raise
         return self
 
-    def _apply_schema(self, container: DockerContainer) -> None:
+    def _bootstrap(self, container: DockerContainer) -> None:
         result = container.exec(
             ExecConfig(
-                command=list(self._spec.schema_command),
-                environment=dict(self._spec.schema_environment),
+                command=list(self._spec.bootstrap_command),
+                environment=dict(self._spec.bootstrap_environment),
             )
         )
         if result.exit_code == 0:
@@ -142,7 +159,7 @@ class DatabaseContainer:
         except DockerException as error:
             logs = f"Could not read {self._spec.name} logs: {error}"
         raise DatabaseBackendError(
-            f"Could not apply the {self._spec.name} schema; the client exited "
+            f"Could not bootstrap {self._spec.name}; the client exited "
             f"with {result.exit_code}\n{output}\n"
             f"--- {self._spec.name} logs ---\n{logs}"
         )

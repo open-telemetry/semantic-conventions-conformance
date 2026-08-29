@@ -20,10 +20,11 @@ Each conformance package has a `database.yaml` that selects its backend:
 backend: postgresql
 ```
 
-The supported values are `postgresql` and `mariadb`. Each session starts one
-pinned container, applies that backend's packaged SQL schema, and removes the
-container when the session closes. The schemas create the same logical objects
-but no rows; scenarios own any data their operations need.
+The supported values are `postgresql`, `mariadb`, and `opensearch`. Each
+session starts one digest-pinned container, applies its packaged bootstrap
+resource, and removes the container when the session closes. The SQL schemas
+create the same empty logical objects. The OpenSearch bootstrap creates a
+single-shard `conformance` index with two fixed documents.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -32,9 +33,9 @@ environment declarations:
 | --- | --- |
 | `DATABASE_HOST` | Loopback address published by Docker |
 | `DATABASE_PORT` | Docker-assigned host port |
-| `DATABASE_NAME` | Test database name |
-| `DATABASE_USER` | Test user |
-| `DATABASE_PASSWORD` | Test-only password |
+| `DATABASE_NAME` | Test database or index name |
+| `DATABASE_USER` | Test user, empty when the backend has no authentication |
+| `DATABASE_PASSWORD` | Test-only password, empty when authentication is disabled |
 
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
@@ -42,7 +43,8 @@ configuration from the same backend.
 
 The package gives each database client span one semantic-convention identity.
 PostgreSQL and MariaDB spans use `db.postgresql.client` and
-`db.mariadb.client`. Other SQL systems use `db.sql.client`, and non-SQL database
-clients use `db.client`.
+`db.mariadb.client`. Other SQL systems use `db.sql.client`. OpenSearch and
+other non-SQL systems use `db.client` because the pinned registry has no
+OpenSearch-specific span refinement.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

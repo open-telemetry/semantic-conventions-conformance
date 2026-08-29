@@ -30,9 +30,9 @@ MARIADB = BackendSpec(
         ("MARIADB_RANDOM_ROOT_PASSWORD", "yes"),
     ),
     ready_command=("healthcheck.sh", "--connect", "--innodb_initialized"),
-    schema_resource="mariadb.sql",
-    schema_path="/tmp/otel-conformance-mariadb.sql",
-    schema_command=(
+    bootstrap_resource="mariadb.sql",
+    bootstrap_path="/tmp/otel-conformance-mariadb.sql",
+    bootstrap_command=(
         "sh",
         "-c",
         "exec mariadb "
@@ -40,7 +40,7 @@ MARIADB = BackendSpec(
         f"--database={MARIADB_DATABASE} "
         "--binary-mode < /tmp/otel-conformance-mariadb.sql",
     ),
-    schema_environment=(("MYSQL_PWD", MARIADB_PASSWORD),),
+    bootstrap_environment=(("MYSQL_PWD", MARIADB_PASSWORD),),
 )
 
 

@@ -25,6 +25,7 @@ from opentelemetry.conformance import (
 from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
 from ._mariadb import MariaDB
+from ._opensearch import OpenSearch
 from ._postgres import Postgres
 
 _HERE = Path(__file__).parent
@@ -38,6 +39,7 @@ DOMAIN = Domain(
 
 _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
     "mariadb": MariaDB,
+    "opensearch": OpenSearch,
     "postgresql": Postgres,
 }
 

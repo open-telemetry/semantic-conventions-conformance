@@ -35,6 +35,12 @@ def test_a_non_sql_database_span_has_the_general_type() -> None:
     }
 
 
+def test_opensearch_uses_the_general_type_without_a_registry_refinement() -> None:
+    assert classify_span(
+        "search", "CLIENT", {"db.system.name": "opensearch"}
+    ) == {"db.client"}
+
+
 def test_an_in_memory_database_call_may_be_internal() -> None:
     assert classify_span(
         "SELECT", "INTERNAL", {"db.system.name": "h2database"}

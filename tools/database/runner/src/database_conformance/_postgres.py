@@ -39,9 +39,9 @@ POSTGRES = BackendSpec(
         "--dbname",
         POSTGRES_DATABASE,
     ),
-    schema_resource="postgres.sql",
-    schema_path="/tmp/otel-conformance-postgres.sql",
-    schema_command=(
+    bootstrap_resource="postgres.sql",
+    bootstrap_path="/tmp/otel-conformance-postgres.sql",
+    bootstrap_command=(
         "psql",
         "--no-psqlrc",
         "--set",
@@ -57,7 +57,7 @@ POSTGRES = BackendSpec(
         "--file",
         "/tmp/otel-conformance-postgres.sql",
     ),
-    schema_environment=(("PGPASSWORD", POSTGRES_PASSWORD),),
+    bootstrap_environment=(("PGPASSWORD", POSTGRES_PASSWORD),),
 )
 
 

@@ -89,9 +89,11 @@ def test_database_session_injects_backend_variables(
     ]
 
 
-def test_database_session_closes_mariadb_after_an_error(
+@pytest.mark.parametrize("backend_name", ["mariadb", "opensearch"])
+def test_database_session_closes_backend_after_an_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    backend_name: str,
 ) -> None:
     closed = False
 
@@ -112,7 +114,9 @@ def test_database_session_closes_mariadb_after_an_error(
         del directory, kwargs
         yield object()
 
-    monkeypatch.setitem(database_conformance._BACKENDS, "mariadb", StubBackend)
+    monkeypatch.setitem(
+        database_conformance._BACKENDS, backend_name, StubBackend
+    )
     monkeypatch.setattr(
         database_conformance,
         "DOMAIN",
@@ -120,7 +124,7 @@ def test_database_session_closes_mariadb_after_an_error(
     )
 
     (tmp_path / "database.yaml").write_text(
-        "backend: mariadb\n", encoding="utf-8"
+        f"backend: {backend_name}\n", encoding="utf-8"
     )
     with pytest.raises(RuntimeError, match="scenario failed"):
         with database_conformance.database_session(tmp_path):

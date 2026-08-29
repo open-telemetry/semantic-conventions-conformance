@@ -9,6 +9,9 @@ opentelemetry = "1.65.0"
 # different instrumentation from the agent scenarios.
 opentelemetry-instrumentation = "2.31.1"
 opentelemetry-instrumentation-alpha = "2.31.1-alpha"
+opensearch-java = "3.9.0"
+opensearch-rest-v1 = "2.19.6"
+opensearch-rest-v3 = "3.8.0"
 postgresql = "42.7.13"
 
 [libraries]
@@ -20,4 +23,7 @@ opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumen
 opentelemetry-instrumentation-jdbc = { module = "io.opentelemetry.instrumentation:opentelemetry-jdbc" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
+opensearch-java = { module = "org.opensearch.client:opensearch-java", version.ref = "opensearch-java" }
+opensearch-rest-v1 = { module = "org.opensearch.client:opensearch-rest-client", version.ref = "opensearch-rest-v1" }
+opensearch-rest-v3 = { module = "org.opensearch.client:opensearch-rest-client", version.ref = "opensearch-rest-v3" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }

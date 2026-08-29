@@ -1,0 +1,100 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+instrumented_library: opensearch-java
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+
+env:
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare opensearch:java-3.0:opentelemetry-javaagent
+
+scenarios:
+  cluster_health:
+    run: otel-conformance-java run --agent opensearch:java-3.0:opentelemetry-javaagent OpenSearchJava3JavaagentScenario cluster_health
+    spans:
+      - match:
+          attributes:
+            db.system.name: opensearch
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET /_cluster/health
+      - match:
+          attributes:
+            http.request.method: GET
+        expect:
+          count: 1
+          attributes:
+            http.response.status_code: 200
+            network.protocol.version: {present: true}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+            url.full: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - http.client.request.duration
+      - queueSize
+    events: []
+
+  get_document:
+    run: otel-conformance-java run --agent opensearch:java-3.0:opentelemetry-javaagent OpenSearchJava3JavaagentScenario get_document
+    spans:
+      - match:
+          attributes:
+            db.system.name: opensearch
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET /conformance/_doc/1
+      - match:
+          attributes:
+            http.request.method: GET
+        expect:
+          count: 1
+          attributes:
+            http.response.status_code: 200
+            network.protocol.version: {present: true}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+            url.full: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - http.client.request.duration
+      - queueSize
+    events: []
+
+  search:
+    run: otel-conformance-java run --agent opensearch:java-3.0:opentelemetry-javaagent OpenSearchJava3JavaagentScenario search
+    spans:
+      - match:
+          attributes:
+            db.system.name: opensearch
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: POST
+            db.query.text: '{"query":{"term":{"name":{"value":"?"}}}}'
+      - match:
+          attributes:
+            http.request.method: POST
+        expect:
+          count: 1
+          attributes:
+            http.response.status_code: 200
+            network.protocol.version: {present: true}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+            url.full: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - http.client.request.duration
+      - queueSize
+    events: []
