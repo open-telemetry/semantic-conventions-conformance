@@ -1,9 +1,10 @@
 """Ollama-compatible endpoints (chat and embeddings).
 
 Ollama has a wire protocol of its own rather than an OpenAI-compatible one:
-a streamed response is newline-delimited JSON rather than SSE, tool call
-arguments arrive as an object rather than a JSON string, and the answer's
-shape a structured request asks for is the ``format`` field itself.
+a streamed response is newline-delimited JSON rather than SSE, streaming is
+the default rather than something a request opts into, tool call arguments
+arrive as an object rather than a JSON string, and the answer's shape a
+structured request asks for is the ``format`` field itself.
 """
 
 import copy
@@ -114,7 +115,8 @@ def _stream(resp):
 def chat():
     body = request.get_json(silent=True) or {}
     resp = _chat_response(body)
-    if body.get("stream"):
+    # Ollama streams unless it is told not to, so an omitted field means yes.
+    if body.get("stream", True):
         return Response(_stream(resp), mimetype="application/x-ndjson")
     return resp
 
@@ -124,9 +126,10 @@ def embed():
     body = request.get_json(silent=True) or {}
     raw_input = body.get("input")
     inputs = raw_input if isinstance(raw_input, list) else [raw_input]
+    width = int(body.get("dimensions") or 256)
     return {
         "model": body.get("model", "nomic-embed-text"),
-        "embeddings": [[0.001] * 256 for _ in inputs],
+        "embeddings": [[0.001] * max(1, width) for _ in inputs],
         "total_duration": 1000000000,
         "load_duration": 100000000,
         "prompt_eval_count": 8 * len(inputs),

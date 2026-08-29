@@ -141,7 +141,11 @@ ENDPOINTS = [
         "ollama-chat",
         "post",
         "/api/chat",
-        {"model": "llama3.2", "messages": [{"role": "user", "content": "hi"}]},
+        {
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": False,
+        },
     ),
     (
         "ollama-embed",
@@ -951,6 +955,7 @@ def test_ollama_chat_calls_an_offered_tool(client):
         json={
             "model": "llama3.2",
             "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": False,
             "tools": [
                 {
                     "type": "function",
@@ -979,6 +984,7 @@ def test_ollama_chat_answers_once_the_tool_has_replied(client):
                 {"role": "user", "content": "weather in Seattle?"},
                 {"role": "tool", "content": "70 degrees"},
             ],
+            "stream": False,
             "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
         },
     )
@@ -1010,6 +1016,7 @@ def test_ollama_answers_a_format_request_with_that_schema(client):
         json={
             "model": "llama3.2",
             "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": False,
             "format": {
                 "type": "object",
                 "properties": {
@@ -1028,7 +1035,8 @@ def test_ollama_answers_a_format_request_with_that_schema(client):
 def test_ollama_embeddings_answer_one_vector_per_input(client):
     response = client.post(
         "/api/embed",
-        json={"model": "nomic-embed-text", "input": ["one", "two"]},
+        json={"model": "nomic-embed-text", "input": ["one", "two"], "dimensions": 64},
     )
     assert len(response.json["embeddings"]) == 2
+    assert len(response.json["embeddings"][0]) == 64
     assert response.json["prompt_eval_count"] == 16
