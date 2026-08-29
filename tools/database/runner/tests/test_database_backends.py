@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from importlib import resources
 from typing import Any
@@ -14,7 +15,8 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres, _redis, _sql_server
+from database_conformance import _cassandra, _mariadb, _postgres, _redis, _sql_server
+from database_conformance._cassandra import CASSANDRA_IMAGE, Cassandra
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
@@ -91,7 +93,7 @@ def install_stub(
     module: Any,
     container: StubContainer,
 ) -> None:
-    monkeypatch.setattr(module, "DockerContainer", lambda _: container)
+    monkeypatch.setattr(module, "DockerContainer", lambda _image: container)
 
 
 @pytest.mark.parametrize(
@@ -105,6 +107,37 @@ def install_stub(
         "expected_initialization",
     ),
     [
+        (
+            _cassandra,
+            Cassandra,
+            9042,
+            {
+                "CASSANDRA_CLUSTER_NAME": "otel-conformance",
+                "CASSANDRA_DC": "datacenter1",
+                "CASSANDRA_NUM_TOKENS": "1",
+                "MAX_HEAP_SIZE": "256M",
+                "HEAP_NEWSIZE": "64M",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "",
+                "DATABASE_PASSWORD": "",
+                "DATABASE_LOCAL_DATACENTER": "datacenter1",
+            },
+            ["/tmp/otel-conformance-cassandra.cql"],
+            ExecConfig(
+                command=[
+                    "cqlsh",
+                    "127.0.0.1",
+                    "9042",
+                    "--file",
+                    "/tmp/otel-conformance-cassandra.cql",
+                ],
+                environment={},
+            ),
+        ),
         (
             _postgres,
             Postgres,
@@ -222,10 +255,7 @@ def install_stub(
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres]
-    | type[MariaDB]
-    | type[Redis]
-    | type[SQLServer],
+    backend_type: Callable[[], DatabaseContainer],
     port: int,
     expected_environment: dict[str, str],
     expected_variables: dict[str, str],
@@ -318,6 +348,7 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+<<<<<<< HEAD
 def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -332,10 +363,27 @@ def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
         match=r"(?s)Incorrect syntax.*ready to accept connections",
     ):
         SQLServer().start()
+=======
+def test_cassandra_schema_failure_reports_cqlsh_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=2, output=b"invalid CQL"),
+        port=9042,
+    )
+    install_stub(monkeypatch, _cassandra, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)invalid CQL.*ready to accept connections",
+    ):
+        Cassandra().start()
+>>>>>>> bb8fb59c (Add Java Cassandra conformance)
 
     assert container.stopped
 
 
+<<<<<<< HEAD
 def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
@@ -355,6 +403,8 @@ def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     assert container.stopped
 
 
+=======
+>>>>>>> bb8fb59c (Add Java Cassandra conformance)
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -380,6 +430,11 @@ def test_cannot_start_postgres_twice(
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
 
+    name, separator, digest = CASSANDRA_IMAGE.partition("@")
+    assert name == "cassandra:5.0.9"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -401,8 +456,17 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
     schema = (
         resources.files("database_conformance")
+<<<<<<< HEAD
         .joinpath("sql_server.sql")
         .read_text(encoding="utf-8")
     )
     assert "CREATE TABLE [conformance].[items]" in schema
     assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
+=======
+        .joinpath("cassandra.cql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE KEYSPACE conformance" in schema
+    assert "CREATE TABLE conformance.items" in schema
+    assert "INSERT INTO" not in schema
+>>>>>>> bb8fb59c (Add Java Cassandra conformance)

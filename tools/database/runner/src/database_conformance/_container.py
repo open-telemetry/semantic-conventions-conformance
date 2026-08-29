@@ -45,6 +45,8 @@ class BackendSpec:
     schema_copy: tuple[str, str] | None
     initialize_command: tuple[str, ...] | None
     initialize_environment: tuple[tuple[str, str], ...] = ()
+    variables: tuple[tuple[str, str], ...] = ()
+    startup_timeout: float = _STARTUP_TIMEOUT[1]
 
 
 class DatabaseContainer:
@@ -67,13 +69,15 @@ class DatabaseContainer:
             raise DatabaseBackendError(
                 f"{self._spec.name} has not been started"
             )
-        return {
+        variables = {
             "DATABASE_HOST": DATABASE_HOST,
             "DATABASE_PORT": str(self._published_port),
             "DATABASE_NAME": self._spec.database,
             "DATABASE_USER": self._spec.user,
             "DATABASE_PASSWORD": self._spec.password,
         }
+        variables.update(self._spec.variables)
+        return variables
 
     def start(self: _DatabaseContainerT) -> _DatabaseContainerT:
         if self._container is not None:
@@ -84,7 +88,11 @@ class DatabaseContainer:
         ready = (
             ExecWaitStrategy(list(self._spec.ready_command))
             .with_startup_timeout(
-                timedelta(seconds=timeout_seconds(*_STARTUP_TIMEOUT))
+                timedelta(
+                    seconds=timeout_seconds(
+                        _STARTUP_TIMEOUT[0], self._spec.startup_timeout
+                    )
+                )
             )
             .with_poll_interval(_POLL_INTERVAL_SECONDS)
         )

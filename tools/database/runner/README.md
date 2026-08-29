@@ -39,6 +39,7 @@ environment declarations:
 | `DATABASE_NAME`     | Test database name or logical database index |
 | `DATABASE_USER`     | Test user                                    |
 | `DATABASE_PASSWORD` | Test-only password                           |
+| `DATABASE_LOCAL_DATACENTER` | Cassandra local datacenter |
 
 Connection fields let each language construct its native client configuration.
 SQL packages select a contract under

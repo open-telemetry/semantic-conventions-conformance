@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from ._cassandra import Cassandra
 from ._container import DatabaseContainer
 from ._mariadb import MariaDB
 from ._postgres import Postgres
@@ -23,6 +24,7 @@ class BackendRegistration:
 
 
 BACKENDS = {
+    "cassandra": BackendRegistration(Cassandra, "cassandra", "db.cassandra.client"),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"
