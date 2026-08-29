@@ -40,8 +40,8 @@ Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
-The package classifies each span once at its most specific semantic-convention
-identity. PostgreSQL and MariaDB spans use `db.postgresql.client` and
+The package gives each database client span one semantic-convention identity.
+PostgreSQL and MariaDB spans use `db.postgresql.client` and
 `db.mariadb.client`. Other SQL systems use `db.sql.client`, and non-SQL database
 clients use `db.client`.
 
