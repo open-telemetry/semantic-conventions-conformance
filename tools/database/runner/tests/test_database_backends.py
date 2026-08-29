@@ -39,11 +39,13 @@ class StubContainer:
         *,
         start_error: BaseException | None = None,
         stop_error: Exception | None = None,
+        log_error: Exception | None = None,
         exec_result: ExecResult | None = None,
         port: int = 5432,
     ) -> None:
         self.start_error = start_error
         self.stop_error = stop_error
+        self.log_error = log_error
         self.exec_result = exec_result or ExecResult()
         self.port = port
         self.env: dict[str, str] = {}
@@ -88,6 +90,8 @@ class StubContainer:
         return self.exec_result
 
     def get_logs(self) -> tuple[bytes, bytes]:
+        if self.log_error is not None:
+            raise self.log_error
         return b"ready to accept connections\n", b""
 
     def stop(self) -> None:
@@ -258,6 +262,39 @@ def test_start_failure_cleans_up_the_container(
         RuntimeError,
         match=r"(?s)Could not start PostgreSQL: startup failed.*"
         r"ready to accept connections",
+    ):
+        Postgres().start()
+
+    assert container.stopped
+
+
+@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit])
+def test_start_control_flow_exception_is_preserved_after_cleanup(
+    monkeypatch: pytest.MonkeyPatch,
+    error_type: type[BaseException],
+) -> None:
+    container = StubContainer(start_error=error_type())
+    install_stub(monkeypatch, _postgres, container)
+
+    with pytest.raises(error_type):
+        Postgres().start()
+
+    assert container.stopped
+
+
+def test_start_failure_survives_unavailable_container_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        start_error=RuntimeError("startup failed"),
+        log_error=RuntimeError("container not started"),
+    )
+    install_stub(monkeypatch, _postgres, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not start PostgreSQL: startup failed.*"
+        r"Could not read PostgreSQL logs: container not started",
     ):
         Postgres().start()
 

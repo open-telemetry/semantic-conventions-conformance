@@ -117,7 +117,11 @@ class DatabaseContainer:
             self._published_port = container.get_exposed_port(self._spec.port)
             self._apply_schema(container)
         except BaseException as error:
-            failure = self._failure_message(container, error)
+            failure = (
+                self._failure_message(container, error)
+                if isinstance(error, Exception)
+                else str(error)
+            )
             try:
                 self.close()
             except DockerException as cleanup_error:
@@ -125,7 +129,9 @@ class DatabaseContainer:
                     f"{failure}\n{self._spec.name} cleanup also failed: "
                     f"{cleanup_error}"
                 ) from error
-            if isinstance(error, DatabaseBackendError):
+            if not isinstance(error, Exception) or isinstance(
+                error, DatabaseBackendError
+            ):
                 raise
             raise DatabaseBackendError(failure) from error
         return self
@@ -149,7 +155,7 @@ class DatabaseContainer:
                 .decode(encoding="utf-8", errors="replace")
                 .strip()
             )
-        except DockerException as log_error:
+        except Exception as log_error:
             return f"Could not read {self._spec.name} logs: {log_error}"
 
     def _apply_schema(self, container: DockerContainer) -> None:
