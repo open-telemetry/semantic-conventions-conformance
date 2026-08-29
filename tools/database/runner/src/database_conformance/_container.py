@@ -42,8 +42,8 @@ class BackendSpec:
     password: str
     environment: tuple[tuple[str, str], ...]
     ready_command: tuple[str, ...]
-    schema_resource: str
-    schema_path: str
+    schema_resource: str | None
+    schema_path: str | None
     schema_command: tuple[str, ...]
     schema_environment: tuple[tuple[str, str], ...] = ()
 
@@ -82,11 +82,6 @@ class DatabaseContainer:
                 f"{self._spec.name} has already been started"
             )
 
-        schema = (
-            resources.files("database_conformance")
-            .joinpath(self._spec.schema_resource)
-            .read_bytes()
-        )
         ready = (
             ExecWaitStrategy(list(self._spec.ready_command))
             .with_startup_timeout(
@@ -97,7 +92,18 @@ class DatabaseContainer:
         container = self._container_factory(self._spec.image)
         for key, value in self._spec.environment:
             container.with_env(key, value)
-        container.with_copy_into_container(schema, self._spec.schema_path)
+        if self._spec.schema_resource is not None:
+            if self._spec.schema_path is None:
+                raise DatabaseBackendError(
+                    f"{self._spec.name} has an initialization resource "
+                    "without a container path"
+                )
+            schema = (
+                resources.files("database_conformance")
+                .joinpath(self._spec.schema_resource)
+                .read_bytes()
+            )
+            container.with_copy_into_container(schema, self._spec.schema_path)
         container.waiting_for(ready)
 
         port_bindings = cast(dict[str, _PortBinding], container.ports)

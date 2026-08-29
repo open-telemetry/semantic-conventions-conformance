@@ -13,9 +13,10 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _mariadb, _postgres, _redis
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
+from database_conformance._redis import REDIS_IMAGE, Redis
 
 
 @dataclass
@@ -114,12 +115,18 @@ def install_stub(
                 "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
             },
         ),
+        (
+            _redis,
+            Redis,
+            6379,
+            {},
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB],
+    backend_type: type[Postgres] | type[MariaDB] | type[Redis],
     port: int,
     expected_environment: dict[str, str],
 ) -> None:
@@ -130,20 +137,29 @@ def test_starts_initializes_publishes_and_removes_database(
         assert database.variables == {
             "DATABASE_HOST": "127.0.0.1",
             "DATABASE_PORT": "32768",
-            "DATABASE_NAME": "conformance",
-            "DATABASE_USER": "conformance",
-            "DATABASE_PASSWORD": "conformance",
+            "DATABASE_NAME": "0" if backend_type is Redis else "conformance",
+            "DATABASE_USER": "default" if backend_type is Redis else "conformance",
+            "DATABASE_PASSWORD": "" if backend_type is Redis else "conformance",
         }
 
     assert container.started
     assert container.stopped
     assert container.env == expected_environment
     assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
-    assert container.transfers
-    schema, path = container.transfers[0]
-    assert path.startswith("/tmp/otel-conformance-")
-    assert b"CREATE" in schema
-    assert b"INSERT INTO" not in schema
+    if backend_type is Redis:
+        assert container.transfers == []
+        assert container.exec_config is not None
+        assert container.exec_config.command[-3:] == [
+            "SET",
+            "conformance:bootstrap",
+            "ready",
+        ]
+    else:
+        assert container.transfers
+        schema, path = container.transfers[0]
+        assert path.startswith("/tmp/otel-conformance-")
+        assert b"CREATE" in schema
+        assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
 
@@ -215,6 +231,11 @@ def test_the_image_is_pinned_by_digest() -> None:
 
     name, separator, digest = MARIADB_IMAGE.partition("@")
     assert name == "mariadb:11.8.9-noble"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
+    name, separator, digest = REDIS_IMAGE.partition("@")
+    assert name == "redis:8.2.1-bookworm"
     assert separator == "@"
     assert digest.startswith("sha256:")
 

@@ -3,6 +3,8 @@
 
 [versions]
 mariadb = "3.5.10"
+jedis = "8.0.1"
+lettuce = "7.7.0.RELEASE"
 opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
@@ -10,14 +12,23 @@ opentelemetry = "1.65.0"
 opentelemetry-instrumentation = "2.31.1"
 opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 postgresql = "42.7.13"
+rediscala = "1.17.0"
+redisson = "4.7.0"
+scala = "2.13.16"
 
 [libraries]
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
+jedis = { module = "redis.clients:jedis", version.ref = "jedis" }
+lettuce = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
 opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
 opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
 opentelemetry-instrumentation-jdbc = { module = "io.opentelemetry.instrumentation:opentelemetry-jdbc" }
+opentelemetry-instrumentation-lettuce = { module = "io.opentelemetry.instrumentation:opentelemetry-lettuce-5.1" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+rediscala = { module = "io.github.rediscala:rediscala_2.13", version.ref = "rediscala" }
+redisson = { module = "org.redisson:redisson", version.ref = "redisson" }
+scala-library = { module = "org.scala-lang:scala-library", version.ref = "scala" }
