@@ -3,8 +3,9 @@
 
 """The coverage model: what a registry declares, per signal and entity.
 
-Weaver resolves a registry into one JSON file. Refinements keep their own ids, so a classifier can select a provider-specific
-definition without counting its attributes as coverage of the base signal::
+Weaver resolves a registry into one JSON file. Span refinements keep their own
+ids, so a classifier can select a provider-specific definition without
+counting its attributes as coverage of the base signal::
 
     {"spans":    {"http.server": {"kind": "server", "attributes": {name: level}}},
      "events":   {name: {"attributes": {name: level}}},

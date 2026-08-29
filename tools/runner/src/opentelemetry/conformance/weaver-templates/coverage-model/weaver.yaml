@@ -6,8 +6,9 @@
 # the levels are for readers of the model, since a missing required attribute
 # is a weaver violation rather than a coverage gap.
 #
-# Refinements keep their own ids. A classifier can select the most specific
-# applicable definition without attributing its fields to the base signal.
+# Span refinements keep their own ids. A classifier can select the most
+# specific applicable definition without attributing its fields to the base
+# signal.
 templates:
   - template: "coverage-model.json.j2"
     application_mode: single
