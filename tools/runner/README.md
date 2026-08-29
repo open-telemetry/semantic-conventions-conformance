@@ -224,6 +224,8 @@ scenarios:
           count: 1
     metrics:
       - gen_ai.client.operation.duration
+    allowed_metrics:
+      - otlp.exporter.seen
     events: []
 
   tool_calling:
@@ -262,7 +264,9 @@ called two *different* tools, without pinning down which.
 `spans`, `metrics` and `events` follow the same rule. A key you leave out is
 **not checked** — a scenario with no expectations only has to run cleanly. A
 key you write is checked exactly: nothing missing, nothing extra, including
-when empty — `events: []` means "emits no events".
+when empty — `events: []` means "emits no events". `allowed_metrics` lists
+metrics that may appear in addition to the required `metrics`; they are not
+required and other undeclared metrics still fail the scenario.
 
 Several implementations can share telemetry expectations while keeping their
 commands and configuration local. Point `scenario_contract` at a YAML file

@@ -162,6 +162,7 @@ class ScenarioSpec:
     events: tuple[str, ...] | None
     expected_violations: tuple[ExpectedViolation, ...]
     inherited_violations: tuple[ExpectedViolation, ...] = ()
+    allowed_metrics: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -440,7 +441,15 @@ def _parse_scenario(
     scenario = _require_mapping(value or {}, where)
     _check_keys(
         scenario,
-        ("env", "run", "spans", "metrics", "events", "expected_violations"),
+        (
+            "env",
+            "run",
+            "spans",
+            "metrics",
+            "allowed_metrics",
+            "events",
+            "expected_violations",
+        ),
         where,
     )
     spans = (
@@ -456,6 +465,11 @@ def _parse_scenario(
         raise SpecError(
             f"{where}: run is required — name the command that runs this "
             "scenario, e.g. 'otel-conformance-python <scenario>.py'"
+        )
+    if "allowed_metrics" in scenario and "metrics" not in scenario:
+        raise SpecError(
+            f"{where}.allowed_metrics: metrics must be declared when allowing "
+            "additional metrics"
         )
     own = tuple(
         _parse_violation(violation, f"{where}.expected_violations[{index}]")
@@ -481,6 +495,9 @@ def _parse_scenario(
         metrics=_parse_string_list(scenario["metrics"], f"{where}.metrics")
         if "metrics" in scenario
         else None,
+        allowed_metrics=_parse_string_list(
+            scenario.get("allowed_metrics"), f"{where}.allowed_metrics"
+        ),
         events=_parse_string_list(scenario["events"], f"{where}.events")
         if "events" in scenario
         else None,

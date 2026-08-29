@@ -48,6 +48,7 @@ def test_minimal_spec_leaves_every_expectation_unchecked(
     assert scenario.run == ("python", "inference.py")
     assert scenario.spans is None
     assert scenario.metrics is None
+    assert scenario.allowed_metrics == ()
     assert scenario.events is None
     assert scenario.expected_violations == ()
 
@@ -99,6 +100,39 @@ def test_declared_but_empty_is_checked_exactly(tmp_path: Path) -> None:
     assert scenario.spans == ()
     assert scenario.metrics == ()
     assert scenario.events == ()
+
+
+def test_allowed_metrics_are_parsed(tmp_path: Path) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            MINIMAL
+            + """
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+""",
+        )
+    )
+
+    scenario = spec.scenarios["inference"]
+    assert scenario.metrics == ("db.client.operation.duration",)
+    assert scenario.allowed_metrics == ("queueSize",)
+
+
+def test_allowed_metrics_require_metric_expectations(tmp_path: Path) -> None:
+    with pytest.raises(SpecError, match="metrics must be declared"):
+        load_spec(
+            write(
+                tmp_path,
+                MINIMAL
+                + """
+    allowed_metrics:
+      - queueSize
+""",
+            )
+        )
 
 
 def test_scenarios_keeps_declaration_order(tmp_path: Path) -> None:
