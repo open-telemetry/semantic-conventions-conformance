@@ -1115,6 +1115,47 @@ def test_cohere_chat_streams_the_same_answer_it_would_return(client):
     assert events[-1]["delta"]["finish_reason"] == "COMPLETE"
 
 
+def test_cohere_streams_a_tool_call_it_would_have_returned(client):
+    """The streamed call has to reassemble into the non-streamed one."""
+    streamed = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": True,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    ).get_data(as_text=True)
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.splitlines()
+        if line.startswith("data: ")
+    ]
+    by_type = {event["type"]: event for event in events}
+    assert "tool-plan-delta" in by_type
+    start = by_type["tool-call-start"]["delta"]["message"]["tool_calls"]
+    assert start["function"]["name"] == "get_current_weather"
+    arguments = "".join(
+        event["delta"]["message"]["tool_calls"]["function"]["arguments"]
+        for event in events
+        if event["type"] in ("tool-call-start", "tool-call-delta")
+    )
+    assert json.loads(arguments) == {"location": "Seattle"}
+    assert "tool-call-end" in by_type
+    assert events[-1]["delta"]["finish_reason"] == "TOOL_CALL"
+
+
 def test_cohere_answers_a_json_object_request_with_its_schema(client):
     response = client.post(
         "/v2/chat",
