@@ -258,11 +258,12 @@ def test_elasticsearch_schema_failure_reports_curl_output_and_logs(
 
 def test_elasticsearch_readiness_waits_for_a_yellow_cluster() -> None:
     assert ELASTICSEARCH.ready_command == (
-        "curl",
-        "--fail",
-        "--silent",
-        "http://127.0.0.1:9200/_cluster/health"
-        "?wait_for_status=yellow&timeout=1s",
+        "sh",
+        "-c",
+        "curl --fail --silent "
+        "'http://127.0.0.1:9200/_cluster/health"
+        "?wait_for_status=yellow&timeout=1s' "
+        "| grep --quiet '\"timed_out\":false'",
     )
 
 
@@ -292,10 +293,7 @@ def test_the_image_is_pinned_by_digest() -> None:
     assert digest.startswith("sha256:")
 
     name, separator, digest = ELASTICSEARCH_IMAGE.partition("@")
-    assert (
-        name
-        == "docker.elastic.co/elasticsearch/elasticsearch:7.17.29"
-    )
+    assert name == "docker.elastic.co/elasticsearch/elasticsearch:7.17.29"
     assert separator == "@"
     assert digest.startswith("sha256:")
 

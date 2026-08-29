@@ -28,10 +28,12 @@ ELASTICSEARCH = BackendSpec(
         ("ES_JAVA_OPTS", "-Xms256m -Xmx256m"),
     ),
     ready_command=(
-        "curl",
-        "--fail",
-        "--silent",
-        "http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=1s",
+        "sh",
+        "-c",
+        "curl --fail --silent "
+        "'http://127.0.0.1:9200/_cluster/health"
+        "?wait_for_status=yellow&timeout=1s' "
+        "| grep --quiet '\"timed_out\":false'",
     ),
     schema_resource="elasticsearch.json",
     schema_path="/tmp/otel-conformance-elasticsearch.json",
