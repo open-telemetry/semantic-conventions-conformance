@@ -18,11 +18,11 @@ All Go modules in this repository require Go 1.25. Their current OpenTelemetry
 dependencies require the same version, and CI selects the toolchain from this
 directory's `go.mod`.
 
-`net-http/scenarios/` is the workload, and it imports no OpenTelemetry at all.
-The per-instrumentation `main` packages under `net-http/otelhttp/` are what
-attach `otelhttp` and start the SDK. The difference between two
-instrumentations of one library should be visible as the code that differs, and
-nothing else.
+Each `<library>/scenarios/` package is the workload, and it imports no
+OpenTelemetry. The per-instrumentation `main` packages attach `otelhttp`,
+`otelecho`, `otelgin`, `otelmux`, or `otelrestful` and start the SDK. The
+difference between instrumentations should be visible as the code that differs,
+and nothing else.
 
 Go's `main` package is a directory, so a launch package and its
 `conformance.yaml` land in the same directory naturally, and `<side>` is that
@@ -30,8 +30,9 @@ directory rather than a name inside a build file.
 
 ## Routes
 
-`net/http`'s `ServeMux` takes the method and the path template in the pattern
-itself, so the contract's routes are declared in net/http's own model:
+Every workload declares the contract's routes in its framework's native model.
+For example, `net/http`'s `ServeMux` takes the method and path template in the
+pattern itself:
 
 ```go
 mux.Handle("GET /users/{userId}", answer())
@@ -51,6 +52,10 @@ pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/go
 otel-conformance scenarios/http/go/net-http/otelhttp/client
 otel-conformance scenarios/http/go/net-http/otelhttp/server
+otel-conformance scenarios/http/go/echo/otelecho/server
+otel-conformance scenarios/http/go/gin/otelgin/server
+otel-conformance scenarios/http/go/gorilla-mux/otelmux/server
+otel-conformance scenarios/http/go/go-restful/otelrestful/server
 ```
 
 Every Go package is built and started the same way, so
