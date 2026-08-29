@@ -22,7 +22,7 @@ curl --fail --silent --show-error \
   }' \
   "$base_url/conformance"
 
-printf '%s\n' \
+bulk_response=$(printf '%s\n' \
   '{"index":{"_id":"1"}}' \
   '{"name":"alpha","description":"first conformance document"}' \
   '{"index":{"_id":"2"}}' \
@@ -31,4 +31,11 @@ printf '%s\n' \
     --request POST \
     --header 'Content-Type: application/x-ndjson' \
     --data-binary @- \
-    "$base_url/conformance/_bulk?refresh=wait_for"
+    "$base_url/conformance/_bulk?refresh=wait_for")
+
+if ! printf '%s\n' "$bulk_response" |
+  grep -qE '"errors"[[:space:]]*:[[:space:]]*false'; then
+  printf 'OpenSearch bulk request reported item failures:\n%s\n' \
+    "$bulk_response" >&2
+  exit 1
+fi
