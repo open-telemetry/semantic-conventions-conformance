@@ -18,6 +18,7 @@ SCHEMA = {
         "conditions": {"enum": ["sunny", "cloudy", "rainy"]},
     },
     "required": ["location", "temperature", "conditions"],
+    "additionalProperties": False,
 }
 
 chat(
