@@ -61,12 +61,11 @@ A Python instrumentation has nothing to build. Its workload is a module in
 `pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
 `scenario.py` that turns it on before handing the workload to the harness.
 
-In Rust the split is between crates. Its plain workload crates hold Actix
-Web's native routes and the awc request sequence without importing
-OpenTelemetry. The instrumentation-specific binary crates install
-`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
-workspace at `rust/` includes the shared crates under `tools/` and commits one
-lockfile for all of them.
+In Rust the split is between crates. Its plain workload crates hold native
+Actix Web and Axum/Tower routes and the awc request sequence without importing
+OpenTelemetry. The instrumentation-specific binary crates install their
+middleware around those workloads. One Cargo workspace at `rust/` includes the
+shared crates under `tools/` and commits one lockfile for all of them.
 
 ## The scenario contract
 
@@ -149,6 +148,7 @@ otel-conformance scenarios/http/python/urllib3/opentelemetry-urllib3/client
 otel-conformance scenarios/http/python/wsgi/opentelemetry-wsgi/server
 otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
 otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
+otel-conformance scenarios/http/rust/tower/opentelemetry-instrumentation-tower/server
 ```
 
 Every Java package is built and started the same way, so
