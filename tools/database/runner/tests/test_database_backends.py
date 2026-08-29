@@ -13,8 +13,9 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _mariadb, _mysql, _postgres
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
+from database_conformance._mysql import MYSQL_IMAGE, MySQL
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
 
@@ -114,12 +115,23 @@ def install_stub(
                 "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
             },
         ),
+        (
+            _mysql,
+            MySQL,
+            3306,
+            {
+                "MYSQL_DATABASE": "conformance",
+                "MYSQL_USER": "conformance",
+                "MYSQL_PASSWORD": "conformance",
+                "MYSQL_RANDOM_ROOT_PASSWORD": "yes",
+            },
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB],
+    backend_type: type[Postgres] | type[MariaDB] | type[MySQL],
     port: int,
     expected_environment: dict[str, str],
 ) -> None:
@@ -176,19 +188,27 @@ def test_cleanup_failure_is_reported_with_start_failure(
         Postgres().start()
 
 
-def test_schema_failure_reports_psql_output_and_logs(
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port"),
+    [(_postgres, Postgres, 5432), (_mysql, MySQL, 3306)],
+)
+def test_schema_failure_reports_client_output_and_logs(
     monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[MySQL],
+    port: int,
 ) -> None:
     container = StubContainer(
-        exec_result=ExecResult(exit_code=3, output=b"syntax error")
+        exec_result=ExecResult(exit_code=3, output=b"syntax error"),
+        port=port,
     )
-    install_stub(monkeypatch, _postgres, container)
+    install_stub(monkeypatch, module, container)
 
     with pytest.raises(
         RuntimeError,
         match=r"(?s)syntax error.*ready to accept connections",
     ):
-        Postgres().start()
+        backend_type().start()
 
     assert container.stopped
 
@@ -218,6 +238,11 @@ def test_the_image_is_pinned_by_digest() -> None:
     assert separator == "@"
     assert digest.startswith("sha256:")
 
+    name, separator, digest = MYSQL_IMAGE.partition("@")
+    assert name == "mysql:9.7.2-oraclelinux9"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -236,3 +261,11 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("mysql.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE TABLE IF NOT EXISTS items" in schema
+    assert "CREATE PROCEDURE noop()" in schema

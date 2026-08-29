@@ -145,6 +145,42 @@ def test_database_session_closes_mariadb_after_an_error(
     assert closed
 
 
+def test_database_session_dispatches_mysql(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    entered = False
+
+    class StubBackend:
+        variables: dict[str, str] = {}
+
+        def __enter__(self) -> StubBackend:
+            nonlocal entered
+            entered = True
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            pass
+
+    @contextmanager
+    def stub_session(
+        directory: Path | str, **kwargs: Any
+    ) -> Generator[object, None, None]:
+        del directory, kwargs
+        yield object()
+
+    monkeypatch.setitem(database_conformance._BACKENDS, "mysql", StubBackend)
+    monkeypatch.setattr(
+        database_conformance,
+        "DOMAIN",
+        SimpleNamespace(session=stub_session),
+    )
+    spec = _write_spec(tmp_path, "  backend: mysql")
+
+    with database_conformance.database_session(tmp_path, spec=spec):
+        assert entered
+
+
 @pytest.mark.parametrize(
     ("runner_config", "message"),
     [
