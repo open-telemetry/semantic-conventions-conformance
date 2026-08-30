@@ -16,15 +16,23 @@ from http_conformance import DOMAIN
 from opentelemetry.conformance import WeaverNotInstalledError, check_weaver
 
 _POLICIES = Path(__file__).parents[1] / "src/http_conformance/policies"
-_HTTP_POLICY_IDS = {"http_route_not_present", "http_span_name_format"}
+_HTTP_POLICY_IDS = {
+    "http_route_not_present",
+    "http_span_name_format",
+    "required_attribute_not_present",
+}
 
 
 def _server_span(
-    name: str, route: str | None = None, method: str = "GET"
+    name: str,
+    route: str | None = None,
+    method: str = "GET",
+    path: str = "/health",
+    query: str | None = None,
 ) -> dict[str, Any]:
     attributes: dict[str, object] = {
         "http.request.method": method,
-        "url.path": "/health",
+        "url.path": path,
         "url.scheme": "http",
         "client.address": "127.0.0.1",
         "network.protocol.version": "1.1",
@@ -32,6 +40,8 @@ def _server_span(
     }
     if route is not None:
         attributes["http.route"] = route
+    if query is not None:
+        attributes["url.query"] = query
     return _span(name, "server", attributes)
 
 
@@ -99,6 +109,17 @@ def policy_advice(
                 _client_span(
                     "GET /users/123",
                     template="/users/{id}",
+                ),
+                _server_span(
+                    "GET /users/{query}",
+                    route="/users/{query}",
+                    path="/users/456",
+                ),
+                _server_span(
+                    "GET /users/{with_query}",
+                    route="/users/{with_query}",
+                    path="/users/456",
+                    query="fields=name&verbose=true",
                 ),
             ]
         ),
@@ -212,3 +233,21 @@ def test_client_target_mismatch_reports_span_name(
     assert set(policy_advice[("client", "GET /users/123")]) == {
         "http_span_name_format"
     }
+
+
+def test_contract_query_request_requires_url_query(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+) -> None:
+    advice = policy_advice[("server", "GET /users/{query}")]
+
+    assert set(advice) == {"required_attribute_not_present"}
+    assert advice["required_attribute_not_present"]["context"] == {
+        "attribute_key": "url.query",
+        "kind": "server",
+    }
+
+
+def test_contract_query_request_with_url_query_has_no_finding(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+) -> None:
+    assert policy_advice[("server", "GET /users/{with_query}")] == {}

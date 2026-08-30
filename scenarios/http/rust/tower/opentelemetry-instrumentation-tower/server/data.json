@@ -158,6 +158,16 @@
       }
     },
     {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET /users/{user_id}' is missing required attribute 'url.query' for contract request '/users/456?fields=name&verbose=true'",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id}",
+      "context": {
+        "attribute_key": "url.query",
+        "kind": "server"
+      }
+    },
+    {
       "id": "recommended_attribute_not_present",
       "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
       "signal_type": "span",
