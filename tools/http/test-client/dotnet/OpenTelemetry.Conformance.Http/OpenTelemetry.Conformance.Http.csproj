@@ -9,9 +9,9 @@
     <EmbeddedResource Include="../../contract.json" LogicalName="otel-http-contract.json" />
   </ItemGroup>
 
-  <!-- The lookup and the JSON parsing are how this project reads the contract
-       rather than API a scenario reaches for, so the tests that cover them
-       reach in through `InternalsVisibleTo` rather than through public API. -->
+  <!-- The lookup is how this project reads the contract rather than API a
+       scenario reaches for, so the tests that cover it reach in through
+       `InternalsVisibleTo` rather than through public API. -->
   <ItemGroup>
     <InternalsVisibleTo Include="OpenTelemetry.Conformance.Http.Tests" />
   </ItemGroup>
