@@ -6,13 +6,7 @@
 const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
-const {
-  ContractError,
-  drive,
-  exchangeFor,
-  respond,
-  verify,
-} = require("../src");
+const { drive, respond } = require("../src");
 
 const BASE_URL = "http://127.0.0.1:0";
 
@@ -38,34 +32,16 @@ describe("driving the contract", () => {
     ]);
   });
 
-  it("fails the run on a wrong status", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    assert.throws(
-      () => verify(users, { status: 500, body: users.responseBody }),
-      (error) =>
-        error instanceof ContractError &&
-        error.message.includes("answered 500"),
-    );
-  });
-
-  it("leaves whitespace and key order to the JSON writer", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    verify(users, {
-      status: users.status,
-      body: '{ "name" :"Alice",\n  "id": 123 }',
+  it("leaves responses to the telemetry contract", async () => {
+    let sent = 0;
+    await drive(BASE_URL, () => {
+      sent += 1;
+      return {
+        status: 599,
+        body: "not json",
+      };
     });
-  });
-
-  it("says so when an answer is not JSON", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    assert.throws(
-      () => verify(users, { status: users.status, body: "<html>" }),
-      (error) =>
-        error instanceof ContractError && error.message.startsWith("not JSON"),
-    );
+    assert.equal(sent, 5);
   });
 
   it("refuses a blank base URL before anything is sent", async () => {

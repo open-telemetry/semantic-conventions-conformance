@@ -6,7 +6,7 @@ a concrete request, and sending the measured ones.
 ```text
 src/contract.js         reads contract.json
 src/server-workload.js  answers one concrete request
-src/client-workload.js  sends the measured requests and checks every answer
+src/client-workload.js  sends the measured requests
 ```
 
 No dependencies at all, deliberately: a third-party HTTP client would be
@@ -24,9 +24,8 @@ on `127.0.0.1`.
 
 ## Sending
 
-`drive(baseUrl, send)` sends the measured requests in order and checks every
-answer. `send` is the call being measured, so the library under test is the
-scenario's to choose:
+`drive(baseUrl, send)` sends the measured requests in order. `send` is the call
+being measured, so the library under test is the scenario's to choose:
 
 ```js
 await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {
@@ -35,9 +34,9 @@ await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {
 });
 ```
 
-Statuses are compared exactly; bodies are compared as parsed JSON, since
-whitespace and key order are the JSON writer's business rather than the
-contract's.
+The shared HTTP telemetry contract checks what those calls emit. Response
+correctness is checked once by the external server driver rather than repeated
+in every client language.
 
 ## Finding the contract
 

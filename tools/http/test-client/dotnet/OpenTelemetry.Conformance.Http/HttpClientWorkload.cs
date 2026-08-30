@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Text.Json.Nodes;
-
 namespace OpenTelemetry.Conformance.Http;
 
 /// <summary>
@@ -13,9 +11,9 @@ namespace OpenTelemetry.Conformance.Http;
 /// library under test. A server scenario is driven from outside its own process by
 /// <c>otel-http-drive</c> and never sends anything.
 /// <para>
-/// Every answer is checked against its exchange, so a server answering different traffic from the
-/// rest fails the run rather than quietly producing a coverage file that cannot be compared with
-/// the others.
+/// The shared telemetry contract checks what these requests emit. Response correctness is checked
+/// centrally when the same traffic drives a server scenario, not reimplemented by each client
+/// language.
 /// </para>
 /// </remarks>
 public static class HttpClientWorkload
@@ -45,32 +43,6 @@ public static class HttpClientWorkload
                 .ConfigureAwait(false);
             Console.WriteLine(
                 $"{exchange.Method} {exchange.Path} -> {response.StatusCode} {Abbreviate(response.Body)}");
-            Verify(exchange, response);
-        }
-    }
-
-    /// <summary>Checks one answer against the exchange that describes it.</summary>
-    public static void Verify(HttpContract.Exchange exchange, HttpContract.Response response)
-    {
-        ArgumentNullException.ThrowIfNull(exchange);
-        ArgumentNullException.ThrowIfNull(response);
-
-        if (response.StatusCode != exchange.Status)
-        {
-            throw new ContractException(
-                $"{exchange.Method} {exchange.Path} answered {response.StatusCode}, but the "
-                + $"contract's request answers {exchange.Status}");
-        }
-
-        // Parsed, not compared as text: whitespace and key order are a language's choice of JSON
-        // writer, and neither is part of the contract.
-        var expectedBody = HttpContract.Parse(exchange.RenderResponseBody(exchange.Body));
-        var actualBody = HttpContract.Parse(response.Body);
-        if (!JsonNode.DeepEquals(expectedBody, actualBody))
-        {
-            throw new ContractException(
-                $"{exchange.Method} {exchange.Path} answered {actualBody.ToJsonString()}, but the "
-                + $"contract's request answers {expectedBody.ToJsonString()}");
         }
     }
 

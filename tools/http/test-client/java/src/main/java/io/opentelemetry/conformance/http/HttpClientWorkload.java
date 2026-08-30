@@ -4,7 +4,6 @@
  */
 package io.opentelemetry.conformance.http;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
 import io.opentelemetry.conformance.http.HttpContract.Response;
 import java.time.Duration;
@@ -16,9 +15,9 @@ import java.time.Duration;
  * the library under test. A server scenario is driven from outside its own process by {@code
  * otel-http-drive} and never sends anything.
  *
- * <p>Every answer is checked against its exchange, so a server answering different traffic from the
- * rest fails the run rather than quietly producing a coverage file that cannot be compared with the
- * others.
+ * <p>The shared telemetry contract checks what these requests emit. Response correctness is checked
+ * centrally when the same traffic drives a server scenario, not reimplemented by each client
+ * language.
  */
 public final class HttpClientWorkload {
 
@@ -50,38 +49,6 @@ public final class HttpClientWorkload {
       System.out.printf(
           "%s %s -> %d %s%n",
           exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
-      verify(exchange, response);
-    }
-  }
-
-  /** Checks one answer against the exchange that describes it. */
-  public static void verify(Exchange exchange, Response response) {
-    if (response.statusCode() != exchange.status()) {
-      throw new ContractError(
-          exchange.method()
-              + " "
-              + exchange.path()
-              + " answered "
-              + response.statusCode()
-              + ", but the contract's request"
-              + " answers "
-              + exchange.status());
-    }
-
-    // Parsed, not compared as text: whitespace and key order are a language's choice of JSON
-    // writer, and neither is part of the contract.
-    JsonNode expectedBody = HttpContract.parse(exchange.renderResponseBody(exchange.body()));
-    JsonNode actualBody = HttpContract.parse(response.body());
-    if (!expectedBody.equals(actualBody)) {
-      throw new ContractError(
-          exchange.method()
-              + " "
-              + exchange.path()
-              + " answered "
-              + actualBody
-              + ", but the contract's request"
-              + " answers "
-              + expectedBody);
     }
   }
 

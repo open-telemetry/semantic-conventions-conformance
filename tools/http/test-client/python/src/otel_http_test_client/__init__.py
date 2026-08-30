@@ -20,10 +20,12 @@ Nothing under test ever drives a server scenario: the driver is a separate
 process, so no instrumentation loaded into the scenario can pick the driver up
 and record client spans the scenario never meant to produce.
 
-:func:`drive` checks every response against its exchange. A server scenario
-declares routes in its framework's native form — that declaration is what an
-instrumentation reads a route from — but every status and body is a constant
-from the shared file because the requests are fixed.
+The external server driver checks every response against its exchange. A
+server scenario declares routes in its framework's native form — that
+declaration is what an instrumentation reads a route from — but every status
+and body is a constant from the shared file because the requests are fixed. A
+client scenario consumes the response without checking it again; the shared
+telemetry contract is its oracle.
 
 This package is standard library only, so installing it next to a scenario
 drags no dependency into a run.
@@ -193,8 +195,13 @@ def respond(
     )
 
 
-def drive(base_url: str, send: Send | None = None) -> None:
-    """Send :data:`REQUESTS` at ``base_url`` in order, checking each answer.
+def drive(
+    base_url: str,
+    send: Send | None = None,
+    *,
+    validate_responses: bool = False,
+) -> None:
+    """Send :data:`REQUESTS` at ``base_url`` in order.
 
     ``send`` defaults to the standard library. A client scenario passes its
     own library instead — that call is the thing being measured.
@@ -202,6 +209,10 @@ def drive(base_url: str, send: Send | None = None) -> None:
     The server is assumed to be up: waiting is :func:`wait_for_health`, kept
     separate because every extra request a driver makes while a server starts
     is a span in that server's report.
+
+    ``validate_responses`` belongs to the external server driver. Client
+    scenarios leave it false because their shared telemetry contract is their
+    oracle.
     """
     sender = send or request
     for exchange in REQUESTS:
@@ -211,11 +222,12 @@ def drive(base_url: str, send: Send | None = None) -> None:
             exchange.body,
         )
         print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
-        verify(exchange, status, response)
+        if validate_responses:
+            verify(exchange, status, response)
 
 
 async def drive_async(base_url: str, send: AsyncSend) -> None:
-    """Asynchronously send :data:`REQUESTS` and check every answer."""
+    """Asynchronously send :data:`REQUESTS` and consume every answer."""
     for exchange in REQUESTS:
         status, response = await send(
             exchange.method,
@@ -223,7 +235,6 @@ async def drive_async(base_url: str, send: AsyncSend) -> None:
             exchange.body,
         )
         print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
-        verify(exchange, status, response)
 
 
 def verify(exchange: Exchange, status: int, response: str) -> None:

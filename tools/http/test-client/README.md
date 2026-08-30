@@ -3,9 +3,13 @@
 The traffic every HTTP conformance scenario is measured against, shared so the
 coverage a client and a server produce is comparable.
 
-[`contract.json`](contract.json) is where that is written down, once. Every
-language reads that file rather than restating it, so a scenario in the
+[`contract.json`](contract.json) is where that traffic is written down, once.
+Every language reads that file rather than restating it, so a scenario in the
 eleventh language is measured against the same traffic as the first.
+[`client-telemetry.yaml`](client-telemetry.yaml) separately declares the
+telemetry every client implementation must emit for that traffic. The
+conformance runner evaluates it once rather than each language implementing
+its own response oracle.
 
 ## The contract
 
@@ -28,15 +32,19 @@ The document and each request carry a `description`. The top-level description
 explains the contract, and each request's description says what it is in the
 contract for and therefore what dropping it would stop measuring.
 
-### It is checked, not just written down
+### Server responses are checked centrally
 
 A server scenario declares routes in the framework under test — that
 declaration is what an instrumentation reads a route from, so there is no
 avoiding one implementation per framework. Everything downstream is shared:
 an exact lookup by concrete method and path can supply the status and body. The
-driver checks every answer and fails the run if it disagrees. Statuses are
-compared exactly; bodies are compared as parsed JSON, since whitespace and key
-order are each language's JSON writer's business.
+external driver checks every answer and fails the run if it disagrees.
+Statuses are compared exactly; bodies are compared as parsed JSON, since
+whitespace and key order are each language's JSON writer's business.
+
+A client scenario consumes each response but does not implement that assertion
+again. Its shared telemetry contract checks the five client spans centrally,
+including their methods, response status, and URL.
 
 ## The two scenario shapes
 
@@ -67,13 +75,16 @@ requests with the library under test. The runner starts
 [`http-mock-server`](../mock-server) for it, because the directory declares it
 under `server:`, and publishes the base URL as `${MOCK_SERVER_URL}`. That mock
 server answers the same concrete exchanges from the same file, so a client is
-measured against what a server scenario would have answered.
+measured against what a server scenario would have answered. Each client
+package imports `client-telemetry.yaml`, so the runner—not its language
+helper—checks what those requests emitted.
 
 ## Per language
 
-Each language gets a small helper here — enough to read the contract, look up
-its answers, and loop over its measured requests. No language restates the
-answers, and none needs an HTTP client of its own beyond the one under test.
+Each language gets a small helper here—enough to read the contract, look up
+server answers, and loop over measured client requests. No language restates
+the traffic or validates client responses, and none needs an HTTP client of its
+own beyond the one under test.
 
 - [`python/`](python) — `otel_http_test_client`: the `otel-http-drive` command
   every language's server scenarios are driven by, `respond()` for answering

@@ -17,8 +17,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { ContractError } = require("./contract-error");
-
 /** Every route answers JSON, so a scenario has one content type rather than a rule per route. */
 const CONTENT_TYPE = "application/json";
 
@@ -116,27 +114,12 @@ function renderResponseBody(exchange, requestBody) {
   );
 }
 
-/**
- * Parses `json`, so two bodies compare by structure rather than by spacing.
- *
- * A body that is not JSON is a contract failure rather than a crash: it is the
- * server answering something the contract does not describe.
- */
-function parse(json) {
-  try {
-    return JSON.parse(json);
-  } catch (error) {
-    throw new ContractError(`not JSON: ${json}`, { cause: error });
-  }
-}
-
 module.exports = {
   CONTENT_TYPE,
   CONTRACT,
   USER_AGENT,
   exchangeFor,
   exchanges,
-  parse,
   renderResponseBody,
   requests,
 };

@@ -4,6 +4,7 @@
 runner: http-conformance
 instrumented_library: urllib
 instrumentation_library: opentelemetry-instrumentation-urllib
+scenario_contract: ../../../../../../tools/http/test-client/client-telemetry.yaml
 
 env:
   OTEL_SEMCONV_STABILITY_OPT_IN: http

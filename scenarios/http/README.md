@@ -64,6 +64,10 @@ traffic every HTTP scenario is measured against, written down once and read by
 every language, so a client's and a server's coverage are comparable. The
 document and each request carry a `description`; each request's description
 says what it is in the sequence for and what dropping it would stop measuring.
+Client packages also import
+[`client-telemetry.yaml`](../../tools/http/test-client/client-telemetry.yaml),
+which makes the conformance runner apply the same span expectations to every
+language.
 
 | Request | What it is there for |
 | --- | --- |
@@ -82,10 +86,11 @@ routing and Servlet mappings have different construction models and may report
 different native templates. What they share is the concrete traffic those
 routes must answer.
 
-It is checked, not just written down. Statuses are compared exactly and bodies
-as parsed JSON, since whitespace and key order are each language's JSON
-writer's business. A scenario that disagrees fails the run rather than quietly
-recording coverage that cannot be compared with the rest.
+Server responses are checked centrally by `otel-http-drive`: statuses exactly
+and bodies as parsed JSON, since whitespace and key order are each language's
+JSON writer's business. Client scenarios consume those responses without
+reimplementing the assertion; their common telemetry contract checks the
+resulting spans centrally.
 
 See [`tools/http/test-client`](../../tools/http/test-client) for the per-
 language helpers that read it.

@@ -25,6 +25,7 @@ from otel_http_test_client import (
     ContractError,
     Exchange,
     client_headers,
+    drive,
     drive_async,
     mock_server_url,
     respond,
@@ -315,6 +316,17 @@ class TestClientWorkloads:
             "User-Agent": "otel-http-conformance/1",
             "Content-Type": "application/json",
         }
+
+    def test_responses_are_left_to_the_telemetry_contract(self) -> None:
+        seen: list[str] = []
+
+        def send(method: str, url: str, _body: str | None) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return 599, "not json"
+
+        drive("http://server", send)
+
+        assert len(seen) == len(REQUESTS)
 
 
 class TestAnsweringTheExchanges:

@@ -5,7 +5,6 @@
 package io.opentelemetry.conformance.http;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,27 +97,6 @@ public final class HttpContract {
   private static String withoutQuery(String path) {
     int query = path.indexOf('?');
     return query == -1 ? path : path.substring(0, query);
-  }
-
-  /**
-   * Parses {@code json}, so two bodies compare by structure rather than by spacing.
-   *
-   * <p>Package-private: Jackson is how this module reads the contract, not something a scenario has
-   * to depend on.
-   */
-  static JsonNode parse(String json) {
-    JsonNode parsed;
-    try {
-      parsed = MAPPER.readTree(json);
-    } catch (IOException e) {
-      throw new ContractError("not JSON: " + json, e);
-    }
-    // An empty or blank body parses to a missing node rather than failing, which would otherwise
-    // surface as a confusing comparison instead of "this is not JSON".
-    if (parsed == null || parsed.isMissingNode()) {
-      throw new ContractError("not JSON: " + json);
-    }
-    return parsed;
   }
 
   private record Document(List<Exchange> requests) {

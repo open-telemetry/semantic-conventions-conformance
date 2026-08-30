@@ -3,7 +3,6 @@
 
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace OpenTelemetry.Conformance.Http;
 
@@ -82,29 +81,6 @@ public static class HttpContract
         var withoutQuery = WithoutQuery(path);
         return Exchanges.FirstOrDefault(exchange =>
             exchange.Method == method && WithoutQuery(exchange.Path) == withoutQuery);
-    }
-
-    /// <summary>Parses <paramref name="json"/>, so two bodies compare by structure rather than by
-    /// spacing.</summary>
-    /// <remarks>
-    /// Internal: <c>System.Text.Json</c> is how this project reads the contract, not something a
-    /// scenario has to reach for.
-    /// </remarks>
-    internal static JsonNode Parse(string json)
-    {
-        JsonNode? parsed;
-        try
-        {
-            parsed = JsonNode.Parse(json);
-        }
-        catch (JsonException error)
-        {
-            throw new ContractException($"not JSON: {json}", error);
-        }
-
-        // An empty body parses to null rather than failing, which would otherwise surface as a
-        // confusing comparison instead of "this is not JSON".
-        return parsed ?? throw new ContractException($"not JSON: {json}");
     }
 
     private static string WithoutQuery(string path)

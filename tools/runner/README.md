@@ -264,6 +264,23 @@ called two *different* tools, without pinning down which.
 key you write is checked exactly: nothing missing, nothing extra, including
 when empty — `events: []` means "emits no events".
 
+Several implementations can share telemetry expectations while keeping their
+commands and configuration local. Point `scenario_contract` at a YAML file
+whose only top-level key is `scenarios`; each scenario may declare `spans`,
+`metrics` and `events`, but not `run` or environment:
+
+```yaml
+scenario_contract: ../../contracts/http-client.yaml
+
+scenarios:
+  client:
+    run: node client.js
+```
+
+The local scenario is merged over the contract by field, so it can replace one
+expectation when an implementation intentionally has a different contract.
+Relative paths start at the directory containing `conformance.yaml`.
+
 `env` configures the scenario process. The real process environment wins over
 it, so exporting a real key and base URL points a scenario at a real provider
 instead of a mock. What the runner injects — the OTLP endpoint, the server URL

@@ -72,7 +72,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("give either a base URL or --serve COMMAND, not both")
 
     wait_for_health(arguments.url)
-    drive(arguments.url)
+    drive(arguments.url, validate_responses=True)
     return 0
 
 
@@ -97,7 +97,7 @@ def _serve_and_drive(command: Sequence[str]) -> int:
 
     try:
         _wait_for_start(process, port, base_url, command)
-        drive(base_url)
+        drive(base_url, validate_responses=True)
     except BaseException:
         _kill_tree(process)
         raise

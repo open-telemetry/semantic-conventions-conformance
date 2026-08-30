@@ -38,34 +38,16 @@ public class HttpClientWorkloadTests
     }
 
     [Fact]
-    public void AWrongStatusFailsTheRun()
+    public async Task ResponsesAreLeftToTheTelemetryContract()
     {
-        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
+        var sent = 0;
+        await HttpClientWorkload.DriveAsync(BaseUrl, (method, url, body) =>
+        {
+            sent++;
+            return Task.FromResult(new HttpContract.Response(599, "not JSON"));
+        });
 
-        var failure = Assert.Throws<ContractException>(() => HttpClientWorkload.Verify(
-            users, new HttpContract.Response(500, users.ResponseBody)));
-        Assert.Contains("answered 500", failure.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void WhitespaceAndKeyOrderAreTheJsonWritersBusiness()
-    {
-        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
-
-        HttpClientWorkload.Verify(
-            users,
-            new HttpContract.Response(users.Status, "{ \"name\" :\"Alice\",\n  \"id\": 123 }"));
-    }
-
-    [Fact]
-    public void AnAnswerThatIsNotJsonSaysSo()
-    {
-        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
-
-        var failure = Assert.Throws<ContractException>(() => HttpClientWorkload.Verify(
-            users, new HttpContract.Response(users.Status, "<html>")));
-
-        Assert.StartsWith("not JSON", failure.Message, StringComparison.Ordinal);
+        Assert.Equal(5, sent);
     }
 
     [Fact]
