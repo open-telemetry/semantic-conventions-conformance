@@ -12,8 +12,13 @@ container and applies its shared schema before any measured process starts.
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
 java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
+contracts/                                 shared telemetry expectations by vendor
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
 ```
+
+Contracts contain only telemetry expectations. A language or driver reuses
+them by declaring the same scenario names with its own environment and run
+commands.
 
 Each operation is a separate scenario so a missing or malformed span identifies
 the JDBC path that produced it:
@@ -22,7 +27,7 @@ the JDBC path that produced it:
 | --- | --- |
 | `statement` | `Statement.executeQuery` |
 | `prepared_statement` | `PreparedStatement.executeQuery` |
-| `batch` | `Statement.executeBatch` |
+| `batch_statement` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
 ## Running it

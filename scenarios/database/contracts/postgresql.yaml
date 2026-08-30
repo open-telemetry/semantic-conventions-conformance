@@ -1,0 +1,76 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  statement:
+    spans:
+      - match:
+          attributes:
+            db.system.name: postgresql
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance|conformance
+            db.query.summary: SELECT conformance.items
+            db.query.text: SELECT count(*) >= ? FROM conformance.items
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  prepared_statement:
+    spans:
+      - match:
+          attributes:
+            db.system.name: postgresql
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance|conformance
+            db.query.summary: SELECT conformance.items
+            db.query.text: SELECT name FROM conformance.items WHERE id = ?
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  batch_statement:
+    spans:
+      - match:
+          attributes:
+            db.system.name: postgresql
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance|conformance
+            db.operation.batch.size: 2
+            db.query.text: {present: true}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  stored_procedure:
+    spans:
+      - match:
+          attributes:
+            db.system.name: postgresql
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance|conformance
+            db.query.summary: CALL conformance.noop
+            db.query.text: CALL conformance.noop()
+            db.stored_procedure.name: conformance.noop
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
