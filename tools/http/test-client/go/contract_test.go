@@ -204,8 +204,9 @@ func TestAnAnswerThatIsNotJSONSaysSo(t *testing.T) {
 	err = Verify(users, Response{StatusCode: users.Status, Body: body})
 
 	var contract *Error
-	if !errors.As(err, &contract) || !strings.HasPrefix(err.Error(), "not JSON") {
-		t.Errorf("verifying a non-JSON answer gave %v, want a contract failure saying so", err)
+	if !errors.As(err, &contract) ||
+		!strings.HasPrefix(err.Error(), "GET /users/123: not JSON") {
+		t.Errorf("verifying a non-JSON answer gave %v, want a contract failure naming the request", err)
 	}
 	var syntax *json.SyntaxError
 	if !errors.As(err, &syntax) {

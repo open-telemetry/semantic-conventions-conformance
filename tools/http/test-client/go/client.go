@@ -76,7 +76,7 @@ func Verify(exchange Exchange, response Response) error {
 	}
 	got, err := parse(response.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s %s: %w", exchange.Method, exchange.Path, err)
 	}
 	if !reflect.DeepEqual(got, want) {
 		return contractError(
