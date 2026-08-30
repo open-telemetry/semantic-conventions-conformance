@@ -208,7 +208,7 @@ fn without_query(path: &str) -> &str {
 
 fn parse_json(body: &str) -> Result<Value, ContractError> {
     serde_json::from_str(body)
-        .map_err(|error| ContractError::new(format!("not JSON ({error}): {body}")))
+        .map_err(|error| ContractError::new(format!("not JSON ({error}): {}", abbreviate(body))))
 }
 
 fn abbreviate(value: &str) -> String {
@@ -218,7 +218,7 @@ fn abbreviate(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{drive, exchanges, requests, respond, verify, Response};
+    use super::{drive, exchanges, parse_json, requests, respond, verify, Response};
 
     #[test]
     fn contract_has_one_readiness_and_five_measured_requests() {
@@ -260,5 +260,14 @@ mod tests {
         .expect_err("the wrong status should fail");
 
         assert!(error.to_string().contains("599"));
+    }
+
+    #[test]
+    fn invalid_json_errors_abbreviate_the_body() {
+        let body = format!("<html>{}</html>", "x".repeat(1_000));
+        let error = parse_json(&body).expect_err("HTML should not parse as JSON");
+
+        assert!(error.to_string().len() < 200);
+        assert!(!error.to_string().contains("</html>"));
     }
 }
