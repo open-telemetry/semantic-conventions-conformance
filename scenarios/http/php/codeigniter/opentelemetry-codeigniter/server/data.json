@@ -15,56 +15,6 @@
   },
   "events": {},
   "metrics": {},
-  "findings": [
-    {
-      "id": "type_mismatch",
-      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
-      "context": {
-        "attribute_key": "http.request.body.size",
-        "attribute_type": "string",
-        "expected": "int"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET Conformance.health' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET Conformance.status' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "context": {
-        "status_code": "error"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET Conformance.status' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET Conformance.users' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST Conformance.items' is missing recommended attribute 'client.address'",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    }
-  ],
   "entities": {
     "process.runtime": {
       "identity": [
@@ -96,5 +46,100 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET Conformance.health",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET Conformance.health' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "GET Conformance.health",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET Conformance.status",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET Conformance.status' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "GET Conformance.status",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET Conformance.status' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "GET Conformance.status",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET Conformance.users",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET Conformance.users' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "GET Conformance.users",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "POST Conformance.items",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST Conformance.items' is missing recommended attribute 'client.address'",
+      "signal_type": "span",
+      "signal_name": "POST Conformance.items",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    }
+  ]
 }
