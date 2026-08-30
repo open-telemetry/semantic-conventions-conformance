@@ -133,6 +133,33 @@ func TestAQueryStringPicksTheSameAnswer(t *testing.T) {
 	}
 }
 
+func TestLookupPrefersAnExactQueryString(t *testing.T) {
+	path := "/users/123?fields=name&verbose=true"
+	exchange, found, err := Lookup("GET", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !found {
+		t.Fatalf("the contract describes no GET %s", path)
+	}
+	if exchange.Path != path {
+		t.Errorf("GET %s selected %s", path, exchange.Path)
+	}
+}
+
+func TestLookupFallsBackToThePathForAnUnknownQuery(t *testing.T) {
+	exchange, found, err := Lookup("GET", "/users/123?fields=other")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !found {
+		t.Fatal("the contract describes no GET /users/123")
+	}
+	if exchange.Path != "/users/123" {
+		t.Errorf("an unknown query selected %s, want /users/123", exchange.Path)
+	}
+}
+
 func TestAWrongStatusFailsTheRun(t *testing.T) {
 	users, found, err := Lookup("GET", "/users/123")
 	if err != nil {

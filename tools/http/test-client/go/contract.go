@@ -119,9 +119,14 @@ func Lookup(method, path string) (Exchange, bool, error) {
 	if err != nil {
 		return Exchange{}, false, err
 	}
-	path = withoutQuery(path)
 	for _, exchange := range exchanges {
-		if exchange.Method == method && withoutQuery(exchange.Path) == path {
+		if exchange.Method == method && exchange.Path == path {
+			return exchange, true, nil
+		}
+	}
+	pathWithoutQuery := withoutQuery(path)
+	for _, exchange := range exchanges {
+		if exchange.Method == method && withoutQuery(exchange.Path) == pathWithoutQuery {
 			return exchange, true, nil
 		}
 	}
