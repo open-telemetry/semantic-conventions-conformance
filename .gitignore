@@ -10,6 +10,7 @@ output/
 results/
 
 # Gradle: its caches, and everything a scenario's `setup` builds into them.
+# `build/` is also where a Go scenario's `setup` compiles its binary.
 .gradle/
 build/
 
