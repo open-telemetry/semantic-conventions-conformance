@@ -7,9 +7,10 @@ Shared by every implementation under ``requests/``, which is what makes their
 results comparable. Nothing here turns instrumentation on, and nothing here
 may: naming one would defeat the sharing.
 
-Only the send is this library's. The sequence, the answers and the checking
-are the contract's, so a client is measured against exactly what a server
-scenario would have answered.
+Only the send is this library's. The sequence and the answers are the
+contract's, so a client is measured against exactly what a server scenario
+would have answered. The shared telemetry contract checks what those requests
+emit.
 """
 
 from __future__ import annotations
