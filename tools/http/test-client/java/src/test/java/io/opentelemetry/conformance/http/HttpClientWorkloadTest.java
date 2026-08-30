@@ -37,7 +37,7 @@ class HttpClientWorkloadTest {
     assertEquals(
         List.of(
             "GET /users/123",
-            "GET /users/123?fields=name&verbose=true",
+            "GET /users/456?fields=name&verbose=true",
             "POST /items",
             "GET /status/404",
             "GET /status/500"),

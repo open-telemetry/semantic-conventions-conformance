@@ -23,6 +23,9 @@ client request. The Tower binary wraps its Axum router with
 `opentelemetry-instrumentation-tower`. Both server instrumentations emit the
 standard HTTP server metrics.
 
+The Tower instrumentation omits `url.query` from the shared query request.
+Its coverage records that semantic convention violation.
+
 Client and server remain separate conformance packages and coverage files.
 Combining them would let one side's telemetry hide a missing signal from the
 other, even though one instrumentation crate covers both.
