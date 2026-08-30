@@ -22,7 +22,7 @@ _SHUTDOWN_TIMEOUT_SECONDS = 10
 
 
 class LayoutError(RuntimeError):
-    """The PHP package or requested router could not be found."""
+    """A PHP scenario prerequisite is missing or invalid."""
 
 
 def package_root(start: Path | None = None) -> Path:
