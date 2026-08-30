@@ -23,6 +23,12 @@ def test_mariadb_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.mariadb.client"}
 
 
+def test_oracle_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "SELECT", "CLIENT", {"db.system.name": "oracle.db"}
+    ) == {"db.oracledb.client"}
+
+
 @pytest.mark.parametrize("system", ["sqlite", "redis"])
 def test_an_unsupported_database_system_is_not_classified(system: str) -> None:
     assert (
