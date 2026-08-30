@@ -25,7 +25,7 @@ scenarios:
   prepared_statement:
     run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario prepared_statement
 
-  batch_statement:
+  batch:
     run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario batch
 
   stored_procedure:

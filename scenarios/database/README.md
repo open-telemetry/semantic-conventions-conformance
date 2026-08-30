@@ -27,7 +27,7 @@ the JDBC path that produced it:
 | --- | --- |
 | `statement` | `Statement.executeQuery` |
 | `prepared_statement` | `PreparedStatement.executeQuery` |
-| `batch_statement` | `Statement.executeBatch` |
+| `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
 ## Running it

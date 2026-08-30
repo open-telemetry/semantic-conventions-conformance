@@ -38,7 +38,7 @@ scenarios:
       - queueSize
     events: []
 
-  batch_statement:
+  batch:
     spans:
       - match:
           attributes:
