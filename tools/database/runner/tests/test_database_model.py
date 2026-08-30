@@ -23,24 +23,24 @@ def _model():
         pytest.skip(f"coverage model not available: {error}")
 
 
-def test_the_registry_declares_the_span_types_we_classify(model) -> None:
+@pytest.mark.parametrize(
+    ("system", "span_type"),
+    [
+        ("mariadb", "db.mariadb.client"),
+        ("postgresql", "db.postgresql.client"),
+    ],
+)
+def test_the_registry_declares_the_span_types_we_classify(
+    model, system: str, span_type: str
+) -> None:
     classified = DOMAIN.classifier(model)(
-        "SELECT", "client", {"db.system.name": "postgresql"}
+        "SELECT", "client", {"db.system.name": system}
     )
 
-    assert classified == {"db.postgresql.client"}
-    assert model["spans"]["db.postgresql.client"]["kind"] == "client"
-
-
-def test_the_general_type_declares_the_database_system(model) -> None:
-    attributes = model["spans"]["db.client"]["attributes"]
-
+    assert classified == {span_type}
+    assert model["spans"][span_type]["kind"] == "client"
+    attributes = model["spans"][span_type]["attributes"]
     assert attributes["db.system.name"] == "required"
-
-
-def test_the_sql_type_declares_query_text(model) -> None:
-    attributes = model["spans"]["db.sql.client"]["attributes"]
-
     assert "db.query.text" in attributes
 
 

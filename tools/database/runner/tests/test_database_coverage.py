@@ -23,22 +23,11 @@ def test_mariadb_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.mariadb.client"}
 
 
-def test_other_sql_client_span_uses_the_sql_definition() -> None:
-    assert classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"}) == {
-        "db.sql.client"
-    }
-
-
-def test_a_non_sql_database_span_has_the_general_type() -> None:
-    assert classify_span("find", "CLIENT", {"db.system.name": "mongodb"}) == {
-        "db.client"
-    }
-
-
-def test_an_in_memory_database_call_may_be_internal() -> None:
-    assert classify_span(
-        "SELECT", "INTERNAL", {"db.system.name": "h2database"}
-    ) == {"db.sql.client"}
+@pytest.mark.parametrize("system", ["sqlite", "redis"])
+def test_an_unsupported_database_system_is_not_classified(system: str) -> None:
+    assert (
+        classify_span("SELECT", "CLIENT", {"db.system.name": system}) == set()
+    )
 
 
 def test_a_span_without_a_database_system_is_not_a_database_span() -> None:
@@ -50,5 +39,6 @@ def test_a_span_without_a_database_system_is_not_a_database_span() -> None:
 def test_a_span_of_an_unrelated_kind_is_not_a_database_client_span() -> None:
     attributes = {"db.system.name": "postgresql"}
 
+    assert classify_span("SELECT", "INTERNAL", attributes) == set()
     assert classify_span("SELECT", "SERVER", attributes) == set()
     assert classify_span("SELECT", "PRODUCER", attributes) == set()

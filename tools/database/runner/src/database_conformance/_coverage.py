@@ -7,28 +7,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Mapping
 
-_SQL_SYSTEMS = frozenset(
-    {
-        "actian.ingres",
-        "cockroachdb",
-        "derby",
-        "firebirdsql",
-        "h2database",
-        "hsqldb",
-        "ibm.db2",
-        "mariadb",
-        "microsoft.sql_server",
-        "mysql",
-        "oracle.db",
-        "other_sql",
-        "postgresql",
-        "sap.maxdb",
-        "sqlite",
-        "trino",
-    }
-)
-
-_SYSTEM_SPAN_TYPES = {
+_SUPPORTED_SYSTEM_SPAN_TYPES = {
     "mariadb": "db.mariadb.client",
     "postgresql": "db.postgresql.client",
 }
@@ -40,19 +19,16 @@ def classify_span(
     """Return the database span types described by a client span."""
     del span_name
     kind = span_kind.upper().removeprefix("SPAN_KIND_")
-    if kind not in {"CLIENT", "INTERNAL"}:
+    if kind != "CLIENT":
         return set()
 
     system = attributes.get("db.system.name")
     if not isinstance(system, str):
         return set()
 
-    if kind == "CLIENT":
-        if specific := _SYSTEM_SPAN_TYPES.get(system):
-            return {specific}
-    if system in _SQL_SYSTEMS:
-        return {"db.sql.client"}
-    return {"db.client"}
+    if specific := _SUPPORTED_SYSTEM_SPAN_TYPES.get(system):
+        return {specific}
+    return set()
 
 
 def classifier(

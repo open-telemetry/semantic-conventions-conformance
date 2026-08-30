@@ -43,9 +43,8 @@ Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
-The package gives each database client span one semantic-convention identity.
-PostgreSQL and MariaDB spans use `db.postgresql.client` and
-`db.mariadb.client`. Other SQL systems use `db.sql.client`, and non-SQL database
-clients use `db.client`.
+The package classifies only spans for the backends it can run. PostgreSQL spans
+use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
+backend also requires adding its span classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
