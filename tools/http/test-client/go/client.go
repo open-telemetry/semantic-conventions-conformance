@@ -32,6 +32,9 @@ func Drive(baseURL string, output io.Writer, send Sender) error {
 	if output == nil {
 		return contractError("output must not be nil")
 	}
+	if send == nil {
+		return contractError("sender must not be nil")
+	}
 	baseURL = strings.TrimRight(baseURL, "/")
 	requests, err := Requests()
 	if err != nil {

@@ -260,6 +260,14 @@ func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
 	}
 }
 
+func TestANilSenderIsRefusedBeforeAnythingIsSent(t *testing.T) {
+	err := Drive(baseURL, io.Discard, nil)
+
+	if err == nil || !strings.Contains(err.Error(), "sender") {
+		t.Errorf("a nil sender gave %v, want a contract error naming the sender", err)
+	}
+}
+
 func TestATrailingSlashOnTheBaseURLIsNotRepeated(t *testing.T) {
 	var firstURL string
 	err := Drive(baseURL+"/", io.Discard, func(method, url, body string) (Response, error) {
