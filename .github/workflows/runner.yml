@@ -335,11 +335,14 @@ jobs:
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
+      # A Go scenario builds itself from source in its `setup:` before it runs,
+      # and a domain's Go scenarios are one module rooted at its own
+      # `scenarios/<domain>/go`, which is where the toolchain is pinned.
       - name: Set up Go
         if: matrix.language == 'go'
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: scenarios/http/go/go.mod
+          go-version-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/go.mod
 
       - name: Install weaver
         run: |
