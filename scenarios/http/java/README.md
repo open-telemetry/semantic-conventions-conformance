@@ -4,15 +4,12 @@ Java HTTP instrumentations, measured against
 [the shared HTTP contract](../../../tools/http/test-client/contract.json).
 
 Each `<library>/scenarios` project contains the workload. Its sibling
-instrumentation projects launch that workload. Where framework generations
-are incompatible, `<library>/scenarios-<version>` projects hold the workload
-instead. The dependency versions are pinned in
-[`gradle/libs.versions.toml`](gradle/libs.versions.toml).
+instrumentation projects launch that workload. The dependency versions are
+pinned in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
 `opentelemetry-javaagent` projects attach the full Java agent.
 `opentelemetry-library` projects initialize the SDK and install one explicit
-library instrumentation. A version suffix keeps incompatible framework lines
-in separate runtime classpaths.
+library instrumentation.
 
 ## Running one
 
@@ -24,5 +21,5 @@ pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
 otel-conformance scenarios/http/java/okhttp/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/tomcat/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/okhttp/opentelemetry-library/client
-otel-conformance scenarios/http/java/servlet/opentelemetry-library-3.0/server
+otel-conformance scenarios/http/java/servlet/opentelemetry-library/server
 ```

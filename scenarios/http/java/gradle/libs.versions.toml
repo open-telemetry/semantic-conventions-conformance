@@ -12,16 +12,12 @@ grizzly = "2.4.4"
 grpc = "1.83.1"
 helidon = "4.5.3"
 httpasyncclient = "4.1.5"
-httpclient4 = "4.5.14"
 httpclient5 = "5.6.4"
 jackson = "2.22.2"
 jetty = "12.0.38"
-jetty9 = "9.4.58.v20250814"
 jodd-http = "6.3.0"
 kotlin = "2.3.21"
-ktor1 = "1.6.8"
-ktor2 = "2.3.13"
-ktor3 = "3.5.2"
+ktor = "3.5.2"
 netty = "4.1.137.Final"
 okhttp = "4.12.0"
 opentelemetry = "1.65.0"
@@ -35,11 +31,8 @@ pekko-http = "1.4.0"
 ratpack = "1.9.0"
 reactor-netty = "1.3.7"
 restlet = "2.4.4"
-restlet1 = "1.1.5"
 spring-boot = "3.5.16"
-spring5 = "5.3.39"
 tomcat = "10.1.59"
-tomcat9 = "9.0.121"
 undertow = "2.3.26.Final"
 vertx = "4.5.32"
 
@@ -53,22 +46,14 @@ grizzly-http-server = { module = "org.glassfish.grizzly:grizzly-http-server", ve
 grpc-netty-shaded = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
 helidon-webserver = { module = "io.helidon.webserver:helidon-webserver", version.ref = "helidon" }
 httpasyncclient = { module = "org.apache.httpcomponents:httpasyncclient", version.ref = "httpasyncclient" }
-httpclient4 = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpclient4" }
 httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jetty-client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty" }
-jetty-client9 = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty9" }
 jodd-http = { module = "org.jodd:jodd-http", version.ref = "jodd-http" }
-ktor1-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor1" }
-ktor1-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor1" }
-ktor2-client-cio = { module = "io.ktor:ktor-client-cio-jvm", version.ref = "ktor2" }
-ktor2-client-core = { module = "io.ktor:ktor-client-core-jvm", version.ref = "ktor2" }
-ktor2-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor2" }
-ktor2-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor2" }
-ktor3-client-cio = { module = "io.ktor:ktor-client-cio-jvm", version.ref = "ktor3" }
-ktor3-client-core = { module = "io.ktor:ktor-client-core-jvm", version.ref = "ktor3" }
-ktor3-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor3" }
-ktor3-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor3" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio-jvm", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core-jvm", version.ref = "ktor" }
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 netty-codec-http = { module = "io.netty:netty-codec-http", version.ref = "netty" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 pekko-actor = { module = "org.apache.pekko:pekko-actor_2.13", version.ref = "pekko" }
@@ -81,15 +66,11 @@ reactor-netty-http = { module = "io.projectreactor.netty:reactor-netty-http", ve
 # republication of the same 2.4.4 artifacts, so every build root here can stay
 # on `mavenCentral()` alone.
 restlet = { module = "io.github.xsavikx:org.restlet", version.ref = "restlet" }
-restlet1-api = { module = "org.restlet:org.restlet", version.ref = "restlet1" }
-restlet1-engine = { module = "com.noelios.restlet:com.noelios.restlet", version.ref = "restlet1" }
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 spring-boot-starter-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux" }
 spring-web = { module = "org.springframework:spring-web" }
 spring-webmvc = { module = "org.springframework:spring-webmvc" }
-spring5-webmvc = { module = "org.springframework:spring-webmvc", version.ref = "spring5" }
 tomcat-embed-core = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat" }
-tomcat9-embed-core = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat9" }
 undertow-core = { module = "io.undertow:undertow-core", version.ref = "undertow" }
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
 
@@ -100,28 +81,21 @@ opentelemetry-exporter-sender-grpc-managed-channel = { module = "io.opentelemetr
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
 
 opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
-opentelemetry-instrumentation-apache-httpclient43 = { module = "io.opentelemetry.instrumentation:opentelemetry-apache-httpclient-4.3" }
-opentelemetry-instrumentation-apache-httpclient52 = { module = "io.opentelemetry.instrumentation:opentelemetry-apache-httpclient-5.2" }
+opentelemetry-instrumentation-apache-httpclient = { module = "io.opentelemetry.instrumentation:opentelemetry-apache-httpclient-5.2" }
 opentelemetry-instrumentation-armeria = { module = "io.opentelemetry.instrumentation:opentelemetry-armeria-1.3" }
 opentelemetry-instrumentation-helidon = { module = "io.opentelemetry.instrumentation:opentelemetry-helidon-4.3" }
 opentelemetry-instrumentation-java-http-client = { module = "io.opentelemetry.instrumentation:opentelemetry-java-http-client" }
 opentelemetry-instrumentation-java-http-server = { module = "io.opentelemetry.instrumentation:opentelemetry-java-http-server" }
-opentelemetry-instrumentation-jetty-httpclient9 = { module = "io.opentelemetry.instrumentation:opentelemetry-jetty-httpclient-9.2" }
-opentelemetry-instrumentation-jetty-httpclient12 = { module = "io.opentelemetry.instrumentation:opentelemetry-jetty-httpclient-12.0" }
-opentelemetry-instrumentation-ktor1 = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-1.0" }
-opentelemetry-instrumentation-ktor2 = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-2.0" }
-opentelemetry-instrumentation-ktor3 = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-3.0" }
+opentelemetry-instrumentation-jetty-httpclient = { module = "io.opentelemetry.instrumentation:opentelemetry-jetty-httpclient-12.0" }
+opentelemetry-instrumentation-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-3.0" }
 opentelemetry-instrumentation-netty = { module = "io.opentelemetry.instrumentation:opentelemetry-netty-4.1" }
 opentelemetry-instrumentation-okhttp = { module = "io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0" }
 opentelemetry-instrumentation-ratpack = { module = "io.opentelemetry.instrumentation:opentelemetry-ratpack-1.7" }
-opentelemetry-instrumentation-restlet1 = { module = "io.opentelemetry.instrumentation:opentelemetry-restlet-1.1" }
-opentelemetry-instrumentation-restlet2 = { module = "io.opentelemetry.instrumentation:opentelemetry-restlet-2.0" }
-opentelemetry-instrumentation-servlet3 = { module = "io.opentelemetry.instrumentation:opentelemetry-servlet-3.0" }
-opentelemetry-instrumentation-servlet5 = { module = "io.opentelemetry.instrumentation:opentelemetry-servlet-5.0" }
+opentelemetry-instrumentation-restlet = { module = "io.opentelemetry.instrumentation:opentelemetry-restlet-2.0" }
+opentelemetry-instrumentation-servlet = { module = "io.opentelemetry.instrumentation:opentelemetry-servlet-5.0" }
 opentelemetry-instrumentation-spring-web = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-web-3.1" }
 opentelemetry-instrumentation-spring-webflux = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webflux-5.3" }
-opentelemetry-instrumentation-spring-webmvc5 = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-5.3" }
-opentelemetry-instrumentation-spring-webmvc6 = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0" }
+opentelemetry-instrumentation-spring-webmvc = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 
 [plugins]
