@@ -7,12 +7,12 @@
 akka = "2.6.21"
 akka-http = "10.2.10"
 armeria = "1.41.0"
-httpclient4 = "4.5.14"
 async-http-client = "2.12.4"
 grizzly = "2.4.4"
 grpc = "1.83.1"
 helidon = "4.5.3"
 httpasyncclient = "4.1.5"
+httpclient4 = "4.5.14"
 httpclient5 = "5.6.4"
 jackson = "2.22.2"
 jetty = "12.0.38"
@@ -48,12 +48,12 @@ akka-actor = { module = "com.typesafe.akka:akka-actor_2.13", version.ref = "akka
 akka-http = { module = "com.typesafe.akka:akka-http_2.13", version.ref = "akka-http" }
 akka-stream = { module = "com.typesafe.akka:akka-stream_2.13", version.ref = "akka" }
 armeria = { module = "com.linecorp.armeria:armeria", version.ref = "armeria" }
-httpclient4 = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpclient4" }
 async-http-client = { module = "org.asynchttpclient:async-http-client", version.ref = "async-http-client" }
 grizzly-http-server = { module = "org.glassfish.grizzly:grizzly-http-server", version.ref = "grizzly" }
 grpc-netty-shaded = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
 helidon-webserver = { module = "io.helidon.webserver:helidon-webserver", version.ref = "helidon" }
 httpasyncclient = { module = "org.apache.httpcomponents:httpasyncclient", version.ref = "httpasyncclient" }
+httpclient4 = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpclient4" }
 httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jetty-client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty" }
@@ -119,9 +119,9 @@ opentelemetry-instrumentation-restlet2 = { module = "io.opentelemetry.instrument
 opentelemetry-instrumentation-servlet3 = { module = "io.opentelemetry.instrumentation:opentelemetry-servlet-3.0" }
 opentelemetry-instrumentation-servlet5 = { module = "io.opentelemetry.instrumentation:opentelemetry-servlet-5.0" }
 opentelemetry-instrumentation-spring-web = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-web-3.1" }
+opentelemetry-instrumentation-spring-webflux = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webflux-5.3" }
 opentelemetry-instrumentation-spring-webmvc5 = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-5.3" }
 opentelemetry-instrumentation-spring-webmvc6 = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0" }
-opentelemetry-instrumentation-spring-webflux = { module = "io.opentelemetry.instrumentation:opentelemetry-spring-webflux-5.3" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 
 [plugins]
