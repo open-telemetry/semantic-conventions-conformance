@@ -2,9 +2,9 @@
 
 PHP scenarios share two small pieces.
 
-`scenario/` is a Composer package with required environment lookup and the
-standard-input end-of-file shutdown protocol. It has no OpenTelemetry
-dependency, so a scenario only loads the telemetry packages it declares.
+`scenario/` is a Composer package with required environment lookup. It has no
+OpenTelemetry dependency, so a scenario only loads the telemetry packages it
+declares.
 
 `otel-conformance-php` is a standard-library-only Python command used by
 `conformance.yaml`:

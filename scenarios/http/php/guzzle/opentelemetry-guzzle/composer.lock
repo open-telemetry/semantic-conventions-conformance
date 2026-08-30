@@ -664,7 +664,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/php/scenario",
-                "reference": "cefbe66832d1b4495bd7c39454bcd76f175ce583"
+                "reference": "b2f4210961a7dfcc11124d74a3a636eb54692ee2"
             },
             "require": {
                 "php": ">=8.2"
@@ -683,7 +683,7 @@
             "license": [
                 "Apache-2.0"
             ],
-            "description": "Environment and lifecycle support shared by PHP conformance scenarios.",
+            "description": "Environment support shared by PHP conformance scenarios.",
             "transport-options": {
                 "symlink": false,
                 "relative": true

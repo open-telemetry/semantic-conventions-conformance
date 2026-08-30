@@ -35,25 +35,6 @@ check(
     'lookup ignores the query string',
 );
 
-putenv(ServerWorkload::PORT_VARIABLE . '=4317');
-check(
-    ServerWorkload::scenarioPort() === 4317,
-    'the server accepts a valid port',
-);
-foreach (['-1', '0', '65536', 'not-a-port'] as $invalidPort) {
-    putenv(ServerWorkload::PORT_VARIABLE . "={$invalidPort}");
-    try {
-        ServerWorkload::scenarioPort();
-        throw new RuntimeException('an invalid port should fail');
-    } catch (ContractException $exception) {
-        check(
-            str_contains($exception->getMessage(), '1 to 65535'),
-            'the port failure names the accepted range',
-        );
-    }
-}
-putenv(ServerWorkload::PORT_VARIABLE);
-
 $created = ServerWorkload::respond(
     'POST',
     '/items',

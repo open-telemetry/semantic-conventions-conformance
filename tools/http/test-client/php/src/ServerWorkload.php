@@ -9,8 +9,6 @@ namespace OpenTelemetry\Conformance\Http;
 
 final class ServerWorkload
 {
-    public const PORT_VARIABLE = 'OTEL_HTTP_SCENARIO_PORT';
-
     private function __construct()
     {
     }
@@ -29,30 +27,5 @@ final class ServerWorkload
             $exchange->status,
             $exchange->renderResponseBody($requestBody),
         );
-    }
-
-    public static function scenarioPort(): int
-    {
-        $value = getenv(self::PORT_VARIABLE);
-        if ($value === false || $value === '') {
-            throw new ContractException(
-                self::PORT_VARIABLE
-                . ' is not set; a server scenario is started by '
-                . '`otel-http-drive`, which chooses the port',
-            );
-        }
-        $port = filter_var(
-            $value,
-            FILTER_VALIDATE_INT,
-            ['options' => ['min_range' => 1, 'max_range' => 65535]],
-        );
-        if ($port === false) {
-            throw new ContractException(
-                self::PORT_VARIABLE
-                . " must be an integer from 1 to 65535: {$value}",
-            );
-        }
-
-        return $port;
     }
 }

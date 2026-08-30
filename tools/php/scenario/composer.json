@@ -1,6 +1,6 @@
 {
   "name": "open-telemetry-conformance/scenario",
-  "description": "Environment and lifecycle support shared by PHP conformance scenarios.",
+  "description": "Environment support shared by PHP conformance scenarios.",
   "license": "Apache-2.0",
   "require": {
     "php": ">=8.2"
