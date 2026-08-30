@@ -147,8 +147,8 @@ otel-conformance scenarios/http/python/tornado/opentelemetry-tornado/server
 otel-conformance scenarios/http/python/urllib/opentelemetry-urllib/client
 otel-conformance scenarios/http/python/urllib3/opentelemetry-urllib3/client
 otel-conformance scenarios/http/python/wsgi/opentelemetry-wsgi/server
-otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
 otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
+otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
 ```
 
 Every Java package is built and started the same way, so
