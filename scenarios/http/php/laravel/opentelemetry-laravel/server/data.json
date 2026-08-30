@@ -1,0 +1,122 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.peer.address",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.path",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'client.port' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "client.port",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /health' should be named one of [\"GET\", \"GET health\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET",
+          "GET health"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /status/{code}' should be named one of [\"GET\", \"GET status/{code}\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET",
+          "GET status/{code}"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /users/{userId}' should be named one of [\"GET\", \"GET users/{userId}\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET",
+          "GET users/{userId}"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'POST /items' should be named one of [\"POST\", \"POST items\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "POST",
+          "POST items"
+        ],
+        "kind": "server"
+      }
+    }
+  ],
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": []
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
+}

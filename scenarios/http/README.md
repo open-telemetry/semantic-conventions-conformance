@@ -23,8 +23,8 @@ Composer package per side. `scenarios/` holds telemetry-free workload code:
 java/armeria/scenarios/                  what the client and server do, no OTel
 java/armeria/opentelemetry-javaagent/    build.gradle.kts, src/, client/, server/
 java/armeria/opentelemetry-library/      build.gradle.kts, src/, client/, server/
-php/slim/scenarios/                      Slim routes and responses, no OTel
-php/slim/opentelemetry-slim/             composer.json, lock, server/
+php/<library>/scenarios/                  PHP library workload, no OTel
+php/<library>/<instrumentation>/          composer.json, lock, client/ or server/
 ```
 
 The `main` classes are per instrumentation because attaching library
@@ -160,10 +160,9 @@ publishes that project and `run` starts what it published from
 neither a configuration nor an assembly path.
 
 PHP packages use `otel-conformance-php install` to install their own committed
-lockfile. A Slim server runs through `otel-conformance-php serve`, which owns
+lockfile. Servers run through `otel-conformance-php serve`, which owns
 the driver's shutdown protocol while `php -S` keeps PHP's request-scoped
-lifecycle and flushes telemetry at each request shutdown. See
-[`php/`](php/README.md).
+lifecycle and flushes telemetry at each request shutdown. See [`php/`](php/README.md).
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every

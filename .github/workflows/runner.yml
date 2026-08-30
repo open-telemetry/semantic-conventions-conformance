@@ -114,7 +114,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: "8.4"
-          extensions: opentelemetry, grpc, protobuf
+          extensions: curl, intl, opentelemetry, grpc, protobuf, pdo_sqlite
           coverage: none
 
       - name: Build PHP
@@ -129,6 +129,28 @@ jobs:
           composer --working-dir scenarios/http/php/slim/opentelemetry-slim install --no-interaction --no-progress
           composer --working-dir scenarios/http/php/guzzle/opentelemetry-guzzle validate --strict
           composer --working-dir scenarios/http/php/guzzle/opentelemetry-guzzle install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/cakephp/opentelemetry-cakephp validate --strict
+          composer --working-dir scenarios/http/php/cakephp/opentelemetry-cakephp install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/codeigniter/opentelemetry-codeigniter validate --strict
+          composer --working-dir scenarios/http/php/codeigniter/opentelemetry-codeigniter install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/curl/opentelemetry-curl validate --strict
+          composer --working-dir scenarios/http/php/curl/opentelemetry-curl install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/laravel/opentelemetry-laravel validate --strict
+          composer --working-dir scenarios/http/php/laravel/opentelemetry-laravel install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/psr15/opentelemetry-psr15 validate --strict
+          composer --working-dir scenarios/http/php/psr15/opentelemetry-psr15 install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/psr18/opentelemetry-psr18 validate --strict
+          composer --working-dir scenarios/http/php/psr18/opentelemetry-psr18 install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/reactphp/opentelemetry-reactphp validate --strict
+          composer --working-dir scenarios/http/php/reactphp/opentelemetry-reactphp install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/symfony/opentelemetry-symfony validate --strict
+          composer --working-dir scenarios/http/php/symfony/opentelemetry-symfony install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/symfony-http-client/opentelemetry-symfony validate --strict
+          composer --working-dir scenarios/http/php/symfony-http-client/opentelemetry-symfony install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/wordpress/opentelemetry-wordpress validate --strict
+          composer --working-dir scenarios/http/php/wordpress/opentelemetry-wordpress install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/yii/opentelemetry-yii validate --strict
+          composer --working-dir scenarios/http/php/yii/opentelemetry-yii install --no-interaction --no-progress
           find tools/http/test-client/php tools/php/scenario scenarios/http/php \
             -path '*/vendor' -prune -o -name '*.php' -print0 \
             | xargs -0 -n1 php -l
@@ -350,7 +372,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: "8.4"
-          extensions: opentelemetry, grpc, protobuf
+          extensions: curl, intl, opentelemetry, grpc, protobuf, pdo_sqlite
           coverage: none
 
       - name: Install weaver

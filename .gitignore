@@ -22,3 +22,6 @@ artifacts/
 
 # Composer: installed dependencies. Every package's lockfile is committed.
 vendor/
+scenarios/http/php/codeigniter/opentelemetry-codeigniter/app/
+scenarios/http/php/codeigniter/opentelemetry-codeigniter/writable/
+scenarios/http/php/wordpress/opentelemetry-wordpress/wp-content/
