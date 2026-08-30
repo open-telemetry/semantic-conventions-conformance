@@ -24,7 +24,7 @@ import pytest
 
 from ._registry import WeaverNotInstalledError, check_weaver
 from ._runners import resolve as resolve_runner
-from ._spec import SPEC_FILE, SpecError, scenarios
+from ._spec import SPEC_FILE, SpecError, load_spec, scenarios
 
 if TYPE_CHECKING:
     from ._session import ConformanceSession, SessionFactory
@@ -110,7 +110,10 @@ def _session_for(config: pytest.Config, directory: Path) -> ConformanceSession:
     except WeaverNotInstalledError as error:
         pytest.skip(str(error))
 
-    factory: SessionFactory = resolve_runner(directory)
-    session = config.stash[_STACK].enter_context(factory(directory))
+    spec = load_spec(directory)
+    factory: SessionFactory = resolve_runner(directory, spec=spec)
+    session = config.stash[_STACK].enter_context(
+        factory(directory, spec=spec)
+    )
     sessions[directory] = session
     return session

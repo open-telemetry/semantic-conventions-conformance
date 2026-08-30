@@ -7,9 +7,6 @@ import sys
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
-
-import yaml
 
 from opentelemetry.conformance import (
     ConformanceSession,
@@ -18,6 +15,7 @@ from opentelemetry.conformance import (
     ServerSpec,
     SpecError,
     WeaverSpec,
+    load_spec,
     main,
     require_pin,
 )
@@ -42,32 +40,22 @@ _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
 }
 
 
-def _backend_name(directory: Path | str) -> str:
-    path = Path(directory) / "database.yaml"
-    try:
-        parsed = cast(object, yaml.safe_load(path.read_text(encoding="utf-8")))
-    except OSError as error:
-        raise SpecError(f"cannot read {path}: {error}") from error
-    except yaml.YAMLError as error:
-        raise SpecError(f"cannot parse {path}: {error}") from error
-    if not isinstance(parsed, Mapping):
+def _backend_name(spec: PackageSpec) -> str:
+    where = f"{spec.directory / 'conformance.yaml'}.runner_config"
+    config = spec.runner_config
+    if set(config) != {"backend"}:
         raise SpecError(
-            f"{path} must contain exactly one string key named 'backend'"
-        )
-    config = cast(Mapping[object, object], parsed)
-    if len(config) != 1 or "backend" not in config:
-        raise SpecError(
-            f"{path} must contain exactly one string key named 'backend'"
+            f"{where} must contain exactly one string key named 'backend'"
         )
     backend = config["backend"]
     if not isinstance(backend, str):
         raise SpecError(
-            f"{path} must contain exactly one string key named 'backend'"
+            f"{where}.backend: expected a string"
         )
     if backend not in _BACKENDS:
         choices = ", ".join(sorted(_BACKENDS))
         raise SpecError(
-            f"{path} selects unsupported backend {backend!r}; "
+            f"{where}.backend selects unsupported backend {backend!r}; "
             f"expected one of: {choices}"
         )
     return backend
@@ -84,9 +72,11 @@ def database_session(
     server: ServerSpec | None = None,
     env: Mapping[str, str] | None = None,
     build_data: Callable[[Path, PackageSpec], object] | None = None,
+    spec: PackageSpec | None = None,
 ) -> Generator[ConformanceSession, None, None]:
     """Open a database conformance session with its configured backend."""
-    with _BACKENDS[_backend_name(directory)]() as backend:
+    spec = spec or load_spec(Path(directory))
+    with _BACKENDS[_backend_name(spec)]() as backend:
         resolved = dict(variables or {})
         resolved.update(backend.variables)
         if build_data is None:
@@ -98,6 +88,7 @@ def database_session(
                 weaver=weaver,
                 server=server,
                 env=env,
+                spec=spec,
             )
         else:
             session_context = DOMAIN.session(
@@ -109,6 +100,7 @@ def database_session(
                 server=server,
                 env=env,
                 build_data=build_data,
+                spec=spec,
             )
         with session_context as session:
             yield session

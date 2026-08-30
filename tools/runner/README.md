@@ -392,6 +392,8 @@ and a directory asks for it by that name:
 
 ```yaml
 runner: genai-conformance
+runner_config:
+  provider: example
 ```
 
 `otel-conformance <dir>` and `pytest <dir>` both resolve it, so several
@@ -399,7 +401,8 @@ conventions domains coexist in one checkout — each directory gets its own
 registry and reduction. A factory is `conformance_session` with defaults
 applied; [`genai_conformance/__init__.py`](../gen-ai/runner/src/genai_conformance/__init__.py)
 is a whole one. A directory naming no runner runs against whatever the command
-line passes.
+line passes. The optional `runner_config` mapping reaches the selected factory
+as `PackageSpec.runner_config`; the factory validates its own keys and values.
 
 Everything a wrapper supplies can also be passed on the command line, which is
 how you try one out before writing it:

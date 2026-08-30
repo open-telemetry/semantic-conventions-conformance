@@ -14,16 +14,19 @@ plain `otel-conformance` and from `pytest`. See
 [`tools/runner/README.md`](../../runner/README.md) for the conformance directory
 format. Docker must be installed and its daemon running.
 
-Each conformance package has a `database.yaml` that selects its backend:
+Each conformance package selects its backend in `conformance.yaml`:
 
 ```yaml
-backend: postgresql
+runner: database-conformance
+runner_config:
+  backend: postgresql
 ```
 
-The supported values are `postgresql` and `mariadb`. Each session starts one
-pinned container, applies that backend's packaged SQL schema, and removes the
-container when the session closes. The schemas create the same logical objects
-but no rows; scenarios own any data their operations need.
+`runner_config` must contain only `backend`, set to `postgresql` or `mariadb`.
+Each session starts one pinned container, applies that backend's packaged SQL
+schema, and removes the container when the session closes. The schemas create
+the same logical objects but no rows; scenarios own any data their operations
+need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:

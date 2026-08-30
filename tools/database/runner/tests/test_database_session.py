@@ -14,7 +14,24 @@ from typing import Any
 import pytest
 
 import database_conformance
-from opentelemetry.conformance import SpecError
+from opentelemetry.conformance import PackageSpec, SpecError, load_spec
+
+
+def _write_spec(tmp_path: Path, runner_config: str) -> PackageSpec:
+    (tmp_path / "conformance.yaml").write_text(
+        f"""
+runner: database-conformance
+runner_config:
+{runner_config}
+instrumented_library: jdbc
+instrumentation_library: demo
+scenarios:
+  statement:
+    run: command
+""",
+        encoding="utf-8",
+    )
+    return load_spec(tmp_path)
 
 
 def test_database_session_injects_backend_variables(
@@ -62,17 +79,17 @@ def test_database_session_injects_backend_variables(
         SimpleNamespace(session=stub_session),
     )
 
-    (tmp_path / "database.yaml").write_text(
-        "backend: postgresql\n", encoding="utf-8"
-    )
+    spec = _write_spec(tmp_path, "  backend: postgresql")
     with database_conformance.database_session(
         tmp_path,
         variables={"DATABASE_HOST": "wrong", "CUSTOM": "value"},
+        spec=spec,
     ) as running:
         assert running is session
         assert events == ["backend-enter", "session-enter"]
 
     assert captured["directory"] == tmp_path
+    assert captured["spec"] is spec
     assert captured["variables"] == {
         "CUSTOM": "value",
         "DATABASE_HOST": "127.0.0.1",
@@ -119,31 +136,37 @@ def test_database_session_closes_mariadb_after_an_error(
         SimpleNamespace(session=stub_session),
     )
 
-    (tmp_path / "database.yaml").write_text(
-        "backend: mariadb\n", encoding="utf-8"
-    )
+    spec = _write_spec(tmp_path, "  backend: mariadb")
     with pytest.raises(RuntimeError, match="scenario failed"):
-        with database_conformance.database_session(tmp_path):
+        with database_conformance.database_session(tmp_path, spec=spec):
             raise RuntimeError("scenario failed")
 
     assert closed
 
 
 @pytest.mark.parametrize(
-    ("contents", "message"),
+    ("runner_config", "message"),
     [
-        ("backend: sqlite\n", "unsupported backend 'sqlite'"),
-        ("backend: [postgresql]\n", "exactly one string key"),
-        ("backend: postgresql\nextra: value\n", "exactly one string key"),
+        ("  backend: sqlite", "unsupported backend 'sqlite'"),
+        ("  backend: [postgresql]", "expected a string"),
+        (
+            "  backend: postgresql\n  extra: value",
+            "exactly one string key",
+        ),
+        ("  other: postgresql", "exactly one string key"),
+        ("  {}", "exactly one string key"),
     ],
 )
 def test_database_session_rejects_invalid_backend_configuration(
     tmp_path: Path,
-    contents: str,
+    runner_config: str,
     message: str,
 ) -> None:
-    (tmp_path / "database.yaml").write_text(contents, encoding="utf-8")
+    spec = _write_spec(tmp_path, runner_config)
 
-    with pytest.raises(SpecError, match=message):
-        with database_conformance.database_session(tmp_path):
+    with pytest.raises(
+        SpecError,
+        match=rf"conformance\.yaml\.runner_config.*{message}",
+    ):
+        with database_conformance.database_session(tmp_path, spec=spec):
             pass

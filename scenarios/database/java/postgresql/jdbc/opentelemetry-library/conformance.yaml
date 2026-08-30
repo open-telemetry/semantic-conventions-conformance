@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 runner: database-conformance
+runner_config:
+  backend: postgresql
 instrumented_library: jdbc
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-jdbc
 scenario_contract: ../../../../contracts/postgresql.yaml
