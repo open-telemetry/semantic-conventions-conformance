@@ -79,6 +79,37 @@ class TestBuilding:
         assert command[command.index("--manifest-path") + 1] == str(manifest)
 
 
+class TestCommandLineErrors:
+    def test_missing_package_is_reported(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+
+        assert otel_conformance_rust.main(["build"]) == 1
+        assert "error: no package Cargo.toml" in capsys.readouterr().err
+
+    def test_missing_executable_is_reported(
+        self,
+        root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        def missing(command: list[str]) -> int:
+            raise FileNotFoundError(2, "No such file or directory", command[0])
+
+        monkeypatch.chdir(root / "server")
+        monkeypatch.setattr(otel_conformance_rust.subprocess, "call", missing)
+
+        assert otel_conformance_rust.main(["build"]) == 1
+        assert (
+            "otel-conformance-rust: error: cargo was not found"
+            in capsys.readouterr().err
+        )
+
+
 class TestRunning:
     def test_the_binary_is_absolute_and_platform_specific(
         self, root: Path
