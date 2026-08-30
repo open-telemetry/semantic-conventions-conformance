@@ -119,24 +119,6 @@
         ],
         "kind": "server"
       }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /wp-cron.php' is missing recommended attribute 'server.address'",
-      "context": {
-        "attribute_key": "server.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "http_span_name_format",
-      "message": "Span 'POST /wp-cron.php' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
-      "context": {
-        "expected": [
-          "POST"
-        ],
-        "kind": "server"
-      }
     }
   ],
   "entities": {
