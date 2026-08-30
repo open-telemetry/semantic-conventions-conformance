@@ -16,8 +16,8 @@ explains the npm workspace it roots.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. Java uses a
-Gradle project and PHP uses one locked Composer package per side.
-`scenarios/` holds telemetry-free workload code:
+Gradle project that builds its `main` classes, while PHP uses one locked
+Composer package per side. `scenarios/` holds telemetry-free workload code:
 
 ```text
 java/armeria/scenarios/                  what the client and server do, no OTel
