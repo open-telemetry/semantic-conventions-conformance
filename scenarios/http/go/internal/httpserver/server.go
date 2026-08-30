@@ -23,8 +23,13 @@ const (
 	// Host is the address every Go HTTP server scenario binds.
 	Host = "127.0.0.1"
 
+	// Bound header reads without timing out idle keep-alive connections, which
+	// Shutdown closes.
 	readHeaderTimeout = 10 * time.Second
-	shutdownTimeout   = 10 * time.Second
+
+	// Leave enough time for the driver to report a shutdown error before its
+	// own process timeout expires.
+	shutdownTimeout = 10 * time.Second
 )
 
 // Run serves handler until stopping reports that the driver said stop.
@@ -52,7 +57,9 @@ func Run(handler http.Handler, stopping <-chan error) error {
 	var stopped error
 	select {
 	case err := <-served:
-		// Serve always returns a non-nil error.
+		// Return immediately if Serve fails; waiting for a stop signal would
+		// leave the process hung until the driver's timeout. Serve always
+		// returns a non-nil error, so there is nothing else this can be.
 		return err
 	case stopped = <-stopping:
 	}
