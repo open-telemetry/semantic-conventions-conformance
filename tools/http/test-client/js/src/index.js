@@ -17,10 +17,8 @@
 const contract = require("./contract");
 const clientWorkload = require("./client-workload");
 const serverWorkload = require("./server-workload");
-const { ContractError } = require("./contract-error");
 
 module.exports = {
-  ContractError,
   ...contract,
   ...clientWorkload,
   ...serverWorkload,
