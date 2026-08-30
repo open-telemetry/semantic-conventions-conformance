@@ -21,6 +21,7 @@ define('WP_CONTENT_DIR', dirname(__DIR__) . '/wp-content');
 define('WP_CONTENT_URL', 'http://localhost/wp-content');
 define('WP_HOME', 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
 define('WP_SITEURL', WP_HOME);
+define('DISABLE_WP_CRON', true);
 
 define('AUTH_KEY', 'opentelemetry-conformance-auth-key');
 define('SECURE_AUTH_KEY', 'opentelemetry-conformance-secure-auth-key');
