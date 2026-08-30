@@ -152,14 +152,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         words, scenario_arguments = words[:1], words[1:]
 
     arguments = parser.parse_args(words)
-    manifest = package_manifest()
-    workspace_root(manifest.parent)
-    command = (
-        run_command(target_directory(manifest), manifest, scenario_arguments)
-        if arguments.command == RUN
-        else build_command(manifest)
-    )
-    return subprocess.call(command)  # noqa: S603
+    try:
+        manifest = package_manifest()
+        workspace_root(manifest.parent)
+        command = (
+            run_command(
+                target_directory(manifest), manifest, scenario_arguments
+            )
+            if arguments.command == RUN
+            else build_command(manifest)
+        )
+        return subprocess.call(command)  # noqa: S603
+    except LayoutError as error:
+        print(f"{parser.prog}: error: {error}", file=sys.stderr)
+    except FileNotFoundError as error:
+        missing = error.filename or "required executable"
+        print(f"{parser.prog}: error: {missing} was not found", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":
