@@ -28,6 +28,7 @@ TOOL = {
                 },
             },
             "required": ["location"],
+            "additionalProperties": False,
         },
     },
 }
