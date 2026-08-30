@@ -2,8 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 runner: database-conformance
+runner_config:
+  backend: postgresql
 instrumented_library: r2dbc
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-r2dbc-1.0
+scenario_contract: ../../../../contracts/postgresql-r2dbc.yaml
 
 env:
   R2DBC_URL: r2dbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
@@ -13,85 +16,19 @@ env:
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare shared:r2dbc:opentelemetry-library
 
 scenarios:
   statement:
     run: otel-conformance-java run shared:r2dbc:opentelemetry-library R2dbcLibraryScenario statement
-    spans:
-      - match:
-          attributes:
-            db.system.name: postgresql
-        expect:
-          count: 1
-          attributes:
-            db.namespace: conformance
-            db.query.summary: SELECT conformance.items
-            db.query.text: SELECT count(*) >= ? FROM conformance.items
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-      - queueSize
-    events: []
 
   bind:
     run: otel-conformance-java run shared:r2dbc:opentelemetry-library R2dbcLibraryScenario bind
-    spans:
-      - match:
-          attributes:
-            db.system.name: postgresql
-        expect:
-          count: 1
-          attributes:
-            db.namespace: conformance
-            db.query.summary: SELECT conformance.items
-            db.query.text: SELECT name FROM conformance.items WHERE id = $1
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-      - queueSize
-    events: []
 
   batch:
     run: otel-conformance-java run shared:r2dbc:opentelemetry-library R2dbcLibraryScenario batch
-    spans:
-      - match:
-          attributes:
-            db.system.name: postgresql
-        expect:
-          count: 1
-          attributes:
-            db.namespace: conformance
-            db.operation.batch.size: 2
-            db.query.summary: BATCH INSERT conformance.items
-            db.query.text: INSERT INTO conformance.items (id, name) VALUES (?, ?)
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-      - queueSize
-    events: []
 
   error:
     run: otel-conformance-java run shared:r2dbc:opentelemetry-library R2dbcLibraryScenario error
-    spans:
-      - match:
-          attributes:
-            db.system.name: postgresql
-        expect:
-          count: 1
-          attributes:
-            db.namespace: conformance
-            db.query.summary: SELECT conformance.missing_items
-            db.query.text: SELECT * FROM conformance.missing_items
-            error.type: 42P01
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-      - queueSize
-    events: []
