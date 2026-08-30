@@ -50,8 +50,8 @@ def classify_span(
     if kind == "CLIENT":
         if specific := _SYSTEM_SPAN_TYPES.get(system):
             return {specific}
-        if system in _SQL_SYSTEMS:
-            return {"db.sql.client"}
+    if system in _SQL_SYSTEMS:
+        return {"db.sql.client"}
     return {"db.client"}
 
 

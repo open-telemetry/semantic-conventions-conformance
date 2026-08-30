@@ -38,7 +38,7 @@ def test_a_non_sql_database_span_has_the_general_type() -> None:
 def test_an_in_memory_database_call_may_be_internal() -> None:
     assert classify_span(
         "SELECT", "INTERNAL", {"db.system.name": "h2database"}
-    ) == {"db.client"}
+    ) == {"db.sql.client"}
 
 
 def test_a_span_without_a_database_system_is_not_a_database_span() -> None:
