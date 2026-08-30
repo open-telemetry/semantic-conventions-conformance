@@ -38,8 +38,8 @@ describe("the contract", () => {
   });
 
   it("answers the same exchange with or without a query string", () => {
-    const plain = exchangeFor("GET", "/users/123");
-    const withQuery = exchangeFor("GET", "/users/123?fields=name&verbose=true");
+    const plain = exchangeFor("GET", "/users/456");
+    const withQuery = exchangeFor("GET", "/users/456?fields=name&verbose=true");
 
     assert.equal(plain.status, withQuery.status);
     assert.equal(plain.responseBody, withQuery.responseBody);

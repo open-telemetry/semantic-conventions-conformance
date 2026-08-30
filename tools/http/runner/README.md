@@ -31,6 +31,10 @@ records at that level but whose prose makes them conditional
 sent the header), which would blame the instrumentation for the request it was
 given.
 
+The shared server contract uses `/users/456` only for its query request. The
+HTTP policy uses that path to report a missing conditionally required
+`url.query` attribute without flagging the query-free `/users/123` request.
+
 The span-name policy checks the HTTP method token separately from its target.
 When a server span name has a target but no `http.route`, it reports
 `http_route_not_present`: without the matched route, the policy can't verify

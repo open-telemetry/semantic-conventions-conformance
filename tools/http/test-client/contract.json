@@ -19,9 +19,9 @@
     {
       "description": "A query string, which is its own attribute (`url.query`) and must not leak into `http.route`, `url.path` or the span name.",
       "method": "GET",
-      "path": "/users/123?fields=name&verbose=true",
+      "path": "/users/456?fields=name&verbose=true",
       "status": 200,
-      "responseBody": "{\"id\": 123, \"name\": \"Alice\"}"
+      "responseBody": "{\"id\": 456, \"name\": \"Alice\"}"
     },
     {
       "description": "A non-GET carrying a body. The answer echoes it, so a scenario that never reads the body fails rather than passing on a constant.",

@@ -335,7 +335,7 @@ class TestAnsweringTheExchanges:
         assert json.loads(body)["payload"] == {"name": "widget"}
 
     def test_a_query_string_does_not_change_the_route(self) -> None:
-        assert respond("GET", "/users/123?fields=other")[0] == 200
+        assert respond("GET", "/users/456?fields=other")[0] == 200
 
     def test_an_unknown_route_is_a_404(self) -> None:
         assert respond("GET", "/nothing/here")[0] == 404
@@ -583,7 +583,7 @@ class TestWhatAServerScenarioIsGiven:
 
         assert completed.returncode == 0, completed.stderr
         seen = json.loads(completed.stderr.strip().splitlines()[-1])
-        assert "/users/123?fields=name&verbose=true" in [
+        assert "/users/456?fields=name&verbose=true" in [
             request["RAW_URI"] for request in seen
         ]
         assert all(request["REMOTE_PORT"] for request in seen)
