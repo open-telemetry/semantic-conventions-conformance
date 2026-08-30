@@ -1,0 +1,45 @@
+{
+  "name": "open-telemetry-conformance/http-php-yii",
+  "description": "Yii HTTP server conformance measured by OpenTelemetry auto-instrumentation.",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.2",
+    "open-telemetry/exporter-otlp": "^1.4",
+    "open-telemetry/opentelemetry-auto-yii": "^0.4",
+    "open-telemetry/sdk": "^1.15",
+    "open-telemetry/transport-grpc": "^1.2",
+    "open-telemetry-conformance/http-test-client": "dev-main",
+    "open-telemetry-conformance/scenario": "dev-main",
+    "yiisoft/yii2": "^2.0.55"
+  },
+  "autoload": {
+    "psr-4": {
+      "app\\": "../scenarios/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    }
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    },
+    {
+      "type": "path",
+      "url": "../../../../../tools/http/test-client/php",
+      "options": {
+        "symlink": false
+      }
+    },
+    {
+      "type": "path",
+      "url": "../../../../../tools/php/scenario",
+      "options": {
+        "symlink": false
+      }
+    }
+  ]
+}
