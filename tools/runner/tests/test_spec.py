@@ -242,6 +242,10 @@ scenarios:
             http.request.method: GET
         expect:
           count: 4
+    metrics:
+      - http.client.request.duration
+    allowed_metrics:
+      - otlp.exporter.seen
     events: []
 """
     )
@@ -263,6 +267,8 @@ scenarios:
     assert scenario.run == ("python", "client.py")
     assert scenario.spans is not None
     assert scenario.spans[0].count == 4
+    assert scenario.metrics == ("http.client.request.duration",)
+    assert scenario.allowed_metrics == ("otlp.exporter.seen",)
     assert scenario.events == ()
 
 

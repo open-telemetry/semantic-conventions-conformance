@@ -20,7 +20,7 @@ import yaml
 SPEC_FILE = "conformance.yaml"
 OtlpProtocol = Literal["grpc", "http/protobuf"]
 DEFAULT_OTLP_PROTOCOL: OtlpProtocol = "grpc"
-_SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
+_SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "allowed_metrics", "events")
 
 
 class SpecError(ValueError):

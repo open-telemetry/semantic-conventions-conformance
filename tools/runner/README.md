@@ -330,8 +330,8 @@ required and other undeclared metrics still fail the scenario.
 
 Several implementations can share telemetry expectations while keeping their
 commands and configuration local. A named contract's only top-level key is
-`scenarios`; each scenario may declare `spans`, `metrics` and `events`, but not
-`run` or environment:
+`scenarios`; each scenario may declare `spans`, `metrics`, `allowed_metrics` and
+`events`, but not `run` or environment:
 
 ```yaml
 scenario_contract: ../../contracts/http-client.yaml
