@@ -140,6 +140,24 @@ def test_match_on_kind() -> None:
     )
 
 
+def test_a_kind_matches_however_it_is_spelled() -> None:
+    """Weaver writes ``client``; a spec writes the ``CLIENT`` of the API."""
+    expectation = SpanExpectation(
+        match=SpanMatch(attributes={}, kind="CLIENT"),
+        count=1,
+        attributes={},
+    )
+
+    for spelling in ("client", "CLIENT", "SPAN_KIND_CLIENT"):
+        assert (
+            check(
+                scenario(spans=(expectation,)),
+                Report([span_sample(kind=spelling)]),
+            )
+            == []
+        )
+
+
 @pytest.mark.parametrize(
     ("matcher", "values", "ok"),
     [

@@ -211,9 +211,7 @@ def _read_sample(
                 match = expectation.match
                 if match.type is not None:
                     if match.kind is not None:
-                        m_kind = match.kind.upper().removeprefix("SPAN_KIND_")
-                        s_kind = kind.upper().removeprefix("SPAN_KIND_")
-                        if m_kind != s_kind:
+                        if span_kind(match.kind) != span_kind(kind):
                             continue
                     if all(attributes.get(attr) == val for attr, val in match.attributes.items()):
                         span_types = {match.type}
@@ -251,6 +249,16 @@ def _data_point_attributes(metric: _Json) -> set[str]:
         for point in _list(metric.get("data_points"))
         for name in carried_attributes(_mapping(point))
     }
+
+
+def span_kind(kind: str) -> str:
+    """One spelling of a span kind, so two spellings compare equal.
+
+    Weaver reports a kind as ``client``, the protocol names it
+    ``SPAN_KIND_CLIENT``, and a spec writes the ``CLIENT`` of the API. All
+    three mean the same kind, so none of them may decide a match.
+    """
+    return kind.upper().removeprefix("SPAN_KIND_")
 
 
 def carried_attributes(owner: _Json) -> dict[str, object]:

@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
-from ._report import carried_attributes
+from ._report import carried_attributes, span_kind
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
@@ -130,7 +130,9 @@ def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
     return all(
         span.attributes.get(attribute) == value
         for attribute, value in match.attributes.items()
-    ) and (match.kind is None or span.kind == match.kind)
+    ) and (
+        match.kind is None or span_kind(span.kind) == span_kind(match.kind)
+    )
 
 
 def _check_spans(
