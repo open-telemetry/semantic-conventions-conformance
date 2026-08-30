@@ -90,6 +90,7 @@ def test_database_session_injects_backend_variables(
 
     assert captured["directory"] == tmp_path
     assert captured["spec"] is spec
+    assert "build_data" not in captured
     assert captured["variables"] == {
         "CUSTOM": "value",
         "DATABASE_HOST": "127.0.0.1",

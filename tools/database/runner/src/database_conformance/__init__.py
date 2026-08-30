@@ -79,29 +79,17 @@ def database_session(
     with _BACKENDS[_backend_name(spec)]() as backend:
         resolved = dict(variables or {})
         resolved.update(backend.variables)
-        if build_data is None:
-            session_context = DOMAIN.session(
-                directory,
-                report_dir=report_dir,
-                data_file=data_file,
-                variables=resolved,
-                weaver=weaver,
-                server=server,
-                env=env,
-                spec=spec,
-            )
-        else:
-            session_context = DOMAIN.session(
-                directory,
-                report_dir=report_dir,
-                data_file=data_file,
-                variables=resolved,
-                weaver=weaver,
-                server=server,
-                env=env,
-                build_data=build_data,
-                spec=spec,
-            )
+        session_context = DOMAIN.session(
+            directory,
+            report_dir=report_dir,
+            data_file=data_file,
+            variables=resolved,
+            weaver=weaver,
+            server=server,
+            env=env,
+            spec=spec,
+            **({"build_data": build_data} if build_data is not None else {}),
+        )
         with session_context as session:
             yield session
 
