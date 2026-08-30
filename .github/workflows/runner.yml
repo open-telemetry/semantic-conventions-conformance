@@ -107,6 +107,18 @@ jobs:
           bundle exec ruby -I../../../ruby/scenario-support/lib ../../../ruby/scenario-support/test/scenario_support_test.rb
           bundle exec ruby -I../../../ruby/scenario-support/lib -I../../../ruby/scenario-sdk/lib ../../../ruby/scenario-sdk/test/scenario_sdk_test.rb
 
+      - name: Test Ruby Net::HTTP scenario
+        working-directory: scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_http/client
+        run: |
+          bundle install
+          bundle exec rake
+
+      - name: Test Ruby Rack scenario
+        working-directory: scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server
+        run: |
+          bundle install
+          bundle exec rake
+
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
