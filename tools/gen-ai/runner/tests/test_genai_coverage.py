@@ -34,6 +34,20 @@ def _classify_span(model):
     return DOMAIN.classifier(model)
 
 
+@pytest.fixture(name="mcp_classify_span", scope="module")
+def _mcp_classify_span():
+    """Classify without requiring the externally resolved registry model."""
+    return DOMAIN.classifier(
+        {
+            "spans": {
+                "gen_ai.execute_tool.internal": {"kind": "internal"},
+                "mcp.client": {"kind": "client"},
+                "mcp.server": {"kind": "server"},
+            }
+        }
+    )
+
+
 @pytest.fixture(name="reduce_for")
 def _reduce_for(model):
     """Reduce a run that emitted the given signals carrying every attribute."""
@@ -41,8 +55,7 @@ def _reduce_for(model):
     def build(span_types=(), events=(), metrics=(), entities=()):
         def signals(names, section):
             return {
-                name: set(model[section][name]["attributes"])
-                for name in names
+                name: set(model[section][name]["attributes"]) for name in names
             }
 
         resources = {
@@ -69,6 +82,57 @@ def test_the_operation_name_names_the_span_type(classify_span) -> None:
     assert classify_span(
         "chat gpt-4", "client", {"gen_ai.operation.name": "chat"}
     ) == {"gen_ai.inference.client"}
+
+
+@pytest.mark.parametrize(
+    ("span_kind", "span_type"),
+    [("client", "mcp.client"), ("server", "mcp.server")],
+)
+def test_mcp_method_takes_precedence_over_genai_compatibility_attributes(
+    mcp_classify_span, span_kind, span_type
+) -> None:
+    assert mcp_classify_span(
+        "tools/call get_weather",
+        span_kind,
+        {
+            "mcp.method.name": "tools/call",
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "get_weather",
+        },
+    ) == {span_type}
+
+
+def test_mcp_method_does_not_reclassify_an_internal_tool_span(
+    mcp_classify_span,
+) -> None:
+    assert mcp_classify_span(
+        "execute_tool get_weather",
+        "internal",
+        {
+            "mcp.method.name": "tools/call",
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "get_weather",
+        },
+    ) == {"gen_ai.execute_tool.internal"}
+
+
+def test_mcp_method_falls_back_when_registry_has_no_mcp_span_type() -> None:
+    classify_span = DOMAIN.classifier(
+        {
+            "spans": {
+                "gen_ai.execute_tool.internal": {"kind": "internal"},
+            }
+        }
+    )
+
+    assert classify_span(
+        "tools/call get_weather",
+        "client",
+        {
+            "mcp.method.name": "tools/call",
+            "gen_ai.operation.name": "execute_tool",
+        },
+    ) == {"gen_ai.execute_tool.internal"}
 
 
 def test_a_span_without_an_operation_name_is_identified_by_its_attributes(
@@ -154,7 +218,9 @@ def test_every_declared_event_is_recordable(model, reduce_for) -> None:
 
 def test_every_declared_entity_is_recordable(model, reduce_for) -> None:
     declared = [
-        name for name in model.get("entities", {}) if name.startswith("gen_ai.")
+        name
+        for name in model.get("entities", {})
+        if name.startswith("gen_ai.")
     ]
 
     recorded = reduce_for(entities=declared)["entities"]
