@@ -1,0 +1,168 @@
+{
+  "spans": {
+    "http.server": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.response.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.response.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET SiteController.actionHealth' is missing recommended attribute 'client.address'",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET SiteController.actionHealth' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET SiteController.actionHealth' is missing required attribute 'url.path'",
+      "context": {
+        "attribute_key": "url.path",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET SiteController.actionStatus' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET SiteController.actionStatus' is missing recommended attribute 'client.address'",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET SiteController.actionStatus' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET SiteController.actionStatus' is missing required attribute 'url.path'",
+      "context": {
+        "attribute_key": "url.path",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET SiteController.actionUsers' is missing recommended attribute 'client.address'",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET SiteController.actionUsers' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET SiteController.actionUsers' is missing required attribute 'url.path'",
+      "context": {
+        "attribute_key": "url.path",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST SiteController.actionItems' is missing recommended attribute 'client.address'",
+      "context": {
+        "attribute_key": "client.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST SiteController.actionItems' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'POST SiteController.actionItems' is missing required attribute 'url.path'",
+      "context": {
+        "attribute_key": "url.path",
+        "kind": "server"
+      }
+    }
+  ],
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": []
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
+}

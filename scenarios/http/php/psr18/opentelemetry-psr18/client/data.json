@@ -1,0 +1,74 @@
+{
+  "spans": {
+    "http.client": [
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.full",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.response.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.response.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "context": {
+        "status_code": "error"
+      }
+    }
+  ],
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": []
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
+}
