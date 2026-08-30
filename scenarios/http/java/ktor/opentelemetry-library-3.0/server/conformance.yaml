@@ -1,0 +1,16 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: ktor
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-ktor-3.0
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare ktor:opentelemetry-library-3.0
+
+scenarios:
+  server:
+    # The driver owns the client process and closes standard input after the run.
+    run: otel-http-drive --serve otel-conformance-java run ktor:opentelemetry-library-3.0 Ktor3LibraryServerScenario

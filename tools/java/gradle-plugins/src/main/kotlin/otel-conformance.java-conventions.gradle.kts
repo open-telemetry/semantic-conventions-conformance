@@ -58,6 +58,19 @@ spotless {
         toggleOffOn()
         target("src/**/*.java")
     }
+    kotlin {
+        ktlint()
+        licenseHeader(
+            """
+            /*
+             * Copyright The OpenTelemetry Authors
+             * SPDX-License-Identifier: Apache-2.0
+             */
+            """.trimIndent(),
+            "(package|import|class|object|fun)",
+        )
+        target("src/**/*.kt")
+    }
     kotlinGradle {
         ktlint()
     }

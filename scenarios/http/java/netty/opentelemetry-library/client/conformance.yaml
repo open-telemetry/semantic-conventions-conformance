@@ -1,0 +1,18 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: netty
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-netty-4.1
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare netty:opentelemetry-library
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-java run netty:opentelemetry-library NettyLibraryClientScenario

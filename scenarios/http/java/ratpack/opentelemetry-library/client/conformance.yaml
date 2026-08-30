@@ -1,0 +1,18 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: ratpack
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-ratpack-1.7
+
+weaver:
+  config: ../../../weaver.toml
+
+setup: otel-conformance-java prepare ratpack:opentelemetry-library
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-java run ratpack:opentelemetry-library RatpackLibraryClientScenario
