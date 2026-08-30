@@ -182,8 +182,8 @@ otel-conformance scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_
 otel-conformance scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server
 otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
 otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
-otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
 otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
+otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
 ```
 
 Every Java package is built and started the same way, so
