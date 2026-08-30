@@ -70,11 +70,25 @@ def target_directory(manifest: Path) -> Path:
             "--manifest-path",
             str(manifest),
         ],
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
     )
-    metadata = cast(dict[str, object], json.loads(result.stdout))
+    output = "\n".join(
+        stream.strip()
+        for stream in (result.stderr, result.stdout)
+        if stream and stream.strip()
+    )
+    if result.returncode:
+        detail = output or f"exit code {result.returncode}"
+        raise LayoutError(f"cargo metadata failed for {manifest}: {detail}")
+    try:
+        metadata = cast(dict[str, object], json.loads(result.stdout))
+    except json.JSONDecodeError as error:
+        detail = output or "no output"
+        raise LayoutError(
+            f"cargo metadata returned invalid JSON for {manifest}: {detail}"
+        ) from error
     target = metadata.get("target_directory")
     if not isinstance(target, str):
         raise LayoutError(
@@ -166,8 +180,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     except LayoutError as error:
         print(f"{parser.prog}: error: {error}", file=sys.stderr)
     except FileNotFoundError as error:
-        missing = error.filename or "required executable"
-        print(f"{parser.prog}: error: {missing} was not found", file=sys.stderr)
+        missing = str(error.filename or "required executable")
+        if Path(missing).name.casefold() in {"cargo", "cargo.exe"}:
+            message = "cargo was not found"
+        elif arguments.command == RUN:
+            message = (
+                "scenario binary was not found; run "
+                "`otel-conformance-rust build` first"
+            )
+        else:
+            message = f"{missing} was not found"
+        print(f"{parser.prog}: error: {message}", file=sys.stderr)
     return 1
 
 

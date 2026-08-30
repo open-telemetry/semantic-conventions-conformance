@@ -109,6 +109,30 @@ class TestCommandLineErrors:
             in capsys.readouterr().err
         )
 
+    def test_missing_scenario_binary_suggests_building(
+        self,
+        root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        def missing(command: list[str]) -> int:
+            raise FileNotFoundError(2, "No such file or directory", command[0])
+
+        monkeypatch.chdir(root / "server")
+        monkeypatch.setattr(
+            otel_conformance_rust,
+            "target_directory",
+            lambda _: root / "custom-target",
+        )
+        monkeypatch.setattr(otel_conformance_rust.subprocess, "call", missing)
+
+        assert otel_conformance_rust.main(["run"]) == 1
+        assert (
+            "scenario binary was not found; run "
+            "`otel-conformance-rust build` first"
+            in capsys.readouterr().err
+        )
+
 
 class TestRunning:
     def test_the_binary_is_absolute_and_platform_specific(
@@ -144,6 +168,47 @@ class TestRunning:
         assert commands[0][commands[0].index("--manifest-path") + 1] == str(
             manifest
         )
+
+    def test_cargo_metadata_failure_is_a_layout_error(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        manifest = root / "server" / MANIFEST
+
+        def metadata(
+            command: list[str], **options: object
+        ) -> subprocess.CompletedProcess[str]:
+            assert options["check"] is False
+            return subprocess.CompletedProcess(
+                command,
+                101,
+                stdout="",
+                stderr="invalid Cargo.lock",
+            )
+
+        monkeypatch.setattr(otel_conformance_rust.subprocess, "run", metadata)
+
+        with pytest.raises(LayoutError, match="invalid Cargo.lock"):
+            target_directory(manifest)
+
+    def test_non_json_cargo_metadata_is_a_layout_error(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        manifest = root / "server" / MANIFEST
+
+        def metadata(
+            command: list[str], **_: object
+        ) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                stdout="not JSON",
+                stderr="",
+            )
+
+        monkeypatch.setattr(otel_conformance_rust.subprocess, "run", metadata)
+
+        with pytest.raises(LayoutError, match="not JSON"):
+            target_directory(manifest)
 
     def test_arguments_reach_the_scenario(
         self, root: Path, monkeypatch: pytest.MonkeyPatch
