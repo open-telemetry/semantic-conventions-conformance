@@ -12,6 +12,11 @@
     "open-telemetry-conformance/scenario": "dev-main",
     "symfony/http-client": "^7.4"
   },
+  "config": {
+    "platform": {
+      "php": "8.2.0"
+    }
+  },
   "repositories": [
     {
       "type": "path",

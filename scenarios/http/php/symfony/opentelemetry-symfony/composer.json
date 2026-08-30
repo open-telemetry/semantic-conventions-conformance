@@ -15,6 +15,11 @@
     "symfony/http-kernel": "^7.4",
     "symfony/routing": "^7.4"
   },
+  "config": {
+    "platform": {
+      "php": "8.2.0"
+    }
+  },
   "repositories": [
     {
       "type": "path",

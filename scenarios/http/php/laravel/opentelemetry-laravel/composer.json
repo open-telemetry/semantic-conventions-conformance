@@ -12,6 +12,11 @@
     "open-telemetry-conformance/http-test-client": "dev-main",
     "open-telemetry-conformance/scenario": "dev-main"
   },
+  "config": {
+    "platform": {
+      "php": "8.3.0"
+    }
+  },
   "repositories": [
     {
       "type": "path",
