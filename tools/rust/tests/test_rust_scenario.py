@@ -47,6 +47,24 @@ class TestFindingTheWorkspace:
 
         assert workspace_root(scenario) == root
 
+    def test_it_honors_a_package_workspace_path(
+        self, tmp_path: Path
+    ) -> None:
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        (workspace / MANIFEST).write_text(
+            "[workspace]\nmembers = []\n",
+            encoding="utf-8",
+        )
+        package = tmp_path / "tools" / "scenario"
+        package.mkdir(parents=True)
+        (package / MANIFEST).write_text(
+            '[package]\nname = "scenario"\nworkspace = "../../workspace"\n',
+            encoding="utf-8",
+        )
+
+        assert workspace_root(package) == workspace
+
     def test_the_package_is_the_nearest_manifest(self, root: Path) -> None:
         scenario = root / "server" / "scenario"
         scenario.mkdir()
