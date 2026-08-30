@@ -37,12 +37,28 @@ def package_manifest(start: Path | None = None) -> Path:
 
 
 def workspace_root(start: Path | None = None) -> Path:
-    """Find the Cargo workspace root at or above ``start``."""
+    """Find the Cargo workspace root for the package at ``start``."""
     here = (start or Path.cwd()).resolve()
     for candidate in (here, *here.parents):
         manifest = candidate / MANIFEST
         if manifest.is_file() and _has_section(manifest, "workspace"):
             return candidate
+        declared = (
+            _section_value(manifest, "package", "workspace")
+            if manifest.is_file()
+            else None
+        )
+        if declared is not None:
+            workspace = (candidate / declared).resolve()
+            workspace_manifest = workspace / MANIFEST
+            if workspace_manifest.is_file() and _has_section(
+                workspace_manifest, "workspace"
+            ):
+                return workspace
+            raise LayoutError(
+                f"{manifest} declares workspace {declared!r}, but "
+                f"{workspace_manifest} has no [workspace]"
+            )
     raise LayoutError(
         f"no workspace {MANIFEST} at or above {here} — "
         "`otel-conformance-rust` runs from inside a Cargo workspace"
