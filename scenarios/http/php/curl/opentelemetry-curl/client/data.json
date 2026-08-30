@@ -11,42 +11,6 @@
   },
   "events": {},
   "metrics": {},
-  "findings": [
-    {
-      "id": "type_mismatch",
-      "message": "Attribute 'http.request.body.size' has type 'double'. Type should be 'int'.",
-      "context": {
-        "attribute_key": "http.request.body.size",
-        "attribute_type": "double",
-        "expected": "int"
-      }
-    },
-    {
-      "id": "type_mismatch",
-      "message": "Attribute 'http.response.header.content_length' has type 'double'. Type should be 'string[]'.",
-      "context": {
-        "attribute_key": "http.response.header.content_length",
-        "attribute_type": "double",
-        "expected": "string[]"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
-      "context": {
-        "attribute_key": "network.protocol.version",
-        "kind": "client"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
-      "context": {
-        "attribute_key": "network.protocol.version",
-        "kind": "client"
-      }
-    }
-  ],
   "entities": {
     "process.runtime": {
       "identity": [
@@ -78,5 +42,71 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'double'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "double",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.response.header.content_length' has type 'double'. Type should be 'string[]'.",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "http.response.header.content_length",
+        "attribute_type": "double",
+        "expected": "string[]"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'double'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "double",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.response.header.content_length' has type 'double'. Type should be 'string[]'.",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "http.response.header.content_length",
+        "attribute_type": "double",
+        "expected": "string[]"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    }
+  ]
 }
