@@ -4,8 +4,10 @@ Java HTTP instrumentations, measured against
 [the shared HTTP contract](../../../tools/http/test-client/contract.json).
 
 Each `<library>/scenarios` project contains the workload. Its sibling
-instrumentation projects launch that workload. The dependency versions are
-pinned in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
+instrumentation projects launch that workload. Where framework generations
+are incompatible, `<library>/scenarios-<version>` projects hold the workload
+instead. The dependency versions are pinned in
+[`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
 `opentelemetry-javaagent` projects attach the full Java agent.
 `opentelemetry-library` projects initialize the SDK and install one explicit
