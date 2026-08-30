@@ -283,6 +283,9 @@ class ConformanceSession:
         otlp = {
             "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
             "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
+            "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": self._spec.otlp_protocol,
+            "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": self._spec.otlp_protocol,
+            "OTEL_EXPORTER_OTLP_LOGS_PROTOCOL": self._spec.otlp_protocol,
             "OTEL_METRIC_EXPORT_INTERVAL": str(
                 METRIC_EXPORT_INTERVAL_MILLIS
             ),

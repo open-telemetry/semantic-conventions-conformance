@@ -194,6 +194,9 @@ def test_grpc_scenario_environment_is_unchanged(
 
     assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://localhost:4317"
     assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == "grpc"
+    assert captured["OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"] == "grpc"
+    assert captured["OTEL_EXPORTER_OTLP_METRICS_PROTOCOL"] == "grpc"
+    assert captured["OTEL_EXPORTER_OTLP_LOGS_PROTOCOL"] == "grpc"
     assert "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" not in captured
     assert "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT" not in captured
     assert "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT" not in captured
@@ -216,6 +219,9 @@ def test_http_scenario_gets_generic_and_signal_endpoints(
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(_session, "_run_command", run)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", "grpc")
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "grpc")
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL", "grpc")
     opened = session(
         directory,
         tmp_path / "data.json",
@@ -231,6 +237,9 @@ def test_http_scenario_gets_generic_and_signal_endpoints(
         "http://127.0.0.1:12345"
     )
     assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == "http/protobuf"
+    assert captured["OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"] == "http/protobuf"
+    assert captured["OTEL_EXPORTER_OTLP_METRICS_PROTOCOL"] == "http/protobuf"
+    assert captured["OTEL_EXPORTER_OTLP_LOGS_PROTOCOL"] == "http/protobuf"
     assert captured["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"].endswith(
         "/v1/traces"
     )
