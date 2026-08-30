@@ -98,7 +98,7 @@ pub fn exchanges() -> Result<&'static [Exchange], ContractError> {
             Ok(document.requests)
         })
         .as_deref()
-        .map_err(|message| ContractError::new(format!("could not parse contract.json: {message}")))
+        .map_err(|message| ContractError::new(format!("invalid contract.json: {message}")))
 }
 
 /// Returns the measured requests, excluding readiness, in order.
