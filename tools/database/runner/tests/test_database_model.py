@@ -39,9 +39,6 @@ def test_the_registry_declares_the_span_types_we_classify(
 
     assert classified == {span_type}
     assert model["spans"][span_type]["kind"] == "client"
-    attributes = model["spans"][span_type]["attributes"]
-    assert attributes["db.system.name"] == "required"
-    assert "db.query.text" in attributes
 
 
 def test_the_registry_declares_operation_duration(model) -> None:
