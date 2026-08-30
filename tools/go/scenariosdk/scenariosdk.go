@@ -60,7 +60,14 @@ func Initialize(ctx context.Context) (*SDK, error) {
 	}
 	metricExporter, err := otlpmetricgrpc.New(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("creating the OTLP metric exporter: %w", err)
+		metricError := fmt.Errorf("creating the OTLP metric exporter: %w", err)
+		shutdownContext, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+		shutdownError := spanExporter.Shutdown(shutdownContext)
+		cancel()
+		if shutdownError != nil {
+			shutdownError = fmt.Errorf("shutting down the OTLP span exporter: %w", shutdownError)
+		}
+		return nil, errors.Join(metricError, shutdownError)
 	}
 
 	sdk := &SDK{
