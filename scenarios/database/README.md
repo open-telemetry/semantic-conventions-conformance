@@ -13,7 +13,7 @@ its bootstrap data before any measured process starts.
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
 java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
-contracts/                                 shared telemetry expectations by vendor
+contracts/                                 shared telemetry expectations by vendor or client API
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
 java/shared/elasticsearch/                  one Java agent launcher per client API
 java/elasticsearch/                         Elasticsearch conformance packages
