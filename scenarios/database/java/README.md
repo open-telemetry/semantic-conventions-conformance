@@ -37,11 +37,18 @@ connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
 
+MongoDB covers synchronous, legacy asynchronous, and Reactive Streams drivers
+with both Java-agent and published standalone library instrumentation. Its
+[workload guide](shared/mongodb/README.md) and
+[backend notes](mongodb/README.md) describe commands, connection settings, and
+bootstrap.
+
 Run one package from the repository root:
 
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-javaagent
 ```
 
 Docker must be installed and running. Redis connection tests also use Docker and

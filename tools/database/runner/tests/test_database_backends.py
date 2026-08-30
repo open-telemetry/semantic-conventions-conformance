@@ -14,9 +14,10 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres, _redis, _sql_server
+from database_conformance import _mariadb, _mongodb, _postgres, _redis, _sql_server
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
+from database_conformance._mongodb import MONGODB_IMAGE, MongoDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 from database_conformance._redis import REDIS_IMAGE, Redis
 from database_conformance._sql_server import SQL_SERVER_IMAGE, SQLServer
@@ -217,6 +218,41 @@ def install_stub(
                 environment={"SQLCMDPASSWORD": "Conformance1!"},
             ),
         ),
+        (
+            _mongodb,
+            MongoDB,
+            27017,
+            {
+                "MONGO_INITDB_ROOT_USERNAME": "root",
+                "MONGO_INITDB_ROOT_PASSWORD": "conformance-root",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "conformance",
+                "DATABASE_PASSWORD": "conformance",
+            },
+            ["/tmp/otel-conformance-mongodb.js"],
+            ExecConfig(
+                command=[
+                    "mongosh",
+                    "--quiet",
+                    "--host",
+                    "127.0.0.1",
+                    "--port",
+                    "27017",
+                    "--username",
+                    "root",
+                    "--password",
+                    "conformance-root",
+                    "--authenticationDatabase",
+                    "admin",
+                    "--file",
+                    "/tmp/otel-conformance-mongodb.js",
+                ],
+            ),
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
@@ -224,6 +260,7 @@ def test_starts_initializes_publishes_and_removes_database(
     module: Any,
     backend_type: type[Postgres]
     | type[MariaDB]
+    | type[MongoDB]
     | type[Redis]
     | type[SQLServer],
     port: int,
@@ -244,8 +281,7 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
     assert [path for _, path in container.transfers] == expected_schema_paths
     for schema, _ in container.transfers:
-        assert b"CREATE" in schema
-        assert b"INSERT INTO" not in schema
+        assert (b"createCollection" if backend_type is MongoDB else b"CREATE") in schema
     assert container.exec_config == expected_initialization
     assert container.wait_strategy is not None
 
@@ -336,6 +372,24 @@ def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
     assert container.stopped
 
 
+def test_mongodb_bootstrap_failure_reports_output_and_cleans_up(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"MongoServerError"),
+        port=27017,
+    )
+    install_stub(monkeypatch, _mongodb, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not apply the MongoDB schema.*MongoServerError",
+    ):
+        MongoDB().start()
+
+    assert container.stopped
+
+
 def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
@@ -373,13 +427,13 @@ def test_cannot_start_postgres_twice(
     [
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
+        (MONGODB_IMAGE, "mongo"),
         (REDIS_IMAGE, "redis"),
         (SQL_SERVER_IMAGE, "mcr.microsoft.com/mssql/server"),
     ],
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
-
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -406,3 +460,13 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE [conformance].[items]" in schema
     assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
+    assert "INSERT INTO" not in schema
+
+    bootstrap = (
+        resources.files("database_conformance")
+        .joinpath("mongodb.js")
+        .read_text(encoding="utf-8")
+    )
+    assert 'createCollection("items")' in bootstrap
+    assert "createUser({" in bootstrap
+    assert bootstrap.count("_id:") == 4
