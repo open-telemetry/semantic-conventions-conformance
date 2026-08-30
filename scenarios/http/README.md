@@ -11,8 +11,9 @@ What HTTP instrumentations emit, checked against the
 
 A language that needs a build of its own has a build root directly under this
 one: the version-pinned Gradle build under `java/` and the solution under
-`dotnet/`, both described below, and [`js/`](js/README.md), whose README
-explains the npm workspace it roots.
+`dotnet/`, both described below, plus [`go/`](go/README.md) and
+[`js/`](js/README.md), whose READMEs explain the Go module and the npm
+workspace they root.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
