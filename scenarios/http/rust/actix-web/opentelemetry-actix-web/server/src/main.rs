@@ -32,7 +32,8 @@ async fn run() -> Result<(), BoxError> {
     let handle = server.handle();
     actix_web::rt::spawn(server);
 
-    actix_web::rt::task::spawn_blocking(otel_conformance_scenario::wait_for_eof).await??;
+    let eof = actix_web::rt::task::spawn_blocking(otel_conformance_scenario::wait_for_eof).await;
     handle.stop(true).await;
+    eof??;
     Ok(())
 }
