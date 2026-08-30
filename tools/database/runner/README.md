@@ -29,6 +29,9 @@ container, waits for its declared readiness check, applies any declared
 initialization, and removes the container when the session closes. Scenario data
 is not pre-seeded; each workload creates or verifies the data it needs.
 
+See the [Oracle scenario notes](../../../scenarios/database/java/oracle/README.md)
+for its container initialization and startup-timeout override.
+
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
 

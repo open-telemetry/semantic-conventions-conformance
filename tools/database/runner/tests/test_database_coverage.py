@@ -24,6 +24,12 @@ def test_mariadb_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.mariadb.client"}
 
 
+def test_oracle_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "SELECT", "CLIENT", {"db.system.name": "oracle.db"}
+    ) == {"db.oracledb.client"}
+
+
 def test_redis_client_span_uses_the_vendor_refinement() -> None:
     assert classify_span("GET", "CLIENT", {"db.system.name": "redis"}) == {
         "db.redis.client"

@@ -7,6 +7,7 @@ dependencies {
     implementation(project(":scenario-sdk"))
     runtimeOnly(libs.mariadb)
     runtimeOnly(libs.mssql)
+    runtimeOnly(libs.oracle)
     runtimeOnly(libs.postgresql)
 
     implementation(platform(libs.opentelemetry.instrumentation.bom.alpha))
