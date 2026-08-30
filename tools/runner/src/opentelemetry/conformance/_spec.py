@@ -18,7 +18,7 @@ from typing import Mapping, Sequence, cast
 import yaml
 
 SPEC_FILE = "conformance.yaml"
-_SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
+_SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "allowed_metrics", "events")
 
 
 class SpecError(ValueError):

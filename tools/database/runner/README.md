@@ -23,10 +23,10 @@ runner_config:
 ```
 
 `runner_config` must contain only `backend`, set to `cassandra`, `mariadb`, or
-`postgresql`. Each session
-starts one pinned container, applies that backend's packaged schema, and removes
-the container when the session closes. The schemas create the objects used by
-the scenarios but no rows; scenarios own any data their operations need.
+`postgresql`. Each session starts one pinned container, applies that backend's
+packaged schema, and removes the container when the session closes. The schemas
+create the objects used by the scenarios but no rows; scenarios own any data
+their operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:

@@ -183,12 +183,10 @@ def test_database_session_dispatches_and_closes_cassandra(
         "DOMAIN",
         SimpleNamespace(session=stub_session),
     )
-    (tmp_path / "database.yaml").write_text(
-        "backend: cassandra\n", encoding="utf-8"
-    )
+    spec = _write_spec(tmp_path, "  backend: cassandra")
 
     with pytest.raises(RuntimeError, match="scenario failed"):
-        with database_conformance.database_session(tmp_path):
+        with database_conformance.database_session(tmp_path, spec=spec):
             raise RuntimeError("scenario failed")
 
     assert events == [

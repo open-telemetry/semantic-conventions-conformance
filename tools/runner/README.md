@@ -271,7 +271,7 @@ required and other undeclared metrics still fail the scenario.
 Several implementations can share telemetry expectations while keeping their
 commands and configuration local. Point `scenario_contract` at a YAML file
 whose only top-level key is `scenarios`; each scenario may declare `spans`,
-`metrics` and `events`, but not `run` or environment:
+`metrics`, `allowed_metrics` and `events`, but not `run` or environment:
 
 ```yaml
 scenario_contract: ../../contracts/http-client.yaml

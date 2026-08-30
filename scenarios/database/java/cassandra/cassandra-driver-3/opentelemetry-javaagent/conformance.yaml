@@ -2,8 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 runner: database-conformance
+runner_config:
+  backend: cassandra
 instrumented_library: cassandra-driver-3
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+scenario_contract: ../../../../contracts/cassandra.yaml
 
 env:
   CASSANDRA_HOST: ${DATABASE_HOST}
@@ -13,109 +16,19 @@ env:
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare shared:cassandra3:opentelemetry-javaagent
 
 scenarios:
   query:
     run: otel-conformance-java run --agent shared:cassandra3:opentelemetry-javaagent Cassandra3JavaagentScenario query
-    spans:
-      - match:
-          attributes:
-            db.system.name: cassandra
-        expect:
-          count: 1
-          attributes:
-            db.operation.name: SELECT
-            db.collection.name: conformance.items
-            db.query.summary: SELECT conformance.items
-            db.query.text: SELECT name FROM conformance.items WHERE id = ?
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
-    events: []
 
   prepared:
     run: otel-conformance-java run --agent shared:cassandra3:opentelemetry-javaagent Cassandra3JavaagentScenario prepared
-    spans:
-      - match:
-          attributes:
-            db.system.name: cassandra
-        expect:
-          count: 1
-          attributes:
-            db.operation.name: SELECT
-            db.collection.name: conformance.items
-            db.query.summary: SELECT conformance.items
-            db.query.text: SELECT name FROM conformance.items WHERE id = ?
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
-    events: []
 
   batch:
     run: otel-conformance-java run --agent shared:cassandra3:opentelemetry-javaagent Cassandra3JavaagentScenario batch
-    spans:
-      - match:
-          attributes:
-            db.system.name: cassandra
-        expect:
-          count: 1
-          attributes:
-            db.operation.name: BATCH INSERT
-            db.operation.batch.size: 2
-            db.collection.name: conformance.items
-            db.query.summary: BATCH INSERT conformance.items
-            db.query.text: INSERT INTO conformance.items (id, name) VALUES (?, ?)
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
-    events: []
 
   error:
     run: otel-conformance-java run --agent shared:cassandra3:opentelemetry-javaagent Cassandra3JavaagentScenario error
-    spans:
-      - match:
-          attributes:
-            db.system.name: cassandra
-        expect:
-          count: 1
-          attributes:
-            db.operation.name: SELECT
-            db.collection.name: conformance.missing_table
-            db.query.summary: SELECT conformance.missing_table
-            db.query.text: SELECT * FROM conformance.missing_table
-            error.type: {present: true}
-            server.address: 127.0.0.1
-            server.port: {present: true}
-    metrics:
-      - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
-    events: []
