@@ -20,8 +20,6 @@ func RunServer(middleware echo.MiddlewareFunc, stopping <-chan error) error {
 
 func newHandler(middleware echo.MiddlewareFunc) http.Handler {
 	server := echo.New()
-	server.HideBanner = true
-	server.HidePort = true
 	if middleware != nil {
 		server.Use(middleware)
 	}
