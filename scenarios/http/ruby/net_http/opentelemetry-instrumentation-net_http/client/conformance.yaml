@@ -1,0 +1,23 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: net/http
+instrumentation_library: opentelemetry-instrumentation-net_http
+otlp_protocol: http/protobuf
+
+setup: otel-conformance-ruby install
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-ruby run client.rb
+    expected_violations:
+      - id: error_type_missing_on_error
+        reason: The instrumentation does not set error.type on 4xx or 5xx responses.
+      - id: recommended_attribute_not_present
+        reason: The instrumentation does not report network.protocol.version.
+      - id: required_attribute_not_present
+        reason: The instrumentation reports url.path instead of the required url.full.

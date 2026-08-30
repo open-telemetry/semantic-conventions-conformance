@@ -44,6 +44,7 @@ def test_minimal_spec_leaves_every_expectation_unchecked(
 
     assert spec.instrumented_library == "demo"
     assert spec.instrumentation_library == "demo-instrumentation"
+    assert spec.otlp_protocol == "grpc"
     scenario = spec.scenarios["inference"]
     assert scenario.run == ("python", "inference.py")
     assert scenario.spans is None
@@ -103,6 +104,24 @@ scenarios:
     )
 
     assert spec.scenarios["inference"].run == ("python", "a b.py")
+
+
+def test_package_may_select_otlp_http_protobuf(tmp_path: Path) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+otlp_protocol: http/protobuf
+scenarios:
+  inference:
+    run: python inference.py
+""",
+        )
+    )
+
+    assert spec.otlp_protocol == "http/protobuf"
 
 
 def test_span_expectation(tmp_path: Path) -> None:
@@ -224,6 +243,18 @@ def test_span_keys_survive_separators_in_a_value() -> None:
             "  a:\n    run: x",
             "unknown key",
             id="unknown-server-key",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: http/json\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="unknown-otlp-protocol",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: [grpc]\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="non-string-otlp-protocol",
         ),
     ],
 )

@@ -1,0 +1,22 @@
+PATH
+  remote: .
+  specs:
+    opentelemetry-conformance-http (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    minitest (5.27.0)
+    rake (13.4.2)
+
+PLATFORMS
+  ruby
+  x64-mingw-ucrt
+
+DEPENDENCIES
+  minitest (~> 5.0)
+  opentelemetry-conformance-http!
+  rake (~> 13.0)
+
+BUNDLED WITH
+   2.6.9

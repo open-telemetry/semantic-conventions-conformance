@@ -12,10 +12,12 @@ directly.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Literal
 
 import pytest
 
@@ -146,9 +148,14 @@ def session(
     data_file: Path,
     setup: tuple[str, ...] | None = None,
     report_dir: Path | None = None,
+    otlp_protocol: Literal["grpc", "http/protobuf"] = "grpc",
 ) -> ConformanceSession:
     return ConformanceSession(
-        replace(load_spec(directory), setup=setup),
+        replace(
+            load_spec(directory),
+            setup=setup,
+            otlp_protocol=otlp_protocol,
+        ),
         report_dir if report_dir is not None else directory / "reports",
         variables={"ROOT": str(directory)},
         weaver=WeaverSpec(registry="model"),
@@ -159,6 +166,78 @@ def session(
             "reports": reports.name,
         },
     )
+
+
+def test_grpc_scenario_environment_is_unchanged(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def run(
+        command: tuple[str, ...],
+        *,
+        cwd: Path,
+        env: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        captured.update(env)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(_session, "_run_command", run)
+    opened = session(directory, tmp_path / "data.json")
+
+    opened._execute(  # noqa: SLF001
+        opened.spec.scenarios["inference"],
+        "http://localhost:4317",
+    )
+
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://localhost:4317"
+    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == "grpc"
+    assert "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" not in captured
+    assert "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT" not in captured
+    assert "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT" not in captured
+
+
+def test_http_scenario_gets_generic_and_signal_endpoints(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def run(
+        command: tuple[str, ...],
+        *,
+        cwd: Path,
+        env: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        captured.update(env)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(_session, "_run_command", run)
+    opened = session(
+        directory,
+        tmp_path / "data.json",
+        otlp_protocol="http/protobuf",
+    )
+
+    opened._execute(  # noqa: SLF001
+        opened.spec.scenarios["inference"],
+        "http://127.0.0.1:12345",
+    )
+
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == (
+        "http://127.0.0.1:12345"
+    )
+    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == "http/protobuf"
+    assert captured["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"].endswith(
+        "/v1/traces"
+    )
+    assert captured["OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"].endswith(
+        "/v1/metrics"
+    )
+    assert captured["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"].endswith("/v1/logs")
 
 
 def test_a_complete_run_writes_the_data_file(

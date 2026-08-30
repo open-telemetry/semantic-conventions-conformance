@@ -38,6 +38,12 @@
       "groupName": "javascript-minor"
     },
     {
+      // group all non-major Ruby dependency updates into a single PR
+      "matchManagers": ["bundler"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "ruby-minor"
+    },
+    {
       // group all non-major .NET dependency updates into a single PR
       "matchManagers": ["nuget"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
