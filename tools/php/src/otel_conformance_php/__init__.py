@@ -98,12 +98,18 @@ def serve(
     if process.poll() is not None:
         return process.returncode or 0
 
-    process.terminate()
+    try:
+        process.terminate()
+    except OSError:
+        pass
     try:
         process.wait(timeout=_SHUTDOWN_TIMEOUT_SECONDS)
         return 0
     except subprocess.TimeoutExpired:
-        process.kill()
+        try:
+            process.kill()
+        except OSError:
+            pass
         process.wait()
         return 1
 

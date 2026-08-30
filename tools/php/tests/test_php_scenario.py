@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import io
+import subprocess
 import threading
 from pathlib import Path
 
@@ -189,6 +190,75 @@ def test_serve_stops_the_server_at_eof(
 
     assert serve(router, input_stream=io.BytesIO()) == 0
     assert process.terminated
+
+
+def test_serve_tolerates_server_exit_during_terminate(
+    package: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = package / "router.php"
+    router.write_text("<?php", encoding="utf-8")
+    monkeypatch.setenv(PORT_VARIABLE, "8080")
+
+    class Process:
+        returncode: int | None = None
+
+        def poll(self) -> int | None:
+            return self.returncode
+
+        def terminate(self) -> None:
+            self.returncode = 0
+            raise OSError("process already exited")
+
+        def wait(self, timeout: int | None = None) -> int:
+            assert timeout == otel_conformance_php._SHUTDOWN_TIMEOUT_SECONDS
+            return self.returncode or 0
+
+    monkeypatch.setattr(
+        otel_conformance_php.subprocess,
+        "Popen",
+        lambda command, stdin: Process(),
+    )
+
+    assert serve(router, input_stream=io.BytesIO()) == 0
+
+
+def test_serve_tolerates_server_exit_during_kill(
+    package: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    router = package / "router.php"
+    router.write_text("<?php", encoding="utf-8")
+    monkeypatch.setenv(PORT_VARIABLE, "8080")
+
+    class Process:
+        returncode: int | None = None
+        waits = 0
+
+        def poll(self) -> int | None:
+            return self.returncode
+
+        def terminate(self) -> None:
+            pass
+
+        def kill(self) -> None:
+            self.returncode = 0
+            raise OSError("process already exited")
+
+        def wait(self, timeout: int | None = None) -> int:
+            self.waits += 1
+            if self.waits == 1:
+                raise subprocess.TimeoutExpired("php", timeout)
+            assert timeout is None
+            return self.returncode or 0
+
+    monkeypatch.setattr(
+        otel_conformance_php.subprocess,
+        "Popen",
+        lambda command, stdin: Process(),
+    )
+
+    assert serve(router, input_stream=io.BytesIO()) == 1
 
 
 def test_serve_reports_server_that_exits_cleanly_before_eof(
