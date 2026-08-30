@@ -22,7 +22,7 @@ IMAGE = (
 )
 
 Groq().chat.completions.create(
-    model="llama-4-scout-17b-16e-instruct",
+    model="meta-llama/llama-4-scout-17b-16e-instruct",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {

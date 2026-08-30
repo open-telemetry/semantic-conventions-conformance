@@ -20,8 +20,9 @@ SCHEMA = {
     "additionalProperties": False,
 }
 
+# Groq allows `strict` json_schema only on GPT-OSS and Qwen 3.8 27B.
 Groq().chat.completions.create(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-20b",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "What is the weather in Seattle?"},

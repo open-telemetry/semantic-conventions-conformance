@@ -145,7 +145,7 @@
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.is_streaming' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "chat llama-4-scout-17b-16e-instruct",
+      "signal_name": "chat meta-llama/llama-4-scout-17b-16e-instruct",
       "context": {
         "attribute_key": "gen_ai.is_streaming"
       }
@@ -154,16 +154,16 @@
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "chat llama-4-scout-17b-16e-instruct",
+      "signal_name": "chat meta-llama/llama-4-scout-17b-16e-instruct",
       "context": {
         "attribute_key": "gen_ai.usage.total_tokens"
       }
     },
     {
       "id": "genai_expected_attribute_missing",
-      "message": "Span 'chat llama-4-scout-17b-16e-instruct' (operation 'chat') is missing expected attribute 'server.address'",
+      "message": "Span 'chat meta-llama/llama-4-scout-17b-16e-instruct' (operation 'chat') is missing expected attribute 'server.address'",
       "signal_type": "span",
-      "signal_name": "chat llama-4-scout-17b-16e-instruct",
+      "signal_name": "chat meta-llama/llama-4-scout-17b-16e-instruct",
       "context": {
         "missing_attribute": "server.address",
         "operation": "chat"
@@ -171,9 +171,46 @@
     },
     {
       "id": "span_status_ok_set_by_instrumentation",
-      "message": "Span 'chat llama-4-scout-17b-16e-instruct' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "message": "Span 'chat meta-llama/llama-4-scout-17b-16e-instruct' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
       "signal_type": "span",
-      "signal_name": "chat llama-4-scout-17b-16e-instruct",
+      "signal_name": "chat meta-llama/llama-4-scout-17b-16e-instruct",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.is_streaming' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat openai/gpt-oss-20b",
+      "context": {
+        "attribute_key": "gen_ai.is_streaming"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat openai/gpt-oss-20b",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat openai/gpt-oss-20b' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat openai/gpt-oss-20b",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'chat openai/gpt-oss-20b' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "chat openai/gpt-oss-20b",
       "context": {
         "status_code": "ok"
       }
