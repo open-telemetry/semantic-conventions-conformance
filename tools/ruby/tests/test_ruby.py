@@ -6,8 +6,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import otel_conformance_ruby
 import pytest
+
+import otel_conformance_ruby
 from otel_conformance_ruby import (
     BUNDLE_DIRECTORY,
     GEMFILE,
