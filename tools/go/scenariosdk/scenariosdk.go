@@ -15,6 +15,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -30,6 +31,8 @@ import (
 // this scenario. The exporters read it themselves; it is required here so a
 // misconfigured run fails rather than exporting nowhere.
 const EndpointVariable = "OTEL_EXPORTER_OTLP_ENDPOINT"
+
+const shutdownTimeout = 10 * time.Second
 
 // SDK is the providers a scenario installed, and how it flushes them.
 type SDK struct {
@@ -86,8 +89,11 @@ func Initialize(ctx context.Context) (*SDK, error) {
 // A scenario that exits without it reports less than it emitted, which reads
 // as missing instrumentation rather than as a scenario bug.
 func (s *SDK) Shutdown(ctx context.Context) error {
+	shutdownContext, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
+
 	return errors.Join(
-		s.tracerProvider.Shutdown(ctx),
-		s.meterProvider.Shutdown(ctx),
+		s.tracerProvider.Shutdown(shutdownContext),
+		s.meterProvider.Shutdown(shutdownContext),
 	)
 }
