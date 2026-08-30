@@ -5,7 +5,8 @@ This local gem reads the shared [HTTP contract](../README.md). It has no runtime
 Add it to a scenario Gemfile:
 
 ```ruby
-gem "opentelemetry-conformance-http", path: "../../../tools/http/test-client/ruby"
+gem "opentelemetry-conformance-http",
+    path: "../../../../../../tools/http/test-client/ruby"
 ```
 
 Require it as `opentelemetry/conformance/http`:
