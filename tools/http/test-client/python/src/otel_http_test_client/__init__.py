@@ -25,7 +25,7 @@ server scenario declares routes in its framework's native form — that
 declaration is what an instrumentation reads a route from — but every status
 and body is a constant from the shared file because the requests are fixed. A
 client scenario consumes the response without checking it again; the shared
-telemetry contract is its oracle.
+telemetry contract defines its conformance expectations.
 
 This package is standard library only, so installing it next to a scenario
 drags no dependency into a run.
@@ -211,8 +211,8 @@ def drive(
     is a span in that server's report.
 
     ``validate_responses`` belongs to the external server driver. Client
-    scenarios leave it false because their shared telemetry contract is their
-    oracle.
+    scenarios leave it false because the conformance runner evaluates their
+    shared telemetry expectations.
     """
     sender = send or request
     for exchange in REQUESTS:

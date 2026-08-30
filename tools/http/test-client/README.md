@@ -8,8 +8,7 @@ Every language reads that file rather than restating it, so a scenario in the
 eleventh language is measured against the same traffic as the first.
 [`client-telemetry.yaml`](client-telemetry.yaml) separately declares the
 telemetry every client implementation must emit for that traffic. The
-conformance runner evaluates it once rather than each language implementing
-its own response oracle.
+conformance runner evaluates every language against the same expectations.
 
 ## The contract
 
