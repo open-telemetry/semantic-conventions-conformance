@@ -95,7 +95,10 @@ starts a local bridge to Weaver and sets `OTEL_EXPORTER_OTLP_ENDPOINT` plus
 `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`,
 and `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`. The signal-specific values include
 their `/v1/traces`, `/v1/metrics`, and `/v1/logs` paths. Existing gRPC packages
-keep the generic endpoint and `OTEL_EXPORTER_OTLP_PROTOCOL=grpc`.
+keep the generic endpoint alone. Under either protocol the runner sets
+`OTEL_EXPORTER_OTLP_PROTOCOL` and its traces, metrics, and logs counterparts to
+the selected value, so a protocol inherited from the environment cannot
+override it.
 The bridge is temporary while
 [Weaver does not accept OTLP/HTTP directly](https://github.com/open-telemetry/weaver/issues/1563).
 
