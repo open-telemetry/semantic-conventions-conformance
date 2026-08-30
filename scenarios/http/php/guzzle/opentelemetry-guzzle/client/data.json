@@ -12,6 +12,33 @@
   },
   "events": {},
   "metrics": {},
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.response.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.response.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "context": {
+        "status_code": "error"
+      }
+    }
+  ],
   "entities": {
     "process.runtime": {
       "identity": [
@@ -43,60 +70,5 @@
         "telemetry.sdk.version"
       ]
     }
-  },
-  "findings": [
-    {
-      "id": "type_mismatch",
-      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
-      "signal_type": "span",
-      "signal_name": "GET",
-      "context": {
-        "attribute_key": "http.request.body.size",
-        "attribute_type": "string",
-        "expected": "int"
-      }
-    },
-    {
-      "id": "type_mismatch",
-      "message": "Attribute 'http.response.body.size' has type 'string'. Type should be 'int'.",
-      "signal_type": "span",
-      "signal_name": "GET",
-      "context": {
-        "attribute_key": "http.response.body.size",
-        "attribute_type": "string",
-        "expected": "int"
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "signal_type": "span",
-      "signal_name": "GET",
-      "context": {
-        "status_code": "error"
-      }
-    },
-    {
-      "id": "type_mismatch",
-      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
-      "signal_type": "span",
-      "signal_name": "POST",
-      "context": {
-        "attribute_key": "http.request.body.size",
-        "attribute_type": "string",
-        "expected": "int"
-      }
-    },
-    {
-      "id": "type_mismatch",
-      "message": "Attribute 'http.response.body.size' has type 'string'. Type should be 'int'.",
-      "signal_type": "span",
-      "signal_name": "POST",
-      "context": {
-        "attribute_key": "http.response.body.size",
-        "attribute_type": "string",
-        "expected": "int"
-      }
-    }
-  ]
+  }
 }
