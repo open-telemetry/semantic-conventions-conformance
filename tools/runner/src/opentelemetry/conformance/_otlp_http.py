@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import gzip
+import io
 import logging
 import re
 import socket
@@ -251,9 +252,16 @@ class _Handler(BaseHTTPRequestHandler):
             return
         if encoding == "gzip":
             try:
-                body = gzip.decompress(body)
+                with gzip.GzipFile(fileobj=io.BytesIO(body)) as compressed:
+                    body = compressed.read(_MAX_BODY_BYTES + 1)
             except (gzip.BadGzipFile, EOFError, OSError):
                 self._error(HTTPStatus.BAD_REQUEST, "invalid gzip body")
+                return
+            if len(body) > _MAX_BODY_BYTES:
+                self._error(
+                    HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                    f"decompressed body exceeds {_MAX_BODY_BYTES} bytes",
+                )
                 return
 
         try:

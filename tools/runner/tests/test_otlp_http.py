@@ -17,6 +17,7 @@ import grpc
 import pytest
 from google.protobuf.message import Message
 
+from opentelemetry.conformance import _otlp_http
 from opentelemetry.conformance._otlp_http import OtlpHttpBridge
 from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import (
     ExportLogsServiceRequest,
@@ -191,6 +192,25 @@ def test_accepts_gzip_bodies(collector: tuple[str, _Received]) -> None:
 
     assert status == HTTPStatus.OK
     assert len(received.metrics[0].resource_metrics) == 1
+
+
+def test_rejects_gzip_body_that_expands_past_limit(
+    collector: tuple[str, _Received],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    endpoint, _ = collector
+    monkeypatch.setattr(_otlp_http, "_MAX_BODY_BYTES", 1024)
+
+    with OtlpHttpBridge(endpoint) as bridge:
+        status, body, _ = _post(
+            bridge,
+            "/v1/traces",
+            gzip.compress(b"\0" * 1025),
+            encoding="gzip",
+        )
+
+    assert status == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+    assert b"decompressed body exceeds 1024 bytes" in body
 
 
 @pytest.mark.parametrize(
