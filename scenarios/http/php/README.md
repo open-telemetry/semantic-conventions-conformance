@@ -35,9 +35,9 @@ request therefore flushes its telemetry through the SDK lifecycle PHP users
 actually run.
 
 `otel-conformance-php serve` is the parent process. It starts the built-in
-server on the port chosen by `otel-http-drive`, relays its output, and stops it
-when the driver closes standard input. The workload itself stays ordinary Slim
-routing code.
+server on the port chosen by `otel-http-drive`, lets `php -S` inherit the
+launcher's standard output and standard error, and stops it when the driver
+closes standard input. The workload itself stays ordinary Slim routing code.
 
 ## Running
 
