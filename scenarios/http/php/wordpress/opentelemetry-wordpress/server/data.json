@@ -1,0 +1,174 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "client.port",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "url.path",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'wp.is_admin' does not exist in the registry.",
+      "context": {
+        "attribute_key": "wp.is_admin"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /health' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /health' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /status/404' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /status/404' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /status/500' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /status/500' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /users/123' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'GET /users/123' should be named one of [\"GET\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST /items' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'POST /items' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "POST"
+        ],
+        "kind": "server"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST /wp-cron.php' is missing recommended attribute 'server.address'",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'POST /wp-cron.php' should be named one of [\"POST\"]; a name built from the request path or URL makes every request a new span name.",
+      "context": {
+        "expected": [
+          "POST"
+        ],
+        "kind": "server"
+      }
+    }
+  ],
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": []
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  }
+}

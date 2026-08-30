@@ -1,0 +1,36 @@
+{
+  "name": "open-telemetry-conformance/http-php-codeigniter",
+  "description": "CodeIgniter HTTP server conformance measured by OpenTelemetry auto-instrumentation.",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.2",
+    "codeigniter4/framework": "^4.7",
+    "open-telemetry/exporter-otlp": "^1.4",
+    "open-telemetry/opentelemetry-auto-codeigniter": "^0.3",
+    "open-telemetry/sdk": "^1.15",
+    "open-telemetry/transport-grpc": "^1.2",
+    "open-telemetry-conformance/http-test-client": "dev-main",
+    "open-telemetry-conformance/scenario": "dev-main"
+  },
+  "scripts": {
+    "prepare": "@php prepare.php",
+    "post-install-cmd": "@prepare",
+    "post-update-cmd": "@prepare"
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../../../../../tools/http/test-client/php",
+      "options": {
+        "symlink": false
+      }
+    },
+    {
+      "type": "path",
+      "url": "../../../../../tools/php/scenario",
+      "options": {
+        "symlink": false
+      }
+    }
+  ]
+}
