@@ -107,7 +107,7 @@ def test_database_session_injects_backend_variables(
     ]
 
 
-def test_database_session_closes_mariadb_after_an_error(
+def test_database_session_closes_mongodb_after_an_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -130,14 +130,14 @@ def test_database_session_closes_mariadb_after_an_error(
         del directory, kwargs
         yield object()
 
-    monkeypatch.setitem(database_conformance._BACKENDS, "mariadb", StubBackend)
+    monkeypatch.setitem(database_conformance._BACKENDS, "mongodb", StubBackend)
     monkeypatch.setattr(
         database_conformance,
         "DOMAIN",
         SimpleNamespace(session=stub_session),
     )
 
-    spec = _write_spec(tmp_path, "  backend: mariadb")
+    spec = _write_spec(tmp_path, "  backend: mongodb")
     with pytest.raises(RuntimeError, match="scenario failed"):
         with database_conformance.database_session(tmp_path, spec=spec):
             raise RuntimeError("scenario failed")

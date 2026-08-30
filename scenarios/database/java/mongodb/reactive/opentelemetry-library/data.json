@@ -1,0 +1,40 @@
+{
+  "spans": {
+    "db.mongodb.client": [
+      "db.collection.name",
+      "db.namespace",
+      "db.operation.name",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "db.client.operation.duration": [
+      "db.collection.name",
+      "db.namespace",
+      "db.operation.name",
+      "db.system.name",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": []
+}
