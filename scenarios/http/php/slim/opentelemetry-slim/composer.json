@@ -9,7 +9,6 @@
     "open-telemetry/sdk": "^1.15",
     "open-telemetry/transport-grpc": "^1.2",
     "open-telemetry-conformance/http-test-client": "dev-main",
-    "open-telemetry-conformance/scenario": "dev-main",
     "slim/psr7": "^1.7",
     "slim/slim": "^4.15"
   },
@@ -17,13 +16,6 @@
     {
       "type": "path",
       "url": "../../../../../tools/http/test-client/php",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../../../../../tools/php/scenario",
       "options": {
         "symlink": false
       }

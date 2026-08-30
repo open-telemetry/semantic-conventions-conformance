@@ -13,9 +13,10 @@ guzzle/opentelemetry-guzzle/          locked instrumentation package
 
 Each instrumentation side is its own Composer package with its own committed
 `composer.lock`. This keeps the measured dependency graph exact without
-creating a PHP-wide build root. Both use path packages from
-[`tools/http/test-client/php`](../../../tools/http/test-client/php) and
-[`tools/php/scenario`](../../../tools/php/scenario).
+creating a PHP-wide build root. Both use the path package from
+[`tools/http/test-client/php`](../../../tools/http/test-client/php), and
+Guzzle also uses [`tools/php/scenario`](../../../tools/php/scenario) to read
+the mock server's URL.
 
 PHP auto-instrumentation needs the `opentelemetry` extension and
 `OTEL_PHP_AUTOLOAD_ENABLED=true`. OTLP uses gRPC because Weaver live-check
