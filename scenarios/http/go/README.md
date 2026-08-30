@@ -5,6 +5,8 @@
 <library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
+internal/httpserver/                the listener, the shutdown, the answers
+internal/httpservertest/            the contract assertions the tests share
 ```
 
 This directory is the Go build root for the HTTP domain. It is a single module,
@@ -19,10 +21,14 @@ dependencies require the same version, and CI selects the toolchain from this
 directory's `go.mod`.
 
 Each `<library>/scenarios/` package is the workload, and it imports no
-OpenTelemetry. The per-instrumentation `main` packages attach `otelhttp`,
-`otelecho`, `otelgin`, `otelmux`, or `otelrestful` and start the SDK. The
-difference between instrumentations should be visible as the code that differs,
-and nothing else.
+OpenTelemetry. What every workload shares is in
+[`internal/httpserver`](internal/httpserver): the listener, the shutdown, and
+the answer each route writes. Their tests share
+[`internal/httpservertest`](internal/httpservertest), which asserts that a
+handler answers every exchange in the contract. The per-instrumentation `main`
+packages attach `otelhttp`, `otelecho`, `otelgin`, `otelmux`, or `otelrestful`
+and start the SDK. The difference between instrumentations should be visible as
+the code that differs, and nothing else.
 
 Go's `main` package is a directory, so a launch package and its
 `conformance.yaml` land in the same directory naturally, and `<side>` is that
@@ -35,7 +41,7 @@ For example, `net/http`'s `ServeMux` takes the method and path template in the
 pattern itself:
 
 ```go
-mux.Handle("GET /users/{userId}", answer())
+mux.Handle("GET /users/{userId}", http.HandlerFunc(httpserver.Answer))
 ```
 
 Nothing is attached per route. `ServeMux` records the pattern it matched on the
