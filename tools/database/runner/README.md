@@ -33,6 +33,7 @@ environment declarations:
 
 | Variable | Value |
 | --- | --- |
+| `DATABASE_BACKEND` | Backend key selected by `runner_config` |
 | `DATABASE_HOST` | Loopback address published by Docker |
 | `DATABASE_PORT` | Docker-assigned host port |
 | `DATABASE_NAME` | Test database name |
@@ -41,7 +42,9 @@ environment declarations:
 
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
-configuration from the same backend.
+configuration from the same backend. The backend key selects that database's
+operations from the shared
+[`contract.json`](../test-client/contract.json).
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
 use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
