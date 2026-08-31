@@ -5,5 +5,4 @@ plugins {
 
 dependencies {
     api(libs.lettuce)
-    implementation(project(":scenario-support"))
 }
