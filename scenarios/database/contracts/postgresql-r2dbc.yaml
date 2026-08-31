@@ -57,6 +57,25 @@ scenarios:
       - queueSize
     events: []
 
+  stored_procedure:
+    spans:
+      - match:
+          attributes:
+            db.system.name: postgresql
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.query.summary: CALL conformance.noop
+            db.query.text: CALL conformance.noop()
+            db.stored_procedure.name: conformance.noop
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
   error:
     spans:
       - match:
