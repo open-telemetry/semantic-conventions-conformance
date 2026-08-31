@@ -144,7 +144,10 @@ class ScenarioSpec:
     ``spans``, ``metrics`` and ``events`` are ``None`` when the scenario
     doesn't declare them, which means "not checked" — a scenario with no
     expectations at all only has to run and stay free of semconv violations.
-    Declaring one makes its check exact.
+    Declaring one makes its check exact, with one relaxation:
+    ``allowed_metrics`` names metrics that may appear alongside the required
+    ``metrics`` without failing the scenario. Every other undeclared metric
+    still fails it.
 
     ``expected_violations`` are this scenario's own and are checked both ways:
     reported, they pass; no longer reported, the run says to remove them.
