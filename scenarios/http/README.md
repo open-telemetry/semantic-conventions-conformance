@@ -75,7 +75,7 @@ ruby/rack/opentelemetry-instrumentation-rack/server/
 ```
 
 [`otel-conformance-ruby`](../../tools/ruby) finds the nearest `Gemfile` and
-`Gemfile.lock`, installs the frozen bundle under that package's `build/bundle`,
+`Gemfile.lock`, installs the frozen bundle under that package's `vendor/bundle`,
 and starts its entry point with `bundle exec ruby`. Repository helpers resolve
 through path dependencies, and neither package writes to the user-wide gem
 installation.

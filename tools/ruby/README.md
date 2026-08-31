@@ -27,9 +27,10 @@ gem "opentelemetry-instrumentation-net_http"
 ```
 
 Run `bundle lock` when dependencies change and commit the result. Installation
-is frozen and sets `GEM_HOME` and `GEM_PATH` to `build/bundle` below the
-package root. Installation and lookup stay inside the package bundle instead
-of using user-wide or system gems.
+is frozen under `vendor/bundle` below the package root, with shared gems
+disabled. Installation and lookup stay inside the package bundle instead of
+using user-wide or system gems. CI uses the same location through
+`ruby/setup-ruby`'s Bundler cache.
 
 ## Launcher
 

@@ -18,6 +18,7 @@ node_modules/
 
 # Bundler: local configuration and cached gems. Gemfile.lock is committed.
 **/.bundle/
+**/vendor/bundle/
 
 # .NET: what a build writes, which the artifacts output layout collects into
 # one directory per build root.

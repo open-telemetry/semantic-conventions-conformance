@@ -122,17 +122,18 @@ def test_the_bundle_is_frozen_and_repository_local(root: Path) -> None:
             "KEEP": "yes",
             "BUNDLE_DISABLE_SHARED_GEMS": "true",
             "BUNDLE_PATH": "somewhere-else",
+            "GEM_HOME": "user-gems",
             "GEM_PATH": "shared-gems",
         },
     )
 
     assert environment == {
         "KEEP": "yes",
+        "BUNDLE_DISABLE_SHARED_GEMS": "true",
         "BUNDLE_FROZEN": "true",
         "BUNDLE_GEMFILE": str(root / GEMFILE),
         "BUNDLE_IGNORE_CONFIG": "true",
-        "GEM_HOME": str(root / BUNDLE_DIRECTORY),
-        "GEM_PATH": str(root / BUNDLE_DIRECTORY),
+        "BUNDLE_PATH": str(root / BUNDLE_DIRECTORY),
     }
 
 
@@ -162,7 +163,7 @@ class TestTheCommandLine:
         assert calls[0]["command"][-1:] == ["install"]
         assert calls[0]["cwd"] == root
         assert calls[0]["env"]["BUNDLE_GEMFILE"] == str(root / GEMFILE)
-        assert calls[0]["env"]["GEM_HOME"] == str(root / BUNDLE_DIRECTORY)
+        assert calls[0]["env"]["BUNDLE_PATH"] == str(root / BUNDLE_DIRECTORY)
 
     def test_run_resolves_the_entry_before_using_the_package_cwd(
         self, root: Path, scenario: Path, calls: list[dict[str, Any]]

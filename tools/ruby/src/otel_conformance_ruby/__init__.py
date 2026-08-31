@@ -15,7 +15,7 @@ from typing import Mapping, Sequence
 
 GEMFILE = "Gemfile"
 LOCKFILE = "Gemfile.lock"
-BUNDLE_DIRECTORY = Path("build") / "bundle"
+BUNDLE_DIRECTORY = Path("vendor") / "bundle"
 RUN = "run"
 
 
@@ -88,15 +88,20 @@ def bundle_environment(
     """Return an environment selecting the package's locked, local bundle."""
     environment = dict(os.environ if environ is None else environ)
     bundle_directory = str(root / BUNDLE_DIRECTORY)
-    environment.pop("BUNDLE_DISABLE_SHARED_GEMS", None)
-    environment.pop("BUNDLE_PATH", None)
+    for variable in (
+        "BUNDLE_DISABLE_SHARED_GEMS",
+        "BUNDLE_PATH",
+        "GEM_HOME",
+        "GEM_PATH",
+    ):
+        environment.pop(variable, None)
     environment.update(
         {
+            "BUNDLE_DISABLE_SHARED_GEMS": "true",
             "BUNDLE_FROZEN": "true",
             "BUNDLE_GEMFILE": str(root / GEMFILE),
             "BUNDLE_IGNORE_CONFIG": "true",
-            "GEM_HOME": bundle_directory,
-            "GEM_PATH": bundle_directory,
+            "BUNDLE_PATH": bundle_directory,
         }
     )
     return environment
