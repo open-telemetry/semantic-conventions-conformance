@@ -348,7 +348,7 @@ jobs:
           toolchain: 1.88.0
           # The Cargo workspace, which is not the repository root the action's
           # cache assumes: without this it saves a `target/` no build writes.
-          cache-workspaces: scenarios/http/rust
+          cache-workspaces: ${{ env.SCENARIO_ROOT }}
 
       - name: Install weaver
         run: |
