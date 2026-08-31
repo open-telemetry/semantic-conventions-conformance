@@ -22,12 +22,13 @@ runner_config:
   backend: postgresql
 ```
 
-The supported values are `postgresql`, `mariadb`, and `mongodb`. Each session
-starts one pinned container, applies that backend's packaged bootstrap, and
-removes the container when the session closes. The relational schemas create
-the same logical objects but no rows. The MongoDB bootstrap recreates the
-`items` collection with deterministic documents for isolated read, update,
-delete, and aggregation operations.
+`runner_config` must contain only `backend`, whose supported values are
+`postgresql`, `mariadb`, and `mongodb`. Each session starts one pinned
+container, applies that backend's packaged bootstrap, and removes the container
+when the session closes. The relational schemas create the same logical objects
+but no rows. The MongoDB bootstrap recreates the `items` collection with
+deterministic documents for isolated read, update, delete, and aggregation
+operations.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
