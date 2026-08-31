@@ -3,8 +3,9 @@
 The workload every SQL database conformance scenario executes, shared so each
 language measures the same operations.
 
-Each file under [`contracts/`](contracts) owns one backend's named scenarios.
-Every scenario keeps its SQL `action` and telemetry `expect` object together.
+Each file under [`contracts/`](contracts) owns one backend's ordered scenarios.
+Every list entry keeps its description, SQL `action`, and telemetry `expect`
+object together.
 
 Parameters use named `${parameter}` markers instead of a client library's bind
 syntax. Each language helper renders those markers for its driver and binds the
@@ -16,7 +17,7 @@ are static contract data and do not pass through environment variables.
 
 ## Operation kinds
 
-Each scenario has a stable name and one SQL action kind:
+Each scenario has a human-readable description and one SQL action kind:
 
 | Kind | Adapter action |
 | --- | --- |
@@ -31,7 +32,13 @@ batch, or stored procedure API. The language helper reads `action`; the
 conformance runner reads `expect` using its generic `spans`, `metrics`, and
 `events` matcher syntax. The scenario process fails if the driver cannot execute
 the action. Tests also require every matching conformance package to reference
-the same YAML contract and wire each scenario name into its run command.
+the same YAML contract and declare one `scenario_run` command.
+
+The conformance runner creates a separate live-check for every list entry and
+injects its zero-based position as `OTEL_CONFORMANCE_SCENARIO_INDEX`. Language
+helpers select that same position from the backend contract, keeping the action
+and expectation aligned without an authored scenario ID. Descriptions are
+labels and may repeat.
 
 ## Per language
 

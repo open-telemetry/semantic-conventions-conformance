@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from database_conformance import _BACKENDS
+from opentelemetry.conformance import load_spec
 
 _REPOSITORY = Path(__file__).parents[4]
 _CONTRACTS = Path(__file__).parents[2] / "sql-test-client" / "contracts"
@@ -33,10 +34,9 @@ def test_runner_supports_every_sql_contract_backend() -> None:
 def test_sql_scenarios_combine_actions_and_expectations() -> None:
     for _, document in _contracts():
         scenarios = document["scenarios"]
-        assert isinstance(scenarios, dict)
+        assert isinstance(scenarios, list)
         assert scenarios
-        for name, scenario in scenarios.items():
-            assert isinstance(name, str)
+        for scenario in scenarios:
             assert isinstance(scenario, dict)
             assert set(scenario) == {"description", "action", "expect"}
             assert isinstance(scenario["description"], str)
@@ -50,8 +50,7 @@ def test_sql_scenarios_are_wired_by_every_matching_package() -> None:
         backend = document["backend"]
         scenarios = document["scenarios"]
         assert isinstance(backend, str)
-        assert isinstance(scenarios, dict)
-        workload_names = set(scenarios)
+        assert isinstance(scenarios, list)
 
         packages: list[tuple[Path, dict[str, object]]] = []
         for path in _SCENARIO_PACKAGES.rglob("conformance.yaml"):
@@ -64,7 +63,13 @@ def test_sql_scenarios_are_wired_by_every_matching_package() -> None:
         for path, package in packages:
             scenario_contract = path.parent / package["scenario_contract"]
             assert scenario_contract.resolve() == contract_path.resolve(), path
-            package_scenarios = package["scenarios"]
-            assert set(package_scenarios) == workload_names, path
-            for name, scenario in package_scenarios.items():
-                assert scenario["run"].split()[-1] == name, path
+            assert "scenarios" not in package, path
+            assert isinstance(package["scenario_run"], str), path
+
+            spec = load_spec(path.parent)
+            assert [
+                scenario.index for scenario in spec.scenarios.values()
+            ] == list(range(len(scenarios))), path
+            assert [
+                scenario.description for scenario in spec.scenarios.values()
+            ] == [scenario["description"] for scenario in scenarios], path
