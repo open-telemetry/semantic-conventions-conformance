@@ -25,14 +25,15 @@ impl fmt::Display for EnvironmentError {
 
 impl std::error::Error for EnvironmentError {}
 
-/// Returns the value of `name`, or an error that names what was missing.
+/// Returns the value of `name`, replacing invalid Unicode, or an error that
+/// names what was missing.
 ///
 /// # Errors
 ///
 /// Returns [`EnvironmentError`] when the variable is absent or blank.
 pub fn require(name: &str) -> Result<String, EnvironmentError> {
-    env::var(name)
-        .ok()
+    env::var_os(name)
+        .map(|value| value.to_string_lossy().into_owned())
         .filter(|value| !value.trim().is_empty())
         .ok_or_else(|| EnvironmentError {
             name: name.to_owned(),
@@ -55,6 +56,21 @@ pub fn wait_for_eof() -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::require;
+
+    #[cfg(unix)]
+    #[test]
+    fn non_unicode_environment_is_not_reported_as_missing() {
+        use std::ffi::OsString;
+        use std::os::unix::ffi::OsStringExt;
+
+        const NAME: &str = "OTEL_CONFORMANCE_RUST_TEST_NON_UNICODE";
+        std::env::set_var(NAME, OsString::from_vec(b"value-\xff".to_vec()));
+
+        let value = require(NAME).expect("the variable should be present");
+
+        std::env::remove_var(NAME);
+        assert_eq!(value, "value-\u{fffd}");
+    }
 
     #[test]
     fn missing_environment_names_the_variable() {
