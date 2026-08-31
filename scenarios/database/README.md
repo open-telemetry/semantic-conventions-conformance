@@ -37,8 +37,9 @@ the JDBC path that produced it:
 | `stored_procedure` | `CallableStatement.execute` |
 
 The R2DBC packages exercise a plain `Statement`, a bound `Statement`, a
-two-command `Batch`, and an invalid query that produces PostgreSQL SQLSTATE
-`42P01`. Every publisher is consumed before the connection closes.
+two-command `Batch`, a stored procedure through `Statement`, and an invalid
+query that produces PostgreSQL SQLSTATE `42P01`. Every publisher is consumed
+before the connection closes.
 
 ## Running it
 

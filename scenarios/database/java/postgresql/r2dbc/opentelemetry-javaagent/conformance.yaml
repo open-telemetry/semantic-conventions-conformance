@@ -30,5 +30,8 @@ scenarios:
   batch:
     run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario batch
 
+  stored_procedure:
+    run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario stored_procedure
+
   error:
     run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario error

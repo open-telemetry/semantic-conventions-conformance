@@ -12,7 +12,9 @@ Vert.x SQL can sit beside JDBC without duplicating the shared JDBC code.
 
 The `shared:r2dbc:scenarios` project likewise owns one reactive workload. Its
 launchers create the same PostgreSQL `ConnectionFactory`, then either let the
-Java agent instrument it or wrap it with `opentelemetry-r2dbc-1.0`.
+Java agent instrument it or wrap it with `opentelemetry-r2dbc-1.0`. The workload
+covers statements, parameter binding, batches, stored procedures, and handled
+SQL errors.
 
 The Java code only connects and performs measured operations. Database
 lifecycle and schema creation stay in the Python runner, where later languages

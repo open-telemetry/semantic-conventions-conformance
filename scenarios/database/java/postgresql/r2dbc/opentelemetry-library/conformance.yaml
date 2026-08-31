@@ -30,5 +30,8 @@ scenarios:
   batch:
     run: otel-conformance-java run shared:r2dbc:opentelemetry-library R2dbcLibraryScenario batch
 
+  stored_procedure:
+    run: otel-conformance-java run shared:r2dbc:opentelemetry-library R2dbcLibraryScenario stored_procedure
+
   error:
     run: otel-conformance-java run shared:r2dbc:opentelemetry-library R2dbcLibraryScenario error

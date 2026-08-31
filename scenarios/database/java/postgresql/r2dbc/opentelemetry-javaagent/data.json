@@ -5,6 +5,7 @@
       "db.operation.batch.size",
       "db.query.summary",
       "db.query.text",
+      "db.stored_procedure.name",
       "error.type",
       "server.address",
       "server.port"

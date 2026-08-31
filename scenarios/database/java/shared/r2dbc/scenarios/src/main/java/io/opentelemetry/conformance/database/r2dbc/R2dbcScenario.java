@@ -55,6 +55,8 @@ public final class R2dbcScenario {
         return bind(connection);
       case BATCH:
         return batch(connection);
+      case STORED_PROCEDURE:
+        return storedProcedure(connection);
       case ERROR:
         return error(connection);
     }
@@ -100,6 +102,12 @@ public final class R2dbcScenario {
         .then();
   }
 
+  private static Mono<Void> storedProcedure(Connection connection) {
+    return Flux.from(connection.createStatement("CALL conformance.noop()").execute())
+        .concatMap(Result::getRowsUpdated)
+        .then();
+  }
+
   private static Mono<Void> error(Connection connection) {
     return Flux.from(
             connection.createStatement("SELECT * FROM conformance.missing_items").execute())
@@ -116,6 +124,7 @@ public final class R2dbcScenario {
     STATEMENT,
     BIND,
     BATCH,
+    STORED_PROCEDURE,
     ERROR;
 
     private static Operation parse(String value) {
