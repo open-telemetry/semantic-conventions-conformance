@@ -22,11 +22,11 @@ runner_config:
   backend: postgresql
 ```
 
-The supported values are `hbase-1`, `hbase-2`, `mariadb`, and `postgresql`.
-Each session starts one pinned container fixture, applies that backend's
-packaged schema, and removes the container when the session closes. PostgreSQL
-and MariaDB create the same empty logical objects. HBase creates its table and
-one deterministic row for read scenarios.
+`runner_config` must contain only `backend`, set to `hbase-1`, `hbase-2`,
+`mariadb`, or `postgresql`. Each session starts one pinned container fixture,
+applies that backend's packaged schema, and removes the container when the
+session closes. PostgreSQL and MariaDB create the same empty logical objects.
+HBase creates its table and one deterministic row for read scenarios.
 
 The HBase fixtures build cached local images from checksum-verified Apache
 HBase 1.7.2 and 2.4.18 binary distributions and a digest-pinned Eclipse Temurin
