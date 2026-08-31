@@ -1,40 +1,159 @@
 {
   "backend": "postgresql",
   "description": "The SQL scenarios every language executes against PostgreSQL.",
-  "scenarios": [
-    {
-      "name": "statement",
+  "scenarios": {
+    "statement": {
       "description": "Runs a direct query.",
-      "kind": "query",
-      "sql": "SELECT count(*) >= 0 FROM conformance.items"
+      "action": {
+        "kind": "query",
+        "sql": "SELECT count(*) >= 0 FROM conformance.items"
+      },
+      "expect": {
+        "spans": [
+          {
+            "match": {
+              "attributes": {
+                "db.system.name": "postgresql"
+              }
+            },
+            "expect": {
+              "count": 1,
+              "attributes": {
+                "db.namespace": "conformance|conformance",
+                "db.query.summary": "SELECT conformance.items",
+                "db.query.text": "SELECT count(*) >= ? FROM conformance.items",
+                "server.address": "127.0.0.1",
+                "server.port": {
+                  "present": true
+                }
+              }
+            }
+          }
+        ],
+        "metrics": [
+          "db.client.operation.duration",
+          "queueSize"
+        ],
+        "events": []
+      }
     },
-    {
-      "name": "prepared_statement",
+    "prepared_statement": {
       "description": "Binds an integer to a prepared query.",
-      "kind": "prepared_query",
-      "sql": "SELECT name FROM conformance.items WHERE id = ${id}",
-      "parameters": [
-        {
-          "name": "id",
-          "type": "integer",
-          "value": -1
-        }
-      ]
+      "action": {
+        "kind": "prepared_query",
+        "sql": "SELECT name FROM conformance.items WHERE id = ${id}",
+        "parameters": [
+          {
+            "name": "id",
+            "type": "integer",
+            "value": -1
+          }
+        ]
+      },
+      "expect": {
+        "spans": [
+          {
+            "match": {
+              "attributes": {
+                "db.system.name": "postgresql"
+              }
+            },
+            "expect": {
+              "count": 1,
+              "attributes": {
+                "db.namespace": "conformance|conformance",
+                "db.query.summary": "SELECT conformance.items",
+                "db.query.text": "SELECT name FROM conformance.items WHERE id = ?",
+                "server.address": "127.0.0.1",
+                "server.port": {
+                  "present": true
+                }
+              }
+            }
+          }
+        ],
+        "metrics": [
+          "db.client.operation.duration",
+          "queueSize"
+        ],
+        "events": []
+      }
     },
-    {
-      "name": "batch",
+    "batch": {
       "description": "Executes two inserts as one batch.",
-      "kind": "batch",
-      "statements": [
-        "INSERT INTO conformance.items (id, name) VALUES (1, 'first')",
-        "INSERT INTO conformance.items (id, name) VALUES (2, 'second')"
-      ]
+      "action": {
+        "kind": "batch",
+        "statements": [
+          "INSERT INTO conformance.items (id, name) VALUES (1, 'first')",
+          "INSERT INTO conformance.items (id, name) VALUES (2, 'second')"
+        ]
+      },
+      "expect": {
+        "spans": [
+          {
+            "match": {
+              "attributes": {
+                "db.system.name": "postgresql"
+              }
+            },
+            "expect": {
+              "count": 1,
+              "attributes": {
+                "db.namespace": "conformance|conformance",
+                "db.operation.batch.size": 2,
+                "db.query.text": {
+                  "present": true
+                },
+                "server.address": "127.0.0.1",
+                "server.port": {
+                  "present": true
+                }
+              }
+            }
+          }
+        ],
+        "metrics": [
+          "db.client.operation.duration",
+          "queueSize"
+        ],
+        "events": []
+      }
     },
-    {
-      "name": "stored_procedure",
+    "stored_procedure": {
       "description": "Calls the no-op stored procedure.",
-      "kind": "stored_procedure",
-      "procedure": "conformance.noop"
+      "action": {
+        "kind": "stored_procedure",
+        "procedure": "conformance.noop"
+      },
+      "expect": {
+        "spans": [
+          {
+            "match": {
+              "attributes": {
+                "db.system.name": "postgresql"
+              }
+            },
+            "expect": {
+              "count": 1,
+              "attributes": {
+                "db.namespace": "conformance|conformance",
+                "db.query.summary": "CALL conformance.noop",
+                "db.query.text": "CALL conformance.noop()",
+                "db.stored_procedure.name": "conformance.noop",
+                "server.address": "127.0.0.1",
+                "server.port": {
+                  "present": true
+                }
+              }
+            }
+          }
+        ],
+        "metrics": [
+          "db.client.operation.duration",
+          "queueSize"
+        ],
+        "events": []
+      }
     }
-  ]
+  }
 }
