@@ -23,7 +23,7 @@ import kotlinx.coroutines.runBlocking
 
 /** Runs the shared request contract through a Ktor 3 CIO client. */
 object KtorClientScenario {
-    fun run(configureTelemetry: HttpClientConfig<*>.() -> Unit = {}) {
+    fun run(configureTelemetry: HttpClientConfig<*>.() -> Unit) {
         HttpClient(CIO) {
             install(HttpTimeout) {
                 requestTimeoutMillis = HttpClientWorkload.REQUEST_TIMEOUT.toMillis()
