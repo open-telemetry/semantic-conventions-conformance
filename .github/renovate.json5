@@ -92,9 +92,11 @@
     {
       // Elasticsearch 8 dropped the transport protocol the Transport Client
       // speaks, and `org.elasticsearch.client:transport` ends at 7.17, so the
-      // node this suite runs against has to stay on that line too.
+      // node this suite runs against and the REST Client version shared with
+      // the Transport Client artifacts have to stay on that line too.
       "matchPackageNames": [
-        "docker.elastic.co/elasticsearch/elasticsearch"
+        "docker.elastic.co/elasticsearch/elasticsearch",
+        "org.elasticsearch.client:elasticsearch-rest-client"
       ],
       "allowedVersions": "<8"
     },
