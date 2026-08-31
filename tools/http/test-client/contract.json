@@ -17,7 +17,7 @@
       "responseBody": "{\"id\": 123, \"name\": \"Alice\"}"
     },
     {
-      "description": "A query string, which is its own attribute (`url.query`) and must not leak into `http.route`, `url.path` or the span name.",
+      "description": "A query string, which is its own attribute (`url.query`) and must not leak into `http.route`, `url.path` or the span name. Its path differs from the other `/users` request so that validation can identify this one when `url.query` is missing.",
       "method": "GET",
       "path": "/users/456?fields=name&verbose=true",
       "status": 200,
