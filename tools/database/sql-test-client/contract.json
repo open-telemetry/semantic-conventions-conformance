@@ -1,5 +1,5 @@
 {
-  "description": "The database operations every language executes. Each operation has one logical result and backend-specific SQL where database dialects differ.",
+  "description": "The SQL database operations every language executes. Each operation has one logical result and backend-specific SQL where database dialects differ.",
   "backends": [
     "mariadb",
     "postgresql"

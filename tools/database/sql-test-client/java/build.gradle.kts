@@ -8,6 +8,6 @@ dependencies {
 
 tasks.processResources {
     from("../contract.json") {
-        rename { "otel-database-contract.json" }
+        rename { "otel-sql-contract.json" }
     }
 }

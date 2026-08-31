@@ -2,44 +2,44 @@
  * Copyright The OpenTelemetry Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-package io.opentelemetry.conformance.database;
+package io.opentelemetry.conformance.database.sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.opentelemetry.conformance.database.DatabaseContract.Batch;
-import io.opentelemetry.conformance.database.DatabaseContract.Parameter;
-import io.opentelemetry.conformance.database.DatabaseContract.PreparedQuery;
-import io.opentelemetry.conformance.database.DatabaseContract.Query;
-import io.opentelemetry.conformance.database.DatabaseContract.StoredProcedure;
-import io.opentelemetry.conformance.database.DatabaseContract.Workload;
+import io.opentelemetry.conformance.database.sql.SqlContract.Batch;
+import io.opentelemetry.conformance.database.sql.SqlContract.Parameter;
+import io.opentelemetry.conformance.database.sql.SqlContract.PreparedQuery;
+import io.opentelemetry.conformance.database.sql.SqlContract.Query;
+import io.opentelemetry.conformance.database.sql.SqlContract.StoredProcedure;
+import io.opentelemetry.conformance.database.sql.SqlContract.Workload;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class DatabaseContractTest {
+class SqlContractTest {
 
   @Test
   void everyBackendResolvesTheSameOperations() {
-    assertEquals(List.of("mariadb", "postgresql"), DatabaseContract.backends());
+    assertEquals(List.of("mariadb", "postgresql"), SqlContract.backends());
 
-    for (String backend : DatabaseContract.backends()) {
-      Workload workload = DatabaseContract.workload(backend);
+    for (String backend : SqlContract.backends()) {
+      Workload workload = SqlContract.workload(backend);
 
       assertEquals(
           List.of("statement", "prepared_statement", "batch", "stored_procedure"),
-          workload.operations().stream().map(DatabaseContract.Operation::name).toList());
+          workload.operations().stream().map(SqlContract.Operation::name).toList());
       assertTrue(
           workload.operations().stream()
-              .map(DatabaseContract.Operation::description)
+              .map(SqlContract.Operation::description)
               .noneMatch(String::isBlank));
     }
   }
 
   @Test
   void resolvesPostgresqlForAClientAdapter() {
-    Workload workload = DatabaseContract.workload("postgresql");
+    Workload workload = SqlContract.workload("postgresql");
 
     Query query = assertInstanceOf(Query.class, workload.operation("statement"));
     assertEquals("SELECT count(*) >= 0 FROM conformance.items", query.sql());
@@ -81,8 +81,7 @@ class DatabaseContractTest {
   @Test
   void rejectsNamesOutsideTheContract() {
     assertThrows(
-        IllegalArgumentException.class,
-        () -> DatabaseContract.workload("postgresql").operation("x"));
-    assertThrows(IllegalArgumentException.class, () -> DatabaseContract.workload("sqlite"));
+        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").operation("x"));
+    assertThrows(IllegalArgumentException.class, () -> SqlContract.workload("sqlite"));
   }
 }

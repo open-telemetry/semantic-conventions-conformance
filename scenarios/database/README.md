@@ -20,11 +20,12 @@ Contracts contain only telemetry expectations. A language or driver reuses
 them by declaring the same scenario names with its own environment and run
 commands.
 
-The concrete workload lives in
-[`tools/database/test-client/contract.json`](../../tools/database/test-client/contract.json).
+The concrete SQL workload lives in
+[`tools/database/sql-test-client/contract.json`](../../tools/database/sql-test-client/contract.json).
 It defines each operation, its expected result, and the SQL or procedure name
-for every backend. Language helpers read that file and translate named
-parameters and procedure calls into their client APIs.
+for every SQL backend. Language helpers read that file and translate named
+parameters and procedure calls into their client APIs. Other database families
+can define workloads that fit their own data models.
 
 Each operation is a separate scenario so a missing or malformed span identifies
 the client path that produced it:
