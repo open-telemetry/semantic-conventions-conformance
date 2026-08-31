@@ -252,11 +252,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'ChatOpenAI.chat'",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'ChatOpenAI.chat'",
       "signal_type": "span",
       "signal_name": "ChatOpenAI.chat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -374,11 +374,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'conformance_workflow.workflow'",
+      "message": "invoke_agent span name should be 'invoke_agent conformance_workflow', got 'conformance_workflow.workflow'",
       "signal_type": "span",
       "signal_name": "conformance_workflow.workflow",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent conformance_workflow",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }
@@ -1184,11 +1184,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'weather_assistant.workflow'",
+      "message": "invoke_agent span name should be 'invoke_agent weather_assistant', got 'weather_assistant.workflow'",
       "signal_type": "span",
       "signal_name": "weather_assistant.workflow",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent weather_assistant",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }

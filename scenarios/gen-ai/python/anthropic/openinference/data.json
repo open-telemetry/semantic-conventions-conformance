@@ -404,11 +404,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'beta.messages.parse'",
+      "message": "chat span name should be 'chat claude-sonnet-4-20250514', got 'beta.messages.parse'",
       "signal_type": "span",
       "signal_name": "beta.messages.parse",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat claude-sonnet-4-20250514",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -830,11 +830,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'messages.create'",
+      "message": "chat span name should be 'chat claude-sonnet-4-20250514', got 'messages.create'",
       "signal_type": "span",
       "signal_name": "messages.create",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat claude-sonnet-4-20250514",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -1040,11 +1040,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'messages.stream'",
+      "message": "chat span name should be 'chat claude-sonnet-4-20250514', got 'messages.stream'",
       "signal_type": "span",
       "signal_name": "messages.stream",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat claude-sonnet-4-20250514",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }

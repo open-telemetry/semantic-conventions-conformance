@@ -225,11 +225,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'agent_run [weather_assistant]'",
+      "message": "invoke_agent span name should be 'invoke_agent weather_assistant', got 'agent_run [weather_assistant]'",
       "signal_type": "span",
       "signal_name": "agent_run [weather_assistant]",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent weather_assistant",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }
@@ -635,11 +635,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "generate_content span name should be 'generate_content' or 'generate_content <value of gen_ai.request.model>', got 'call_llm'",
+      "message": "generate_content span name should be 'generate_content gemini-2.0-flash', got 'call_llm'",
       "signal_type": "span",
       "signal_name": "call_llm",
       "context": {
-        "expected_form": "generate_content or 'generate_content <gen_ai.request.model>'",
+        "expected_form": "generate_content gemini-2.0-flash",
         "keyed_attr": "gen_ai.request.model",
         "operation": "generate_content"
       }
