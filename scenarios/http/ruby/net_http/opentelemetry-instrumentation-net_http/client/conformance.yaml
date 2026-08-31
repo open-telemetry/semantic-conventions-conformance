@@ -20,4 +20,4 @@ scenarios:
       - id: recommended_attribute_not_present
         reason: The instrumentation does not report network.protocol.version.
       - id: required_attribute_not_present
-        reason: The instrumentation reports url.path instead of the required url.full.
+        reason: The instrumentation does not report the required url.full attribute.
