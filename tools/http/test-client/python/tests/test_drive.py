@@ -547,7 +547,7 @@ class TestDrivingAServerScenario:
                 events.append(f"waited {timeout}")
                 return 0
 
-        monkeypatch.setattr(driver, "_ERROR_SHUTDOWN_TIMEOUT_SECONDS", 3)
+        monkeypatch.setattr(driver, "_SHUTDOWN_TIMEOUT_SECONDS", 3)
 
         driver._stop_after_error(Process())  # type: ignore[arg-type]
 

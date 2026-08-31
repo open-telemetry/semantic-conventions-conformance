@@ -37,7 +37,6 @@ from . import (
 # first request, and a loaded CI machine slower still.
 _STARTUP_TIMEOUT_SECONDS = 60
 _SHUTDOWN_TIMEOUT_SECONDS = 30
-_ERROR_SHUTDOWN_TIMEOUT_SECONDS = 5
 _POLL_INTERVAL_SECONDS = 0.1
 
 
@@ -112,11 +111,16 @@ def _serve_and_drive(command: Sequence[str]) -> int:
 
 
 def _stop_after_error(process: subprocess.Popen[bytes]) -> None:
-    """Deliver the EOF protocol before force-killing a failed scenario."""
+    """Deliver the EOF protocol before force-killing a failed scenario.
+
+    The same allowance as a run that succeeded: a failed run is the one whose
+    telemetry has to explain the failure, so the scenario gets as long to
+    export it here as it would have got there.
+    """
     if process.stdin is not None:
         process.stdin.close()
     try:
-        process.wait(timeout=_ERROR_SHUTDOWN_TIMEOUT_SECONDS)
+        process.wait(timeout=_SHUTDOWN_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired:
         _kill_tree(process)
 
