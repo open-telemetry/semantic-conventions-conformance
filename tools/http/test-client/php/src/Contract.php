@@ -13,7 +13,6 @@ final class Contract
 {
     public const CONTENT_TYPE = 'application/json';
     public const USER_AGENT = 'otel-http-conformance/1';
-    public const PATH_VARIABLE = 'OTEL_HTTP_CONTRACT';
 
     private const ABBREVIATION_BYTES = 60;
     private const CHECKOUT_PATH = 'tools/http/test-client/contract.json';
@@ -140,11 +139,6 @@ final class Contract
 
     private static function locate(): string
     {
-        $declared = getenv(self::PATH_VARIABLE);
-        if ($declared !== false && $declared !== '') {
-            return $declared;
-        }
-
         $beside = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'contract.json';
         if (is_file($beside)) {
             return $beside;
@@ -164,8 +158,7 @@ final class Contract
             if ($parent === $directory) {
                 throw new ContractException(
                     'no ' . self::CHECKOUT_PATH
-                    . ' at or above the working directory; set '
-                    . self::PATH_VARIABLE . ' to run away from a checkout',
+                    . ' at or above the working directory',
                 );
             }
             $directory = $parent;

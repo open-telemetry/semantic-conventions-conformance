@@ -8,8 +8,7 @@ function and verifies each response as parsed JSON.
 
 The package locates the contract beside its source checkout first. When
 Composer installs it as a copied path dependency, it walks up from the
-scenario directory to the repository copy. `OTEL_HTTP_CONTRACT` is the
-explicit override for running away from a checkout.
+scenario directory to the repository copy.
 
 Run its unit tests with:
 
