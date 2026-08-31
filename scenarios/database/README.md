@@ -17,6 +17,8 @@ it to the client API. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
+HBase's client API lines, workloads, and fixture requirements are documented in
+its [scenario notes](java/hbase/README.md).
 
 ## Running a package
 

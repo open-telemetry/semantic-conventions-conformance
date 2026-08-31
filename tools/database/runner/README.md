@@ -43,7 +43,7 @@ environment declarations:
 | Variable            | Value                                        |
 | ------------------- | -------------------------------------------- |
 | `DATABASE_HOST`     | Loopback address published by Docker         |
-| `DATABASE_PORT`     | Docker-assigned host port                    |
+| `DATABASE_PORT`     | Published host port; fixed for HBase          |
 | `DATABASE_NAME`     | Test database name or logical database index |
 | `DATABASE_USER`     | Test user                                    |
 | `DATABASE_PASSWORD` | Test-only password                           |
