@@ -6,7 +6,7 @@ Rust crates that every package in this domain builds against.
 
 ```text
 actix-web/scenarios/                           plain Actix Web server workload
-actix-web/opentelemetry-actix-web/server/     traced and measured server binary
+actix-web/opentelemetry-actix-web/server/      traced and measured server binary
 awc/scenarios/                                 plain awc client workload
 awc/opentelemetry-actix-web/client/            traced client binary
 ../../../tools/http/test-client/rust/          shared HTTP contract
