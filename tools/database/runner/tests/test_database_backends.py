@@ -6,14 +6,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 from importlib import resources
 from typing import Any
 
 import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
+from testcontainers.core.wait_strategies import ExecWaitStrategy
 
-from database_conformance import _mariadb, _mysql, _postgres
+from database_conformance import _container, _mariadb, _mysql, _postgres
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._mysql import MYSQL_IMAGE, MySQL
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
@@ -158,6 +160,43 @@ def test_starts_initializes_publishes_and_removes_database(
     assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
+
+
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port", "expected_seconds"),
+    [
+        (_postgres, Postgres, 5432, 60.0),
+        (_mariadb, MariaDB, 3306, 60.0),
+        (_mysql, MySQL, 3306, 120.0),
+    ],
+)
+def test_each_backend_applies_its_own_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[MariaDB] | type[MySQL],
+    port: int,
+    expected_seconds: float,
+) -> None:
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
+    )
+    timeouts: list[timedelta | int] = []
+
+    class RecordingWaitStrategy(ExecWaitStrategy):
+        def with_startup_timeout(
+            self, timeout: timedelta | int
+        ) -> RecordingWaitStrategy:
+            timeouts.append(timeout)
+            super().with_startup_timeout(timeout)
+            return self
+
+    monkeypatch.setattr(_container, "ExecWaitStrategy", RecordingWaitStrategy)
+    install_stub(monkeypatch, module, StubContainer(port=port))
+
+    with backend_type():
+        pass
+
+    assert timeouts == [timedelta(seconds=expected_seconds)]
 
 
 def test_start_failure_cleans_up_the_container(
