@@ -13,6 +13,7 @@ env:
   HBASE_ZOOKEEPER_PORT: ${DATABASE_PORT}
   OTEL_SEMCONV_STABILITY_OPT_IN: database
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+  OTEL_LOGS_EXPORTER: none
 
 weaver:
   config: ../../../../../../tools/java/weaver.toml

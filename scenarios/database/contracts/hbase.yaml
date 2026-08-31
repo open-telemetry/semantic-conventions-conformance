@@ -28,9 +28,6 @@ scenarios:
             server.port: 16020
     metrics:
       - db.client.operation.duration
-      - otlp.exporter.exported
-      - otlp.exporter.seen
-      - processedLogs
       - queueSize
     events: []
 
@@ -60,9 +57,6 @@ scenarios:
             server.port: 16020
     metrics:
       - db.client.operation.duration
-      - otlp.exporter.exported
-      - otlp.exporter.seen
-      - processedLogs
       - queueSize
     events: []
 
@@ -92,9 +86,6 @@ scenarios:
             server.port: 16020
     metrics:
       - db.client.operation.duration
-      - otlp.exporter.exported
-      - otlp.exporter.seen
-      - processedLogs
       - queueSize
     events: []
 
@@ -125,8 +116,5 @@ scenarios:
             server.port: 16020
     metrics:
       - db.client.operation.duration
-      - otlp.exporter.exported
-      - otlp.exporter.seen
-      - processedLogs
       - queueSize
     events: []
