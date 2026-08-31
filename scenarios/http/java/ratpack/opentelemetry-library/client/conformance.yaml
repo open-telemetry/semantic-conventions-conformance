@@ -6,7 +6,7 @@ instrumented_library: ratpack
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-ratpack-1.7
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare ratpack:opentelemetry-library
 

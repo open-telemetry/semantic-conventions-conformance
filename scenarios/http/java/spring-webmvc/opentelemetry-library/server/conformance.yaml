@@ -6,7 +6,7 @@ instrumented_library: spring-webmvc
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare spring-webmvc:opentelemetry-library
 

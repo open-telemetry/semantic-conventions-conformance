@@ -10,7 +10,7 @@ env:
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare undertow:opentelemetry-javaagent
 

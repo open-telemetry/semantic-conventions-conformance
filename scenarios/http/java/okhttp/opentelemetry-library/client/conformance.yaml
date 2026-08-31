@@ -6,7 +6,7 @@ instrumented_library: okhttp
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare okhttp:opentelemetry-library
 

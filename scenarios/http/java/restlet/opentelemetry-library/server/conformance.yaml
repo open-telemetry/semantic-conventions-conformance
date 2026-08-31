@@ -6,7 +6,7 @@ instrumented_library: restlet
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-restlet-2.0
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare restlet:opentelemetry-library
 

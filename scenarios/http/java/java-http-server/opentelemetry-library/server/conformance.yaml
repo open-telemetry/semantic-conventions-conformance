@@ -6,7 +6,7 @@ instrumented_library: java-http-server
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-java-http-server
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare java-http-server:opentelemetry-library
 
