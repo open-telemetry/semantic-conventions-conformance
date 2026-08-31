@@ -209,6 +209,27 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+def test_command_only_initialization_failure_uses_general_diagnostic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"SET failed"),
+        port=6379,
+    )
+    install_stub(monkeypatch, _redis, container)
+
+    with pytest.raises(RuntimeError) as error:
+        Redis().start()
+
+    message = str(error.value)
+    assert message.startswith(
+        "Could not initialize Redis; the client exited with 1"
+    )
+    assert "schema" not in message
+    assert "SET failed" in message
+    assert container.stopped
+
+
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

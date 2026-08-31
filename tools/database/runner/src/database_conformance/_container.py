@@ -117,7 +117,7 @@ class DatabaseContainer:
         try:
             container.start()
             self._published_port = container.get_exposed_port(self._spec.port)
-            self._apply_schema(container)
+            self._initialize_backend(container)
         except BaseException as error:
             try:
                 self.close()
@@ -129,7 +129,7 @@ class DatabaseContainer:
             raise
         return self
 
-    def _apply_schema(self, container: DockerContainer) -> None:
+    def _initialize_backend(self, container: DockerContainer) -> None:
         result = container.exec(
             ExecConfig(
                 command=list(self._spec.schema_command),
@@ -152,8 +152,8 @@ class DatabaseContainer:
         except DockerException as error:
             logs = f"Could not read {self._spec.name} logs: {error}"
         raise DatabaseBackendError(
-            f"Could not apply the {self._spec.name} schema; the client exited "
-            f"with {result.exit_code}\n{output}\n"
+            f"Could not initialize {self._spec.name}; the client exited with "
+            f"{result.exit_code}\n{output}\n"
             f"--- {self._spec.name} logs ---\n{logs}"
         )
 
