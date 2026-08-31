@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [versions]
+jackson = "2.22.2"
 mariadb = "3.5.10"
 opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
@@ -12,6 +13,7 @@ opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 postgresql = "42.7.13"
 
 [libraries]
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }

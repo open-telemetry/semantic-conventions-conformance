@@ -4,6 +4,13 @@
  */
 package io.opentelemetry.conformance.database.jdbc;
 
+import io.opentelemetry.conformance.database.DatabaseContract;
+import io.opentelemetry.conformance.database.DatabaseContract.Batch;
+import io.opentelemetry.conformance.database.DatabaseContract.Operation;
+import io.opentelemetry.conformance.database.DatabaseContract.Parameter;
+import io.opentelemetry.conformance.database.DatabaseContract.PreparedQuery;
+import io.opentelemetry.conformance.database.DatabaseContract.Query;
+import io.opentelemetry.conformance.database.DatabaseContract.StoredProcedure;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -19,68 +26,93 @@ public final class JdbcScenario {
   private JdbcScenario() {}
 
   public static void run(String operation) throws SQLException {
+    Operation workload =
+        DatabaseContract.workload(ScenarioEnvironment.require("DATABASE_BACKEND"))
+            .operation(operation);
     try (Connection connection =
         DriverManager.getConnection(
             ScenarioEnvironment.require("JDBC_URL"),
             ScenarioEnvironment.require("JDBC_USER"),
             ScenarioEnvironment.require("JDBC_PASSWORD"))) {
-      switch (operation) {
-        case "statement":
-          statement(connection);
-          break;
-        case "prepared_statement":
-          preparedStatement(connection);
-          break;
-        case "batch":
-          batch(connection);
-          break;
-        case "stored_procedure":
-          storedProcedure(connection);
-          break;
-        default:
-          throw new IllegalArgumentException("unknown JDBC operation: " + operation);
+      switch (workload) {
+        case Query query -> statement(connection, query);
+        case PreparedQuery query -> preparedStatement(connection, query);
+        case Batch batch -> batch(connection, batch);
+        case StoredProcedure procedure -> storedProcedure(connection, procedure);
       }
     }
   }
 
-  private static void statement(Connection connection) throws SQLException {
+  private static void statement(Connection connection, Query operation) throws SQLException {
     try (Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery("SELECT count(*) >= 0 FROM conformance.items")) {
-      requireSingleBoolean(result, true);
+        ResultSet result = statement.executeQuery(operation.sql())) {
+      requireSingleBoolean(result, operation.expected());
     }
   }
 
-  private static void preparedStatement(Connection connection) throws SQLException {
+  private static void preparedStatement(Connection connection, PreparedQuery operation)
+      throws SQLException {
     try (PreparedStatement statement =
-        connection.prepareStatement("SELECT name FROM conformance.items WHERE id = ?")) {
-      statement.setInt(1, -1);
+        connection.prepareStatement(operation.renderSql(index -> "?"))) {
+      int index = 1;
+      for (Parameter parameter : operation.parameters()) {
+        statement.setInt(index++, parameter.integer());
+      }
       try (ResultSet result = statement.executeQuery()) {
-        if (result.next()) {
-          throw new IllegalStateException("prepared statement returned an unexpected row");
+        int rows = 0;
+        while (result.next()) {
+          rows++;
+        }
+        if (rows != operation.expectedRows()) {
+          throw new IllegalStateException(
+              "expected " + operation.expectedRows() + " rows, got " + rows);
         }
       }
     }
   }
 
-  private static void batch(Connection connection) throws SQLException {
+  private static void batch(Connection connection, Batch operation) throws SQLException {
     try (Statement statement = connection.createStatement()) {
-      statement.addBatch("INSERT INTO conformance.items (id, name) VALUES (1, 'first')");
-      statement.addBatch("INSERT INTO conformance.items (id, name) VALUES (2, 'second')");
+      for (String sql : operation.statements()) {
+        statement.addBatch(sql);
+      }
       int[] updates = statement.executeBatch();
-      if (updates.length != 2
+      if (updates.length != operation.expectedSuccessfulStatements()
           || Arrays.stream(updates).anyMatch(count -> count == Statement.EXECUTE_FAILED)) {
         throw new IllegalStateException(
-            "expected two successful batch operations, got " + Arrays.toString(updates));
+            "expected "
+                + operation.expectedSuccessfulStatements()
+                + " successful batch operations, got "
+                + Arrays.toString(updates));
       }
     }
   }
 
-  private static void storedProcedure(Connection connection) throws SQLException {
-    try (CallableStatement statement = connection.prepareCall("CALL conformance.noop()")) {
-      if (statement.execute()) {
-        throw new IllegalStateException("stored procedure returned an unexpected result");
+  private static void storedProcedure(Connection connection, StoredProcedure operation)
+      throws SQLException {
+    try (CallableStatement statement =
+        connection.prepareCall("CALL " + operation.procedure() + "()")) {
+      int resultSets = resultSetCount(statement);
+      if (resultSets != operation.expectedResultSets()) {
+        throw new IllegalStateException(
+            "expected "
+                + operation.expectedResultSets()
+                + " stored procedure result sets, got "
+                + resultSets);
       }
     }
+  }
+
+  private static int resultSetCount(CallableStatement statement) throws SQLException {
+    int resultSets = 0;
+    boolean hasResultSet = statement.execute();
+    while (hasResultSet || statement.getUpdateCount() != -1) {
+      if (hasResultSet) {
+        resultSets++;
+      }
+      hasResultSet = statement.getMoreResults();
+    }
+    return resultSets;
   }
 
   private static void requireSingleBoolean(ResultSet result, boolean expected) throws SQLException {
