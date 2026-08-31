@@ -12,5 +12,7 @@ setup: otel-conformance-java prepare ktor:opentelemetry-library
 
 scenarios:
   server:
-    # The driver owns the client process and closes standard input after the run.
+    # The requests are sent from outside the scenario, so a server run holds
+    # server telemetry only; the driver starts this command, chooses the port
+    # it binds, and closes its standard input when it is done.
     run: otel-http-drive --serve otel-conformance-java run ktor:opentelemetry-library KtorLibraryServerScenario
