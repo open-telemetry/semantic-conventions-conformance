@@ -36,13 +36,6 @@ The `main` classes are per instrumentation because attaching library
 instrumentation is code rather than a command-line flag; everything they do
 beyond that is in `scenarios/`.
 
-In Rust the split is between crates. Its plain workload crates hold Actix
-Web's native routes and the awc request sequence without importing
-OpenTelemetry. The instrumentation-specific binary crates install
-`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
-workspace at `rust/` includes the shared crates under `tools/` and commits one
-lockfile for all of them.
-
 Armeria therefore has four isolated packages: client and server coverage for
 both the OpenTelemetry Java agent and explicit OpenTelemetry library
 instrumentation. Client and server stay separate packages because coverage
@@ -92,6 +85,13 @@ ruby/rack/opentelemetry-instrumentation-rack/server/
 and starts its entry point with `bundle exec ruby`. Repository helpers resolve
 through path dependencies, and neither package writes to the user-wide gem
 installation.
+
+In Rust the split is between crates. Its plain workload crates hold Actix
+Web's native routes and the awc request sequence without importing
+OpenTelemetry. The instrumentation-specific binary crates install
+`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
+workspace at `rust/` includes the shared crates under `tools/` and commits one
+lockfile for all of them.
 
 ## The scenario contract
 
