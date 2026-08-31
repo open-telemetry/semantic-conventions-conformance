@@ -41,6 +41,9 @@ environment declarations:
 | `DATABASE_PASSWORD` | Test-only password                           |
 | `DATABASE_LOCAL_DATACENTER` | Cassandra local datacenter |
 
+Cassandra runs without authentication, so `DATABASE_USER` and
+`DATABASE_PASSWORD` are empty for that backend.
+
 Connection fields let each language construct its native client configuration.
 SQL packages select a contract under
 [`contracts/`](../sql-test-client/contracts) using `scenario_contract`. The
