@@ -17,6 +17,8 @@ it to the client API. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
+Cassandra's driver ranges, operations, and connection settings are documented
+in its [scenario notes](java/cassandra/README.md).
 
 ## Running a package
 
