@@ -30,8 +30,7 @@ MARIADB = BackendSpec(
         ("MARIADB_RANDOM_ROOT_PASSWORD", "yes"),
     ),
     ready_command=("healthcheck.sh", "--connect", "--innodb_initialized"),
-    schema_resource="mariadb.sql",
-    schema_path="/tmp/otel-conformance-mariadb.sql",
+    schema_copy=("mariadb.sql", "/tmp/otel-conformance-mariadb.sql"),
     initialize_command=(
         "sh",
         "-c",

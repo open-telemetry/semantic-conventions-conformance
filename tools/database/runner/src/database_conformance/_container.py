@@ -42,8 +42,7 @@ class BackendSpec:
     password: str
     environment: tuple[tuple[str, str], ...]
     ready_command: tuple[str, ...]
-    schema_resource: str | None
-    schema_path: str | None
+    schema_copy: tuple[str, str] | None
     initialize_command: tuple[str, ...]
     initialize_environment: tuple[tuple[str, str], ...] = ()
 
@@ -96,18 +95,14 @@ class DatabaseContainer:
         container = self._container_factory(self._spec.image)
         for key, value in self._spec.environment:
             container.with_env(key, value)
-        if self._spec.schema_resource is not None:
-            if self._spec.schema_path is None:
-                raise DatabaseBackendError(
-                    f"{self._spec.name} has an initialization resource "
-                    "without a container path"
-                )
+        if self._spec.schema_copy is not None:
+            resource, path = self._spec.schema_copy
             schema = (
                 resources.files("database_conformance")
-                .joinpath(self._spec.schema_resource)
+                .joinpath(resource)
                 .read_bytes()
             )
-            container.with_copy_into_container(schema, self._spec.schema_path)
+            container.with_copy_into_container(schema, path)
         container.waiting_for(ready)
 
         port_bindings = cast(dict[str, _PortBinding], container.ports)

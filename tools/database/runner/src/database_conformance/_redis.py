@@ -32,8 +32,7 @@ REDIS = BackendSpec(
         str(REDIS_PORT),
         "PING",
     ),
-    schema_resource=None,
-    schema_path=None,
+    schema_copy=None,
     initialize_command=(
         "redis-cli",
         "-h",

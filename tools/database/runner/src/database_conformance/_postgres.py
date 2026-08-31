@@ -39,8 +39,7 @@ POSTGRES = BackendSpec(
         "--dbname",
         POSTGRES_DATABASE,
     ),
-    schema_resource="postgres.sql",
-    schema_path="/tmp/otel-conformance-postgres.sql",
+    schema_copy=("postgres.sql", "/tmp/otel-conformance-postgres.sql"),
     initialize_command=(
         "psql",
         "--no-psqlrc",
