@@ -34,7 +34,7 @@ from ._session import (
     SessionFactory,
     conformance_session,
 )
-from ._spec import ServerSpec, WeaverSpec
+from ._spec import PackageSpec, ServerSpec, WeaverSpec
 
 # Span invariants every domain is checked against; see policies/.
 _RUNNER_POLICIES = Path(__file__).parent / "policies"
@@ -191,6 +191,7 @@ class Domain:
         server: ServerSpec | None = None,
         env: Mapping[str, str] | None = None,
         build_data: BuildData | None = None,
+        spec: PackageSpec | None = None,
     ) -> Generator[ConformanceSession, None, None]:
         """A conformance session wired to this domain.
 
@@ -224,6 +225,7 @@ class Domain:
                 server=server,
                 env=env,
                 build_data=build_data,
+                spec=spec,
             ) as session:
                 yield session
 

@@ -1,0 +1,31 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: genai-conformance
+instrumented_library: crewai
+instrumentation_library: openinference-instrumentation-crewai
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  OPENAI_BASE_URL: ${MOCK_SERVER_URL}/v1
+  OPENAI_API_KEY: test_openai_api_key
+  # OpenInference records its own `llm.*` attributes by default;
+  # this is the switch that adds the GenAI conventions beside them.
+  OPENINFERENCE_ENABLE_GENAI_SEMCONV: "true"
+  # OpenInference names a crew's span after the crew's id, which CrewAI
+  # generates per run and refuses to let a caller set, so the name and every
+  # finding quoting it would differ on every run. This directory ships an
+  # exporter that takes the id out on the way out; see `crewai_conformance`.
+  OTEL_TRACES_EXPORTER: otlp-strip-run-ids
+
+scenarios:
+  workflow:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/workflow.py
+
+  invoke_agent:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/invoke_agent.py
+
+  automatic_tool_calling:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/automatic_tool_calling.py
