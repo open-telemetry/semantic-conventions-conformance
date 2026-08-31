@@ -18,6 +18,12 @@ MANIFEST = "Cargo.toml"
 PROFILE = "release"
 RUN = "run"
 
+CARGO_MISSING = "cargo was not found"
+BINARY_MISSING = (
+    "scenario binary was not found; run "
+    "`otel-conformance-rust build` first"
+)
+
 
 class LayoutError(RuntimeError):
     """The Rust package or workspace could not be found."""
@@ -185,28 +191,29 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         manifest = package_manifest()
         workspace_root(manifest.parent)
-        command = (
-            run_command(
-                target_directory(manifest), manifest, scenario_arguments
-            )
-            if arguments.command == RUN
-            else build_command(manifest)
-        )
-        return subprocess.call(command)  # noqa: S603
-    except LayoutError as error:
-        print(f"{parser.prog}: error: {error}", file=sys.stderr)
-    except FileNotFoundError as error:
-        missing = str(error.filename or "required executable")
-        if Path(missing).name.casefold() in {"cargo", "cargo.exe"}:
-            message = "cargo was not found"
-        elif arguments.command == RUN:
-            message = (
-                "scenario binary was not found; run "
-                "`otel-conformance-rust build` first"
-            )
+        # Each call names the program it could not start, because a
+        # `FileNotFoundError` says which one only on some platforms: Windows
+        # raises it out of `CreateProcess`, which leaves `filename` unset.
+        if arguments.command == RUN:
+            try:
+                target = target_directory(manifest)
+            except FileNotFoundError:
+                return _fail(parser, CARGO_MISSING)
+            command = run_command(target, manifest, scenario_arguments)
+            absent = BINARY_MISSING
         else:
-            message = f"{missing} was not found"
-        print(f"{parser.prog}: error: {message}", file=sys.stderr)
+            command = build_command(manifest)
+            absent = CARGO_MISSING
+        try:
+            return subprocess.call(command)  # noqa: S603
+        except FileNotFoundError:
+            return _fail(parser, absent)
+    except LayoutError as error:
+        return _fail(parser, str(error))
+
+
+def _fail(parser: argparse.ArgumentParser, message: str) -> int:
+    print(f"{parser.prog}: error: {message}", file=sys.stderr)
     return 1
 
 

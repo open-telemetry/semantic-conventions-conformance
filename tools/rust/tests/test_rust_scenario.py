@@ -116,12 +116,32 @@ class TestCommandLineErrors:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         def missing(command: list[str]) -> int:
-            raise FileNotFoundError(2, "No such file or directory", command[0])
+            raise FileNotFoundError(2, "No such file or directory")
 
         monkeypatch.chdir(root / "server")
         monkeypatch.setattr(otel_conformance_rust.subprocess, "call", missing)
 
         assert otel_conformance_rust.main(["build"]) == 1
+        assert (
+            "otel-conformance-rust: error: cargo was not found"
+            in capsys.readouterr().err
+        )
+
+    def test_missing_cargo_is_reported_before_running(
+        self,
+        root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        def missing(
+            command: list[str], **_: object
+        ) -> subprocess.CompletedProcess[str]:
+            raise FileNotFoundError(2, "No such file or directory")
+
+        monkeypatch.chdir(root / "server")
+        monkeypatch.setattr(otel_conformance_rust.subprocess, "run", missing)
+
+        assert otel_conformance_rust.main(["run"]) == 1
         assert (
             "otel-conformance-rust: error: cargo was not found"
             in capsys.readouterr().err
@@ -134,7 +154,7 @@ class TestCommandLineErrors:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         def missing(command: list[str]) -> int:
-            raise FileNotFoundError(2, "No such file or directory", command[0])
+            raise FileNotFoundError(2, "No such file or directory")
 
         monkeypatch.chdir(root / "server")
         monkeypatch.setattr(
