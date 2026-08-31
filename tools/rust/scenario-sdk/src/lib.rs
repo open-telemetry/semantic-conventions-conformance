@@ -17,7 +17,9 @@ use otel_conformance_scenario::require;
 
 const ENDPOINT_VARIABLE: &str = "OTEL_EXPORTER_OTLP_ENDPOINT";
 const METRIC_EXPORT_INTERVAL_VARIABLE: &str = "OTEL_METRIC_EXPORT_INTERVAL";
-const DEFAULT_METRIC_EXPORT_INTERVAL_MILLIS: u64 = 2_147_483_647;
+// Effectively infinite, so periodic exports cannot split one scenario's
+// metrics across reports. The shutdown flush exports them at the end.
+const DEFAULT_METRIC_EXPORT_INTERVAL_MILLIS: u64 = i32::MAX as u64;
 
 /// The providers installed globally for instrumentation libraries.
 pub struct ScenarioSdk {
