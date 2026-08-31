@@ -356,6 +356,45 @@ class TestAnsweringTheExchanges:
         assert respond("GET", "/items")[0] == 404
 
 
+class TestCheckingTheRequestBody:
+    """What the mock server asks for, and a server scenario does not.
+
+    ``otel-http-drive`` compares the echoed body, so a server scenario that
+    never read the request already fails. Nothing reads the answer a client
+    scenario receives, so the mock server is the only place a client that
+    never sent the body can be caught.
+    """
+
+    def test_a_body_the_contract_declares_must_arrive(self) -> None:
+        assert respond("POST", "/items", check_request_body=True)[0] == 400
+
+    def test_a_different_body_is_refused(self) -> None:
+        answer = respond(
+            "POST", "/items", '{"name": "gadget"}', check_request_body=True
+        )
+
+        assert answer[0] == 400
+
+    def test_a_body_that_is_not_json_is_refused(self) -> None:
+        answer = respond("POST", "/items", "<html>", check_request_body=True)
+
+        assert answer[0] == 400
+
+    def test_formatting_is_not_part_of_the_contract(self) -> None:
+        """Spacing and key order are the client library's JSON writer's call."""
+        status, body = respond(
+            "POST", "/items", '{"name":"widget"}', check_request_body=True
+        )
+
+        assert status == 201
+        assert json.loads(body)["payload"] == {"name": "widget"}
+
+    def test_a_request_the_contract_sends_no_body_for_is_answered(
+        self,
+    ) -> None:
+        assert respond("GET", "/users/123", check_request_body=True)[0] == 200
+
+
 class TestVerifyingAnAnswer:
     """What keeps eleven languages' answers the same."""
 

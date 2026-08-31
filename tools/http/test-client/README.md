@@ -43,7 +43,10 @@ whitespace and key order are each language's JSON writer's business.
 
 A client scenario consumes each response but does not implement that assertion
 again. Its shared telemetry contract checks the five client spans centrally,
-including their methods, response status, and URL.
+including their methods, response status, and URL. What a client sent is
+checked where it arrives: the mock server answers 400 when the body the
+contract's `POST` carries does not, so that expectation's `201` is also how a
+client that never sent the body fails.
 
 ## The two scenario shapes
 

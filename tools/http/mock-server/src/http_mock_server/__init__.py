@@ -36,7 +36,16 @@ class _Handler(BaseHTTPRequestHandler):
     def _handle(self, method: str) -> None:
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length).decode("utf-8") if length else None
-        status, payload = respond(method, urlparse(self.path).path, body)
+        # Strict about the request body, which a server scenario's own answers
+        # are not: nothing reads the answer a client scenario receives, so a
+        # client that never sent the body would be echoed an empty payload and
+        # pass. Answering 400 turns that into a failed telemetry expectation.
+        status, payload = respond(
+            method,
+            urlparse(self.path).path,
+            body,
+            check_request_body=True,
+        )
         encoded = payload.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", CONTENT_TYPE)

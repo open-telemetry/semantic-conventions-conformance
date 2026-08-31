@@ -179,17 +179,46 @@ def _exchange_for(method: str, path: str) -> Exchange | None:
     return None
 
 
+def _carries_the_contracts_body(exchange: Exchange, body: str | None) -> bool:
+    """Whether ``body`` is the body the contract's request sends.
+
+    Parsed rather than compared as text: how a client library spaces and
+    orders its JSON is its own business. A request the contract declares
+    without a body carries whatever arrived, since nothing describes it.
+    """
+    if exchange.body is None:
+        return True
+    try:
+        return json.loads(body or "") == json.loads(exchange.body)
+    except json.JSONDecodeError:
+        return False
+
+
 def respond(
-    method: str, path: str, body: str | None = None
+    method: str,
+    path: str,
+    body: str | None = None,
+    *,
+    check_request_body: bool = False,
 ) -> tuple[int, str]:
     """What the contract answers to one request.
 
     The whole answer contract in one function, so the mock server a client
     scenario calls and any Python server scenario answer identically.
+
+    ``check_request_body`` answers 400 when a request the contract declares
+    with a body arrives without that body. Only the mock server asks for
+    that. A server scenario's answers are read by :func:`verify`, which
+    compares the echoed body and so already fails a scenario that never read
+    the request; the answer a client scenario receives is read by nothing, so
+    a client that never sent the body would otherwise be echoed an empty
+    payload and pass.
     """
     exchange = _exchange_for(method, path)
     if exchange is None:
         return 404, '{"message": "no such route"}'
+    if check_request_body and not _carries_the_contracts_body(exchange, body):
+        return 400, '{"message": "not the body the contract sends"}'
     return exchange.status, exchange.response_body.replace(
         "${requestBody}", body or "{}"
     )
