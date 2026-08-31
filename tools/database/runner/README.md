@@ -40,6 +40,9 @@ environment declarations:
 | `DATABASE_PASSWORD` | Test-only password |
 | `DATABASE_LOCAL_DATACENTER` | Cassandra local datacenter; absent for SQL backends |
 
+Cassandra runs without authentication, so `DATABASE_USER` and
+`DATABASE_PASSWORD` are empty for that backend.
+
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
