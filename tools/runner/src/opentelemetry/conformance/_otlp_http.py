@@ -15,6 +15,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+import zlib
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import TracebackType
@@ -254,7 +255,9 @@ class _Handler(BaseHTTPRequestHandler):
             try:
                 with gzip.GzipFile(fileobj=io.BytesIO(body)) as compressed:
                     body = compressed.read(_MAX_BODY_BYTES + 1)
-            except (gzip.BadGzipFile, EOFError, OSError):
+            # zlib.error, for a corrupt deflate stream under an intact gzip
+            # header, derives from Exception rather than OSError.
+            except (gzip.BadGzipFile, EOFError, OSError, zlib.error):
                 self._error(HTTPStatus.BAD_REQUEST, "invalid gzip body")
                 return
             if len(body) > _MAX_BODY_BYTES:

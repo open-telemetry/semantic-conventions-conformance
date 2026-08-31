@@ -213,6 +213,11 @@ def test_rejects_gzip_body_that_expands_past_limit(
     assert b"decompressed body exceeds 1024 bytes" in body
 
 
+# An intact gzip header followed by a deflate block whose type is the reserved
+# value 11. Decompressing it raises zlib.error, which is not an OSError.
+_CORRUPT_DEFLATE = b"\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x07"
+
+
 @pytest.mark.parametrize(
     ("path", "body", "content_type", "encoding", "status", "message"),
     [
@@ -251,6 +256,15 @@ def test_rejects_gzip_body_that_expands_past_limit(
             HTTPStatus.BAD_REQUEST,
             b"invalid gzip body",
             id="gzip",
+        ),
+        pytest.param(
+            "/v1/traces",
+            _CORRUPT_DEFLATE,
+            "application/x-protobuf",
+            "gzip",
+            HTTPStatus.BAD_REQUEST,
+            b"invalid gzip body",
+            id="gzip-deflate-stream",
         ),
         pytest.param(
             "/v1/traces",
