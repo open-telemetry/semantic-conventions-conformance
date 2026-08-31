@@ -163,7 +163,6 @@ def test_starts_initializes_publishes_and_removes_database(
     schema, path = container.transfers[0]
     assert path.startswith("/tmp/otel-conformance-")
     assert schema_marker in schema
-    assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
 
@@ -271,6 +270,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
     assert "CREATE TABLE IF NOT EXISTS conformance.items" in schema
     assert "CREATE OR REPLACE PROCEDURE conformance.noop()" in schema
+    assert "INSERT INTO" not in schema
 
     schema = (
         resources.files("database_conformance")
@@ -279,6 +279,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+    assert "INSERT INTO" not in schema
 
     bootstrap = (
         resources.files("database_conformance")
