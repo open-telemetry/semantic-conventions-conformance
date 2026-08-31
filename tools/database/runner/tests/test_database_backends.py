@@ -444,6 +444,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
     assert "CREATE TABLE IF NOT EXISTS conformance.items" in schema
     assert "CREATE OR REPLACE PROCEDURE conformance.noop()" in schema
+    assert "INSERT INTO" not in schema
 
     schema = (
         resources.files("database_conformance")
@@ -452,6 +453,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+    assert "INSERT INTO" not in schema
 
     schema = (
         resources.files("database_conformance")
