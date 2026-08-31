@@ -81,6 +81,24 @@
       "allowedVersions": "<10.3"
     },
     {
+      // The Elasticsearch Java API Client carries its own OpenTelemetry
+      // instrumentation from 7.17.20 on. Keep it below that so the scenario
+      // measures the Java agent instead.
+      "matchPackageNames": [
+        "co.elastic.clients:elasticsearch-java"
+      ],
+      "allowedVersions": "<7.17.20"
+    },
+    {
+      // Elasticsearch 8 dropped the transport protocol the Transport Client
+      // speaks, and `org.elasticsearch.client:transport` ends at 7.17, so the
+      // node this suite runs against has to stay on that line too.
+      "matchPackageNames": [
+        "docker.elastic.co/elasticsearch/elasticsearch"
+      ],
+      "allowedVersions": "<8"
+    },
+    {
       // These ship only `bN` prereleases and have never published a stable
       // release, so each minor is its own prerelease line and Renovate's
       // default would never propose 0.65b0 to 0.66b0. Several are at `1.0bN`
