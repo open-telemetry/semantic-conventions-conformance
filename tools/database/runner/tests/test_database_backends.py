@@ -340,6 +340,44 @@ def test_a_backend_waits_for_its_own_startup_timeout(
     assert strategy._startup_timeout == expected_timeout
 
 
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port", "override", "expected_timeout"),
+    [
+        (_postgres, Postgres, 5432, None, 60.0),
+        (_oracle, Oracle, 1521, None, 180.0),
+        (_oracle, Oracle, 1521, "240", 240.0),
+    ],
+)
+def test_a_backend_waits_for_its_own_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[Oracle],
+    port: int,
+    override: str | None,
+    expected_timeout: float,
+) -> None:
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
+    )
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", raising=False
+    )
+    if override is not None:
+        monkeypatch.setenv(
+            "OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", override
+        )
+    container = StubContainer(port=port)
+    install_stub(monkeypatch, module, container)
+
+    with backend_type():
+        pass
+
+    strategy = container.wait_strategy
+    assert isinstance(strategy, ExecWaitStrategy)
+    # Testcontainers keeps the configured startup timeout private.
+    assert strategy._startup_timeout == expected_timeout
+
+
 def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
