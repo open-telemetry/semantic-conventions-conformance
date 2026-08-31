@@ -103,8 +103,7 @@ public final class R2dbcScenario {
   private static Mono<Void> error(Connection connection) {
     return Flux.from(
             connection.createStatement("SELECT * FROM conformance.missing_items").execute())
-        .flatMap(result -> result.map((row, metadata) -> row))
-        .then()
+        .flatMap(Result::getRowsUpdated)
         .then(
             Mono.<Void>error(new IllegalStateException("invalid statement unexpectedly succeeded")))
         .onErrorResume(
