@@ -59,13 +59,12 @@ otel-conformance scenarios/database/java/cassandra/cassandra-driver-4.19/opentel
 ```
 
 Docker must be installed and running. One database container serves the whole
-package run, then is removed. The runner owns the
-[PostgreSQL](../../tools/database/runner/src/database_conformance/postgres.sql)
-and
+package run, then is removed. The runner owns the schemas for
+[PostgreSQL](../../tools/database/runner/src/database_conformance/postgres.sql),
 [MariaDB](../../tools/database/runner/src/database_conformance/mariadb.sql), and
-[Cassandra](../../tools/database/runner/src/database_conformance/cassandra.cql)
-schemas. The Cassandra schema recreates its keyspace and table for each package
-run. None of the schemas seed data.
+[Cassandra](../../tools/database/runner/src/database_conformance/cassandra.cql).
+The Cassandra schema recreates its keyspace and table for each package run.
+None of the schemas seed data.
 
 The runs opt into stable database semantic conventions. Java instrumentation
 otherwise emits legacy database attributes during the migration period, which

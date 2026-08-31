@@ -17,8 +17,8 @@ can reuse them.
 
 The Cassandra packages pin one current driver in each instrumentation range:
 3.11.5 for driver 3, 4.3.1 for the early driver 4 API, and Apache driver 4.19.3
-for driver 4.4 and later. All four packages run query, prepared, batch, and
-server-error operations against the same disposable Cassandra node.
+for driver 4.4 and later. Each of the four packages runs query, prepared,
+batch, and server-error operations against its own disposable Cassandra node.
 
 Run the package from the repository root:
 
