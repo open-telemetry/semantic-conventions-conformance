@@ -9,7 +9,6 @@ akka-http = "10.2.10"
 armeria = "1.41.0"
 async-http-client = "2.12.4"
 grizzly = "2.4.4"
-grpc = "1.83.1"
 helidon = "4.5.3"
 httpasyncclient = "4.1.5"
 httpclient5 = "5.6.4"
@@ -43,7 +42,6 @@ akka-stream = { module = "com.typesafe.akka:akka-stream_2.13", version.ref = "ak
 armeria = { module = "com.linecorp.armeria:armeria", version.ref = "armeria" }
 async-http-client = { module = "org.asynchttpclient:async-http-client", version.ref = "async-http-client" }
 grizzly-http-server = { module = "org.glassfish.grizzly:grizzly-http-server", version.ref = "grizzly" }
-grpc-netty-shaded = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
 helidon-webserver = { module = "io.helidon.webserver:helidon-webserver", version.ref = "helidon" }
 httpasyncclient = { module = "org.apache.httpcomponents:httpasyncclient", version.ref = "httpasyncclient" }
 httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
@@ -77,7 +75,6 @@ vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
 opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
-opentelemetry-exporter-sender-grpc-managed-channel = { module = "io.opentelemetry:opentelemetry-exporter-sender-grpc-managed-channel" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
 
 opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
