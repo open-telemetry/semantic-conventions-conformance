@@ -188,10 +188,11 @@ package level:
 otlp_protocol: http/protobuf
 ```
 
-The runner gives the package an HTTP endpoint and signal-specific
-`/v1/traces`, `/v1/metrics`, and `/v1/logs` endpoints. Its local bridge accepts
-those protobuf requests and forwards them to Weaver over gRPC. Packages that
-use the default `grpc` protocol continue to export directly to Weaver.
+The runner gives the package a generic HTTP endpoint. The Ruby exporters append
+the signal-specific `/v1/traces`, `/v1/metrics`, and `/v1/logs` paths. The
+runner's local bridge accepts those protobuf requests and forwards them to
+Weaver over gRPC. Packages that use the default `grpc` protocol continue to
+export directly to Weaver.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
