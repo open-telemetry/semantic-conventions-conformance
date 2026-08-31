@@ -168,10 +168,19 @@ def session(
     )
 
 
-def test_grpc_scenario_gets_generic_and_signal_endpoints(
+@pytest.mark.parametrize(
+    ("otlp_protocol", "otlp_endpoint"),
+    [
+        ("grpc", "http://localhost:4317"),
+        ("http/protobuf", "http://127.0.0.1:12345"),
+    ],
+)
+def test_scenario_uses_only_generic_otlp_configuration(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    otlp_protocol: Literal["grpc", "http/protobuf"],
+    otlp_endpoint: str,
 ) -> None:
     captured: dict[str, str] = {}
 
@@ -185,86 +194,31 @@ def test_grpc_scenario_gets_generic_and_signal_endpoints(
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(_session, "_run_command", run)
-    monkeypatch.setenv(
-        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://example.com:4317"
-    )
-    monkeypatch.setenv(
-        "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://example.com:4317"
-    )
-    monkeypatch.setenv(
-        "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "http://example.com:4317"
-    )
-    opened = session(directory, tmp_path / "data.json")
-
-    opened._execute(  # noqa: SLF001
-        opened.spec.scenarios["inference"],
-        "http://localhost:4317",
-    )
-
-    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://localhost:4317"
-    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == "grpc"
-    assert captured["OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"] == "grpc"
-    assert captured["OTEL_EXPORTER_OTLP_METRICS_PROTOCOL"] == "grpc"
-    assert captured["OTEL_EXPORTER_OTLP_LOGS_PROTOCOL"] == "grpc"
-    assert (
-        captured["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"]
-        == "http://localhost:4317"
-    )
-    assert (
-        captured["OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"]
-        == "http://localhost:4317"
-    )
-    assert (
-        captured["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"]
-        == "http://localhost:4317"
-    )
-
-
-def test_http_scenario_gets_generic_and_signal_endpoints(
-    directory: Path,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, str] = {}
-
-    def run(
-        command: tuple[str, ...],
-        *,
-        cwd: Path,
-        env: dict[str, str],
-    ) -> subprocess.CompletedProcess[str]:
-        captured.update(env)
-        return subprocess.CompletedProcess(command, 0, "", "")
-
-    monkeypatch.setattr(_session, "_run_command", run)
-    monkeypatch.setenv("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", "grpc")
-    monkeypatch.setenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "grpc")
-    monkeypatch.setenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL", "grpc")
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT",
+            "http://example.com:4317",
+        )
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL",
+            "ambient",
+        )
     opened = session(
         directory,
         tmp_path / "data.json",
-        otlp_protocol="http/protobuf",
+        otlp_protocol=otlp_protocol,
     )
 
     opened._execute(  # noqa: SLF001
         opened.spec.scenarios["inference"],
-        "http://127.0.0.1:12345",
+        otlp_endpoint,
     )
 
-    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == (
-        "http://127.0.0.1:12345"
-    )
-    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == "http/protobuf"
-    assert captured["OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"] == "http/protobuf"
-    assert captured["OTEL_EXPORTER_OTLP_METRICS_PROTOCOL"] == "http/protobuf"
-    assert captured["OTEL_EXPORTER_OTLP_LOGS_PROTOCOL"] == "http/protobuf"
-    assert captured["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"].endswith(
-        "/v1/traces"
-    )
-    assert captured["OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"].endswith(
-        "/v1/metrics"
-    )
-    assert captured["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"].endswith("/v1/logs")
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == otlp_endpoint
+    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == otlp_protocol
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        assert f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT" not in captured
+        assert f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL" not in captured
 
 
 def test_a_complete_run_writes_the_data_file(

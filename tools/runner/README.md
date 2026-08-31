@@ -91,15 +91,10 @@ otlp_protocol: http/protobuf
 ```
 
 The only accepted values are `grpc` and `http/protobuf`. The runner sets
-`OTEL_EXPORTER_OTLP_ENDPOINT` plus `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`,
-`OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`, and
-`OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`. For HTTP, the runner starts a local bridge
-to Weaver, and the signal-specific values include their `/v1/traces`,
-`/v1/metrics`, and `/v1/logs` paths. For gRPC, all four values use Weaver's
-generic endpoint. Under either protocol the runner sets
-`OTEL_EXPORTER_OTLP_PROTOCOL` and its traces, metrics, and logs counterparts to
-the selected value, so a protocol inherited from the environment cannot
-override it.
+`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_PROTOCOL`, and removes
+their traces, metrics, and logs counterparts from the scenario process
+environment. For HTTP, SDK exporters append their standard `/v1/traces`,
+`/v1/metrics`, and `/v1/logs` paths to the local bridge endpoint.
 The bridge is temporary while
 [Weaver does not accept OTLP/HTTP directly](https://github.com/open-telemetry/weaver/issues/1563).
 

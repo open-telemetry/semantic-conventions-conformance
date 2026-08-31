@@ -61,6 +61,11 @@ _WEAVER_INACTIVITY_TIMEOUT = (
 )
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
+_OTLP_SIGNAL_ENV = tuple(
+    f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
+    for signal in ("TRACES", "METRICS", "LOGS")
+    for setting in ("ENDPOINT", "PROTOCOL")
+)
 
 # Both relative to the conformance directory. The raw reports are throwaway;
 # the data file is meant to be committed and diffed.
@@ -281,37 +286,22 @@ class ConformanceSession:
     def _execute(
         self, scenario: ScenarioSpec, otlp_endpoint: str
     ) -> subprocess.CompletedProcess[str]:
-        otlp = {
-            "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": otlp_endpoint,
-            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": otlp_endpoint,
-            "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT": otlp_endpoint,
-            "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
-            "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL": self._spec.otlp_protocol,
-            "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": self._spec.otlp_protocol,
-            "OTEL_EXPORTER_OTLP_LOGS_PROTOCOL": self._spec.otlp_protocol,
-            "OTEL_METRIC_EXPORT_INTERVAL": str(
-                METRIC_EXPORT_INTERVAL_MILLIS
-            ),
-        }
-        if self._spec.otlp_protocol == "http/protobuf":
-            otlp.update(
-                {
-                    "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": (
-                        f"{otlp_endpoint}/v1/traces"
-                    ),
-                    "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": (
-                        f"{otlp_endpoint}/v1/metrics"
-                    ),
-                    "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT": (
-                        f"{otlp_endpoint}/v1/logs"
-                    ),
-                }
-            )
+        env = self._env(
+            scenario.env,
+            {
+                "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
+                "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
+                "OTEL_METRIC_EXPORT_INTERVAL": str(
+                    METRIC_EXPORT_INTERVAL_MILLIS
+                ),
+            },
+        )
+        for variable in _OTLP_SIGNAL_ENV:
+            env.pop(variable, None)
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
-            env=self._env(scenario.env, otlp),
+            env=env,
         )
 
     def _env(
