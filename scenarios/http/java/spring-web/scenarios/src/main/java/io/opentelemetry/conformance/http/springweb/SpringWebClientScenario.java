@@ -12,6 +12,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 /** Runs the shared request contract through a Spring {@link RestTemplate}. */
@@ -19,7 +20,10 @@ public final class SpringWebClientScenario {
   private SpringWebClientScenario() {}
 
   public static void run(Consumer<RestTemplate> configureTelemetry) throws Exception {
-    RestTemplate restTemplate = new RestTemplate();
+    SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+    requestFactory.setConnectTimeout(HttpClientWorkload.REQUEST_TIMEOUT);
+    requestFactory.setReadTimeout(HttpClientWorkload.REQUEST_TIMEOUT);
+    RestTemplate restTemplate = new RestTemplate(requestFactory);
     restTemplate.setErrorHandler(response -> false);
     configureTelemetry.accept(restTemplate);
 

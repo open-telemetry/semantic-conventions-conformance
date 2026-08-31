@@ -10,6 +10,7 @@ import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import ratpack.exec.ExecController;
 import ratpack.exec.ExecInitializer;
 import ratpack.exec.Promise;
@@ -80,7 +81,7 @@ public final class RatpackClientScenario {
         .fork()
         .onError(result::completeExceptionally)
         .start(execution -> request(client, method, url, body).then(result::complete));
-    return result.get();
+    return result.get(HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
   }
 
   private static Promise<HttpContract.Response> request(
