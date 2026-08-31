@@ -98,6 +98,21 @@ class TestBuilding:
 
 
 class TestCommandLineErrors:
+    def test_run_help_is_handled_by_the_launcher(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with pytest.raises(SystemExit) as exit_info:
+            otel_conformance_rust.main(["run", "--help"])
+
+        assert exit_info.value.code == 0
+        assert "usage: otel-conformance-rust run" in capsys.readouterr().out
+
+    def test_only_run_accepts_unknown_arguments(self) -> None:
+        with pytest.raises(SystemExit) as exit_info:
+            otel_conformance_rust.main(["build", "--flag"])
+
+        assert exit_info.value.code == 2
+
     def test_missing_package_is_reported(
         self,
         tmp_path: Path,
