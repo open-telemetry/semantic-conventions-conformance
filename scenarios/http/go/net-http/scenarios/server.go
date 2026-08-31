@@ -83,10 +83,8 @@ func RunServer(middleware Middleware, stopping <-chan error) error {
 	select {
 	case err := <-served:
 		// Return immediately if Serve fails; waiting for a stop signal would
-		// leave the process hung until the driver's timeout.
-		if err == nil {
-			err = errors.New("the server stopped accepting connections")
-		}
+		// leave the process hung until the driver's timeout. Serve always
+		// returns a non-nil error, so there is nothing else this can be.
 		return err
 	case stopped = <-stopping:
 	}
