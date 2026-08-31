@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 import pytest
+import yaml
 
 import otel_http_test_client.__main__ as driver
 from otel_http_test_client import (
@@ -22,6 +23,7 @@ from otel_http_test_client import (
     EXCHANGES,
     PORT_VARIABLE,
     REQUESTS,
+    SCENARIO_INDEX_VARIABLE,
     ContractError,
     Exchange,
     client_headers,
@@ -29,6 +31,7 @@ from otel_http_test_client import (
     drive_async,
     mock_server_url,
     respond,
+    scenario_request,
     verify,
     wait_for_health,
     wait_for_port,
@@ -243,11 +246,14 @@ def _stopped_answering(port_file: Path, timeout: float = 30.0) -> bool:
 
 class TestTheContract:
     def test_it_is_read_from_the_shared_file(self) -> None:
-        assert CONTRACT.name == "contract.json"
-        declared = json.loads(CONTRACT.read_text(encoding="utf-8"))
-        assert declared["description"]
-        assert len(EXCHANGES) == len(declared["requests"])
+        assert CONTRACT.name == "contract.yaml"
+        declared = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
+        assert len(REQUESTS) == len(declared)
         assert len(REQUESTS) == len(EXCHANGES) - 1
+        assert all(
+            set(entry) == {"description", "action", "expect"}
+            for entry in declared
+        )
 
     def test_every_request_has_a_description(self) -> None:
         assert all(exchange.description for exchange in EXCHANGES)
@@ -265,7 +271,9 @@ class TestTheContract:
             )
             verify(exchange, status, body)
 
-    def test_the_async_driver_sends_the_same_contract(self) -> None:
+    def test_the_async_driver_sends_one_selected_request(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         seen: list[str] = []
 
         async def send(
@@ -274,7 +282,9 @@ class TestTheContract:
             seen.append(f"{method} {url}")
             return respond(method, url.removeprefix("http://server"), body)
 
-        asyncio.run(drive_async("http://server", send))
+        for index in range(len(REQUESTS)):
+            monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, str(index))
+            asyncio.run(drive_async("http://server", send))
 
         assert seen == [
             f"{exchange.method} http://server{exchange.path}"
@@ -287,7 +297,17 @@ class TestTheContract:
         )
 
         assert placeholders
-        assert set(placeholders) == {"${requestBody}"}
+        assert set(placeholders) == {
+            "${MOCK_SERVER_URL}",
+            "${requestBody}",
+        }
+
+    def test_each_ordinal_selects_one_independent_request(self) -> None:
+        assert [scenario_request(index) for index in range(len(REQUESTS))] == [
+            *REQUESTS
+        ]
+        with pytest.raises(RuntimeError, match="selects no"):
+            scenario_request(len(REQUESTS))
 
 
 class TestClientWorkloads:
@@ -317,16 +337,23 @@ class TestClientWorkloads:
             "Content-Type": "application/json",
         }
 
-    def test_responses_are_left_to_the_telemetry_contract(self) -> None:
-        seen: list[str] = []
+    def test_a_wrong_response_fails_the_scenario(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
 
-        def send(method: str, url: str, _body: str | None) -> tuple[int, str]:
-            seen.append(f"{method} {url}")
-            return 599, "not json"
+        with pytest.raises(ContractError, match="answered 599"):
+            drive("http://server", lambda *_args: (599, "not json"))
 
-        drive("http://server", send)
+    def test_json_numbers_do_not_stand_in_for_booleans(self) -> None:
+        exchange = scenario_request(2)
 
-        assert len(seen) == len(REQUESTS)
+        with pytest.raises(ContractError, match="contract's request answers"):
+            verify(
+                exchange,
+                exchange.status,
+                '{"created": 1, "payload": {"name": "widget"}}',
+            )
 
 
 class TestAnsweringTheExchanges:

@@ -12,7 +12,9 @@ directly.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
+from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -30,6 +32,12 @@ from opentelemetry.conformance._session import (
     ConformanceSession,
     _run_command,
     _start_weaver,
+)
+from opentelemetry.conformance._spec import (
+    AttributeMatcher,
+    ScenarioSpec,
+    SpanExpectation,
+    SpanMatch,
 )
 
 SPEC = """
@@ -263,6 +271,93 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
+def test_runtime_variables_are_resolved_in_span_expectations(
+    directory: Path, tmp_path: Path
+) -> None:
+    opened = session(directory, tmp_path / "data.json")
+    spec = ScenarioSpec(
+        name="0000",
+        directory=directory,
+        env={},
+        run=("run",),
+        spans=(
+            SpanExpectation(
+                match=SpanMatch(attributes={"url.full": "${ROOT}/one"}),
+                count=1,
+                attributes={
+                    "server.address": AttributeMatcher(equals="${ROOT}")
+                },
+            ),
+        ),
+        metrics=None,
+        events=None,
+        expected_violations=(),
+        description="Sends one request.",
+        index=0,
+    )
+
+    resolved = opened._resolve_expectations(spec)
+
+    assert resolved.spans is not None
+    assert resolved.spans[0].match.attributes == {
+        "url.full": f"{directory}/one"
+    }
+    assert resolved.spans[0].attributes["server.address"].equals == str(
+        directory
+    )
+
+
+def test_unknown_runtime_expectation_variable_is_rejected(
+    directory: Path, tmp_path: Path
+) -> None:
+    opened = session(directory, tmp_path / "data.json")
+    spec = ScenarioSpec(
+        name="0000",
+        directory=directory,
+        env={},
+        run=("run",),
+        spans=(
+            SpanExpectation(
+                match=SpanMatch(attributes={"url.full": "${MISSING}"}),
+                count=1,
+            ),
+        ),
+        metrics=None,
+        events=None,
+        expected_violations=(),
+        description="Sends one request.",
+    )
+
+    with pytest.raises(SpecError, match="MISSING"):
+        opened._resolve_expectations(spec)
+
+
+def test_contract_index_is_injected_into_the_scenario_process(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def run(
+        command: tuple[str, ...], *, cwd: Path, env: Mapping[str, str]
+    ) -> subprocess.CompletedProcess[str]:
+        del command, cwd
+        captured.update(env)
+        return subprocess.CompletedProcess([], 0, "", "")
+
+    monkeypatch.setattr(_session, "_run_command", run)
+    opened = session(directory, tmp_path / "data.json")
+    scenario = replace(
+        opened.spec.scenarios["inference"],
+        index=3,
+    )
+
+    opened._execute(scenario, "http://collector")
+
+    assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
+
+
 def test_a_missing_registry_is_a_spec_error(
     directory: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -314,6 +409,23 @@ def test_a_scenario_replaces_only_its_own_report(
     assert json.loads((reports / "tool_calling.json").read_text()) == {
         "run": "first"
     }
+
+
+def test_a_complete_run_removes_reports_for_deleted_scenarios(
+    directory: Path, tmp_path: Path
+) -> None:
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "inference.json").write_text("{}")
+    (reports / "tool_calling.json").write_text("{}")
+    stale = reports / "deleted.json"
+    stale.write_text("{}")
+    opened = session(directory, tmp_path / "data.json", report_dir=reports)
+    opened._ran.update(opened.spec.scenarios)
+
+    opened.close()
+
+    assert not stale.exists()
 
 
 def test_reports_default_to_inside_the_scenario_directory(

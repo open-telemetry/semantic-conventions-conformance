@@ -37,9 +37,8 @@ class _Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length).decode("utf-8") if length else None
         # Strict about the request body, which a server scenario's own answers
-        # are not: nothing reads the answer a client scenario receives, so a
-        # client that never sent the body would be echoed an empty payload and
-        # pass. Answering 400 turns that into a failed telemetry expectation.
+        # are not. Answering 400 identifies a client that omitted or changed the
+        # contract's body before response validation sees only the echoed value.
         status, payload = respond(
             method,
             urlparse(self.path).path,

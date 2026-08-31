@@ -24,7 +24,7 @@ import pytest
 
 from ._registry import WeaverNotInstalledError, check_weaver
 from ._runners import resolve as resolve_runner
-from ._spec import SPEC_FILE, SpecError, load_spec, scenarios
+from ._spec import SPEC_FILE, SpecError, load_spec
 
 if TYPE_CHECKING:
     from ._session import ConformanceSession, SessionFactory
@@ -61,21 +61,27 @@ class ConformanceFile(pytest.File):
 
     def collect(self) -> Any:
         try:
-            declared = scenarios(self.path.parent)
+            declared = load_spec(self.path.parent).scenarios
         except SpecError as error:
             raise pytest.Collector.CollectError(str(error)) from error
-        for name in declared:
+        for name, scenario in declared.items():
             yield ConformanceItem.from_parent(  # pyright: ignore[reportUnknownMemberType]
-                self, name=name
+                self,
+                name=scenario.display_name,
+                scenario_name=name,
             )
 
 
 class ConformanceItem(pytest.Item):
     """One scenario, run under its own live-check."""
 
+    def __init__(self, *args: Any, scenario_name: str, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._scenario_name = scenario_name
+
     def runtest(self) -> None:
         session = _session_for(self.config, self.path.parent)
-        report = session.run(self.name)
+        report = session.run(self._scenario_name)
         problems = [*report.failures, *report.violations]
         if problems:
             raise ConformanceFailure("\n".join(problems))
@@ -112,8 +118,6 @@ def _session_for(config: pytest.Config, directory: Path) -> ConformanceSession:
 
     spec = load_spec(directory)
     factory: SessionFactory = resolve_runner(directory, spec=spec)
-    session = config.stash[_STACK].enter_context(
-        factory(directory, spec=spec)
-    )
+    session = config.stash[_STACK].enter_context(factory(directory, spec=spec))
     sessions[directory] = session
     return session

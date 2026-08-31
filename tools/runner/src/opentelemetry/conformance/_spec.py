@@ -19,8 +19,6 @@ import yaml
 
 SPEC_FILE = "conformance.yaml"
 _SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
-
-
 class SpecError(ValueError):
     """The package's ``conformance.yaml`` is invalid."""
 
@@ -162,6 +160,16 @@ class ScenarioSpec:
     events: tuple[str, ...] | None
     expected_violations: tuple[ExpectedViolation, ...]
     inherited_violations: tuple[ExpectedViolation, ...] = ()
+    description: str = ""
+    index: int | None = None
+
+    @property
+    def display_name(self) -> str:
+        """A human label that keeps an indexed scenario unambiguous."""
+        description = self.description or self.name
+        if self.index is None:
+            return description
+        return f"[{self.index}] {description}"
 
 
 @dataclass(frozen=True)
@@ -298,8 +306,14 @@ def _required_string(
 def _parse_command(value: object, where: str) -> tuple[str, ...]:
     """A command is a shell-style string, or an already-split list."""
     if isinstance(value, str):
-        return tuple(shlex.split(value))
-    return _parse_string_list(value, f"{where} (a command string or list)")
+        command = tuple(shlex.split(value))
+    else:
+        command = _parse_string_list(
+            value, f"{where} (a command string or list)"
+        )
+    if not command:
+        raise SpecError(f"{where}: expected a non-empty command")
+    return command
 
 
 def _parse_matcher(value: object, where: str) -> AttributeMatcher:
@@ -436,6 +450,8 @@ def _parse_scenario(
     where: str,
     *,
     inherited: tuple[ExpectedViolation, ...] = (),
+    description: str | None = None,
+    index: int | None = None,
 ) -> ScenarioSpec:
     scenario = _require_mapping(value or {}, where)
     _check_keys(
@@ -486,12 +502,14 @@ def _parse_scenario(
         else None,
         expected_violations=own,
         inherited_violations=inherited,
+        description=description or name,
+        index=index,
     )
 
 
 def _load_scenario_contract(
     directory: Path, value: object, where: str
-) -> Mapping[str, object]:
+) -> tuple[Path, object]:
     contract = _required_string(
         {"scenario_contract": value}, "scenario_contract", where
     )
@@ -499,11 +517,16 @@ def _load_scenario_contract(
     if not path.is_file():
         raise SpecError(f"{path} not found")
 
-    document = yaml.safe_load(path.read_text(encoding="utf-8"))
-    document = _require_mapping(document or {}, str(path))
-    _check_keys(document, ("scenarios",), str(path))
+    return path, yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _named_contract_scenarios(
+    document: object, path: Path
+) -> Mapping[str, object]:
+    mapping = _require_mapping(document or {}, str(path))
+    _check_keys(mapping, ("scenarios",), str(path))
     scenarios = _require_mapping(
-        document.get("scenarios") or {}, f"{path}.scenarios"
+        mapping.get("scenarios") or {}, f"{path}.scenarios"
     )
     if not scenarios:
         raise SpecError(f"{path}: declares no scenarios")
@@ -516,6 +539,43 @@ def _load_scenario_contract(
             f"{path}.scenarios.{name}",
         )
     return scenarios
+
+
+def _list_contract_scenarios(
+    document: object,
+    path: Path,
+    run: tuple[str, ...],
+    directory: Path,
+    inherited: tuple[ExpectedViolation, ...],
+) -> Mapping[str, ScenarioSpec]:
+    entries = _require_list(document, str(path))
+    if not entries:
+        raise SpecError(f"{path}: declares no scenarios")
+
+    parsed: dict[str, ScenarioSpec] = {}
+    for index, value in enumerate(entries):
+        where = f"{path}[{index}]"
+        entry = _require_mapping(value, where)
+        _check_keys(entry, ("description", "action", "expect"), where)
+        description = _required_string(entry, "description", where)
+        action = _require_mapping(entry.get("action"), f"{where}.action")
+        if not action:
+            raise SpecError(f"{where}.action: expected a non-empty mapping")
+        if "expect" not in entry:
+            raise SpecError(f"{where}.expect is required")
+        expect = _require_mapping(entry["expect"], f"{where}.expect")
+        _check_keys(expect, _SCENARIO_CONTRACT_KEYS, f"{where}.expect")
+        name = f"{index:04d}"
+        parsed[name] = _parse_scenario(
+            name,
+            {**expect, "run": list(run)},
+            directory,
+            where,
+            inherited=inherited,
+            description=description,
+            index=index,
+        )
+    return parsed
 
 
 def _merge_scenarios(
@@ -547,6 +607,7 @@ def load_spec(directory: Path) -> PackageSpec:
             "runner",
             "runner_config",
             "scenario_contract",
+            "scenario_run",
             "instrumented_library",
             "instrumentation_library",
             "env",
@@ -569,19 +630,6 @@ def load_spec(directory: Path) -> PackageSpec:
     local_scenarios = _require_mapping(
         document.get("scenarios") or {}, f"{path}.scenarios"
     )
-    contract_scenarios: Mapping[str, object]
-    if "scenario_contract" in document:
-        contract_scenarios = _load_scenario_contract(
-            directory,
-            document["scenario_contract"],
-            str(path),
-        )
-    else:
-        contract_scenarios = {}
-    declared = _merge_scenarios(contract_scenarios, local_scenarios, path)
-    if not declared:
-        raise SpecError(f"{path}: declares no scenarios")
-
     inherited = tuple(
         _parse_violation(violation, f"{path}.expected_violations[{index}]")
         for index, violation in enumerate(
@@ -591,6 +639,56 @@ def load_spec(directory: Path) -> PackageSpec:
             )
         )
     )
+
+    contract_document: object | None = None
+    contract_path: Path | None = None
+    if "scenario_contract" in document:
+        contract_path, contract_document = _load_scenario_contract(
+            directory,
+            document["scenario_contract"],
+            str(path),
+        )
+    if isinstance(contract_document, list):
+        if local_scenarios:
+            raise SpecError(
+                f"{path}: scenarios cannot be combined with a scenario-list "
+                "contract; use scenario_run"
+            )
+        if "scenario_run" not in document:
+            raise SpecError(
+                f"{path}: scenario_run is required for a scenario-list contract"
+            )
+        assert contract_path is not None
+        parsed_scenarios = _list_contract_scenarios(
+            contract_document,
+            contract_path,
+            _parse_command(document["scenario_run"], f"{path}.scenario_run"),
+            directory,
+            inherited,
+        )
+    else:
+        if "scenario_run" in document:
+            raise SpecError(
+                f"{path}: scenario_run requires a scenario-list contract"
+            )
+        contract_scenarios = (
+            _named_contract_scenarios(contract_document, contract_path)
+            if contract_path is not None
+            else {}
+        )
+        declared = _merge_scenarios(contract_scenarios, local_scenarios, path)
+        if not declared:
+            raise SpecError(f"{path}: declares no scenarios")
+        parsed_scenarios = {
+            name: _parse_scenario(
+                name,
+                scenario,
+                directory,
+                f"{path}.scenarios.{name}",
+                inherited=inherited,
+            )
+            for name, scenario in declared.items()
+        }
 
     return PackageSpec(
         instrumented_library=instrumented,
@@ -611,16 +709,7 @@ def load_spec(directory: Path) -> PackageSpec:
         if "setup" in document
         else None,
         expected_violations=inherited,
-        scenarios={
-            name: _parse_scenario(
-                name,
-                scenario,
-                directory,
-                f"{path}.scenarios.{name}",
-                inherited=inherited,
-            )
-            for name, scenario in declared.items()
-        },
+        scenarios=parsed_scenarios,
     )
 
 

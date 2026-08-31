@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: http-url-connection
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
-scenario_contract: ../../../../../../tools/http/test-client/client-telemetry.yaml
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 env:
   # Keep Java runtime metrics out of this HTTP-only conformance report.
@@ -18,6 +18,4 @@ setup: otel-conformance-java prepare http-url-connection:opentelemetry-javaagent
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    run: otel-conformance-java run --agent http-url-connection:opentelemetry-javaagent HttpUrlConnectionJavaagentClientScenario
+scenario_run: otel-conformance-java run --agent http-url-connection:opentelemetry-javaagent HttpUrlConnectionJavaagentClientScenario

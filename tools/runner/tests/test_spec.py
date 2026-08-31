@@ -155,6 +155,106 @@ scenarios:
     assert scenario.events == ()
 
 
+def test_scenario_list_contract_generates_one_scenario_per_entry(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "client.yaml").write_text(
+        """
+- description: The same description may repeat.
+  action: {request: {method: GET, path: /one}}
+  expect:
+    spans:
+      - match:
+          attributes: {url.full: "${SERVER}/one"}
+        expect: {count: 1}
+- description: The same description may repeat.
+  action: {request: {method: GET, path: /two}}
+  expect: {events: []}
+"""
+    )
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: client.yaml
+scenario_run: python client.py
+""",
+        )
+    )
+
+    assert list(spec.scenarios) == ["0000", "0001"]
+    first, second = spec.scenarios.values()
+    assert first.description == second.description
+    assert first.index == 0
+    assert second.index == 1
+    assert first.run == second.run == ("python", "client.py")
+    assert first.spans is not None
+    assert first.spans[0].match.attributes == {"url.full": "${SERVER}/one"}
+    assert second.events == ()
+
+
+@pytest.mark.parametrize(
+    ("contract", "package", "message"),
+    [
+        ("[]", "scenario_run: run", "declares no scenarios"),
+        (
+            "- description: test\n  action: {}\n  expect: {}",
+            "scenario_run: run",
+            "non-empty mapping",
+        ),
+        (
+            "- description: test\n  action: {kind: request}",
+            "scenario_run: run",
+            "expect is required",
+        ),
+        (
+            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "",
+            "scenario_run is required",
+        ),
+        (
+            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenario_run: run\nscenarios: {local: {run: local}}",
+            "cannot be combined",
+        ),
+        (
+            "- description: test\n  action: {kind: request}\n  expect: {}",
+            'scenario_run: ""',
+            "non-empty command",
+        ),
+        (
+            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenario_run: []",
+            "non-empty command",
+        ),
+        (
+            "scenarios: {client: {events: []}}",
+            "scenario_run: run",
+            "requires a scenario-list",
+        ),
+    ],
+)
+def test_invalid_scenario_list_contract_raises(
+    tmp_path: Path, contract: str, package: str, message: str
+) -> None:
+    (tmp_path / "client.yaml").write_text(contract)
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                f"""
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: client.yaml
+{package}
+""",
+            )
+        )
+
+
 def test_local_scenario_replaces_a_contract_expectation(
     tmp_path: Path,
 ) -> None:

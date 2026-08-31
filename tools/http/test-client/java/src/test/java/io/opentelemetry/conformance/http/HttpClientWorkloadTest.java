@@ -19,13 +19,16 @@ class HttpClientWorkloadTest {
   /** A sender backed by the other side of the same contract, which is what a run measures. */
   private static List<String> driveAgainstTheContract() throws Exception {
     List<String> sent = new ArrayList<>();
-    HttpClientWorkload.drive(
-        BASE_URL,
-        (method, url, body) -> {
-          String path = url.substring(BASE_URL.length());
-          sent.add(method + " " + path);
-          return HttpServerWorkload.respond(method, path, body);
-        });
+    for (int index = 0; index < HttpContract.requests().size(); index++) {
+      HttpClientWorkload.drive(
+          BASE_URL,
+          (method, url, body) -> {
+            String path = url.substring(BASE_URL.length());
+            sent.add(method + " " + path);
+            return HttpServerWorkload.respond(method, path, body);
+          },
+          HttpContract.request(index));
+    }
     return sent;
   }
 
@@ -42,22 +45,22 @@ class HttpClientWorkloadTest {
   }
 
   @Test
-  void responsesAreLeftToTheTelemetryContract() throws Exception {
-    List<String> sent = new ArrayList<>();
-    HttpClientWorkload.drive(
-        BASE_URL,
-        (method, url, body) -> {
-          sent.add(method + " " + url);
-          return new Response(599, "not JSON");
-        });
-
-    assertEquals(5, sent.size());
+  void aWrongResponseFailsTheScenario() {
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            HttpClientWorkload.drive(
+                BASE_URL,
+                (method, url, body) -> new Response(599, "not JSON"),
+                HttpContract.request(0)));
   }
 
   @Test
   void aBlankBaseUrlIsRefusedBeforeAnythingIsSent() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> HttpClientWorkload.drive("  ", (method, url, body) -> new Response(200, "{}")));
+        () ->
+            HttpClientWorkload.drive(
+                "  ", (method, url, body) -> new Response(200, "{}"), HttpContract.request(0)));
   }
 }

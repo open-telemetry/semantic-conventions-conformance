@@ -40,16 +40,18 @@ public final class HttpClientWorkload {
    * to answer before running the scenario at all.
    */
   public static void drive(String baseUrl, Sender sender) throws Exception {
+    drive(baseUrl, sender, HttpContract.scenarioRequest());
+  }
+
+  static void drive(String baseUrl, Sender sender, Exchange exchange) throws Exception {
     if (baseUrl.isBlank()) {
       throw new IllegalArgumentException("base URL must not be blank");
     }
-    for (Exchange exchange : HttpContract.requests()) {
-      Response response =
-          sender.send(exchange.method(), baseUrl + exchange.path(), exchange.body());
-      System.out.printf(
-          "%s %s -> %d %s%n",
-          exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
-    }
+    Response response = sender.send(exchange.method(), baseUrl + exchange.path(), exchange.body());
+    System.out.printf(
+        "%s %s -> %d %s%n",
+        exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
+    HttpContract.verify(exchange, response);
   }
 
   private static String abbreviate(String value) {

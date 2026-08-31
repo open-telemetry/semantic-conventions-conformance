@@ -17,7 +17,7 @@ It answers the exchanges in
 [`otel-http-test-client`](../test-client) rather than restating them — the same
 traffic the external driver sends to a server scenario, so both sides of the
 domain are measured consistently. It is stricter about one thing than a server
-scenario is: nothing reads the answer a client scenario receives, so a request
-whose declared body does not arrive gets a 400 rather than an echo of nothing.
+scenario is: a request whose declared body does not arrive gets a 400 rather
+than an echo of nothing.
 Standard library only, and never instrumented: it runs as a separate process
 and nothing it emits should reach the report.

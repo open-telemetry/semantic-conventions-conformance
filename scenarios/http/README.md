@@ -59,19 +59,15 @@ A Python instrumentation has nothing to build. Its workload is a module in
 
 ## The scenario contract
 
-[`contract.json`](../../tools/http/test-client/contract.json) is the concrete
-traffic every HTTP scenario is measured against, written down once and read by
-every language, so a client's and a server's coverage are comparable. The
-document and each request carry a `description`; each request's description
-says what it is in the sequence for and what dropping it would stop measuring.
-Client packages also import
-[`client-telemetry.yaml`](../../tools/http/test-client/client-telemetry.yaml),
-which makes the conformance runner apply the same span expectations to every
-language.
+[`contract.yaml`](../../tools/http/test-client/contract.yaml) combines each
+client request and response with its telemetry expectations. The runner turns
+every list entry into a separate scenario, while language helpers select the
+same entry through `OTEL_CONFORMANCE_SCENARIO_INDEX`. This keeps the traffic
+shared without aggregating independent requests into one report.
 
 | Request | What it is there for |
 | --- | --- |
-| `GET /health` | Readiness only. Sent before the sequence, never measured. |
+| `GET /health` | Readiness only. It is not a contract-list scenario. |
 | `GET /users/123` | A parameterized route, so `http.route` is the template rather than the concrete path. |
 | `GET /users/123?fields=name&verbose=true` | A query string, which is `url.query` and must not leak into `http.route`, `url.path` or the span name. |
 | `POST /items` | A non-GET carrying a body. The answer echoes it, so a scenario that never read the body fails. |

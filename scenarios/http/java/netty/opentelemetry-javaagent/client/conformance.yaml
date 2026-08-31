@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: netty
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
-scenario_contract: ../../../../../../tools/http/test-client/client-telemetry.yaml
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 env:
   # Keep Java runtime metrics out of this HTTP-only conformance report.
@@ -18,6 +18,4 @@ setup: otel-conformance-java prepare netty:opentelemetry-javaagent
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    run: otel-conformance-java run --agent netty:opentelemetry-javaagent NettyJavaagentClientScenario
+scenario_run: otel-conformance-java run --agent netty:opentelemetry-javaagent NettyJavaagentClientScenario

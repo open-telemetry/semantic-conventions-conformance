@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: System.Net.Http
 instrumentation_library: OpenTelemetry.Instrumentation.Http
-scenario_contract: ../../../../../../tools/http/test-client/client-telemetry.yaml
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 # Publishing here rather than in `run:` keeps the toolchain out of the measured
 # process: a `dotnet run` would restore and compile on the clock.
@@ -13,6 +13,4 @@ setup: otel-conformance-dotnet build
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    run: otel-conformance-dotnet run
+scenario_run: otel-conformance-dotnet run

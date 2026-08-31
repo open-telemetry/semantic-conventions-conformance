@@ -1,0 +1,103 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+- description: Sends a request to a parameterized user route.
+  action:
+    request:
+      method: GET
+      path: /users/123
+    response:
+      status: 200
+      body: '{"id": 123, "name": "Alice"}'
+  expect:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            http.request.method: GET
+            http.response.status_code: 200
+            url.full: ${MOCK_SERVER_URL}/users/123
+        expect:
+          count: 1
+    events: []
+
+- description: Sends a request with a query string.
+  action:
+    request:
+      method: GET
+      path: /users/123?fields=name&verbose=true
+    response:
+      status: 200
+      body: '{"id": 123, "name": "Alice"}'
+  expect:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            http.request.method: GET
+            http.response.status_code: 200
+            url.full: ${MOCK_SERVER_URL}/users/123?fields=name&verbose=true
+        expect:
+          count: 1
+    events: []
+
+- description: Sends a POST request carrying a JSON body.
+  action:
+    request:
+      method: POST
+      path: /items
+      body: '{"name": "widget"}'
+    response:
+      status: 201
+      body: '{"created": true, "payload": ${requestBody}}'
+  expect:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            http.request.method: POST
+            http.response.status_code: 201
+            url.full: ${MOCK_SERVER_URL}/items
+        expect:
+          count: 1
+    events: []
+
+- description: Sends a request that returns a 404 response.
+  action:
+    request:
+      method: GET
+      path: /status/404
+    response:
+      status: 404
+      body: '{"message": "status 404"}'
+  expect:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            http.request.method: GET
+            http.response.status_code: 404
+            url.full: ${MOCK_SERVER_URL}/status/404
+        expect:
+          count: 1
+    events: []
+
+- description: Sends a request that returns a 500 response.
+  action:
+    request:
+      method: GET
+      path: /status/500
+    response:
+      status: 500
+      body: '{"message": "status 500"}'
+  expect:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            http.request.method: GET
+            http.response.status_code: 500
+            url.full: ${MOCK_SERVER_URL}/status/500
+        expect:
+          count: 1
+    events: []

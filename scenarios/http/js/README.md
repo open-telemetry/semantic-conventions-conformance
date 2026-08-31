@@ -1,7 +1,7 @@
 # HTTP conformance scenarios in JavaScript
 
 Node's HTTP instrumentations, measured against
-[the same contract](../../../tools/http/test-client/contract.json) as every
+[the same contract](../../../tools/http/test-client/contract.yaml) as every
 other language.
 
 ```text

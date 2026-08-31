@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: urllib3
 instrumentation_library: opentelemetry-instrumentation-urllib3
-scenario_contract: ../../../../../../tools/http/test-client/client-telemetry.yaml
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 env:
   OTEL_SEMCONV_STABILITY_OPT_IN: http
@@ -12,6 +12,4 @@ env:
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    run: uv run --frozen --project . otel-conformance-python scenario.py
+scenario_run: uv run --frozen --project . otel-conformance-python scenario.py

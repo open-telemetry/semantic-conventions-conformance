@@ -130,9 +130,7 @@ def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
     return all(
         span.attributes.get(attribute) == value
         for attribute, value in match.attributes.items()
-    ) and (
-        match.kind is None or span_kind(span.kind) == span_kind(match.kind)
-    )
+    ) and (match.kind is None or span_kind(span.kind) == span_kind(match.kind))
 
 
 def _check_spans(
@@ -161,14 +159,14 @@ def _check_spans(
                 selected.add(index)
         if len(matched) != expectation.count:
             failures.append(
-                f"{spec.name}: expected {expectation.count} span(s) matching "
+                f"{spec.display_name}: expected {expectation.count} span(s) matching "
                 f"{expectation.describe()}, saw {len(matched)}"
             )
         for attribute, matcher in expectation.attributes.items():
             failure = _check_attribute(matched, attribute, matcher)
             if failure:
                 failures.append(
-                    f"{spec.name}: {expectation.describe()}: {failure}"
+                    f"{spec.display_name}: {expectation.describe()}: {failure}"
                 )
 
     if has_assertions:
@@ -177,7 +175,7 @@ def _check_spans(
         ]
         if undeclared:
             failures.append(
-                f"{spec.name}: {len(undeclared)} undeclared span(s): "
+                f"{spec.display_name}: {len(undeclared)} undeclared span(s): "
                 f"{sorted({span.name for span in undeclared})}"
             )
     return failures

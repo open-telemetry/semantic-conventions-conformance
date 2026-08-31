@@ -32,18 +32,24 @@ public static class HttpClientWorkload
     /// </remarks>
     public static async Task DriveAsync(string baseUrl, Sender send)
     {
+        await DriveAsync(baseUrl, send, HttpContract.ScenarioRequest()).ConfigureAwait(false);
+    }
+
+    internal static async Task DriveAsync(
+        string baseUrl,
+        Sender send,
+        HttpContract.Exchange exchange)
+    {
         ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);
         ArgumentNullException.ThrowIfNull(send);
 
         var normalizedBaseUrl = baseUrl.TrimEnd('/');
-        foreach (var exchange in HttpContract.Requests)
-        {
-            var response = await send(
-                    exchange.Method, normalizedBaseUrl + exchange.Path, exchange.Body)
-                .ConfigureAwait(false);
-            Console.WriteLine(
-                $"{exchange.Method} {exchange.Path} -> {response.StatusCode} {Abbreviate(response.Body)}");
-        }
+        var response = await send(
+                exchange.Method, normalizedBaseUrl + exchange.Path, exchange.Body)
+            .ConfigureAwait(false);
+        Console.WriteLine(
+            $"{exchange.Method} {exchange.Path} -> {response.StatusCode} {Abbreviate(response.Body)}");
+        HttpContract.Verify(exchange, response);
     }
 
     private static string Abbreviate(string value)

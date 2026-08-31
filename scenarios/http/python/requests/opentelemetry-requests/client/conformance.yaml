@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: requests
 instrumentation_library: opentelemetry-instrumentation-requests
-scenario_contract: ../../../../../../tools/http/test-client/client-telemetry.yaml
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 env:
   # Python's HTTP instrumentations still emit the pre-stable attributes by
@@ -15,6 +15,4 @@ env:
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    run: uv run --frozen --project . otel-conformance-python scenario.py
+scenario_run: uv run --frozen --project . otel-conformance-python scenario.py

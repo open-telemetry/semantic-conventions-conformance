@@ -28,6 +28,17 @@ public class HttpContractTests
     }
 
     [Fact]
+    public void EachOrdinalSelectsOneIndependentRequest()
+    {
+        Assert.Equal(HttpContract.Requests, [
+            .. Enumerable.Range(0, HttpContract.Requests.Count).Select(HttpContract.Request),
+        ]);
+        Assert.Throws<ArgumentOutOfRangeException>(() => HttpContract.Request(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => HttpContract.Request(HttpContract.Requests.Count));
+    }
+
+    [Fact]
     public void AQueryStringDoesNotChangeWhichExchangeAnswers()
     {
         var plain = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));

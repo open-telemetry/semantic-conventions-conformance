@@ -4,7 +4,7 @@
 """The HTTP conformance exchanges a server answers or a client sends.
 
 Coverage files are only comparable if every scenario is exercised the same
-way, so both halves live in ``contract.json`` once rather than in each
+way, so both halves live in ``contract.yaml`` once rather than in each
 language. Both sides of the domain use it:
 
 - A **server** scenario is a plain server process. It declares matching routes
@@ -24,11 +24,10 @@ The external server driver checks every response against its exchange. A
 server scenario declares routes in its framework's native form — that
 declaration is what an instrumentation reads a route from — but every status
 and body is a constant from the shared file because the requests are fixed. A
-client scenario consumes the response without checking it again; the shared
-telemetry contract defines its conformance expectations.
+client helper checks the selected response after the library under test sends
+the request.
 
-This package is standard library only, so installing it next to a scenario
-drags no dependency into a run.
+This package adds only the shared YAML parser needed to read the contract.
 """
 
 from __future__ import annotations
@@ -46,6 +45,8 @@ from pathlib import Path
 from typing import Callable, NamedTuple, Sequence
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
+import yaml
+
 __all__ = [
     "CONTENT_TYPE",
     "CONTRACT",
@@ -53,6 +54,7 @@ __all__ = [
     "PORT_VARIABLE",
     "REQUEST_TIMEOUT_SECONDS",
     "REQUESTS",
+    "SCENARIO_INDEX_VARIABLE",
     "USER_AGENT",
     "AsyncSend",
     "ContractError",
@@ -60,12 +62,14 @@ __all__ = [
     "Send",
     "client_headers",
     "drive",
+    "drive_all",
     "drive_async",
     "mock_server_url",
     "request",
     "reserve_port",
     "respond",
     "scenario_port",
+    "scenario_request",
     "serve",
     "verify",
     "wait_for_health",
@@ -99,6 +103,7 @@ AsyncSend = Callable[[str, str, "str | None"], Awaitable["tuple[int, str]"]]
 # The port a server scenario listens on. ``otel-http-drive`` chooses it, which
 # is what lets different scenarios run in parallel without colliding.
 PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
+SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX"
 
 # Fixed rather than the interpreter's default, so a server scenario is driven
 # by the same client whichever Python happens to be installed.
@@ -109,39 +114,45 @@ REQUEST_TIMEOUT_SECONDS = 10
 
 
 def _contract() -> Path:
-    """Where ``contract.json`` is.
+    """Where ``contract.yaml`` is.
 
     Installed beside this module, or — in a checkout — above the Python
     package, since the contract belongs to every language rather than to this
     one.
     """
-    packaged = Path(__file__).parent / "contract.json"
+    packaged = Path(__file__).parent / "contract.yaml"
     if packaged.is_file():
         return packaged
-    return Path(__file__).resolve().parents[3] / "contract.json"
+    return Path(__file__).resolve().parents[3] / "contract.yaml"
 
 
 CONTRACT = _contract()
 
-_DOCUMENT = json.loads(CONTRACT.read_text(encoding="utf-8"))
-
-EXCHANGES: Sequence[Exchange] = tuple(
-    Exchange(
-        method=entry["method"],
-        path=entry["path"],
-        body=entry.get("body"),
-        status=entry["status"],
-        response_body=entry["responseBody"],
-        readiness=entry.get("readiness", False),
-        description=entry["description"],
-    )
-    for entry in _DOCUMENT["requests"]
-)
+_DOCUMENT = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
 
 REQUESTS: Sequence[Exchange] = tuple(
-    exchange for exchange in EXCHANGES if not exchange.readiness
+    Exchange(
+        method=entry["action"]["request"]["method"],
+        path=entry["action"]["request"]["path"],
+        body=entry["action"]["request"].get("body"),
+        status=entry["action"]["response"]["status"],
+        response_body=entry["action"]["response"]["body"],
+        readiness=False,
+        description=entry["description"],
+    )
+    for entry in _DOCUMENT
 )
-_READINESS = next(exchange for exchange in EXCHANGES if exchange.readiness)
+
+_READINESS = Exchange(
+    method="GET",
+    path="/health",
+    body=None,
+    status=200,
+    response_body='{"ok": true}',
+    readiness=True,
+    description="Checks whether the server is ready.",
+)
+EXCHANGES: Sequence[Exchange] = (_READINESS, *REQUESTS)
 
 # Every route answers JSON, so a scenario that reads the contract has one
 # content type to send rather than a rule per route.
@@ -157,6 +168,38 @@ def mock_server_url() -> str:
             "server the package declares"
         )
     return base_url
+
+
+def scenario_request(index: int | None = None) -> Exchange:
+    """The one request selected by the runner's zero-based contract index."""
+    if index is None:
+        raw = os.environ.get(SCENARIO_INDEX_VARIABLE)
+        if raw is None:
+            raise RuntimeError(f"{SCENARIO_INDEX_VARIABLE} is not set")
+        try:
+            index = int(raw)
+        except ValueError as error:
+            raise RuntimeError(
+                f"{SCENARIO_INDEX_VARIABLE} must be a zero-based decimal "
+                f"index, got {raw!r}"
+            ) from error
+        if str(index) != raw or index < 0:
+            raise RuntimeError(
+                f"{SCENARIO_INDEX_VARIABLE} must be a zero-based decimal "
+                f"index, got {raw!r}"
+            )
+    if index < 0:
+        raise RuntimeError(
+            f"{SCENARIO_INDEX_VARIABLE}={index} selects no contract entry; "
+            f"expected 0..{len(REQUESTS) - 1}"
+        )
+    try:
+        return REQUESTS[index]
+    except IndexError as error:
+        raise RuntimeError(
+            f"{SCENARIO_INDEX_VARIABLE}={index} selects no contract entry; "
+            f"expected 0..{len(REQUESTS) - 1}"
+        ) from error
 
 
 def client_headers(body: str | None) -> dict[str, str]:
@@ -227,10 +270,8 @@ def respond(
 def drive(
     base_url: str,
     send: Send | None = None,
-    *,
-    validate_responses: bool = False,
 ) -> None:
-    """Send :data:`REQUESTS` at ``base_url`` in order.
+    """Send the runner-selected request at ``base_url``.
 
     ``send`` defaults to the standard library. A client scenario passes its
     own library instead — that call is the thing being measured.
@@ -239,10 +280,23 @@ def drive(
     separate because every extra request a driver makes while a server starts
     is a span in that server's report.
 
-    ``validate_responses`` belongs to the external server driver. Client
-    scenarios leave it false because the conformance runner evaluates their
-    shared telemetry expectations.
+    The response is checked against the same contract entry. Telemetry remains
+    the conformance result, but a client that sends the wrong request or cannot
+    consume the expected answer fails at the source.
     """
+    sender = send or request
+    exchange = scenario_request()
+    status, response = sender(
+        exchange.method,
+        f"{base_url}{exchange.path}",
+        exchange.body,
+    )
+    print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
+    verify(exchange, status, response)
+
+
+def drive_all(base_url: str, send: Send | None = None) -> None:
+    """Send and verify every measured request when driving a server scenario."""
     sender = send or request
     for exchange in REQUESTS:
         status, response = sender(
@@ -251,19 +305,19 @@ def drive(
             exchange.body,
         )
         print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
-        if validate_responses:
-            verify(exchange, status, response)
+        verify(exchange, status, response)
 
 
 async def drive_async(base_url: str, send: AsyncSend) -> None:
-    """Asynchronously send :data:`REQUESTS` and consume every answer."""
-    for exchange in REQUESTS:
-        status, response = await send(
-            exchange.method,
-            f"{base_url}{exchange.path}",
-            exchange.body,
-        )
-        print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
+    """Asynchronously send and verify the runner-selected request."""
+    exchange = scenario_request()
+    status, response = await send(
+        exchange.method,
+        f"{base_url}{exchange.path}",
+        exchange.body,
+    )
+    print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
+    verify(exchange, status, response)
 
 
 def verify(exchange: Exchange, status: int, response: str) -> None:
@@ -293,11 +347,26 @@ def verify(exchange: Exchange, status: int, response: str) -> None:
             f"{exchange.method} {exchange.path} answered {response[:200]!r}, "
             "which is not the JSON the contract's request describes"
         ) from error
-    if got != want:
+    if not _same_json(got, want):
         raise ContractError(
             f"{exchange.method} {exchange.path} answered {got!r}, but the "
             f"contract's request answers {want!r}"
         )
+
+
+def _same_json(got: object, want: object) -> bool:
+    if type(got) is not type(want):
+        return False
+    if isinstance(got, dict) and isinstance(want, dict):
+        return got.keys() == want.keys() and all(
+            _same_json(got[key], want[key]) for key in got
+        )
+    if isinstance(got, list) and isinstance(want, list):
+        return len(got) == len(want) and all(
+            _same_json(got_item, want_item)
+            for got_item, want_item in zip(got, want, strict=True)
+        )
+    return got == want
 
 
 def wait_for_port(

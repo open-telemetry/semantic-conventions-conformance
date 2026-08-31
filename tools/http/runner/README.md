@@ -42,6 +42,6 @@ both live in [the runner's own policies](../../runner/README.md#advice-policies)
 Client scenarios call [`http-mock-server`](../mock-server), which installs
 with this package. Server scenarios are driven from outside, by
 [`otel-http-drive --serve`](../test-client). Both use the request sequence
-in [`contract.json`](../test-client/contract.json).
+in [`contract.yaml`](../test-client/contract.yaml).
 
 [http]: https://opentelemetry.io/docs/specs/semconv/http/

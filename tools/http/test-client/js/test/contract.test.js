@@ -11,6 +11,7 @@ const {
   exchanges,
   renderResponseBody,
   requests,
+  scenarioRequest,
 } = require("../src");
 
 describe("the contract", () => {
@@ -22,6 +23,14 @@ describe("the contract", () => {
     assert.ok(exchanges().some((exchange) => exchange.readiness));
     assert.ok(!requests().some((exchange) => exchange.readiness));
     assert.equal(requests().length, exchanges().length - 1);
+  });
+
+  it("selects each request by its independent ordinal", () => {
+    requests().forEach((exchange, index) => {
+      assert.equal(scenarioRequest(index), exchange);
+    });
+    assert.throws(() => scenarioRequest(-1), /zero-based decimal/);
+    assert.throws(() => scenarioRequest(requests().length), /selects no/);
   });
 
   // A field this reader names but the contract does not is `undefined` here

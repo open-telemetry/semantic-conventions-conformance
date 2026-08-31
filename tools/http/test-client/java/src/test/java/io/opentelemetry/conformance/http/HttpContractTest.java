@@ -6,6 +6,7 @@ package io.opentelemetry.conformance.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
@@ -32,6 +33,16 @@ class HttpContractTest {
     assertTrue(HttpContract.exchanges().stream().anyMatch(Exchange::readiness));
     assertTrue(requests.stream().noneMatch(Exchange::readiness));
     assertEquals(HttpContract.exchanges().size() - 1, requests.size());
+  }
+
+  @Test
+  void eachOrdinalSelectsOneIndependentRequest() {
+    for (int index = 0; index < HttpContract.requests().size(); index++) {
+      assertEquals(HttpContract.requests().get(index), HttpContract.request(index));
+    }
+    assertThrows(IllegalArgumentException.class, () -> HttpContract.request(-1));
+    assertThrows(
+        IllegalArgumentException.class, () -> HttpContract.request(HttpContract.requests().size()));
   }
 
   @Test

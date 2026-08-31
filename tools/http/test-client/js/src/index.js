@@ -8,7 +8,7 @@
  *
  * One entry point for both halves of the domain: `contract` reads the shared
  * file, `respond` answers concrete requests for any framework, and `drive`
- * sends the measured requests with the library under test.
+ * sends the runner-selected request with the library under test.
  *
  * Nothing here has a dependency of its own, so installing it next to a
  * scenario drags nothing into a run.

@@ -13,10 +13,11 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import shlex
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from string import Template
 from types import TracebackType
@@ -51,6 +52,7 @@ if TYPE_CHECKING:
     from opentelemetry.test.weaver_live_check import LiveCheckReport
 
 logger = logging.getLogger(__name__)
+_VARIABLE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
 # Generous: a cold scenario subprocess can spend a while importing a large
 # framework before it emits anything. Overridable through the environment.
@@ -199,8 +201,6 @@ class ConformanceSession:
                 f"{name!r} is not declared in {self._spec.directory}; "
                 f"declared: {sorted(self._spec.scenarios)}"
             )
-        self._ran.add(name)
-
         from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
@@ -231,25 +231,28 @@ class ConformanceSession:
             _quiet_connection_retries(),
             _start_weaver(start_weaver) as weaver,
         ):
-            completed = self._execute(scenario, weaver.otlp_endpoint)
+            resolved_scenario = self._resolve_expectations(scenario)
+            completed = self._execute(resolved_scenario, weaver.otlp_endpoint)
             report = weaver.end(
                 timeout=int(timeout_seconds(*_WEAVER_STOP_TIMEOUT))
             )
 
         # Before the checks, so a failing run still leaves a report to read.
         self._dump(name, report)
+        self._ran.add(name)
 
         failures: list[str] = []
         if completed.returncode != 0:
             failures.append(
-                f"{name}: scenario exited with {completed.returncode}\n"
+                f"{scenario.display_name}: scenario exited with "
+                f"{completed.returncode}\n"
                 f"--- stdout ---\n{completed.stdout}\n"
                 f"--- stderr ---\n{completed.stderr}"
             )
-        findings = check(scenario, report)
+        findings = check(resolved_scenario, report)
         failures += findings.failures
         return ScenarioReport(
-            name=name,
+            name=scenario.display_name,
             failures=failures,
             violations=findings.violations,
             report=report,
@@ -259,6 +262,56 @@ class ConformanceSession:
 
     def _resolve(self, value: str) -> str:
         return Template(value).safe_substitute(self._variables)
+
+    def _resolve_expectations(self, scenario: ScenarioSpec) -> ScenarioSpec:
+        """Resolve runtime variables in values used to select or check spans."""
+
+        def resolve(value: object) -> object:
+            if isinstance(value, str):
+                missing = sorted(
+                    {
+                        match.group(1)
+                        for match in _VARIABLE.finditer(value)
+                        if match.group(1) not in self._variables
+                    }
+                )
+                if missing:
+                    raise SpecError(
+                        f"{scenario.display_name}: expectation references unknown "
+                        f"variable(s) {missing}"
+                    )
+                return _VARIABLE.sub(
+                    lambda match: self._variables[match.group(1)], value
+                )
+            if isinstance(value, list):
+                return [resolve(item) for item in value]
+            if isinstance(value, tuple):
+                return tuple(resolve(item) for item in value)
+            if isinstance(value, Mapping):
+                return {key: resolve(item) for key, item in value.items()}
+            return value
+
+        if scenario.spans is None:
+            return scenario
+        return replace(
+            scenario,
+            spans=tuple(
+                replace(
+                    expectation,
+                    match=replace(
+                        expectation.match,
+                        attributes=resolve(expectation.match.attributes),
+                    ),
+                    attributes={
+                        name: replace(matcher, equals=resolve(matcher.equals))
+                        if matcher.present is None and matcher.distinct is None
+                        else matcher
+                        for name, matcher in expectation.attributes.items()
+                    },
+                )
+                for expectation in scenario.spans
+            ),
+        )
 
     def _resolve_path(self, value: str) -> str:
         """Resolve a declared path, relative ones against the package.
@@ -276,19 +329,17 @@ class ConformanceSession:
     def _execute(
         self, scenario: ScenarioSpec, otlp_endpoint: str
     ) -> subprocess.CompletedProcess[str]:
+        injected = {
+            "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
+            "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            "OTEL_METRIC_EXPORT_INTERVAL": str(METRIC_EXPORT_INTERVAL_MILLIS),
+        }
+        if scenario.index is not None:
+            injected["OTEL_CONFORMANCE_SCENARIO_INDEX"] = str(scenario.index)
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
-            env=self._env(
-                scenario.env,
-                {
-                    "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-                    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
-                    "OTEL_METRIC_EXPORT_INTERVAL": str(
-                        METRIC_EXPORT_INTERVAL_MILLIS
-                    ),
-                },
-            ),
+            env=self._env(scenario.env, injected),
         )
 
     def _env(
@@ -345,6 +396,10 @@ class ConformanceSession:
         """
         if self._ran != set(self._spec.scenarios):
             return
+        expected_reports = {f"{name}.json" for name in self._spec.scenarios}
+        for report in self._report_dir.glob("*.json"):
+            if report.name not in expected_reports:
+                report.unlink()
         data = self._build_data(self._report_dir, self._spec)
         self._data_file.parent.mkdir(parents=True, exist_ok=True)
         self._data_file.write_text(json.dumps(data, indent=2) + "\n")

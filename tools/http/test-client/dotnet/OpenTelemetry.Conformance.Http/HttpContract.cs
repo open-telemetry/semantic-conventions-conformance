@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Reflection;
-using System.Text.Json;
+using System.Globalization;
+using System.Text.Json.Nodes;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace OpenTelemetry.Conformance.Http;
 
 /// <summary>The HTTP conformance exchanges, as .NET reads them.</summary>
 /// <remarks>
-/// Read from the <c>otel-http-contract.json</c> manifest resource, which the build embeds from
-/// <c>tools/http/test-client/contract.json</c> — the one place it is written down, so a .NET
+/// Read from the <c>otel-http-contract.yaml</c> manifest resource, which the build embeds from
+/// <c>tools/http/test-client/contract.yaml</c> — the one place it is written down, so a .NET
 /// scenario and a scenario in any other language are measured against the same traffic.
 /// <para>
 /// <see cref="Exchanges"/> carries the concrete traffic and its answers. Every .NET framework
@@ -29,23 +32,27 @@ public static class HttpContract
     /// </summary>
     public const string UserAgent = "otel-http-conformance/1";
 
-    private const string ResourceName = "otel-http-contract.json";
+    public const string ScenarioIndexVariable = "OTEL_CONFORMANCE_SCENARIO_INDEX";
 
-    private static readonly JsonSerializerOptions ReadOptions =
-        new() { PropertyNameCaseInsensitive = true };
+    private const string ResourceName = "otel-http-contract.yaml";
 
-    // Loaded on first use rather than in a static constructor, so a packaging problem arrives as
-    // the message below rather than wrapped in TypeInitializationException.
-    private static readonly Lazy<Document> Contract = new(Load);
+    private static readonly Lazy<IReadOnlyList<Exchange>> Contract = new(Load);
 
-    private static readonly Lazy<IReadOnlyList<Exchange>> MeasuredRequests =
-        new(() => Contract.Value.Requests.Where(exchange => !exchange.Readiness).ToArray());
+    private static readonly Exchange Readiness =
+        new(
+            "GET",
+            "/health",
+            null,
+            200,
+            "{\"ok\": true}",
+            true,
+            "Checks whether the server is ready.");
 
     /// <summary>Every exchange the contract describes, including readiness, in order.</summary>
-    public static IReadOnlyList<Exchange> Exchanges => Contract.Value.Requests;
+    public static IReadOnlyList<Exchange> Exchanges => [Readiness, .. Contract.Value];
 
     /// <summary>The measured requests to send, in order.</summary>
-    public static IReadOnlyList<Exchange> Requests => MeasuredRequests.Value;
+    public static IReadOnlyList<Exchange> Requests => Contract.Value;
 
     /// <summary>One concrete request and the answer the contract requires.</summary>
     /// <remarks>
@@ -75,6 +82,68 @@ public static class HttpContract
     /// </remarks>
     public sealed record Response(int StatusCode, string Body);
 
+    /// <summary>The one request selected by the runner's zero-based contract index.</summary>
+    public static Exchange ScenarioRequest()
+    {
+        var raw = Environment.GetEnvironmentVariable(ScenarioIndexVariable);
+        if (!int.TryParse(
+                raw,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out var index)
+            || index < 0
+            || raw != index.ToString(CultureInfo.InvariantCulture))
+        {
+            throw new InvalidOperationException(
+                $"{ScenarioIndexVariable} must be a zero-based decimal index, got '{raw}'");
+        }
+
+        return Request(index);
+    }
+
+    internal static Exchange Request(int index)
+    {
+        if (index < 0 || index >= Requests.Count)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(index),
+                $"{ScenarioIndexVariable}={index} selects no contract entry; "
+                + $"expected 0..{Requests.Count - 1}");
+        }
+
+        return Requests[index];
+    }
+
+    internal static void Verify(Exchange exchange, Response response)
+    {
+        if (response.StatusCode != exchange.Status)
+        {
+            throw new InvalidOperationException(
+                $"{exchange.Method} {exchange.Path} answered {response.StatusCode}, "
+                + $"expected {exchange.Status}");
+        }
+
+        JsonNode? actual;
+        JsonNode? expected;
+        try
+        {
+            actual = JsonNode.Parse(response.Body);
+            expected = JsonNode.Parse(exchange.RenderResponseBody(exchange.Body));
+        }
+        catch (System.Text.Json.JsonException error)
+        {
+            throw new InvalidOperationException(
+                $"{exchange.Method} {exchange.Path} did not return the expected JSON",
+                error);
+        }
+
+        if (!JsonNode.DeepEquals(actual, expected))
+        {
+            throw new InvalidOperationException(
+                $"{exchange.Method} {exchange.Path} returned an unexpected JSON body");
+        }
+    }
+
     /// <summary>The exchange answering <c>method path</c>, if the contract describes one.</summary>
     internal static Exchange? Find(string method, string path)
     {
@@ -89,16 +158,61 @@ public static class HttpContract
         return query == -1 ? path : path[..query];
     }
 
-    private static Document Load()
+    private static IReadOnlyList<Exchange> Load()
     {
         var assembly = typeof(HttpContract).GetTypeInfo().Assembly;
         using var stream = assembly.GetManifestResourceStream(ResourceName)
             ?? throw new InvalidOperationException(
                 $"{ResourceName} is not embedded in {assembly.GetName().Name} — the build embeds "
-                + "it from tools/http/test-client/contract.json");
-        return JsonSerializer.Deserialize<Document>(stream, ReadOptions)
-            ?? throw new InvalidOperationException($"{ResourceName} is empty");
+                + "it from tools/http/test-client/contract.yaml");
+        using var reader = new StreamReader(stream);
+        var scenarios = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .IgnoreUnmatchedProperties()
+            .Build()
+            .Deserialize<List<ScenarioEntry>>(reader);
+        if (scenarios is null || scenarios.Count == 0)
+        {
+            throw new InvalidOperationException($"{ResourceName} is empty");
+        }
+
+        return scenarios.Select(scenario => new Exchange(
+            scenario.Action.Request.Method,
+            scenario.Action.Request.Path,
+            scenario.Action.Request.Body,
+            scenario.Action.Response.Status,
+            scenario.Action.Response.Body,
+            false,
+            scenario.Description)).ToArray();
     }
 
-    private sealed record Document(IReadOnlyList<Exchange> Requests);
+    private sealed class ScenarioEntry
+    {
+        public string Description { get; init; } = string.Empty;
+
+        public ContractAction Action { get; init; } = new();
+    }
+
+    private sealed class ContractAction
+    {
+        public ContractRequest Request { get; init; } = new();
+
+        public ContractResponse Response { get; init; } = new();
+    }
+
+    private sealed class ContractRequest
+    {
+        public string Method { get; init; } = string.Empty;
+
+        public string Path { get; init; } = string.Empty;
+
+        public string? Body { get; init; }
+    }
+
+    private sealed class ContractResponse
+    {
+        public int Status { get; init; }
+
+        public string Body { get; init; } = string.Empty;
+    }
 }

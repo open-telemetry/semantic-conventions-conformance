@@ -6,7 +6,8 @@
   <!-- The contract is shared with every other language, so it is embedded from
        where it lives rather than copied into this project. -->
   <ItemGroup>
-    <EmbeddedResource Include="../../contract.json" LogicalName="otel-http-contract.json" />
+    <EmbeddedResource Include="../../contract.yaml" LogicalName="otel-http-contract.yaml" />
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
 
   <!-- The lookup is how this project reads the contract rather than API a

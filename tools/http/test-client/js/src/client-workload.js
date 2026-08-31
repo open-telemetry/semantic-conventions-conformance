@@ -16,10 +16,10 @@
  * scenario, not reimplemented by each client language.
  */
 
-const { requests } = require("./contract");
+const { scenarioRequest, verify } = require("./contract");
 
 /**
- * Sends `requests()` at `baseUrl` through `send`.
+ * Sends the runner-selected contract request at `baseUrl` through `send`.
  *
  * `send(method, url, requestBody)` is the call being measured: a client
  * scenario passes its own library, and answers with `{ status, body }`.
@@ -32,17 +32,17 @@ async function drive(baseUrl, send) {
   if (!baseUrl || !baseUrl.trim()) {
     throw new TypeError("base URL must not be blank");
   }
-  for (const exchange of requests()) {
-    const response = await send(
-      exchange.method,
-      `${baseUrl}${exchange.path}`,
-      exchange.body,
-    );
-    console.log(
-      `${exchange.method} ${exchange.path} -> ${response.status} ` +
-        `${abbreviate(response.body)}`,
-    );
-  }
+  const exchange = scenarioRequest();
+  const response = await send(
+    exchange.method,
+    `${baseUrl}${exchange.path}`,
+    exchange.body,
+  );
+  console.log(
+    `${exchange.method} ${exchange.path} -> ${response.status} ` +
+      `${abbreviate(response.body)}`,
+  );
+  verify(exchange, response.status, response.body);
 }
 
 function abbreviate(value) {
