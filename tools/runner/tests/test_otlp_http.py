@@ -309,6 +309,12 @@ def test_rejects_invalid_requests(
         ),
         pytest.param("-1", HTTPStatus.BAD_REQUEST, b"invalid", id="negative"),
         pytest.param(
+            "1" * 5000,
+            HTTPStatus.BAD_REQUEST,
+            b"invalid",
+            id="too-many-digits",
+        ),
+        pytest.param(
             str(64 * 1024 * 1024 + 1),
             HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
             b"exceeds",

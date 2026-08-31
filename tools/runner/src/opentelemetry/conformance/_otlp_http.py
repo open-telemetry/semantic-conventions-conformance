@@ -303,7 +303,11 @@ class _Handler(BaseHTTPRequestHandler):
         if len(values) != 1 or _CONTENT_LENGTH.fullmatch(values[0]) is None:
             self._error(HTTPStatus.BAD_REQUEST, "invalid Content-Length")
             return None
-        length = int(values[0])
+        try:
+            length = int(values[0])
+        except ValueError:
+            self._error(HTTPStatus.BAD_REQUEST, "invalid Content-Length")
+            return None
         if length > _MAX_BODY_BYTES:
             self._error(
                 HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
