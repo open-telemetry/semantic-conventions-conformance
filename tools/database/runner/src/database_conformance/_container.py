@@ -44,8 +44,8 @@ class BackendSpec:
     ready_command: tuple[str, ...]
     schema_resource: str | None
     schema_path: str | None
-    schema_command: tuple[str, ...]
-    schema_environment: tuple[tuple[str, str], ...] = ()
+    initialize_command: tuple[str, ...]
+    initialize_environment: tuple[tuple[str, str], ...] = ()
 
 
 class DatabaseContainer:
@@ -132,8 +132,8 @@ class DatabaseContainer:
     def _initialize_backend(self, container: DockerContainer) -> None:
         result = container.exec(
             ExecConfig(
-                command=list(self._spec.schema_command),
-                environment=dict(self._spec.schema_environment),
+                command=list(self._spec.initialize_command),
+                environment=dict(self._spec.initialize_environment),
             )
         )
         if result.exit_code == 0:
