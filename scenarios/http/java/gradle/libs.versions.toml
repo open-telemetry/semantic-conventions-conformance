@@ -16,7 +16,7 @@ jackson = "2.22.2"
 jetty = "12.1.12"
 jodd-http = "6.3.0"
 netty = "4.2.17.Final"
-okhttp = "4.12.0"
+okhttp = "5.5.0"
 opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
