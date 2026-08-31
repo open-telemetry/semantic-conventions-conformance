@@ -56,7 +56,6 @@ class SqlContractTest {
 
     Query query = assertInstanceOf(Query.class, workload.scenario("statement"));
     assertEquals("SELECT count(*) >= 0 FROM conformance.items", query.sql());
-    assertTrue(query.expected());
 
     PreparedQuery prepared =
         assertInstanceOf(PreparedQuery.class, workload.scenario("prepared_statement"));
@@ -66,16 +65,13 @@ class SqlContractTest {
         "SELECT name FROM conformance.items WHERE id = $1",
         prepared.renderSql(index -> "$" + index));
     assertEquals(-1, prepared.parameters().get(0).integer());
-    assertEquals(0, prepared.expectedRows());
 
     Batch batch = assertInstanceOf(Batch.class, workload.scenario("batch"));
     assertEquals(2, batch.statements().size());
-    assertEquals(2, batch.expectedSuccessfulStatements());
 
     StoredProcedure procedure =
         assertInstanceOf(StoredProcedure.class, workload.scenario("stored_procedure"));
     assertEquals("conformance.noop", procedure.procedure());
-    assertEquals(0, procedure.expectedResultSets());
   }
 
   @Test
@@ -85,8 +81,7 @@ class SqlContractTest {
             "repeated",
             "Uses one value twice.",
             "SELECT ${id} = ${id}",
-            List.of(new Parameter("id", 1), new Parameter("id", 1)),
-            1);
+            List.of(new Parameter("id", 1), new Parameter("id", 1)));
 
     assertEquals("SELECT $1 = $2", query.renderSql(index -> "$" + index));
   }

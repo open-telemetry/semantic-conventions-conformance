@@ -23,8 +23,8 @@ import java.util.regex.Pattern;
  * The SQL database workload shared by every language.
  *
  * <p>The build copies each file under {@code tools/database/sql-test-client/contracts} onto the
- * classpath. A backend contract owns its named scenarios, exact SQL, parameters, and expected
- * results. Client adapters only translate those operations into their native APIs.
+ * classpath. A backend contract owns its named scenarios, exact SQL, and parameters. Client
+ * adapters only translate those operations into their native APIs.
  */
 public final class SqlContract {
 
@@ -75,9 +75,8 @@ public final class SqlContract {
     String description();
   }
 
-  /** A direct query with one expected Boolean value. */
-  public record Query(String name, String description, String sql, boolean expected)
-      implements Operation {
+  /** A direct query. */
+  public record Query(String name, String description, String sql) implements Operation {
     public Query {
       name = requireText(name, "operation name");
       description = requireText(description, name + " description");
@@ -85,9 +84,9 @@ public final class SqlContract {
     }
   }
 
-  /** A prepared query with ordered named parameters and an expected row count. */
+  /** A prepared query with ordered named parameters. */
   public record PreparedQuery(
-      String name, String description, String sql, List<Parameter> parameters, int expectedRows)
+      String name, String description, String sql, List<Parameter> parameters)
       implements Operation {
     public PreparedQuery {
       name = requireText(name, "operation name");
@@ -97,10 +96,6 @@ public final class SqlContract {
       if (parameters.isEmpty()) {
         throw new IllegalArgumentException(name + " must declare at least one parameter");
       }
-      if (expectedRows < 0) {
-        throw new IllegalArgumentException(name + " expected row count must not be negative");
-      }
-
       List<String> markers = new ArrayList<>();
       Matcher matcher = PARAMETER_MARKER.matcher(sql);
       while (matcher.find()) {
@@ -145,8 +140,7 @@ public final class SqlContract {
   }
 
   /** A list of statements executed as one batch. */
-  public record Batch(
-      String name, String description, List<String> statements, int expectedSuccessfulStatements)
+  public record Batch(String name, String description, List<String> statements)
       implements Operation {
     public Batch {
       name = requireText(name, "operation name");
@@ -158,24 +152,16 @@ public final class SqlContract {
       for (String statement : statements) {
         requireText(statement, name + " statement");
       }
-      if (expectedSuccessfulStatements != statements.size()) {
-        throw new IllegalArgumentException(name + " expects every batch statement to succeed");
-      }
     }
   }
 
-  /** A stored procedure call with an expected result-set count. */
-  public record StoredProcedure(
-      String name, String description, String procedure, int expectedResultSets)
+  /** A stored procedure call. */
+  public record StoredProcedure(String name, String description, String procedure)
       implements Operation {
     public StoredProcedure {
       name = requireText(name, "operation name");
       description = requireText(description, name + " description");
       procedure = requireText(procedure, name + " procedure");
-      if (expectedResultSets < 0) {
-        throw new IllegalArgumentException(
-            name + " expected result-set count must not be negative");
-      }
     }
   }
 
@@ -212,39 +198,26 @@ public final class SqlContract {
       String sql,
       List<ParameterEntry> parameters,
       List<String> statements,
-      String procedure,
-      ExpectedEntry expect) {
+      String procedure) {
 
     Operation resolve() {
       String scenarioName = requireText(name, "scenario name");
       String scenarioDescription = requireText(description, scenarioName + " description");
-      ExpectedEntry expected = Objects.requireNonNull(expect, scenarioName + " expect");
       return switch (requireText(kind, scenarioName + " kind")) {
         case "query" ->
-            new Query(
-                scenarioName,
-                scenarioDescription,
-                requireText(sql, scenarioName + " SQL"),
-                expected.singleBoolean(scenarioName));
+            new Query(scenarioName, scenarioDescription, requireText(sql, scenarioName + " SQL"));
         case "prepared_query" ->
             new PreparedQuery(
                 scenarioName,
                 scenarioDescription,
                 requireText(sql, scenarioName + " SQL"),
-                parameterEntries(scenarioName).stream().map(ParameterEntry::parameter).toList(),
-                expected.rows(scenarioName));
-        case "batch" ->
-            new Batch(
-                scenarioName,
-                scenarioDescription,
-                statements,
-                expected.successfulStatements(scenarioName));
+                parameterEntries(scenarioName).stream().map(ParameterEntry::parameter).toList());
+        case "batch" -> new Batch(scenarioName, scenarioDescription, statements);
         case "stored_procedure" ->
             new StoredProcedure(
                 scenarioName,
                 scenarioDescription,
-                requireText(procedure, scenarioName + " procedure"),
-                expected.resultSets(scenarioName));
+                requireText(procedure, scenarioName + " procedure"));
         default ->
             throw new IllegalArgumentException(
                 "unknown SQL operation kind for " + scenarioName + ": " + kind);
@@ -269,35 +242,6 @@ public final class SqlContract {
       }
       return new Parameter(name, value.intValue());
     }
-  }
-
-  private record ExpectedEntry(
-      Boolean singleBoolean, Integer rows, Integer successfulStatements, Integer resultSets) {
-    boolean singleBoolean(String operation) {
-      if (singleBoolean == null) {
-        throw new IllegalArgumentException(operation + " must expect one Boolean value");
-      }
-      return singleBoolean;
-    }
-
-    int rows(String operation) {
-      return requiredCount(rows, operation, "rows");
-    }
-
-    int successfulStatements(String operation) {
-      return requiredCount(successfulStatements, operation, "successfulStatements");
-    }
-
-    int resultSets(String operation) {
-      return requiredCount(resultSets, operation, "resultSets");
-    }
-  }
-
-  private static int requiredCount(Integer value, String operation, String field) {
-    if (value == null) {
-      throw new IllegalArgumentException(operation + " must expect " + field);
-    }
-    return value;
   }
 
   private static String requireText(String value, String field) {
