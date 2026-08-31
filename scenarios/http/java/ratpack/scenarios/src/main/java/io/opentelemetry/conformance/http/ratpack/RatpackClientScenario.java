@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import ratpack.exec.ExecController;
 import ratpack.exec.ExecInitializer;
 import ratpack.exec.Promise;
-import ratpack.func.Action;
 import ratpack.http.client.HttpClient;
 import ratpack.server.RatpackServer;
 import ratpack.test.exec.ExecHarness;
@@ -41,29 +40,21 @@ public final class RatpackClientScenario {
   public static void run(ClientInstrumenter instrumenter, ExecInitializer execInitializer)
       throws Exception {
     RatpackServer server =
-        RatpackServer.of(
+        RatpackServer.start(
             definition -> {
               definition.serverConfig(
                   config -> config.port(0).address(InetAddress.getByName("127.0.0.1")));
               definition.registryOf(registry -> registry.add(execInitializer));
               definition.handlers(chain -> {});
             });
-    server.start();
     try {
       ExecController controller =
           server
               .getRegistry()
               .orElseThrow(() -> new IllegalStateException("Ratpack server did not start"))
               .get(ExecController.class);
-      CompletableFuture<HttpClient> instrumentedClient = new CompletableFuture<>();
-      controller
-          .fork()
-          .onError(instrumentedClient::completeExceptionally)
-          .start(
-              execution ->
-                  instrumentedClient.complete(
-                      instrumenter.instrument(HttpClient.of(Action.noop()))));
-      try (HttpClient client = instrumentedClient.get()) {
+      try (HttpClient client =
+          instrumenter.instrument(HttpClient.of(spec -> spec.execController(controller)))) {
         HttpClientWorkload.drive(
             ScenarioEnvironment.require("MOCK_SERVER_URL"),
             (method, url, body) -> request(controller, client, method, url, body));
