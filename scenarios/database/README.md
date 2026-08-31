@@ -33,8 +33,8 @@ the JDBC path that produced it:
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
-The Elasticsearch scenarios cover one current version from each distinct
-instrumented client API:
+The Elasticsearch scenarios cover one version from each distinct instrumented
+client API:
 
 | Scenario package | Client | Version | Operation |
 | --- | --- | --- | --- |
@@ -42,9 +42,10 @@ instrumented client API:
 | `elasticsearch/api-client` | Elasticsearch Java API Client | 7.17.19 | `search` |
 | `elasticsearch/transport` | Transport Client | 7.17.29 | `prepareSearch` |
 
-The Java API Client stays at 7.17.19 because 7.17.20 and later have native
-OpenTelemetry instrumentation. This suite measures the Java agent
-instrumentation line instead.
+The Low Level REST Client stays on the 7.17 line because it shares its version
+with the Transport Client artifacts, which end there. The Java API Client stays
+at 7.17.19 because 7.17.20 and later have native OpenTelemetry instrumentation.
+This suite measures the Java agent instrumentation line instead.
 
 ## Running it
 
