@@ -49,7 +49,11 @@ class BackendSpec:
 
 
 class DatabaseContainer:
-    """Own one disposable database initialized from a packaged schema."""
+    """Own one disposable database initialized by a backend command.
+
+    A backend that ships a packaged schema has it copied in first; one that
+    does not is set up by the command alone.
+    """
 
     def __init__(
         self,
