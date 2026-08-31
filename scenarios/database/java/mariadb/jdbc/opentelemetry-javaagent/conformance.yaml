@@ -6,7 +6,7 @@ runner_config:
   backend: mariadb
 instrumented_library: jdbc
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
-scenario_contract: ../../../../contracts/mariadb.yaml
+scenario_contract: ../../../../../../tools/database/sql-test-client/contracts/mariadb.json
 
 env:
   JDBC_URL: jdbc:mariadb://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}

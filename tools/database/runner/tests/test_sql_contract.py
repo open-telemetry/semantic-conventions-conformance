@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""SQL workload contracts agree with the runner and telemetry contracts."""
+"""Combined SQL contracts agree with the runner and scenario packages."""
 
 import json
 from pathlib import Path
@@ -12,7 +12,6 @@ from database_conformance import _BACKENDS
 
 _REPOSITORY = Path(__file__).parents[4]
 _CONTRACTS = Path(__file__).parents[2] / "sql-test-client" / "contracts"
-_TELEMETRY_CONTRACTS = _REPOSITORY / "scenarios" / "database" / "contracts"
 _SCENARIO_PACKAGES = _REPOSITORY / "scenarios" / "database"
 
 
@@ -32,27 +31,28 @@ def test_runner_supports_every_sql_contract_backend() -> None:
         assert backend in _BACKENDS
 
 
-def test_sql_scenarios_match_vendor_telemetry_contracts() -> None:
+def test_sql_scenarios_combine_actions_and_expectations() -> None:
     for _, document in _contracts():
-        backend = document["backend"]
         scenarios = document["scenarios"]
-        assert isinstance(backend, str)
-        assert isinstance(scenarios, list)
-        workload_names = [scenario["name"] for scenario in scenarios]
-        assert len(workload_names) == len(set(workload_names))
-
-        telemetry_path = _TELEMETRY_CONTRACTS / f"{backend}.yaml"
-        telemetry = yaml.safe_load(telemetry_path.read_text(encoding="utf-8"))
-        assert set(workload_names) == set(telemetry["scenarios"])
+        assert isinstance(scenarios, dict)
+        assert scenarios
+        for name, scenario in scenarios.items():
+            assert isinstance(name, str)
+            assert isinstance(scenario, dict)
+            assert set(scenario) == {"description", "action", "expect"}
+            assert isinstance(scenario["description"], str)
+            assert scenario["description"]
+            assert isinstance(scenario["action"], dict)
+            assert isinstance(scenario["expect"], dict)
 
 
 def test_sql_scenarios_are_wired_by_every_matching_package() -> None:
-    for _, document in _contracts():
+    for contract_path, document in _contracts():
         backend = document["backend"]
         scenarios = document["scenarios"]
         assert isinstance(backend, str)
-        assert isinstance(scenarios, list)
-        workload_names = {scenario["name"] for scenario in scenarios}
+        assert isinstance(scenarios, dict)
+        workload_names = set(scenarios)
 
         packages: list[tuple[Path, dict[str, object]]] = []
         for path in _SCENARIO_PACKAGES.rglob("conformance.yaml"):
@@ -63,6 +63,8 @@ def test_sql_scenarios_are_wired_by_every_matching_package() -> None:
 
         assert packages
         for path, package in packages:
+            scenario_contract = path.parent / package["scenario_contract"]
+            assert scenario_contract.resolve() == contract_path.resolve(), path
             package_scenarios = package["scenarios"]
             assert set(package_scenarios) == workload_names, path
             for name, scenario in package_scenarios.items():
