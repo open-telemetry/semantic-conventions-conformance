@@ -47,6 +47,9 @@ class SqlContractTest {
           workload.scenarios().stream()
               .map(SqlContract.Operation::description)
               .noneMatch(String::isBlank));
+      for (int index = 0; index < workload.scenarios().size(); index++) {
+        assertEquals(index, workload.scenarios().get(index).index());
+      }
     }
   }
 
@@ -54,11 +57,10 @@ class SqlContractTest {
   void resolvesPostgresqlForAClientAdapter() {
     Workload workload = SqlContract.workload("postgresql");
 
-    Query query = assertInstanceOf(Query.class, workload.scenario("statement"));
+    Query query = assertInstanceOf(Query.class, workload.scenario(0));
     assertEquals("SELECT count(*) >= 0 FROM conformance.items", query.sql());
 
-    PreparedQuery prepared =
-        assertInstanceOf(PreparedQuery.class, workload.scenario("prepared_statement"));
+    PreparedQuery prepared = assertInstanceOf(PreparedQuery.class, workload.scenario(1));
     assertEquals(
         "SELECT name FROM conformance.items WHERE id = ?", prepared.renderSql(index -> "?"));
     assertEquals(
@@ -66,11 +68,10 @@ class SqlContractTest {
         prepared.renderSql(index -> "$" + index));
     assertEquals(-1, prepared.parameters().get(0).integer());
 
-    Batch batch = assertInstanceOf(Batch.class, workload.scenario("batch"));
+    Batch batch = assertInstanceOf(Batch.class, workload.scenario(2));
     assertEquals(2, batch.statements().size());
 
-    StoredProcedure procedure =
-        assertInstanceOf(StoredProcedure.class, workload.scenario("stored_procedure"));
+    StoredProcedure procedure = assertInstanceOf(StoredProcedure.class, workload.scenario(3));
     assertEquals("conformance.noop", procedure.procedure());
   }
 
@@ -78,7 +79,7 @@ class SqlContractTest {
   void rendersEveryParameterOccurrenceWithItsOwnBindMarker() {
     PreparedQuery query =
         new PreparedQuery(
-            "repeated",
+            0,
             "Uses one value twice.",
             "SELECT ${id} = ${id}",
             List.of(new Parameter("id", 1), new Parameter("id", 1)));
@@ -87,9 +88,23 @@ class SqlContractTest {
   }
 
   @Test
-  void rejectsNamesOutsideTheContract() {
+  void allowsDuplicateDescriptions() {
+    Workload workload =
+        new Workload(
+            "postgresql",
+            "Duplicate labels.",
+            List.of(
+                new Query(0, "Same label.", "SELECT 1"), new Query(1, "Same label.", "SELECT 2")));
+
+    assertEquals(workload.scenario(0).description(), workload.scenario(1).description());
+  }
+
+  @Test
+  void rejectsIndexesOutsideTheContract() {
     assertThrows(
-        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario("x"));
+        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario(-1));
+    assertThrows(
+        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario(4));
     assertThrows(IllegalStateException.class, () -> SqlContract.workload("no_such_backend"));
   }
 }

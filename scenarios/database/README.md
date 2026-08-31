@@ -18,11 +18,11 @@ java/{postgresql,mariadb}/jdbc/             vendor conformance packages
 
 Each backend's combined SQL contract lives under
 [`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
-Each named scenario keeps its backend-specific `action` and generic telemetry
-`expect` object together. Language helpers translate `action` into their client
-APIs, while the conformance runner projects `expect` into its existing matchers.
-Contracts can diverge as dialect-specific sanitization and summarization
-coverage grows.
+Each ordered scenario keeps its backend-specific `action` and generic telemetry
+`expect` object together. The runner executes each list position under its own
+live-check and passes that position to the language helper, which translates
+`action` into its client API. Contracts can diverge as dialect-specific
+sanitization and summarization coverage grows.
 
 Each operation is a separate scenario so a missing or malformed span identifies
 the client path that produced it:

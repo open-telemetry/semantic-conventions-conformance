@@ -24,7 +24,15 @@ import java.sql.Statement;
 public final class JdbcScenario {
   private JdbcScenario() {}
 
-  public static void run(String scenario) throws SQLException {
+  public static void run() throws SQLException {
+    String value = ScenarioEnvironment.require("OTEL_CONFORMANCE_SCENARIO_INDEX");
+    int scenario;
+    try {
+      scenario = Integer.parseInt(value);
+    } catch (NumberFormatException error) {
+      throw new IllegalArgumentException(
+          "OTEL_CONFORMANCE_SCENARIO_INDEX must be a decimal integer: " + value, error);
+    }
     Operation workload =
         SqlContract.workload(ScenarioEnvironment.require("DATABASE_BACKEND")).scenario(scenario);
     try (Connection connection =

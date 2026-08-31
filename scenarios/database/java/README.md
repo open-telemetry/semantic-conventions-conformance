@@ -7,7 +7,7 @@ The language-neutral SQL actions and telemetry expectations live together in
 backend-specific files under
 [`tools/database/sql-test-client/contracts`](../../../tools/database/sql-test-client/contracts).
 The `shared:jdbc:scenarios` Gradle project reads the selected backend through
-`SqlContract` and translates its named scenarios into JDBC. Its launcher
+`SqlContract` and translates the runner-selected list entry into JDBC. Its launcher
 projects configure either the Java agent or `opentelemetry-jdbc`. Vendor
 directories contain the conformance configuration and coverage, so another
 PostgreSQL client such as Vert.x SQL can sit beside JDBC without duplicating the

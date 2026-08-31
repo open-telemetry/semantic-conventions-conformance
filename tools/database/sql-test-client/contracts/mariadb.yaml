@@ -5,8 +5,7 @@ backend: mariadb
 description: The SQL scenarios every language executes against MariaDB.
 
 scenarios:
-  statement:
-    description: Runs a direct query.
+  - description: Runs a direct query.
     action:
       kind: query
       sql: SELECT count(*) >= 0 FROM conformance.items
@@ -28,8 +27,7 @@ scenarios:
         - queueSize
       events: []
 
-  prepared_statement:
-    description: Binds an integer to a prepared query.
+  - description: Binds an integer to a prepared query.
     action:
       kind: prepared_query
       sql: SELECT name FROM conformance.items WHERE id = ${id}
@@ -55,8 +53,7 @@ scenarios:
         - queueSize
       events: []
 
-  batch:
-    description: Executes two inserts as one batch.
+  - description: Executes two inserts as one batch.
     action:
       kind: batch
       statements:
@@ -80,8 +77,7 @@ scenarios:
         - queueSize
       events: []
 
-  stored_procedure:
-    description: Calls the no-op stored procedure.
+  - description: Calls the no-op stored procedure.
     action:
       kind: stored_procedure
       procedure: conformance.noop
