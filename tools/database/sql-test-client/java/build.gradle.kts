@@ -7,7 +7,7 @@ dependencies {
 }
 
 tasks.processResources {
-    from("../contract.json") {
-        rename { "otel-sql-contract.json" }
+    from("../contracts") {
+        into("otel-sql-contracts")
     }
 }

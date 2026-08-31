@@ -25,9 +25,9 @@ import java.util.Arrays;
 public final class JdbcScenario {
   private JdbcScenario() {}
 
-  public static void run(String operation) throws SQLException {
+  public static void run(String scenario) throws SQLException {
     Operation workload =
-        SqlContract.workload(ScenarioEnvironment.require("DATABASE_BACKEND")).operation(operation);
+        SqlContract.workload(ScenarioEnvironment.require("DATABASE_BACKEND")).scenario(scenario);
     try (Connection connection =
         DriverManager.getConnection(
             ScenarioEnvironment.require("JDBC_URL"),
