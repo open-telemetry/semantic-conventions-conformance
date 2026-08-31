@@ -6,6 +6,7 @@ package io.opentelemetry.conformance.database.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -33,7 +34,7 @@ public final class SqlContract {
   private static final String RESOURCE_DIRECTORY = "/otel-sql-contracts/";
   private static final Pattern BACKEND_NAME = Pattern.compile("[a-z][a-z0-9_]*");
   private static final Pattern PARAMETER_MARKER = Pattern.compile("\\$\\{([A-Za-z][A-Za-z0-9_]*)}");
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
   private SqlContract() {}
 
@@ -267,7 +268,7 @@ public final class SqlContract {
   }
 
   private static Workload load(String backend) {
-    String resource = RESOURCE_DIRECTORY + backend + ".json";
+    String resource = RESOURCE_DIRECTORY + backend + ".yaml";
     try (InputStream stream = SqlContract.class.getResourceAsStream(resource)) {
       if (stream == null) {
         throw new IllegalStateException(

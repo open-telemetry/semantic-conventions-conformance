@@ -6,7 +6,7 @@ runner_config:
   backend: postgresql
 instrumented_library: jdbc
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-jdbc
-scenario_contract: ../../../../../../tools/database/sql-test-client/contracts/postgresql.json
+scenario_contract: ../../../../../../tools/database/sql-test-client/contracts/postgresql.yaml
 
 env:
   JDBC_URL: jdbc:otel:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}

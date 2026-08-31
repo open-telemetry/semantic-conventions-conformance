@@ -31,12 +31,12 @@ batch, or stored procedure API. The language helper reads `action`; the
 conformance runner reads `expect` using its generic `spans`, `metrics`, and
 `events` matcher syntax. The scenario process fails if the driver cannot execute
 the action. Tests also require every matching conformance package to reference
-the same JSON contract and wire each scenario name into its run command.
+the same YAML contract and wire each scenario name into its run command.
 
 ## Per language
 
 Each language gets a small SQL helper that reads the selected backend file:
 
 - [`java/`](java) provides `SqlContract`. The build copies
-  `contracts/*.json` onto the classpath, and JDBC scenarios translate named
+  `contracts/*.yaml` onto the classpath, and JDBC scenarios translate named
   parameters and stored procedures into JDBC calls.
