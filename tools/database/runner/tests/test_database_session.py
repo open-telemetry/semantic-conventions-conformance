@@ -14,6 +14,7 @@ from typing import Any
 import pytest
 
 import database_conformance
+from database_conformance._mysql import MySQL
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
 
 
@@ -168,6 +169,8 @@ def test_database_session_dispatches_mysql(
     ) -> Generator[object, None, None]:
         del directory, kwargs
         yield object()
+
+    assert database_conformance._BACKENDS.get("mysql") is MySQL
 
     monkeypatch.setitem(database_conformance._BACKENDS, "mysql", StubBackend)
     monkeypatch.setattr(
