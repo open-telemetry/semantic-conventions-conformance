@@ -23,10 +23,31 @@ GEM
     google-protobuf (4.36.0)
       bigdecimal
       rake (~> 13.3)
+    google-protobuf (4.36.0-aarch64-linux-gnu)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.0-aarch64-linux-musl)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.0-arm64-darwin)
+      bigdecimal
+      rake (~> 13.3)
     google-protobuf (4.36.0-x64-mingw-ucrt)
       bigdecimal
       rake (~> 13.3)
+    google-protobuf (4.36.0-x86-linux-gnu)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.0-x86-linux-musl)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.0-x86_64-darwin)
+      bigdecimal
+      rake (~> 13.3)
     google-protobuf (4.36.0-x86_64-linux-gnu)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.0-x86_64-linux-musl)
       bigdecimal
       rake (~> 13.3)
     googleapis-common-protos-types (1.23.0)
@@ -67,9 +88,16 @@ GEM
     webrick (1.9.2)
 
 PLATFORMS
+  aarch64-linux-gnu
+  aarch64-linux-musl
+  arm64-darwin
   ruby
   x64-mingw-ucrt
+  x86-linux-gnu
+  x86-linux-musl
+  x86_64-darwin
   x86_64-linux-gnu
+  x86_64-linux-musl
 
 DEPENDENCIES
   bigdecimal (= 3.1.8)
