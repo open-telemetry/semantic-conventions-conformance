@@ -34,13 +34,6 @@ The `main` classes are per instrumentation because attaching library
 instrumentation is code rather than a command-line flag; everything they do
 beyond that is in `scenarios/`.
 
-In Rust the split is between crates. Its plain workload crates hold Actix
-Web's native routes and the awc request sequence without importing
-OpenTelemetry. The instrumentation-specific binary crates install
-`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
-workspace at `rust/` includes the shared crates under `tools/` and commits one
-lockfile for all of them.
-
 Armeria therefore has four isolated packages: client and server coverage for
 both the OpenTelemetry Java agent and explicit OpenTelemetry library
 instrumentation. Client and server stay separate packages because coverage
@@ -67,6 +60,13 @@ A Python instrumentation has nothing to build. Its workload is a module in
 `python/<library>/scenarios/`, and each `<side>/` directory holds the
 `pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
 `scenario.py` that turns it on before handing the workload to the harness.
+
+In Rust the split is between crates. Its plain workload crates hold Actix
+Web's native routes and the awc request sequence without importing
+OpenTelemetry. The instrumentation-specific binary crates install
+`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
+workspace at `rust/` includes the shared crates under `tools/` and commits one
+lockfile for all of them.
 
 ## The scenario contract
 
