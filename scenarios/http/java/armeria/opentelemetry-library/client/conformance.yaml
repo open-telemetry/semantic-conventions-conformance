@@ -7,7 +7,7 @@ instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-armeria-
 scenario_contract: ../../../../../../tools/http/test-client/client-telemetry.yaml
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare armeria:opentelemetry-library
 

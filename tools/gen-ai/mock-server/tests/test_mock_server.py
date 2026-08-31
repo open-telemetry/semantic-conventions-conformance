@@ -117,6 +117,12 @@ ENDPOINTS = [
         {"model": "command-r", "messages": [{"role": "user", "content": "hi"}]},
     ),
     (
+        "cohere-embed",
+        "post",
+        "/v2/embed",
+        {"model": "embed-v4.0", "texts": ["hi", "there"], "input_type": "search_document"},
+    ),
+    (
         "mistral-chat",
         "post",
         "/mistral/v1/chat/completions",
@@ -136,6 +142,22 @@ ENDPOINTS = [
         "post",
         "/mistral/v1/embeddings",
         {"model": "mistral-embed", "inputs": ["hi", "there"]},
+    ),
+    (
+        "ollama-chat",
+        "post",
+        "/api/chat",
+        {
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": False,
+        },
+    ),
+    (
+        "ollama-embed",
+        "post",
+        "/api/embed",
+        {"model": "nomic-embed-text", "input": ["hi", "there"]},
     ),
 ]
 
@@ -930,3 +952,244 @@ def test_google_breaks_usage_down_by_input_and_output_modality(client):
     assert [d["modality"] for d in usage["candidatesTokensDetails"]] == ["TEXT", "IMAGE"]
     assert sum(d["tokenCount"] for d in usage["candidatesTokensDetails"]) == usage["candidatesTokenCount"]
     assert usage["cachedContentTokenCount"] < usage["promptTokenCount"]
+
+
+def test_ollama_chat_calls_an_offered_tool(client):
+    """Ollama carries the arguments as an object, not as a JSON string."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": False,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_current_weather"
+    assert call["function"]["arguments"] == {"location": "Seattle"}
+
+
+def test_ollama_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "tool", "content": "70 degrees"},
+            ],
+            "stream": False,
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert "tool_calls" not in response.json["message"]
+    assert response.json["done_reason"] == "stop"
+
+
+def test_ollama_streams_newline_delimited_json(client):
+    """Ollama streams NDJSON, not SSE, and only the last line is done."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": True,
+        },
+    )
+    lines = [json.loads(line) for line in response.get_data(as_text=True).splitlines()]
+    assert [line["done"] for line in lines] == [False] * (len(lines) - 1) + [True]
+    streamed = "".join(line["message"]["content"] for line in lines).strip()
+    assert streamed == "This is a response from the mock server."
+    assert lines[-1]["eval_count"] == 12
+
+
+def test_ollama_answers_a_format_request_with_that_schema(client):
+    """`format` carries the schema itself, so the answer is built from it."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": False,
+            "format": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string"},
+                    "temperature": {"type": "integer"},
+                },
+            },
+        },
+    )
+    assert json.loads(response.json["message"]["content"]) == {
+        "location": "Seattle",
+        "temperature": 1,
+    }
+
+
+def test_ollama_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/api/embed",
+        json={"model": "nomic-embed-text", "input": ["one", "two"], "dimensions": 64},
+    )
+    assert len(response.json["embeddings"]) == 2
+    assert len(response.json["embeddings"][0]) == 64
+    assert response.json["prompt_eval_count"] == 16
+
+
+def test_cohere_chat_calls_an_offered_tool(client):
+    """Cohere narrates the call in a tool_plan field of its own."""
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_current_weather"
+    assert json.loads(call["function"]["arguments"]) == {"location": "Seattle"}
+    assert response.json["message"]["tool_plan"]
+    assert response.json["finish_reason"] == "TOOL_CALL"
+
+
+def test_cohere_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "tool", "tool_call_id": "x", "content": "70 degrees"},
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert "tool_calls" not in response.json["message"]
+    assert response.json["finish_reason"] == "COMPLETE"
+
+
+def test_cohere_chat_streams_the_same_answer_it_would_return(client):
+    streamed = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": True,
+        },
+    ).get_data(as_text=True)
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.splitlines()
+        if line.startswith("data: ")
+    ]
+    text = "".join(
+        event["delta"]["message"]["content"]["text"]
+        for event in events
+        if event["type"] == "content-delta"
+    ).strip()
+    assert text == "This is a response from the mock server."
+    assert events[-1]["delta"]["finish_reason"] == "COMPLETE"
+
+
+def test_cohere_streams_a_tool_call_it_would_have_returned(client):
+    """The streamed call has to reassemble into the non-streamed one."""
+    streamed = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": True,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    ).get_data(as_text=True)
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.splitlines()
+        if line.startswith("data: ")
+    ]
+    by_type = {event["type"]: event for event in events}
+    assert "tool-plan-delta" in by_type
+    start = by_type["tool-call-start"]["delta"]["message"]["tool_calls"]
+    assert start["function"]["name"] == "get_current_weather"
+    arguments = "".join(
+        event["delta"]["message"]["tool_calls"]["function"]["arguments"]
+        for event in events
+        if event["type"] in ("tool-call-start", "tool-call-delta")
+    )
+    assert json.loads(arguments) == {"location": "Seattle"}
+    assert "tool-call-end" in by_type
+    assert events[-1]["delta"]["finish_reason"] == "TOOL_CALL"
+
+
+def test_cohere_answers_a_json_object_request_with_its_schema(client):
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "response_format": {
+                "type": "json_object",
+                "json_schema": {
+                    "type": "object",
+                    "properties": {
+                        "location": {"type": "string"},
+                        "temperature": {"type": "integer"},
+                    },
+                },
+            },
+        },
+    )
+    assert json.loads(response.json["message"]["content"][0]["text"]) == {
+        "location": "Seattle",
+        "temperature": 1,
+    }
+
+
+def test_cohere_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/v2/embed",
+        json={
+            "model": "embed-v4.0",
+            "texts": ["one", "two"],
+            "input_type": "search_document",
+            "output_dimension": 64,
+        },
+    )
+    vectors = response.json["embeddings"]["float"]
+    assert len(vectors) == 2
+    assert len(vectors[0]) == 64

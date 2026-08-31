@@ -52,6 +52,36 @@ def test_minimal_spec_leaves_every_expectation_unchecked(
     assert scenario.expected_violations == ()
 
 
+def test_runner_config_is_available_to_the_selected_runner(
+    tmp_path: Path,
+) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            MINIMAL
+            + """
+runner_config:
+  backend: postgresql
+""",
+        )
+    )
+
+    assert spec.runner_config == {"backend": "postgresql"}
+
+
+def test_runner_config_must_be_a_mapping(tmp_path: Path) -> None:
+    with pytest.raises(SpecError, match=r"conformance.yaml.runner_config"):
+        load_spec(
+            write(
+                tmp_path,
+                MINIMAL
+                + """
+runner_config: postgresql
+""",
+            )
+        )
+
+
 def test_declared_but_empty_is_checked_exactly(tmp_path: Path) -> None:
     spec = load_spec(
         write(

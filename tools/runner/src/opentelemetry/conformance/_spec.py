@@ -244,6 +244,9 @@ class PackageSpec:
     # Which wrapper supplies the registry and the reduction (see
     # :mod:`._runners`). None means the caller supplies all available runners.
     runner: str | None = None
+    runner_config: Mapping[str, object] = field(
+        default_factory=dict[str, object]
+    )
 
 
 def _require_mapping(value: object, where: str) -> Mapping[str, object]:
@@ -542,6 +545,7 @@ def load_spec(directory: Path) -> PackageSpec:
         document,
         (
             "runner",
+            "runner_config",
             "scenario_contract",
             "instrumented_library",
             "instrumentation_library",
@@ -593,6 +597,13 @@ def load_spec(directory: Path) -> PackageSpec:
         instrumentation_library=instrumentation,
         directory=directory,
         runner=_optional_string(document, "runner", str(path)),
+        runner_config=dict(
+            _require_mapping(
+                document["runner_config"], f"{path}.runner_config"
+            )
+        )
+        if "runner_config" in document
+        else {},
         env=_parse_env(document.get("env"), f"{path}.env"),
         weaver=_parse_weaver(document.get("weaver"), f"{path}.weaver"),
         server=_parse_server(document.get("server"), f"{path}.server"),

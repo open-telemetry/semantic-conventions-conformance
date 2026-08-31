@@ -21,7 +21,7 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ._spec import SpecError, declared_runner
+from ._spec import PackageSpec, SpecError, declared_runner
 
 if TYPE_CHECKING:
     from ._domain import Domain
@@ -37,7 +37,9 @@ def installed() -> dict[str, str]:
     }
 
 
-def resolve(directory: Path) -> SessionFactory:
+def resolve(
+    directory: Path, *, spec: PackageSpec | None = None
+) -> SessionFactory:
     """The session factory for ``directory``.
 
     A directory naming no runner gets the plain session — enough to run
@@ -46,7 +48,7 @@ def resolve(directory: Path) -> SessionFactory:
     """
     from ._session import conformance_session  # noqa: PLC0415  (cycle)
 
-    name = declared_runner(directory)
+    name = spec.runner if spec is not None else declared_runner(directory)
     if name is None:
         return conformance_session
     return load(name)

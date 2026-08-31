@@ -44,6 +44,8 @@ POSIX_SHELL_ONLY = pytest.mark.skipif(
 SPEC = """
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
+runner_config:
+  sample: value
 scenarios:
   inference:
     run: python inference.py
@@ -213,6 +215,7 @@ def test_options_reach_the_session(directory: Path, tmp_path: Path) -> None:
     )
 
     (call,) = calls
+    spec: PackageSpec = call["spec"]
     weaver: WeaverSpec = call["weaver"]
     server: ServerSpec = call["server"]
     env: Mapping[str, str] = call["env"]
@@ -226,6 +229,8 @@ def test_options_reach_the_session(directory: Path, tmp_path: Path) -> None:
     assert server.url_var == "BASE_URL"
     assert env == {"OPENAI_API_KEY": "placeholder"}
     assert call["variables"] == {"REGISTRY_ROOT": "/tmp/registry"}
+    assert spec.directory == directory
+    assert spec.runner_config == {"sample": "value"}
 
 
 def test_the_session_factory_chooses_the_reduction(directory: Path) -> None:
