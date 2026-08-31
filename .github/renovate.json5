@@ -33,8 +33,10 @@
     },
     {
       // The agent has distinct instrumentation for the HBase 1.x and 2.0-2.4
-      // client APIs. Keep each representative client inside its API line and
-      // aligned with the matching fixture version.
+      // client APIs. Keep each client within the API range its local fixture
+      // serves. The fixture version and its checksum live in
+      // tools/database/runner/src/database_conformance/_hbase.py and move by
+      // hand.
       "matchPackageNames": ["org.apache.hbase:hbase-client"],
       "matchCurrentVersion": "/^1\\./",
       "allowedVersions": ">=1.7.2 <2.0.0"
