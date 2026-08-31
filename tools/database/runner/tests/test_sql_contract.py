@@ -3,7 +3,6 @@
 
 """Combined SQL contracts agree with the runner and scenario packages."""
 
-import json
 from pathlib import Path
 
 import yaml
@@ -16,10 +15,10 @@ _SCENARIO_PACKAGES = _REPOSITORY / "scenarios" / "database"
 
 
 def _contracts() -> list[tuple[Path, dict[str, object]]]:
-    paths = sorted(_CONTRACTS.glob("*.json"))
+    paths = sorted(_CONTRACTS.glob("*.yaml"))
     assert paths
     return [
-        (path, json.loads(path.read_text(encoding="utf-8")))
+        (path, yaml.safe_load(path.read_text(encoding="utf-8")))
         for path in paths
     ]
 
