@@ -14,9 +14,8 @@ async fn main() -> Result<(), BoxError> {
     let sdk = ScenarioSdk::initialize()?;
     let result = run().await;
     let shutdown = actix_web::rt::task::spawn_blocking(move || sdk.shutdown()).await?;
-    result?;
     shutdown?;
-    Ok(())
+    result
 }
 
 async fn run() -> Result<(), BoxError> {
