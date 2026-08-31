@@ -31,7 +31,7 @@ ELASTICSEARCH = BackendSpec(
         "sh",
         "-c",
         "curl --fail --silent "
-        "'http://127.0.0.1:9200/_cluster/health"
+        f"'http://127.0.0.1:{ELASTICSEARCH_PORT}/_cluster/health"
         "?wait_for_status=yellow&timeout=1s' "
         "| grep --quiet '\"timed_out\":false'",
     ),
