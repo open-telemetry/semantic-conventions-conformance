@@ -115,17 +115,23 @@ classes than the row, the row says so.
 | `anthropic` | inference, streaming, tool_calling, automatic_tool_calling, multimodal | `opentelemetry-anthropic`, `opentelemetry-langchain-anthropic`, `openinference`, `openllmetry`<br>no automatic_tool_calling in `opentelemetry-langchain-anthropic`: langchain binds tools but does not run them outside an agent |
 | `autogen` | invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry` for this library |
 | `bedrock` | Bedrock Converse: inference, streaming, tool_calling | `opentelemetry-botocore`, `openinference`, `openllmetry` |
+| `cohere` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`<br>no `openllmetry`: does not support cohere v7 |
+| `crewai` | workflow, invoke_agent, automatic_tool_calling | `openinference`, `openllmetry` |
 | `google-adk` | invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry` for this library |
 | `google-genai` | every client class, plus automatic_tool_calling | `opentelemetry-google-genai`, `openinference`, `openllmetry` |
+| `groq` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`, `openllmetry` |
 | `haystack` | workflow, invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry`: does not support Haystack 3 |
 | `langchain` | workflow, invoke_agent, automatic_tool_calling | `opentelemetry-langchain`, `openinference`, `openllmetry` |
 | `litellm` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `native`, `openinference`, `openllmetry` |
+| `llama-index` | workflow, invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry`:  does not record anything for modern versions |
 | `mistral` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `native`, `openinference`<br>no `openllmetry`: does not support mistralai 2 |
+| `ollama` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`, `openllmetry` |
 | `openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
 | `openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own | `opentelemetry-openai-agents`, `openinference`, `openllmetry` |
 | `pydantic-ai` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent`<br>no `openinference` or `openllmetry` for this library |
 | `strands-agents` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
+| `together` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`<br>no `openllmetry`: not compatible with together 2 |
 
 The conventions also cover retrieval, memory and planning. No instrumentation
 here emits them, so there is no class for them yet.

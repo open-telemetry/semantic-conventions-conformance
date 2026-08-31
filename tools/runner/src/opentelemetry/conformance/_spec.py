@@ -20,6 +20,7 @@ import yaml
 SPEC_FILE = "conformance.yaml"
 OtlpProtocol = Literal["grpc", "http/protobuf"]
 DEFAULT_OTLP_PROTOCOL: OtlpProtocol = "grpc"
+_SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
 
 
 class SpecError(ValueError):
@@ -104,7 +105,9 @@ class SpanExpectation:
 
     match: SpanMatch
     count: int | None = None
-    attributes: Mapping[str, AttributeMatcher] = field(default_factory=dict[str, AttributeMatcher])
+    attributes: Mapping[str, AttributeMatcher] = field(
+        default_factory=dict[str, AttributeMatcher]
+    )
 
     def describe(self) -> str:
         return self.match.describe()
@@ -244,6 +247,9 @@ class PackageSpec:
     # :mod:`._runners`). None means the caller supplies all available runners.
     runner: str | None = None
     otlp_protocol: OtlpProtocol = DEFAULT_OTLP_PROTOCOL
+    runner_config: Mapping[str, object] = field(
+        default_factory=dict[str, object]
+    )
 
 
 def _require_mapping(value: object, where: str) -> Mapping[str, object]:
@@ -497,6 +503,50 @@ def _parse_scenario(
     )
 
 
+def _load_scenario_contract(
+    directory: Path, value: object, where: str
+) -> Mapping[str, object]:
+    contract = _required_string(
+        {"scenario_contract": value}, "scenario_contract", where
+    )
+    path = directory / contract
+    if not path.is_file():
+        raise SpecError(f"{path} not found")
+
+    document = yaml.safe_load(path.read_text(encoding="utf-8"))
+    document = _require_mapping(document or {}, str(path))
+    _check_keys(document, ("scenarios",), str(path))
+    scenarios = _require_mapping(
+        document.get("scenarios") or {}, f"{path}.scenarios"
+    )
+    if not scenarios:
+        raise SpecError(f"{path}: declares no scenarios")
+
+    for name, value in scenarios.items():
+        scenario = _require_mapping(value or {}, f"{path}.scenarios.{name}")
+        _check_keys(
+            scenario,
+            _SCENARIO_CONTRACT_KEYS,
+            f"{path}.scenarios.{name}",
+        )
+    return scenarios
+
+
+def _merge_scenarios(
+    contract: Mapping[str, object], declared: Mapping[str, object], path: Path
+) -> Mapping[str, object]:
+    merged = {
+        name: dict(_require_mapping(value or {}, f"{path}.scenarios.{name}"))
+        for name, value in contract.items()
+    }
+    for name, value in declared.items():
+        scenario = dict(
+            _require_mapping(value or {}, f"{path}.scenarios.{name}")
+        )
+        merged[name] = {**merged.get(name, {}), **scenario}
+    return merged
+
+
 def load_spec(directory: Path) -> PackageSpec:
     """Load ``<directory>/conformance.yaml``."""
     path = directory / SPEC_FILE
@@ -509,6 +559,8 @@ def load_spec(directory: Path) -> PackageSpec:
         document,
         (
             "runner",
+            "runner_config",
+            "scenario_contract",
             "instrumented_library",
             "instrumentation_library",
             "otlp_protocol",
@@ -529,9 +581,19 @@ def load_spec(directory: Path) -> PackageSpec:
         document, "instrumentation_library", str(path)
     )
 
-    declared = _require_mapping(
+    local_scenarios = _require_mapping(
         document.get("scenarios") or {}, f"{path}.scenarios"
     )
+    contract_scenarios: Mapping[str, object]
+    if "scenario_contract" in document:
+        contract_scenarios = _load_scenario_contract(
+            directory,
+            document["scenario_contract"],
+            str(path),
+        )
+    else:
+        contract_scenarios = {}
+    declared = _merge_scenarios(contract_scenarios, local_scenarios, path)
     if not declared:
         raise SpecError(f"{path}: declares no scenarios")
 
@@ -550,6 +612,13 @@ def load_spec(directory: Path) -> PackageSpec:
         instrumentation_library=instrumentation,
         directory=directory,
         runner=_optional_string(document, "runner", str(path)),
+        runner_config=dict(
+            _require_mapping(
+                document["runner_config"], f"{path}.runner_config"
+            )
+        )
+        if "runner_config" in document
+        else {},
         env=_parse_env(document.get("env"), f"{path}.env"),
         weaver=_parse_weaver(document.get("weaver"), f"{path}.weaver"),
         server=_parse_server(document.get("server"), f"{path}.server"),

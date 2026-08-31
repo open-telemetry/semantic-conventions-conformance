@@ -362,6 +362,28 @@ def test_a_missing_registry_is_a_spec_error(
             pass
 
 
+def test_a_preloaded_spec_is_not_read_again(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    spec = load_spec(directory)
+    monkeypatch.setattr(_session, "check_weaver", lambda: None)
+    monkeypatch.setattr(
+        _session,
+        "load_spec",
+        lambda path: pytest.fail(f"reloaded {path}"),
+    )
+
+    with conformance_session(
+        directory,
+        data_file=tmp_path / "data.json",
+        weaver=WeaverSpec(registry="model"),
+        spec=spec,
+    ) as opened:
+        assert opened.spec is spec
+
+
 def test_a_scenario_replaces_only_its_own_report(
     directory: Path, tmp_path: Path
 ) -> None:

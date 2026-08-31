@@ -53,6 +53,36 @@ def test_minimal_spec_leaves_every_expectation_unchecked(
     assert scenario.expected_violations == ()
 
 
+def test_runner_config_is_available_to_the_selected_runner(
+    tmp_path: Path,
+) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            MINIMAL
+            + """
+runner_config:
+  backend: postgresql
+""",
+        )
+    )
+
+    assert spec.runner_config == {"backend": "postgresql"}
+
+
+def test_runner_config_must_be_a_mapping(tmp_path: Path) -> None:
+    with pytest.raises(SpecError, match=r"conformance.yaml.runner_config"):
+        load_spec(
+            write(
+                tmp_path,
+                MINIMAL
+                + """
+runner_config: postgresql
+""",
+            )
+        )
+
+
 def test_declared_but_empty_is_checked_exactly(tmp_path: Path) -> None:
     spec = load_spec(
         write(
@@ -87,6 +117,130 @@ scenarios:
     )
 
     assert scenarios(directory) == ["zebra", "alpha"]
+
+
+def test_scenario_contract_supplies_shared_expectations(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "client.yaml").write_text(
+        """
+scenarios:
+  client:
+    spans:
+      - match:
+          attributes:
+            http.request.method: GET
+        expect:
+          count: 4
+    events: []
+"""
+    )
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: client.yaml
+scenarios:
+  client:
+    run: python client.py
+""",
+        )
+    )
+
+    scenario = spec.scenarios["client"]
+    assert scenario.run == ("python", "client.py")
+    assert scenario.spans is not None
+    assert scenario.spans[0].count == 4
+    assert scenario.events == ()
+
+
+def test_local_scenario_replaces_a_contract_expectation(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "client.yaml").write_text(
+        """
+scenarios:
+  client:
+    metrics:
+      - http.client.request.duration
+"""
+    )
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: client.yaml
+scenarios:
+  client:
+    run: python client.py
+    metrics: []
+""",
+        )
+    )
+
+    assert spec.scenarios["client"].metrics == ()
+
+
+@pytest.mark.parametrize(
+    ("contract", "message"),
+    [
+        pytest.param(
+            "server: {}\nscenarios: {client: {spans: []}}",
+            "unknown key",
+            id="unknown-contract-key",
+        ),
+        pytest.param(
+            "scenarios: {client: {run: python client.py}}",
+            "unknown key",
+            id="contract-command",
+        ),
+        pytest.param(
+            "scenarios: {}",
+            "declares no scenarios",
+            id="empty-contract",
+        ),
+    ],
+)
+def test_invalid_scenario_contract_raises(
+    tmp_path: Path, contract: str, message: str
+) -> None:
+    (tmp_path / "client.yaml").write_text(contract)
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: client.yaml
+scenarios:
+  client:
+    run: python client.py
+""",
+            )
+        )
+
+
+def test_missing_scenario_contract_raises(tmp_path: Path) -> None:
+    with pytest.raises(SpecError, match="missing.yaml not found"):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: missing.yaml
+scenarios:
+  client:
+    run: python client.py
+""",
+            )
+        )
 
 
 def test_command_may_be_a_list(tmp_path: Path) -> None:
@@ -174,9 +328,7 @@ def test_span_keys_survive_separators_in_a_value() -> None:
 @pytest.mark.parametrize(
     ("document", "message"),
     [
-        pytest.param(
-            "scenarios: {}", "instrumented_library", id="no-library"
-        ),
+        pytest.param("scenarios: {}", "instrumented_library", id="no-library"),
         pytest.param(
             "instrumented_library: demo\nscenarios:\n  a:\n    run: x",
             "instrumentation_library",

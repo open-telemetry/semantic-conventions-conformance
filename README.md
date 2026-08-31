@@ -11,6 +11,7 @@ against expectations declared in YAML.
 | --- | --- |
 | [`tools/runner/`](tools/runner) | the runner. Generic — it carries no semantic conventions of its own |
 | [`tools/gen-ai/`](tools/gen-ai) | what makes a run a *GenAI* run: the registry pin, the advice policies, and a mock LLM server so scenarios are deterministic without cassettes |
+| [`tools/database/`](tools/database) | what makes a run a *database* run: the upstream registry pin, database span classification, and ephemeral database backends |
 | [`tools/http/`](tools/http) | the same for HTTP: the upstream registry pin, and the test client that drives both sides of the domain |
 | [`tools/python/`](tools/python) | the launcher a Python scenario runs under when programmatic configuration is needed for a scenario |
 | [`tools/java/`](tools/java) | what every JVM scenario shares, in any domain: the launcher that builds and runs one, the Gradle convention plugins, and the SDK bootstrap |
@@ -18,13 +19,15 @@ against expectations declared in YAML.
 | [`tools/ruby/`](tools/ruby) | what every Ruby scenario shares: the launcher that installs and runs its locked bundle, plus scenario lifecycle and SDK helpers |
 | [`tools/dotnet/`](tools/dotnet) | what every .NET scenario shares: the launcher that builds and runs one, the shutdown protocol every scenario needs, and the SDK bootstrap the ones measuring library instrumentation own |
 | [`scenarios/gen-ai/`](scenarios/gen-ai) | the GenAI scenarios and the coverage they produce |
+| [`scenarios/database/`](scenarios/database) | the database scenarios and the coverage they produce |
 | [`scenarios/http/`](scenarios/http) | the HTTP scenarios and the coverage they produce |
 
 A conformance directory names the wrapper it wants under `runner:`, so one
 command runs any of them:
 
 ```sh
-pip install -e tools/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner
+pip install -e tools/runner -e tools/database/runner \
+  -e tools/gen-ai/mock-server -e tools/gen-ai/runner
 otel-conformance path/to/directory --report-only
 ```
 

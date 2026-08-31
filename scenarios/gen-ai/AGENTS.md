@@ -63,4 +63,8 @@ otel-conformance scenarios/gen-ai/python/<library>/<instrumentation> --report-on
   the stimulus, fix the scenario.
 - Findings are expected and are the point. Do not add `expected_violations`,
   and do not declare span, metric or event expectations. Scenarios here
-  measure; they do not assert.
+  measure; they do not assert. A `match` carrying `type` and no `expect`
+  beside it is the exception, and only for a span the reduction cannot place:
+  it says which type the span is, asserts nothing, and leaves every finding on
+  it recorded. Comment why it is there, and drop it once the span identifies
+  itself.
