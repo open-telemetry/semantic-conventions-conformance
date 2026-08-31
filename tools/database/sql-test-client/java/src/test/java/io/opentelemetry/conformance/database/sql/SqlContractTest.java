@@ -5,6 +5,7 @@
 package io.opentelemetry.conformance.database.sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,23 +16,35 @@ import io.opentelemetry.conformance.database.sql.SqlContract.PreparedQuery;
 import io.opentelemetry.conformance.database.sql.SqlContract.Query;
 import io.opentelemetry.conformance.database.sql.SqlContract.StoredProcedure;
 import io.opentelemetry.conformance.database.sql.SqlContract.Workload;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 class SqlContractTest {
 
   @Test
-  void everyBackendResolvesTheSameOperations() {
-    assertEquals(List.of("mariadb", "postgresql"), SqlContract.backends());
+  void loadsEveryBackendContract() throws IOException {
+    List<String> backends;
+    try (Stream<Path> contracts = Files.list(Path.of("../contracts"))) {
+      backends =
+          contracts
+              .map(path -> path.getFileName().toString())
+              .filter(name -> name.endsWith(".json"))
+              .map(name -> name.substring(0, name.length() - ".json".length()))
+              .sorted()
+              .toList();
+    }
 
-    for (String backend : SqlContract.backends()) {
+    assertFalse(backends.isEmpty());
+    for (String backend : backends) {
       Workload workload = SqlContract.workload(backend);
-
-      assertEquals(
-          List.of("statement", "prepared_statement", "batch", "stored_procedure"),
-          workload.operations().stream().map(SqlContract.Operation::name).toList());
+      assertEquals(backend, workload.backend());
+      assertFalse(workload.scenarios().isEmpty());
       assertTrue(
-          workload.operations().stream()
+          workload.scenarios().stream()
               .map(SqlContract.Operation::description)
               .noneMatch(String::isBlank));
     }
@@ -41,12 +54,12 @@ class SqlContractTest {
   void resolvesPostgresqlForAClientAdapter() {
     Workload workload = SqlContract.workload("postgresql");
 
-    Query query = assertInstanceOf(Query.class, workload.operation("statement"));
+    Query query = assertInstanceOf(Query.class, workload.scenario("statement"));
     assertEquals("SELECT count(*) >= 0 FROM conformance.items", query.sql());
     assertTrue(query.expected());
 
     PreparedQuery prepared =
-        assertInstanceOf(PreparedQuery.class, workload.operation("prepared_statement"));
+        assertInstanceOf(PreparedQuery.class, workload.scenario("prepared_statement"));
     assertEquals(
         "SELECT name FROM conformance.items WHERE id = ?", prepared.renderSql(index -> "?"));
     assertEquals(
@@ -55,12 +68,12 @@ class SqlContractTest {
     assertEquals(-1, prepared.parameters().get(0).integer());
     assertEquals(0, prepared.expectedRows());
 
-    Batch batch = assertInstanceOf(Batch.class, workload.operation("batch"));
+    Batch batch = assertInstanceOf(Batch.class, workload.scenario("batch"));
     assertEquals(2, batch.statements().size());
     assertEquals(2, batch.expectedSuccessfulStatements());
 
     StoredProcedure procedure =
-        assertInstanceOf(StoredProcedure.class, workload.operation("stored_procedure"));
+        assertInstanceOf(StoredProcedure.class, workload.scenario("stored_procedure"));
     assertEquals("conformance.noop", procedure.procedure());
     assertEquals(0, procedure.expectedResultSets());
   }
@@ -81,7 +94,7 @@ class SqlContractTest {
   @Test
   void rejectsNamesOutsideTheContract() {
     assertThrows(
-        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").operation("x"));
-    assertThrows(IllegalArgumentException.class, () -> SqlContract.workload("sqlite"));
+        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario("x"));
+    assertThrows(IllegalStateException.class, () -> SqlContract.workload("sqlite"));
   }
 }
