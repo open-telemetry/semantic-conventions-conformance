@@ -212,7 +212,8 @@ public final class SqlContract {
                 scenarioDescription,
                 requireText(sql, scenarioName + " SQL"),
                 parameterEntries(scenarioName).stream().map(ParameterEntry::parameter).toList());
-        case "batch" -> new Batch(scenarioName, scenarioDescription, statements);
+        case "batch" ->
+            new Batch(scenarioName, scenarioDescription, statementEntries(scenarioName));
         case "stored_procedure" ->
             new StoredProcedure(
                 scenarioName,
@@ -229,6 +230,13 @@ public final class SqlContract {
         throw new IllegalArgumentException(scenarioName + " must declare parameters");
       }
       return parameters;
+    }
+
+    private List<String> statementEntries(String scenarioName) {
+      if (statements == null) {
+        throw new IllegalArgumentException(scenarioName + " must declare statements");
+      }
+      return statements;
     }
   }
 
