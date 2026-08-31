@@ -183,11 +183,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     words = list(sys.argv[1:] if argv is None else argv)
-    scenario_arguments: list[str] = []
-    if words and words[0] == RUN:
-        words, scenario_arguments = words[:1], words[1:]
-
-    arguments = parser.parse_args(words)
+    arguments, scenario_arguments = parser.parse_known_args(words)
+    if arguments.command != RUN and scenario_arguments:
+        parser.error(
+            f"unrecognized arguments: {' '.join(scenario_arguments)}"
+        )
     try:
         manifest = package_manifest()
         workspace_root(manifest.parent)
