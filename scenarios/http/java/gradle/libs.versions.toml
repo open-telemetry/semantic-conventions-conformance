@@ -31,7 +31,7 @@ restlet = "2.4.4"
 spring-boot = "3.5.16"
 tomcat = "10.1.59"
 undertow = "2.4.3.Final"
-vertx = "4.5.32"
+vertx = "5.1.6"
 
 [libraries]
 akka-actor = { module = "com.typesafe.akka:akka-actor_2.13", version.ref = "akka" }
