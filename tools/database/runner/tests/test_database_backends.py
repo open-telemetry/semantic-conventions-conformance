@@ -42,12 +42,14 @@ class StubContainer:
         log_error: Exception | None = None,
         exec_result: ExecResult | None = None,
         port: int = 5432,
+        published_port: int = 32768,
     ) -> None:
         self.start_error = start_error
         self.stop_error = stop_error
         self.log_error = log_error
         self.exec_result = exec_result or ExecResult()
         self.port = port
+        self.published_port = published_port
         self.env: dict[str, str] = {}
         self.kwargs: dict[str, Any] = {}
         self.ports: dict[str, Any] = {}
@@ -83,7 +85,7 @@ class StubContainer:
 
     def get_exposed_port(self, port: int) -> int:
         assert port == self.port
-        return 32768
+        return self.published_port
 
     def exec(self, config: ExecConfig) -> ExecResult:
         self.exec_config = config
@@ -185,7 +187,10 @@ class StubImage:
 def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    container = StubContainer(port=HBASE_ZOOKEEPER_PORT)
+    container = StubContainer(
+        port=HBASE_ZOOKEEPER_PORT,
+        published_port=HBASE_ZOOKEEPER_PORT,
+    )
     image = StubImage()
     image_arguments: dict[str, Any] = {}
 
@@ -198,7 +203,7 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
     with HBase1() as database:
         assert database.variables == {
             "DATABASE_HOST": "127.0.0.1",
-            "DATABASE_PORT": "32768",
+            "DATABASE_PORT": "2181",
             "DATABASE_NAME": "conformance",
             "DATABASE_USER": "",
             "DATABASE_PASSWORD": "",
