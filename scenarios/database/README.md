@@ -23,9 +23,10 @@ commands.
 Each backend's concrete SQL workload lives under
 [`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
 Its JSON file defines named scenarios with exact SQL, parameters, procedure
-names, and execution expectations. Language helpers translate those scenarios
-into their client APIs. Workloads can diverge as dialect-specific sanitization
-and summarization coverage grows.
+names, and operation kinds. Language helpers translate those scenarios into
+their client APIs. Workloads can diverge as dialect-specific sanitization and
+summarization coverage grows. The vendor YAML contracts hold the telemetry
+assertions.
 
 Each operation is a separate scenario so a missing or malformed span identifies
 the client path that produced it:
