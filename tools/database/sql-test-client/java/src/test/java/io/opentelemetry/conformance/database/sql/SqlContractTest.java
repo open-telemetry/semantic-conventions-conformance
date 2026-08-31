@@ -32,8 +32,8 @@ class SqlContractTest {
       backends =
           contracts
               .map(path -> path.getFileName().toString())
-              .filter(name -> name.endsWith(".json"))
-              .map(name -> name.substring(0, name.length() - ".json".length()))
+              .filter(name -> name.endsWith(".yaml"))
+              .map(name -> name.substring(0, name.length() - ".yaml".length()))
               .sorted()
               .toList();
     }
