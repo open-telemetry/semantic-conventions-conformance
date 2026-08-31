@@ -15,4 +15,12 @@ scenarios:
       - id: error_type_missing_on_error
         reason: The instrumentation does not set error.type on 5xx responses.
       - id: recommended_attribute_not_present
-        reason: The instrumentation does not report client.address or network.protocol.version.
+        context:
+          attribute_key: client.address
+          kind: server
+        reason: The instrumentation does not report client.address.
+      - id: recommended_attribute_not_present
+        context:
+          attribute_key: network.protocol.version
+          kind: server
+        reason: The instrumentation does not report network.protocol.version.
