@@ -6,8 +6,8 @@ What database instrumentations emit, checked against the
 Initial support is Java-only. PostgreSQL and MariaDB exercise JDBC through the
 OpenTelemetry Java agent and the OpenTelemetry JDBC library instrumentation.
 Elasticsearch exercises the REST, Java API, and Transport clients through the
-Java agent. The database runner starts the selected Docker container and applies
-its bootstrap data before any measured process starts.
+Java agent. The database runner starts the selected Docker container and
+applies that backend's packaged schema before any measured process starts.
 
 ```text
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
