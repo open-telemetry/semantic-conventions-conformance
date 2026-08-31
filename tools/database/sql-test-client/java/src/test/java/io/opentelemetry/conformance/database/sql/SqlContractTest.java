@@ -90,6 +90,6 @@ class SqlContractTest {
   void rejectsNamesOutsideTheContract() {
     assertThrows(
         IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario("x"));
-    assertThrows(IllegalStateException.class, () -> SqlContract.workload("sqlite"));
+    assertThrows(IllegalStateException.class, () -> SqlContract.workload("no_such_backend"));
   }
 }
