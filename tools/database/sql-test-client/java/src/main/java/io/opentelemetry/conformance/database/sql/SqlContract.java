@@ -2,7 +2,7 @@
  * Copyright The OpenTelemetry Authors
  * SPDX-License-Identifier: Apache-2.0
  */
-package io.opentelemetry.conformance.database;
+package io.opentelemetry.conformance.database.sql;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,15 +21,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The database workload shared by every language.
+ * The SQL database workload shared by every language.
  *
- * <p>The build copies {@code tools/database/test-client/contract.json} onto the classpath. The
+ * <p>The build copies {@code tools/database/sql-test-client/contract.json} onto the classpath. The
  * contract owns backend-specific SQL, parameters, and expected results. Client adapters only
  * translate those operations into their native APIs.
  */
-public final class DatabaseContract {
+public final class SqlContract {
 
-  private static final String RESOURCE = "/otel-database-contract.json";
+  private static final String RESOURCE = "/otel-sql-contract.json";
   private static final Pattern BACKEND_NAME = Pattern.compile("[a-z][a-z0-9_]*");
   private static final Pattern PARAMETER_MARKER = Pattern.compile("\\$\\{([A-Za-z][A-Za-z0-9_]*)}");
   private static final ObjectMapper MAPPER =
@@ -37,18 +37,18 @@ public final class DatabaseContract {
 
   private static volatile Document document;
 
-  private DatabaseContract() {}
+  private SqlContract() {}
 
-  /** The database backends described by the contract. */
+  /** The SQL database backends described by the contract. */
   public static List<String> backends() {
     return document().backends();
   }
 
-  /** The workload resolved for one database backend. */
+  /** The workload resolved for one SQL database backend. */
   public static Workload workload(String backend) {
     Objects.requireNonNull(backend, "backend");
     if (!BACKEND_NAME.matcher(backend).matches()) {
-      throw new IllegalArgumentException("invalid database backend: " + backend);
+      throw new IllegalArgumentException("invalid SQL database backend: " + backend);
     }
     return document().workload(backend);
   }
@@ -62,7 +62,7 @@ public final class DatabaseContract {
       Set<String> names = new HashSet<>();
       for (Operation operation : operations) {
         if (!names.add(operation.name())) {
-          throw new IllegalArgumentException("duplicate database operation: " + operation.name());
+          throw new IllegalArgumentException("duplicate SQL operation: " + operation.name());
         }
       }
     }
@@ -72,11 +72,11 @@ public final class DatabaseContract {
       return operations.stream()
           .filter(operation -> operation.name().equals(name))
           .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("unknown database operation: " + name));
+          .orElseThrow(() -> new IllegalArgumentException("unknown SQL operation: " + name));
     }
   }
 
-  /** A database operation with one stable scenario name. */
+  /** A SQL operation with one stable scenario name. */
   public sealed interface Operation permits Query, PreparedQuery, Batch, StoredProcedure {
     String name();
 
@@ -194,27 +194,27 @@ public final class DatabaseContract {
       backends = List.copyOf(Objects.requireNonNull(backends, "backends"));
       operations = List.copyOf(Objects.requireNonNull(operations, "operations"));
       if (backends.isEmpty()) {
-        throw new IllegalArgumentException("the database contract must declare a backend");
+        throw new IllegalArgumentException("the SQL contract must declare a backend");
       }
       if (operations.isEmpty()) {
-        throw new IllegalArgumentException("the database contract must declare an operation");
+        throw new IllegalArgumentException("the SQL contract must declare an operation");
       }
 
       Set<String> backendNames = new HashSet<>();
       for (String backend : backends) {
         requireText(backend, "backend");
         if (!BACKEND_NAME.matcher(backend).matches()) {
-          throw new IllegalArgumentException("invalid database backend: " + backend);
+          throw new IllegalArgumentException("invalid SQL database backend: " + backend);
         }
         if (!backendNames.add(backend)) {
-          throw new IllegalArgumentException("duplicate database backend: " + backend);
+          throw new IllegalArgumentException("duplicate SQL database backend: " + backend);
         }
       }
 
       Set<String> operationNames = new HashSet<>();
       for (OperationEntry operation : operations) {
         if (!operationNames.add(operation.name())) {
-          throw new IllegalArgumentException("duplicate database operation: " + operation.name());
+          throw new IllegalArgumentException("duplicate SQL operation: " + operation.name());
         }
         operation.validateBackends(backendNames);
         for (String backend : backends) {
@@ -226,7 +226,7 @@ public final class DatabaseContract {
     Workload workload(String backend) {
       if (!backends.contains(backend)) {
         throw new IllegalArgumentException(
-            "unsupported database backend "
+            "unsupported SQL database backend "
                 + backend
                 + "; expected one of: "
                 + String.join(", ", backends));
@@ -254,7 +254,7 @@ public final class DatabaseContract {
             case "stored_procedure" -> procedures;
             default ->
                 throw new IllegalArgumentException(
-                    "unknown database operation kind for " + name + ": " + kind);
+                    "unknown SQL operation kind for " + name + ": " + kind);
           };
       if (values == null || !values.keySet().equals(backends)) {
         throw new IllegalArgumentException(
@@ -294,7 +294,7 @@ public final class DatabaseContract {
                 expected.resultSets(operationName));
         default ->
             throw new IllegalArgumentException(
-                "unknown database operation kind for " + operationName + ": " + kind);
+                "unknown SQL operation kind for " + operationName + ": " + kind);
       };
     }
 
@@ -373,12 +373,12 @@ public final class DatabaseContract {
   }
 
   private static Document load() {
-    try (InputStream stream = DatabaseContract.class.getResourceAsStream(RESOURCE)) {
+    try (InputStream stream = SqlContract.class.getResourceAsStream(RESOURCE)) {
       if (stream == null) {
         throw new IllegalStateException(
             RESOURCE
                 + " is not on the classpath; the build copies it from"
-                + " tools/database/test-client/contract.json");
+                + " tools/database/sql-test-client/contract.json");
       }
       return MAPPER.readValue(stream, Document.class);
     } catch (IOException error) {

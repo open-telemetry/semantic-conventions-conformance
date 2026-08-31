@@ -22,4 +22,4 @@ fun shared(name: String, directory: String) {
 
 shared("scenario-support", "../../../tools/java/scenario-support")
 shared("scenario-sdk", "../../../tools/java/scenario-sdk")
-shared("database-test-client", "../../../tools/database/test-client/java")
+shared("sql-test-client", "../../../tools/database/sql-test-client/java")

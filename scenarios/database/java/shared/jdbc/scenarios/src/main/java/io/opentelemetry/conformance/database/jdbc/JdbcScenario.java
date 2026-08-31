@@ -4,13 +4,13 @@
  */
 package io.opentelemetry.conformance.database.jdbc;
 
-import io.opentelemetry.conformance.database.DatabaseContract;
-import io.opentelemetry.conformance.database.DatabaseContract.Batch;
-import io.opentelemetry.conformance.database.DatabaseContract.Operation;
-import io.opentelemetry.conformance.database.DatabaseContract.Parameter;
-import io.opentelemetry.conformance.database.DatabaseContract.PreparedQuery;
-import io.opentelemetry.conformance.database.DatabaseContract.Query;
-import io.opentelemetry.conformance.database.DatabaseContract.StoredProcedure;
+import io.opentelemetry.conformance.database.sql.SqlContract;
+import io.opentelemetry.conformance.database.sql.SqlContract.Batch;
+import io.opentelemetry.conformance.database.sql.SqlContract.Operation;
+import io.opentelemetry.conformance.database.sql.SqlContract.Parameter;
+import io.opentelemetry.conformance.database.sql.SqlContract.PreparedQuery;
+import io.opentelemetry.conformance.database.sql.SqlContract.Query;
+import io.opentelemetry.conformance.database.sql.SqlContract.StoredProcedure;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -27,8 +27,7 @@ public final class JdbcScenario {
 
   public static void run(String operation) throws SQLException {
     Operation workload =
-        DatabaseContract.workload(ScenarioEnvironment.require("DATABASE_BACKEND"))
-            .operation(operation);
+        SqlContract.workload(ScenarioEnvironment.require("DATABASE_BACKEND")).operation(operation);
     try (Connection connection =
         DriverManager.getConnection(
             ScenarioEnvironment.require("JDBC_URL"),
