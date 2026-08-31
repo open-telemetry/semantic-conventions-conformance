@@ -168,7 +168,7 @@ def session(
     )
 
 
-def test_grpc_scenario_environment_is_unchanged(
+def test_grpc_scenario_gets_generic_and_signal_endpoints(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -185,6 +185,15 @@ def test_grpc_scenario_environment_is_unchanged(
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(_session, "_run_command", run)
+    monkeypatch.setenv(
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://example.com:4317"
+    )
+    monkeypatch.setenv(
+        "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://example.com:4317"
+    )
+    monkeypatch.setenv(
+        "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "http://example.com:4317"
+    )
     opened = session(directory, tmp_path / "data.json")
 
     opened._execute(  # noqa: SLF001
@@ -197,9 +206,18 @@ def test_grpc_scenario_environment_is_unchanged(
     assert captured["OTEL_EXPORTER_OTLP_TRACES_PROTOCOL"] == "grpc"
     assert captured["OTEL_EXPORTER_OTLP_METRICS_PROTOCOL"] == "grpc"
     assert captured["OTEL_EXPORTER_OTLP_LOGS_PROTOCOL"] == "grpc"
-    assert "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" not in captured
-    assert "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT" not in captured
-    assert "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT" not in captured
+    assert (
+        captured["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"]
+        == "http://localhost:4317"
+    )
+    assert (
+        captured["OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"]
+        == "http://localhost:4317"
+    )
+    assert (
+        captured["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"]
+        == "http://localhost:4317"
+    )
 
 
 def test_http_scenario_gets_generic_and_signal_endpoints(
