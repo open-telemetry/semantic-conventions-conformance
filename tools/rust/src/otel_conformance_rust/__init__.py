@@ -179,7 +179,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     subcommands = parser.add_subparsers(dest="command", required=True)
     subcommands.add_parser("build", help="compile this scenario in release mode")
     subcommands.add_parser(
-        RUN, help="run the compiled scenario; remaining words are passed through"
+        RUN,
+        help="run the compiled scenario; unrecognized arguments are passed to it",
     )
 
     words = list(sys.argv[1:] if argv is None else argv)
