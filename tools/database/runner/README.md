@@ -30,12 +30,13 @@ initialization, and removes the container when the session closes. SQL and Redis
 workloads create or verify the data they need. HBase creates its table and one
 deterministic row for read scenarios.
 
-The HBase fixtures build cached local images from checksum-verified Apache
-HBase 1.7.2 and 2.4.18 binary distributions and a digest-pinned Eclipse Temurin
-base. Each client runs against its matching server API line. HBase advertises
-fixed ZooKeeper, master, and region-server ports, so only one HBase conformance
-session can run on a host at a time. Startup failures include the fixture's
-container logs.
+The HBase fixtures build local images from checksum-verified Apache HBase
+1.7.2 and 2.4.18 binary distributions and a digest-pinned Eclipse Temurin
+base, then remove each image when its session closes. Each client runs
+against its matching server API line. HBase advertises fixed ZooKeeper,
+master, and region-server ports, so only one HBase conformance session can
+run on a host at a time. Startup failures include the fixture's container
+logs.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
