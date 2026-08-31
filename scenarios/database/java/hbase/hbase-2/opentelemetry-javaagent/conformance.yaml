@@ -13,6 +13,8 @@ env:
   HBASE_ZOOKEEPER_PORT: ${DATABASE_PORT}
   OTEL_SEMCONV_STABILITY_OPT_IN: database
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+  # HBase client logging activates SDK log-pipeline counters whose export is
+  # not guaranteed before these short-lived scenarios exit.
   OTEL_LOGS_EXPORTER: none
 
 weaver:
