@@ -4,9 +4,7 @@ The workload every SQL database conformance scenario executes, shared so each
 language measures the same operations and checks the same results.
 
 Each file under [`contracts/`](contracts) owns one backend's named scenarios,
-exact SQL, parameters, procedure names, and execution expectations. MariaDB and
-PostgreSQL do not inherit a common query list. A shared query is repeated so
-either backend can later replace or expand it without changing the other.
+exact SQL, parameters, procedure names, and execution expectations.
 
 Parameters use named `${parameter}` markers instead of a client library's bind
 syntax. Each language helper renders those markers for its driver and binds the
