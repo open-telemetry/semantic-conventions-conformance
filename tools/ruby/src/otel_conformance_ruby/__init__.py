@@ -87,6 +87,7 @@ def bundle_environment(
 ) -> dict[str, str]:
     """Return an environment selecting the package's locked, local bundle."""
     environment = dict(os.environ if environ is None else environ)
+    bundle_directory = str(root / BUNDLE_DIRECTORY)
     environment.pop("BUNDLE_DISABLE_SHARED_GEMS", None)
     environment.pop("BUNDLE_PATH", None)
     environment.update(
@@ -94,7 +95,8 @@ def bundle_environment(
             "BUNDLE_FROZEN": "true",
             "BUNDLE_GEMFILE": str(root / GEMFILE),
             "BUNDLE_IGNORE_CONFIG": "true",
-            "GEM_HOME": str(root / BUNDLE_DIRECTORY),
+            "GEM_HOME": bundle_directory,
+            "GEM_PATH": bundle_directory,
         }
     )
     return environment

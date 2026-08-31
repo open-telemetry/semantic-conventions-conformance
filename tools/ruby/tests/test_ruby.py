@@ -122,6 +122,7 @@ def test_the_bundle_is_frozen_and_repository_local(root: Path) -> None:
             "KEEP": "yes",
             "BUNDLE_DISABLE_SHARED_GEMS": "true",
             "BUNDLE_PATH": "somewhere-else",
+            "GEM_PATH": "shared-gems",
         },
     )
 
@@ -131,6 +132,7 @@ def test_the_bundle_is_frozen_and_repository_local(root: Path) -> None:
         "BUNDLE_GEMFILE": str(root / GEMFILE),
         "BUNDLE_IGNORE_CONFIG": "true",
         "GEM_HOME": str(root / BUNDLE_DIRECTORY),
+        "GEM_PATH": str(root / BUNDLE_DIRECTORY),
     }
 
 
