@@ -41,7 +41,7 @@ environment declarations:
 | Variable | Value |
 | --- | --- |
 | `DATABASE_HOST` | Loopback address published by Docker |
-| `DATABASE_PORT` | Docker-assigned host port |
+| `DATABASE_PORT` | Published host port; Docker-assigned for PostgreSQL and MariaDB, 2181 for HBase |
 | `DATABASE_NAME` | Test database name |
 | `DATABASE_USER` | Test user |
 | `DATABASE_PASSWORD` | Test-only password |
