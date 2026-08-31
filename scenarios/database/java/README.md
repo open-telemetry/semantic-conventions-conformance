@@ -3,10 +3,11 @@
 Java JDBC conformance for PostgreSQL and MariaDB, tested through the OpenTelemetry
 Java agent and the OpenTelemetry JDBC library instrumentation.
 
-The language-neutral SQL workload and expected results live in
-[`tools/database/sql-test-client/contract.json`](../../../tools/database/sql-test-client/contract.json).
+The language-neutral SQL workloads and expected results live in backend-specific
+files under
+[`tools/database/sql-test-client/contracts`](../../../tools/database/sql-test-client/contracts).
 The `shared:jdbc:scenarios` Gradle project reads the selected backend through
-`SqlContract` and translates its operations into JDBC. Its launcher
+`SqlContract` and translates its named scenarios into JDBC. Its launcher
 projects configure either the Java agent or `opentelemetry-jdbc`. Vendor
 directories contain the conformance configuration and coverage, so another
 PostgreSQL client such as Vert.x SQL can sit beside JDBC without duplicating the

@@ -13,7 +13,6 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntFunction;
@@ -23,60 +22,53 @@ import java.util.regex.Pattern;
 /**
  * The SQL database workload shared by every language.
  *
- * <p>The build copies {@code tools/database/sql-test-client/contract.json} onto the classpath. The
- * contract owns backend-specific SQL, parameters, and expected results. Client adapters only
- * translate those operations into their native APIs.
+ * <p>The build copies each file under {@code tools/database/sql-test-client/contracts} onto the
+ * classpath. A backend contract owns its named scenarios, exact SQL, parameters, and expected
+ * results. Client adapters only translate those operations into their native APIs.
  */
 public final class SqlContract {
 
-  private static final String RESOURCE = "/otel-sql-contract.json";
+  private static final String RESOURCE_DIRECTORY = "/otel-sql-contracts/";
   private static final Pattern BACKEND_NAME = Pattern.compile("[a-z][a-z0-9_]*");
   private static final Pattern PARAMETER_MARKER = Pattern.compile("\\$\\{([A-Za-z][A-Za-z0-9_]*)}");
   private static final ObjectMapper MAPPER =
       new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-  private static volatile Document document;
-
   private SqlContract() {}
 
-  /** The SQL database backends described by the contract. */
-  public static List<String> backends() {
-    return document().backends();
-  }
-
-  /** The workload resolved for one SQL database backend. */
+  /** The workload described by one SQL database backend's contract. */
   public static Workload workload(String backend) {
     Objects.requireNonNull(backend, "backend");
     if (!BACKEND_NAME.matcher(backend).matches()) {
       throw new IllegalArgumentException("invalid SQL database backend: " + backend);
     }
-    return document().workload(backend);
+    return load(backend);
   }
 
-  /** One backend's resolved operations. */
-  public record Workload(String backend, String description, List<? extends Operation> operations) {
+  /** One backend's named SQL scenarios. */
+  public record Workload(String backend, String description, List<? extends Operation> scenarios) {
     public Workload {
       backend = requireText(backend, "backend");
       description = requireText(description, "description");
-      operations = List.copyOf(Objects.requireNonNull(operations, "operations"));
+      scenarios = List.copyOf(Objects.requireNonNull(scenarios, "scenarios"));
       Set<String> names = new HashSet<>();
-      for (Operation operation : operations) {
+      for (Operation operation : scenarios) {
         if (!names.add(operation.name())) {
-          throw new IllegalArgumentException("duplicate SQL operation: " + operation.name());
+          throw new IllegalArgumentException("duplicate SQL scenario: " + operation.name());
         }
       }
     }
 
-    /** Finds a named operation or rejects a scenario name outside the contract. */
-    public Operation operation(String name) {
-      return operations.stream()
+    /** Finds a named scenario or rejects a name outside the backend contract. */
+    public Operation scenario(String name) {
+      return scenarios.stream()
           .filter(operation -> operation.name().equals(name))
           .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("unknown SQL operation: " + name));
+          .orElseThrow(() -> new IllegalArgumentException("unknown SQL scenario: " + name));
     }
   }
 
-  /** A SQL operation with one stable scenario name. */
+  /** A named SQL scenario expressed as one client operation. */
   public sealed interface Operation permits Query, PreparedQuery, Batch, StoredProcedure {
     String name();
 
@@ -187,120 +179,81 @@ public final class SqlContract {
     }
   }
 
-  private record Document(
-      String description, List<String> backends, List<OperationEntry> operations) {
+  private record Document(String backend, String description, List<ScenarioEntry> scenarios) {
     Document {
+      backend = requireText(backend, "backend");
+      if (!BACKEND_NAME.matcher(backend).matches()) {
+        throw new IllegalArgumentException("invalid SQL database backend: " + backend);
+      }
       description = requireText(description, "description");
-      backends = List.copyOf(Objects.requireNonNull(backends, "backends"));
-      operations = List.copyOf(Objects.requireNonNull(operations, "operations"));
-      if (backends.isEmpty()) {
-        throw new IllegalArgumentException("the SQL contract must declare a backend");
-      }
-      if (operations.isEmpty()) {
-        throw new IllegalArgumentException("the SQL contract must declare an operation");
+      scenarios = List.copyOf(Objects.requireNonNull(scenarios, "scenarios"));
+      if (scenarios.isEmpty()) {
+        throw new IllegalArgumentException("the SQL contract must declare a scenario");
       }
 
-      Set<String> backendNames = new HashSet<>();
-      for (String backend : backends) {
-        requireText(backend, "backend");
-        if (!BACKEND_NAME.matcher(backend).matches()) {
-          throw new IllegalArgumentException("invalid SQL database backend: " + backend);
-        }
-        if (!backendNames.add(backend)) {
-          throw new IllegalArgumentException("duplicate SQL database backend: " + backend);
-        }
-      }
-
-      Set<String> operationNames = new HashSet<>();
-      for (OperationEntry operation : operations) {
-        if (!operationNames.add(operation.name())) {
-          throw new IllegalArgumentException("duplicate SQL operation: " + operation.name());
-        }
-        operation.validateBackends(backendNames);
-        for (String backend : backends) {
-          operation.resolve(backend);
+      Set<String> scenarioNames = new HashSet<>();
+      for (ScenarioEntry scenario : scenarios) {
+        if (!scenarioNames.add(scenario.name())) {
+          throw new IllegalArgumentException("duplicate SQL scenario: " + scenario.name());
         }
       }
     }
 
-    Workload workload(String backend) {
-      if (!backends.contains(backend)) {
-        throw new IllegalArgumentException(
-            "unsupported SQL database backend "
-                + backend
-                + "; expected one of: "
-                + String.join(", ", backends));
-      }
+    Workload workload() {
       return new Workload(
-          backend, description, operations.stream().map(entry -> entry.resolve(backend)).toList());
+          backend, description, scenarios.stream().map(ScenarioEntry::resolve).toList());
     }
   }
 
-  private record OperationEntry(
+  private record ScenarioEntry(
       String name,
       String description,
       String kind,
-      Map<String, String> sql,
+      String sql,
       List<ParameterEntry> parameters,
-      Map<String, List<String>> statements,
-      Map<String, String> procedures,
+      List<String> statements,
+      String procedure,
       ExpectedEntry expect) {
 
-    void validateBackends(Set<String> backends) {
-      Map<?, ?> values =
-          switch (requireText(kind, name + " kind")) {
-            case "query", "prepared_query" -> sql;
-            case "batch" -> statements;
-            case "stored_procedure" -> procedures;
-            default ->
-                throw new IllegalArgumentException(
-                    "unknown SQL operation kind for " + name + ": " + kind);
-          };
-      if (values == null || !values.keySet().equals(backends)) {
-        throw new IllegalArgumentException(
-            name + " must define its backend values for exactly: " + String.join(", ", backends));
-      }
-    }
-
-    Operation resolve(String backend) {
-      String operationName = requireText(name, "operation name");
-      String operationDescription = requireText(description, operationName + " description");
-      ExpectedEntry expected = Objects.requireNonNull(expect, operationName + " expect");
-      return switch (requireText(kind, operationName + " kind")) {
+    Operation resolve() {
+      String scenarioName = requireText(name, "scenario name");
+      String scenarioDescription = requireText(description, scenarioName + " description");
+      ExpectedEntry expected = Objects.requireNonNull(expect, scenarioName + " expect");
+      return switch (requireText(kind, scenarioName + " kind")) {
         case "query" ->
             new Query(
-                operationName,
-                operationDescription,
-                backendValue(sql, backend, operationName + " SQL"),
-                expected.singleBoolean(operationName));
+                scenarioName,
+                scenarioDescription,
+                requireText(sql, scenarioName + " SQL"),
+                expected.singleBoolean(scenarioName));
         case "prepared_query" ->
             new PreparedQuery(
-                operationName,
-                operationDescription,
-                backendValue(sql, backend, operationName + " SQL"),
-                parameterEntries(operationName).stream().map(ParameterEntry::parameter).toList(),
-                expected.rows(operationName));
+                scenarioName,
+                scenarioDescription,
+                requireText(sql, scenarioName + " SQL"),
+                parameterEntries(scenarioName).stream().map(ParameterEntry::parameter).toList(),
+                expected.rows(scenarioName));
         case "batch" ->
             new Batch(
-                operationName,
-                operationDescription,
-                backendValue(statements, backend, operationName + " statements"),
-                expected.successfulStatements(operationName));
+                scenarioName,
+                scenarioDescription,
+                statements,
+                expected.successfulStatements(scenarioName));
         case "stored_procedure" ->
             new StoredProcedure(
-                operationName,
-                operationDescription,
-                backendValue(procedures, backend, operationName + " procedure"),
-                expected.resultSets(operationName));
+                scenarioName,
+                scenarioDescription,
+                requireText(procedure, scenarioName + " procedure"),
+                expected.resultSets(scenarioName));
         default ->
             throw new IllegalArgumentException(
-                "unknown SQL operation kind for " + operationName + ": " + kind);
+                "unknown SQL operation kind for " + scenarioName + ": " + kind);
       };
     }
 
-    private List<ParameterEntry> parameterEntries(String operationName) {
+    private List<ParameterEntry> parameterEntries(String scenarioName) {
       if (parameters == null) {
-        throw new IllegalArgumentException(operationName + " must declare parameters");
+        throw new IllegalArgumentException(scenarioName + " must declare parameters");
       }
       return parameters;
     }
@@ -340,15 +293,6 @@ public final class SqlContract {
     }
   }
 
-  private static <T> T backendValue(Map<String, T> values, String backend, String field) {
-    Objects.requireNonNull(values, field);
-    T value = values.get(backend);
-    if (value == null) {
-      throw new IllegalArgumentException(field + " is missing for " + backend);
-    }
-    return value;
-  }
-
   private static int requiredCount(Integer value, String operation, String field) {
     if (value == null) {
       throw new IllegalArgumentException(operation + " must expect " + field);
@@ -363,26 +307,23 @@ public final class SqlContract {
     return value;
   }
 
-  private static Document document() {
-    Document loaded = document;
-    if (loaded == null) {
-      loaded = load();
-      document = loaded;
-    }
-    return loaded;
-  }
-
-  private static Document load() {
-    try (InputStream stream = SqlContract.class.getResourceAsStream(RESOURCE)) {
+  private static Workload load(String backend) {
+    String resource = RESOURCE_DIRECTORY + backend + ".json";
+    try (InputStream stream = SqlContract.class.getResourceAsStream(resource)) {
       if (stream == null) {
         throw new IllegalStateException(
-            RESOURCE
-                + " is not on the classpath; the build copies it from"
-                + " tools/database/sql-test-client/contract.json");
+            resource
+                + " is not on the classpath; the build copies contracts from"
+                + " tools/database/sql-test-client/contracts");
       }
-      return MAPPER.readValue(stream, Document.class);
+      Document document = MAPPER.readValue(stream, Document.class);
+      if (!document.backend().equals(backend)) {
+        throw new IllegalArgumentException(
+            resource + " declares backend " + document.backend() + " instead of " + backend);
+      }
+      return document.workload();
     } catch (IOException error) {
-      throw new UncheckedIOException("could not read " + RESOURCE, error);
+      throw new UncheckedIOException("could not read " + resource, error);
     }
   }
 }

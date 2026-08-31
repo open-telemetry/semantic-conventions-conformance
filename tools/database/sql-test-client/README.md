@@ -3,8 +3,11 @@
 The workload every SQL database conformance scenario executes, shared so each
 language measures the same operations and checks the same results.
 
-[`contract.json`](contract.json) defines the operations once. SQL and procedure
-names are keyed by backend because those belong to the database dialect.
+Each file under [`contracts/`](contracts) owns one backend's named scenarios,
+exact SQL, parameters, procedure names, and execution expectations. MariaDB and
+PostgreSQL do not inherit a common query list. A shared query is repeated so
+either backend can later replace or expand it without changing the other.
+
 Parameters use named `${parameter}` markers instead of a client library's bind
 syntax. Each language helper renders those markers for its driver and binds the
 listed values in order.
@@ -14,27 +17,28 @@ runtime. These values depend on the container it started. Queries, parameters,
 and expected results are static contract data and do not pass through
 environment variables.
 
-## Operations
+## Operation kinds
 
-Each operation has a stable name used by the conformance scenario:
+Each scenario has a stable name and one client operation kind:
 
-| Operation | Contract action |
+| Kind | Adapter action |
 | --- | --- |
-| `statement` | Run a direct query and check its single Boolean result |
-| `prepared_statement` | Bind the listed parameters and check the row count |
+| `query` | Run a direct query and check its single Boolean result |
+| `prepared_query` | Bind the listed parameters and check the row count |
 | `batch` | Run the listed statements as one batch and check the success count |
 | `stored_procedure` | Call the named procedure and check the result-set count |
 
-A backend must provide the database-specific value for every operation. The
-expected result remains shared because all backends implement the same logical
-schema and workload. Other database families can define contracts with
-operations that fit their data model instead of extending this SQL contract.
+Scenario names in each JSON file must match the same backend's telemetry
+contract under `scenarios/database/contracts`. The SQL and execution assertion
+can vary independently by backend. Operation kinds remain shared so each
+language adapter knows whether to use a direct query, prepared query, batch, or
+stored procedure API. Tests also require every matching conformance package to
+wire each scenario name into its run command.
 
 ## Per language
 
-Each language gets a small SQL helper that reads the shared file and exposes
-the selected backend's workload:
+Each language gets a small SQL helper that reads the selected backend file:
 
 - [`java/`](java) provides `SqlContract`. The build copies
-  `contract.json` onto the classpath, and JDBC scenarios translate its named
-  parameters and stored procedure into JDBC calls.
+  `contracts/*.json` onto the classpath, and JDBC scenarios translate named
+  parameters and stored procedures into JDBC calls.
