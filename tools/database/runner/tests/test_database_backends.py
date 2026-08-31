@@ -7,14 +7,23 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, replace
+from datetime import timedelta
 from importlib import resources
 from typing import Any
 
 import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
+from testcontainers.core.wait_strategies import ExecWaitStrategy
 
-from database_conformance import _mariadb, _mysql, _postgres, _redis, _sql_server
+from database_conformance import (
+    _container,
+    _mariadb,
+    _mysql,
+    _postgres,
+    _redis,
+    _sql_server,
+)
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._mysql import MYSQL_IMAGE, MySQL
@@ -303,6 +312,49 @@ def test_sql_server_readiness_requires_online_databases() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port", "expected_seconds"),
+    [
+        (_postgres, Postgres, 5432, 60.0),
+        (_mariadb, MariaDB, 3306, 60.0),
+        (_mysql, MySQL, 3306, 120.0),
+        (_redis, Redis, 6379, 60.0),
+        (_sql_server, SQLServer, 1433, 60.0),
+    ],
+)
+def test_each_backend_applies_its_own_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres]
+    | type[MariaDB]
+    | type[MySQL]
+    | type[Redis]
+    | type[SQLServer],
+    port: int,
+    expected_seconds: float,
+) -> None:
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
+    )
+    timeouts: list[timedelta | int] = []
+
+    class RecordingWaitStrategy(ExecWaitStrategy):
+        def with_startup_timeout(
+            self, timeout: timedelta | int
+        ) -> RecordingWaitStrategy:
+            timeouts.append(timeout)
+            super().with_startup_timeout(timeout)
+            return self
+
+    monkeypatch.setattr(_container, "ExecWaitStrategy", RecordingWaitStrategy)
+    install_stub(monkeypatch, module, StubContainer(port=port))
+
+    with backend_type():
+        pass
+
+    assert timeouts == [timedelta(seconds=expected_seconds)]
+
+
 def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -418,6 +470,7 @@ def test_cannot_start_postgres_twice(
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
