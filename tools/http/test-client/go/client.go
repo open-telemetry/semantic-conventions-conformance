@@ -72,7 +72,7 @@ func Verify(exchange Exchange, response Response) error {
 	// choice of JSON writer, and neither is part of the contract.
 	want, err := parse(exchange.RenderResponseBody(exchange.Body))
 	if err != nil {
-		return err
+		return fmt.Errorf("%s %s: %w", exchange.Method, exchange.Path, err)
 	}
 	got, err := parse(response.Body)
 	if err != nil {

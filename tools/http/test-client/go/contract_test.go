@@ -133,6 +133,21 @@ func TestAQueryStringPicksTheSameAnswer(t *testing.T) {
 	}
 }
 
+func TestAContractAnswerThatIsNotJSONNamesTheRequest(t *testing.T) {
+	exchange := Exchange{
+		Method:       "GET",
+		Path:         "/malformed",
+		Status:       200,
+		ResponseBody: "<html>",
+	}
+
+	err := Verify(exchange, Response{StatusCode: exchange.Status, Body: "{}"})
+
+	if err == nil || !strings.HasPrefix(err.Error(), "GET /malformed: not JSON") {
+		t.Errorf("verifying a non-JSON contract answer gave %v, want a failure naming the request", err)
+	}
+}
+
 func TestLookupPrefersAnExactQueryString(t *testing.T) {
 	path := "/users/123?fields=name&verbose=true"
 	exchange, found, err := Lookup("GET", path)
