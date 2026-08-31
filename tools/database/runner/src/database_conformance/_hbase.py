@@ -18,8 +18,8 @@ HBASE_DATABASE = "conformance"
 HBASE_ZOOKEEPER_PORT = 2181
 HBASE_MASTER_PORT = 16000
 HBASE_REGIONSERVER_PORT = 16020
-HBASE_1_IMAGE = "otel-conformance-hbase:1.7.2"
-HBASE_2_IMAGE = "otel-conformance-hbase:2.4.18"
+HBASE_1_VERSION = "1.7.2"
+HBASE_2_VERSION = "2.4.18"
 _HBASE_1_SHA512 = (
     "43c633606f4316319d0e872862bfee935a191308239ca42ad9545402fb9a83f9"
     "399845123bdcda60c315bcb09bd7555375b73afcb3d668453d56e3985bf284fa"
@@ -30,11 +30,20 @@ _HBASE_2_SHA512 = (
 )
 
 
+def _image_name(version: str) -> str:
+    """The local tag of the fixture built from Apache HBase ``version``."""
+    return f"otel-conformance-hbase:{version}"
+
+
+HBASE_1_IMAGE = _image_name(HBASE_1_VERSION)
+HBASE_2_IMAGE = _image_name(HBASE_2_VERSION)
+
+
 class HBase(DatabaseContainer):
     """Own an HBase fixture built from an Apache distribution."""
 
     def __init__(self, version: str, checksum: str) -> None:
-        image_name = f"otel-conformance-hbase:{version}"
+        image_name = _image_name(version)
         image_context = Path(
             str(
                 resources.files("database_conformance").joinpath("hbase-image")
@@ -103,11 +112,11 @@ class HBase1(HBase):
     """Own an HBase fixture compatible with the 1.x client line."""
 
     def __init__(self) -> None:
-        super().__init__("1.7.2", _HBASE_1_SHA512)
+        super().__init__(HBASE_1_VERSION, _HBASE_1_SHA512)
 
 
 class HBase2(HBase):
     """Own an HBase fixture compatible with the 2.x client line."""
 
     def __init__(self) -> None:
-        super().__init__("2.4.18", _HBASE_2_SHA512)
+        super().__init__(HBASE_2_VERSION, _HBASE_2_SHA512)
