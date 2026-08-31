@@ -408,6 +408,6 @@ def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
         "d53aa7811eba390450721b1037978605992f5d9467c4af629384f23a49f78436"
         in dockerfile
     )
-    assert "ARG HBASE_VERSION=2.4.18" in dockerfile
-    assert "ARG HBASE_SHA512=" in dockerfile
+    assert f"ARG HBASE_VERSION={_hbase.HBASE_2_VERSION}" in dockerfile
+    assert f"ARG HBASE_SHA512={_hbase._HBASE_2_SHA512}" in dockerfile
     assert "sha512sum --check --strict" in dockerfile
