@@ -367,7 +367,7 @@ jobs:
           status=0
           for directory in "${directories[@]}"; do
             echo "::group::$directory"
-            otel-conformance "$directory" --report-only || status=1
+            otel-conformance "$directory" --report-only --capture-traces || status=1
             echo "::endgroup::"
           done
           exit "$status"
@@ -386,7 +386,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: weaver-reports-${{ matrix.domain }}-${{ matrix.language }}
-          path: scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/output/weaver-reports/*.json
+          path: |
+            scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/output/weaver-reports/*.json
+            scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/output/weaver-reports/*.spans.jsonl
           if-no-files-found: warn
 
   required-status-check:

@@ -251,6 +251,25 @@ def test_the_session_factory_chooses_the_reduction(directory: Path) -> None:
     )
 
 
+def test_capture_traces_omitted_unless_requested(directory: Path) -> None:
+    """Capture is newer than some third-party ``SessionFactory``s, so it must
+    not reach one that was never updated to accept it.
+    """
+    calls: list[dict[str, Any]] = []
+
+    main([str(directory)], session=factory([], calls))
+
+    assert "capture_traces" not in calls[0]
+
+
+def test_capture_traces_reaches_the_session(directory: Path) -> None:
+    calls: list[dict[str, Any]] = []
+
+    main([str(directory), "--capture-traces"], session=factory([], calls))
+
+    assert calls[0]["capture_traces"] is True
+
+
 @POSIX_SHELL_ONLY
 def test_data_command_runs_in_a_shell(directory: Path, tmp_path: Path) -> None:
     """It is handed a directory, so it has to be able to glob it.

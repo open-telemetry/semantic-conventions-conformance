@@ -192,6 +192,7 @@ class Domain:
         env: Mapping[str, str] | None = None,
         build_data: BuildData | None = None,
         spec: PackageSpec | None = None,
+        capture_traces: bool = False,
     ) -> Generator[ConformanceSession, None, None]:
         """A conformance session wired to this domain.
 
@@ -226,6 +227,7 @@ class Domain:
                 env=env,
                 build_data=build_data,
                 spec=spec,
+                capture_traces=capture_traces,
             ) as session:
                 yield session
 

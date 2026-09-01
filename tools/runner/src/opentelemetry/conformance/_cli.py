@@ -161,6 +161,14 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         "(fetching a registry, an environment variable it took from the "
         "process environment)",
     )
+    parser.add_argument(
+        "--capture-traces",
+        action="store_true",
+        help="also write each scenario's raw spans (one JSON object per "
+        "line, with IDs and timestamps intact) to <scenario>.spans.jsonl "
+        "in --report-dir; weaver's own report has neither, since "
+        "live-check strips them",
+    )
 
     weaver = parser.add_argument_group(
         "registry", "defaults for what the package doesn't declare"
@@ -337,8 +345,11 @@ def _run(
         env=dict(args.env),
         variables=dict(args.var),
         spec=spec,
-        # Passed only when asked: a wrapping session factory may have its own
-        # reduction, which an explicit default would override.
+        # Both passed only when asked: capture_traces is a newer keyword a
+        # third-party SessionFactory may not accept yet, and an explicit
+        # build_data default would override a wrapping factory's own
+        # reduction.
+        **({"capture_traces": True} if args.capture_traces else {}),
         **(
             {"build_data": run_data_command} if args.data_command else {}
         ),

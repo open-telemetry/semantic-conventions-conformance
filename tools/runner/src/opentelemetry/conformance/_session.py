@@ -29,6 +29,7 @@ from typing import (
     TypeVar,
 )
 
+from ._capture_bridge import SpanCaptureBridge
 from ._checks import check
 from ._coverage import coverage
 from ._env import (
@@ -143,6 +144,7 @@ class SessionFactory(Protocol):
         env: Mapping[str, str] | None = ...,
         build_data: Callable[[Path, PackageSpec], object] = ...,
         spec: PackageSpec | None = ...,
+        capture_traces: bool = ...,
     ) -> AbstractContextManager[ConformanceSession]: ...
 
 
@@ -171,6 +173,7 @@ class ConformanceSession:
         env: Mapping[str, str],
         data_file: Path,
         build_data: Callable[[Path, PackageSpec], object],
+        capture_traces: bool = False,
     ) -> None:
         if weaver.registry is None:
             raise SpecError(
@@ -185,6 +188,7 @@ class ConformanceSession:
         self._default_env = dict(env)
         self._data_file = data_file
         self._build_data = build_data
+        self._capture_traces = capture_traces
         self._ran: set[str] = set()
 
     @property
@@ -231,7 +235,18 @@ class ConformanceSession:
             _quiet_connection_retries(),
             _start_weaver(start_weaver) as weaver,
         ):
-            completed = self._execute(scenario, weaver.otlp_endpoint)
+            if self._capture_traces:
+                bridge = SpanCaptureBridge(
+                    forward_endpoint=weaver.otlp_endpoint,
+                    out_path=self._report_dir / f"{name}.spans.jsonl",
+                )
+                bridge.start()
+                try:
+                    completed = self._execute(scenario, bridge.endpoint)
+                finally:
+                    bridge.stop()
+            else:
+                completed = self._execute(scenario, weaver.otlp_endpoint)
             report = weaver.end(
                 timeout=int(timeout_seconds(*_WEAVER_STOP_TIMEOUT))
             )
@@ -438,6 +453,7 @@ def conformance_session(
     env: Mapping[str, str] | None = None,
     build_data: Callable[[Path, PackageSpec], object] = coverage,
     spec: PackageSpec | None = None,
+    capture_traces: bool = False,
 ) -> Generator[ConformanceSession, None, None]:
     """Open a session over the conformance directory at ``directory``.
 
@@ -458,6 +474,11 @@ def conformance_session(
     directory and the spec after a complete run, returns the data to write to
     ``data_file``; it defaults to the attributes each declared span carried,
     plus the metrics and events the run produced.
+
+    ``capture_traces``, if set, also writes each scenario's raw spans (with
+    IDs and timestamps intact) to ``<scenario>.spans.jsonl`` in
+    ``report_dir`` — one JSON object per line — since weaver's own report
+    has neither IDs nor timestamps, live-check strips them.
     """
     check_weaver()
     spec = spec or load_spec(Path(directory))
@@ -492,6 +513,7 @@ def conformance_session(
             if data_file is not None
             else Path(directory) / DEFAULT_DATA_FILE,
             build_data=build_data,
+            capture_traces=capture_traces,
         )
         session.setup()
         stack.enter_context(session)

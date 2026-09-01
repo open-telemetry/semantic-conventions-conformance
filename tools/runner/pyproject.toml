@@ -11,6 +11,11 @@ dependencies = [
   # opentelemetry.test.weaver_live_check — imported lazily by the session.
   "opentelemetry-test-utils >= 0.65b0, <1",
   "PyYAML >= 6.0.2",
+  # The optional OTLP capture tee (--capture-traces): a gRPC server sitting
+  # in front of weaver's own port, so it's needed regardless of which
+  # scenario-language extra below is installed.
+  "grpcio >= 1.60",
+  "opentelemetry-proto >= 1.20",
 ]
 
 [project.optional-dependencies]

@@ -73,6 +73,7 @@ def database_session(
     env: Mapping[str, str] | None = None,
     build_data: Callable[[Path, PackageSpec], object] | None = None,
     spec: PackageSpec | None = None,
+    capture_traces: bool = False,
 ) -> Generator[ConformanceSession, None, None]:
     """Open a database conformance session with its configured backend."""
     spec = spec or load_spec(Path(directory))
@@ -88,6 +89,7 @@ def database_session(
             server=server,
             env=env,
             spec=spec,
+            capture_traces=capture_traces,
             **({"build_data": build_data} if build_data is not None else {}),
         )
         with session_context as session:
