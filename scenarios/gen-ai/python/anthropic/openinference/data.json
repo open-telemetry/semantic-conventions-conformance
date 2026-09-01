@@ -295,6 +295,24 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.request.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.request.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.response.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "beta.messages.parse",
+      "context": {
+        "attribute_key": "llm.response.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.system' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "beta.messages.parse",
@@ -721,6 +739,24 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.request.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.request.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.response.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.response.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.system' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "messages.create",
@@ -954,6 +990,24 @@
       "signal_name": "messages.stream",
       "context": {
         "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.request.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.request.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.response.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "llm.response.model_name"
       }
     },
     {
