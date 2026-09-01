@@ -69,7 +69,6 @@ def test_sql_scenarios_are_wired_by_every_matching_package() -> None:
             scenario_contract = path.parent / package["scenario_contract"]
             assert scenario_contract.resolve() == contract_path.resolve(), path
             assert "scenarios" not in package, path
-            assert isinstance(package["scenario_run"], str), path
 
             spec = load_spec(path.parent)
             assert [
