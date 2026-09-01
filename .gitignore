@@ -19,3 +19,6 @@ node_modules/
 # .NET: what a build writes, which the artifacts output layout collects into
 # one directory per build root.
 artifacts/
+
+# Cargo: every workspace member shares this build directory.
+target/

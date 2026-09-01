@@ -1,0 +1,40 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+[workspace]
+members = [
+  "../../../tools/http/test-client/rust",
+  "../../../tools/rust/scenario",
+  "../../../tools/rust/scenario-sdk",
+  "actix-web/opentelemetry-actix-web/server",
+  "actix-web/scenarios",
+  "awc/opentelemetry-actix-web/client",
+  "awc/scenarios",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+rust-version = "1.88.0"
+
+[workspace.dependencies]
+actix-web = "4.12.1"
+awc = { version = "3.8.2", default-features = false }
+opentelemetry = { version = "0.32.0", features = ["trace"] }
+opentelemetry-instrumentation-actix-web = { version = "=0.24.0", features = ["awc", "metrics"] }
+opentelemetry-otlp = { version = "0.32.0", default-features = false, features = ["grpc-tonic", "metrics", "trace"] }
+opentelemetry_sdk = { version = "0.32.0", features = ["metrics", "trace"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
+
+otel-conformance-http = { path = "../../../tools/http/test-client/rust" }
+otel-conformance-scenario = { path = "../../../tools/rust/scenario" }
+otel-conformance-scenario-sdk = { path = "../../../tools/rust/scenario-sdk" }
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

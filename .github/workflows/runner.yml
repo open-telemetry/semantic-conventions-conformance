@@ -44,10 +44,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml flask testcontainers
-          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet
+          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet -e tools/rust
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
+        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests tools/rust/tests
 
   lint:
     name: Lint
@@ -110,6 +110,24 @@ jobs:
           dotnet build http-dotnet-conformance.slnx
           dotnet test http-dotnet-conformance.slnx --no-build
 
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          toolchain: 1.88.0
+          components: clippy,rustfmt
+          # The Cargo workspace, which is not the repository root the action's
+          # cache assumes: without this it saves a `target/` no build writes.
+          cache-workspaces: scenarios/http/rust
+
+      # One workspace includes the scenario binaries and the shared Rust crates
+      # under tools/, so these commands cover every Rust package used here.
+      - name: Build Rust
+        working-directory: scenarios/http/rust
+        run: |
+          cargo fmt --check
+          cargo clippy --workspace --locked -- -D warnings
+          cargo test --workspace --locked
+
   types:
     name: Types
     runs-on: ubuntu-latest
@@ -147,7 +165,8 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/dotnet \
+            -e tools/rust
 
       - name: Run pyright
         run: python -m pyright
@@ -321,6 +340,16 @@ jobs:
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
+      # A Rust scenario compiles itself in its `setup:` before it runs.
+      - name: Set up Rust
+        if: matrix.language == 'rust'
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          toolchain: 1.88.0
+          # The Cargo workspace, which is not the repository root the action's
+          # cache assumes: without this it saves a `target/` no build writes.
+          cache-workspaces: ${{ env.SCENARIO_ROOT }}
+
       - name: Install weaver
         run: |
           . tools/runner/src/opentelemetry/conformance/versions.env
@@ -345,7 +374,8 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/dotnet \
+            -e tools/rust
 
       # Keyed by domain too: a matrix job fetches only the registry its own
       # domain pins, so one key per domain keeps every cache complete.
