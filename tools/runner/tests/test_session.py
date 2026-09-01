@@ -353,12 +353,17 @@ def test_a_complete_run_removes_reports_for_deleted_scenarios(
     (reports / "tool_calling.json").write_text("{}")
     stale = reports / "deleted.json"
     stale.write_text("{}")
+    nested = reports / "old"
+    nested.mkdir()
+    nested_stale = nested / "inference.json"
+    nested_stale.write_text("{}")
     opened = session(directory, tmp_path / "data.json", report_dir=reports)
     opened._ran.update(opened.spec.scenarios)
 
     opened.close()
 
     assert not stale.exists()
+    assert not nested_stale.exists()
 
 
 def test_reports_default_to_inside_the_scenario_directory(

@@ -343,9 +343,12 @@ class ConformanceSession:
         """
         if self._ran != set(self._spec.scenarios):
             return
-        expected_reports = {f"{name}.json" for name in self._spec.scenarios}
-        for report in self._report_dir.glob("*.json"):
-            if report.name not in expected_reports:
+        expected_reports = {
+            self._report_dir / f"{name}.json"
+            for name in self._spec.scenarios
+        }
+        for report in self._report_dir.glob("**/*.json"):
+            if report not in expected_reports:
                 report.unlink()
         data = self._build_data(self._report_dir, self._spec)
         self._data_file.parent.mkdir(parents=True, exist_ok=True)
