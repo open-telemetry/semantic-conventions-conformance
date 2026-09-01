@@ -63,14 +63,4 @@ class HttpClientWorkloadTest {
             HttpClientWorkload.drive(
                 "  ", (method, url, body) -> new Response(200, "{}"), HttpContract.request(0)));
   }
-
-  @Test
-  void instrumentationQuiescenceCanBeTunedOrDisabled() {
-    assertEquals(100, HttpClientWorkload.instrumentationQuiescenceMillis(null));
-    assertEquals(250, HttpClientWorkload.instrumentationQuiescenceMillis("250"));
-    assertEquals(0, HttpClientWorkload.instrumentationQuiescenceMillis("0"));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> HttpClientWorkload.instrumentationQuiescenceMillis("-1"));
-  }
 }

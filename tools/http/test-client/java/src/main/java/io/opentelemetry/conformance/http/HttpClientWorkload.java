@@ -23,11 +23,7 @@ public final class HttpClientWorkload {
   /** Maximum time a client scenario waits for one request to finish. */
   public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
-  /** Configures how long the process stays alive for asynchronous instrumentation callbacks. */
-  public static final String INSTRUMENTATION_QUIESCENCE_MILLIS_VARIABLE =
-      "OTEL_CONFORMANCE_JAVA_INSTRUMENTATION_QUIESCENCE_MILLIS";
-
-  private static final long DEFAULT_INSTRUMENTATION_QUIESCENCE_MILLIS = 100;
+  private static final Duration INSTRUMENTATION_QUIESCENCE = Duration.ofMillis(100);
 
   private HttpClientWorkload() {}
 
@@ -58,29 +54,7 @@ public final class HttpClientWorkload {
         exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
     HttpContract.verify(exchange, response);
     // Some asynchronous clients return the body before their instrumentation completion callback.
-    Thread.sleep(
-        instrumentationQuiescenceMillis(System.getenv(INSTRUMENTATION_QUIESCENCE_MILLIS_VARIABLE)));
-  }
-
-  static long instrumentationQuiescenceMillis(String value) {
-    if (value == null) {
-      return DEFAULT_INSTRUMENTATION_QUIESCENCE_MILLIS;
-    }
-    if (!value.matches("0|[1-9][0-9]*")) {
-      throw new IllegalArgumentException(
-          INSTRUMENTATION_QUIESCENCE_MILLIS_VARIABLE
-              + " must be a non-negative integer, got "
-              + value);
-    }
-    try {
-      return Long.parseLong(value);
-    } catch (NumberFormatException error) {
-      throw new IllegalArgumentException(
-          INSTRUMENTATION_QUIESCENCE_MILLIS_VARIABLE
-              + " is too large for a millisecond duration: "
-              + value,
-          error);
-    }
+    Thread.sleep(INSTRUMENTATION_QUIESCENCE.toMillis());
   }
 
   private static String abbreviate(String value) {
