@@ -250,7 +250,9 @@ public final class SqlContract {
                 index,
                 description,
                 requireText(sql, scenario + " SQL"),
-                parameterEntries(scenario).stream().map(ParameterEntry::parameter).toList());
+                parameterEntries(scenario).stream()
+                    .map(entry -> entry.parameter(scenario))
+                    .toList());
         case "batch" -> new Batch(index, description, statementEntries(scenario));
         case "stored_procedure" ->
             new StoredProcedure(
@@ -277,14 +279,14 @@ public final class SqlContract {
   }
 
   private record ParameterEntry(String name, String type, JsonNode value) {
-    Parameter parameter() {
-      String parameterName = requireText(name, "parameter name");
+    Parameter parameter(String scenario) {
+      String parameterName = requireText(name, scenario + " parameter name");
+      String label = scenario + " parameter " + parameterName;
       if (!"integer".equals(type)) {
-        throw new IllegalArgumentException(
-            parameterName + " has unsupported parameter type: " + type);
+        throw new IllegalArgumentException(label + " has unsupported parameter type: " + type);
       }
       if (value == null || !value.isInt()) {
-        throw new IllegalArgumentException(parameterName + " must declare an integer value");
+        throw new IllegalArgumentException(label + " must declare an integer value");
       }
       return new Parameter(parameterName, value.intValue());
     }
