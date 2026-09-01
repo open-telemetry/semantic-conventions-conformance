@@ -12,6 +12,7 @@ const {
   renderResponseBody,
   requests,
   scenarioRequest,
+  verify,
 } = require("../src");
 
 describe("the contract", () => {
@@ -31,6 +32,23 @@ describe("the contract", () => {
     });
     assert.throws(() => scenarioRequest(-1), /zero-based decimal/);
     assert.throws(() => scenarioRequest(requests().length), /selects no/);
+  });
+
+  // Parsed, not compared as text: whitespace and key order are a language's
+  // choice of JSON writer, and neither is part of the contract.
+  it("leaves whitespace and key order to the JSON writer", () => {
+    const users = exchangeFor("GET", "/users/123");
+
+    verify(users, users.status, '{ "name" :"Alice",\n  "id": 123 }');
+  });
+
+  it("says so when an answer is not JSON", () => {
+    const users = exchangeFor("GET", "/users/123");
+
+    assert.throws(
+      () => verify(users, users.status, "<html>"),
+      /did not return the expected JSON/,
+    );
   });
 
   // A field this reader names but the contract does not is `undefined` here

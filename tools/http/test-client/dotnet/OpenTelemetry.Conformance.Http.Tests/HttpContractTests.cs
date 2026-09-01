@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text.Json;
 using Xunit;
 
 namespace OpenTelemetry.Conformance.Http.Tests;
@@ -36,6 +37,31 @@ public class HttpContractTests
         Assert.Throws<ArgumentOutOfRangeException>(() => HttpContract.Request(-1));
         Assert.Throws<ArgumentOutOfRangeException>(
             () => HttpContract.Request(HttpContract.Requests.Count));
+    }
+
+    // Parsed, not compared as text: whitespace and key order are a language's choice of JSON
+    // writer, and neither is part of the contract.
+    [Fact]
+    public void WhitespaceAndKeyOrderAreTheJsonWritersBusiness()
+    {
+        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
+
+        HttpContract.Verify(
+            users,
+            new HttpContract.Response(users.Status, "{ \"name\" :\"Alice\",\n  \"id\": 123 }"));
+    }
+
+    [Fact]
+    public void AnAnswerThatIsNotJsonSaysSo()
+    {
+        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
+
+        var failure = Assert.Throws<InvalidOperationException>(
+            () => HttpContract.Verify(users, new HttpContract.Response(users.Status, "<html>")));
+
+        Assert.Contains(
+            "did not return the expected JSON", failure.Message, StringComparison.Ordinal);
+        Assert.IsAssignableFrom<JsonException>(failure.InnerException);
     }
 
     [Fact]
