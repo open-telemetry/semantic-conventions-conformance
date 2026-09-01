@@ -43,7 +43,6 @@ scenarios:
             count: 1
             attributes:
               url.full: {present: true}
-              url.query: fields=name&verbose=true
       events: []
 
   - description: Sends a POST request carrying a JSON body.
