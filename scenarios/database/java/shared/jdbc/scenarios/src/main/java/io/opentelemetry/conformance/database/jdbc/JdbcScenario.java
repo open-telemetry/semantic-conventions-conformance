@@ -26,14 +26,14 @@ public final class JdbcScenario {
   private JdbcScenario() {}
 
   public static void run() throws SQLException {
-    Operation workload =
+    Operation operation =
         SqlContract.selectedScenario(ScenarioEnvironment.require("DATABASE_BACKEND"));
     try (Connection connection =
         DriverManager.getConnection(
             ScenarioEnvironment.require("JDBC_URL"),
             ScenarioEnvironment.require("JDBC_USER"),
             ScenarioEnvironment.require("JDBC_PASSWORD"))) {
-      switch (workload) {
+      switch (operation) {
         case Query query -> statement(connection, query);
         case PreparedQuery query -> preparedStatement(connection, query);
         case Batch batch -> batch(connection, batch);
