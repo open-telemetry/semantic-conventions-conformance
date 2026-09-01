@@ -69,6 +69,14 @@ class HttpContractTest {
   }
 
   @Test
+  void aScenarioIndexThatIsNotSetSaysSo() {
+    IllegalStateException failure =
+        assertThrows(IllegalStateException.class, HttpContract::scenarioRequest);
+
+    assertEquals(HttpContract.SCENARIO_INDEX_VARIABLE + " is not set", failure.getMessage());
+  }
+
+  @Test
   void aBlankResponseFailsCleanly() {
     Exchange exchange = HttpContract.request(0);
 

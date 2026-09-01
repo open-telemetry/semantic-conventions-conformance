@@ -121,7 +121,10 @@ public final class HttpContract {
   /** The one request selected by the runner's zero-based contract index. */
   public static Exchange scenarioRequest() {
     String raw = System.getenv(SCENARIO_INDEX_VARIABLE);
-    if (raw == null || !raw.matches("0|[1-9][0-9]*")) {
+    if (raw == null) {
+      throw new IllegalStateException(SCENARIO_INDEX_VARIABLE + " is not set");
+    }
+    if (!raw.matches("0|[1-9][0-9]*")) {
       throw new IllegalStateException(
           SCENARIO_INDEX_VARIABLE + " must be a zero-based decimal index, got " + raw);
     }
