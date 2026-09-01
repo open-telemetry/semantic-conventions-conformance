@@ -6,10 +6,10 @@ dependencies = [
     "google-adk==2.8.0",
     "openinference-instrumentation-google-adk==0.1.24",
     # ADK caps the SDK below the version the other directories pin.
-    "opentelemetry-api==1.44.0",
-    "opentelemetry-sdk==1.44.0",
-    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
-    "opentelemetry-distro==0.65b0",
+    "opentelemetry-api==1.42.0",
+    "opentelemetry-sdk==1.42.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.42.0",
+    "opentelemetry-distro==0.63b0",
 ]
 
 [tool.uv]

@@ -8,10 +8,10 @@ dependencies = [
     # these scenarios take the zero-code agent instead of
     # `otel-conformance-python`. Nothing else here is instrumented, so the
     # agent finds no instrumentation to load and only sets the SDK up.
-    "opentelemetry-api==1.44.0",
-    "opentelemetry-sdk==1.44.0",
-    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
-    "opentelemetry-distro==0.65b0",
+    "opentelemetry-api==1.42.0",
+    "opentelemetry-sdk==1.42.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.42.0",
+    "opentelemetry-distro==0.63b0",
 ]
 
 [tool.uv]
