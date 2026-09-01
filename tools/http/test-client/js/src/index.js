@@ -10,8 +10,7 @@
  * file, `respond` answers concrete requests for any framework, and `drive`
  * sends the runner-selected request with the library under test.
  *
- * Nothing here has a dependency of its own, so installing it next to a
- * scenario drags nothing into a run.
+ * The only dependency is the YAML parser used before the measured request.
  */
 
 const contract = require("./contract");
