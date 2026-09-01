@@ -2,6 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 description: Shared HTTP client requests and expected telemetry.
+
+# Not one of the scenarios below: a driver sends it to learn a server is
+# listening, and no telemetry expectation covers it.
+readiness:
+  description: Checks whether the server is ready.
+  action:
+    request:
+      method: GET
+      path: /health
+    response:
+      status: 200
+      body: '{"ok": true}'
+
 scenarios:
   - description: Sends a request to a parameterized user route.
     action:

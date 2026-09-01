@@ -36,23 +36,14 @@ public static class HttpContract
 
     private const string ResourceName = "otel-http-contract.yaml";
 
-    private static readonly Lazy<IReadOnlyList<Exchange>> Contract = new(Load);
-
-    private static readonly Exchange Readiness =
-        new(
-            "GET",
-            "/health",
-            null,
-            200,
-            "{\"ok\": true}",
-            true,
-            "Checks whether the server is ready.");
+    private static readonly Lazy<Contract> Loaded = new(Load);
 
     /// <summary>Every exchange the contract describes, including readiness, in order.</summary>
-    public static IReadOnlyList<Exchange> Exchanges => [Readiness, .. Contract.Value];
+    public static IReadOnlyList<Exchange> Exchanges =>
+        [Loaded.Value.Readiness, .. Loaded.Value.Requests];
 
     /// <summary>The measured requests to send, in order.</summary>
-    public static IReadOnlyList<Exchange> Requests => Contract.Value;
+    public static IReadOnlyList<Exchange> Requests => Loaded.Value.Requests;
 
     /// <summary>One concrete request and the answer the contract requires.</summary>
     /// <remarks>
@@ -158,7 +149,7 @@ public static class HttpContract
         return query == -1 ? path : path[..query];
     }
 
-    private static IReadOnlyList<Exchange> Load()
+    private static Contract Load()
     {
         var assembly = typeof(HttpContract).GetTypeInfo().Assembly;
         using var stream = assembly.GetManifestResourceStream(ResourceName)
@@ -177,19 +168,34 @@ public static class HttpContract
             throw new InvalidOperationException($"{ResourceName} is empty");
         }
 
-        return scenarios.Select(scenario => new Exchange(
-            scenario.Action.Request.Method,
-            scenario.Action.Request.Path,
-            scenario.Action.Request.Body,
-            scenario.Action.Response.Status,
-            scenario.Action.Response.Body,
-            false,
-            scenario.Description)).ToArray();
+        if (document?.Readiness is not { } readiness)
+        {
+            throw new InvalidOperationException(
+                $"{ResourceName} declares no readiness exchange");
+        }
+
+        return new Contract(
+            ToExchange(readiness, readiness: true),
+            scenarios.Select(scenario => ToExchange(scenario, readiness: false)).ToArray());
     }
+
+    private static Exchange ToExchange(ScenarioEntry entry, bool readiness) => new(
+        entry.Action.Request.Method,
+        entry.Action.Request.Path,
+        entry.Action.Request.Body,
+        entry.Action.Response.Status,
+        entry.Action.Response.Body,
+        readiness,
+        entry.Description);
+
+    /// <summary>The readiness exchange and the measured requests, as one load of the file.</summary>
+    private sealed record Contract(Exchange Readiness, IReadOnlyList<Exchange> Requests);
 
     private sealed class ContractDocument
     {
         public string Description { get; init; } = string.Empty;
+
+        public ScenarioEntry? Readiness { get; init; }
 
         public List<ScenarioEntry> Scenarios { get; init; } = [];
     }

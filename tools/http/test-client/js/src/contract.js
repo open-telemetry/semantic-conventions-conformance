@@ -65,30 +65,25 @@ function contractPath() {
 const CONTRACT = contractPath();
 
 const DOCUMENT = YAML.parse(fs.readFileSync(CONTRACT, "utf8"));
+
+function exchange(entry, readiness) {
+  return Object.freeze({
+    method: entry.action.request.method,
+    path: entry.action.request.path,
+    // null rather than absent, so a sender has one shape to check.
+    body: entry.action.request.body ?? null,
+    status: entry.action.response.status,
+    responseBody: entry.action.response.body,
+    readiness,
+    description: entry.description,
+  });
+}
+
 const REQUESTS = Object.freeze(
-  DOCUMENT.scenarios.map((entry) =>
-    Object.freeze({
-      method: entry.action.request.method,
-      path: entry.action.request.path,
-      // null rather than absent, so a sender has one shape to check.
-      body: entry.action.request.body ?? null,
-      status: entry.action.response.status,
-      responseBody: entry.action.response.body,
-      readiness: false,
-      description: entry.description,
-    }),
-  ),
+  DOCUMENT.scenarios.map((entry) => exchange(entry, false)),
 );
 
-const READINESS = Object.freeze({
-  method: "GET",
-  path: "/health",
-  body: null,
-  status: 200,
-  responseBody: '{"ok": true}',
-  readiness: true,
-  description: "Checks whether the server is ready.",
-});
+const READINESS = exchange(DOCUMENT.readiness, true);
 
 const EXCHANGES = Object.freeze([READINESS, ...REQUESTS]);
 

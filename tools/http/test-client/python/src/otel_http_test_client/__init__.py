@@ -42,7 +42,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Awaitable
 from pathlib import Path
-from typing import Callable, NamedTuple, Sequence
+from typing import Any, Callable, Mapping, NamedTuple, Sequence
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 import yaml
@@ -131,28 +131,25 @@ CONTRACT = _contract()
 _DOCUMENT = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
 _SCENARIOS = _DOCUMENT["scenarios"]
 
-REQUESTS: Sequence[Exchange] = tuple(
-    Exchange(
-        method=entry["action"]["request"]["method"],
-        path=entry["action"]["request"]["path"],
-        body=entry["action"]["request"].get("body"),
-        status=entry["action"]["response"]["status"],
-        response_body=entry["action"]["response"]["body"],
-        readiness=False,
+
+def _exchange(entry: Mapping[str, Any], *, readiness: bool) -> Exchange:
+    action = entry["action"]
+    return Exchange(
+        method=action["request"]["method"],
+        path=action["request"]["path"],
+        body=action["request"].get("body"),
+        status=action["response"]["status"],
+        response_body=action["response"]["body"],
+        readiness=readiness,
         description=entry["description"],
     )
-    for entry in _SCENARIOS
+
+
+REQUESTS: Sequence[Exchange] = tuple(
+    _exchange(entry, readiness=False) for entry in _SCENARIOS
 )
 
-_READINESS = Exchange(
-    method="GET",
-    path="/health",
-    body=None,
-    status=200,
-    response_body='{"ok": true}',
-    readiness=True,
-    description="Checks whether the server is ready.",
-)
+_READINESS = _exchange(_DOCUMENT["readiness"], readiness=True)
 EXCHANGES: Sequence[Exchange] = (_READINESS, *REQUESTS)
 
 # Every route answers JSON, so a scenario that reads the contract has one

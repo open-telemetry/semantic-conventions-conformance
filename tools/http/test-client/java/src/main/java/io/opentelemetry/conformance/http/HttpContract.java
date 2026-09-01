@@ -47,7 +47,7 @@ public final class HttpContract {
 
   // Loaded on first use rather than in a static initializer, so a classpath problem arrives as the
   // message below rather than wrapped in ExceptionInInitializerError.
-  private static volatile List<Exchange> requests;
+  private static volatile Contract contract;
 
   private HttpContract() {}
 
@@ -79,44 +79,43 @@ public final class HttpContract {
 
   private record Action(Request request, ExpectedResponse response) {}
 
-  private record ContractDocument(String description, List<ScenarioEntry> scenarios) {}
+  private record ContractDocument(
+      String description, ScenarioEntry readiness, List<ScenarioEntry> scenarios) {}
 
   private record ScenarioEntry(String description, Action action) {
-    Exchange exchange() {
+    Exchange exchange(boolean readiness) {
       return new Exchange(
           action.request.method,
           action.request.path,
           action.request.body,
           action.response.status,
           action.response.body,
-          false,
+          readiness,
           description);
     }
   }
 
-  private static final Exchange READINESS =
-      new Exchange(
-          "GET",
-          "/health",
-          null,
-          200,
-          "{\"ok\": true}",
-          true,
-          "Checks whether the server is ready.");
+  /** The readiness exchange and the measured requests, as one load of the file. */
+  private record Contract(Exchange readiness, List<Exchange> requests) {}
 
   /** Every exchange the contract describes, including readiness, in order. */
   public static List<Exchange> exchanges() {
+    Contract loaded = contract();
     return java.util.stream.Stream.concat(
-            java.util.stream.Stream.of(READINESS), requests().stream())
+            java.util.stream.Stream.of(loaded.readiness()), loaded.requests().stream())
         .toList();
   }
 
   /** The measured requests to send, in order. */
   public static List<Exchange> requests() {
-    List<Exchange> loaded = requests;
+    return contract().requests();
+  }
+
+  private static Contract contract() {
+    Contract loaded = contract;
     if (loaded == null) {
       loaded = load();
-      requests = loaded;
+      contract = loaded;
     }
     return loaded;
   }
@@ -188,7 +187,7 @@ public final class HttpContract {
     return query == -1 ? path : path.substring(0, query);
   }
 
-  private static List<Exchange> load() {
+  private static Contract load() {
     try (InputStream stream = HttpContract.class.getResourceAsStream(RESOURCE)) {
       if (stream == null) {
         throw new IllegalStateException(
@@ -196,9 +195,15 @@ public final class HttpContract {
                 + " is not on the classpath — the build copies it from"
                 + " tools/http/test-client/contract.yaml");
       }
-      return YAML.readValue(stream, ContractDocument.class).scenarios().stream()
-          .map(ScenarioEntry::exchange)
-          .collect(Collectors.toUnmodifiableList());
+      ContractDocument document = YAML.readValue(stream, ContractDocument.class);
+      if (document.readiness() == null) {
+        throw new IllegalStateException(RESOURCE + " declares no readiness exchange");
+      }
+      return new Contract(
+          document.readiness().exchange(true),
+          document.scenarios().stream()
+              .map(entry -> entry.exchange(false))
+              .collect(Collectors.toUnmodifiableList()));
     } catch (IOException e) {
       throw new UncheckedIOException("could not read " + RESOURCE, e);
     }
