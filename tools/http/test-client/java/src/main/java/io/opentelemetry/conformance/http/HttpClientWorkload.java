@@ -23,6 +23,8 @@ public final class HttpClientWorkload {
   /** Maximum time a client scenario waits for one request to finish. */
   public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
+  private static final Duration INSTRUMENTATION_QUIESCENCE = Duration.ofMillis(100);
+
   private HttpClientWorkload() {}
 
   /** Sends one request using the HTTP client library under test. */
@@ -51,6 +53,8 @@ public final class HttpClientWorkload {
         "%s %s -> %d %s%n",
         exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
     HttpContract.verify(exchange, response);
+    // Some asynchronous clients return the body before their instrumentation completion callback.
+    Thread.sleep(INSTRUMENTATION_QUIESCENCE);
   }
 
   private static String abbreviate(String value) {
