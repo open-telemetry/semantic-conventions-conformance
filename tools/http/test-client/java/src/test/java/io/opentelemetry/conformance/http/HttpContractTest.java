@@ -8,6 +8,7 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,6 +25,11 @@ class HttpContractTest {
   @Test
   void itIsReadFromTheFileEveryLanguageReads() {
     assertFalse(HttpContract.exchanges().isEmpty());
+  }
+
+  @Test
+  void theCombinedExchangesAreCachedWithTheContract() {
+    assertSame(HttpContract.exchanges(), HttpContract.exchanges());
   }
 
   @Test

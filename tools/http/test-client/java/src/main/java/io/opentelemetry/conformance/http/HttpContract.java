@@ -13,6 +13,7 @@ import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The HTTP conformance exchanges, as the JVM reads them.
@@ -96,14 +97,11 @@ public final class HttpContract {
   }
 
   /** The readiness exchange and the measured requests, as one load of the file. */
-  record Contract(Exchange readiness, List<Exchange> requests) {}
+  record Contract(List<Exchange> exchanges, List<Exchange> requests) {}
 
   /** Every exchange the contract describes, including readiness, in order. */
   public static List<Exchange> exchanges() {
-    Contract loaded = contract();
-    return java.util.stream.Stream.concat(
-            java.util.stream.Stream.of(loaded.readiness()), loaded.requests().stream())
-        .toList();
+    return contract().exchanges();
   }
 
   /** The measured requests to send, in order. */
@@ -210,10 +208,11 @@ public final class HttpContract {
     if (scenarios == null || scenarios.isEmpty()) {
       throw new IllegalStateException(RESOURCE + " declares no scenarios");
     }
-    return new Contract(
-        document.readiness().exchange(true),
+    Exchange readiness = document.readiness().exchange(true);
+    List<Exchange> requests =
         scenarios.stream()
             .map(entry -> entry.exchange(false))
-            .collect(Collectors.toUnmodifiableList()));
+            .collect(Collectors.toUnmodifiableList());
+    return new Contract(Stream.concat(Stream.of(readiness), requests.stream()).toList(), requests);
   }
 }
