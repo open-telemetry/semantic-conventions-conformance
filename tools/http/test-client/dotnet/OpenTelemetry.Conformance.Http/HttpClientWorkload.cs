@@ -23,7 +23,7 @@ public static class HttpClientWorkload
     public delegate Task<HttpContract.Response> Sender(string method, string url, string? body);
 
     /// <summary>
-    /// Sends <see cref="HttpContract.Requests"/> at <paramref name="baseUrl"/> through
+    /// Sends the runner-selected contract request at <paramref name="baseUrl"/> through
     /// <paramref name="send"/>.
     /// </summary>
     /// <remarks>

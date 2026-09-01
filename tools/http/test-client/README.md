@@ -112,10 +112,11 @@ HTTP client beyond the one under test.
   the one selected request. The build copies `contract.yaml` onto the classpath,
   and its unit tests drive both halves against each other.
 - [`js/`](js) — three Node modules: `contract` reads the file, `respond` looks
-  up answers for any Node framework, and `drive` sends the requests through a
-  caller-supplied sender. Its unit tests drive both halves against each other.
+  up answers for any Node framework, and `drive` sends one runner-selected
+  request through a caller-supplied sender. Its unit tests drive both halves
+  against each other.
 - [`dotnet/`](dotnet) — `HttpContract` reads the file,
   `HttpServerWorkload.Respond` looks up answers for any .NET framework, and
-  `HttpClientWorkload.DriveAsync` sends the requests through a caller-supplied
-  sender. The build embeds `contract.yaml` as a manifest resource, and its unit
-  tests drive both halves against each other.
+  `HttpClientWorkload.DriveAsync` sends one runner-selected request through a
+  caller-supplied sender. The build embeds `contract.yaml` as a manifest
+  resource, and its unit tests drive both halves against each other.

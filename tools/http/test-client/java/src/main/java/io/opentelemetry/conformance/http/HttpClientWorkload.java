@@ -35,7 +35,7 @@ public final class HttpClientWorkload {
   }
 
   /**
-   * Sends {@link HttpContract#requests()} at {@code baseUrl} through {@code sender}.
+   * Sends the runner-selected contract request at {@code baseUrl} through {@code sender}.
    *
    * <p>No health check: the runner starts the mock server a client scenario calls and waits for it
    * to answer before running the scenario at all.
