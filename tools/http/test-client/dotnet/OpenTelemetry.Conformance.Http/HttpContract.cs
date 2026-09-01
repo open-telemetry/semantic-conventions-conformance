@@ -77,12 +77,14 @@ public static class HttpContract
     public static Exchange ScenarioRequest()
     {
         var raw = Environment.GetEnvironmentVariable(ScenarioIndexVariable);
+
+        // `NumberStyles.None` allows no sign, so a parsed index is never negative; the round
+        // trip then rejects every remaining non-canonical spelling, such as `007`.
         if (!int.TryParse(
                 raw,
                 NumberStyles.None,
                 CultureInfo.InvariantCulture,
                 out var index)
-            || index < 0
             || raw != index.ToString(CultureInfo.InvariantCulture))
         {
             throw new InvalidOperationException(
