@@ -295,10 +295,8 @@ scenarios:
       request: {method: GET, path: /items}
     expect:
       spans:
-        - match:
-            attributes:
-              url.full: {present: true}
-          expect: {count: 1}
+        - match: {kind: CLIENT}
+          expect: {count: 1, attributes: {url.full: {present: true}}}
       events: []
 ```
 
