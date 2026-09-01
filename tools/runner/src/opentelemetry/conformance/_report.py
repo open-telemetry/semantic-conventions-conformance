@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Iterable, Mapping, cast
 
+from ._spans import span_kind
+
 if TYPE_CHECKING:
     from ._spec import PackageSpec, ScenarioSpec
 
@@ -132,8 +134,7 @@ def collect_findings(document: object) -> set[Finding]:
 def finding_list(findings: Iterable[Finding]) -> list[dict[str, object]]:
     """Findings as a coverage file records them, in a stable committed order."""
     return [
-        finding.as_dict()
-        for finding in sorted(findings, key=Finding.sort_key)
+        finding.as_dict() for finding in sorted(findings, key=Finding.sort_key)
     ]
 
 
@@ -215,13 +216,18 @@ def _read_sample(
                     if match.kind is not None:
                         if span_kind(match.kind) != span_kind(kind):
                             continue
-                    if all(attributes.get(attr) == val for attr, val in match.attributes.items()):
+                    if all(
+                        attributes.get(attr) == val
+                        for attr, val in match.attributes.items()
+                    ):
                         span_types = {match.type}
                         break
 
         if span_types is None:
             span_types = classify(
-                str(span.get("name", "")), str(span.get("kind", "")), attributes
+                str(span.get("name", "")),
+                str(span.get("kind", "")),
+                attributes,
             )
 
         for span_type in span_types:
@@ -251,16 +257,6 @@ def _data_point_attributes(metric: _Json) -> set[str]:
         for point in _list(metric.get("data_points"))
         for name in carried_attributes(_mapping(point))
     }
-
-
-def span_kind(kind: str) -> str:
-    """One spelling of a span kind, so two spellings compare equal.
-
-    Weaver reports a kind as ``client``, the protocol names it
-    ``SPAN_KIND_CLIENT``, and a spec writes the ``CLIENT`` of the API. All
-    three mean the same kind, so none of them may decide a match.
-    """
-    return kind.upper().removeprefix("SPAN_KIND_")
 
 
 def carried_attributes(owner: _Json) -> dict[str, object]:

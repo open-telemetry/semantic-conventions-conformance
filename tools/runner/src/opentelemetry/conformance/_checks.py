@@ -12,7 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
-from ._report import carried_attributes, span_kind
+from ._report import carried_attributes
+from ._spans import span_kind
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
