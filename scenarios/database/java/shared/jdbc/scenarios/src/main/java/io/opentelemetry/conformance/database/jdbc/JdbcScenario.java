@@ -45,8 +45,8 @@ public final class JdbcScenario {
   private static void statement(Connection connection, Query operation) throws SQLException {
     try (Statement statement = connection.createStatement();
         ResultSet result = statement.executeQuery(operation.sql())) {
-      if (!result.next()) {
-        throw new IllegalStateException("direct query returned no rows");
+      if (!result.next() || !result.getBoolean(1) || result.wasNull() || result.next()) {
+        throw new IllegalStateException("direct query returned an unexpected result");
       }
     }
   }
