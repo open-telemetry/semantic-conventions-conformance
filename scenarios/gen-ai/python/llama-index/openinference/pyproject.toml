@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
     "llama-index-core==0.14.24",
-    "llama-index-llms-openai==0.7.10",
+    "llama-index-llms-openai==0.8.0",
     # The instrumentation declares this among its instruments, and zero-code
     # skips an instrumentation whose dependencies are not met. Nothing here
     # imports it, so its own cap on the LLM binding is overridden below.
