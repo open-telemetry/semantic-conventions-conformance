@@ -27,10 +27,10 @@ sanitization and summarization coverage grows.
 Each operation is a separate scenario so a missing or malformed span identifies
 the client path that produced it:
 
-| Scenario | JDBC path |
+| Action kind | JDBC path |
 | --- | --- |
-| `statement` | `Statement.executeQuery` |
-| `prepared_statement` | `PreparedStatement.executeQuery` |
+| `query` | `Statement.executeQuery` |
+| `prepared_query` | `PreparedStatement.executeQuery` |
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
