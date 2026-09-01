@@ -6,12 +6,23 @@ requests and the runner checks each request independently.
 
 ## The contract
 
-The document has a contract-level `description` and a `scenarios` list. Each
-scenario has a human-readable `description`, an HTTP-specific `action`, and
-generic telemetry under `expect`:
+The document has a contract-level `description`, a `readiness` exchange, and a
+`scenarios` list. Each scenario has a human-readable `description`, an
+HTTP-specific `action`, and generic telemetry under `expect`. `readiness` has
+the same `description` and `action`, and no `expect`, because nothing measures
+it. Every language helper needs it, so a contract without it fails to load:
 
 ```yaml
 description: Shared HTTP client requests and expected telemetry.
+readiness:
+  description: Checks whether the server is ready.
+  action:
+    request:
+      method: GET
+      path: /health
+    response:
+      status: 200
+      body: '{"ok": true}'
 scenarios:
   - description: Sends a request with a query string.
     action:
@@ -49,8 +60,9 @@ report different native templates. What they share is the concrete traffic
 their routes must answer.
 
 The requests are fixed, so their statuses and response bodies are constants.
-`${requestBody}` in a response inserts the body that arrived. Readiness remains
-outside the measured list as the fixed `GET /health` exchange.
+`${requestBody}` in a response inserts the body that arrived. The `readiness`
+exchange is declared beside the measured `scenarios` rather than in them, so
+`GET /health` is never measured.
 
 ### Server responses are checked centrally
 
