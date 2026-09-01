@@ -113,7 +113,14 @@ class SqlContractTest {
         IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario(-1));
     assertThrows(
         IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario(4));
-    assertThrows(IllegalStateException.class, () -> SqlContract.workload("no_such_backend"));
+  }
+
+  @Test
+  void rejectsABackendWithNoContractOnTheClasspath() {
+    assertTrue(
+        assertThrows(IllegalStateException.class, () -> SqlContract.workload("no_such_backend"))
+            .getMessage()
+            .startsWith("/otel-sql-contracts/no_such_backend.yaml is not on the classpath"));
   }
 
   @Test
