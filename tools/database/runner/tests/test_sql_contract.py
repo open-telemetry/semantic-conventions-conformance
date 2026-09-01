@@ -24,11 +24,14 @@ def _contracts() -> list[tuple[Path, dict[str, object]]]:
     ]
 
 
-def test_runner_supports_every_sql_contract_backend() -> None:
+def test_sql_contract_metadata_matches_its_resource_and_runner() -> None:
     for path, document in _contracts():
+        assert set(document) == {"backend", "description", "scenarios"}
         backend = document["backend"]
         assert backend == path.stem
         assert backend in _BACKENDS
+        assert isinstance(document["description"], str)
+        assert document["description"]
 
 
 def test_sql_scenarios_combine_actions_and_expectations() -> None:
