@@ -25,11 +25,13 @@ def _contracts() -> list[tuple[Path, dict[str, object]]]:
 
 
 def test_sql_contract_metadata_matches_its_resource_and_runner() -> None:
-    for path, document in _contracts():
+    contracts = _contracts()
+    assert {path.stem for path, _ in contracts} == set(_BACKENDS)
+
+    for path, document in contracts:
         assert set(document) == {"backend", "description", "scenarios"}
         backend = document["backend"]
         assert backend == path.stem
-        assert backend in _BACKENDS
         assert isinstance(document["description"], str)
         assert document["description"]
 
