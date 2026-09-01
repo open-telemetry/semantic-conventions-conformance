@@ -314,6 +314,9 @@ The command reads that index to select the same action. Reports use stable
 zero-padded ordinal filenames, while CLI and pytest output prefix `description`
 with its index; repeated descriptions do not merge entries.
 
+`--scenario` takes the zero-padded ordinal, not the displayed label. To run the
+first entry above, pass `--scenario 0000` rather than `[0] Sends one request.`.
+
 `env` configures the scenario process. The real process environment wins over
 it, so exporting a real key and base URL points a scenario at a real provider
 instead of a mock. What the runner injects — the OTLP endpoint, the server URL
