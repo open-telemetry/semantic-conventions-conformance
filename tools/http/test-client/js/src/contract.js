@@ -100,6 +100,9 @@ function requests() {
 
 /** The one request selected by the runner's zero-based contract index. */
 function scenarioRequest(index = process.env[SCENARIO_INDEX_VARIABLE]) {
+  if (index === undefined) {
+    throw new Error(`${SCENARIO_INDEX_VARIABLE} is not set`);
+  }
   if (typeof index === "number") {
     index = String(index);
   }

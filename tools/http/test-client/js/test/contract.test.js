@@ -8,6 +8,7 @@ const { describe, it } = require("node:test");
 
 const {
   ContractError,
+  SCENARIO_INDEX_VARIABLE,
   exchangeFor,
   exchanges,
   renderResponseBody,
@@ -33,6 +34,23 @@ describe("the contract", () => {
     });
     assert.throws(() => scenarioRequest(-1), /zero-based decimal/);
     assert.throws(() => scenarioRequest(requests().length), /selects no/);
+  });
+
+  it("says when the scenario index is not set", () => {
+    const previous = process.env[SCENARIO_INDEX_VARIABLE];
+    delete process.env[SCENARIO_INDEX_VARIABLE];
+    try {
+      assert.throws(
+        () => scenarioRequest(),
+        new RegExp(`${SCENARIO_INDEX_VARIABLE} is not set`),
+      );
+    } finally {
+      if (previous === undefined) {
+        delete process.env[SCENARIO_INDEX_VARIABLE];
+      } else {
+        process.env[SCENARIO_INDEX_VARIABLE] = previous;
+      }
+    }
   });
 
   // Parsed, not compared as text: whitespace and key order are a language's
