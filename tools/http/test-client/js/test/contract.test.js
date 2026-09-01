@@ -7,6 +7,7 @@ const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
 const {
+  ContractError,
   exchangeFor,
   exchanges,
   renderResponseBody,
@@ -47,7 +48,9 @@ describe("the contract", () => {
 
     assert.throws(
       () => verify(users, users.status, "<html>"),
-      /did not return the expected JSON/,
+      (error) =>
+        error instanceof ContractError &&
+        /did not return the expected JSON/.test(error.message),
     );
   });
 

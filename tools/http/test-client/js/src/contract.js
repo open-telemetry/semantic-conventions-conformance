@@ -17,6 +17,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const YAML = require("yaml");
+const { ContractError } = require("./contract-error");
 
 /** Every route answers JSON, so a scenario has one content type rather than a rule per route. */
 const CONTENT_TYPE = "application/json";
@@ -145,7 +146,7 @@ function renderResponseBody(exchange, requestBody) {
 /** Check one answer against the request's expected status and JSON body. */
 function verify(exchange, status, body) {
   if (status !== exchange.status) {
-    throw new Error(
+    throw new ContractError(
       `${exchange.method} ${exchange.path} answered ${status}, ` +
         `expected ${exchange.status}`,
     );
@@ -156,13 +157,13 @@ function verify(exchange, status, body) {
     actual = JSON.parse(body);
     expected = JSON.parse(renderResponseBody(exchange, exchange.body));
   } catch (error) {
-    throw new Error(
+    throw new ContractError(
       `${exchange.method} ${exchange.path} did not return the expected JSON`,
       { cause: error },
     );
   }
   if (!require("node:util").isDeepStrictEqual(actual, expected)) {
-    throw new Error(
+    throw new ContractError(
       `${exchange.method} ${exchange.path} answered ${JSON.stringify(actual)}, ` +
         `expected ${JSON.stringify(expected)}`,
     );
