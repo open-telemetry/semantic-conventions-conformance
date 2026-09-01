@@ -202,6 +202,7 @@ scenario_run: python client.py
     ("contract", "package", "message"),
     [
         ("scenarios: []", "scenario_run: run", "declares no scenarios"),
+        ("[]", "scenario_run: run", "expected a mapping"),
         (
             "scenarios:\n  - description: test\n    action: {}\n    expect: {}",
             "scenario_run: run",

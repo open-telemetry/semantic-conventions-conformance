@@ -654,9 +654,10 @@ def load_spec(directory: Path) -> PackageSpec:
             str(path),
         )
     contract_scenario_declarations = (
-        _require_mapping(contract_document or {}, str(contract_path)).get(
-            "scenarios"
-        )
+        _require_mapping(
+            contract_document if contract_document is not None else {},
+            str(contract_path),
+        ).get("scenarios")
         if contract_path is not None
         else None
     )
