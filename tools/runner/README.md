@@ -265,9 +265,9 @@ key you write is checked exactly: nothing missing, nothing extra, including
 when empty — `events: []` means "emits no events".
 
 Several implementations can share telemetry expectations while keeping their
-commands and configuration local. A named contract has a `scenarios` mapping;
-each scenario may declare `spans`, `metrics` and `events`, but not `run` or
-environment:
+commands and configuration local. A named contract's only top-level key is
+`scenarios`; each scenario may declare `spans`, `metrics` and `events`, but not
+`run` or environment:
 
 ```yaml
 scenario_contract: ../../contracts/http-client.yaml
