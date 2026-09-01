@@ -12,7 +12,7 @@ env:
   OTEL_INSTRUMENTATION_TOMCAT_ENABLED: "false"
 
 weaver:
-  config: ../../../weaver.toml
+  config: ../../../../../../tools/java/weaver.toml
 
 setup: otel-conformance-java prepare servlet:opentelemetry-javaagent
 

@@ -142,6 +142,7 @@ class SessionFactory(Protocol):
         server: ServerSpec | None = ...,
         env: Mapping[str, str] | None = ...,
         build_data: Callable[[Path, PackageSpec], object] = ...,
+        spec: PackageSpec | None = ...,
     ) -> AbstractContextManager[ConformanceSession]: ...
 
 
@@ -436,6 +437,7 @@ def conformance_session(
     server: ServerSpec | None = None,
     env: Mapping[str, str] | None = None,
     build_data: Callable[[Path, PackageSpec], object] = coverage,
+    spec: PackageSpec | None = None,
 ) -> Generator[ConformanceSession, None, None]:
     """Open a session over the conformance directory at ``directory``.
 
@@ -458,7 +460,7 @@ def conformance_session(
     plus the metrics and events the run produced.
     """
     check_weaver()
-    spec = load_spec(Path(directory))
+    spec = spec or load_spec(Path(directory))
     reports = (
         Path(report_dir)
         if report_dir is not None
