@@ -71,9 +71,12 @@ def test_sql_scenarios_are_wired_by_every_matching_package() -> None:
             assert "scenarios" not in package, path
 
             spec = load_spec(path.parent)
+            loaded_scenarios = sorted(
+                spec.scenarios.values(), key=lambda scenario: scenario.index
+            )
             assert [
-                scenario.index for scenario in spec.scenarios.values()
+                scenario.index for scenario in loaded_scenarios
             ] == list(range(len(scenarios))), path
             assert [
-                scenario.description for scenario in spec.scenarios.values()
+                scenario.description for scenario in loaded_scenarios
             ] == [scenario["description"] for scenario in scenarios], path
