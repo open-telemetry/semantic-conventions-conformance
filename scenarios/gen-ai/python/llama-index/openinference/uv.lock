@@ -892,7 +892,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "llama-index-core", specifier = "==0.14.24" },
-    { name = "llama-index-llms-openai", specifier = "==0.7.10" },
+    { name = "llama-index-llms-openai", specifier = "==0.8.0" },
     { name = "llama-index-multi-modal-llms-openai", specifier = "==0.6.2" },
     { name = "openinference-instrumentation-llama-index", specifier = "==4.4.8" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },

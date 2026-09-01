@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "autogen-agentchat==0.7.5",
     "autogen-ext[openai]==0.7.5",
-    "openinference-instrumentation-autogen-agentchat==0.1.11",
+    "openinference-instrumentation-autogen-agentchat==0.1.14",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.44.0",

@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
     "mistralai==2.9.4",
-    "openinference-instrumentation-mistralai==2.1.0",
+    "openinference-instrumentation-mistralai==2.1.3",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.44.0",

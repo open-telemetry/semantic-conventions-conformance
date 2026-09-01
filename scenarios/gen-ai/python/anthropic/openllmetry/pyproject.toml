@@ -3,7 +3,7 @@ name = "anthropic-openllmetry-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "anthropic==0.122.0",
+    "anthropic==0.125.0",
     "opentelemetry-instrumentation-anthropic==0.62.3",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",

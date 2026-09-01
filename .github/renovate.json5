@@ -93,6 +93,28 @@
         "opentelemetry-util-genai"
       ],
       "ignoreUnstable": false
+    },
+    {
+      // requires-python specifies the supported Python version for a project,
+      // not a dependency to bump to the newest minor.
+      "matchPackageNames": ["python"],
+      "matchDepTypes": ["requires-python"],
+      "enabled": false
+    },
+    {
+      // google-adk and crewai cap opentelemetry-sdk below 1.43, so keep
+      // their core SDK packages pinned.
+      "matchFileNames": [
+        "scenarios/gen-ai/python/google-adk/**",
+        "scenarios/gen-ai/python/crewai/**"
+      ],
+      "matchPackageNames": [
+        "opentelemetry-api",
+        "opentelemetry-sdk",
+        "opentelemetry-exporter-otlp-proto-grpc",
+        "opentelemetry-distro"
+      ],
+      "enabled": false
     }
   ],
   "customManagers": [
