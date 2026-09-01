@@ -32,6 +32,9 @@ tasks.processResources {
     from(contracts) {
         into("otel-sql-contracts")
     }
+}
+
+tasks.processTestResources {
     from(generateContractIndex) {
         into("otel-sql-contracts")
         rename { "index.txt" }
