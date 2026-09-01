@@ -19,6 +19,8 @@ import yaml
 
 SPEC_FILE = "conformance.yaml"
 _SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
+
+
 class SpecError(ValueError):
     """The package's ``conformance.yaml`` is invalid."""
 
@@ -517,7 +519,9 @@ def _load_scenario_contract(
     if not path.is_file():
         raise SpecError(f"{path} not found")
 
-    return path, yaml.safe_load(path.read_text(encoding="utf-8"))
+    return path, cast(
+        "object", yaml.safe_load(path.read_text(encoding="utf-8"))
+    )
 
 
 def _named_contract_scenarios(
@@ -660,7 +664,7 @@ def load_spec(directory: Path) -> PackageSpec:
             )
         assert contract_path is not None
         parsed_scenarios = _list_contract_scenarios(
-            contract_document,
+            cast("object", contract_document),
             contract_path,
             _parse_command(document["scenario_run"], f"{path}.scenario_run"),
             directory,
@@ -671,7 +675,7 @@ def load_spec(directory: Path) -> PackageSpec:
             raise SpecError(
                 f"{path}: scenario_run requires a scenario-list contract"
             )
-        contract_scenarios = (
+        contract_scenarios: Mapping[str, object] = (
             _named_contract_scenarios(contract_document, contract_path)
             if contract_path is not None
             else {}

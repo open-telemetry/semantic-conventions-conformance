@@ -347,26 +347,13 @@ def verify(exchange: Exchange, status: int, response: str) -> None:
             f"{exchange.method} {exchange.path} answered {response[:200]!r}, "
             "which is not the JSON the contract's request describes"
         ) from error
-    if not _same_json(got, want):
+    if json.dumps(got, sort_keys=True, separators=(",", ":")) != json.dumps(
+        want, sort_keys=True, separators=(",", ":")
+    ):
         raise ContractError(
             f"{exchange.method} {exchange.path} answered {got!r}, but the "
             f"contract's request answers {want!r}"
         )
-
-
-def _same_json(got: object, want: object) -> bool:
-    if type(got) is not type(want):
-        return False
-    if isinstance(got, dict) and isinstance(want, dict):
-        return got.keys() == want.keys() and all(
-            _same_json(got[key], want[key]) for key in got
-        )
-    if isinstance(got, list) and isinstance(want, list):
-        return len(got) == len(want) and all(
-            _same_json(got_item, want_item)
-            for got_item, want_item in zip(got, want, strict=True)
-        )
-    return got == want
 
 
 def wait_for_port(

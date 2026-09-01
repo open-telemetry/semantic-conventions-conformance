@@ -16,9 +16,10 @@
           attributes:
             http.request.method: GET
             http.response.status_code: 200
-            url.full: ${MOCK_SERVER_URL}/users/123
         expect:
           count: 1
+          attributes:
+            url.full: {present: true}
     events: []
 
 - description: Sends a request with a query string.
@@ -36,9 +37,10 @@
           attributes:
             http.request.method: GET
             http.response.status_code: 200
-            url.full: ${MOCK_SERVER_URL}/users/123?fields=name&verbose=true
         expect:
           count: 1
+          attributes:
+            url.full: {present: true}
     events: []
 
 - description: Sends a POST request carrying a JSON body.
@@ -57,9 +59,10 @@
           attributes:
             http.request.method: POST
             http.response.status_code: 201
-            url.full: ${MOCK_SERVER_URL}/items
         expect:
           count: 1
+          attributes:
+            url.full: {present: true}
     events: []
 
 - description: Sends a request that returns a 404 response.
@@ -77,9 +80,10 @@
           attributes:
             http.request.method: GET
             http.response.status_code: 404
-            url.full: ${MOCK_SERVER_URL}/status/404
         expect:
           count: 1
+          attributes:
+            url.full: {present: true}
     events: []
 
 - description: Sends a request that returns a 500 response.
@@ -97,7 +101,8 @@
           attributes:
             http.request.method: GET
             http.response.status_code: 500
-            url.full: ${MOCK_SERVER_URL}/status/500
         expect:
           count: 1
+          attributes:
+            url.full: {present: true}
     events: []

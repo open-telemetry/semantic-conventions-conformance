@@ -65,23 +65,21 @@ class ConformanceFile(pytest.File):
         except SpecError as error:
             raise pytest.Collector.CollectError(str(error)) from error
         for name, scenario in declared.items():
-            yield ConformanceItem.from_parent(  # pyright: ignore[reportUnknownMemberType]
-                self,
-                name=scenario.display_name,
-                scenario_name=name,
+            item = ConformanceItem.from_parent(  # pyright: ignore[reportUnknownMemberType]
+                self, name=scenario.display_name
             )
+            item.scenario_name = name
+            yield item
 
 
 class ConformanceItem(pytest.Item):
     """One scenario, run under its own live-check."""
 
-    def __init__(self, *args: Any, scenario_name: str, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self._scenario_name = scenario_name
+    scenario_name: str
 
     def runtest(self) -> None:
         session = _session_for(self.config, self.path.parent)
-        report = session.run(self._scenario_name)
+        report = session.run(self.scenario_name)
         problems = [*report.failures, *report.violations]
         if problems:
             raise ConformanceFailure("\n".join(problems))

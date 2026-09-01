@@ -15,9 +15,8 @@ import java.time.Duration;
  * the library under test. A server scenario is driven from outside its own process by {@code
  * otel-http-drive} and never sends anything.
  *
- * <p>The shared telemetry contract checks what these requests emit. Response correctness is checked
- * centrally when the same traffic drives a server scenario, not reimplemented by each client
- * language.
+ * <p>The shared telemetry contract checks what this request emits. The helper also verifies the
+ * response against the selected contract entry.
  */
 public final class HttpClientWorkload {
 

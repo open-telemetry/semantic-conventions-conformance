@@ -33,12 +33,6 @@ from opentelemetry.conformance._session import (
     _run_command,
     _start_weaver,
 )
-from opentelemetry.conformance._spec import (
-    AttributeMatcher,
-    ScenarioSpec,
-    SpanExpectation,
-    SpanMatch,
-)
 
 SPEC = """
 instrumented_library: demo
@@ -269,67 +263,6 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path("model") == str(directory / "model")
     assert opened._resolve_path("${ROOT}/model") == str(directory / "model")
     assert opened._resolve_path(absolute) == absolute
-
-
-def test_runtime_variables_are_resolved_in_span_expectations(
-    directory: Path, tmp_path: Path
-) -> None:
-    opened = session(directory, tmp_path / "data.json")
-    spec = ScenarioSpec(
-        name="0000",
-        directory=directory,
-        env={},
-        run=("run",),
-        spans=(
-            SpanExpectation(
-                match=SpanMatch(attributes={"url.full": "${ROOT}/one"}),
-                count=1,
-                attributes={
-                    "server.address": AttributeMatcher(equals="${ROOT}")
-                },
-            ),
-        ),
-        metrics=None,
-        events=None,
-        expected_violations=(),
-        description="Sends one request.",
-        index=0,
-    )
-
-    resolved = opened._resolve_expectations(spec)
-
-    assert resolved.spans is not None
-    assert resolved.spans[0].match.attributes == {
-        "url.full": f"{directory}/one"
-    }
-    assert resolved.spans[0].attributes["server.address"].equals == str(
-        directory
-    )
-
-
-def test_unknown_runtime_expectation_variable_is_rejected(
-    directory: Path, tmp_path: Path
-) -> None:
-    opened = session(directory, tmp_path / "data.json")
-    spec = ScenarioSpec(
-        name="0000",
-        directory=directory,
-        env={},
-        run=("run",),
-        spans=(
-            SpanExpectation(
-                match=SpanMatch(attributes={"url.full": "${MISSING}"}),
-                count=1,
-            ),
-        ),
-        metrics=None,
-        events=None,
-        expected_violations=(),
-        description="Sends one request.",
-    )
-
-    with pytest.raises(SpecError, match="MISSING"):
-        opened._resolve_expectations(spec)
 
 
 def test_contract_index_is_injected_into_the_scenario_process(

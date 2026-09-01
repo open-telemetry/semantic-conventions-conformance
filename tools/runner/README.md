@@ -309,9 +309,7 @@ The runner creates one scenario per list entry. Each runs under a fresh weaver
 report with `OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index.
 The command reads that index to select the same action. Reports use stable
 zero-padded ordinal filenames, while CLI and pytest output prefix `description`
-with its index; repeated descriptions do not merge entries. `${NAME}`
-references in span match and attribute values resolve from runtime variables
-such as a server URL. An unknown variable fails instead of weakening the match.
+with its index; repeated descriptions do not merge entries.
 
 `env` configures the scenario process. The real process environment wins over
 it, so exporting a real key and base URL points a scenario at a real provider

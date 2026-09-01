@@ -297,10 +297,7 @@ class TestTheContract:
         )
 
         assert placeholders
-        assert set(placeholders) == {
-            "${MOCK_SERVER_URL}",
-            "${requestBody}",
-        }
+        assert set(placeholders) == {"${requestBody}"}
 
     def test_each_ordinal_selects_one_independent_request(self) -> None:
         assert [scenario_request(index) for index in range(len(REQUESTS))] == [

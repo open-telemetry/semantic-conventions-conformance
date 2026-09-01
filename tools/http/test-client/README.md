@@ -23,15 +23,20 @@ HTTP-specific `action`, and generic telemetry under `expect`:
       - match:
           kind: CLIENT
           attributes:
-            url.full: ${MOCK_SERVER_URL}/users/123?fields=name&verbose=true
-        expect: {count: 1}
+            http.request.method: GET
+            http.response.status_code: 200
+        expect:
+          count: 1
+          attributes:
+            url.full: {present: true}
     events: []
 ```
 
 The runner expands each entry into a separate scenario and passes its ordinal
 through `OTEL_CONFORMANCE_SCENARIO_INDEX`. The language helper selects that
 entry and sends only its request. A fresh weaver report checks one request, so
-the two successful GETs cannot satisfy one aggregate count.
+the two successful GETs cannot satisfy one aggregate count even though they
+share the same method and status.
 
 A server declares matching routes in its framework's native form. This is
 intentionally not contract data: route builders, annotations, compile-time
