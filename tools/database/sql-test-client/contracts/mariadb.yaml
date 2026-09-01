@@ -21,7 +21,8 @@ scenarios:
               db.query.summary: SELECT conformance.items
               db.query.text: SELECT count(*) >= ? FROM conformance.items
               server.address: 127.0.0.1
-              server.port: {present: true}
+              server.port:
+                present: true
       metrics:
         - db.client.operation.duration
         - queueSize
@@ -47,7 +48,8 @@ scenarios:
               db.query.summary: SELECT conformance.items
               db.query.text: SELECT name FROM conformance.items WHERE id = ?
               server.address: 127.0.0.1
-              server.port: {present: true}
+              server.port:
+                present: true
       metrics:
         - db.client.operation.duration
         - queueSize
@@ -69,9 +71,11 @@ scenarios:
             attributes:
               db.namespace: conformance
               db.operation.batch.size: 2
-              db.query.text: {present: true}
+              db.query.text:
+                present: true
               server.address: 127.0.0.1
-              server.port: {present: true}
+              server.port:
+                present: true
       metrics:
         - db.client.operation.duration
         - queueSize
@@ -94,7 +98,8 @@ scenarios:
               db.query.text: CALL conformance.noop()
               db.stored_procedure.name: conformance.noop
               server.address: 127.0.0.1
-              server.port: {present: true}
+              server.port:
+                present: true
       metrics:
         - db.client.operation.duration
         - queueSize
