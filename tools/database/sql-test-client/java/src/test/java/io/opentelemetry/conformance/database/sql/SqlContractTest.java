@@ -42,6 +42,7 @@ class SqlContractTest {
     for (String backend : backends) {
       Workload workload = SqlContract.workload(backend);
       assertEquals(backend, workload.backend());
+      assertFalse(workload.description().isBlank());
       assertFalse(workload.scenarios().isEmpty());
       assertTrue(
           workload.scenarios().stream()
