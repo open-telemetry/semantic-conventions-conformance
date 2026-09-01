@@ -148,6 +148,25 @@ def test_one_session_is_shared_by_a_directory(pytester, scenarios) -> None:
     assert len(opened) == 1, opened
 
 
+def test_collection_and_execution_share_one_loaded_spec(
+    pytester, scenarios, monkeypatch
+) -> None:
+    scenarios()
+    loads: list[Path] = []
+    load_spec = pytest_plugin.load_spec
+
+    def counted_load_spec(directory: Path):
+        loads.append(directory)
+        return load_spec(directory)
+
+    monkeypatch.setattr(pytest_plugin, "load_spec", counted_load_spec)
+
+    result = pytester.runpytest()
+
+    result.assert_outcomes(passed=2)
+    assert len(loads) == 1
+
+
 def test_a_broken_spec_is_a_collection_error(pytester, scenarios) -> None:
     scenarios()
     pytester.makefile(

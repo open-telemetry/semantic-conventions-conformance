@@ -28,13 +28,16 @@ from ._spec import SPEC_FILE, SpecError, load_spec
 
 if TYPE_CHECKING:
     from ._session import ConformanceSession, SessionFactory
+    from ._spec import PackageSpec
 
 _SESSIONS = pytest.StashKey[dict[Path, "ConformanceSession"]]()
+_SPECS = pytest.StashKey[dict[Path, "PackageSpec"]]()
 _STACK = pytest.StashKey[ExitStack]()
 
 
 def pytest_configure(config: pytest.Config) -> None:
     config.stash[_SESSIONS] = {}
+    config.stash[_SPECS] = {}
     config.stash[_STACK] = ExitStack()
 
 
@@ -61,10 +64,11 @@ class ConformanceFile(pytest.File):
 
     def collect(self) -> Any:
         try:
-            declared = load_spec(self.path.parent).scenarios
+            spec = load_spec(self.path.parent)
         except SpecError as error:
             raise pytest.Collector.CollectError(str(error)) from error
-        for name, scenario in declared.items():
+        self.config.stash[_SPECS][self.path.parent] = spec
+        for name, scenario in spec.scenarios.items():
             item = ConformanceItem.from_parent(  # pyright: ignore[reportUnknownMemberType]
                 self, name=scenario.display_name
             )
@@ -114,7 +118,11 @@ def _session_for(config: pytest.Config, directory: Path) -> ConformanceSession:
     except WeaverNotInstalledError as error:
         pytest.skip(str(error))
 
-    spec = load_spec(directory)
+    specs = config.stash[_SPECS]
+    spec = specs.get(directory)
+    if spec is None:
+        spec = load_spec(directory)
+        specs[directory] = spec
     factory: SessionFactory = resolve_runner(directory, spec=spec)
     session = config.stash[_STACK].enter_context(factory(directory, spec=spec))
     sessions[directory] = session
