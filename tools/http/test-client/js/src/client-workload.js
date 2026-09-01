@@ -11,9 +11,9 @@
  * to leave the library under test. A server scenario is driven from outside
  * its own process by `otel-http-drive` and never sends anything.
  *
- * The shared telemetry contract checks what these requests emit. Response
- * correctness is checked centrally when the same traffic drives a server
- * scenario, not reimplemented by each client language.
+ * The shared telemetry contract checks what these requests emit. This helper
+ * also verifies the selected response status and JSON body. Server scenarios
+ * use `otel-http-drive` for the same response checks.
  */
 
 const { scenarioRequest, verify } = require("./contract");

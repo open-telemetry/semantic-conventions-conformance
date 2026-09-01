@@ -11,9 +11,9 @@ namespace OpenTelemetry.Conformance.Http;
 /// library under test. A server scenario is driven from outside its own process by
 /// <c>otel-http-drive</c> and never sends anything.
 /// <para>
-/// The shared telemetry contract checks what these requests emit. Response correctness is checked
-/// centrally when the same traffic drives a server scenario, not reimplemented by each client
-/// language.
+/// The shared telemetry contract checks what these requests emit. This helper also verifies the
+/// selected response status and JSON body. Server scenarios use <c>otel-http-drive</c> for the same
+/// response checks.
 /// </para>
 /// </remarks>
 public static class HttpClientWorkload
