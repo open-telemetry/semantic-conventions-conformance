@@ -44,10 +44,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml flask testcontainers
-          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet
+          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet -e tools/go
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
+        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests tools/go/tests
 
   lint:
     name: Lint
@@ -110,6 +110,19 @@ jobs:
           dotnet build http-dotnet-conformance.slnx
           dotnet test http-dotnet-conformance.slnx --no-build
 
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: scenarios/http/go/go.mod
+
+      # Each directory is a separate Go module, so check and test them
+      # independently.
+      - name: Build Go
+        run: |
+          for module in tools/go tools/http/test-client/go scenarios/http/go; do
+            (cd "$module" && go vet ./... && go test ./...)
+          done
+
   types:
     name: Types
     runs-on: ubuntu-latest
@@ -147,7 +160,8 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/dotnet \
+            -e tools/go
 
       - name: Run pyright
         run: python -m pyright
@@ -321,6 +335,15 @@ jobs:
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
+      # A Go scenario builds itself from source in its `setup:` before it runs,
+      # and a domain's Go scenarios are one module rooted at its own
+      # `scenarios/<domain>/go`, which is where the toolchain is pinned.
+      - name: Set up Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/go.mod
+
       - name: Install weaver
         run: |
           . tools/runner/src/opentelemetry/conformance/versions.env
@@ -345,7 +368,8 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/dotnet \
+            -e tools/go
 
       # Keyed by domain too: a matrix job fetches only the registry its own
       # domain pins, so one key per domain keeps every cache complete.

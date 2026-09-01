@@ -11,8 +11,9 @@ What HTTP instrumentations emit, checked against the
 
 A language that needs a build of its own has a build root directly under this
 one: the version-pinned Gradle build under `java/` and the solution under
-`dotnet/`, both described below, and [`js/`](js/README.md), whose README
-explains the npm workspace it roots.
+`dotnet/`, both described below, plus [`go/`](go/README.md) and
+[`js/`](js/README.md), whose READMEs explain the Go module and the npm
+workspace they root.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
@@ -110,11 +111,13 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js \
-  -e tools/dotnet
+  -e tools/dotnet -e tools/go
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/go/net-http/otelhttp/client
+otel-conformance scenarios/http/go/net-http/otelhttp/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/http/opentelemetry-http/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/server
@@ -155,6 +158,10 @@ scenario directory sits inside the project that produces it, so `build`
 publishes that project and `run` starts what it published from
 `dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
 neither a configuration nor an assembly path.
+
+Go's build root is [`go/`](go), and [`otel-conformance-go`](../../tools/go)
+holds how a Go package is built and started: `setup:` compiles the scenario and
+`run:` is the resulting binary, so the toolchain is not the measured process.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
