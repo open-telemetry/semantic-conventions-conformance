@@ -31,7 +31,8 @@ scenarios:
           expect:
             count: 1
             attributes:
-              url.full: {present: true}
+              url.full:
+                present: true
       events: []
 ```
 

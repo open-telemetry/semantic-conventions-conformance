@@ -34,7 +34,8 @@ scenarios:
           expect:
             count: 1
             attributes:
-              url.full: {present: true}
+              url.full:
+                present: true
       events: []
 
   - description: Sends a request with a query string.
@@ -55,7 +56,8 @@ scenarios:
           expect:
             count: 1
             attributes:
-              url.full: {present: true}
+              url.full:
+                present: true
       events: []
 
   - description: Sends a POST request carrying a JSON body.
@@ -77,7 +79,8 @@ scenarios:
           expect:
             count: 1
             attributes:
-              url.full: {present: true}
+              url.full:
+                present: true
       events: []
 
   - description: Sends a request that returns a 404 response.
@@ -98,7 +101,8 @@ scenarios:
           expect:
             count: 1
             attributes:
-              url.full: {present: true}
+              url.full:
+                present: true
       events: []
 
   - description: Sends a request that returns a 500 response.
@@ -119,5 +123,6 @@ scenarios:
           expect:
             count: 1
             attributes:
-              url.full: {present: true}
+              url.full:
+                present: true
       events: []
