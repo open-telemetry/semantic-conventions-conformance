@@ -95,6 +95,16 @@
     },
     {
       "id": "http_route_not_present",
+      "message": "Server span 'GET /users/456' uses target '/users/456' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /users/456",
+      "context": {
+        "kind": "server",
+        "target": "/users/456"
+      }
+    },
+    {
+      "id": "http_route_not_present",
       "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
       "signal_type": "span",
       "signal_name": "POST /items",

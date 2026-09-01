@@ -30,9 +30,9 @@ public class HttpContractTests
     [Fact]
     public void AQueryStringDoesNotChangeWhichExchangeAnswers()
     {
-        var plain = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
+        var plain = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/456"));
         var withQuery = Assert.IsType<HttpContract.Exchange>(
-            HttpContract.Find("GET", "/users/123?fields=name&verbose=true"));
+            HttpContract.Find("GET", "/users/456?fields=name&verbose=true"));
 
         Assert.Equal(plain.Status, withQuery.Status);
         Assert.Equal(plain.ResponseBody, withQuery.ResponseBody);

@@ -36,9 +36,9 @@ class HttpContractTest {
 
   @Test
   void aQueryStringDoesNotChangeWhichExchangeAnswers() {
-    Exchange plain = HttpContract.exchange("GET", "/users/123").orElseThrow();
+    Exchange plain = HttpContract.exchange("GET", "/users/456").orElseThrow();
     Exchange withQuery =
-        HttpContract.exchange("GET", "/users/123?fields=name&verbose=true").orElseThrow();
+        HttpContract.exchange("GET", "/users/456?fields=name&verbose=true").orElseThrow();
 
     assertEquals(plain.status(), withQuery.status());
     assertEquals(plain.responseBody(), withQuery.responseBody());

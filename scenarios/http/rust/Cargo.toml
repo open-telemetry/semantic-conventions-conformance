@@ -10,6 +10,8 @@ members = [
   "actix-web/scenarios",
   "awc/opentelemetry-actix-web/client",
   "awc/scenarios",
+  "tower/opentelemetry-instrumentation-tower/server",
+  "tower/scenarios",
 ]
 resolver = "2"
 
@@ -21,13 +23,15 @@ rust-version = "1.88.0"
 [workspace.dependencies]
 actix-web = "4.12.1"
 awc = { version = "3.8.2", default-features = false }
+axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio"] }
 opentelemetry = { version = "0.32.0", features = ["trace"] }
 opentelemetry-instrumentation-actix-web = { version = "=0.24.0", features = ["awc", "metrics"] }
+opentelemetry-instrumentation-tower = { version = "=0.18.0", features = ["axum"] }
 opentelemetry-otlp = { version = "0.32.0", default-features = false, features = ["grpc-tonic", "metrics", "trace"] }
 opentelemetry_sdk = { version = "0.32.0", features = ["metrics", "trace"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
-tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.48.0", features = ["macros", "net", "rt-multi-thread", "sync"] }
 
 otel-conformance-http = { path = "../../../tools/http/test-client/rust" }
 otel-conformance-scenario = { path = "../../../tools/rust/scenario" }
