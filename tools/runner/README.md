@@ -297,7 +297,7 @@ scenarios:
       spans:
         - match:
             attributes:
-              url.full: ${MOCK_SERVER_URL}/items
+              url.full: {present: true}
           expect: {count: 1}
       events: []
 ```
