@@ -171,7 +171,7 @@ public static class HttpContract
         var scenarios = document?.Scenarios;
         if (scenarios is null || scenarios.Count == 0)
         {
-            throw new InvalidOperationException($"{ResourceName} is empty");
+            throw new InvalidOperationException($"{ResourceName} declares no scenarios");
         }
 
         if (document?.Readiness is not { } readiness)
