@@ -344,7 +344,7 @@ def test_a_scenario_replaces_only_its_own_report(
     }
 
 
-def test_a_complete_run_removes_only_nested_duplicates(
+def test_a_complete_run_removes_only_immediate_nested_duplicates(
     directory: Path, tmp_path: Path
 ) -> None:
     reports = tmp_path / "reports"
@@ -359,6 +359,10 @@ def test_a_complete_run_removes_only_nested_duplicates(
     nested_stale.write_text("{}")
     nested_unrelated = nested / "metadata.json"
     nested_unrelated.write_text("{}")
+    deep = nested / "unrelated"
+    deep.mkdir()
+    deep_duplicate = deep / "inference.json"
+    deep_duplicate.write_text("{}")
     opened = session(directory, tmp_path / "data.json", report_dir=reports)
     opened._ran.update(opened.spec.scenarios)
 
@@ -367,6 +371,7 @@ def test_a_complete_run_removes_only_nested_duplicates(
     assert not nested_stale.exists()
     assert unrelated.exists()
     assert nested_unrelated.exists()
+    assert deep_duplicate.exists()
 
 
 def test_reports_default_to_inside_the_scenario_directory(
