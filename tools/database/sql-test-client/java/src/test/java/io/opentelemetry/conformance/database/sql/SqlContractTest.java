@@ -115,6 +115,25 @@ class SqlContractTest {
   }
 
   @Test
+  void identifiesBlankScenarioIndexValues() {
+    assertEquals(
+        "OTEL_CONFORMANCE_SCENARIO_INDEX must be a zero-based decimal index, got null",
+        assertThrows(
+                IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", null))
+            .getMessage());
+    assertEquals(
+        "OTEL_CONFORMANCE_SCENARIO_INDEX must be a zero-based decimal index, got \"\"",
+        assertThrows(
+                IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", ""))
+            .getMessage());
+    assertEquals(
+        "OTEL_CONFORMANCE_SCENARIO_INDEX must be a zero-based decimal index, got \" \"",
+        assertThrows(
+                IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", " "))
+            .getMessage());
+  }
+
+  @Test
   void rejectsAScenarioIndexTheRunnerWouldNeverSet() {
     for (String raw : new String[] {null, "", " ", "one", "01", "-1", "1.0", "99999999999"}) {
       assertThrows(
