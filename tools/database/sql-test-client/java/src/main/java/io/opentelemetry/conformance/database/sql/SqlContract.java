@@ -24,6 +24,9 @@ import java.util.stream.IntStream;
  * <p>The build copies each file under {@code tools/database/sql-test-client/contracts} onto the
  * classpath. A backend contract owns its ordered SQL actions and adjacent telemetry expectations.
  * Client adapters only translate the actions into their native APIs.
+ *
+ * <p>Contract parsing is strict. Unknown YAML fields fail loading so every adapter must support a
+ * contract addition before a shared contract uses it.
  */
 public final class SqlContract {
 
