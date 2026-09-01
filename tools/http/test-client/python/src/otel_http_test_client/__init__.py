@@ -220,6 +220,16 @@ def _exchange_for(method: str, path: str) -> Exchange | None:
     return None
 
 
+def _canonical_json(value: object) -> str:
+    """``value`` written so that only its JSON content can differ.
+
+    Sorting keys and dropping insignificant whitespace makes two documents
+    compare equal exactly when they carry the same JSON, and writing them
+    back out keeps ``1`` and ``true`` apart, which Python's ``==`` does not.
+    """
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
 def _carries_the_contracts_body(exchange: Exchange, body: str | None) -> bool:
     """Whether ``body`` is the body the contract's request sends.
 
@@ -230,9 +240,10 @@ def _carries_the_contracts_body(exchange: Exchange, body: str | None) -> bool:
     if exchange.body is None:
         return True
     try:
-        return json.loads(body or "") == json.loads(exchange.body)
+        got, want = json.loads(body or ""), json.loads(exchange.body)
     except json.JSONDecodeError:
         return False
+    return _canonical_json(got) == _canonical_json(want)
 
 
 def respond(
@@ -345,9 +356,7 @@ def verify(exchange: Exchange, status: int, response: str) -> None:
             f"{exchange.method} {exchange.path} answered {response[:200]!r}, "
             "which is not the JSON the contract's request describes"
         ) from error
-    if json.dumps(got, sort_keys=True, separators=(",", ":")) != json.dumps(
-        want, sort_keys=True, separators=(",", ":")
-    ):
+    if _canonical_json(got) != _canonical_json(want):
         raise ContractError(
             f"{exchange.method} {exchange.path} answered {got!r}, but the "
             f"contract's request answers {want!r}"

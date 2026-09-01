@@ -26,6 +26,7 @@ from otel_http_test_client import (
     SCENARIO_INDEX_VARIABLE,
     ContractError,
     Exchange,
+    _carries_the_contracts_body,
     client_headers,
     drive,
     drive_async,
@@ -414,6 +415,25 @@ class TestCheckingTheRequestBody:
 
         assert status == 201
         assert json.loads(body)["payload"] == {"name": "widget"}
+
+    def test_a_number_does_not_stand_in_for_a_boolean(self) -> None:
+        """Python reads ``1`` and ``true`` as equal, and the contract does not.
+
+        No request the contract declares carries a boolean today, so this
+        asks the check itself rather than going through the mock server.
+        """
+        exchange = Exchange(
+            method="POST",
+            path="/items",
+            body='{"created": true}',
+            status=201,
+            response_body="{}",
+            readiness=False,
+            description="a request whose body carries a JSON boolean",
+        )
+
+        assert _carries_the_contracts_body(exchange, '{"created": true}')
+        assert not _carries_the_contracts_body(exchange, '{"created": 1}')
 
     def test_a_request_the_contract_sends_no_body_for_is_answered(
         self,
