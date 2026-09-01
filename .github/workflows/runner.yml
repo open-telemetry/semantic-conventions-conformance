@@ -44,10 +44,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pyyaml flask testcontainers
-          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet
+          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet -e tools/php
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
+        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests tools/php/tests
 
   lint:
     name: Lint
@@ -110,6 +110,29 @@ jobs:
           dotnet build http-dotnet-conformance.slnx
           dotnet test http-dotnet-conformance.slnx --no-build
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.4"
+          extensions: opentelemetry, grpc, protobuf
+          coverage: none
+
+      - name: Build PHP
+        run: |
+          composer --working-dir tools/http/test-client/php validate --strict
+          composer --working-dir tools/http/test-client/php install --no-interaction --no-progress
+          composer --working-dir tools/http/test-client/php test
+          composer --working-dir tools/php/scenario validate --strict
+          composer --working-dir tools/php/scenario install --no-interaction --no-progress
+          composer --working-dir tools/php/scenario test
+          composer --working-dir scenarios/http/php/slim/opentelemetry-slim validate --strict
+          composer --working-dir scenarios/http/php/slim/opentelemetry-slim install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/guzzle/opentelemetry-guzzle validate --strict
+          composer --working-dir scenarios/http/php/guzzle/opentelemetry-guzzle install --no-interaction --no-progress
+          find tools/http/test-client/php tools/php/scenario scenarios/http/php \
+            -path '*/vendor' -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
   types:
     name: Types
     runs-on: ubuntu-latest
@@ -147,7 +170,8 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/dotnet \
+            -e tools/php
 
       - name: Run pyright
         run: python -m pyright
@@ -321,6 +345,14 @@ jobs:
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
+      - name: Set up PHP
+        if: matrix.language == 'php'
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.4"
+          extensions: opentelemetry, grpc, protobuf
+          coverage: none
+
       - name: Install weaver
         run: |
           . tools/runner/src/opentelemetry/conformance/versions.env
@@ -345,7 +377,8 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/dotnet \
+            -e tools/php
 
       # Keyed by domain too: a matrix job fetches only the registry its own
       # domain pins, so one key per domain keeps every cache complete.

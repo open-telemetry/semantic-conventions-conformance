@@ -55,6 +55,12 @@
       "groupName": "python-minor"
     },
     {
+      // group all non-major PHP dependency updates into a single PR
+      "matchManagers": ["composer"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "php-minor"
+    },
+    {
       // Everything under this Maven group ships only `-alpha` versions, so
       // Renovate's default of skipping unstable versions would never update it.
       "matchPackageNames": [

@@ -17,6 +17,7 @@ command rather than as the runner's ``server:``.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import signal
 import subprocess
@@ -99,10 +100,29 @@ def _serve_and_drive(command: Sequence[str]) -> int:
         _wait_for_start(process, port, base_url, command)
         drive(base_url)
     except BaseException:
-        _kill_tree(process)
+        try:
+            _stop_after_error(process)
+        except Exception:
+            with contextlib.suppress(Exception):
+                _kill_tree(process)
         raise
 
     return _stop(process)
+
+
+def _stop_after_error(process: subprocess.Popen[bytes]) -> None:
+    """Deliver the EOF protocol before force-killing a failed scenario.
+
+    The same allowance as a run that succeeded: a failed run is the one whose
+    telemetry has to explain the failure, so the scenario gets as long to
+    export it here as it would have got there.
+    """
+    if process.stdin is not None:
+        process.stdin.close()
+    try:
+        process.wait(timeout=_SHUTDOWN_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        _kill_tree(process)
 
 
 def _kill_tree(process: subprocess.Popen[bytes]) -> None:

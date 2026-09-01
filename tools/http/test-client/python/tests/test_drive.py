@@ -531,6 +531,69 @@ class TestDrivingAServerScenario:
         assert completed.returncode != 0
         assert "ContractError" in completed.stderr
 
+    def test_an_error_delivers_eof_before_force_killing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        events: list[str] = []
+
+        class Input:
+            def close(self) -> None:
+                events.append("closed")
+
+        class Process:
+            stdin = Input()
+
+            def wait(self, *, timeout: float) -> int:
+                events.append(f"waited {timeout}")
+                return 0
+
+        monkeypatch.setattr(driver, "_SHUTDOWN_TIMEOUT_SECONDS", 3)
+
+        driver._stop_after_error(Process())  # type: ignore[arg-type]
+
+        assert events == ["closed", "waited 3"]
+
+    def test_cleanup_failure_does_not_mask_the_original_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class Reservation:
+            def close(self) -> None:
+                pass
+
+        original = RuntimeError("startup failed")
+        process = object()
+        cleanup: list[str] = []
+
+        def stop_after_error(received: object) -> None:
+            assert received is process
+            cleanup.append("stop")
+            raise OSError("cleanup failed")
+
+        def kill_tree(received: object) -> None:
+            assert received is process
+            cleanup.append("kill")
+            raise ValueError("fallback failed")
+
+        monkeypatch.setattr(
+            driver, "reserve_port", lambda: (1234, Reservation())
+        )
+        monkeypatch.setattr(
+            driver.subprocess, "Popen", lambda *_args, **_kwargs: process
+        )
+        monkeypatch.setattr(
+            driver,
+            "_wait_for_start",
+            lambda *_args: (_ for _ in ()).throw(original),
+        )
+        monkeypatch.setattr(driver, "_stop_after_error", stop_after_error)
+        monkeypatch.setattr(driver, "_kill_tree", kill_tree)
+
+        with pytest.raises(RuntimeError, match="startup failed") as raised:
+            driver._serve_and_drive(["scenario"])
+
+        assert raised.value is original
+        assert cleanup == ["stop", "kill"]
+
 
 @pytest.mark.skipif(
     sys.platform == "win32",

@@ -1,0 +1,24 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: guzzle
+instrumentation_library: open-telemetry/opentelemetry-auto-guzzle
+
+env:
+  OTEL_PHP_AUTOLOAD_ENABLED: "true"
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: none
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+setup: otel-conformance-php install
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    # Guzzle reports 4xx and 5xx as responses because the workload disables
+    # http_errors; both statuses are measured and checked like every other.
+    run: php ../client.php
