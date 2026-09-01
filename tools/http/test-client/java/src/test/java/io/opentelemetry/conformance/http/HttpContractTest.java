@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
+import io.opentelemetry.conformance.http.HttpContract.Response;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +44,15 @@ class HttpContractTest {
     assertThrows(IllegalArgumentException.class, () -> HttpContract.request(-1));
     assertThrows(
         IllegalArgumentException.class, () -> HttpContract.request(HttpContract.requests().size()));
+  }
+
+  @Test
+  void aBlankResponseFailsCleanly() {
+    Exchange exchange = HttpContract.request(0);
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> HttpContract.verify(exchange, new Response(exchange.status(), " ")));
   }
 
   @Test

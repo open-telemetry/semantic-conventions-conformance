@@ -155,8 +155,8 @@ public final class HttpContract {
               + exchange.status());
     }
     try {
-      if (!JSON.readTree(response.body())
-          .equals(JSON.readTree(exchange.renderResponseBody(exchange.body())))) {
+      if (!JSON.readTree(exchange.renderResponseBody(exchange.body()))
+          .equals(JSON.readTree(response.body()))) {
         throw new IllegalStateException(
             exchange.method() + " " + exchange.path() + " returned an unexpected JSON body");
       }
