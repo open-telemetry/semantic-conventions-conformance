@@ -344,26 +344,29 @@ def test_a_scenario_replaces_only_its_own_report(
     }
 
 
-def test_a_complete_run_removes_reports_for_deleted_scenarios(
+def test_a_complete_run_removes_only_nested_duplicates(
     directory: Path, tmp_path: Path
 ) -> None:
     reports = tmp_path / "reports"
     reports.mkdir()
     (reports / "inference.json").write_text("{}")
     (reports / "tool_calling.json").write_text("{}")
-    stale = reports / "deleted.json"
-    stale.write_text("{}")
+    unrelated = reports / "metadata.json"
+    unrelated.write_text("{}")
     nested = reports / "old"
     nested.mkdir()
     nested_stale = nested / "inference.json"
     nested_stale.write_text("{}")
+    nested_unrelated = nested / "metadata.json"
+    nested_unrelated.write_text("{}")
     opened = session(directory, tmp_path / "data.json", report_dir=reports)
     opened._ran.update(opened.spec.scenarios)
 
     opened.close()
 
-    assert not stale.exists()
     assert not nested_stale.exists()
+    assert unrelated.exists()
+    assert nested_unrelated.exists()
 
 
 def test_reports_default_to_inside_the_scenario_directory(
