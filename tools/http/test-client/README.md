@@ -90,3 +90,8 @@ answers, and none needs an HTTP client of its own beyond the one under test.
   `HttpClientWorkload.DriveAsync` sends the requests through a caller-supplied
   sender. The build embeds `contract.json` as a manifest resource, and its unit
   tests drive both halves against each other.
+- [`ruby/`](ruby) — `OpenTelemetry::Conformance::HTTP` reads the file,
+  `respond` looks up answers for any Ruby framework, and `drive` sends the
+  requests through a caller-supplied sender. A scenario depends on it by path,
+  so it reads `contract.json` where it sits, and its unit tests drive both
+  halves against each other.

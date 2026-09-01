@@ -84,6 +84,20 @@ it. In Python, `uv run --project .` syncs a `.venv` beside the directory's
 run: uv run --project . opentelemetry-instrument python inference.py
 ```
 
+The runner uses OTLP/gRPC unless the package selects OTLP/HTTP protobuf:
+
+```yaml
+otlp_protocol: http/protobuf
+```
+
+The only accepted values are `grpc` and `http/protobuf`. The runner sets
+`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_PROTOCOL`, and removes
+their traces, metrics, and logs counterparts from the scenario process
+environment. For HTTP, SDK exporters append their standard `/v1/traces`,
+`/v1/metrics`, and `/v1/logs` paths to the local bridge endpoint.
+The bridge is temporary while
+[Weaver does not accept OTLP/HTTP directly](https://github.com/open-telemetry/weaver/issues/1563).
+
 Installing into whatever environment happened to be active instead — the
 runner's own, say — puts every implementation in one environment, which is
 exactly the case above.

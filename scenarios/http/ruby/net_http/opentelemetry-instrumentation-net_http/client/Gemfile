@@ -1,0 +1,21 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+source "https://rubygems.org"
+
+ruby ">= 3.4", "< 3.5"
+
+gem "bigdecimal", "3.1.8"
+gem "opentelemetry-exporter-otlp", "0.34.1"
+gem "opentelemetry-instrumentation-net_http", "0.29.0"
+gem "opentelemetry-sdk", "1.13.0"
+
+gem "opentelemetry-conformance-http",
+    path: "../../../../../../tools/http/test-client/ruby"
+gem "otel-conformance-scenario-sdk",
+    path: "../../../../../../tools/ruby/scenario-sdk"
+gem "otel-conformance-scenario-support",
+    path: "../../../../../../tools/ruby/scenario-support"
+
+gem "minitest", "~> 5.0"
+gem "rake", "~> 13.0"

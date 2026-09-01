@@ -36,6 +36,7 @@ from ._env import (
     build_env,
     timeout_seconds,
 )
+from ._otlp_http import OtlpHttpBridge
 from ._registry import check_weaver
 from ._server import Server
 from ._spec import (
@@ -60,6 +61,11 @@ _WEAVER_INACTIVITY_TIMEOUT = (
 )
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
+_OTLP_SIGNAL_ENV = tuple(
+    f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
+    for signal in ("TRACES", "METRICS", "LOGS")
+    for setting in ("ENDPOINT", "PROTOCOL")
+)
 
 # Both relative to the conformance directory. The raw reports are throwaway;
 # the data file is meant to be committed and diffed.
@@ -231,7 +237,11 @@ class ConformanceSession:
             _quiet_connection_retries(),
             _start_weaver(start_weaver) as weaver,
         ):
-            completed = self._execute(scenario, weaver.otlp_endpoint)
+            if self._spec.otlp_protocol == "http/protobuf":
+                with OtlpHttpBridge(weaver.otlp_endpoint) as bridge:
+                    completed = self._execute(scenario, bridge.url)
+            else:
+                completed = self._execute(scenario, weaver.otlp_endpoint)
             report = weaver.end(
                 timeout=int(timeout_seconds(*_WEAVER_STOP_TIMEOUT))
             )
@@ -276,19 +286,22 @@ class ConformanceSession:
     def _execute(
         self, scenario: ScenarioSpec, otlp_endpoint: str
     ) -> subprocess.CompletedProcess[str]:
+        env = self._env(
+            scenario.env,
+            {
+                "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
+                "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
+                "OTEL_METRIC_EXPORT_INTERVAL": str(
+                    METRIC_EXPORT_INTERVAL_MILLIS
+                ),
+            },
+        )
+        for variable in _OTLP_SIGNAL_ENV:
+            env.pop(variable, None)
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
-            env=self._env(
-                scenario.env,
-                {
-                    "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-                    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
-                    "OTEL_METRIC_EXPORT_INTERVAL": str(
-                        METRIC_EXPORT_INTERVAL_MILLIS
-                    ),
-                },
-            ),
+            env=env,
         )
 
     def _env(

@@ -43,11 +43,11 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pyyaml flask testcontainers
-          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet
+          python -m pip install pytest pyyaml flask grpcio opentelemetry-proto testcontainers
+          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/ruby -e tools/dotnet
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
+        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests
 
   lint:
     name: Lint
@@ -93,6 +93,32 @@ jobs:
           npm --prefix scenarios/http/js ci
           npm --prefix scenarios/http/js run format:check
           npm --prefix scenarios/http/js test
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: tools/http/test-client/ruby
+
+      - name: Test Ruby
+        working-directory: tools/http/test-client/ruby
+        run: |
+          bundle exec rake
+          bundle exec ruby -I../../../ruby/scenario-support/lib ../../../ruby/scenario-support/test/scenario_support_test.rb
+          bundle exec ruby -I../../../ruby/scenario-support/lib -I../../../ruby/scenario-sdk/lib ../../../ruby/scenario-sdk/test/scenario_sdk_test.rb
+
+      - name: Test Ruby Net::HTTP scenario
+        working-directory: scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_http/client
+        run: |
+          bundle install
+          bundle exec rake
+
+      - name: Test Ruby Rack scenario
+        working-directory: scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server
+        run: |
+          bundle install
+          bundle exec rake
 
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
@@ -147,6 +173,7 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
+            -e tools/ruby \
             -e tools/dotnet
 
       - name: Run pyright
@@ -245,14 +272,26 @@ jobs:
                 split("\n") |
                 map(
                   select(length > 0) |
-                  split("/") |
-                  if length < 4 then
-                    error("unexpected conformance scenario path: " + join("/"))
+                  split("/") as $parts |
+                  if ($parts | length) < 4 then
+                    error("unexpected conformance scenario path: " + ($parts | join("/")))
+                  elif $parts[2] == "ruby" then
+                    {
+                      domain: $parts[1],
+                      language: $parts[2],
+                      matrix_id: ($parts[1:-1] | join("-")),
+                      scenario_root: ($parts[0:-1] | join("/"))
+                    }
                   else
-                    {domain: .[1], language: .[2]}
+                    {
+                      domain: $parts[1],
+                      language: $parts[2],
+                      matrix_id: ($parts[1:3] | join("-")),
+                      scenario_root: ($parts[0:3] | join("/"))
+                    }
                   end
                 ) |
-                unique |
+                unique_by(.scenario_root) |
                 {include: .}
               '
           )"
@@ -260,13 +299,13 @@ jobs:
 
   scenarios:
     needs: discover-scenarios
-    name: Scenarios (${{ matrix.domain }}, ${{ matrix.language }})
+    name: Scenarios (${{ matrix.matrix_id }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      SCENARIO_ROOT: scenarios/${{ matrix.domain }}/${{ matrix.language }}
+      SCENARIO_ROOT: ${{ matrix.scenario_root }}
     concurrency:
-      group: ${{ github.workflow }}-scenarios-${{ matrix.domain }}-${{ matrix.language }}-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ github.workflow }}-scenarios-${{ matrix.matrix_id }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -321,6 +360,14 @@ jobs:
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
+      - name: Set up Ruby
+        if: matrix.language == 'ruby'
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: ${{ matrix.scenario_root }}
+
       - name: Install weaver
         run: |
           . tools/runner/src/opentelemetry/conformance/versions.env
@@ -345,6 +392,7 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
+            -e tools/ruby \
             -e tools/dotnet
 
       # Keyed by domain too: a matrix job fetches only the registry its own
@@ -385,8 +433,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: weaver-reports-${{ matrix.domain }}-${{ matrix.language }}
-          path: scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/output/weaver-reports/*.json
+          name: weaver-reports-${{ matrix.matrix_id }}
+          path: ${{ matrix.scenario_root }}/**/output/weaver-reports/*.json
           if-no-files-found: warn
 
   required-status-check:

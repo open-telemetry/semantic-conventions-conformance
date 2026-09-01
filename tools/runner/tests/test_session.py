@@ -12,10 +12,12 @@ directly.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Literal
 
 import pytest
 
@@ -146,9 +148,14 @@ def session(
     data_file: Path,
     setup: tuple[str, ...] | None = None,
     report_dir: Path | None = None,
+    otlp_protocol: Literal["grpc", "http/protobuf"] = "grpc",
 ) -> ConformanceSession:
     return ConformanceSession(
-        replace(load_spec(directory), setup=setup),
+        replace(
+            load_spec(directory),
+            setup=setup,
+            otlp_protocol=otlp_protocol,
+        ),
         report_dir if report_dir is not None else directory / "reports",
         variables={"ROOT": str(directory)},
         weaver=WeaverSpec(registry="model"),
@@ -159,6 +166,59 @@ def session(
             "reports": reports.name,
         },
     )
+
+
+@pytest.mark.parametrize(
+    ("otlp_protocol", "otlp_endpoint"),
+    [
+        ("grpc", "http://localhost:4317"),
+        ("http/protobuf", "http://127.0.0.1:12345"),
+    ],
+)
+def test_scenario_uses_only_generic_otlp_configuration(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    otlp_protocol: Literal["grpc", "http/protobuf"],
+    otlp_endpoint: str,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def run(
+        command: tuple[str, ...],
+        *,
+        cwd: Path,
+        env: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        captured.update(env)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(_session, "_run_command", run)
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT",
+            "http://example.com:4317",
+        )
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL",
+            "ambient",
+        )
+    opened = session(
+        directory,
+        tmp_path / "data.json",
+        otlp_protocol=otlp_protocol,
+    )
+
+    opened._execute(  # noqa: SLF001
+        opened.spec.scenarios["inference"],
+        otlp_endpoint,
+    )
+
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == otlp_endpoint
+    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == otlp_protocol
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        assert f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT" not in captured
+        assert f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL" not in captured
 
 
 def test_a_complete_run_writes_the_data_file(
