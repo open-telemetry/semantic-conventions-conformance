@@ -35,6 +35,7 @@ public static class HttpContract
     public const string ScenarioIndexVariable = "OTEL_CONFORMANCE_SCENARIO_INDEX";
 
     private const string ResourceName = "otel-http-contract.yaml";
+    private const int MaxBodyDescriptionLength = 200;
 
     private static readonly Lazy<Contract> Loaded = new(Load);
 
@@ -137,9 +138,15 @@ public static class HttpContract
         if (!JsonNode.DeepEquals(actual, expected))
         {
             throw new InvalidOperationException(
-                $"{exchange.Method} {exchange.Path} returned an unexpected JSON body");
+                $"{exchange.Method} {exchange.Path} returned {DescribeBody(response.Body)}, "
+                + $"expected {DescribeBody(exchange.RenderResponseBody(exchange.Body))}");
         }
     }
+
+    private static string DescribeBody(string body) =>
+        body.Length <= MaxBodyDescriptionLength
+            ? body
+            : body[..MaxBodyDescriptionLength] + "...";
 
     /// <summary>The exchange answering <c>method path</c>, if the contract describes one.</summary>
     internal static Exchange? Find(string method, string path)

@@ -110,6 +110,22 @@ class HttpContractTest {
   }
 
   @Test
+  void anUnexpectedJsonBodyIncludesBoundedDetails() {
+    Exchange users = HttpContract.exchange("GET", "/users/123").orElseThrow();
+    String actual = "{\"name\":\"Bob\",\"padding\":\"" + "x".repeat(500) + "\"}";
+
+    IllegalStateException failure =
+        assertThrows(
+            IllegalStateException.class,
+            () -> HttpContract.verify(users, new Response(users.status(), actual)));
+
+    String message = requireNonNull(failure.getMessage());
+    assertTrue(message.contains("returned {\"name\":\"Bob\""));
+    assertTrue(message.contains("..., expected "));
+    assertTrue(message.length() < 500);
+  }
+
+  @Test
   void aQueryStringDoesNotChangeWhichExchangeAnswers() {
     Exchange plain = HttpContract.exchange("GET", "/users/123").orElseThrow();
     Exchange withQuery =

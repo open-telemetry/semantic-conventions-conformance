@@ -40,6 +40,7 @@ public final class HttpContract {
   public static final String SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX";
 
   private static final String RESOURCE = "/otel-http-contract.yaml";
+  private static final int MAX_BODY_DESCRIPTION_LENGTH = 200;
 
   private static final ObjectMapper YAML =
       new ObjectMapper(new YAMLFactory())
@@ -155,15 +156,27 @@ public final class HttpContract {
               + exchange.status());
     }
     try {
-      if (!JSON.readTree(exchange.renderResponseBody(exchange.body()))
-          .equals(JSON.readTree(response.body()))) {
+      String expectedBody = exchange.renderResponseBody(exchange.body());
+      if (!JSON.readTree(expectedBody).equals(JSON.readTree(response.body()))) {
         throw new IllegalStateException(
-            exchange.method() + " " + exchange.path() + " returned an unexpected JSON body");
+            exchange.method()
+                + " "
+                + exchange.path()
+                + " returned "
+                + describeBody(response.body())
+                + ", expected "
+                + describeBody(expectedBody));
       }
     } catch (IOException error) {
       throw new UncheckedIOException(
           exchange.method() + " " + exchange.path() + " did not return the expected JSON", error);
     }
+  }
+
+  private static String describeBody(String body) {
+    return body.length() <= MAX_BODY_DESCRIPTION_LENGTH
+        ? body
+        : body.substring(0, MAX_BODY_DESCRIPTION_LENGTH) + "...";
   }
 
   /**

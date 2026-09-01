@@ -83,6 +83,20 @@ public class HttpContractTests
     }
 
     [Fact]
+    public void AnUnexpectedJsonBodyIncludesBoundedDetails()
+    {
+        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
+        var actual = $"{{\"name\":\"Bob\",\"padding\":\"{new string('x', 500)}\"}}";
+
+        var failure = Assert.Throws<InvalidOperationException>(
+            () => HttpContract.Verify(users, new HttpContract.Response(users.Status, actual)));
+
+        Assert.Contains("returned {\"name\":\"Bob\"", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("..., expected ", failure.Message, StringComparison.Ordinal);
+        Assert.True(failure.Message.Length < 500);
+    }
+
+    [Fact]
     public void AQueryStringDoesNotChangeWhichExchangeAnswers()
     {
         var plain = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
