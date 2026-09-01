@@ -111,7 +111,10 @@ HTTP client beyond the one under test.
 - [`java/`](java) — `HttpContract` reads the file, `HttpServerWorkload.respond`
   looks up answers for any JVM framework, and `HttpClientWorkload.drive` sends
   the one selected request. The build copies `contract.yaml` onto the classpath,
-  and its unit tests drive both halves against each other.
+  and its unit tests drive both halves against each other. Client processes
+  wait 100 milliseconds for asynchronous instrumentation callbacks before
+  exiting. Set `OTEL_CONFORMANCE_JAVA_INSTRUMENTATION_QUIESCENCE_MILLIS` to a
+  non-negative duration in milliseconds, or to `0` to disable that wait.
 - [`js/`](js) — three Node modules: `contract` reads the file, `respond` looks
   up answers for any Node framework, and `drive` sends one runner-selected
   request through a caller-supplied sender. Its unit tests drive both halves
