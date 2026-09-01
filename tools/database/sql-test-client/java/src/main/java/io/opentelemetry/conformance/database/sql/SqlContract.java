@@ -56,14 +56,19 @@ public final class SqlContract {
   static Operation selectedScenario(String backend, String rawIndex) {
     if (rawIndex == null || !SCENARIO_INDEX.matcher(rawIndex).matches()) {
       throw new IllegalStateException(
-          SCENARIO_INDEX_VARIABLE + " must be a zero-based decimal index, got " + rawIndex);
+          SCENARIO_INDEX_VARIABLE
+              + " must be a zero-based decimal index, got "
+              + displayValue(rawIndex));
     }
     int index;
     try {
       index = Integer.parseInt(rawIndex);
     } catch (NumberFormatException error) {
       throw new IllegalStateException(
-          SCENARIO_INDEX_VARIABLE + " is larger than any contract position: " + rawIndex, error);
+          SCENARIO_INDEX_VARIABLE
+              + " is larger than any contract position: "
+              + displayValue(rawIndex),
+          error);
     }
     return workload(backend).scenario(index);
   }
@@ -298,6 +303,10 @@ public final class SqlContract {
 
   private static String scenarioLabel(int index) {
     return "scenario[" + index + "]";
+  }
+
+  private static String displayValue(String value) {
+    return value == null ? "null" : "\"" + value + "\"";
   }
 
   private static Workload load(String backend) {
