@@ -74,7 +74,6 @@ external driver checks every answer and fails the run if it disagrees.
 Statuses are compared exactly; bodies are compared as parsed JSON, since
 whitespace and key order are each language's JSON writer's business.
 
-A client helper verifies the selected response status and parsed JSON body.
 The mock server also answers 400 when the contract's POST body does not arrive,
 so a client cannot pass by sending an empty body.
 
@@ -114,8 +113,8 @@ package points `scenario_contract` at `contract.yaml` and declares one
 ## Per language
 
 Each language gets a small helper here to read the contract, look up server
-answers, select one client request, and validate its response. None needs an
-HTTP client beyond the one under test.
+answers, and select one client request. None needs an HTTP client beyond the one
+under test.
 
 - [`python/`](python) — `otel_http_test_client`: the `otel-http-drive` command
   every language's server scenarios are driven by, `respond()` for answering

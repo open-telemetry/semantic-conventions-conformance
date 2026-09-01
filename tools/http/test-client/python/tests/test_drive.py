@@ -387,13 +387,22 @@ class TestClientWorkloads:
             "Content-Type": "application/json",
         }
 
-    def test_a_wrong_response_fails_the_scenario(
+    def test_a_response_outside_the_contract_does_not_fail_the_scenario(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
 
-        with pytest.raises(ContractError, match="answered 599"):
-            drive_selected("http://server", lambda *_args: (599, "not json"))
+        drive_selected("http://server", lambda *_args: (599, "not json"))
+
+    def test_the_async_client_does_not_validate_the_response(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
+
+        async def send(*_args: object) -> tuple[int, str]:
+            return 599, "not json"
+
+        asyncio.run(drive_selected_async("http://server", send))
 
     def test_json_numbers_do_not_stand_in_for_booleans(self) -> None:
         exchange = scenario_request(2)

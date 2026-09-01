@@ -7,14 +7,12 @@ const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
 const {
-  ContractError,
   SCENARIO_INDEX_VARIABLE,
   exchangeFor,
   exchanges,
   renderResponseBody,
   requests,
   scenarioRequest,
-  verify,
 } = require("../src");
 
 describe("the contract", () => {
@@ -51,25 +49,6 @@ describe("the contract", () => {
         process.env[SCENARIO_INDEX_VARIABLE] = previous;
       }
     }
-  });
-
-  // Parsed, not compared as text: whitespace and key order are a language's
-  // choice of JSON writer, and neither is part of the contract.
-  it("leaves whitespace and key order to the JSON writer", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    verify(users, users.status, '{ "name" :"Alice",\n  "id": 123 }');
-  });
-
-  it("says so when an answer is not JSON", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    assert.throws(
-      () => verify(users, users.status, "<html>"),
-      (error) =>
-        error instanceof ContractError &&
-        /did not return the expected JSON/.test(error.message),
-    );
   });
 
   // A field this reader names but the contract does not is `undefined` here

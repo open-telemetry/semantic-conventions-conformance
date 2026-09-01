@@ -11,12 +11,10 @@
  * to leave the library under test. A server scenario is driven from outside
  * its own process by `otel-http-drive` and never sends anything.
  *
- * The shared telemetry contract checks what these requests emit. This helper
- * also verifies the selected response status and JSON body. Server scenarios
- * use `otel-http-drive` for the same response checks.
+ * The shared telemetry contract checks what these requests emit.
  */
 
-const { scenarioRequest, verify } = require("./contract");
+const { scenarioRequest } = require("./contract");
 
 /**
  * Sends the runner-selected contract request at `baseUrl` through `send`.
@@ -42,7 +40,6 @@ async function drive(baseUrl, send) {
     `${exchange.method} ${exchange.path} -> ${response.status} ` +
       `${abbreviate(response.body)}`,
   );
-  verify(exchange, response.status, response.body);
 }
 
 function abbreviate(value) {

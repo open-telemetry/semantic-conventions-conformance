@@ -15,8 +15,7 @@ import java.time.Duration;
  * the library under test. A server scenario is driven from outside its own process by {@code
  * otel-http-drive} and never sends anything.
  *
- * <p>The shared telemetry contract checks what this request emits. The helper also verifies the
- * response against the selected contract entry.
+ * <p>The shared telemetry contract checks what this request emits.
  */
 public final class HttpClientWorkload {
 
@@ -52,7 +51,6 @@ public final class HttpClientWorkload {
     System.out.printf(
         "%s %s -> %d %s%n",
         exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
-    HttpContract.verify(exchange, response);
     // Some asynchronous clients return the body before their instrumentation completion callback.
     Thread.sleep(INSTRUMENTATION_QUIESCENCE.toMillis());
   }

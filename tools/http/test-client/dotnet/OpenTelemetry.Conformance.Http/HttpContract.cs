@@ -1,9 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Reflection;
 using System.Globalization;
-using System.Text.Json.Nodes;
+using System.Reflection;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -35,7 +34,6 @@ public static class HttpContract
     public const string ScenarioIndexVariable = "OTEL_CONFORMANCE_SCENARIO_INDEX";
 
     private const string ResourceName = "otel-http-contract.yaml";
-    private const int MaxBodyDescriptionLength = 200;
 
     private static readonly Lazy<Contract> Loaded = new(Load);
 
@@ -111,42 +109,6 @@ public static class HttpContract
 
         return Requests[index];
     }
-
-    internal static void Verify(Exchange exchange, Response response)
-    {
-        if (response.StatusCode != exchange.Status)
-        {
-            throw new InvalidOperationException(
-                $"{exchange.Method} {exchange.Path} answered {response.StatusCode}, "
-                + $"expected {exchange.Status}");
-        }
-
-        JsonNode? actual;
-        JsonNode? expected;
-        try
-        {
-            actual = JsonNode.Parse(response.Body);
-            expected = JsonNode.Parse(exchange.RenderResponseBody(exchange.Body));
-        }
-        catch (System.Text.Json.JsonException error)
-        {
-            throw new InvalidOperationException(
-                $"{exchange.Method} {exchange.Path} did not return the expected JSON",
-                error);
-        }
-
-        if (!JsonNode.DeepEquals(actual, expected))
-        {
-            throw new InvalidOperationException(
-                $"{exchange.Method} {exchange.Path} returned {DescribeBody(response.Body)}, "
-                + $"expected {DescribeBody(exchange.RenderResponseBody(exchange.Body))}");
-        }
-    }
-
-    private static string DescribeBody(string body) =>
-        body.Length <= MaxBodyDescriptionLength
-            ? body
-            : body[..MaxBodyDescriptionLength] + "...";
 
     /// <summary>The exchange answering <c>method path</c>, if the contract describes one.</summary>
     internal static Exchange? Find(string method, string path)

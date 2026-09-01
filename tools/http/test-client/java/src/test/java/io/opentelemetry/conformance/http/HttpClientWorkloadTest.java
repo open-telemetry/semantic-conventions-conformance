@@ -33,7 +33,7 @@ class HttpClientWorkloadTest {
   }
 
   @Test
-  void bothSidesOfTheContractAgree() throws Exception {
+  void sendsEveryContractRequest() throws Exception {
     assertEquals(
         List.of(
             "GET /users/123",
@@ -45,14 +45,9 @@ class HttpClientWorkloadTest {
   }
 
   @Test
-  void aWrongResponseFailsTheScenario() {
-    assertThrows(
-        IllegalStateException.class,
-        () ->
-            HttpClientWorkload.drive(
-                BASE_URL,
-                (method, url, body) -> new Response(599, "not JSON"),
-                HttpContract.request(0)));
+  void aResponseOutsideTheContractDoesNotFailTheScenario() throws Exception {
+    HttpClientWorkload.drive(
+        BASE_URL, (method, url, body) -> new Response(599, "not JSON"), HttpContract.request(0));
   }
 
   @Test

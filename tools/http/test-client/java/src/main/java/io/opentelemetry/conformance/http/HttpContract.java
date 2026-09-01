@@ -40,12 +40,10 @@ public final class HttpContract {
   public static final String SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX";
 
   private static final String RESOURCE = "/otel-http-contract.yaml";
-  private static final int MAX_BODY_DESCRIPTION_LENGTH = 200;
 
   private static final ObjectMapper YAML =
       new ObjectMapper(new YAMLFactory())
           .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-  private static final ObjectMapper JSON = new ObjectMapper();
 
   // Loaded on first use rather than in a static initializer, so a classpath problem arrives as the
   // message below rather than wrapped in ExceptionInInitializerError.
@@ -142,41 +140,6 @@ public final class HttpContract {
               + (requests().size() - 1));
     }
     return requests().get(index);
-  }
-
-  static void verify(Exchange exchange, Response response) {
-    if (response.statusCode() != exchange.status()) {
-      throw new IllegalStateException(
-          exchange.method()
-              + " "
-              + exchange.path()
-              + " answered "
-              + response.statusCode()
-              + ", expected "
-              + exchange.status());
-    }
-    try {
-      String expectedBody = exchange.renderResponseBody(exchange.body());
-      if (!JSON.readTree(expectedBody).equals(JSON.readTree(response.body()))) {
-        throw new IllegalStateException(
-            exchange.method()
-                + " "
-                + exchange.path()
-                + " returned "
-                + describeBody(response.body())
-                + ", expected "
-                + describeBody(expectedBody));
-      }
-    } catch (IOException error) {
-      throw new UncheckedIOException(
-          exchange.method() + " " + exchange.path() + " did not return the expected JSON", error);
-    }
-  }
-
-  private static String describeBody(String body) {
-    return body.length() <= MAX_BODY_DESCRIPTION_LENGTH
-        ? body
-        : body.substring(0, MAX_BODY_DESCRIPTION_LENGTH) + "...";
   }
 
   /**

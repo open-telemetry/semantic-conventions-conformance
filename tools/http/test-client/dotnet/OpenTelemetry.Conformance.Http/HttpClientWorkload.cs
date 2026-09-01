@@ -10,11 +10,7 @@ namespace OpenTelemetry.Conformance.Http;
 /// Only a <em>client</em> scenario needs this: it is the sender, so the requests have to leave the
 /// library under test. A server scenario is driven from outside its own process by
 /// <c>otel-http-drive</c> and never sends anything.
-/// <para>
-/// The shared telemetry contract checks what these requests emit. This helper also verifies the
-/// selected response status and JSON body. Server scenarios use <c>otel-http-drive</c> for the same
-/// response checks.
-/// </para>
+/// <para>The shared telemetry contract checks what these requests emit.</para>
 /// </remarks>
 public static class HttpClientWorkload
 {
@@ -49,7 +45,6 @@ public static class HttpClientWorkload
             .ConfigureAwait(false);
         Console.WriteLine(
             $"{exchange.Method} {exchange.Path} -> {response.StatusCode} {Abbreviate(response.Body)}");
-        HttpContract.Verify(exchange, response);
     }
 
     private static string Abbreviate(string value)

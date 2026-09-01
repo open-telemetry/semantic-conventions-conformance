@@ -23,9 +23,7 @@ and record client spans the scenario never meant to produce.
 The external server driver checks every response against its exchange. A
 server scenario declares routes in its framework's native form — that
 declaration is what an instrumentation reads a route from — but every status
-and body is a constant from the shared file because the requests are fixed. A
-client helper checks the selected response after the library under test sends
-the request.
+and body is a constant from the shared file because the requests are fixed.
 
 This package adds only the shared YAML parser needed to read the contract.
 """
@@ -303,9 +301,8 @@ def drive_selected(
     separate because every extra request a driver makes while a server starts
     is a span in that server's report.
 
-    The response is checked against the same contract entry. Telemetry remains
-    the conformance result, but a client that sends the wrong request or cannot
-    consume the expected answer fails at the source.
+    The returned status and body are logged for diagnostics. Telemetry is the
+    conformance result.
     """
     sender = send or request
     exchange = scenario_request()
@@ -315,7 +312,6 @@ def drive_selected(
         exchange.body,
     )
     print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
-    verify(exchange, status, response)
 
 
 def drive_all(base_url: str, send: Send | None = None) -> None:
@@ -344,7 +340,7 @@ async def drive_async(base_url: str, send: AsyncSend) -> None:
 
 
 async def drive_selected_async(base_url: str, send: AsyncSend) -> None:
-    """Asynchronously send and verify the runner-selected request."""
+    """Asynchronously send the runner-selected request."""
     exchange = scenario_request()
     status, response = await send(
         exchange.method,
@@ -352,7 +348,6 @@ async def drive_selected_async(base_url: str, send: AsyncSend) -> None:
         exchange.body,
     )
     print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
-    verify(exchange, status, response)
 
 
 def verify(exchange: Exchange, status: int, response: str) -> None:

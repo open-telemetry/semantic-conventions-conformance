@@ -34,9 +34,6 @@ await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {
 });
 ```
 
-The helper verifies the response against the selected entry after the measured
-call returns.
-
 ## Finding the contract
 
 `contract.yaml` is one directory above this package, and npm packs only a

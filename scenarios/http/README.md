@@ -84,9 +84,8 @@ routes must answer.
 
 Server responses are checked centrally by `otel-http-drive`: statuses exactly
 and bodies as parsed JSON, since whitespace and key order are each language's
-JSON writer's business. Each client helper separately verifies the selected
-response status and parsed JSON body. The common telemetry contract checks the
-resulting spans centrally.
+JSON writer's business. Client conformance is decided by the common telemetry
+contract instead.
 
 See [`tools/http/test-client`](../../tools/http/test-client) for the per-
 language helpers that read it.

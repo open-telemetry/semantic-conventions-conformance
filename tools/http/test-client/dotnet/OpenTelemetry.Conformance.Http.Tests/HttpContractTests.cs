@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Text.Json;
 using Xunit;
 
 namespace OpenTelemetry.Conformance.Http.Tests;
@@ -55,45 +54,6 @@ public class HttpContractTests
         {
             Environment.SetEnvironmentVariable(HttpContract.ScenarioIndexVariable, previous);
         }
-    }
-
-    // Parsed, not compared as text: whitespace and key order are a language's choice of JSON
-    // writer, and neither is part of the contract.
-    [Fact]
-    public void WhitespaceAndKeyOrderAreTheJsonWritersBusiness()
-    {
-        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
-
-        HttpContract.Verify(
-            users,
-            new HttpContract.Response(users.Status, "{ \"name\" :\"Alice\",\n  \"id\": 123 }"));
-    }
-
-    [Fact]
-    public void AnAnswerThatIsNotJsonSaysSo()
-    {
-        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
-
-        var failure = Assert.Throws<InvalidOperationException>(
-            () => HttpContract.Verify(users, new HttpContract.Response(users.Status, "<html>")));
-
-        Assert.Contains(
-            "did not return the expected JSON", failure.Message, StringComparison.Ordinal);
-        Assert.IsAssignableFrom<JsonException>(failure.InnerException);
-    }
-
-    [Fact]
-    public void AnUnexpectedJsonBodyIncludesBoundedDetails()
-    {
-        var users = Assert.IsType<HttpContract.Exchange>(HttpContract.Find("GET", "/users/123"));
-        var actual = $"{{\"name\":\"Bob\",\"padding\":\"{new string('x', 500)}\"}}";
-
-        var failure = Assert.Throws<InvalidOperationException>(
-            () => HttpContract.Verify(users, new HttpContract.Response(users.Status, actual)));
-
-        Assert.Contains("returned {\"name\":\"Bob\"", failure.Message, StringComparison.Ordinal);
-        Assert.Contains("..., expected ", failure.Message, StringComparison.Ordinal);
-        Assert.True(failure.Message.Length < 500);
     }
 
     [Fact]

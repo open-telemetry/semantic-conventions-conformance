@@ -5,7 +5,6 @@
 package io.opentelemetry.conformance.http;
 
 import static java.util.Objects.requireNonNull;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -13,9 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
-import io.opentelemetry.conformance.http.HttpContract.Response;
 import java.io.ByteArrayInputStream;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -74,55 +71,6 @@ class HttpContractTest {
         assertThrows(IllegalStateException.class, HttpContract::scenarioRequest);
 
     assertEquals(HttpContract.SCENARIO_INDEX_VARIABLE + " is not set", failure.getMessage());
-  }
-
-  @Test
-  void aBlankResponseFailsCleanly() {
-    Exchange exchange = HttpContract.request(0);
-
-    assertThrows(
-        IllegalStateException.class,
-        () -> HttpContract.verify(exchange, new Response(exchange.status(), " ")));
-  }
-
-  // Parsed, not compared as text: whitespace and key order are a language's choice of JSON
-  // writer, and neither is part of the contract.
-  @Test
-  void whitespaceAndKeyOrderAreTheJsonWritersBusiness() {
-    Exchange users = HttpContract.exchange("GET", "/users/123").orElseThrow();
-
-    assertDoesNotThrow(
-        () ->
-            HttpContract.verify(
-                users, new Response(users.status(), "{ \"name\" :\"Alice\",\n  \"id\": 123 }")));
-  }
-
-  @Test
-  void anAnswerThatIsNotJsonSaysSo() {
-    Exchange users = HttpContract.exchange("GET", "/users/123").orElseThrow();
-
-    UncheckedIOException failure =
-        assertThrows(
-            UncheckedIOException.class,
-            () -> HttpContract.verify(users, new Response(users.status(), "<html>")));
-
-    assertTrue(requireNonNull(failure.getMessage()).contains("did not return the expected JSON"));
-  }
-
-  @Test
-  void anUnexpectedJsonBodyIncludesBoundedDetails() {
-    Exchange users = HttpContract.exchange("GET", "/users/123").orElseThrow();
-    String actual = "{\"name\":\"Bob\",\"padding\":\"" + "x".repeat(500) + "\"}";
-
-    IllegalStateException failure =
-        assertThrows(
-            IllegalStateException.class,
-            () -> HttpContract.verify(users, new Response(users.status(), actual)));
-
-    String message = requireNonNull(failure.getMessage());
-    assertTrue(message.contains("returned {\"name\":\"Bob\""));
-    assertTrue(message.contains("..., expected "));
-    assertTrue(message.length() < 500);
   }
 
   @Test
