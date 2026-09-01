@@ -1,0 +1,11 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+backend: invalid_kind
+description: A contract with an invalid operation kind.
+
+scenarios:
+  - description: Uses an invalid operation kind.
+    action:
+      kind: invalid
+    expect: {}

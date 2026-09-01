@@ -76,6 +76,14 @@ class SqlContractTest {
   }
 
   @Test
+  void rejectsAnUnknownOperationKind() {
+    assertEquals(
+        "unknown SQL operation kind for scenario[0]: invalid",
+        assertThrows(IllegalArgumentException.class, () -> SqlContract.workload("invalid_kind"))
+            .getMessage());
+  }
+
+  @Test
   void rendersEveryParameterOccurrenceWithItsOwnBindMarker() {
     PreparedQuery query =
         new PreparedQuery(
