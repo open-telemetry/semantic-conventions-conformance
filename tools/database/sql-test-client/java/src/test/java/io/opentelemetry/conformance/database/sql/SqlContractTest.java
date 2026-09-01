@@ -108,4 +108,20 @@ class SqlContractTest {
         IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario(4));
     assertThrows(IllegalStateException.class, () -> SqlContract.workload("no_such_backend"));
   }
+
+  @Test
+  void selectsTheScenarioTheRunnerIndexNames() {
+    assertInstanceOf(Query.class, SqlContract.selectedScenario("postgresql", "0"));
+    assertInstanceOf(Batch.class, SqlContract.selectedScenario("postgresql", "2"));
+  }
+
+  @Test
+  void rejectsAScenarioIndexTheRunnerWouldNeverSet() {
+    for (String raw : new String[] {null, "", " ", "one", "01", "-1", "1.0", "99999999999"}) {
+      assertThrows(
+          IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", raw), raw);
+    }
+    assertThrows(
+        IllegalArgumentException.class, () -> SqlContract.selectedScenario("postgresql", "4"));
+  }
 }

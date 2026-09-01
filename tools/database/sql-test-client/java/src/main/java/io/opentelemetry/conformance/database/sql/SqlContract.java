@@ -27,9 +27,13 @@ import java.util.stream.IntStream;
  */
 public final class SqlContract {
 
+  /** The environment variable carrying the scenario's zero-based contract position. */
+  public static final String SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX";
+
   private static final String RESOURCE_DIRECTORY = "/otel-sql-contracts/";
   private static final Pattern BACKEND_NAME = Pattern.compile("[a-z][a-z0-9_]*");
   private static final Pattern PARAMETER_MARKER = Pattern.compile("\\$\\{([A-Za-z][A-Za-z0-9_]*)}");
+  private static final Pattern SCENARIO_INDEX = Pattern.compile("0|[1-9][0-9]*");
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
   private SqlContract() {}
@@ -41,6 +45,27 @@ public final class SqlContract {
       throw new IllegalArgumentException("invalid SQL database backend: " + backend);
     }
     return load(backend);
+  }
+
+  /** The one scenario the runner selected from {@code backend}'s contract. */
+  public static Operation selectedScenario(String backend) {
+    return selectedScenario(backend, System.getenv(SCENARIO_INDEX_VARIABLE));
+  }
+
+  // Takes the raw value so a test can drive the parsing without an environment variable.
+  static Operation selectedScenario(String backend, String rawIndex) {
+    if (rawIndex == null || !SCENARIO_INDEX.matcher(rawIndex).matches()) {
+      throw new IllegalStateException(
+          SCENARIO_INDEX_VARIABLE + " must be a zero-based decimal index, got " + rawIndex);
+    }
+    int index;
+    try {
+      index = Integer.parseInt(rawIndex);
+    } catch (NumberFormatException error) {
+      throw new IllegalStateException(
+          SCENARIO_INDEX_VARIABLE + " is larger than any contract position: " + rawIndex, error);
+    }
+    return workload(backend).scenario(index);
   }
 
   /** One backend's ordered SQL scenarios. */
