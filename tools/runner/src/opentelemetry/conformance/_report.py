@@ -151,9 +151,11 @@ def read(
         if not isinstance(report, dict):
             continue
         document = cast(_Json, report)
+        scenario_spec = spec.scenarios.get(path.stem) if spec else None
+        if spec is not None and scenario_spec is None:
+            continue
         _merge_counted(counted, _mapping(document.get("statistics")))
         observed.findings |= collect_findings(document)
-        scenario_spec = spec.scenarios.get(path.stem) if spec else None
         for sample in _list(document.get("samples")):
             _read_sample(observed, sample, classify, scenario_spec)
 

@@ -98,12 +98,14 @@ def test_list_entries_use_descriptions_without_merging_duplicates(
     conformance = pytester.path / "conformance"
     (conformance / "contract.yaml").write_text(
         """
-- description: Repeated human label.
-  action: {kind: first}
-  expect: {}
-- description: Repeated human label.
-  action: {kind: second}
-  expect: {}
+description: Repeated-label contract.
+scenarios:
+  - description: Repeated human label.
+    action: {kind: first}
+    expect: {}
+  - description: Repeated human label.
+    action: {kind: second}
+    expect: {}
 """
     )
     (conformance / "conformance.yaml").write_text(

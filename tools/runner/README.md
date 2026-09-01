@@ -281,21 +281,25 @@ The local scenario is merged over the contract by field, so it can replace one
 expectation when an implementation intentionally has a different contract.
 Relative paths start at the directory containing `conformance.yaml`.
 
-A domain contract can instead be a top-level list of unnamed scenarios. Every
-entry must have `description`, a domain-owned `action` mapping, and a generic
-`expect` mapping:
+A domain contract can instead use a `scenarios` list. Every entry must have
+exactly `description`, a non-empty domain-owned `action` mapping, and a generic
+`expect` mapping. Other contract fields are domain-owned metadata and ignored
+by the generic runner:
 
 ```yaml
-- description: Sends one request.
-  action:
-    request: {method: GET, path: /items}
-  expect:
-    spans:
-      - match:
-          attributes:
-            url.full: ${MOCK_SERVER_URL}/items
-        expect: {count: 1}
-    events: []
+description: Shared HTTP client requests.
+protocol: http
+scenarios:
+  - description: Sends one request.
+    action:
+      request: {method: GET, path: /items}
+    expect:
+      spans:
+        - match:
+            attributes:
+              url.full: ${MOCK_SERVER_URL}/items
+          expect: {count: 1}
+      events: []
 ```
 
 The package declares one command template for the list:
@@ -305,7 +309,8 @@ scenario_contract: ../../contracts/http-client.yaml
 scenario_run: node client.js
 ```
 
-The runner creates one scenario per list entry. Each runs under a fresh weaver
+The runner creates one scenario per indexed entry and rejects local `scenarios`
+overrides for this contract form. Each runs under a fresh weaver
 report with `OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index.
 The command reads that index to select the same action. Reports use stable
 zero-padded ordinal filenames, while CLI and pytest output prefix `description`

@@ -64,8 +64,9 @@ function contractPath() {
 
 const CONTRACT = contractPath();
 
+const DOCUMENT = YAML.parse(fs.readFileSync(CONTRACT, "utf8"));
 const REQUESTS = Object.freeze(
-  YAML.parse(fs.readFileSync(CONTRACT, "utf8")).map((entry) =>
+  DOCUMENT.scenarios.map((entry) =>
     Object.freeze({
       method: entry.action.request.method,
       path: entry.action.request.path,

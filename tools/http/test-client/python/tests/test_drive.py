@@ -248,11 +248,13 @@ class TestTheContract:
     def test_it_is_read_from_the_shared_file(self) -> None:
         assert CONTRACT.name == "contract.yaml"
         declared = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
-        assert len(REQUESTS) == len(declared)
+        assert declared["description"]
+        scenarios = declared["scenarios"]
+        assert len(REQUESTS) == len(scenarios)
         assert len(REQUESTS) == len(EXCHANGES) - 1
         assert all(
             set(entry) == {"description", "action", "expect"}
-            for entry in declared
+            for entry in scenarios
         )
 
     def test_every_request_has_a_description(self) -> None:

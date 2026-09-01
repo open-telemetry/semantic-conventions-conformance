@@ -4,7 +4,6 @@
  */
 package io.opentelemetry.conformance.http;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -79,6 +78,8 @@ public final class HttpContract {
   private record ExpectedResponse(int status, String body) {}
 
   private record Action(Request request, ExpectedResponse response) {}
+
+  private record ContractDocument(String description, List<ScenarioEntry> scenarios) {}
 
   private record ScenarioEntry(String description, Action action) {
     Exchange exchange() {
@@ -195,7 +196,7 @@ public final class HttpContract {
                 + " is not on the classpath — the build copies it from"
                 + " tools/http/test-client/contract.yaml");
       }
-      return YAML.readValue(stream, new TypeReference<List<ScenarioEntry>>() {}).stream()
+      return YAML.readValue(stream, ContractDocument.class).scenarios().stream()
           .map(ScenarioEntry::exchange)
           .collect(Collectors.toUnmodifiableList());
     } catch (IOException e) {

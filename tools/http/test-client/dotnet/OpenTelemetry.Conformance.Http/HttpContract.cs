@@ -166,11 +166,12 @@ public static class HttpContract
                 $"{ResourceName} is not embedded in {assembly.GetName().Name} — the build embeds "
                 + "it from tools/http/test-client/contract.yaml");
         using var reader = new StreamReader(stream);
-        var scenarios = new DeserializerBuilder()
+        var document = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build()
-            .Deserialize<List<ScenarioEntry>>(reader);
+            .Deserialize<ContractDocument>(reader);
+        var scenarios = document?.Scenarios;
         if (scenarios is null || scenarios.Count == 0)
         {
             throw new InvalidOperationException($"{ResourceName} is empty");
@@ -184,6 +185,13 @@ public static class HttpContract
             scenario.Action.Response.Body,
             false,
             scenario.Description)).ToArray();
+    }
+
+    private sealed class ContractDocument
+    {
+        public string Description { get; init; } = string.Empty;
+
+        public List<ScenarioEntry> Scenarios { get; init; } = [];
     }
 
     private sealed class ScenarioEntry

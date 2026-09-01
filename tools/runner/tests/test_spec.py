@@ -160,16 +160,19 @@ def test_scenario_list_contract_generates_one_scenario_per_entry(
 ) -> None:
     (tmp_path / "client.yaml").write_text(
         """
-- description: The same description may repeat.
-  action: {request: {method: GET, path: /one}}
-  expect:
-    spans:
-      - match:
-          attributes: {url.full: "${SERVER}/one"}
-        expect: {count: 1}
-- description: The same description may repeat.
-  action: {request: {method: GET, path: /two}}
-  expect: {events: []}
+description: Shared HTTP requests.
+owner: http
+scenarios:
+  - description: The same description may repeat.
+    action: {request: {method: GET, path: /one}}
+    expect:
+      spans:
+        - match:
+            attributes: {url.full: "${SERVER}/one"}
+          expect: {count: 1}
+  - description: The same description may repeat.
+    action: {request: {method: GET, path: /two}}
+    expect: {events: []}
 """
     )
     spec = load_spec(
@@ -198,41 +201,76 @@ scenario_run: python client.py
 @pytest.mark.parametrize(
     ("contract", "package", "message"),
     [
-        ("[]", "scenario_run: run", "declares no scenarios"),
+        ("scenarios: []", "scenario_run: run", "declares no scenarios"),
         (
-            "- description: test\n  action: {}\n  expect: {}",
+            "scenarios:\n  - description: test\n    action: {}\n    expect: {}",
             "scenario_run: run",
             "non-empty mapping",
         ),
         (
-            "- description: test\n  action: {kind: request}",
+            "scenarios:\n  - description: test\n    action: {kind: request}",
             "scenario_run: run",
             "expect is required",
         ),
         (
-            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
             "",
             "scenario_run is required",
         ),
         (
-            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
             "scenario_run: run\nscenarios: {local: {run: local}}",
             "cannot be combined",
         ),
         (
-            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
             'scenario_run: ""',
             "non-empty command",
         ),
         (
-            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
             "scenario_run: []",
             "non-empty command",
         ),
         (
             "scenarios: {client: {events: []}}",
             "scenario_run: run",
-            "requires a scenario-list",
+            "requires an indexed contract",
+        ),
+        (
+            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenario_run: run",
+            "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}\n    id: authored",
+            "scenario_run: run",
+            "unknown key",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {run: local}",
+            "scenario_run: run",
+            "unknown key",
+        ),
+        (
+            "scenarios:\n  - action: {kind: request}\n    expect: {}",
+            "scenario_run: run",
+            "description is required",
+        ),
+        (
+            "scenarios:\n  - description: test\n    expect: {}",
+            "scenario_run: run",
+            "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: request\n    expect: {}",
+            "scenario_run: run",
+            "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: []",
+            "scenario_run: run",
+            "expected a mapping",
         ),
     ],
 )

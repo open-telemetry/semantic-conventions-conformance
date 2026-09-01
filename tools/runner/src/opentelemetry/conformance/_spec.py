@@ -552,13 +552,14 @@ def _list_contract_scenarios(
     directory: Path,
     inherited: tuple[ExpectedViolation, ...],
 ) -> Mapping[str, ScenarioSpec]:
-    entries = _require_list(document, str(path))
+    contract = _require_mapping(document or {}, str(path))
+    entries = _require_list(contract.get("scenarios"), f"{path}.scenarios")
     if not entries:
         raise SpecError(f"{path}: declares no scenarios")
 
     parsed: dict[str, ScenarioSpec] = {}
     for index, value in enumerate(entries):
-        where = f"{path}[{index}]"
+        where = f"{path}.scenarios[{index}]"
         entry = _require_mapping(value, where)
         _check_keys(entry, ("description", "action", "expect"), where)
         description = _required_string(entry, "description", where)
@@ -652,15 +653,22 @@ def load_spec(directory: Path) -> PackageSpec:
             document["scenario_contract"],
             str(path),
         )
-    if isinstance(contract_document, list):
+    contract_scenario_declarations = (
+        _require_mapping(contract_document or {}, str(contract_path)).get(
+            "scenarios"
+        )
+        if contract_path is not None
+        else None
+    )
+    if isinstance(contract_scenario_declarations, list):
         if local_scenarios:
             raise SpecError(
-                f"{path}: scenarios cannot be combined with a scenario-list "
+                f"{path}: scenarios cannot be combined with an indexed "
                 "contract; use scenario_run"
             )
         if "scenario_run" not in document:
             raise SpecError(
-                f"{path}: scenario_run is required for a scenario-list contract"
+                f"{path}: scenario_run is required for an indexed contract"
             )
         assert contract_path is not None
         parsed_scenarios = _list_contract_scenarios(
@@ -673,14 +681,16 @@ def load_spec(directory: Path) -> PackageSpec:
     else:
         if "scenario_run" in document:
             raise SpecError(
-                f"{path}: scenario_run requires a scenario-list contract"
+                f"{path}: scenario_run requires an indexed contract"
             )
-        contract_scenarios: Mapping[str, object] = (
+        named_contract_scenarios: Mapping[str, object] = (
             _named_contract_scenarios(contract_document, contract_path)
             if contract_path is not None
             else {}
         )
-        declared = _merge_scenarios(contract_scenarios, local_scenarios, path)
+        declared = _merge_scenarios(
+            named_contract_scenarios, local_scenarios, path
+        )
         if not declared:
             raise SpecError(f"{path}: declares no scenarios")
         parsed_scenarios = {

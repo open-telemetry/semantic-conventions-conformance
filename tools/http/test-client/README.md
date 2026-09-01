@@ -6,30 +6,33 @@ requests and the runner checks each request independently.
 
 ## The contract
 
-The document is a list. Each entry has a human-readable `description`, an
-HTTP-specific `action`, and generic telemetry under `expect`:
+The document has a contract-level `description` and a `scenarios` list. Each
+scenario has a human-readable `description`, an HTTP-specific `action`, and
+generic telemetry under `expect`:
 
 ```yaml
-- description: Sends a request with a query string.
-  action:
-    request:
-      method: GET
-      path: /users/123?fields=name&verbose=true
-    response:
-      status: 200
-      body: '{"id": 123, "name": "Alice"}'
-  expect:
-    spans:
-      - match:
-          kind: CLIENT
-          attributes:
-            http.request.method: GET
-            http.response.status_code: 200
-        expect:
-          count: 1
-          attributes:
-            url.full: {present: true}
-    events: []
+description: Shared HTTP client requests and expected telemetry.
+scenarios:
+  - description: Sends a request with a query string.
+    action:
+      request:
+        method: GET
+        path: /users/123?fields=name&verbose=true
+      response:
+        status: 200
+        body: '{"id": 123, "name": "Alice"}'
+    expect:
+      spans:
+        - match:
+            kind: CLIENT
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 200
+          expect:
+            count: 1
+            attributes:
+              url.full: {present: true}
+      events: []
 ```
 
 The runner expands each entry into a separate scenario and passes its ordinal

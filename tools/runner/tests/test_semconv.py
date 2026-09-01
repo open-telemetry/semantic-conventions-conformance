@@ -19,6 +19,7 @@ import pytest
 
 from opentelemetry.conformance._report import Observed, finding_list, read
 from opentelemetry.conformance._semconv import _reduce, semconv_coverage
+from opentelemetry.conformance._spec import load_spec
 
 MODEL = {
     "spans": {
@@ -106,6 +107,32 @@ def test_a_span_type_carries_what_any_of_its_samples_had(tmp_path) -> None:
     carried = read(tmp_path, by_kind).spans["http.server"]
 
     assert carried == {"http.request.method", "http.route"}
+
+
+def test_reports_for_undeclared_scenarios_are_ignored(tmp_path) -> None:
+    (tmp_path / "conformance.yaml").write_text(
+        """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenarios:
+  current:
+    run: current
+"""
+    )
+    write_report(
+        tmp_path,
+        "current",
+        samples=[span_sample("server", attribute("http.request.method"))],
+    )
+    write_report(
+        tmp_path,
+        "deleted",
+        samples=[span_sample("server", attribute("http.route"))],
+    )
+
+    carried = read(tmp_path, by_kind, load_spec(tmp_path)).spans["http.server"]
+
+    assert carried == {"http.request.method"}
 
 
 def test_an_attribute_weaver_rejected_did_not_really_arrive(tmp_path) -> None:

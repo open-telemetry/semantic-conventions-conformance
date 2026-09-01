@@ -129,6 +129,7 @@ def _contract() -> Path:
 CONTRACT = _contract()
 
 _DOCUMENT = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
+_SCENARIOS = _DOCUMENT["scenarios"]
 
 REQUESTS: Sequence[Exchange] = tuple(
     Exchange(
@@ -140,7 +141,7 @@ REQUESTS: Sequence[Exchange] = tuple(
         readiness=False,
         description=entry["description"],
     )
-    for entry in _DOCUMENT
+    for entry in _SCENARIOS
 )
 
 _READINESS = Exchange(
