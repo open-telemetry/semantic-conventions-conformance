@@ -1,0 +1,36 @@
+{
+  "name": "open-telemetry-conformance/http-php-cakephp",
+  "description": "CakePHP HTTP server conformance measured by OpenTelemetry auto-instrumentation.",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.2",
+    "cakephp/cakephp": "^5.4",
+    "open-telemetry/exporter-otlp": "^1.4",
+    "open-telemetry/opentelemetry-auto-cakephp": "^0.0.8",
+    "open-telemetry/sdk": "^1.15",
+    "open-telemetry/transport-grpc": "^1.2",
+    "open-telemetry-conformance/http-test-client": "dev-main",
+    "open-telemetry-conformance/scenario": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "../scenarios/src/"
+    }
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../../../../../tools/http/test-client/php",
+      "options": {
+        "symlink": false
+      }
+    },
+    {
+      "type": "path",
+      "url": "../../../../../tools/php/scenario",
+      "options": {
+        "symlink": false
+      }
+    }
+  ]
+}

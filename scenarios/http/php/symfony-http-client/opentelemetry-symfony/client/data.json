@@ -1,0 +1,136 @@
+{
+  "spans": {
+    "http.client": [
+      "http.request.method",
+      "http.response.status_code",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": []
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "deprecated",
+      "message": "Attribute 'peer.service' is deprecated; reason = 'renamed', note = 'Replaced by `service.peer.name`.'.",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "peer.service",
+        "deprecation_note": "Replaced by `service.peer.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET' is missing required attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET' is missing required attribute 'server.port'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "server.port",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'peer.service' is deprecated; reason = 'renamed', note = 'Replaced by `service.peer.name`.'.",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "peer.service",
+        "deprecation_note": "Replaced by `service.peer.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'POST' is missing required attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'POST' is missing required attribute 'server.port'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "server.port",
+        "kind": "client"
+      }
+    }
+  ]
+}
