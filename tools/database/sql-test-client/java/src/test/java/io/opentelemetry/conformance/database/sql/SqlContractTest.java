@@ -7,6 +7,7 @@ package io.opentelemetry.conformance.database.sql;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,11 +17,12 @@ import io.opentelemetry.conformance.database.sql.SqlContract.PreparedQuery;
 import io.opentelemetry.conformance.database.sql.SqlContract.Query;
 import io.opentelemetry.conformance.database.sql.SqlContract.StoredProcedure;
 import io.opentelemetry.conformance.database.sql.SqlContract.Workload;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 class SqlContractTest {
@@ -28,14 +30,12 @@ class SqlContractTest {
   @Test
   void loadsEveryBackendContract() throws IOException {
     List<String> backends;
-    try (Stream<Path> contracts = Files.list(Path.of("../contracts"))) {
-      backends =
-          contracts
-              .map(path -> path.getFileName().toString())
-              .filter(name -> name.endsWith(".yaml"))
-              .map(name -> name.substring(0, name.length() - ".yaml".length()))
-              .sorted()
-              .toList();
+    InputStream stream = SqlContract.class.getResourceAsStream("/otel-sql-contracts/index.txt");
+    assertNotNull(stream);
+    try (stream;
+        BufferedReader reader =
+            new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+      backends = reader.lines().toList();
     }
 
     assertFalse(backends.isEmpty());
