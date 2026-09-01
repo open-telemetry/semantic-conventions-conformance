@@ -32,9 +32,8 @@ class SqlContractTest {
     List<String> backends;
     InputStream stream = SqlContract.class.getResourceAsStream("/otel-sql-contracts/index.txt");
     assertNotNull(stream);
-    try (stream;
-        BufferedReader reader =
-            new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+    try (BufferedReader reader =
+        new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       backends = reader.lines().toList();
     }
 
