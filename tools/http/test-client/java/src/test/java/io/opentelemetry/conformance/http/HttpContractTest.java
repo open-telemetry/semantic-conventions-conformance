@@ -13,7 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
 import io.opentelemetry.conformance.http.HttpContract.Response;
+import java.io.ByteArrayInputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +39,17 @@ class HttpContractTest {
     assertTrue(HttpContract.exchanges().stream().anyMatch(Exchange::readiness));
     assertTrue(requests.stream().noneMatch(Exchange::readiness));
     assertEquals(HttpContract.exchanges().size() - 1, requests.size());
+  }
+
+  @Test
+  void aContractWithoutScenariosSaysSo() {
+    ByteArrayInputStream contract =
+        new ByteArrayInputStream("readiness: {}\n".getBytes(StandardCharsets.UTF_8));
+
+    IllegalStateException failure =
+        assertThrows(IllegalStateException.class, () -> HttpContract.load(contract));
+
+    assertTrue(requireNonNull(failure.getMessage()).contains("declares no scenarios"));
   }
 
   @Test

@@ -96,7 +96,7 @@ public final class HttpContract {
   }
 
   /** The readiness exchange and the measured requests, as one load of the file. */
-  private record Contract(Exchange readiness, List<Exchange> requests) {}
+  record Contract(Exchange readiness, List<Exchange> requests) {}
 
   /** Every exchange the contract describes, including readiness, in order. */
   public static List<Exchange> exchanges() {
@@ -195,17 +195,25 @@ public final class HttpContract {
                 + " is not on the classpath — the build copies it from"
                 + " tools/http/test-client/contract.yaml");
       }
-      ContractDocument document = YAML.readValue(stream, ContractDocument.class);
-      if (document.readiness() == null) {
-        throw new IllegalStateException(RESOURCE + " declares no readiness exchange");
-      }
-      return new Contract(
-          document.readiness().exchange(true),
-          document.scenarios().stream()
-              .map(entry -> entry.exchange(false))
-              .collect(Collectors.toUnmodifiableList()));
+      return load(stream);
     } catch (IOException e) {
       throw new UncheckedIOException("could not read " + RESOURCE, e);
     }
+  }
+
+  static Contract load(InputStream stream) throws IOException {
+    ContractDocument document = YAML.readValue(stream, ContractDocument.class);
+    if (document.readiness() == null) {
+      throw new IllegalStateException(RESOURCE + " declares no readiness exchange");
+    }
+    List<ScenarioEntry> scenarios = document.scenarios();
+    if (scenarios == null || scenarios.isEmpty()) {
+      throw new IllegalStateException(RESOURCE + " declares no scenarios");
+    }
+    return new Contract(
+        document.readiness().exchange(true),
+        scenarios.stream()
+            .map(entry -> entry.exchange(false))
+            .collect(Collectors.toUnmodifiableList()));
   }
 }
