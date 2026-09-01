@@ -77,6 +77,10 @@ public static class HttpContract
     public static Exchange ScenarioRequest()
     {
         var raw = Environment.GetEnvironmentVariable(ScenarioIndexVariable);
+        if (raw is null)
+        {
+            throw new InvalidOperationException($"{ScenarioIndexVariable} is not set");
+        }
 
         // `NumberStyles.None` allows no sign, so a parsed index is never negative; the round
         // trip then rejects every remaining non-canonical spelling, such as `007`.

@@ -39,6 +39,24 @@ public class HttpContractTests
             () => HttpContract.Request(HttpContract.Requests.Count));
     }
 
+    [Fact]
+    public void AScenarioIndexThatIsNotSetSaysSo()
+    {
+        var previous = Environment.GetEnvironmentVariable(HttpContract.ScenarioIndexVariable);
+        try
+        {
+            Environment.SetEnvironmentVariable(HttpContract.ScenarioIndexVariable, null);
+
+            var error = Assert.Throws<InvalidOperationException>(HttpContract.ScenarioRequest);
+
+            Assert.Equal($"{HttpContract.ScenarioIndexVariable} is not set", error.Message);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(HttpContract.ScenarioIndexVariable, previous);
+        }
+    }
+
     // Parsed, not compared as text: whitespace and key order are a language's choice of JSON
     // writer, and neither is part of the contract.
     [Fact]
