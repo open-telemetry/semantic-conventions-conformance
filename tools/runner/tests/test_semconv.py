@@ -129,6 +129,7 @@ scenarios:
         "deleted",
         samples=[span_sample("server", attribute("http.route"))],
     )
+    (tmp_path / "truncated.json").write_text("{")
 
     carried = read(tmp_path, by_kind, load_spec(tmp_path)).spans["http.server"]
 

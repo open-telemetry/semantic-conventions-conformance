@@ -147,13 +147,13 @@ def read(
     counted: dict[str, set[str]] = {}
 
     for path in sorted(report_dir.glob("**/*.json")):
+        scenario_spec = spec.scenarios.get(path.stem) if spec else None
+        if spec is not None and scenario_spec is None:
+            continue
         report = cast("object", json.loads(path.read_text(encoding="utf-8")))
         if not isinstance(report, dict):
             continue
         document = cast(_Json, report)
-        scenario_spec = spec.scenarios.get(path.stem) if spec else None
-        if spec is not None and scenario_spec is None:
-            continue
         _merge_counted(counted, _mapping(document.get("statistics")))
         observed.findings |= collect_findings(document)
         for sample in _list(document.get("samples")):
