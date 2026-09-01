@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [versions]
+cassandra-driver3 = "3.11.5"
+cassandra-driver43 = "4.3.1"
+cassandra-driver44 = "4.19.3"
 mariadb = "3.5.10"
 opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
@@ -12,11 +15,15 @@ opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 postgresql = "42.7.13"
 
 [libraries]
+cassandra-driver3 = { module = "com.datastax.cassandra:cassandra-driver-core", version.ref = "cassandra-driver3" }
+cassandra-driver43 = { module = "com.datastax.oss:java-driver-core", version.ref = "cassandra-driver43" }
+cassandra-driver44 = { module = "org.apache.cassandra:java-driver-core", version.ref = "cassandra-driver44" }
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
 opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
 opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
+opentelemetry-instrumentation-cassandra44 = { module = "io.opentelemetry.instrumentation:opentelemetry-cassandra-4.4" }
 opentelemetry-instrumentation-jdbc = { module = "io.opentelemetry.instrumentation:opentelemetry-jdbc" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }

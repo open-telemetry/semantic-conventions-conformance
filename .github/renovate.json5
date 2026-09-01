@@ -110,7 +110,7 @@
       // The database runner invokes these images directly rather than through
       // Dockerfiles or Compose files, so Renovate needs their Python assignments.
       "customType": "regex",
-      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb)\\.py$/"],
+      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:cassandra|postgres|mariadb)\\.py$/"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?) versioning=(?<versioning>[^\\s]+?)\\s+[A-Z_]+_IMAGE = \"[^:\"]+:(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
       ]

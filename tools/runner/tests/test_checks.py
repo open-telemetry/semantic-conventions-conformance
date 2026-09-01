@@ -251,6 +251,53 @@ def test_declared_signal_lists_are_exact(signal: str) -> None:
     assert "undeclared" in extra
 
 
+def test_allowed_metrics_may_be_present_or_absent() -> None:
+    report = Report(
+        statistics={
+            "seen_registry_metrics": {
+                "db.client.operation.duration": 1,
+            },
+            "seen_non_registry_metrics": {
+                "queueSize": 1,
+                "processedSpans": 0,
+            },
+        }
+    )
+
+    assert (
+        check(
+            scenario(
+                metrics=("db.client.operation.duration",),
+                allowed_metrics=("queueSize", "processedSpans"),
+            ),
+            report,
+        )
+        == []
+    )
+
+
+def test_allowed_metrics_do_not_weaken_required_or_undeclared_checks() -> None:
+    report = Report(
+        statistics={
+            "seen_non_registry_metrics": {
+                "queueSize": 1,
+                "unexpected": 1,
+            },
+        }
+    )
+
+    assert check(
+        scenario(
+            metrics=("db.client.operation.duration",),
+            allowed_metrics=("queueSize",),
+        ),
+        report,
+    ) == [
+        "expected metrics ['db.client.operation.duration'] but they were not emitted",
+        "undeclared metrics emitted: ['unexpected']",
+    ]
+
+
 def test_zero_count_signals_are_not_seen() -> None:
     report = Report(statistics={"seen_registry_metrics": {"never.emitted": 0}})
 
@@ -453,8 +500,9 @@ def test_a_violation_without_context_accepts_every_finding_with_that_id() -> (
     assert check(spec, report) == []
 
 
-def test_a_violation_without_context_still_fails_once_the_class_empties(
-) -> None:
+def test_a_violation_without_context_still_fails_once_the_class_empties() -> (
+    None
+):
     """Bulk or not, a suppression mustn't outlive the gap that caused it."""
     declared = ExpectedViolation(
         id="missing_attribute", context=None, reason="known"
@@ -475,7 +523,10 @@ def test_a_violation_without_context_does_not_accept_other_ids() -> None:
     report = Report(
         violations=[
             {"id": "missing_attribute", "context": {"attribute_key": "llm.a"}},
-            {"id": "genai_span_kind_unexpected", "context": {"kind": "internal"}},
+            {
+                "id": "genai_span_kind_unexpected",
+                "context": {"kind": "internal"},
+            },
         ]
     )
 
@@ -625,7 +676,9 @@ def test_mapping_only_expectation_does_not_enforce_exact_validation() -> None:
     report = Report(
         samples=[
             span_sample(**{"gen_ai.operation.name": "chat"}),
-            span_sample(name="other_span", **{"custom.attr": "value"}),  # undeclared span
+            span_sample(
+                name="other_span", **{"custom.attr": "value"}
+            ),  # undeclared span
         ]
     )
 

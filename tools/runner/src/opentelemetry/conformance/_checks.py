@@ -109,6 +109,7 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
                     "metric",
                     expected=set(spec.metrics),
                     seen=seen_metrics(statistics),
+                    allowed=set(spec.allowed_metrics),
                 )
             ),
             *(
@@ -220,15 +221,19 @@ def _hashable(value: object) -> object:
 
 
 def _check_names(
-    kind: str, *, expected: set[str], seen: set[str]
+    kind: str,
+    *,
+    expected: set[str],
+    seen: set[str],
+    allowed: set[str] | None = None,
 ) -> list[str]:
-    """A declared list is exact: nothing missing and nothing extra."""
+    """Check required names and reject names not explicitly allowed."""
     failures: list[str] = []
     if missing := expected - seen:
         failures.append(
             f"expected {kind}s {sorted(missing)} but they were not emitted"
         )
-    if extra := seen - expected:
+    if extra := seen - expected - (allowed or set()):
         failures.append(f"undeclared {kind}s emitted: {sorted(extra)}")
     return failures
 
