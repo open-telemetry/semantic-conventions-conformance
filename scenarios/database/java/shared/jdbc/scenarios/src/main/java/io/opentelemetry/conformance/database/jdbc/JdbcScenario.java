@@ -19,6 +19,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 
 /** Exercises individual JDBC execution paths against a relational database. */
 public final class JdbcScenario {
@@ -43,7 +44,11 @@ public final class JdbcScenario {
 
   private static void statement(Connection connection, Query operation) throws SQLException {
     try (Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery(operation.sql())) {}
+        ResultSet result = statement.executeQuery(operation.sql())) {
+      if (!result.next()) {
+        throw new IllegalStateException("direct query returned no rows");
+      }
+    }
   }
 
   private static void preparedStatement(Connection connection, PreparedQuery operation)
@@ -54,7 +59,11 @@ public final class JdbcScenario {
       for (Parameter parameter : operation.parameters()) {
         statement.setInt(index++, parameter.integer());
       }
-      try (ResultSet result = statement.executeQuery()) {}
+      try (ResultSet result = statement.executeQuery()) {
+        if (result.next()) {
+          throw new IllegalStateException("prepared query unexpectedly returned a row");
+        }
+      }
     }
   }
 
@@ -63,7 +72,15 @@ public final class JdbcScenario {
       for (String sql : operation.statements()) {
         statement.addBatch(sql);
       }
-      statement.executeBatch();
+      int[] updates = statement.executeBatch();
+      if (updates.length != operation.statements().size()
+          || Arrays.stream(updates).anyMatch(count -> count == Statement.EXECUTE_FAILED)) {
+        throw new IllegalStateException(
+            "expected "
+                + operation.statements().size()
+                + " successful batch operations, got "
+                + Arrays.toString(updates));
+      }
     }
   }
 
@@ -71,7 +88,9 @@ public final class JdbcScenario {
       throws SQLException {
     try (CallableStatement statement =
         connection.prepareCall("CALL " + operation.procedure() + "()")) {
-      statement.execute();
+      if (statement.execute()) {
+        throw new IllegalStateException("stored procedure unexpectedly returned a result set");
+      }
     }
   }
 }
