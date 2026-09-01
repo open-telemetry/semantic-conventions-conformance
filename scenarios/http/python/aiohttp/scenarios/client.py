@@ -12,7 +12,7 @@ import aiohttp
 from otel_http_test_client import (
     REQUEST_TIMEOUT_SECONDS,
     client_headers,
-    drive_async,
+    drive_selected_async,
     mock_server_url,
 )
 
@@ -35,4 +35,4 @@ async def _run() -> None:
             ) as response:
                 return response.status, await response.text()
 
-        await drive_async(mock_server_url(), send)
+        await drive_selected_async(mock_server_url(), send)

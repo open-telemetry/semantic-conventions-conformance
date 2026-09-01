@@ -13,7 +13,7 @@ language. Both sides of the domain use it:
     ``otel-http-drive`` starts it, sends :data:`REQUESTS` at it from outside,
     then closes standard input so it flushes and exits.
 - A **client** scenario is the sender. It passes its own library as ``send``
-  to :func:`drive`, pointed at a server the runner started — see
+  to :func:`drive_selected`, pointed at a server the runner started — see
   ``tools/http/mock-server``, which answers :data:`EXCHANGES` from this module.
 
 Nothing under test ever drives a server scenario: the driver is a separate
@@ -64,6 +64,8 @@ __all__ = [
     "drive",
     "drive_all",
     "drive_async",
+    "drive_selected",
+    "drive_selected_async",
     "mock_server_url",
     "request",
     "reserve_port",
@@ -280,6 +282,18 @@ def drive(
     base_url: str,
     send: Send | None = None,
 ) -> None:
+    """Send and verify every measured request.
+
+    This is the original public driver. Indexed client scenarios use
+    :func:`drive_selected` instead.
+    """
+    drive_all(base_url, send)
+
+
+def drive_selected(
+    base_url: str,
+    send: Send | None = None,
+) -> None:
     """Send the runner-selected request at ``base_url``.
 
     ``send`` defaults to the standard library. A client scenario passes its
@@ -318,6 +332,18 @@ def drive_all(base_url: str, send: Send | None = None) -> None:
 
 
 async def drive_async(base_url: str, send: AsyncSend) -> None:
+    """Asynchronously send and verify every measured request."""
+    for exchange in REQUESTS:
+        status, response = await send(
+            exchange.method,
+            f"{base_url}{exchange.path}",
+            exchange.body,
+        )
+        print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
+        verify(exchange, status, response)
+
+
+async def drive_selected_async(base_url: str, send: AsyncSend) -> None:
     """Asynchronously send and verify the runner-selected request."""
     exchange = scenario_request()
     status, response = await send(

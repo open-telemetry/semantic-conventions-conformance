@@ -30,6 +30,8 @@ from otel_http_test_client import (
     client_headers,
     drive,
     drive_async,
+    drive_selected,
+    drive_selected_async,
     mock_server_url,
     respond,
     scenario_request,
@@ -274,7 +276,55 @@ class TestTheContract:
             )
             verify(exchange, status, body)
 
-    def test_the_async_driver_sends_one_selected_request(
+    def test_the_driver_keeps_sending_every_request(self) -> None:
+        seen: list[str] = []
+
+        def send(method: str, url: str, body: str | None) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return respond(method, url.removeprefix("http://server"), body)
+
+        drive("http://server", send)
+
+        assert seen == [
+            f"{exchange.method} http://server{exchange.path}"
+            for exchange in REQUESTS
+        ]
+
+    def test_the_async_driver_keeps_sending_every_request(self) -> None:
+        seen: list[str] = []
+
+        async def send(
+            method: str, url: str, body: str | None
+        ) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return respond(method, url.removeprefix("http://server"), body)
+
+        asyncio.run(drive_async("http://server", send))
+
+        assert seen == [
+            f"{exchange.method} http://server{exchange.path}"
+            for exchange in REQUESTS
+        ]
+
+    def test_the_selected_driver_sends_one_request(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen: list[str] = []
+
+        def send(method: str, url: str, body: str | None) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return respond(method, url.removeprefix("http://server"), body)
+
+        for index in range(len(REQUESTS)):
+            monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, str(index))
+            drive_selected("http://server", send)
+
+        assert seen == [
+            f"{exchange.method} http://server{exchange.path}"
+            for exchange in REQUESTS
+        ]
+
+    def test_the_selected_async_driver_sends_one_request(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         seen: list[str] = []
@@ -287,7 +337,7 @@ class TestTheContract:
 
         for index in range(len(REQUESTS)):
             monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, str(index))
-            asyncio.run(drive_async("http://server", send))
+            asyncio.run(drive_selected_async("http://server", send))
 
         assert seen == [
             f"{exchange.method} http://server{exchange.path}"
@@ -343,7 +393,7 @@ class TestClientWorkloads:
         monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
 
         with pytest.raises(ContractError, match="answered 599"):
-            drive("http://server", lambda *_args: (599, "not json"))
+            drive_selected("http://server", lambda *_args: (599, "not json"))
 
     def test_json_numbers_do_not_stand_in_for_booleans(self) -> None:
         exchange = scenario_request(2)
