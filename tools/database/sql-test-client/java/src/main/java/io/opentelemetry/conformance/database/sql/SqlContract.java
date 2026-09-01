@@ -270,13 +270,15 @@ public final class SqlContract {
 
   private record ParameterEntry(String name, String type, JsonNode value) {
     Parameter parameter() {
+      String parameterName = requireText(name, "parameter name");
       if (!"integer".equals(type)) {
-        throw new IllegalArgumentException(name + " has unsupported parameter type: " + type);
+        throw new IllegalArgumentException(
+            parameterName + " has unsupported parameter type: " + type);
       }
       if (value == null || !value.isInt()) {
-        throw new IllegalArgumentException(name + " must declare an integer value");
+        throw new IllegalArgumentException(parameterName + " must declare an integer value");
       }
-      return new Parameter(name, value.intValue());
+      return new Parameter(parameterName, value.intValue());
     }
   }
 
