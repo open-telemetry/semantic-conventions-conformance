@@ -7,10 +7,10 @@ Shared by every implementation under ``requests/``, which is what makes their
 results comparable. Nothing here turns instrumentation on, and nothing here
 may: naming one would defeat the sharing.
 
-Only the send is this library's. The sequence and the answers are the
+Only the send is this library's. The selected request and its answer are the
 contract's, so a client is measured against exactly what a server scenario
-would have answered. The shared telemetry contract checks what those requests
-emit.
+would have answered. The shared telemetry contract checks what that request
+emits.
 """
 
 from __future__ import annotations
@@ -26,9 +26,7 @@ from otel_http_test_client import (
 
 
 def run() -> None:
-    """Send the contract at the server the runner started."""
-    # One session for the whole sequence, so the requests share a connection
-    # the way an application's would.
+    """Send the contract request the runner selected, at the server it started."""
     with requests.Session() as session:
 
         def send(method: str, url: str, body: str | None) -> tuple[int, str]:
