@@ -12,4 +12,4 @@ setup: otel-conformance-java prepare armeria:opentelemetry-library
 
 scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 scenario_contract_variant: server
-scenario_run: otel-http-drive --persistent --serve otel-conformance-java run armeria:opentelemetry-library ArmeriaLibraryServerScenario
+scenario_run: otel-http-drive --serve otel-conformance-java run armeria:opentelemetry-library ArmeriaLibraryServerScenario

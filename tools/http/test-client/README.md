@@ -118,12 +118,13 @@ process:
 ```yaml
 scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 scenario_contract_variant: server
-scenario_run: otel-http-drive --persistent --serve <the server scenario command>
+scenario_run: otel-http-drive --serve <the server scenario command>
 ```
 
 Selecting `server` is what makes this persistent. The variant's `runner`
-role tells the runner to drive one process through the whole batch, so the
-package names a command and nothing about how it is run.
+role tells the runner to drive one process through the whole batch, and the
+runner tells the driver so through the environment. The package names a
+command and nothing about how it is run.
 
 The driver picks a free port, starts the command, waits on the fixed readiness
 request, sends the measured requests with the Python

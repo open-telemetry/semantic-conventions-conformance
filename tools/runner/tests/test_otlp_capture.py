@@ -470,6 +470,12 @@ def test_export_does_not_acknowledge_before_forwarding_completes() -> None:
 
 
 def test_capture_snapshot_notifies_ingress_and_in_flight_drain() -> None:
+    """An export is recorded on arrival and counted until it is forwarded.
+
+    The window already holds it while the forward is outstanding, which is
+    what lets an action be judged without waiting for the collector.
+    """
+
     trace = _requests()[0]
     with _Upstream() as upstream, OtlpCaptureProxy(upstream.target) as capture:
         upstream.release.clear()
@@ -489,7 +495,7 @@ def test_capture_snapshot_notifies_ingress_and_in_flight_drain() -> None:
         assert changed.wait(1)
         drained = capture.snapshot(window)
         assert drained.in_flight == 0
-        assert drained.revision > ingress.revision
+        assert drained.exports == ingress.exports
         capture.close_window(window, timeout=1)
         channel.close()
 

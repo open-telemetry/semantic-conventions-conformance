@@ -39,6 +39,7 @@ import time
 import urllib.error
 import urllib.request
 from collections.abc import Awaitable
+from functools import lru_cache
 from typing import Callable, Mapping, NamedTuple, NoReturn, Sequence, cast
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
@@ -47,6 +48,7 @@ __all__ = [
     "ACTION_VARIABLE",
     "CONTENT_TYPE",
     "PORT_VARIABLE",
+    "PROTOCOL_VARIABLE",
     "REQUEST_TIMEOUT_SECONDS",
     "USER_AGENT",
     "AsyncSend",
@@ -100,6 +102,11 @@ AsyncSend = Callable[[str, str, "str | None"], Awaitable["tuple[int, str]"]]
 PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
 ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION"
 ACTIONS_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTIONS"
+
+# Set by the runner only when the selected contract variant made this run
+# persistent, which is how ``otel-http-drive --serve`` learns it is being
+# driven rather than sending one pass of its own.
+PROTOCOL_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_PROTOCOL"
 
 # Fixed rather than the interpreter's default, so a server scenario is driven
 # by the same client whichever Python happens to be installed.
@@ -205,11 +212,9 @@ def _exchange_from_action(
     )
 
 
-def _action_table(raw: str | None = None) -> tuple[Exchange, ...]:
-    if raw is None:
-        raw = os.environ.get(ACTIONS_VARIABLE)
-    if raw is None:
-        raise RuntimeError(f"{ACTIONS_VARIABLE} is not set")
+def _decode_action_table(raw: str) -> tuple[Exchange, ...]:
+    """Decode the runner's action table. Explicit input, no cache."""
+
     loaded = _decode_json(raw, ACTIONS_VARIABLE)
     if not isinstance(loaded, list) or not loaded:
         raise RuntimeError(
@@ -224,6 +229,27 @@ def _action_table(raw: str | None = None) -> tuple[Exchange, ...]:
         )
         for index, action in enumerate(actions)
     )
+
+
+@lru_cache(maxsize=None)
+def _cached_action_table(raw: str) -> tuple[Exchange, ...]:
+    return _decode_action_table(raw)
+
+
+def _action_table(raw: str | None = None) -> tuple[Exchange, ...]:
+    """The runner's action table, parsed once per measured process.
+
+    A server scenario answers every request from this table, so decoding it
+    per request would charge the measured process for JSON parsing on the
+    very path its instrumentation is timing. The table arrives once in the
+    environment and never changes, so its parse is keyed by that text.
+    """
+
+    if raw is None:
+        raw = os.environ.get(ACTIONS_VARIABLE)
+    if raw is None:
+        raise RuntimeError(f"{ACTIONS_VARIABLE} is not set")
+    return _cached_action_table(raw)
 
 
 def scenario_request(raw: str | None = None) -> Exchange:

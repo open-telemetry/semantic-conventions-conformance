@@ -92,11 +92,30 @@ function actionExchange(value, variable, readiness) {
   });
 }
 
-/** Every exchange the runner supplied, including readiness, in order. */
+/**
+ * Every exchange the runner supplied, including readiness, in order.
+ *
+ * A server scenario answers every request from this table, so parsing it per request would
+ * charge the measured process on the path its instrumentation is timing. The runner sets the
+ * table before the process starts and never changes it; keying the cache on the raw text
+ * keeps a caller that varies it honest.
+ */
+let cachedTable = null;
+
 function exchanges(raw = process.env[ACTIONS_VARIABLE]) {
   if (raw === undefined) {
     throw new Error(`${ACTIONS_VARIABLE} is not set`);
   }
+  if (cachedTable !== null && cachedTable.raw === raw) {
+    return cachedTable.exchanges;
+  }
+  const parsed = decodeActions(raw);
+  cachedTable = { raw, exchanges: parsed };
+  return parsed;
+}
+
+/** Decode an action table. Explicit input, no cache. */
+function decodeActions(raw) {
   const actions = parseJson(raw, ACTIONS_VARIABLE);
   if (!Array.isArray(actions) || actions.length === 0) {
     throw new Error(
@@ -154,6 +173,7 @@ module.exports = {
   ACTION_VARIABLE,
   CONTENT_TYPE,
   USER_AGENT,
+  decodeActions,
   exchangeFor,
   exchanges,
   renderResponseBody,

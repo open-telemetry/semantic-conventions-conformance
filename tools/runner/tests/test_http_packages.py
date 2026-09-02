@@ -209,15 +209,17 @@ def test_all_http_packages_use_the_contract_execution_model() -> None:
         assert len(package.action_table) == scenario_count + 1, path
 
         # The lifecycle follows from the variant's driver role, so no package
-        # names the internal protocol the runner and a driven process speak.
+        # names the internal protocol the runner and a driven process speak,
+        # nor asks the driver for it on the command line.
         assert "protocol" not in _keys(document), path
         assert not isinstance(document["scenario_run"], dict), path
+        assert "--persistent" not in document["scenario_run"], path
         protocols = {scenario.protocol for scenario in package.scenarios.values()}
         if side == "client":
             assert protocols == {None}, path
         else:
             assert document["scenario_run"].startswith(
-                "otel-http-drive --persistent --serve "
+                "otel-http-drive --serve "
             ), path
             assert protocols == {"jsonl-v1"}, path
 
@@ -264,7 +266,7 @@ class _StubCapture:
 
     def snapshot(self, window: CaptureWindow) -> CaptureSnapshot:
         del window
-        return CaptureSnapshot((), 0, 0)
+        return CaptureSnapshot((), 0)
 
     def drain(self, *, timeout: float | None = None) -> None:
         del timeout
@@ -288,6 +290,9 @@ def test_a_custom_contract_reaches_the_measured_server(
     A package may point at a contract of its own, so a driver that rebuilt the
     table from whichever contract its own installation shipped would drive one
     contract while the package was judged against another.
+
+    The command asks for no lifecycle. That the driver runs persistently at
+    all is the runner telling it so, from the variant's driver role.
     """
     pytest.importorskip("otel_http_test_client")
 
@@ -308,7 +313,6 @@ def test_a_custom_contract_reaches_the_measured_server(
                     sys.executable,
                     "-m",
                     "otel_http_test_client",
-                    "--persistent",
                     "--serve",
                     sys.executable,
                     str(server),

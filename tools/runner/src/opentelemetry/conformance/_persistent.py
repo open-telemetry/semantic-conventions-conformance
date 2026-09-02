@@ -36,12 +36,11 @@ from ._spec import ScenarioSpec
 PROTOCOL_VERSION = "jsonl-v1"
 DEFAULT_WINDOW_TIMEOUT = 10.0
 DEFAULT_SETTLE_DELAY = 0.25
-# The longest a settling loop parks on the condition once its settle delay is
-# up and the capture is still carrying an export. Every arrival and completion
-# wakes the condition, so this only bounds a wait nothing else ends; what it
-# rules out is re-reading the same snapshot at full speed until the export
-# lands.
-_IN_FLIGHT_WAIT_SECONDS = 0.05
+
+# Where the still-running action's window ends: nowhere yet. A clock the
+# runner read would be a boundary the measured process never agreed to, and
+# a record it stamps a moment later would fall outside every window.
+_OPEN_END = 1 << 63
 
 PERSISTENT_ENV = {
     "OTEL_BSP_SCHEDULE_DELAY": "50",
@@ -414,34 +413,32 @@ class PersistentController:
         fingerprint: object = None
         while True:
             changes = self._observed_capture_changes()
-            snapshot = self._capture.snapshot(batch_window)
-            captured = decode_window(batch_window, snapshot.exports)
-            if snapshot.in_flight == 0:
-                if required_metrics:
-                    closed = [
-                        end
-                        for end in _metric_point_ends(
-                            captured, frozenset(required_metrics)
-                        )
-                        if end >= ready_unix_nano
-                    ]
-                    if closed:
-                        return max(closed)
-                else:
-                    # No metric window to close, so nothing can aggregate
-                    # readiness together with an action. Settling on the
-                    # bootstrap window's own content is enough.
-                    current = _window_fingerprint(captured, None)
-                    if current != fingerprint:
-                        fingerprint = current
-                        settle_deadline = (
-                            time.monotonic() + self._settle_delay
-                        )
-                    elif (
-                        settle_deadline is not None
-                        and time.monotonic() >= settle_deadline
-                    ):
-                        return ready_unix_nano
+            captured = decode_window(
+                batch_window, self._capture.snapshot(batch_window).exports
+            )
+            if required_metrics:
+                closed = [
+                    end
+                    for end in _metric_point_ends(
+                        captured, frozenset(required_metrics)
+                    )
+                    if end >= ready_unix_nano
+                ]
+                if closed:
+                    return max(closed)
+            else:
+                # No metric window to close, so nothing can aggregate
+                # readiness together with an action. Settling on the
+                # bootstrap window's own content is enough.
+                current = _window_fingerprint(captured, None)
+                if current != fingerprint:
+                    fingerprint = current
+                    settle_deadline = time.monotonic() + self._settle_delay
+                elif (
+                    settle_deadline is not None
+                    and time.monotonic() >= settle_deadline
+                ):
+                    return ready_unix_nano
 
             with self._condition:
                 self._raise_async_failure()
@@ -464,13 +461,7 @@ class PersistentController:
                     continue
                 wait_for = wait_until - time.monotonic()
                 if wait_for <= 0:
-                    if snapshot.in_flight == 0:
-                        continue
-                    # The bootstrap window has settled but the capture is
-                    # still carrying an export that belongs in it. Park for a
-                    # slice of what is left of the bootstrap deadline: the
-                    # capture wakes this the moment the export lands.
-                    wait_for = min(remaining, _IN_FLIGHT_WAIT_SECONDS)
+                    continue
                 self._condition.wait(wait_for)
 
     def _run_action(
@@ -520,19 +511,17 @@ class PersistentController:
         while action.state is not ActionState.SEALED:
             changes = self._observed_capture_changes()
             snapshot = self._capture.snapshot(batch_window)
-            now_unix_nano = time.time_ns()
             try:
                 partition = partition_persistent_exports(
                     snapshot.exports,
                     actions,
-                    now_unix_nano,
+                    # This action is still running, so nothing bounds it yet.
+                    # Bounding it on a clock the runner read would make a
+                    # record the measured process stamped a moment later
+                    # unassignable, for no reason but two clocks disagreeing.
+                    None,
                     bootstrap_unix_nano,
                 )
-            except PersistentProtocolError as error:
-                raise PersistentProtocolError(
-                    f"{action.scenario.display_name}: {error}"
-                ) from error
-            try:
                 _reject_late_telemetry(actions, partition)
             except PersistentProtocolError as error:
                 raise PersistentProtocolError(
@@ -564,9 +553,6 @@ class PersistentController:
                 elif (
                     settle_deadline is not None
                     and time.monotonic() >= settle_deadline
-                    # Seal on a quiet instant, so nothing the window is
-                    # judged on is still being recorded.
-                    and snapshot.in_flight == 0
                 ):
                     action.transition(ActionState.SEALED)
                     action.sealed_unix_nano = time.time_ns()
@@ -586,19 +572,12 @@ class PersistentController:
                     wait_until = min(wait_until, settle_deadline)
                 remaining = wait_until - time.monotonic()
                 if remaining <= 0:
-                    left = deadline - time.monotonic()
-                    if left <= 0:
+                    if deadline - time.monotonic() <= 0:
                         raise TimeoutError(
                             f"timed out sealing action sequence "
                             f"{action.sequence}"
                         )
-                    if snapshot.in_flight == 0:
-                        continue
-                    # The window has settled but the capture is still carrying
-                    # an export that would land in it. Park for a slice of
-                    # what is left of the action's deadline: the capture wakes
-                    # this the moment the export lands.
-                    remaining = min(left, _IN_FLIGHT_WAIT_SECONDS)
+                    continue
                 if self._capture_changes != changes:
                     continue
                 self._condition.wait(remaining)
@@ -791,7 +770,7 @@ class PersistentController:
 def partition_persistent_exports(
     exports: Sequence[CapturedExport],
     actions: Sequence[_ActionWindow],
-    batch_end_unix_nano: int,
+    batch_end_unix_nano: int | None,
     bootstrap_unix_nano: int = 0,
 ) -> _Partition:
     """Assign raw OTLP records to action windows without aggregate subtraction.
@@ -804,10 +783,20 @@ def partition_persistent_exports(
     ``bootstrap_unix_nano`` is when the driver reported readiness, and is a
     boundary a metric point may not straddle, so no point may mix readiness
     with the first action.
+
+    ``batch_end_unix_nano`` bounds the last action. Pass ``None`` while that
+    action is still running: it has no end yet, and inventing one from the
+    runner's clock would leave a record the measured process stamps a moment
+    later belonging to no window at all.
     """
 
     if not actions:
         return _Partition(_empty_window("readiness", 0), (), ())
+    # An action still running has no end, so its window reaches forward
+    # without bound until the batch is reconciled against a real one.
+    batch_end = (
+        _OPEN_END if batch_end_unix_nano is None else batch_end_unix_nano
+    )
     # Where readiness ends and the first action begins. Taken from the
     # instrumentation's own clock when it reported one, because a coarse
     # system clock can put the driver's send at the same nanosecond as an
@@ -826,17 +815,14 @@ def partition_persistent_exports(
     ranges = [
         (start, max(starts[index + 1], start))
         if index + 1 < len(starts)
-        else (start, max(batch_end_unix_nano, start))
+        else (start, max(batch_end, start))
         for index, start in enumerate(starts)
     ]
     # Index 0 is the bootstrap window; action ``index`` is at ``index + 1``.
     ranges.insert(0, (0, starts[0]))
     response_boundaries = [
         bootstrap_unix_nano,
-        *(
-            action.response_unix_nano or batch_end_unix_nano
-            for action in actions
-        ),
+        *(action.response_unix_nano or batch_end for action in actions),
     ]
     assigned: list[list[CapturedExport]] = [[] for _ in ranges]
     metric_boundaries: list[list[int]] = [[] for _ in ranges]

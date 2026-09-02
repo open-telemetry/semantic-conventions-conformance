@@ -9,6 +9,7 @@ const { describe, it } = require("node:test");
 const {
   ACTIONS_VARIABLE,
   ACTION_VARIABLE,
+  decodeActions,
   exchangeFor,
   exchanges,
   renderResponseBody,
@@ -22,6 +23,17 @@ process.env[ACTIONS_VARIABLE] = ACTIONS_JSON;
 describe("the contract", () => {
   it("decodes the complete runner action table", () => {
     assert.ok(exchanges().length > 0);
+  });
+
+  it("parses one table however many requests it answers", () => {
+    // A server scenario answers every request from this table, so parsing it
+    // per request would charge the measured process on the path its
+    // instrumentation is timing.
+    const first = exchanges();
+
+    assert.equal(exchanges(), first);
+    assert.equal(exchangeFor("GET", "/users/123"), first[1]);
+    assert.notEqual(decodeActions(ACTIONS_JSON), first);
   });
 
   it("does not measure readiness", () => {

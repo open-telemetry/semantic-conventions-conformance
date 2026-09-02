@@ -37,6 +37,7 @@ from ._env import (
     SCENARIO_ACTION_VARIABLE,
     SCENARIO_ACTIONS_VARIABLE,
     SCENARIO_INDEX_VARIABLE,
+    SCENARIO_PROTOCOL_VARIABLE,
     action_table_json,
     build_env,
     timeout_seconds,
@@ -334,9 +335,15 @@ class ConformanceSession:
         self.start()
         assert self._capture is not None
         first = scenarios[0]
+        protocol = first.run_spec.protocol
+        assert protocol is not None
         injected = {
             "OTEL_EXPORTER_OTLP_ENDPOINT": self._capture.endpoint,
             "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            # The command says what to start, not how it is driven. That
+            # follows from the selected variant's role, so the runner tells
+            # the process here rather than every package repeating a flag.
+            SCENARIO_PROTOCOL_VARIABLE: protocol,
             **PERSISTENT_ENV,
         }
         # The runner owns the table, so a driver that starts a measured server

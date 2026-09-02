@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from opentelemetry.conformance._coverage import coverage
 from opentelemetry.conformance._otlp_capture import (
     CapturedExport,
     CapturedWindow,
@@ -20,6 +21,12 @@ from opentelemetry.conformance._report import (
     write_weaver,
 )
 from opentelemetry.conformance._semconv import _reduce
+from opentelemetry.conformance._spec import (
+    PackageSpec,
+    ScenarioSpec,
+    ServerSpec,
+    WeaverSpec,
+)
 from opentelemetry.proto.collector.logs.v1 import logs_service_pb2
 from opentelemetry.proto.collector.metrics.v1 import metrics_service_pb2
 from opentelemetry.proto.collector.trace.v1 import trace_service_pb2
@@ -254,6 +261,127 @@ def test_multiple_delta_exports_union_metric_point_attributes(
             }
         },
     )["metrics"] == {"requests": ["error.type", "route"]}
+
+
+def _metric_export(
+    name: str, *, scope: str = "instrumentation"
+) -> CapturedExport:
+    return CapturedExport(
+        "metrics",
+        metrics_service_pb2.ExportMetricsServiceRequest(
+            resource_metrics=[
+                metrics_pb2.ResourceMetrics(
+                    scope_metrics=[
+                        metrics_pb2.ScopeMetrics(
+                            scope=common_pb2.InstrumentationScope(name=scope),
+                            metrics=[
+                                metrics_pb2.Metric(
+                                    name=name,
+                                    gauge=metrics_pb2.Gauge(
+                                        data_points=[
+                                            metrics_pb2.NumberDataPoint(
+                                                as_int=1
+                                            )
+                                        ]
+                                    ),
+                                )
+                            ],
+                        )
+                    ]
+                )
+            ]
+        ),
+    )
+
+
+def _spec() -> PackageSpec:
+    """A package with one scenario that declares no expectations.
+
+    Coverage then records what the run actually emitted, which is the point:
+    nothing is filtered because a scenario failed to ask for it.
+    """
+
+    return PackageSpec(
+        instrumented_library="demo",
+        instrumentation_library="demo-instrumentation",
+        directory=Path("."),
+        env={},
+        weaver=WeaverSpec(),
+        server=ServerSpec(),
+        setup=None,
+        scenarios={
+            "checkout": ScenarioSpec(
+                name="checkout",
+                directory=Path("."),
+                env={},
+                run=("python", "checkout.py"),
+                spans=None,
+                metrics=None,
+                events=None,
+            )
+        },
+    )
+
+
+def test_sdk_self_reporting_stays_out_of_the_committed_coverage(
+    tmp_path: Path,
+) -> None:
+    """Coverage records what an instrumentation emits, so it agrees with the
+    scenario checks about what the SDK emits about itself.
+
+    An SDK reports on its own queues and exporters for as long as a process
+    runs. That describes the exporter the runner configured, so a scenario is
+    neither credited nor charged for it — and neither is the committed record.
+    """
+
+    write_capture(
+        tmp_path,
+        _window(
+            "checkout",
+            _metric_export("http.server.request.duration"),
+            _metric_export("otel.sdk.exporter.span.exported"),
+            _metric_export(
+                "queue.size", scope="io.opentelemetry.sdk.trace"
+            ),
+            _metric_export(
+                "sent.count", scope="io.opentelemetry.exporters.otlp-grpc"
+            ),
+        ),
+    )
+
+    observed = read(tmp_path, lambda _name, _kind, _attributes: set())
+    reduced = coverage(tmp_path, _spec())
+
+    assert set(observed.metrics) == {"http.server.request.duration"}
+    assert reduced["metrics"] == ["http.server.request.duration"]
+
+
+def test_the_raw_capture_still_records_what_the_sdk_said_about_itself(
+    tmp_path: Path,
+) -> None:
+    """Leaving it out of coverage is not hiding it.
+
+    The report is the diagnostic, and Weaver is given every export, so what
+    the SDK said about itself stays readable.
+    """
+
+    write_capture(
+        tmp_path,
+        _window("checkout", _metric_export("otel.sdk.exporter.span.exported")),
+    )
+
+    document = json.loads(
+        scenario_report_path(tmp_path, "checkout").read_text(encoding="utf-8")
+    )
+    names = [
+        metric["name"]
+        for request in document["metrics"]
+        for resource in request["resource_metrics"]
+        for scope in resource["scope_metrics"]
+        for metric in scope["metrics"]
+    ]
+
+    assert names == ["otel.sdk.exporter.span.exported"]
 
 
 def test_unwindowed_capture_contributes_to_aggregate_coverage_only(

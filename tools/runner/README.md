@@ -454,7 +454,14 @@ scenario_run: [node, controller.js]
 ```
 
 The runner then speaks `jsonl-v1` on that command's standard input and
-output. It starts one controller, and therefore one measured process behind
+output, and sets `OTEL_CONFORMANCE_SCENARIO_PROTOCOL` to that name so the
+command knows it is being driven. A command that starts a measured process
+of its own — `otel-http-drive --serve` does — reads it rather than taking a
+flag every package would have to repeat. It is set only for a persistent
+run, so its absence is what makes a manual run one-shot, and a value the
+command does not speak fails before the measured process is started.
+
+The runner starts one controller, and therefore one measured process behind
 that controller, for each selected consecutive batch that shares the
 command. It waits for a `ready` record, sends one `action` record
 per scenario, and closes stdin after the batch. Each record has `version`,
@@ -476,21 +483,29 @@ while the response is still travelling — and the runner reads the record
 later still. Only the controller's own clock bounds the exchange.
 
 Telemetry remains tentative until the controller acknowledges the action, its
-positive expectations arrive, assigned exports drain, and a short quiet period
-passes. Final checks happen only after `stopped`, process exit, and a final
-capture drain.
+positive expectations arrive, and a short quiet period passes. The capture
+records a complete OTLP request before forwarding it upstream, so a window
+already holds everything it will be judged on while that forward is still in
+flight; waiting for Weaver's round trip would only charge every action for
+the collector's latency. Ingress still closes and drains before the final
+Weaver and quarantine checks. Those checks happen only after `stopped`,
+process exit, and that final drain.
 
 An action window is bounded by the timestamps the instrumentation itself
 reported, never by the order exports arrived in, so a cold runtime whose
 first export is slow does not spill readiness telemetry into the first
-action. What ran before the first action is the readiness window.
+action. What ran before the first action is the readiness window. The action
+still running has no end at all: the runner and the measured process read
+different clocks, and bounding the open window on the runner's would make a
+record the process stamps a moment later belong to no window. The batch's
+real end is applied once, when everything is reconciled.
 
 A span is placed by the interval between its start and its end, and its events
 travel with it. A log record is placed by its own timestamp, falling back to
 its observed timestamp. Spans of one trace describe one exchange, so a trace
 whose spans fall in different windows is ambiguous and fails. So does a span
-or record that reaches across a boundary, or lands in no window at all:
-nothing is guessed.
+or record that reaches across a sealed boundary, or lands in no window at
+all: nothing is guessed.
 
 Actions run one at a time, so a record that arrives while a later action is
 running still belongs to whichever action its timestamps place it in. It can
@@ -508,8 +523,9 @@ interval counts as an action's metric boundary.
 An SDK reports on its own processors and exporters for as long as the process
 runs, under the `otel.sdk.` metric namespace or an SDK-internal scope. That
 describes the exporter the runner configured, so a scenario is neither
-credited nor charged for it, and it never keeps an action from settling. The
-raw exports still reach the report and Weaver.
+credited nor charged for it, it never keeps an action from settling, and it
+stays out of the committed coverage. The raw exports still reach the report
+and Weaver.
 
 Reports use stable zero-padded ordinal filenames, while CLI and pytest output
 prefix `description` with its index; repeated descriptions do not merge
