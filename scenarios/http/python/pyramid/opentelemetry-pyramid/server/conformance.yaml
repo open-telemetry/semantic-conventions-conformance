@@ -8,6 +8,12 @@ instrumentation_library: opentelemetry-instrumentation-pyramid
 env:
   OTEL_SEMCONV_STABILITY_OPT_IN: http
 
-scenarios:
-  server:
-    run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract_variant: server
+scenario_run:
+  command: otel-http-drive --persistent --serve uv run --frozen --project . otel-conformance-python scenario.py
+  protocol: jsonl-v1
+
+# What this instrumentation emits beyond the shared HTTP server contract.
+additional_metrics:
+  - http.server.active_requests

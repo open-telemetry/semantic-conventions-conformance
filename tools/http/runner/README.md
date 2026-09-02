@@ -40,8 +40,18 @@ Span status and `error.type` aren't checked here: neither is HTTP-specific, so
 both live in [the runner's own policies](../../runner/README.md#advice-policies).
 
 Client scenarios call [`http-mock-server`](../mock-server), which installs
-with this package. Server scenarios are driven from outside, by
-[`otel-http-drive --serve`](../test-client). Both use the request sequence
-in [`contract.yaml`](../test-client/contract.yaml).
+with this package. Each contract entry starts a one-shot client process from its
+JSON action and gets one capture window and report. Server scenarios are driven
+from outside by [`otel-http-drive --persistent --serve`](../test-client), with
+one measured server process per selected batch and the action table handed off
+as JSON. Both sides use [`contract.yaml`](../test-client/contract.yaml), and the
+runner invokes Weaver once for the package.
+
+The persistent driver sends readiness and sequential actions with distinct
+`traceparent` values. The runner uses those correlations and signal timestamps
+to isolate each action, then waits for expected telemetry, forwarding drains,
+and a quiet settle period before sending the next request. Ambiguous metric
+intervals and driver protocol failures fail the package rather than falling back
+to an aggregate report.
 
 [http]: https://opentelemetry.io/docs/specs/semconv/http/

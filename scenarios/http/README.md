@@ -60,10 +60,10 @@ A Python instrumentation has nothing to build. Its workload is a module in
 ## The scenario contract
 
 [`contract.yaml`](../../tools/http/test-client/contract.yaml) combines each
-client request and response with its telemetry expectations. The runner turns
-every list entry into a separate scenario, while language helpers select the
-same entry through `OTEL_CONFORMANCE_SCENARIO_INDEX`. This keeps the traffic
-shared without aggregating independent requests into one report.
+request and response with client and server telemetry expectations. All 50
+packages select their side's contract variant. The runner turns every entry into
+one action with its own capture window and report, without aggregating
+independent requests.
 
 | Request | What it is there for |
 | --- | --- |
@@ -89,6 +89,18 @@ contract instead.
 
 See [`tools/http/test-client`](../../tools/http/test-client) for the per-
 language helpers that read it.
+
+For a client package, each selected entry starts a one-shot process and arrives
+as strict JSON in `OTEL_CONFORMANCE_SCENARIO_ACTION`. For a server package,
+`otel-http-drive` keeps one measured server process alive for the selected batch;
+the full readiness-and-action table the runner parsed arrives as JSON in
+`OTEL_CONFORMANCE_SCENARIO_ACTIONS`, and the driver passes it on unchanged. The
+runner still gives every action its own
+telemetry window and report, then runs Weaver once for the package. It waits for
+the acknowledged response and settled telemetry before sending the next action.
+Readiness, malformed protocol data, response mismatches, overlapping metric
+intervals, and early server exits fail closed rather than guessing which action
+owns the telemetry.
 
 ## Both sides of the domain
 
@@ -159,7 +171,7 @@ neither a configuration nor an assembly path.
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
 complete run rewrites and CI diffs. A divergence someone has looked at goes in
-`expected_violations` with a reason.
+the top-level `expected_violations` list with a reason.
 See [`tools/runner/README.md`](../../tools/runner/README.md)
 for the file format.
 

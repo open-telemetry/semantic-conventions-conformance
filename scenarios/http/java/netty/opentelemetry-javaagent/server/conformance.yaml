@@ -14,9 +14,8 @@ weaver:
 
 setup: otel-conformance-java prepare netty:opentelemetry-javaagent
 
-scenarios:
-  server:
-    # The requests are sent from outside the scenario, so a server run holds
-    # server telemetry only; the driver starts this command, chooses the port
-    # it binds, and closes its standard input when it is done.
-    run: otel-http-drive --serve otel-conformance-java run --agent netty:opentelemetry-javaagent NettyJavaagentServerScenario
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract_variant: server
+scenario_run:
+  command: otel-http-drive --persistent --serve otel-conformance-java run --agent netty:opentelemetry-javaagent NettyJavaagentServerScenario
+  protocol: jsonl-v1

@@ -5,6 +5,7 @@ runner: http-conformance
 instrumented_library: armeria
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
 scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract_variant: client
 
 env:
   # Keep Java runtime metrics out of this HTTP-only conformance report.

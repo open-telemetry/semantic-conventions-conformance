@@ -12,10 +12,11 @@ key and base URL and run it.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from string import Template
-from typing import Mapping
+from typing import Mapping, Sequence
 
 _logger = logging.getLogger(__name__)
 
@@ -23,6 +24,27 @@ _logger = logging.getLogger(__name__)
 # across reports — the flush at its end exports them. Passed as an environment
 # variable so any language's SDK autoconfiguration picks it up.
 METRIC_EXPORT_INTERVAL_MILLIS = 2**31 - 1
+
+# Which scenario a one-shot process was started for, and the one action it is
+# to perform.
+SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX"
+SCENARIO_ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION"
+
+# The package's whole action table, readiness first. A process that answers
+# actions rather than performing them — a measured server, a mock server, or a
+# driver that starts one — needs every action the run may reach, not just the
+# one it is currently on.
+SCENARIO_ACTIONS_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTIONS"
+
+
+def action_table_json(table: Sequence[Mapping[str, object]]) -> str:
+    """The action table as the canonical JSON every language decodes."""
+    return json.dumps(
+        list(table),
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
 
 
 def timeout_seconds(variable: str, default: float) -> float:

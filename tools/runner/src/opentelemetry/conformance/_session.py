@@ -3,10 +3,9 @@
 
 """The conformance session — a plain library, free of pytest.
 
-It owns the server and weaver lifecycles so a pytest fixture and the
-CLI are thin wrappers over the same entry point, and it never raises for
-something a scenario got wrong: that lands in ``ScenarioReport.failures`` and
-the caller decides what it means. A broken harness still raises.
+It owns the package server, capture, and Weaver lifecycles so pytest and the CLI
+use the same entry point. Scenario process failures and package live-check
+findings are results; a broken runner still raises.
 """
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ import logging
 import shlex
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from string import Template
 from types import TracebackType
@@ -24,19 +23,48 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     Generator,
+    Iterable,
     Mapping,
     Protocol,
+    Sequence,
     TypeVar,
 )
 
-from ._checks import check
+from ._checks import check_package_violations, check_scenario_telemetry
 from ._coverage import coverage
 from ._env import (
     METRIC_EXPORT_INTERVAL_MILLIS,
+    SCENARIO_ACTION_VARIABLE,
+    SCENARIO_ACTIONS_VARIABLE,
+    SCENARIO_INDEX_VARIABLE,
+    action_table_json,
     build_env,
     timeout_seconds,
 )
+from ._otlp_capture import (
+    CapturedExport,
+    CapturedWindow,
+    OtlpCaptureProxy,
+    UnexpectedExportsError,
+)
+from ._persistent import (
+    DEFAULT_SETTLE_DELAY,
+    DEFAULT_WINDOW_TIMEOUT,
+    PERSISTENT_ENV,
+    ActionState,
+    PersistentController,
+)
 from ._registry import check_weaver
+from ._report import (
+    READINESS_REPORT,
+    SCENARIO_REPORT_DIR,
+    UNWINDOWED_REPORT,
+    WEAVER_REPORT,
+    write_capture,
+    write_readiness,
+    write_unwindowed,
+    write_weaver,
+)
 from ._server import Server
 from ._spec import (
     PackageSpec,
@@ -52,18 +80,21 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Generous: a cold scenario subprocess can spend a while importing a large
-# framework before it emits anything. Overridable through the environment.
-_WEAVER_INACTIVITY_TIMEOUT = (
-    "OTEL_CONFORMANCE_WEAVER_INACTIVITY_TIMEOUT",
-    300.0,
-)
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
+_CAPTURE_DRAIN_TIMEOUT = ("OTEL_CONFORMANCE_CAPTURE_DRAIN_TIMEOUT", 120.0)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
+_SCENARIO_WINDOW_TIMEOUT = (
+    "OTEL_CONFORMANCE_SCENARIO_WINDOW_TIMEOUT",
+    DEFAULT_WINDOW_TIMEOUT,
+)
+_SCENARIO_SETTLE_DELAY = (
+    "OTEL_CONFORMANCE_SCENARIO_SETTLE_DELAY",
+    DEFAULT_SETTLE_DELAY,
+)
 
-# Both relative to the conformance directory. The raw reports are throwaway;
+# Both relative to the conformance directory. The reports are diagnostic;
 # the data file is meant to be committed and diffed.
-DEFAULT_REPORT_DIR = Path("output") / "weaver-reports"
+DEFAULT_REPORT_DIR = Path("output") / "reports"
 DEFAULT_DATA_FILE = Path("data.json")
 
 # Fallback only: a config declared by the caller or the package replaces it.
@@ -73,7 +104,12 @@ RUNNER_WEAVER_DEFAULTS = WeaverSpec(
 
 
 class _WeaverProcess(Protocol):
+    @property
+    def otlp_endpoint(self) -> str: ...
+
     def start(self) -> _WeaverProcess: ...
+
+    def end(self, timeout: int) -> LiveCheckReport: ...
 
     def close(self) -> None: ...
 
@@ -152,10 +188,19 @@ class ScenarioReport:
 
     name: str
     failures: list[str]
-    violations: list[str] = field(default_factory=list[str])
-    report: LiveCheckReport | None = None
+    telemetry: CapturedWindow
     stdout: str = ""
     stderr: str = ""
+
+
+@dataclass(frozen=True)
+class PackageReport:
+    """The scenario processes and aggregate Weaver result for one package."""
+
+    scenarios: tuple[ScenarioReport, ...]
+    failures: list[str]
+    violations: list[str]
+    report: LiveCheckReport
 
 
 class ConformanceSession:
@@ -186,19 +231,181 @@ class ConformanceSession:
         self._data_file = data_file
         self._build_data = build_data
         self._ran: set[str] = set()
+        self._scenario_reports: list[ScenarioReport] = []
+        self._resources: ExitStack | None = None
+        self._live_check: _WeaverProcess | None = None
+        self._capture: OtlpCaptureProxy | None = None
+        self._package_report: PackageReport | None = None
+        self._finalize_error: BaseException | None = None
+        self._ending = False
 
     @property
     def spec(self) -> PackageSpec:
         return self._spec
 
     def run(self, name: str) -> ScenarioReport:
-        """Run one scenario under a fresh weaver live-check."""
+        """Run one scenario in its own window of the package capture."""
         scenario = self._spec.scenarios.get(name)
         if scenario is None:
             raise KeyError(
                 f"{name!r} is not declared in {self._spec.directory}; "
                 f"declared: {sorted(self._spec.scenarios)}"
             )
+        if self._ending or self._package_report is not None:
+            raise RuntimeError(
+                "The conformance package has already been finalized"
+            )
+        if not scenario.run_spec.one_shot:
+            return self._run_persistent((scenario,))[0]
+        self.start()
+        assert self._capture is not None
+        window = self._capture.open_window(name)
+        try:
+            completed = self._execute(scenario, self._capture.endpoint)
+        finally:
+            telemetry = self._capture.close_window(
+                window,
+                timeout=timeout_seconds(*_CAPTURE_DRAIN_TIMEOUT),
+            )
+        write_capture(self._report_dir, telemetry)
+        self._ran.add(name)
+
+        failures: list[str] = []
+        if completed.returncode != 0:
+            failures.append(
+                f"{scenario.display_name}: scenario exited with "
+                f"{completed.returncode}\n"
+                f"--- stdout ---\n{completed.stdout}\n"
+                f"--- stderr ---\n{completed.stderr}"
+            )
+        failures.extend(check_scenario_telemetry(scenario, telemetry))
+        scenario_report = ScenarioReport(
+            name=scenario.display_name,
+            failures=failures,
+            telemetry=telemetry,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+        )
+        self._scenario_reports.append(scenario_report)
+        return scenario_report
+
+    def run_all(
+        self, selected_names: Iterable[str] | None = None
+    ) -> tuple[ScenarioReport, ...]:
+        """Run the selected scenarios in declaration order by default."""
+        names = (
+            tuple(self._spec.scenarios)
+            if selected_names is None
+            else tuple(selected_names)
+        )
+        for name in names:
+            if name not in self._spec.scenarios:
+                raise KeyError(
+                    f"{name!r} is not declared in {self._spec.directory}; "
+                    f"declared: {sorted(self._spec.scenarios)}"
+                )
+        reports: list[ScenarioReport] = []
+        index = 0
+        while index < len(names):
+            scenario = self._spec.scenarios[names[index]]
+            if scenario.run_spec.one_shot:
+                reports.append(self.run(names[index]))
+                index += 1
+                continue
+
+            batch = [scenario]
+            index += 1
+            while index < len(names):
+                candidate = self._spec.scenarios[names[index]]
+                if (
+                    candidate.run_spec != scenario.run_spec
+                    or candidate.directory != scenario.directory
+                    or candidate.env != scenario.env
+                ):
+                    break
+                batch.append(candidate)
+                index += 1
+            reports.extend(self._run_persistent(batch))
+        return tuple(reports)
+
+    def _run_persistent(
+        self, scenarios: Sequence[ScenarioSpec]
+    ) -> tuple[ScenarioReport, ...]:
+        self.start()
+        assert self._capture is not None
+        first = scenarios[0]
+        injected = {
+            "OTEL_EXPORTER_OTLP_ENDPOINT": self._capture.endpoint,
+            "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            **PERSISTENT_ENV,
+        }
+        # The runner owns the table, so a driver that starts a measured server
+        # hands it on rather than rebuilding it: what answers the requests is
+        # then the contract this package declared, custom or shared.
+        if self._spec.action_table:
+            injected[SCENARIO_ACTIONS_VARIABLE] = action_table_json(
+                self._spec.action_table
+            )
+        controller = PersistentController(
+            scenarios,
+            capture=self._capture,
+            cwd=first.directory,
+            env=self._env(first.env, injected),
+            timeout=timeout_seconds(*_SCENARIO_WINDOW_TIMEOUT),
+            settle_delay=timeout_seconds(*_SCENARIO_SETTLE_DELAY),
+            startup_timeout=timeout_seconds(*_SCENARIO_TIMEOUT),
+        )
+        reports: list[ScenarioReport] = []
+        results = controller.run()
+        write_readiness(self._report_dir, controller.readiness)
+        for result in results:
+            write_capture(self._report_dir, result.telemetry)
+            if result.executed:
+                self._ran.add(result.scenario.name)
+            failures: list[str] = (
+                [result.failure] if result.failure is not None else []
+            )
+            if result.state is ActionState.SEALED:
+                failures.extend(
+                    check_scenario_telemetry(result.scenario, result.telemetry)
+                )
+            report = ScenarioReport(
+                name=result.scenario.display_name,
+                failures=failures,
+                telemetry=result.telemetry,
+                stdout=result.stdout,
+                stderr=result.stderr,
+            )
+            self._scenario_reports.append(report)
+            reports.append(report)
+        return tuple(reports)
+
+    def start(self) -> None:
+        """Start the package's single Weaver process and capture proxy."""
+        if self._resources is not None:
+            return
+        if self._ending or self._package_report is not None:
+            raise RuntimeError(
+                "The conformance package has already been finalized"
+            )
+
+        resources = ExitStack()
+        try:
+            with _quiet_connection_retries():
+                live_check = resources.enter_context(
+                    _start_weaver(self._new_live_check)
+                )
+            capture = resources.enter_context(
+                OtlpCaptureProxy(live_check.otlp_endpoint)
+            )
+        except BaseException:
+            resources.close()
+            raise
+        self._resources = resources
+        self._live_check = live_check
+        self._capture = capture
+
+    def _new_live_check(self) -> _WeaverProcess:
         from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
@@ -212,50 +419,81 @@ class ConformanceSession:
                 "--advice-data",
                 self._resolve_path(weaver_spec.advice_data),
             ]
+        return WeaverLiveCheck(
+            inactivity_timeout=0,
+            registry=self._resolve_path(self._registry),
+            policies_dir=self._resolve_path(weaver_spec.policies)
+            if weaver_spec.policies
+            else None,
+            extra_args=extra_args,
+        )
 
-        def start_weaver() -> WeaverLiveCheck:
-            return WeaverLiveCheck(
-                inactivity_timeout=int(
-                    timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
-                ),
-                registry=self._resolve_path(self._registry),
-                policies_dir=self._resolve_path(weaver_spec.policies)
-                if weaver_spec.policies
-                else None,
-                extra_args=extra_args,
+    def finalize(self) -> PackageReport:
+        """Stop package telemetry once and return its aggregate result.
+
+        Finalizing is attempted once. A caller asking again for a report the
+        session could not produce gets the failure that stopped it, rather
+        than a second attempt at a package whose telemetry is already gone.
+        Closing the session is not such a caller: :meth:`__exit__` releases
+        what is left instead, so a failure reported where it happened is not
+        raised a second time out of teardown.
+        """
+        if self._finalize_error is not None:
+            raise self._finalize_error
+        if self._package_report is not None:
+            return self._package_report
+
+        self.start()
+        assert self._capture is not None
+        assert self._live_check is not None
+        self._ending = True
+        failures: list[str] = []
+        try:
+            # Nothing may still be arriving when the quarantine is read: an
+            # export the transport accepts after that read would never be
+            # checked, and would land in no report.
+            self._capture.close_ingress(
+                timeout=timeout_seconds(*_CAPTURE_DRAIN_TIMEOUT)
             )
-
-        with (
-            _quiet_connection_retries(),
-            _start_weaver(start_weaver) as weaver,
-        ):
-            completed = self._execute(scenario, weaver.otlp_endpoint)
-            report = weaver.end(
+            try:
+                self._capture.raise_for_quarantined()
+            except UnexpectedExportsError as error:
+                failures.append(str(error))
+            quarantined = self._capture.quarantined_requests
+            self._capture.close()
+            report = self._live_check.end(
                 timeout=int(timeout_seconds(*_WEAVER_STOP_TIMEOUT))
             )
+        except BaseException as error:
+            self._finalize_error = error
+            raise
+        finally:
+            self._shutdown()
 
-        # Before the checks, so a failing run still leaves a report to read.
-        self._dump(name, report)
-        self._ran.add(name)
-
-        failures: list[str] = []
-        if completed.returncode != 0:
-            failures.append(
-                f"{scenario.display_name}: scenario exited with "
-                f"{completed.returncode}\n"
-                f"--- stdout ---\n{completed.stdout}\n"
-                f"--- stderr ---\n{completed.stderr}"
-            )
-        findings = check(scenario, report)
-        failures += findings.failures
-        return ScenarioReport(
-            name=scenario.display_name,
-            failures=failures,
+        findings = check_package_violations(
+            self._spec,
+            report,
+            complete=self._ran == set(self._spec.scenarios),
+        )
+        package_report = PackageReport(
+            scenarios=tuple(self._scenario_reports),
+            failures=[*failures, *findings.failures],
             violations=findings.violations,
             report=report,
-            stdout=completed.stdout,
-            stderr=completed.stderr,
         )
+        self._package_report = package_report
+        try:
+            self._dump_weaver(report)
+            self._dump_unwindowed(quarantined)
+            self._write_data()
+        except BaseException as error:
+            self._finalize_error = error
+            raise
+        return package_report
+
+    def _shutdown(self) -> None:
+        if self._resources is not None:
+            self._resources.close()
 
     def _resolve(self, value: str) -> str:
         return Template(value).safe_substitute(self._variables)
@@ -276,13 +514,25 @@ class ConformanceSession:
     def _execute(
         self, scenario: ScenarioSpec, otlp_endpoint: str
     ) -> subprocess.CompletedProcess[str]:
+        if not scenario.run_spec.one_shot:
+            raise RuntimeError(
+                f"scenario protocol {scenario.run_spec.protocol!r} is not "
+                "a one-shot command"
+            )
         injected = {
             "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
             "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
             "OTEL_METRIC_EXPORT_INTERVAL": str(METRIC_EXPORT_INTERVAL_MILLIS),
         }
         if scenario.index is not None:
-            injected["OTEL_CONFORMANCE_SCENARIO_INDEX"] = str(scenario.index)
+            injected[SCENARIO_INDEX_VARIABLE] = str(scenario.index)
+        if scenario.action is not None:
+            injected[SCENARIO_ACTION_VARIABLE] = json.dumps(
+                scenario.action,
+                allow_nan=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
@@ -321,19 +571,31 @@ class ConformanceSession:
             )
         return completed
 
-    def _dump(self, name: str, report: LiveCheckReport) -> None:
-        self._report_dir.mkdir(parents=True, exist_ok=True)
-        (self._report_dir / f"{name}.json").write_text(
-            # The report's own dict; weaver_live_check exposes no public
-            # accessor for it yet.
-            json.dumps(  # noqa: SLF001
-                report._report,  # pyright: ignore[reportPrivateUsage]
-                indent=2,
-                sort_keys=True,
-            )
+    def _dump_weaver(self, report: LiveCheckReport) -> None:
+        # WeaverLiveCheck exposes no public accessor for the report document.
+        write_weaver(
+            self._report_dir,
+            report._report,  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
         )
 
-    def close(self) -> None:
+    def _dump_unwindowed(self, captured: tuple[CapturedExport, ...]) -> None:
+        path = self._report_dir / UNWINDOWED_REPORT
+        if not captured:
+            path.unlink(missing_ok=True)
+            return
+        write_unwindowed(
+            self._report_dir,
+            CapturedWindow(
+                name="unwindowed",
+                generation=0,
+                exports=captured,
+                spans=(),
+                metric_names=(),
+                event_names=(),
+            ),
+        )
+
+    def _write_data(self) -> None:
         """Write the data file, if the run was complete and can produce one.
 
         A reduction only holds across a whole run, so a filtered one writes
@@ -343,15 +605,37 @@ class ConformanceSession:
         """
         if self._ran != set(self._spec.scenarios):
             return
-        expected_reports = {f"{name}.json" for name in self._spec.scenarios}
-        for report in self._report_dir.glob("*/*.json"):
-            if report.name in expected_reports:
-                report.unlink()
+        self._clean_stale_reports()
         data = self._build_data(self._report_dir, self._spec)
         self._data_file.parent.mkdir(parents=True, exist_ok=True)
         self._data_file.write_text(json.dumps(data, indent=2) + "\n")
 
+    def _clean_stale_reports(self) -> None:
+        """Remove files owned by the old and current report layouts."""
+
+        scenarios = self._report_dir / SCENARIO_REPORT_DIR
+        expected = {f"{name}.json" for name in self._spec.scenarios}
+        if scenarios.is_dir():
+            for path in scenarios.glob("*.json"):
+                if path.name not in expected:
+                    path.unlink()
+
+        for path in self._report_dir.glob("*.json"):
+            if path.name in {
+                READINESS_REPORT.name,
+                UNWINDOWED_REPORT.name,
+                WEAVER_REPORT.name,
+            }:
+                continue
+            if path.name in expected:
+                path.unlink()
+
+    def close(self) -> PackageReport:
+        """Finalize the package through the context-manager close path."""
+        return self.finalize()
+
     def __enter__(self) -> ConformanceSession:
+        self.start()
         return self
 
     def __exit__(
@@ -360,10 +644,11 @@ class ConformanceSession:
         exc: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        # A run that raised is partial; reducing it would overwrite the
-        # committed data file with half a run.
-        if exc_type is None:
-            self.close()
+        if exc_type is None and self._finalize_error is None:
+            self.finalize()
+        else:
+            self._ending = True
+            self._shutdown()
 
 
 def _run_command(
@@ -455,11 +740,11 @@ def conformance_session(
     URL to the scenarios under its ``url_var``.
 
     A run produces two things, configured independently. ``report_dir`` holds
-    one raw weaver report per scenario, ``<scenario>.json``, replaced each time
-    that scenario runs and otherwise left alone. ``build_data``, given that
-    directory and the spec after a complete run, returns the data to write to
-    ``data_file``; it defaults to the attributes each declared span carried,
-    plus the metrics and events the run produced.
+    normalized captures under ``scenarios/`` and one aggregate
+    ``weaver.json``. ``build_data``, given that directory and the spec after a
+    complete run, returns the data to write to ``data_file``; it defaults to
+    the attributes each declared span carried, plus the metrics and events the
+    run produced.
     """
     check_weaver()
     spec = spec or load_spec(Path(directory))
@@ -478,6 +763,13 @@ def conformance_session(
                 Server(
                     declared_server.run,
                     health_path=declared_server.health_path,
+                    env={
+                        SCENARIO_ACTIONS_VARIABLE: action_table_json(
+                            spec.action_table
+                        )
+                    }
+                    if spec.action_table
+                    else None,
                 )
             )
             resolved[declared_server.url_variable] = running.url

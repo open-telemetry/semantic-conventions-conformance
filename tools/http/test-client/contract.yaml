@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-description: Shared HTTP client requests and expected telemetry.
+description: Shared HTTP requests and expected telemetry.
 
 # Not one of the scenarios below: a driver sends it to learn a server is
 # listening, and no telemetry expectation covers it.
@@ -16,6 +16,10 @@ readiness:
       body: '{"ok": true}'
 
 scenarios:
+  # The `client` and `server` variants list what each instrumented side
+  # produces for one exchange, judged in that exchange's own telemetry window.
+  # An instrumentation that emits more than this says so under
+  # `additional_metrics` in its own conformance.yaml.
   - description: Sends a request to a parameterized user route.
     action:
       request:
@@ -25,18 +29,32 @@ scenarios:
         status: 200
         body: '{"id": 123, "name": "Alice"}'
     expect:
-      spans:
-        - match:
-            kind: CLIENT
-            attributes:
-              http.request.method: GET
-              http.response.status_code: 200
-          expect:
-            count: 1
-            attributes:
-              url.full:
-                present: true
-      events: []
+      client:
+        spans:
+          - match:
+              kind: CLIENT
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 200
+            expect:
+              count: 1
+              attributes:
+                url.full:
+                  present: true
+        events: []
+
+      server:
+        spans:
+          - match:
+              kind: SERVER
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 200
+            expect:
+              count: 1
+        metrics:
+          - http.server.request.duration
+        events: []
 
   - description: Sends a request with a query string.
     action:
@@ -47,18 +65,32 @@ scenarios:
         status: 200
         body: '{"id": 123, "name": "Alice"}'
     expect:
-      spans:
-        - match:
-            kind: CLIENT
-            attributes:
-              http.request.method: GET
-              http.response.status_code: 200
-          expect:
-            count: 1
-            attributes:
-              url.full:
-                present: true
-      events: []
+      client:
+        spans:
+          - match:
+              kind: CLIENT
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 200
+            expect:
+              count: 1
+              attributes:
+                url.full:
+                  present: true
+        events: []
+
+      server:
+        spans:
+          - match:
+              kind: SERVER
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 200
+            expect:
+              count: 1
+        metrics:
+          - http.server.request.duration
+        events: []
 
   - description: Sends a POST request carrying a JSON body.
     action:
@@ -70,18 +102,32 @@ scenarios:
         status: 201
         body: '{"created": true, "payload": ${requestBody}}'
     expect:
-      spans:
-        - match:
-            kind: CLIENT
-            attributes:
-              http.request.method: POST
-              http.response.status_code: 201
-          expect:
-            count: 1
-            attributes:
-              url.full:
-                present: true
-      events: []
+      client:
+        spans:
+          - match:
+              kind: CLIENT
+              attributes:
+                http.request.method: POST
+                http.response.status_code: 201
+            expect:
+              count: 1
+              attributes:
+                url.full:
+                  present: true
+        events: []
+
+      server:
+        spans:
+          - match:
+              kind: SERVER
+              attributes:
+                http.request.method: POST
+                http.response.status_code: 201
+            expect:
+              count: 1
+        metrics:
+          - http.server.request.duration
+        events: []
 
   - description: Sends a request that returns a 404 response.
     action:
@@ -92,18 +138,32 @@ scenarios:
         status: 404
         body: '{"message": "status 404"}'
     expect:
-      spans:
-        - match:
-            kind: CLIENT
-            attributes:
-              http.request.method: GET
-              http.response.status_code: 404
-          expect:
-            count: 1
-            attributes:
-              url.full:
-                present: true
-      events: []
+      client:
+        spans:
+          - match:
+              kind: CLIENT
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 404
+            expect:
+              count: 1
+              attributes:
+                url.full:
+                  present: true
+        events: []
+
+      server:
+        spans:
+          - match:
+              kind: SERVER
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 404
+            expect:
+              count: 1
+        metrics:
+          - http.server.request.duration
+        events: []
 
   - description: Sends a request that returns a 500 response.
     action:
@@ -114,15 +174,28 @@ scenarios:
         status: 500
         body: '{"message": "status 500"}'
     expect:
-      spans:
-        - match:
-            kind: CLIENT
-            attributes:
-              http.request.method: GET
-              http.response.status_code: 500
-          expect:
-            count: 1
-            attributes:
-              url.full:
-                present: true
-      events: []
+      client:
+        spans:
+          - match:
+              kind: CLIENT
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 500
+            expect:
+              count: 1
+              attributes:
+                url.full:
+                  present: true
+        events: []
+      server:
+        spans:
+          - match:
+              kind: SERVER
+              attributes:
+                http.request.method: GET
+                http.response.status_code: 500
+            expect:
+              count: 1
+        metrics:
+          - http.server.request.duration
+        events: []

@@ -1,11 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Expectations vs. a weaver report.
-
-The report is fed in as the plain dict weaver produces, so these cover the
-check logic without weaver, a mock server or a scenario process.
-"""
+"""Scenario telemetry and package Weaver finding checks."""
 
 from __future__ import annotations
 
@@ -15,8 +11,16 @@ from typing import Any
 
 import pytest
 
-from opentelemetry.conformance._checks import check as _check
+from opentelemetry.conformance._checks import (
+    check_package_violations,
+    check_scenario_telemetry,
+)
 from opentelemetry.conformance._coverage import coverage
+from opentelemetry.conformance._otlp_capture import (
+    CapturedSpan,
+    CapturedWindow,
+)
+from opentelemetry.conformance._report import CAPTURE_FORMAT, WEAVER_REPORT
 from opentelemetry.conformance._spec import (
     AttributeMatcher,
     ExpectedViolation,
@@ -46,22 +50,138 @@ def span_sample(
     }
 
 
-class Report(dict[str, Any]):
-    """Stands in for ``LiveCheckReport``: a dict plus a ``violations`` list."""
+def write_capture_report(
+    directory: Path,
+    name: str,
+    *samples: dict[str, Any],
+    metrics: tuple[str, ...] = (),
+    events: tuple[str, ...] = (),
+) -> None:
+    spans = []
+    for sample in samples:
+        raw = sample["span"]
+        spans.append(
+            {
+                **{key: raw[key] for key in ("name", "kind")},
+                "attributes": [
+                    {
+                        "key": attribute["name"],
+                        "value": {"string_value": attribute["value"]},
+                    }
+                    for attribute in raw["attributes"]
+                ],
+            }
+        )
+    captures = directory / "scenarios"
+    captures.mkdir(parents=True, exist_ok=True)
+    (captures / f"{name}.json").write_text(
+        json.dumps(
+            {
+                "format": CAPTURE_FORMAT,
+                "name": name,
+                "generation": 1,
+                "traces": [
+                    {"resource_spans": [{"scope_spans": [{"spans": spans}]}]}
+                ],
+                "metrics": [
+                    {
+                        "resource_metrics": [
+                            {
+                                "scope_metrics": [
+                                    {
+                                        "metrics": [
+                                            {"name": metric}
+                                            for metric in metrics
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "logs": [
+                    {
+                        "resource_logs": [
+                            {
+                                "scope_logs": [
+                                    {
+                                        "log_records": [
+                                            {"event_name": event}
+                                            for event in events
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+            }
+        )
+    )
+
+
+class WeaverReport(dict[str, Any]):
+    """The public violation API needed by the package check."""
 
     def __init__(
         self,
-        samples: list[dict[str, Any]] | None = None,
-        statistics: dict[str, Any] | None = None,
         violations: list[dict[str, Any]] | None = None,
     ) -> None:
-        super().__init__(samples=samples or [], statistics=statistics or {})
+        super().__init__()
         self.violations = violations or []
 
 
-def check(spec: ScenarioSpec, report: Any) -> list[str]:
-    """Both kinds of finding; the split has its own tests below."""
-    return _check(spec, report).all()
+def captured_span(
+    name: str = "chat gpt-4o-mini",
+    kind: str = "SPAN_KIND_CLIENT",
+    **attributes: object,
+) -> CapturedSpan:
+    return CapturedSpan(
+        name=name,
+        kind=kind,
+        attributes=attributes,
+        trace_id=b"\x01" * 16,
+        span_id=b"\x02" * 8,
+        parent_span_id=b"",
+        start_time_unix_nano=101,
+        end_time_unix_nano=202,
+    )
+
+
+def window(
+    spans: list[CapturedSpan] | None = None,
+    *,
+    metrics: tuple[str, ...] = (),
+    events: tuple[str, ...] = (),
+) -> CapturedWindow:
+    return CapturedWindow(
+        name="inference",
+        generation=1,
+        exports=(),
+        spans=tuple(spans or ()),
+        metric_names=metrics,
+        event_names=events,
+    )
+
+
+def check(spec: ScenarioSpec, captured: CapturedWindow) -> list[str]:
+    return check_scenario_telemetry(spec, captured)
+
+
+def package_spec(
+    expected: tuple[ExpectedViolation, ...] = (),
+) -> PackageSpec:
+    return PackageSpec(
+        instrumented_library="demo",
+        instrumentation_library="demo-instrumentation",
+        directory=Path("."),
+        env={},
+        weaver=WeaverSpec(),
+        server=ServerSpec(),
+        setup=None,
+        scenarios={"inference": scenario()},
+        expected_violations=expected,
+    )
 
 
 def scenario(**kwargs: Any) -> ScenarioSpec:
@@ -73,7 +193,6 @@ def scenario(**kwargs: Any) -> ScenarioSpec:
         "spans": None,
         "metrics": None,
         "events": None,
-        "expected_violations": (),
     }
     return ScenarioSpec(**{**defaults, **kwargs})
 
@@ -86,39 +205,39 @@ CHAT = SpanExpectation(
 
 
 def test_no_expectations_passes_on_anything() -> None:
-    report = Report(
-        samples=[span_sample(**{"gen_ai.operation.name": "chat"})],
-        statistics={"seen_registry_metrics": {"gen_ai.client.token.usage": 3}},
+    captured = window(
+        [captured_span(**{"gen_ai.operation.name": "chat"})],
+        metrics=("gen_ai.client.token.usage",),
     )
 
-    assert check(scenario(), report) == []
+    assert check(scenario(), captured) == []
 
 
 def test_span_count_must_be_exact() -> None:
-    report = Report(
-        samples=[
-            span_sample(**{"gen_ai.operation.name": "chat"}),
-            span_sample(**{"gen_ai.operation.name": "chat"}),
+    captured = window(
+        [
+            captured_span(**{"gen_ai.operation.name": "chat"}),
+            captured_span(**{"gen_ai.operation.name": "chat"}),
         ]
     )
 
-    (failure,) = check(scenario(spans=(CHAT,)), report)
+    (failure,) = check(scenario(spans=(CHAT,)), captured)
     assert "expected 1 span(s)" in failure
     assert "saw 2" in failure
 
 
 def test_undeclared_span_fails() -> None:
-    report = Report(
-        samples=[
-            span_sample(**{"gen_ai.operation.name": "chat"}),
-            span_sample(
+    captured = window(
+        [
+            captured_span(**{"gen_ai.operation.name": "chat"}),
+            captured_span(
                 name="execute_tool lookup",
                 **{"gen_ai.operation.name": "execute_tool"},
             ),
         ]
     )
 
-    (failure,) = check(scenario(spans=(CHAT,)), report)
+    (failure,) = check(scenario(spans=(CHAT,)), captured)
     assert "1 undeclared span(s)" in failure
     assert "execute_tool lookup" in failure
 
@@ -130,11 +249,13 @@ def test_match_on_kind() -> None:
         attributes={},
     )
 
-    assert check(scenario(spans=(expectation,)), Report([span_sample()])) == []
+    assert (
+        check(scenario(spans=(expectation,)), window([captured_span()])) == []
+    )
     assert (
         check(
             scenario(spans=(expectation,)),
-            Report([span_sample(kind="SERVER")]),
+            window([captured_span(kind="SPAN_KIND_SERVER")]),
         )
         != []
     )
@@ -152,7 +273,7 @@ def test_a_kind_matches_however_it_is_spelled() -> None:
         assert (
             check(
                 scenario(spans=(expectation,)),
-                Report([span_sample(kind=spelling)]),
+                window([captured_span(kind=spelling)]),
             )
             == []
         )
@@ -177,16 +298,16 @@ def test_attribute_matchers(
         count=len(values),
         attributes={"gen_ai.tool.name": matcher},
     )
-    report = Report(
+    captured = window(
         [
-            span_sample(
+            captured_span(
                 **{"gen_ai.operation.name": "chat", "gen_ai.tool.name": value}
             )
             for value in values
         ]
     )
 
-    assert (check(scenario(spans=(expectation,)), report) == []) is ok
+    assert (check(scenario(spans=(expectation,)), captured) == []) is ok
 
 
 def test_present_false_passes_when_attribute_is_absent() -> None:
@@ -195,29 +316,29 @@ def test_present_false_passes_when_attribute_is_absent() -> None:
         count=1,
         attributes={"server.address": AttributeMatcher(present=False)},
     )
-    report = Report([span_sample(**{"gen_ai.operation.name": "chat"})])
+    captured = window([captured_span(**{"gen_ai.operation.name": "chat"})])
 
-    assert check(scenario(spans=(expectation,)), report) == []
+    assert check(scenario(spans=(expectation,)), captured) == []
 
 
-def test_a_rejected_value_does_not_satisfy_an_expectation() -> None:
-    """Weaver rejected the value, so the attribute did not really arrive."""
+def test_a_malformed_but_present_value_satisfies_presence() -> None:
     expectation = SpanExpectation(
         match=SpanMatch(attributes={"gen_ai.operation.name": "chat"}),
         count=1,
         attributes={"server.port": AttributeMatcher(present=True)},
     )
-    sample = span_sample(**{"gen_ai.operation.name": "chat"})
-    sample["span"]["attributes"].append(
-        {
-            "name": "server.port",
-            "value": "8080",
-            "live_check_result": {"all_advice": [{"id": "type_mismatch"}]},
-        }
+    captured = window(
+        [
+            captured_span(
+                **{
+                    "gen_ai.operation.name": "chat",
+                    "server.port": "malformed",
+                }
+            )
+        ]
     )
 
-    (failure,) = check(scenario(spans=(expectation,)), Report([sample]))
-    assert "server.port" in failure
+    assert check(scenario(spans=(expectation,)), captured) == []
 
 
 def test_list_valued_attributes_are_comparable() -> None:
@@ -229,9 +350,9 @@ def test_list_valued_attributes_are_comparable() -> None:
             "gen_ai.response.finish_reasons": AttributeMatcher(distinct=1)
         },
     )
-    report = Report(
+    captured = window(
         [
-            span_sample(
+            captured_span(
                 **{
                     "gen_ai.operation.name": "chat",
                     "gen_ai.response.finish_reasons": ["stop"],
@@ -241,42 +362,80 @@ def test_list_valued_attributes_are_comparable() -> None:
         ]
     )
 
-    assert check(scenario(spans=(expectation,)), report) == []
+    assert check(scenario(spans=(expectation,)), captured) == []
 
 
 @pytest.mark.parametrize("signal", ["metrics", "events"])
 def test_declared_signal_lists_are_exact(signal: str) -> None:
     """A declared metric or event list fails both ways — same rule for both."""
-    statistics = {
-        "seen_registry_metrics": {"gen_ai.client.operation.duration": 1},
-        "seen_registry_events": {
-            "gen_ai.client.inference.operation.details": 1
-        },
-    }
     emitted = (
         "gen_ai.client.operation.duration"
         if signal == "metrics"
         else "gen_ai.client.inference.operation.details"
     )
-    report = Report(statistics=statistics)
+    captured = window(
+        metrics=("gen_ai.client.operation.duration",),
+        events=("gen_ai.client.inference.operation.details",),
+    )
 
-    assert check(scenario(**{signal: (emitted,)}), report) == []
+    assert check(scenario(**{signal: (emitted,)}), captured) == []
 
-    (missing,) = check(scenario(**{signal: (emitted, "other")}), report)
+    (missing,) = check(scenario(**{signal: (emitted, "other")}), captured)
     assert "not emitted" in missing
 
-    (extra,) = check(scenario(**{signal: ()}), report)
+    (extra,) = check(scenario(**{signal: ()}), captured)
     assert "undeclared" in extra
 
 
-def test_zero_count_signals_are_not_seen() -> None:
-    report = Report(statistics={"seen_registry_metrics": {"never.emitted": 0}})
+def test_an_optional_metric_is_neither_required_nor_undeclared() -> None:
+    """What only some actions record, without loosening the rest."""
+    declared = scenario(
+        metrics=("gen_ai.client.operation.duration",),
+        optional_metrics=("gen_ai.client.token.usage",),
+    )
 
-    assert check(scenario(metrics=()), report) == []
+    assert (
+        check(
+            declared,
+            window(metrics=("gen_ai.client.operation.duration",)),
+        )
+        == []
+    )
+    assert (
+        check(
+            declared,
+            window(
+                metrics=(
+                    "gen_ai.client.operation.duration",
+                    "gen_ai.client.token.usage",
+                )
+            ),
+        )
+        == []
+    )
+
+    (extra,) = check(
+        declared,
+        window(
+            metrics=(
+                "gen_ai.client.operation.duration",
+                "gen_ai.server.request.duration",
+            )
+        ),
+    )
+    assert "undeclared metrics emitted: ['gen_ai.server.request.duration']" in (
+        extra
+    )
+
+
+def test_span_events_do_not_count_as_otlp_log_events() -> None:
+    captured = window([captured_span()])
+
+    assert check(scenario(events=()), captured) == []
 
 
 def test_undeclared_violation_fails() -> None:
-    report = Report(
+    report = WeaverReport(
         violations=[
             {
                 "id": "genai_expected_attribute_missing",
@@ -286,10 +445,12 @@ def test_undeclared_violation_fails() -> None:
         ]
     )
 
-    (failure,) = check(scenario(), report)
+    findings = check_package_violations(package_spec(), report, complete=True)
+    (failure,) = findings.violations
     assert failure == (
         "[genai_expected_attribute_missing] server.address is missing"
     )
+    assert findings.failures == []
 
 
 def test_declared_violation_is_accepted_then_required() -> None:
@@ -298,15 +459,20 @@ def test_declared_violation_is_accepted_then_required() -> None:
         context={"operation": "chat"},
         reason="the SDK does not expose it",
     )
-    spec = scenario(expected_violations=(declared,))
+    spec = package_spec((declared,))
     reported = {
         "id": "genai_expected_attribute_missing",
         "context": {"operation": "chat"},
     }
 
-    assert check(spec, Report(violations=[reported])) == []
+    findings = check_package_violations(
+        spec, WeaverReport(violations=[reported]), complete=True
+    )
+    assert findings.failures == []
+    assert findings.violations == []
 
-    (failure,) = check(spec, Report(violations=[]))
+    findings = check_package_violations(spec, WeaverReport(), complete=True)
+    (failure,) = findings.failures
     assert "no longer reported" in failure
 
 
@@ -317,7 +483,7 @@ def test_violation_context_must_match_in_full() -> None:
         context={"operation": "chat", "missing_attribute": "server.address"},
         reason="known",
     )
-    report = Report(
+    report = WeaverReport(
         violations=[
             {
                 "id": "genai_expected_attribute_missing",
@@ -329,45 +495,40 @@ def test_violation_context_must_match_in_full() -> None:
         ]
     )
 
-    failures = check(scenario(expected_violations=(declared,)), report)
-    assert (
-        len(failures) == 2
-    )  # the undeclared one, and the declared one missing
+    findings = check_package_violations(
+        package_spec((declared,)), report, complete=True
+    )
+    assert len(findings.failures) == 1
+    assert len(findings.violations) == 1
 
 
-def test_violations_are_kept_apart_from_failures() -> None:
-    report = Report(
-        samples=[],
-        violations=[{"id": "genai_expected_attribute_missing"}],
+def test_partial_run_does_not_require_declared_violations() -> None:
+    declared = ExpectedViolation(
+        id="genai_expected_attribute_missing",
+        context=None,
+        reason="known",
     )
 
-    findings = _check(scenario(spans=(CHAT,)), report)
-    (mismatch,) = findings.failures
-    assert "matching" in mismatch
-    # No message and no context: the id is all there is to say.
-    assert findings.violations == ["[genai_expected_attribute_missing]"]
+    findings = check_package_violations(
+        package_spec((declared,)), WeaverReport(), complete=False
+    )
+
+    assert findings.failures == []
+    assert findings.violations == []
 
 
 def test_coverage_reduces_a_run(tmp_path: Path) -> None:
-    (tmp_path / "inference.json").write_text(
-        json.dumps(
-            {
-                "samples": [
-                    span_sample(
-                        **{
-                            "gen_ai.operation.name": "chat",
-                            "gen_ai.request.model": "gpt-4o-mini",
-                        }
-                    )
-                ],
-                "statistics": {
-                    "seen_registry_metrics": {
-                        "gen_ai.client.operation.duration": 1
-                    },
-                    "seen_non_registry_events": {"custom.event": 1},
-                },
+    write_capture_report(
+        tmp_path,
+        "inference",
+        span_sample(
+            **{
+                "gen_ai.operation.name": "chat",
+                "gen_ai.request.model": "gpt-4o-mini",
             }
-        )
+        ),
+        metrics=("gen_ai.client.operation.duration",),
+        events=("custom.event",),
     )
     spec = PackageSpec(
         instrumented_library="demo",
@@ -404,30 +565,24 @@ def test_coverage_records_the_violations_a_run_drew(tmp_path: Path) -> None:
         "message": "missing server.address",
         "context": {"attr": "server.address"},
     }
-    for name in ("inference", "streaming"):
-        (tmp_path / f"{name}.json").write_text(
-            json.dumps(
-                {
-                    "samples": [
-                        {"live_check_result": {"all_advice": [said]}},
+    (tmp_path / WEAVER_REPORT).write_text(
+        json.dumps(
+            {
+                "live_check_result": {
+                    "all_advice": [
+                        said,
+                        said,
                         {
-                            "live_check_result": {
-                                "all_advice": [
-                                    said,
-                                    {
-                                        "id": "not_stable",
-                                        "level": "improvement",
-                                        "message": "not recorded",
-                                        "context": None,
-                                    },
-                                ]
-                            }
+                            "id": "not_stable",
+                            "level": "improvement",
+                            "message": "not recorded",
+                            "context": None,
                         },
-                    ],
-                    "statistics": {},
+                    ]
                 }
-            )
+            }
         )
+    )
     spec = PackageSpec(
         instrumented_library="demo",
         instrumentation_library="demo-instrumentation",
@@ -454,52 +609,47 @@ def test_coverage_records_the_violations_a_run_drew(tmp_path: Path) -> None:
 def test_a_violation_without_context_accepts_every_finding_with_that_id() -> (
     None
 ):
-    """One gap seen many times is declared once."""
     declared = ExpectedViolation(
         id="missing_attribute",
         context=None,
         reason="the implementation's own attribute namespace",
     )
-    spec = scenario(expected_violations=(declared,))
-    report = Report(
+    report = WeaverReport(
         violations=[
             {"id": "missing_attribute", "context": {"attribute_key": "llm.a"}},
             {"id": "missing_attribute", "context": {"attribute_key": "llm.b"}},
         ]
     )
 
-    assert check(spec, report) == []
-
-
-def test_a_violation_without_context_still_fails_once_the_class_empties(
-) -> None:
-    """Bulk or not, a suppression mustn't outlive the gap that caused it."""
-    declared = ExpectedViolation(
-        id="missing_attribute", context=None, reason="known"
+    findings = check_package_violations(
+        package_spec((declared,)), report, complete=True
     )
-    spec = scenario(expected_violations=(declared,))
 
-    (failure,) = check(spec, Report(violations=[]))
-
-    assert "no longer reported" in failure
-    assert "any context" in failure
+    assert findings.failures == []
+    assert findings.violations == []
 
 
 def test_a_violation_without_context_does_not_accept_other_ids() -> None:
     declared = ExpectedViolation(
         id="missing_attribute", context=None, reason="known"
     )
-    spec = scenario(expected_violations=(declared,))
-    report = Report(
+    report = WeaverReport(
         violations=[
             {"id": "missing_attribute", "context": {"attribute_key": "llm.a"}},
-            {"id": "genai_span_kind_unexpected", "context": {"kind": "internal"}},
+            {
+                "id": "genai_span_kind_unexpected",
+                "context": {"kind": "internal"},
+            },
         ]
     )
 
-    (failure,) = check(spec, report)
+    findings = check_package_violations(
+        package_spec((declared,)), report, complete=True
+    )
+    (failure,) = findings.violations
 
     assert "genai_span_kind_unexpected" in failure
+    assert findings.failures == []
 
 
 def test_an_empty_context_still_means_a_finding_carried_none() -> None:
@@ -507,70 +657,18 @@ def test_an_empty_context_still_means_a_finding_carried_none() -> None:
     declared = ExpectedViolation(
         id="missing_attribute", context={}, reason="known"
     )
-    spec = scenario(expected_violations=(declared,))
-    report = Report(
+    report = WeaverReport(
         violations=[
             {"id": "missing_attribute", "context": {"attribute_key": "llm.a"}}
         ]
     )
 
-    assert check(spec, report) != []
-
-
-def test_a_package_violation_suppresses_in_every_scenario() -> None:
-    spec = scenario(
-        inherited_violations=(
-            ExpectedViolation(
-                id="missing_attribute",
-                context=None,
-                reason="declared once for the package",
-            ),
-        )
-    )
-    report = Report(
-        violations=[
-            {"id": "missing_attribute", "context": {"attribute_key": "llm.a"}}
-        ]
+    findings = check_package_violations(
+        package_spec((declared,)), report, complete=True
     )
 
-    assert check(spec, report) == []
-
-
-def test_a_package_violation_no_scenario_reaches_is_not_a_failure() -> None:
-    """It describes a gap in general, not a promise about each scenario."""
-    spec = scenario(
-        inherited_violations=(
-            ExpectedViolation(
-                id="missing_attribute", context=None, reason="package-wide"
-            ),
-        )
-    )
-
-    assert check(spec, Report(violations=[])) == []
-
-
-def test_a_scenario_violation_is_still_required_alongside_package_ones() -> (
-    None
-):
-    spec = scenario(
-        expected_violations=(
-            ExpectedViolation(
-                id="genai_span_kind_unexpected",
-                context={"kind": "internal"},
-                reason="this scenario's own",
-            ),
-        ),
-        inherited_violations=(
-            ExpectedViolation(
-                id="missing_attribute", context=None, reason="package-wide"
-            ),
-        ),
-    )
-
-    (failure,) = check(spec, Report(violations=[]))
-
-    assert "genai_span_kind_unexpected" in failure
-    assert "no longer reported" in failure
+    assert len(findings.failures) == 1
+    assert len(findings.violations) == 1
 
 
 def _report_with(*samples: dict[str, Any]) -> str:
@@ -598,10 +696,10 @@ def test_coverage_records_spans_no_expectation_declared(
     Measuring an implementation you don't own is the case with no
     expectations at all; reducing that to nothing would defeat the point.
     """
-    (tmp_path / "inference.json").write_text(
-        _report_with(
-            span_sample(kind="internal", **{"llm.model_name": "gpt-4o-mini"})
-        )
+    write_capture_report(
+        tmp_path,
+        "inference",
+        span_sample(kind="internal", **{"llm.model_name": "gpt-4o-mini"}),
     )
 
     assert coverage(tmp_path, _package(tmp_path))["spans"] == [
@@ -612,11 +710,11 @@ def test_coverage_records_spans_no_expectation_declared(
 def test_coverage_keeps_undeclared_spans_apart_from_declared_ones(
     tmp_path: Path,
 ) -> None:
-    (tmp_path / "inference.json").write_text(
-        _report_with(
-            span_sample(**{"gen_ai.operation.name": "chat"}),
-            span_sample(kind="internal", **{"custom.attribute": "x"}),
-        )
+    write_capture_report(
+        tmp_path,
+        "inference",
+        span_sample(**{"gen_ai.operation.name": "chat"}),
+        span_sample(kind="internal", **{"custom.attribute": "x"}),
     )
 
     assert coverage(tmp_path, _package(tmp_path, spans=(CHAT,)))["spans"] == [
@@ -640,12 +738,11 @@ def test_mapping_only_expectation_does_not_enforce_exact_validation() -> None:
     # The scenario has ONLY mapping-only expectations
     spec = scenario(spans=(mapping,))
 
-    report = Report(
-        samples=[
-            span_sample(**{"gen_ai.operation.name": "chat"}),
-            span_sample(name="other_span", **{"custom.attr": "value"}),  # undeclared span
+    captured = window(
+        [
+            captured_span(**{"gen_ai.operation.name": "chat"}),
+            captured_span(name="other_span", **{"custom.attr": "value"}),
         ]
     )
 
-    # It should pass without raising undeclared span error
-    assert check(spec, report) == []
+    assert check(spec, captured) == []

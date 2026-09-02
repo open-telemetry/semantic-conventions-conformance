@@ -7,9 +7,15 @@ instrumentation_library: "@opentelemetry/instrumentation-express"
 
 setup: otel-conformance-js install
 
-scenarios:
-  server:
-    # The requests are sent from outside the scenario, so a server run holds
-    # server telemetry only; the driver starts this command, chooses the port
-    # it binds, and closes its standard input when it is done.
-    run: otel-http-drive --serve node ../server.js
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract_variant: server
+scenario_run:
+  command: otel-http-drive --persistent --serve node ../server.js
+  protocol: jsonl-v1
+
+# The Express instrumentation spans each middleware and route handler it
+# dispatches, so how many there are follows the application's own layering
+# rather than anything the contract asked for.
+additional_spans:
+  - match:
+      kind: INTERNAL
