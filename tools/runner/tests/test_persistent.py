@@ -33,7 +33,9 @@ from opentelemetry.conformance._persistent import (
     PersistentController,
     PersistentProtocolError,
     _ActionWindow,
+    _delivered_contents,
     _Message,
+    _reject_late_telemetry,
     partition_persistent_exports,
 )
 from opentelemetry.conformance._spec import (
@@ -139,7 +141,18 @@ def _run(
     count: int = 1,
     timeout: float = 1.0,
 ):
-    command = _driver(tmp_path, body)
+    return _run_command(
+        tmp_path, _driver(tmp_path, body), count=count, timeout=timeout
+    )
+
+
+def _run_command(
+    tmp_path: Path,
+    command: tuple[str, ...],
+    *,
+    count: int = 1,
+    timeout: float = 1.0,
+):
     scenarios = tuple(
         _scenario(command, f"action-{index}") for index in range(count)
     )
@@ -182,34 +195,62 @@ def test_controller_reuses_process_and_seals_each_action(
         )
         for result in results
     )
-    assert len({result.trace_id for result in results}) == 5
-    assert all(
-        len(result.trace_id) == 32
-        and int(result.trace_id, 16) != 0
-        and not result.failure
-        for result in results
-    )
+    assert all(not result.failure for result in results)
 
 
-def test_final_shutdown_telemetry_is_reconciled(tmp_path: Path) -> None:
-    trace_file = tmp_path / "trace-id"
+def test_the_action_record_carries_no_injected_correlation(
+    tmp_path: Path,
+) -> None:
+    """Nothing the runner sends can become a parent of what it measures.
+
+    A trace ID handed to the driver would be sent on as a ``traceparent``,
+    which reparents the server span under a remote parent and hands it a
+    sampling decision it never made.
+    """
+
+    record_file = tmp_path / "action-record"
     command = _driver(
         tmp_path,
         f"""
-import json, sys, time
+import json, pathlib, sys, time
 print(json.dumps({{"version": "jsonl-v1", "type": "ready", "sequence": 0, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}}), flush=True)
-action = json.loads(sys.stdin.readline())
-open({str(trace_file)!r}, "w").write(action["correlation_trace_id"])
+line = sys.stdin.readline()
+pathlib.Path({str(record_file)!r}).write_text(line, encoding="utf-8")
 print(json.dumps({{"version": "jsonl-v1", "type": "action_complete", "sequence": 1, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}}), flush=True)
 sys.stdin.read()
 print(json.dumps({{"version": "jsonl-v1", "type": "stopped", "sequence": 2}}), flush=True)
 """,
     )
 
+    (result,) = _run_command(tmp_path, command)
+
+    assert result.failure is None
+    record = json.loads(record_file.read_text(encoding="utf-8"))
+    assert sorted(record) == [
+        "action",
+        "scenario",
+        "sequence",
+        "type",
+        "version",
+    ]
+
+
+def test_final_shutdown_telemetry_is_reconciled(tmp_path: Path) -> None:
+    command = _driver(
+        tmp_path,
+        """
+import json, sys, time
+print(json.dumps({"version": "jsonl-v1", "type": "ready", "sequence": 0, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}), flush=True)
+json.loads(sys.stdin.readline())
+print(json.dumps({"version": "jsonl-v1", "type": "action_complete", "sequence": 1, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}), flush=True)
+sys.stdin.read()
+print(json.dumps({"version": "jsonl-v1", "type": "stopped", "sequence": 2}), flush=True)
+""",
+    )
+
     def emit_at_shutdown(capture: _Capture) -> None:
-        trace_id = trace_file.read_text()
         now = time.time_ns()
-        capture.exports = (_trace(trace_id, now, now + 1),)
+        capture.exports = (_trace("07" * 16, now, now + 1),)
 
     capture = _Capture(on_drain=emit_at_shutdown)
     (result,) = PersistentController(
@@ -223,7 +264,7 @@ print(json.dumps({{"version": "jsonl-v1", "type": "stopped", "sequence": 2}}), f
 
     assert result.failure is None
     assert [span.trace_id.hex() for span in result.telemetry.spans] == [
-        result.trace_id
+        "07" * 16
     ]
 
 
@@ -314,12 +355,11 @@ def _clock() -> Callable[[], int]:
 
 
 def _window(
-    name: str, sequence: int, trace_id: str, start: int
+    name: str, sequence: int, start: int
 ) -> _ActionWindow:
     return _ActionWindow(
         scenario=_scenario(("driver",), name),
         sequence=sequence,
-        trace_id=trace_id,
         state=ActionState.SEALED,
         sent_unix_nano=start,
         response_unix_nano=start + 10,
@@ -397,12 +437,18 @@ def _metric(
     )
 
 
-def test_late_trace_is_reconciled_to_its_correlation_window() -> None:
+def test_spans_are_assigned_by_their_reported_interval() -> None:
+    """Delivery order does not matter; the reported interval decides.
+
+    The later action's span is exported first, so anything reading exports
+    in the order they arrived would put it in the first window.
+    """
+
     first_id = "01" * 16
     second_id = "02" * 16
     actions = (
-        _window("first", 1, first_id, 100),
-        _window("second", 2, second_id, 200),
+        _window("first", 1, 100),
+        _window("second", 2, 200),
     )
 
     partition = partition_persistent_exports(
@@ -546,14 +592,15 @@ def test_a_span_landing_after_a_snapshot_seals_its_action(
 ) -> None:
     """The same race, on the span the action is judged on."""
 
-    action_complete = tmp_path / "action-trace-id"
+    action_complete = tmp_path / "action-complete"
+    trace_id = "0a" * 16
     command = _driver(
         tmp_path,
         f"""
 import json, pathlib, sys, time
 print(json.dumps({{"version": "jsonl-v1", "type": "ready", "sequence": 0, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}}), flush=True)
-action = json.loads(sys.stdin.readline())
-pathlib.Path({str(action_complete)!r}).write_text(action["correlation_trace_id"])
+json.loads(sys.stdin.readline())
+pathlib.Path({str(action_complete)!r}).write_text("done")
 print(json.dumps({{"version": "jsonl-v1", "type": "action_complete", "sequence": 1, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}}), flush=True)
 sys.stdin.read()
 print(json.dumps({{"version": "jsonl-v1", "type": "stopped", "sequence": 2}}), flush=True)
@@ -568,7 +615,6 @@ print(json.dumps({{"version": "jsonl-v1", "type": "stopped", "sequence": 2}}), f
     def land_after_the_snapshot(capture: _Capture) -> None:
         if capture.exports or not action_complete.exists():
             return
-        trace_id = action_complete.read_text()
         capture.exports += (_trace(trace_id, tick(), tick()),)
         capture.announce()
 
@@ -585,7 +631,7 @@ print(json.dumps({{"version": "jsonl-v1", "type": "stopped", "sequence": 2}}), f
     assert result.failure is None
     assert result.state is ActionState.SEALED
     assert [span.name for span in result.telemetry.spans] == [
-        result.trace_id[-4:]
+        trace_id[-4:]
     ]
 
 
@@ -849,7 +895,7 @@ def test_self_reporting_sdk_metrics_do_not_block_sealing(
 
 
 def test_multiple_delta_exports_stay_in_one_action_window() -> None:
-    action = (_window("first", 1, "01" * 16, 100),)
+    action = (_window("first", 1, 100),)
 
     partition = partition_persistent_exports(
         (_metric(90, 105), _metric(105, 115)), action, 200
@@ -861,8 +907,8 @@ def test_multiple_delta_exports_stay_in_one_action_window() -> None:
 
 def test_cumulative_and_overlapping_metrics_are_rejected() -> None:
     actions = (
-        _window("first", 1, "01" * 16, 100),
-        _window("second", 2, "02" * 16, 200),
+        _window("first", 1, 100),
+        _window("second", 2, 200),
     )
     with pytest.raises(PersistentProtocolError, match="cumulative"):
         partition_persistent_exports(
@@ -884,8 +930,8 @@ def test_cumulative_up_down_counter_is_a_snapshot() -> None:
     """Its point is the current value, so its timestamp places it."""
 
     actions = (
-        _window("first", 1, "01" * 16, 100),
-        _window("second", 2, "02" * 16, 200),
+        _window("first", 1, 100),
+        _window("second", 2, 200),
     )
 
     partition = partition_persistent_exports(
@@ -911,7 +957,7 @@ def test_cumulative_up_down_counter_is_a_snapshot() -> None:
 
 
 def test_readiness_telemetry_lands_in_the_bootstrap_window() -> None:
-    actions = (_window("first", 1, "01" * 16, 100),)
+    actions = (_window("first", 1, 100),)
 
     partition = partition_persistent_exports(
         (_trace("0" * 31 + "1", 40, 60), _trace("01" * 16, 110, 120)),
@@ -924,8 +970,147 @@ def test_readiness_telemetry_lands_in_the_bootstrap_window() -> None:
     assert [span.name for span in partition.windows[0].spans] == ["0101"]
 
 
+def test_a_span_delivered_late_stays_with_the_action_that_recorded_it() -> (
+    None
+):
+    """Delivery during a later action cannot move a span into it.
+
+    The span is timestamped inside the first action, so that is where it
+    lands. The first action was already judged without it, though, so the
+    batch fails rather than reporting a window that changed afterwards.
+    """
+
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+    sealed = partition_persistent_exports(
+        (_trace("01" * 16, 110, 120),), actions, 300
+    )
+    actions[0].sealed_contents = _delivered_contents(sealed.windows[0])
+
+    late = partition_persistent_exports(
+        (_trace("01" * 16, 110, 120), _trace("0a" * 16, 130, 140)),
+        actions,
+        300,
+    )
+
+    assert [span.name for span in late.windows[0].spans] == ["0101", "0a0a"]
+    assert late.windows[1].spans == ()
+    with pytest.raises(PersistentProtocolError, match="after it was sealed"):
+        _reject_late_telemetry(actions, late)
+
+
+def test_a_sealed_window_that_never_changes_is_not_flagged() -> None:
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+    partition = partition_persistent_exports(
+        (_trace("01" * 16, 110, 120), _trace("02" * 16, 210, 220)),
+        actions,
+        300,
+    )
+    actions[0].sealed_contents = _delivered_contents(partition.windows[0])
+
+    _reject_late_telemetry(actions, partition)
+
+
+def test_an_ambiguous_span_fails_closed() -> None:
+    """Nothing is guessed: a span the windows cannot place fails the batch."""
+
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+
+    with pytest.raises(PersistentProtocolError, match="overlaps action"):
+        partition_persistent_exports(
+            (_trace("01" * 16, 150, 250),), actions, 300
+        )
+    with pytest.raises(PersistentProtocolError, match="unassignable"):
+        partition_persistent_exports(
+            (_trace("01" * 16, 400, 500),), actions, 300
+        )
+    with pytest.raises(PersistentProtocolError, match="missing valid"):
+        partition_persistent_exports(
+            (_trace("01" * 16, 0, 0),), actions, 300
+        )
+
+
+def test_a_span_ending_when_the_next_request_goes_out_stays_put() -> None:
+    """Finishing at the boundary is not straddling it.
+
+    The next request went out at that instant, so nothing of it can be in
+    a span that had already ended.
+    """
+
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+
+    partition = partition_persistent_exports(
+        (_trace("01" * 16, 110, 200),), actions, 300
+    )
+
+    assert [span.name for span in partition.windows[0].spans] == ["0101"]
+    assert partition.windows[1].spans == ()
+
+
+def test_one_trace_split_across_two_actions_fails_closed() -> None:
+    """Spans of one trace describe one exchange, so they cannot be split.
+
+    An SDK batches by schedule delay, so the halves of a trace routinely
+    leave in separate exports. Both forms have to fail.
+    """
+
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+
+    with pytest.raises(
+        PersistentProtocolError, match="one trace overlaps multiple"
+    ):
+        partition_persistent_exports(
+            (_trace("01" * 16, 110, 120), _trace("01" * 16, 210, 220)),
+            actions,
+            300,
+        )
+
+    export = _trace("01" * 16, 110, 120)
+    request = cast(
+        trace_service_pb2.ExportTraceServiceRequest, export.request
+    )
+    request.resource_spans[0].scope_spans[0].spans.append(
+        trace_pb2.Span(
+            name="child",
+            trace_id=bytes.fromhex("01" * 16),
+            span_id=b"\x02" * 8,
+            start_time_unix_nano=210,
+            end_time_unix_nano=220,
+        )
+    )
+
+    with pytest.raises(
+        PersistentProtocolError, match="one trace overlaps multiple"
+    ):
+        partition_persistent_exports((export,), actions, 300)
+
+
+def test_readiness_spans_are_excluded_by_the_bootstrap_window() -> None:
+    """Nothing marks readiness telemetry; its timestamps place it.
+
+    Its export arrives after both actions have run, which is what a cold
+    runtime does, and it still belongs before the first action.
+    """
+
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+
+    partition = partition_persistent_exports(
+        (
+            _trace("02" * 16, 210, 220),
+            _trace("0b" * 16, 40, 60),
+            _trace("01" * 16, 110, 120),
+        ),
+        actions,
+        300,
+        50,
+    )
+
+    assert [span.name for span in partition.bootstrap.spans] == ["0b0b"]
+    assert [span.name for span in partition.windows[0].spans] == ["0101"]
+    assert [span.name for span in partition.windows[1].spans] == ["0202"]
+
+
 def test_metric_spanning_readiness_and_the_first_action_is_rejected() -> None:
-    actions = (_window("first", 1, "01" * 16, 100),)
+    actions = (_window("first", 1, 100),)
 
     with pytest.raises(PersistentProtocolError, match="overlaps"):
         partition_persistent_exports((_metric(40, 110),), actions, 200, 50)
@@ -937,7 +1122,7 @@ def test_metric_missing_timestamps_is_rejected() -> None:
     ):
         partition_persistent_exports(
             (_metric(0, 150),),
-            (_window("first", 1, "01" * 16, 100),),
+            (_window("first", 1, 100),),
             200,
         )
 
@@ -1092,8 +1277,52 @@ def _answered(
     return _ActionWindow(
         scenario=controller._scenarios[sequence - 1],
         sequence=sequence,
-        trace_id="11" * 16,
     )
+
+
+def test_sealing_records_what_the_window_held(tmp_path: Path) -> None:
+    capture = _Capture()
+    controller, _watch = _watched(
+        tmp_path, capture, timeout=5.0, settle_delay=0.0
+    )
+    action = _answered(controller, 1)
+
+    controller._run_action(
+        action, [action], capture.open_window("batch"), time.time_ns()
+    )
+
+    assert action.state is ActionState.SEALED
+    assert action.sealed_contents == ((), ())
+
+
+def test_an_action_fails_when_a_sealed_window_gains_telemetry(
+    tmp_path: Path,
+) -> None:
+    """A span recorded in a sealed action turns up while the next one runs.
+
+    Timestamps put it back in the action that recorded it, so it is never
+    counted toward the running one. That action was judged without it,
+    though, so the batch fails instead of reporting either window.
+    """
+
+    capture = _Capture()
+    controller = PersistentController(
+        (_scenario(("driver",), "first"), _scenario(("driver",), "second")),
+        capture=cast(OtlpCaptureProxy, capture),
+        cwd=tmp_path,
+        env=os.environ,
+        timeout=5.0,
+        settle_delay=0.0,
+    )
+    first = _window("first", 1, 100)
+    first.sealed_contents = ((), ())
+    second = _answered(controller, 2)
+    capture.exports = (_trace("01" * 16, 110, 120),)
+
+    with pytest.raises(PersistentProtocolError, match="after it was sealed"):
+        controller._run_action(
+            second, [first, second], capture.open_window("batch"), 50
+        )
 
 
 def test_an_action_settling_on_an_in_flight_export_waits_for_it(

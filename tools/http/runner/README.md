@@ -47,11 +47,14 @@ one measured server process per selected batch and the action table handed off
 as JSON. Both sides use [`contract.yaml`](../test-client/contract.yaml), and the
 runner invokes Weaver once for the package.
 
-The persistent driver sends readiness and sequential actions with distinct
-`traceparent` values. The runner uses those correlations and signal timestamps
-to isolate each action, then waits for expected telemetry, forwarding drains,
-and a quiet settle period before sending the next request. Ambiguous metric
-intervals and driver protocol failures fail the package rather than falling back
-to an aggregate report.
+The persistent driver sends readiness and then one request per action, in
+sequence and never concurrently. It stamps each exchange where it sent the
+request and where it saw the answer. The runner isolates an action from the
+timestamps the instrumentation itself reported, then waits for expected
+telemetry, forwarding drains, and a quiet settle period before sending the
+next request. Nothing is injected into the traffic under test. Ambiguous
+metric intervals, telemetry that arrives after its action was sealed, and
+driver protocol failures fail the package rather than falling back to an
+aggregate report.
 
 [http]: https://opentelemetry.io/docs/specs/semconv/http/

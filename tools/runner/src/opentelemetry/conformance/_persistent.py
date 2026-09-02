@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import json
-import secrets
 import subprocess
 import time
 from collections import deque
@@ -71,7 +70,6 @@ class PersistentActionResult:
     """One action after the persistent process and final telemetry drain."""
 
     scenario: ScenarioSpec
-    trace_id: str
     state: ActionState
     transitions: tuple[ActionState, ...]
     telemetry: CapturedWindow
@@ -85,7 +83,6 @@ class PersistentActionResult:
 class _ActionWindow:
     scenario: ScenarioSpec
     sequence: int
-    trace_id: str
     state: ActionState = ActionState.OPEN
     transitions: list[ActionState] = field(
         default_factory=lambda: [ActionState.OPEN]
@@ -94,6 +91,10 @@ class _ActionWindow:
     requested_unix_nano: int | None = None
     response_unix_nano: int | None = None
     sealed_unix_nano: int | None = None
+    # What the window held the moment it was sealed. Anything that joins it
+    # afterwards was recorded inside this action but delivered after the
+    # runner had already judged it, which no later action may absorb.
+    sealed_contents: object | None = None
     stdout: list[str] = field(default_factory=list[str])
 
     def transition(self, state: ActionState) -> None:
@@ -213,7 +214,6 @@ class PersistentController:
                     action = _ActionWindow(
                         scenario=scenario,
                         sequence=index + 1,
-                        trace_id=_trace_id(),
                     )
                     actions.append(action)
                     self._run_action(
@@ -257,6 +257,7 @@ class PersistentController:
             partition = partition_persistent_exports(
                 final.exports, actions, batch_end, bootstrap_unix_nano
             )
+            _reject_late_telemetry(actions, partition)
         except PersistentProtocolError as error:
             failure = failure or str(error)
             reconciliation_failure = True
@@ -487,7 +488,6 @@ class PersistentController:
             "type": "action",
             "sequence": action.sequence,
             "scenario": action.scenario.name,
-            "correlation_trace_id": action.trace_id,
             "action": dict(action.scenario.action or {}),
         }
         action.sent_unix_nano = time.time_ns()
@@ -532,6 +532,12 @@ class PersistentController:
                 raise PersistentProtocolError(
                     f"{action.scenario.display_name}: {error}"
                 ) from error
+            try:
+                _reject_late_telemetry(actions, partition)
+            except PersistentProtocolError as error:
+                raise PersistentProtocolError(
+                    f"{action.scenario.display_name}: {error}"
+                ) from error
             current = partition.windows[-1]
             boundary = partition.metric_boundaries[-1]
             satisfied = _positive_expectations_satisfied(
@@ -564,6 +570,7 @@ class PersistentController:
                 ):
                     action.transition(ActionState.SEALED)
                     action.sealed_unix_nano = time.time_ns()
+                    action.sealed_contents = _delivered_contents(current)
                     return
 
             with self._condition:
@@ -757,7 +764,6 @@ class PersistentController:
                 action = _ActionWindow(
                     scenario=scenario,
                     sequence=index + 1,
-                    trace_id="",
                 )
                 telemetry = _empty_window(scenario.name, index + 1)
                 executed = False
@@ -769,7 +775,6 @@ class PersistentController:
             results.append(
                 PersistentActionResult(
                     scenario=scenario,
-                    trace_id=action.trace_id,
                     state=action.state,
                     transitions=tuple(action.transitions),
                     telemetry=telemetry,
@@ -792,7 +797,8 @@ def partition_persistent_exports(
     """Assign raw OTLP records to action windows without aggregate subtraction.
 
     Assignment is driven by the timestamps the instrumentation itself
-    reported, never by the order in which exports happened to arrive. The
+    reported, never by the order in which exports happened to arrive, and
+    never by anything the runner injected into the traffic under test. The
     range before the first action is the bootstrap window: readiness
     telemetry belongs there however late its export lands.
     ``bootstrap_unix_nano`` is when the driver reported readiness, and is a
@@ -832,13 +838,11 @@ def partition_persistent_exports(
             for action in actions
         ),
     ]
-    trace_ids = {
-        bytes.fromhex(action.trace_id): index + 1
-        for index, action in enumerate(actions)
-        if action.trace_id
-    }
     assigned: list[list[CapturedExport]] = [[] for _ in ranges]
     metric_boundaries: list[list[int]] = [[] for _ in ranges]
+    # Shared across every export: an SDK batches by schedule delay, so the
+    # spans of one trace routinely leave in different requests.
+    seen_trace_ids: dict[bytes, int] = {}
     declared = [
         frozenset(action.scenario.metrics)
         if action.scenario.metrics
@@ -852,7 +856,9 @@ def partition_persistent_exports(
         if isinstance(
             item.request, trace_service_pb2.ExportTraceServiceRequest
         ):
-            requests = _partition_traces(item.request, trace_ids, ranges)
+            requests = _partition_traces(
+                item.request, ranges, seen_trace_ids
+            )
         elif isinstance(
             item.request, metrics_service_pb2.ExportMetricsServiceRequest
         ):
@@ -862,7 +868,7 @@ def partition_persistent_exports(
             for index, values in boundaries.items():
                 metric_boundaries[index].extend(values)
         else:
-            requests = _partition_logs(item.request, trace_ids, ranges)
+            requests = _partition_logs(item.request, ranges)
         for index, request in requests.items():
             assigned[index].append(
                 CapturedExport(
@@ -892,23 +898,29 @@ def partition_persistent_exports(
 
 def _partition_traces(
     request: trace_service_pb2.ExportTraceServiceRequest,
-    trace_ids: Mapping[bytes, int],
     ranges: Sequence[tuple[int, int]],
+    seen_trace_ids: dict[bytes, int],
 ) -> dict[int, trace_service_pb2.ExportTraceServiceRequest]:
+    """Place every span by the interval the instrumentation reported for it.
+
+    A span's events are part of the span, so they travel with it. Spans of
+    one trace describe one exchange, so a trace whose spans land in
+    different windows is ambiguous and fails rather than being split.
+    ``seen_trace_ids`` carries that across exports, since an SDK is free to
+    send the spans of one trace in separate batches.
+    """
+
     assignments: dict[tuple[int, int, int], int] = {}
-    seen_trace_ids: dict[bytes, int] = {}
     for resource_index, resource in enumerate(request.resource_spans):
         for scope_index, scope in enumerate(resource.scope_spans):
             for span_index, span in enumerate(scope.spans):
+                index = _assign_interval(
+                    span.start_time_unix_nano,
+                    span.end_time_unix_nano,
+                    ranges,
+                    "span",
+                )
                 trace_id = bytes(span.trace_id)
-                index = trace_ids.get(trace_id)
-                if index is None:
-                    index = _assign_interval(
-                        span.start_time_unix_nano,
-                        span.end_time_unix_nano,
-                        ranges,
-                        "span",
-                    )
                 previous = seen_trace_ids.setdefault(trace_id, index)
                 if previous != index:
                     raise PersistentProtocolError(
@@ -946,22 +958,18 @@ def _filtered_trace_requests(
 
 def _partition_logs(
     request: logs_service_pb2.ExportLogsServiceRequest,
-    trace_ids: Mapping[bytes, int],
     ranges: Sequence[tuple[int, int]],
 ) -> dict[int, logs_service_pb2.ExportLogsServiceRequest]:
     assignments: dict[tuple[int, int, int], int] = {}
     for resource_index, resource in enumerate(request.resource_logs):
         for scope_index, scope in enumerate(resource.scope_logs):
             for record_index, record in enumerate(scope.log_records):
-                trace_id = bytes(record.trace_id)
-                index = trace_ids.get(trace_id)
-                if index is None:
-                    timestamp = (
-                        record.time_unix_nano or record.observed_time_unix_nano
-                    )
-                    index = _assign_interval(
-                        timestamp, timestamp, ranges, "log record"
-                    )
+                timestamp = (
+                    record.time_unix_nano or record.observed_time_unix_nano
+                )
+                index = _assign_interval(
+                    timestamp, timestamp, ranges, "log record"
+                )
                 assignments[(resource_index, scope_index, record_index)] = (
                     index
                 )
@@ -1162,22 +1170,104 @@ def _assign_interval(
     ranges: Sequence[tuple[int, int]],
     description: str,
 ) -> int:
+    """The one window an interval belongs to, by its own timestamps.
+
+    An interval belongs to the window its start falls in. The last range
+    ends where the caller read the clock rather than at a boundary the
+    driver reported, so its end is inclusive: a coarse clock stamps a
+    record that has only just been made at exactly that instant.
+
+    Every earlier boundary is where the next request went out. An interval
+    still open then could have recorded that request's work too, so it
+    belongs to neither window and fails rather than being guessed at.
+    """
+
     if not start or not end or end < start:
         raise PersistentProtocolError(
             f"{description} is missing valid timestamps needed for assignment"
         )
+    last = len(ranges) - 1
     matches = [
         index
         for index, (window_start, window_end) in enumerate(ranges)
-        if end >= window_start and start < window_end
+        if window_start <= start
+        and (start < window_end or (index == last and start <= window_end))
     ]
     if len(matches) != 1:
-        reason = "overlaps action intervals" if matches else "is unassignable"
         raise PersistentProtocolError(
-            f"{description} {reason}: point=[{start}, {end}], "
+            f"{description} is unassignable: point=[{start}, {end}], "
             f"actions={list(ranges)}"
         )
-    return matches[0]
+    index = matches[0]
+    if index != last and end > ranges[index][1]:
+        raise PersistentProtocolError(
+            f"{description} overlaps action intervals: point=[{start}, "
+            f"{end}], actions={list(ranges)}"
+        )
+    return index
+
+
+def _reject_late_telemetry(
+    actions: Sequence[_ActionWindow], partition: _Partition
+) -> None:
+    """Fail on telemetry that joined an action after a later one had begun.
+
+    Assignment is by timestamp, so a delayed record is never counted toward
+    whichever action happened to be running when it arrived. It does mean
+    the earlier action was judged on an incomplete window, which no report
+    may stand on.
+
+    The most recent action is left out. It is still open, or — once the
+    batch is over — still collecting a shutdown flush that belongs to it
+    and to nothing after it.
+    """
+
+    for index, action in enumerate(actions[:-1]):
+        expected = action.sealed_contents
+        if expected is None or index >= len(partition.windows):
+            continue
+        if _delivered_contents(partition.windows[index]) != expected:
+            raise PersistentProtocolError(
+                f"action {action.sequence} "
+                f"({action.scenario.display_name}) recorded telemetry that "
+                "arrived after it was sealed"
+            )
+
+
+def _delivered_contents(window: CapturedWindow) -> object:
+    """The records a window holds that each stand for one recorded thing.
+
+    A span or a log record is either in a window or it is not, so one that
+    turns up after the window was sealed changes this. Metric points are
+    left out: a delta interval keeps closing for as long as the process
+    runs, and the boundary rules already refuse a point that could belong
+    to two actions.
+    """
+
+    spans = sorted(
+        (
+            span.trace_id,
+            span.span_id,
+            span.start_time_unix_nano,
+            span.end_time_unix_nano,
+        )
+        for span in window.spans
+    )
+    logs: list[tuple[int, int]] = []
+    for item in window.exports:
+        request = item.request
+        if not isinstance(request, logs_service_pb2.ExportLogsServiceRequest):
+            continue
+        for resource in request.resource_logs:
+            for scope in resource.scope_logs:
+                logs.extend(
+                    (
+                        record.time_unix_nano,
+                        record.observed_time_unix_nano,
+                    )
+                    for record in scope.log_records
+                )
+    return (tuple(spans), tuple(sorted(logs)))
 
 
 def _positive_expectations_satisfied(
@@ -1327,13 +1417,6 @@ def _validate_envelope(document: Mapping[str, object], sequence: int) -> None:
         raise PersistentProtocolError(
             f"expected sequence {sequence}, got {actual_sequence!r}"
         )
-
-
-def _trace_id() -> str:
-    while True:
-        value = secrets.token_hex(16)
-        if value != "0" * 32:
-            return value
 
 
 def _raise_json(value: str) -> Any:

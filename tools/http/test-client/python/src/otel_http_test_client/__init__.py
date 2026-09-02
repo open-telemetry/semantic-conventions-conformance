@@ -482,22 +482,17 @@ def request(
     method: str,
     url: str,
     body: str | None = None,
-    *,
-    headers: Mapping[str, str] | None = None,
 ) -> tuple[int, str]:
     """Send one request, reading an error response as a result like any other.
 
     A 404 or 500 is what the scenario asked for, so it comes back as a status
     rather than an exception.
     """
-    request_headers = client_headers(body)
-    if headers is not None:
-        request_headers.update(headers)
     prepared = urllib.request.Request(  # noqa: S310
         url,
         data=None if body is None else body.encode("utf-8"),
         method=method,
-        headers=request_headers,
+        headers=client_headers(body),
     )
     try:
         with urllib.request.urlopen(  # noqa: S310
