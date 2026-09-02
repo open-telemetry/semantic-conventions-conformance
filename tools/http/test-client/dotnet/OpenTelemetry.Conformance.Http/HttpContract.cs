@@ -27,9 +27,36 @@ public static class HttpContract
 
     public const string ActionsVariable = "OTEL_CONFORMANCE_SCENARIO_ACTIONS";
 
+    private sealed record CachedTable(string Raw, IReadOnlyList<Exchange> Exchanges);
+
+    // A single reference, so publishing it is atomic. A multi-word struct could be
+    // read with its list still null on a request thread, which is where a measured
+    // server first touches this.
+    private static volatile CachedTable? cachedTable;
+
     /// <summary>Every exchange supplied by the runner, including readiness, in order.</summary>
     public static IReadOnlyList<Exchange> Exchanges =>
-        DeserializeActions(RequiredEnvironment(ActionsVariable));
+        CachedActions(RequiredEnvironment(ActionsVariable));
+
+    /// <summary>The action table, parsed once per process.</summary>
+    /// <remarks>
+    /// A server scenario answers every request from this table, so parsing it per request
+    /// would charge the measured process on the path its instrumentation is timing. The
+    /// runner sets the table before the process starts and never changes it; keying the
+    /// cache on the raw text keeps a caller that varies it honest.
+    /// </remarks>
+    internal static IReadOnlyList<Exchange> CachedActions(string json)
+    {
+        var cached = cachedTable;
+        if (cached is not null && cached.Raw == json)
+        {
+            return cached.Exchanges;
+        }
+
+        var parsed = DeserializeActions(json);
+        cachedTable = new CachedTable(json, parsed);
+        return parsed;
+    }
 
     /// <summary>The measured requests supplied by the runner.</summary>
     public static IReadOnlyList<Exchange> Requests => Exchanges.Skip(1).ToArray();
@@ -85,7 +112,7 @@ public static class HttpContract
             index++;
         }
 
-        return exchanges;
+        return exchanges.AsReadOnly();
     }
 
     internal static Exchange Request(int index)

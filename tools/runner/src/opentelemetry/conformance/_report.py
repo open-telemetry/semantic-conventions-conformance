@@ -15,7 +15,7 @@ from google.protobuf.json_format import MessageToDict
 from opentelemetry.proto.collector.metrics.v1 import metrics_service_pb2
 from opentelemetry.proto.collector.trace.v1 import trace_service_pb2
 
-from ._otlp_capture import CapturedWindow
+from ._otlp_capture import CapturedWindow, self_monitoring
 from ._spans import span_kind
 
 if TYPE_CHECKING:
@@ -245,7 +245,13 @@ def iter_spans(document: _Json) -> Iterator[_Json]:
                     yield _mapping(span)
 
 
-def iter_metrics(document: _Json) -> Iterator[_Json]:
+def iter_metrics(document: _Json) -> Iterator[tuple[str, _Json]]:
+    """Every metric with the scope that reported it.
+
+    The scope is what tells an SDK's report on its own exporter apart from a
+    measurement of the library under test, so it travels with the metric.
+    """
+
     for request in _list(document.get("metrics")):
         for resource_metrics in _list(
             _mapping(request).get("resource_metrics")
@@ -253,8 +259,11 @@ def iter_metrics(document: _Json) -> Iterator[_Json]:
             for scope_metrics in _list(
                 _mapping(resource_metrics).get("scope_metrics")
             ):
+                scope = _mapping(_mapping(scope_metrics).get("scope"))
+                name = scope.get("name")
+                scope_name = name if isinstance(name, str) else ""
                 for metric in _list(_mapping(scope_metrics).get("metrics")):
-                    yield _mapping(metric)
+                    yield scope_name, _mapping(metric)
 
 
 def iter_logs(document: _Json) -> Iterator[_Json]:
@@ -362,9 +371,13 @@ def read(
             for span_type in types:
                 observed.spans.setdefault(span_type, set()).update(attributes)
 
-        for metric in iter_metrics(document):
+        for scope_name, metric in iter_metrics(document):
             name = metric.get("name")
-            if isinstance(name, str) and name:
+            if (
+                isinstance(name, str)
+                and name
+                and not self_monitoring(scope_name, name)
+            ):
                 observed.metrics.setdefault(name, set()).update(
                     metric_point_attributes(metric)
                 )

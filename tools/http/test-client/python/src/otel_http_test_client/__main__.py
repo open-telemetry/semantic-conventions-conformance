@@ -24,6 +24,7 @@ import yaml
 from . import (
     ACTIONS_VARIABLE,
     PORT_VARIABLE,
+    PROTOCOL_VARIABLE,
     Exchange,
     _action_table,  # pyright: ignore[reportPrivateUsage]
     _drive_exchanges,  # pyright: ignore[reportPrivateUsage]
@@ -97,6 +98,25 @@ if sys.platform == "win32":
     _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
 
 
+def _driven_protocol() -> str | None:
+    """The protocol the runner is driving this process with, if any.
+
+    Set only for a persistent run, so its absence is what makes a manual
+    ``--serve`` one-shot. An unknown value is a runner this driver cannot
+    speak to, which fails before a measured server is started.
+    """
+
+    protocol = os.environ.get(PROTOCOL_VARIABLE)
+    if protocol is None or protocol == "":
+        return None
+    if protocol != _PROTOCOL_VERSION:
+        raise SystemExit(
+            f"{PROTOCOL_VARIABLE}={protocol!r} is not a protocol this driver "
+            f"speaks; expected {_PROTOCOL_VERSION!r}"
+        )
+    return protocol
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="otel-http-drive",
@@ -111,7 +131,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--persistent",
         action="store_true",
-        help="speak jsonl-v1 on stdin and stdout while serving COMMAND",
+        help=(
+            "speak jsonl-v1 on stdin and stdout while serving COMMAND; the "
+            f"runner sets ${{{PROTOCOL_VARIABLE}}} instead, so this is for "
+            "driving a server by hand"
+        ),
     )
     parser.add_argument(
         "--serve",
@@ -124,19 +148,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         ),
     )
     arguments = parser.parse_args(argv)
+    persistent = arguments.persistent or _driven_protocol() is not None
 
     if arguments.url is None:
         if arguments.serve is None:
             parser.error("give either a base URL or --serve COMMAND")
         if not arguments.serve:
             parser.error("--serve requires COMMAND")
-        return _serve_and_drive(
-            arguments.serve, persistent=arguments.persistent
-        )
+        return _serve_and_drive(arguments.serve, persistent=persistent)
     if arguments.serve is not None:
         parser.error("give either a base URL or --serve COMMAND, not both")
-    if arguments.persistent:
-        parser.error("--persistent requires --serve COMMAND")
+    if persistent:
+        parser.error(
+            "a persistent run requires --serve COMMAND; driving a base URL "
+            "sends one pass and exits"
+        )
 
     _wait_for_health_exchange(arguments.url, _selected_exchanges()[0])
     _drive_exchanges(arguments.url, _selected_exchanges()[1:])
@@ -441,60 +467,14 @@ def _parse_action_record(raw: str, expected: int) -> Mapping[str, object]:
 
 
 def _exchange_from_action(value: object) -> Exchange:
-    if not isinstance(value, dict):
-        raise ValueError("action must be a JSON object")
-    action = cast(dict[str, object], value)
-    unknown = sorted(set(action) - {"request", "response"})
-    if unknown:
-        raise ValueError(f"action has unknown field(s): {unknown}")
-    request_value = action.get("request")
-    response_value = action.get("response")
-    if not isinstance(request_value, dict) or not isinstance(
-        response_value, dict
-    ):
-        raise ValueError("action requires request and response objects")
-    request_document = cast(dict[str, object], request_value)
-    response_document = cast(dict[str, object], response_value)
-    request_unknown = sorted(
-        set(request_document) - {"method", "path", "body"}
-    )
-    if request_unknown:
-        raise ValueError(
-            f"action request has unknown field(s): {request_unknown}"
-        )
-    response_unknown = sorted(set(response_document) - {"status", "body"})
-    if response_unknown:
-        raise ValueError(
-            f"action response has unknown field(s): {response_unknown}"
-        )
-    method = request_document.get("method")
-    path = request_document.get("path")
-    body = request_document.get("body")
-    status = response_document.get("status")
-    response_body = response_document.get("body")
-    if not isinstance(method, str) or not method:
-        raise ValueError("action request.method must be a non-empty string")
-    if not isinstance(path, str) or not path.startswith("/"):
-        raise ValueError("action request.path must start with '/'")
-    if body is not None and not isinstance(body, str):
-        raise ValueError("action request.body must be a string")
-    if (
-        not isinstance(status, int)
-        or isinstance(status, bool)
-        or not 100 <= status <= 599
-    ):
-        raise ValueError("action response.status must be an HTTP status")
-    if not isinstance(response_body, str):
-        raise ValueError("action response.body must be a string")
-    return Exchange(
-        method=method,
-        path=path,
-        body=body,
-        status=status,
-        response_body=response_body,
-        readiness=False,
-        description="runner action",
-    )
+    """One action record's exchange, decoded the one canonical way.
+
+    The shared decoder is what every workload in this package already uses,
+    so a driver validating actions its own way could accept traffic no
+    workload would, or refuse traffic every workload accepts.
+    """
+
+    return _decode_action(value, variable="jsonl-v1", readiness=False)
 
 
 def _request_exchange(

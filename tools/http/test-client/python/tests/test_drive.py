@@ -22,9 +22,13 @@ from otel_http_test_client import (
     ACTION_VARIABLE,
     ACTIONS_VARIABLE,
     PORT_VARIABLE,
+    PROTOCOL_VARIABLE,
     ContractError,
     Exchange,
+    _action_table,
     _carries_the_contracts_body,
+    _decode_action_table,
+    _exchange_for,
     client_headers,
     drive,
     drive_async,
@@ -287,16 +291,17 @@ def _drive(scenario: Path) -> subprocess.CompletedProcess[str]:
 def _start_persistent_driver(
     tmp_path: Path, **environment: str
 ) -> tuple[subprocess.Popen[str], Path]:
+    """Start the driver the way the runner does: no flag, just the variable."""
+
     scenario = tmp_path / "persistent_scenario.py"
     scenario.write_text(_PERSISTENT_SCENARIO, encoding="utf-8")
     result = tmp_path / "persistent-result.json"
-    env = {**os.environ, **environment}
+    env = {**os.environ, PROTOCOL_VARIABLE: "jsonl-v1", **environment}
     process = subprocess.Popen(  # noqa: S603
         [
             sys.executable,
             "-m",
             "otel_http_test_client",
-            "--persistent",
             "--serve",
             sys.executable,
             str(scenario),
@@ -532,6 +537,21 @@ class TestTheContract:
         action["extra"] = True
         with pytest.raises(RuntimeError, match="unknown field"):
             scenario_request(json.dumps(action))
+
+    def test_repeated_lookups_reuse_one_parsed_table(self) -> None:
+        """A server answers every request from this table.
+
+        Parsing it per request would charge the measured process on the very
+        path its instrumentation is timing.
+        """
+
+        first = _action_table()
+
+        assert _action_table() is first
+        assert _exchange_for("GET", "/users/123") is first[1]
+        assert _decode_action_table(driver._canonical_action_table()) is not (
+            first
+        )
 
     def test_missing_action_table_says_which_variable(
         self, monkeypatch: pytest.MonkeyPatch
@@ -1206,6 +1226,59 @@ class TestTheCommandLine:
             main(["--serve"])
         assert "--serve requires COMMAND" in capsys.readouterr().err
 
+    def test_the_protocol_variable_alone_makes_a_run_persistent(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """No package repeats a flag for what its variant already decided."""
+
+        monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v1")
+        served: list[bool] = []
+        monkeypatch.setattr(
+            driver,
+            "_serve_and_drive",
+            lambda _command, *, persistent: served.append(persistent) or 0,
+        )
+
+        assert main(["--serve", "true"]) == 0
+        assert served == [True]
+
+    def test_an_unset_protocol_variable_leaves_a_manual_run_one_shot(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv(PROTOCOL_VARIABLE, raising=False)
+        served: list[bool] = []
+        monkeypatch.setattr(
+            driver,
+            "_serve_and_drive",
+            lambda _command, *, persistent: served.append(persistent) or 0,
+        )
+
+        assert main(["--serve", "true"]) == 0
+        assert served == [False]
+
+    def test_an_unknown_protocol_fails_before_a_server_is_started(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A runner this driver cannot answer must not be answered badly."""
+
+        monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v2")
+        monkeypatch.setattr(
+            driver,
+            "_serve_and_drive",
+            lambda *_args, **_kwargs: pytest.fail("the server was started"),
+        )
+
+        with pytest.raises(SystemExit, match="jsonl-v2"):
+            main(["--serve", "true"])
+
+    def test_a_driven_base_url_is_rejected(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v1")
+
+        with pytest.raises(SystemExit):
+            main(["http://127.0.0.1:1"])
+        assert "requires --serve COMMAND" in capsys.readouterr().err
 
 def test_the_port_variable_is_documented() -> None:
     """Every language's server scenarios read it, so it is part of the API."""

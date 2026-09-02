@@ -27,7 +27,6 @@ from opentelemetry.conformance._otlp_capture import (
     decode_window,
 )
 from opentelemetry.conformance._persistent import (
-    _IN_FLIGHT_WAIT_SECONDS,
     DEFAULT_SETTLE_DELAY,
     ActionState,
     PersistentController,
@@ -85,9 +84,7 @@ class _Capture:
         self.snapshot_calls += 1
         if self.on_snapshot is not None:
             self.on_snapshot(self)
-        taken = CaptureSnapshot(
-            self.exports, self.in_flight, len(self.exports)
-        )
+        taken = CaptureSnapshot(self.exports, self.in_flight)
         if self.after_snapshot is not None:
             self.after_snapshot(self)
         return taken
@@ -1029,6 +1026,35 @@ def test_an_ambiguous_span_fails_closed() -> None:
         )
 
 
+def test_the_open_action_reaches_forward_without_bound() -> None:
+    """A running action has no end, so nothing it records falls outside it.
+
+    The runner and the measured process read different clocks. Bounding the
+    open window on the runner's would make a span the process stamped a
+    moment later belong to no window at all.
+    """
+
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+    ahead = 10**18
+
+    partition = partition_persistent_exports(
+        (_trace("02" * 16, 210, ahead),), actions, None
+    )
+
+    assert [span.name for span in partition.windows[1].spans] == ["0202"]
+
+
+def test_a_reconciled_batch_still_rejects_telemetry_past_its_end() -> None:
+    """Once the batch has a real end, out of range is out of range."""
+
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+
+    with pytest.raises(PersistentProtocolError, match="unassignable"):
+        partition_persistent_exports(
+            (_trace("02" * 16, 310, 320),), actions, 300
+        )
+
+
 def test_a_span_ending_when_the_next_request_goes_out_stays_put() -> None:
     """Finishing at the boundary is not straddling it.
 
@@ -1325,29 +1351,21 @@ def test_an_action_fails_when_a_sealed_window_gains_telemetry(
         )
 
 
-def test_an_action_settling_on_an_in_flight_export_waits_for_it(
+def test_an_action_seals_while_its_export_is_still_going_upstream(
     tmp_path: Path,
 ) -> None:
-    """The window is judged quiet, but the capture is still carrying an export.
+    """Weaver's round trip is not part of what an action is judged on.
 
-    Sealing there would judge the action on telemetry the capture has not
-    finished recording, so the loop keeps waiting. What it must not do is
-    re-read the same snapshot at full speed until the export lands: the
-    capture wakes it when that happens.
+    The capture records a complete OTLP request before it forwards one, so
+    a window already holds everything the runner will judge it on while
+    that forward is still in flight. Waiting for Weaver there would only
+    make every action pay for the collector's latency.
     """
 
     capture = _Capture(in_flight=1)
-    controller, watched = _watched(
+    controller, _watch = _watched(
         tmp_path, capture, timeout=5.0, settle_delay=0.0
     )
-
-    def land_once_it_parks(capture: _Capture) -> None:
-        # The escape hatch is what a spinning loop hits, so this test fails on
-        # its assertions rather than on the action deadline.
-        if len(watched.waits) >= 2 or capture.snapshot_calls >= 40:
-            capture.in_flight = 0
-
-    capture.on_snapshot = land_once_it_parks
     action = _answered(controller, 1)
 
     controller._run_action(
@@ -1355,19 +1373,23 @@ def test_an_action_settling_on_an_in_flight_export_waits_for_it(
     )
 
     assert action.state is ActionState.SEALED
-    assert watched.waits, "the loop never parked on the condition"
-    assert all(waited == _IN_FLIGHT_WAIT_SECONDS for waited in watched.waits)
-    assert capture.snapshot_calls == len(watched.waits) + 1
+    assert capture.in_flight == 1, "the forward never had to complete"
 
 
-def test_an_action_that_never_goes_quiet_times_out_without_spinning(
+def test_an_action_whose_expectations_never_arrive_times_out(
     tmp_path: Path,
 ) -> None:
-    """An export that never lands ends the action on its own deadline."""
+    """Telemetry that never lands ends the action on its own deadline."""
 
-    capture = _Capture(in_flight=1)
+    capture = _Capture()
     controller, watched = _watched(
         tmp_path, capture, timeout=0.3, settle_delay=0.0
+    )
+    controller._scenarios = (
+        replace(
+            controller._scenarios[0],
+            spans=(SpanExpectation(match=SpanMatch(attributes={}), count=1),),
+        ),
     )
     action = _answered(controller, 1)
 
@@ -1376,58 +1398,41 @@ def test_an_action_that_never_goes_quiet_times_out_without_spinning(
             action, [action], capture.open_window("batch"), time.time_ns()
         )
 
-    assert action.state is ActionState.SETTLING
-    # 0.3s of deadline in slices of _IN_FLIGHT_WAIT_SECONDS, not a spin.
-    assert 1 <= len(watched.waits) <= 10
-    assert all(
-        waited is not None and 0 < waited <= _IN_FLIGHT_WAIT_SECONDS
-        for waited in watched.waits
-    )
+    assert action.state is ActionState.RESPONSE_COMPLETE
+    assert watched.waits, "the loop never parked on the condition"
 
 
-def test_bootstrap_settling_on_an_in_flight_export_waits_for_it(
+def test_bootstrap_settles_while_its_export_is_still_going_upstream(
     tmp_path: Path,
 ) -> None:
-    """The same quiet instant, on the window that isolates readiness."""
+    """The same, on the window that isolates readiness."""
 
-    capture = _Capture()
-    controller, watched = _watched(
+    capture = _Capture(in_flight=1)
+    controller, _watch = _watched(
         tmp_path, capture, timeout=5.0, settle_delay=0.0
     )
     ready_unix_nano = time.time_ns()
-
-    def hold_then_land(capture: _Capture) -> None:
-        if capture.snapshot_calls == 1:
-            return
-        if len(watched.waits) >= 2 or capture.snapshot_calls >= 40:
-            capture.in_flight = 0
-        else:
-            capture.in_flight = 1
-
-    capture.on_snapshot = hold_then_land
 
     boundary = controller._wait_for_bootstrap(
         capture.open_window("batch"), ready_unix_nano
     )
 
     assert boundary == ready_unix_nano
-    assert watched.waits, "the loop never parked on the condition"
-    assert all(waited == _IN_FLIGHT_WAIT_SECONDS for waited in watched.waits)
+    assert capture.in_flight == 1, "the forward never had to complete"
 
 
-def test_bootstrap_that_never_goes_quiet_times_out_without_spinning(
+def test_bootstrap_that_never_isolates_times_out_without_spinning(
     tmp_path: Path,
 ) -> None:
+    """A declared metric whose interval never closes ends on the deadline."""
+
     capture = _Capture()
     controller, watched = _watched(
         tmp_path, capture, timeout=0.3, settle_delay=0.0
     )
-
-    def hold(capture: _Capture) -> None:
-        if capture.snapshot_calls > 1:
-            capture.in_flight = 1
-
-    capture.on_snapshot = hold
+    controller._scenarios = (
+        replace(controller._scenarios[0], metrics=("never.closes",)),
+    )
 
     with pytest.raises(TimeoutError, match="isolating readiness telemetry"):
         controller._wait_for_bootstrap(
@@ -1436,6 +1441,5 @@ def test_bootstrap_that_never_goes_quiet_times_out_without_spinning(
 
     assert 1 <= len(watched.waits) <= 10
     assert all(
-        waited is not None and 0 < waited <= _IN_FLIGHT_WAIT_SECONDS
-        for waited in watched.waits
+        waited is not None and 0 < waited <= 0.3 for waited in watched.waits
     )

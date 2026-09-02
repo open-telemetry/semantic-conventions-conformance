@@ -18,6 +18,20 @@ public class HttpContractTests
     }
 
     [Fact]
+    public void RepeatedLookupsReuseOneParsedTable()
+    {
+        // A server scenario answers every request from this table, so parsing it per
+        // request would charge the measured process on the path its instrumentation
+        // is timing.
+        var first = HttpContract.CachedActions(TestActions.Json);
+        var second = HttpContract.CachedActions(TestActions.Json);
+
+        Assert.Same(first, second);
+        Assert.Same(first[0], second[0]);
+        Assert.NotSame(first, HttpContract.DeserializeActions(TestActions.Json));
+    }
+
+    [Fact]
     public void SingularClientActionIsDecoded()
     {
         var exchange = HttpContract.DeserializeAction(

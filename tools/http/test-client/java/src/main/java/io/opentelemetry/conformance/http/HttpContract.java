@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** The HTTP conformance exchanges supplied by the runner as JSON. */
 public final class HttpContract {
@@ -63,8 +64,30 @@ public final class HttpContract {
 
   /** Every exchange supplied by the runner, including readiness, in order. */
   public static List<Exchange> exchanges() {
-    return loadActions(requiredEnvironment(ACTIONS_VARIABLE));
+    return cachedActions(requiredEnvironment(ACTIONS_VARIABLE));
   }
+
+  /**
+   * The action table, parsed once per process.
+   *
+   * <p>A server scenario answers every request from this table, so parsing it per request would
+   * charge the measured process on the path its instrumentation is timing. The runner sets the
+   * table before the process starts and never changes it; keying the cache on the raw text keeps a
+   * caller that varies it honest.
+   */
+  static List<Exchange> cachedActions(String raw) {
+    ParsedTable cached = CACHE.get();
+    if (cached != null && cached.raw().equals(raw)) {
+      return cached.exchanges();
+    }
+    List<Exchange> parsed = loadActions(raw);
+    CACHE.set(new ParsedTable(raw, parsed));
+    return parsed;
+  }
+
+  private record ParsedTable(String raw, List<Exchange> exchanges) {}
+
+  private static final AtomicReference<ParsedTable> CACHE = new AtomicReference<>();
 
   /** The measured requests supplied by the runner. */
   public static List<Exchange> requests() {

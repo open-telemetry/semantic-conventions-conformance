@@ -6,6 +6,8 @@ package io.opentelemetry.conformance.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,6 +24,19 @@ class HttpContractTest {
     assertTrue(exchanges.get(0).readiness());
     assertTrue(exchanges.stream().skip(1).noneMatch(Exchange::readiness));
     assertEquals(6, exchanges.size());
+  }
+
+  @Test
+  void repeatedLookupsReuseOneParsedTable() {
+    // A server scenario answers every request from this table, so parsing it
+    // per request would charge the measured process on the path its
+    // instrumentation is timing.
+    List<Exchange> first = HttpContract.cachedActions(TestActions.JSON);
+    List<Exchange> second = HttpContract.cachedActions(TestActions.JSON);
+
+    assertSame(first, second);
+    assertSame(first.get(0), second.get(0));
+    assertNotSame(first, HttpContract.loadActions(TestActions.JSON));
   }
 
   @Test

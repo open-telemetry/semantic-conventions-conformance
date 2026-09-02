@@ -35,7 +35,9 @@ from opentelemetry.proto.trace.v1 import trace_pb2
 Signal = Literal["traces", "metrics", "logs"]
 
 # What an SDK emits about its own processors and exporters: the names the
-# semantic conventions reserve for it, and the scopes SDKs report it under.
+# semantic conventions reserve for it, and the scope prefixes the Java SDK
+# reports it under. Other SDKs use the reserved names, which is what makes
+# the prefix the general rule and these two the known exception.
 _SELF_MONITORING_METRICS = ("otel.sdk.",)
 _SELF_MONITORING_SCOPES = (
     "io.opentelemetry.sdk.",
@@ -106,11 +108,16 @@ class CapturedWindow:
 
 @dataclass(frozen=True)
 class CaptureSnapshot:
-    """An atomic view used by event-driven persistent action windows."""
+    """An atomic view used by event-driven persistent action windows.
+
+    ``in_flight`` counts what is still on its way upstream. A window's
+    exports are recorded here before that forward starts, so this is what
+    :meth:`OtlpCaptureProxy.drain` waits on, not what an action is judged
+    on.
+    """
 
     exports: tuple[CapturedExport, ...]
     in_flight: int
-    revision: int
 
 
 class UnexpectedExportsError(RuntimeError):
@@ -186,7 +193,6 @@ class OtlpCaptureProxy:
         self._quarantined: list[CapturedExport] = []
         self._in_flight = 0
         self._window_in_flight: Counter[CaptureWindow] = Counter()
-        self._revision = 0
         self._change_notifier: Callable[[], None] | None = None
         self._started = False
         self._ingress_closed = False
@@ -291,7 +297,6 @@ class OtlpCaptureProxy:
             return CaptureSnapshot(
                 exports=tuple(self._captured[window]),
                 in_flight=self._window_in_flight[window],
-                revision=self._revision,
             )
 
     def close_window(
@@ -416,7 +421,6 @@ class OtlpCaptureProxy:
                 self._captured[window].append(item)
                 self._window_in_flight[window] += 1
             self._in_flight += 1
-            self._revision += 1
             self._condition.notify_all()
             notifier = self._change_notifier
         if notifier is not None:
@@ -428,7 +432,6 @@ class OtlpCaptureProxy:
             self._in_flight -= 1
             if window is not None:
                 self._window_in_flight[window] -= 1
-            self._revision += 1
             self._condition.notify_all()
             notifier = self._change_notifier
         if notifier is not None:

@@ -18,4 +18,4 @@ setup: otel-conformance-java prepare servlet:opentelemetry-javaagent
 
 scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 scenario_contract_variant: server
-scenario_run: otel-http-drive --persistent --serve otel-conformance-java run --agent servlet:opentelemetry-javaagent ServletJavaagentServerScenario
+scenario_run: otel-http-drive --serve otel-conformance-java run --agent servlet:opentelemetry-javaagent ServletJavaagentServerScenario

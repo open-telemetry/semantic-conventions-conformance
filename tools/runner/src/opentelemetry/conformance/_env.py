@@ -36,6 +36,12 @@ SCENARIO_ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION"
 # one it is currently on.
 SCENARIO_ACTIONS_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTIONS"
 
+# The wire format the runner and a driven process speak, set only when the
+# selected contract variant's driver role made this run persistent. It is an
+# internal handoff, not package configuration: a command is written once and
+# learns from here whether it is being driven.
+SCENARIO_PROTOCOL_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_PROTOCOL"
+
 
 def action_table_json(table: Sequence[Mapping[str, object]]) -> str:
     """The action table as the canonical JSON every language decodes."""

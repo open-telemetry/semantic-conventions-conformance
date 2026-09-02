@@ -49,7 +49,7 @@ one-shot process per contract entry from that entry's JSON action, each with
 one capture window and report. They call
 [`http-mock-server`](../mock-server), which installs with this package.
 Server scenarios select `server`, whose `runner` role has them driven from
-outside by [`otel-http-drive --persistent --serve`](../test-client), with
+outside by [`otel-http-drive --serve`](../test-client), with
 one measured server process per selected batch and the action table handed off
 as JSON. The runner invokes Weaver once for the package.
 

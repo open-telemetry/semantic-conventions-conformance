@@ -21,6 +21,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ._checks import ObservedSpan, selects
+from ._otlp_capture import self_monitoring
 from ._report import (
     capture_documents,
     carried_attributes,
@@ -46,10 +47,15 @@ def coverage(report_dir: Path, spec: PackageSpec) -> dict[str, object]:
         return attributes.setdefault(key, set())
 
     for scenario, document in capture_documents(report_dir, spec):
+        # The same rule the scenario checks were judged by. An SDK reporting
+        # on its own exporter describes the runner's plumbing, so counting it
+        # here would put it in the committed record of what an
+        # instrumentation emits.
         metrics.update(
             str(metric["name"])
-            for metric in iter_metrics(document)
+            for scope_name, metric in iter_metrics(document)
             if metric.get("name")
+            and not self_monitoring(scope_name, str(metric["name"]))
         )
         events.update(
             str(record["event_name"])
