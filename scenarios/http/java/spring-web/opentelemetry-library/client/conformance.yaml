@@ -1,0 +1,18 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: spring-web
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-spring-web-3.1
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare spring-web:opentelemetry-library
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenarios:
+  client:
+    run: otel-conformance-java run spring-web:opentelemetry-library SpringWebLibraryClientScenario

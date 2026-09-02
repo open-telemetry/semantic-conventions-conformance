@@ -8,6 +8,7 @@ import io.opentelemetry.conformance.http.HttpClientWorkload;
 import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -22,7 +23,11 @@ public final class ApacheHttpClientClientScenario {
   private ApacheHttpClientClientScenario() {}
 
   public static void run() throws Exception {
-    try (CloseableHttpClient client = HttpClients.createDefault()) {
+    run(HttpClients::createDefault);
+  }
+
+  public static void run(Supplier<CloseableHttpClient> clientFactory) throws Exception {
+    try (CloseableHttpClient client = clientFactory.get()) {
       HttpClientWorkload.drive(
           ScenarioEnvironment.require("MOCK_SERVER_URL"),
           (method, url, body) -> {
