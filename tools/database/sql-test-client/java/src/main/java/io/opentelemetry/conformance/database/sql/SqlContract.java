@@ -4,128 +4,95 @@
  */
 package io.opentelemetry.conformance.database.sql;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 /**
- * The SQL database workload shared by every language.
+ * Translates the runner-selected SQL action into client-independent operation types.
  *
- * <p>The build copies each file under {@code tools/database/sql-test-client/contracts} onto the
- * classpath. A backend contract owns its ordered SQL actions and adjacent telemetry expectations.
- * Client adapters only translate the actions into their native APIs.
+ * <p>The conformance runner reads a backend's combined YAML contract, selects one scenario, and
+ * injects only its action as JSON. Client adapters translate the resulting operation into their
+ * native APIs.
  *
- * <p>Contract parsing is strict. Unknown YAML fields fail loading so every adapter must support a
- * contract addition before a shared contract uses it.
+ * <p>Parsing is strict. Unknown fields, duplicate fields, mismatched types, and fields belonging to
+ * a different operation kind are rejected.
  */
 public final class SqlContract {
 
-  /** The environment variable carrying the scenario's zero-based contract position. */
-  public static final String SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX";
+  /** The environment variable carrying the selected scenario's action as JSON. */
+  public static final String SCENARIO_ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION";
 
-  private static final String RESOURCE_DIRECTORY = "/otel-sql-contracts/";
-  private static final Pattern BACKEND_NAME = Pattern.compile("[a-z][a-z0-9_]*");
   private static final Pattern PARAMETER_MARKER = Pattern.compile("\\$\\{([A-Za-z][A-Za-z0-9_]*)}");
-  private static final Pattern SCENARIO_INDEX = Pattern.compile("0|[1-9][0-9]*");
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper()
+          .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+          .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
   private SqlContract() {}
 
-  /** The workload described by one SQL database backend's contract. */
-  public static Workload workload(String backend) {
-    Objects.requireNonNull(backend, "backend");
-    if (!BACKEND_NAME.matcher(backend).matches()) {
-      throw new IllegalArgumentException("invalid SQL database backend: " + backend);
-    }
-    return load(backend);
+  /** The operation selected by the conformance runner. */
+  public static Operation selectedScenario() {
+    return parseAction(System.getenv(SCENARIO_ACTION_VARIABLE));
   }
 
-  /** The one scenario the runner selected from {@code backend}'s contract. */
-  public static Operation selectedScenario(String backend) {
-    return selectedScenario(backend, System.getenv(SCENARIO_INDEX_VARIABLE));
-  }
-
-  // Takes the raw value so a test can drive the parsing without an environment variable.
-  static Operation selectedScenario(String backend, String rawIndex) {
-    if (rawIndex == null || !SCENARIO_INDEX.matcher(rawIndex).matches()) {
-      throw new IllegalStateException(
-          SCENARIO_INDEX_VARIABLE
-              + " must be a zero-based decimal index, got "
-              + displayValue(rawIndex));
+  // Takes the raw value so tests can drive parsing without modifying the process environment.
+  static Operation parseAction(String rawAction) {
+    if (rawAction == null) {
+      throw new IllegalStateException(SCENARIO_ACTION_VARIABLE + " is not set");
     }
-    int index;
+    if (rawAction.isBlank()) {
+      throw new IllegalStateException(SCENARIO_ACTION_VARIABLE + " must not be blank");
+    }
+
+    JsonNode action;
     try {
-      index = Integer.parseInt(rawIndex);
-    } catch (NumberFormatException error) {
-      throw new IllegalStateException(
-          SCENARIO_INDEX_VARIABLE
-              + " is larger than any contract position: "
-              + displayValue(rawIndex),
+      action = MAPPER.readTree(rawAction);
+    } catch (JsonProcessingException error) {
+      throw new IllegalArgumentException(
+          SCENARIO_ACTION_VARIABLE + " contains invalid JSON: " + error.getOriginalMessage(),
           error);
     }
-    return workload(backend).scenario(index);
-  }
-
-  /** One backend's ordered SQL scenarios. */
-  public record Workload(String backend, String description, List<? extends Operation> scenarios) {
-    public Workload {
-      backend = requireText(backend, "backend");
-      description = requireText(description, "description");
-      scenarios = List.copyOf(Objects.requireNonNull(scenarios, "scenarios"));
-      for (int index = 0; index < scenarios.size(); index++) {
-        if (scenarios.get(index).index() != index) {
-          throw new IllegalArgumentException(
-              "SQL scenario at index " + index + " declares index " + scenarios.get(index).index());
-        }
-      }
+    if (!action.isObject()) {
+      throw new IllegalArgumentException(SCENARIO_ACTION_VARIABLE + " must contain a JSON object");
     }
 
-    /** Finds a scenario by contract position. */
-    public Operation scenario(int index) {
-      if (index < 0 || index >= scenarios.size()) {
-        throw new IllegalArgumentException("unknown SQL scenario index: " + index);
-      }
-      return scenarios.get(index);
-    }
+    String kind = requiredText(action, "kind", "SQL action");
+    return switch (kind) {
+      case "query" -> query(action);
+      case "prepared_query" -> preparedQuery(action);
+      case "batch" -> batch(action);
+      case "stored_procedure" -> storedProcedure(action);
+      default -> throw new IllegalArgumentException("unknown SQL operation kind: " + kind);
+    };
   }
 
-  /** One indexed SQL scenario expressed as a client operation. */
-  public sealed interface Operation permits Query, PreparedQuery, Batch, StoredProcedure {
-    int index();
-
-    String description();
-  }
+  /** One SQL action expressed as a client operation. */
+  public sealed interface Operation permits Query, PreparedQuery, Batch, StoredProcedure {}
 
   /** A direct query. */
-  public record Query(int index, String description, String sql) implements Operation {
+  public record Query(String sql) implements Operation {
     public Query {
-      index = requireIndex(index);
-      description = requireText(description, scenarioLabel(index) + " description");
-      sql = requireText(sql, scenarioLabel(index) + " SQL");
+      sql = requireText(sql, "query SQL");
     }
   }
 
   /** A prepared query with ordered named parameters. */
-  public record PreparedQuery(int index, String description, String sql, List<Parameter> parameters)
-      implements Operation {
+  public record PreparedQuery(String sql, List<Parameter> parameters) implements Operation {
     public PreparedQuery {
-      index = requireIndex(index);
-      String scenario = scenarioLabel(index);
-      description = requireText(description, scenario + " description");
-      sql = requireText(sql, scenario + " SQL");
+      sql = requireText(sql, "prepared query SQL");
       parameters = List.copyOf(Objects.requireNonNull(parameters, "parameters"));
       if (parameters.isEmpty()) {
-        throw new IllegalArgumentException(scenario + " must declare at least one parameter");
+        throw new IllegalArgumentException("prepared query must declare at least one parameter");
       }
       List<String> markers = new ArrayList<>();
       Matcher matcher = PARAMETER_MARKER.matcher(sql);
@@ -135,8 +102,7 @@ public final class SqlContract {
       List<String> parameterNames = parameters.stream().map(Parameter::name).toList();
       if (!markers.equals(parameterNames)) {
         throw new IllegalArgumentException(
-            scenario
-                + " SQL markers must match its parameters in order: expected "
+            "prepared query SQL markers must match its parameters in order: expected "
                 + parameterNames
                 + ", got "
                 + markers);
@@ -171,125 +137,103 @@ public final class SqlContract {
   }
 
   /** A list of statements executed as one batch. */
-  public record Batch(int index, String description, List<String> statements) implements Operation {
+  public record Batch(List<String> statements) implements Operation {
     public Batch {
-      index = requireIndex(index);
-      String scenario = scenarioLabel(index);
-      description = requireText(description, scenario + " description");
       statements = List.copyOf(Objects.requireNonNull(statements, "statements"));
       if (statements.isEmpty()) {
-        throw new IllegalArgumentException(scenario + " must declare at least one statement");
+        throw new IllegalArgumentException("batch must declare at least one statement");
       }
       for (String statement : statements) {
-        requireText(statement, scenario + " statement");
+        requireText(statement, "batch statement");
       }
     }
   }
 
   /** A stored procedure call. */
-  public record StoredProcedure(int index, String description, String procedure)
-      implements Operation {
+  public record StoredProcedure(String procedure) implements Operation {
     public StoredProcedure {
-      index = requireIndex(index);
-      description = requireText(description, scenarioLabel(index) + " description");
-      procedure = requireText(procedure, scenarioLabel(index) + " procedure");
+      procedure = requireText(procedure, "stored procedure name");
     }
   }
 
-  private record Document(String backend, String description, List<ScenarioEntry> scenarios) {
-    Document {
-      backend = requireText(backend, "backend");
-      if (!BACKEND_NAME.matcher(backend).matches()) {
-        throw new IllegalArgumentException("invalid SQL database backend: " + backend);
-      }
-      description = requireText(description, "description");
-      scenarios = List.copyOf(Objects.requireNonNull(scenarios, "scenarios"));
-      if (scenarios.isEmpty()) {
-        throw new IllegalArgumentException("the SQL contract must declare a scenario");
-      }
-    }
-
-    Workload workload() {
-      return new Workload(
-          backend,
-          description,
-          IntStream.range(0, scenarios.size())
-              .mapToObj(index -> scenarios.get(index).resolve(index))
-              .toList());
-    }
+  private static Query query(JsonNode action) {
+    requireOnlyFields(action, "query", "kind", "sql");
+    return new Query(requiredText(action, "sql", "query"));
   }
 
-  private record ScenarioEntry(String description, ActionEntry action, JsonNode expect) {
-
-    Operation resolve(int index) {
-      String scenario = scenarioLabel(index);
-      String scenarioDescription = requireText(description, scenario + " description");
-      if (action == null) {
-        throw new IllegalArgumentException(scenario + " must declare an action");
-      }
-      if (expect == null || !expect.isObject()) {
-        throw new IllegalArgumentException(scenario + " must declare an expect object");
-      }
-      return action.resolve(index, scenarioDescription);
+  private static PreparedQuery preparedQuery(JsonNode action) {
+    requireOnlyFields(action, "prepared query", "kind", "sql", "parameters");
+    JsonNode entries = action.get("parameters");
+    if (entries == null || !entries.isArray()) {
+      throw new IllegalArgumentException("prepared query parameters must be a JSON array");
     }
-  }
-
-  private record ActionEntry(
-      String kind,
-      String sql,
-      List<ParameterEntry> parameters,
-      List<String> statements,
-      String procedure) {
-
-    Operation resolve(int index, String description) {
-      String scenario = scenarioLabel(index);
-      return switch (requireText(kind, scenario + " kind")) {
-        case "query" -> new Query(index, description, requireText(sql, scenario + " SQL"));
-        case "prepared_query" ->
-            new PreparedQuery(
-                index,
-                description,
-                requireText(sql, scenario + " SQL"),
-                parameterEntries(scenario).stream()
-                    .map(entry -> entry.parameter(scenario))
-                    .toList());
-        case "batch" -> new Batch(index, description, statementEntries(scenario));
-        case "stored_procedure" ->
-            new StoredProcedure(
-                index, description, requireText(procedure, scenario + " procedure"));
-        default ->
-            throw new IllegalArgumentException(
-                "unknown SQL operation kind for " + scenario + ": " + kind);
-      };
-    }
-
-    private List<ParameterEntry> parameterEntries(String scenario) {
-      if (parameters == null) {
-        throw new IllegalArgumentException(scenario + " must declare parameters");
+    List<Parameter> parameters = new ArrayList<>();
+    for (int index = 0; index < entries.size(); index++) {
+      JsonNode entry = entries.get(index);
+      String label = "prepared query parameter[" + index + "]";
+      if (!entry.isObject()) {
+        throw new IllegalArgumentException(label + " must be a JSON object");
       }
-      return parameters;
-    }
-
-    private List<String> statementEntries(String scenario) {
-      if (statements == null) {
-        throw new IllegalArgumentException(scenario + " must declare statements");
-      }
-      return statements;
-    }
-  }
-
-  private record ParameterEntry(String name, String type, JsonNode value) {
-    Parameter parameter(String scenario) {
-      String parameterName = requireText(name, scenario + " parameter name");
-      String label = scenario + " parameter " + parameterName;
+      requireOnlyFields(entry, label, "name", "type", "value");
+      String name = requiredText(entry, "name", label);
+      String type = requiredText(entry, "type", label);
       if (!"integer".equals(type)) {
-        throw new IllegalArgumentException(label + " has unsupported parameter type: " + type);
+        throw new IllegalArgumentException(
+            label + " " + name + " has unsupported parameter type: " + type);
       }
+      JsonNode value = entry.get("value");
       if (value == null || !value.isInt()) {
-        throw new IllegalArgumentException(label + " must declare an integer value");
+        throw new IllegalArgumentException(label + " " + name + " must have an integer value");
       }
-      return new Parameter(parameterName, value.intValue());
+      parameters.add(new Parameter(name, value.intValue()));
     }
+    return new PreparedQuery(requiredText(action, "sql", "prepared query"), parameters);
+  }
+
+  private static Batch batch(JsonNode action) {
+    requireOnlyFields(action, "batch", "kind", "statements");
+    JsonNode entries = action.get("statements");
+    if (entries == null || !entries.isArray()) {
+      throw new IllegalArgumentException("batch statements must be a JSON array");
+    }
+    List<String> statements = new ArrayList<>();
+    for (int index = 0; index < entries.size(); index++) {
+      statements.add(requiredText(entries.get(index), "batch statement[" + index + "]"));
+    }
+    return new Batch(statements);
+  }
+
+  private static StoredProcedure storedProcedure(JsonNode action) {
+    requireOnlyFields(action, "stored procedure", "kind", "procedure");
+    return new StoredProcedure(requiredText(action, "procedure", "stored procedure"));
+  }
+
+  private static void requireOnlyFields(JsonNode object, String label, String... fields) {
+    Set<String> allowed = Set.of(fields);
+    List<String> unknown = new ArrayList<>();
+    object
+        .fieldNames()
+        .forEachRemaining(
+            field -> {
+              if (!allowed.contains(field)) {
+                unknown.add(field);
+              }
+            });
+    if (!unknown.isEmpty()) {
+      unknown.sort(String::compareTo);
+      throw new IllegalArgumentException(label + " has unknown field(s): " + unknown);
+    }
+  }
+
+  private static String requiredText(JsonNode object, String field, String label) {
+    return requiredText(object.get(field), label + " " + field);
+  }
+
+  private static String requiredText(JsonNode value, String label) {
+    if (value == null || !value.isTextual() || value.textValue().isBlank()) {
+      throw new IllegalArgumentException(label + " must be a non-blank string");
+    }
+    return value.textValue();
   }
 
   private static String requireText(String value, String field) {
@@ -297,40 +241,5 @@ public final class SqlContract {
       throw new IllegalArgumentException(field + " must not be blank");
     }
     return value;
-  }
-
-  private static int requireIndex(int index) {
-    if (index < 0) {
-      throw new IllegalArgumentException("SQL scenario index must not be negative: " + index);
-    }
-    return index;
-  }
-
-  private static String scenarioLabel(int index) {
-    return "scenario[" + index + "]";
-  }
-
-  private static String displayValue(String value) {
-    return value == null ? "null" : "\"" + value + "\"";
-  }
-
-  private static Workload load(String backend) {
-    String resource = RESOURCE_DIRECTORY + backend + ".yaml";
-    try (InputStream stream = SqlContract.class.getResourceAsStream(resource)) {
-      if (stream == null) {
-        throw new IllegalStateException(
-            resource
-                + " is not on the classpath; the build copies contracts from"
-                + " tools/database/sql-test-client/contracts");
-      }
-      Document document = MAPPER.readValue(stream, Document.class);
-      if (!document.backend().equals(backend)) {
-        throw new IllegalArgumentException(
-            resource + " declares backend " + document.backend() + " instead of " + backend);
-      }
-      return document.workload();
-    } catch (IOException error) {
-      throw new UncheckedIOException("could not read " + resource, error);
-    }
   }
 }

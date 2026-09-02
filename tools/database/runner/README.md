@@ -43,9 +43,10 @@ environment declarations:
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend. The backend key selects that database's
-operations from a workload contract. SQL scenarios use the shared
-[`contracts/`](../sql-test-client/contracts) directory, with one independent
-workload file per backend.
+contract. SQL scenarios use the shared
+[`contracts/`](../sql-test-client/contracts) directory. The generic conformance
+runner injects only the selected contract entry's `action` into the scenario
+process.
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
 use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a

@@ -80,3 +80,6 @@ def test_sql_scenarios_are_wired_by_every_matching_package() -> None:
             assert [
                 scenario.description for scenario in loaded_scenarios
             ] == [scenario["description"] for scenario in scenarios], path
+            assert [
+                scenario.action for scenario in loaded_scenarios
+            ] == [scenario["action"] for scenario in scenarios], path
