@@ -5,6 +5,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast
 
 import pytest
 import yaml
@@ -85,8 +86,14 @@ open(sys.argv[1], "w", encoding="utf-8").write(json.dumps(TABLE))
 """
 
 # Nothing the shared contract describes: every route, status and body differs,
-# so a driver answering from its own installed copy cannot pass.
+# so a driver answering from its own installed copy cannot pass. It declares
+# only the runner-driven side, which is what makes this package persistent.
 _CUSTOM_CONTRACT = """
+variants:
+  measured-server:
+    description: The runner drives the instrumented server from outside.
+    driver: runner
+
 readiness:
   description: Checks whether the custom server is ready.
   action:
@@ -108,9 +115,10 @@ scenarios:
         status: 201
         body: '{"created": 1}'
     expect:
-      spans: []
-      metrics: []
-      events: []
+      measured-server:
+        spans: []
+        metrics: []
+        events: []
 
   - description: Sends a request to the other custom route.
     action:
@@ -121,9 +129,10 @@ scenarios:
         status: 202
         body: '{"accepted": 2}'
     expect:
-      spans: []
-      metrics: []
-      events: []
+      measured-server:
+        spans: []
+        metrics: []
+        events: []
 """
 
 
@@ -147,6 +156,22 @@ def declared_packages() -> list[Path]:
     )
 
 
+def _keys(document: object) -> set[str]:
+    """Every mapping key anywhere in a parsed document."""
+    if isinstance(document, dict):
+        mapping = cast("dict[str, object]", document)
+        return set(mapping) | {
+            key for value in mapping.values() for key in _keys(value)
+        }
+    if isinstance(document, list):
+        return {
+            key
+            for value in cast("list[object]", document)
+            for key in _keys(value)
+        }
+    return set()
+
+
 def test_all_http_packages_use_the_contract_execution_model() -> None:
     declarations = declared_packages()
     clients = [path for path in declarations if path.parent.name == "client"]
@@ -158,6 +183,15 @@ def test_all_http_packages_use_the_contract_execution_model() -> None:
 
     contract = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
     scenario_count = len(contract["scenarios"])
+    roles = {
+        name: variant["driver"]
+        for name, variant in contract["variants"].items()
+    }
+    # One catalog of actions, two execution roles over it.
+    assert roles == {"client": "instrumentation", "server": "runner"}
+    assert all(
+        set(entry["expect"]) == set(roles) for entry in contract["scenarios"]
+    )
 
     for path in declarations:
         package_directory = path.parent
@@ -167,21 +201,22 @@ def test_all_http_packages_use_the_contract_execution_model() -> None:
         assert document["scenario_contract"] == CONTRACT_REFERENCE, path
         assert (package_directory / document["scenario_contract"]).resolve() == CONTRACT
         assert document["scenario_contract_variant"] == side, path
+        assert document["scenario_contract_variant"] in roles, path
         assert "scenarios" not in document, path
 
         package = load_spec(package_directory)
         assert len(package.scenarios) == scenario_count, path
         assert len(package.action_table) == scenario_count + 1, path
 
+        # The lifecycle follows from the variant's driver role, so no package
+        # names the internal protocol the runner and a driven process speak.
+        assert "protocol" not in _keys(document), path
+        assert not isinstance(document["scenario_run"], dict), path
         protocols = {scenario.protocol for scenario in package.scenarios.values()}
         if side == "client":
-            assert not isinstance(document["scenario_run"], dict), path
             assert protocols == {None}, path
         else:
-            scenario_run = document["scenario_run"]
-            assert set(scenario_run) == {"command", "protocol"}, path
-            assert scenario_run["protocol"] == "jsonl-v1", path
-            assert scenario_run["command"].startswith(
+            assert document["scenario_run"].startswith(
                 "otel-http-drive --persistent --serve "
             ), path
             assert protocols == {"jsonl-v1"}, path
@@ -268,19 +303,17 @@ def test_a_custom_contract_reaches_the_measured_server(
                 "instrumented_library": "custom",
                 "instrumentation_library": "custom-instrumentation",
                 "scenario_contract": "contract.yaml",
-                "scenario_run": {
-                    "command": [
-                        sys.executable,
-                        "-m",
-                        "otel_http_test_client",
-                        "--persistent",
-                        "--serve",
-                        sys.executable,
-                        str(server),
-                        str(received),
-                    ],
-                    "protocol": "jsonl-v1",
-                },
+                "scenario_contract_variant": "measured-server",
+                "scenario_run": [
+                    sys.executable,
+                    "-m",
+                    "otel_http_test_client",
+                    "--persistent",
+                    "--serve",
+                    sys.executable,
+                    str(server),
+                    str(received),
+                ],
             }
         ),
         encoding="utf-8",

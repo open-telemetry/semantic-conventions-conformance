@@ -349,18 +349,23 @@ string keys and JSON-representable values.
 A contract that declares `readiness:` also gives the runner a whole action
 table: readiness first, then every entry in declaration order. The runner
 passes it as compact, key-sorted JSON in `OTEL_CONFORMANCE_SCENARIO_ACTIONS`
-to a runner-managed `server:` and to a `jsonl-v1` process. A process that
+to a runner-managed `server:` and to a runner-driven process. A process that
 answers actions rather than performing them needs every action the run may
 reach, and the runner owns the table, so a package pointing at a contract of
 its own is driven by that contract rather than by whichever one a driver
 happens to ship.
 
-A contract entry can split its expectations into named variants:
+A contract entry can split its expectations into named variants, one per side
+of the exchange. A variant says who drives the action it describes:
 
 ```yaml
-scenario_contract: ../../contracts/http.yaml
-scenario_contract_variant: client
-scenario_run: node scenario.js
+variants:
+  client:
+    description: The instrumented HTTP client sends the request.
+    driver: instrumentation
+  server:
+    description: The instrumented HTTP server answers the request.
+    driver: runner
 ```
 
 ```yaml
@@ -371,9 +376,34 @@ expect:
     spans: []
 ```
 
+A package selects one:
+
+```yaml
+scenario_contract: ../../contracts/http.yaml
+scenario_contract_variant: client
+scenario_run: node scenario.js
+```
+
 The runner selects the requested variant before parsing its telemetry
-expectations. Entries with direct `spans`, `metrics`, or `events` under
-`expect` remain valid.
+expectations.
+
+`driver` is what the package is really choosing. `instrumentation` means the
+instrumented component initiates the action, so each action runs its own
+process. `runner` means the runner drives one instrumented process through
+every action in the batch, from outside. The package names the command and
+the variant; how that command is run follows, and is never restated.
+
+The catalog is one list of actions shared by every variant, so each entry
+must carry expectations for every declared variant and for nothing else.
+Otherwise a package selecting one side would be silently unjudged on an
+action the other side covers.
+
+A contract that declares no `variants` describes one way of running, and the
+instrumented component drives it: every scenario is one-shot, exactly as it
+was before roles existed. Entries with direct `spans`, `metrics`, or
+`events` under `expect` remain valid there, as does selecting a variant by
+expectation key alone. Local `scenarios` in a package are one-shot for the
+same reason — they name their own command and no contract role applies.
 
 A shared contract states what every implementation of it emits. One that
 emits more says so in its own directory, so the metric check stays exact
@@ -412,18 +442,21 @@ extra spans as declared without requiring one. This fits spans whose count
 follows the runtime rather than the contract. Give the rule a `count` to turn it
 into an assertion.
 
-String and list commands are one-shot commands. The parser also reserves a
-typed persistent-controller form:
+### The runner-driven protocol
+
+What follows is between the runner and a process it drives. Nothing here is
+package configuration: a package asks for it by selecting a variant whose
+`driver` is `runner`.
 
 ```yaml
-scenario_run:
-  command: [node, controller.js]
-  protocol: jsonl-v1
+scenario_contract_variant: server
+scenario_run: [node, controller.js]
 ```
 
-Only `jsonl-v1` is recognized. The runner starts one controller, and therefore
-one measured process behind that controller, for each selected consecutive batch
-that shares the command. It waits for a `ready` record, sends one `action` record
+The runner then speaks `jsonl-v1` on that command's standard input and
+output. It starts one controller, and therefore one measured process behind
+that controller, for each selected consecutive batch that shares the
+command. It waits for a `ready` record, sends one `action` record
 per scenario, and closes stdin after the batch. Each record has `version`,
 `type`, and an integer `sequence`; action records also carry the scenario name
 and the selected action. The controller answers each action with

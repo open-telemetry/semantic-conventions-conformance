@@ -11,9 +11,7 @@ setup: otel-conformance-dotnet build
 
 scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 scenario_contract_variant: server
-scenario_run:
-  command: otel-http-drive --persistent --serve otel-conformance-dotnet run
-  protocol: jsonl-v1
+scenario_run: otel-http-drive --persistent --serve otel-conformance-dotnet run
 
 # What this instrumentation emits beyond the shared HTTP server contract.
 additional_metrics:

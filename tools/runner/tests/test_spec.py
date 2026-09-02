@@ -161,7 +161,6 @@ def test_scenario_list_contract_generates_one_scenario_per_entry(
     (tmp_path / "client.yaml").write_text(
         """
 description: Shared HTTP requests.
-owner: http
 scenarios:
   - description: The same description may repeat.
     action: {request: {method: GET, path: /one}}
@@ -690,17 +689,86 @@ scenarios:
     assert spec.scenarios["inference"].run == ("python", "a b.py")
 
 
-def test_scenario_run_protocol_is_explicit_in_the_model(
+_ROLE_CONTRACT = """
+variants:
+  sender:
+    description: The instrumented client sends the request.
+    driver: instrumentation
+  receiver:
+    description: The runner drives the instrumented server.
+    driver: runner
+
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect:
+      sender: {events: []}
+      receiver: {metrics: []}
+"""
+
+
+def _role_package(tmp_path: Path, variant: str) -> Path:
+    (tmp_path / "contract.yaml").write_text(_ROLE_CONTRACT, encoding="utf-8")
+    return write(
+        tmp_path,
+        f"""
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_contract_variant: {variant}
+scenario_run: [python, controller.py]
+""",
+    )
+
+
+@pytest.mark.parametrize(
+    ("variant", "protocol", "one_shot", "expectation"),
+    [
+        ("sender", None, True, "events"),
+        ("receiver", "jsonl-v1", False, "metrics"),
+    ],
+)
+def test_the_selected_variant_role_decides_the_lifecycle(
     tmp_path: Path,
+    variant: str,
+    protocol: str | None,
+    one_shot: bool,
+    expectation: str,
 ) -> None:
+    """One catalog of actions, two ways of running it.
+
+    The package names a command and a variant. Whether that command is
+    started once per action or driven for the whole batch is the role's
+    doing, not something the package restates.
+    """
+
+    spec = load_spec(_role_package(tmp_path, variant))
+
+    scenario = spec.scenarios["0000"]
+    assert scenario.run == ("python", "controller.py")
+    assert scenario.run_spec == ScenarioRunSpec(
+        ("python", "controller.py"), protocol=protocol
+    )
+    assert scenario.run_spec.one_shot is one_shot
+    assert getattr(scenario, expectation) == ()
+
+
+def test_a_contract_without_variants_stays_one_shot(tmp_path: Path) -> None:
+    """What every contract did before roles existed still holds.
+
+    Nothing declares who drives, so the instrumented component does, and
+    each action starts its own process.
+    """
+
     (tmp_path / "contract.yaml").write_text(
         """
 scenarios:
   - description: request
     action: {method: GET}
-    expect: {}
+    expect: {events: []}
 """
     )
+
     spec = load_spec(
         write(
             tmp_path,
@@ -708,46 +776,65 @@ scenarios:
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
 scenario_contract: contract.yaml
-scenario_run:
-  command: [python, controller.py]
-  protocol: jsonl-v1
+scenario_run: [python, client.py]
 """,
         )
     )
 
-    scenario = spec.scenarios["0000"]
-    assert scenario.run == ("python", "controller.py")
-    assert scenario.run_spec == ScenarioRunSpec(
-        ("python", "controller.py"), protocol="jsonl-v1"
-    )
-    assert scenario.run_spec.one_shot is False
+    assert spec.scenarios["0000"].run_spec.one_shot is True
+    assert spec.scenarios["0000"].protocol is None
 
 
 @pytest.mark.parametrize(
-    ("run", "message"),
+    ("variants", "selected", "message"),
     [
         (
-            "{command: run, protocol: jsonl-v2}",
-            "unknown protocol 'jsonl-v2'",
+            "variants: {}",
+            "sender",
+            r"variants: declares no variants",
         ),
-        ("{command: run}", "protocol is required"),
-        ("{protocol: jsonl-v1}", "command is required"),
         (
-            "{command: run, protocol: jsonl-v1, extra: true}",
-            "unknown key",
+            "variants:\n  sender: {description: no role}",
+            "sender",
+            r"variants\.sender\.driver is required; allowed: "
+            r"\['instrumentation', 'runner'\]",
+        ),
+        (
+            "variants:\n  sender: {driver: proxy}",
+            "sender",
+            r"variants\.sender\.driver: unknown driver role 'proxy'; "
+            r"allowed: \['instrumentation', 'runner'\]",
+        ),
+        (
+            "variants:\n  sender: {driver: instrumentation}",
+            "receiver",
+            r"scenario_contract_variant: unknown scenario contract variant "
+            r"'receiver'; the contract declares \['sender'\]",
+        ),
+        (
+            "variants:\n  sender: {driver: instrumentation}",
+            "",
+            r"scenario_contract_variant is required; the contract declares "
+            r"variants \['sender'\]",
         ),
     ],
 )
-def test_invalid_scenario_run_mapping_raises(
-    tmp_path: Path, run: str, message: str
+def test_invalid_driver_roles_raise(
+    tmp_path: Path, variants: str, selected: str, message: str
 ) -> None:
     (tmp_path / "contract.yaml").write_text(
-        """
+        f"""
+{variants}
+
 scenarios:
   - description: request
-    action: {method: GET}
-    expect: {}
+    action: {{method: GET}}
+    expect:
+      sender: {{events: []}}
 """
+    )
+    variant_line = (
+        f"scenario_contract_variant: {selected}\n" if selected else ""
     )
 
     with pytest.raises(SpecError, match=message):
@@ -758,7 +845,157 @@ scenarios:
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
 scenario_contract: contract.yaml
+{variant_line}scenario_run: run
+""",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    ("expectation", "message"),
+    [
+        (
+            "sender: {events: []}",
+            r"expect: no expectations for declared variant\(s\) \['receiver'\]",
+        ),
+        (
+            "sender: {events: []}\n      receiver: {events: []}\n"
+            "      proxy: {events: []}",
+            r"expect: expectations for undeclared variant\(s\) \['proxy'\]; "
+            r"the contract declares \['receiver', 'sender'\]",
+        ),
+        (
+            "events: []",
+            r"expect: expectations must be nested under a declared variant "
+            r"\['receiver', 'sender'\], got \['events'\]",
+        ),
+    ],
+)
+def test_expectations_must_cover_exactly_the_declared_variants(
+    tmp_path: Path, expectation: str, message: str
+) -> None:
+    """One action catalog, so every variant is judged on every action."""
+
+    (tmp_path / "contract.yaml").write_text(
+        f"""
+variants:
+  sender: {{driver: instrumentation}}
+  receiver: {{driver: runner}}
+
+scenarios:
+  - description: request
+    action: {{method: GET}}
+    expect:
+      {expectation}
+"""
+    )
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_contract_variant: sender
+scenario_run: run
+""",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    ("run", "message"),
+    [
+        (
+            "{command: run, protocol: jsonl-v1}",
+            r"scenario_run: expected a command string or list, got a mapping "
+            r"with key\(s\) \['command', 'protocol'\]; the process lifecycle "
+            r"follows from the selected contract variant's driver role",
+        ),
+        (
+            "{command: run}",
+            r"scenario_run: expected a command string or list, got a mapping "
+            r"with key\(s\) \['command'\]; the process lifecycle",
+        ),
+    ],
+)
+def test_scenario_run_no_longer_declares_a_protocol(
+    tmp_path: Path, run: str, message: str
+) -> None:
+    """`jsonl-v1` is between the runner and a driven process, not config."""
+
+    (tmp_path / "contract.yaml").write_text(_ROLE_CONTRACT, encoding="utf-8")
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                f"""
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_contract_variant: receiver
 scenario_run: {run}
+""",
+            )
+        )
+
+
+def test_a_local_scenario_run_says_it_is_one_shot(tmp_path: Path) -> None:
+    """No variant reaches a scenario the package declares itself.
+
+    Pointing its author at a driver role would name a mechanism the parser
+    forbids here, so say what actually decides its lifecycle.
+    """
+
+    with pytest.raises(
+        SpecError,
+        match=(
+            r"scenarios\.local\.run: expected a command string or list, got "
+            r"a mapping with key\(s\) \['command', 'protocol'\]; a scenario "
+            r"declared here is always one-shot"
+        ),
+    ):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenarios:
+  local:
+    run: {command: run, protocol: jsonl-v1}
+""",
+            )
+        )
+
+
+def test_a_contract_key_typo_is_rejected(tmp_path: Path) -> None:
+    """A misspelled `variants` would silently make a package one-shot."""
+
+    (tmp_path / "contract.yaml").write_text(
+        """
+variant:
+  receiver: {driver: runner}
+
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect: {events: []}
+"""
+    )
+
+    with pytest.raises(SpecError, match=r"unknown key\(s\) \['variant'\]"):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: run
 """,
             )
         )

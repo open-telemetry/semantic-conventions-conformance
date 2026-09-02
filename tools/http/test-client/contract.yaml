@@ -3,6 +3,17 @@
 
 description: Shared HTTP requests and expected telemetry.
 
+# Who initiates each action, and therefore how the runner runs a package that
+# selects the variant. One catalog of actions below; these say which side of
+# each exchange is the instrumented one.
+variants:
+  client:
+    description: The instrumented HTTP client sends the request.
+    driver: instrumentation
+  server:
+    description: The instrumented HTTP server answers the request.
+    driver: runner
+
 # Not one of the scenarios below: a driver sends it to learn a server is
 # listening, and no telemetry expectation covers it.
 readiness:
