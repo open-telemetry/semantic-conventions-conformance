@@ -39,19 +39,20 @@ that the target has bounded cardinality.
 Span status and `error.type` aren't checked here: neither is HTTP-specific, so
 both live in [the runner's own policies](../../runner/README.md#advice-policies).
 
-Both sides measure the same action catalog in
-[`contract.yaml`](../test-client/contract.yaml), and each package selects the
-variant naming its own side. The variant declares who drives the exchange,
-which is what decides how the package runs.
+Each side has its own contract in
+[`../test-client`'s sibling `contracts/`](../contracts), and each package
+points at the one for its side. A contract declares who drives it, which is
+what decides how the package runs.
 
-Client scenarios select `client`, whose `instrumentation` role starts a
-one-shot process per contract entry from that entry's JSON action, each with
-one capture window and report. They call
+Client scenarios use [`client.yaml`](../contracts/client.yaml), whose
+`instrumentation` role starts a one-shot process per contract entry from that
+entry's JSON action, each with one capture window and report. They call
 [`http-mock-server`](../mock-server), which installs with this package.
-Server scenarios select `server`, whose `runner` role has them driven from
+Server scenarios use [`server.yaml`](../contracts/server.yaml), whose
+`runner` role has them driven from
 outside by [`otel-http-drive --serve`](../test-client), with
-one measured server process per selected batch and the action table handed off
-as JSON. The runner invokes Weaver once for the package.
+one measured server process per selected batch and that contract's action
+table handed off as JSON. The runner invokes Weaver once for the package.
 
 The persistent driver sends readiness and then one request per action, in
 sequence and never concurrently. It stamps each exchange where it sent the

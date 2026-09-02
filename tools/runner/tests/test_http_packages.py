@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -23,8 +24,14 @@ from opentelemetry.conformance._otlp_capture import (
 from opentelemetry.conformance._session import ConformanceSession
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = ROOT / "tools" / "http" / "test-client" / "contract.yaml"
-CONTRACT_REFERENCE = "../../../../../../tools/http/test-client/contract.yaml"
+CONTRACTS = {
+    side: ROOT / "tools" / "http" / "contracts" / f"{side}.yaml"
+    for side in ("client", "server")
+}
+CONTRACT_REFERENCES = {
+    side: f"../../../../../../tools/http/contracts/{side}.yaml"
+    for side in ("client", "server")
+}
 
 # A measured server that answers only what the runner's table describes, and
 # writes that table down so a test can read what it was given. Deliberately
@@ -85,14 +92,11 @@ server.shutdown()
 open(sys.argv[1], "w", encoding="utf-8").write(json.dumps(TABLE))
 """
 
-# Nothing the shared contract describes: every route, status and body differs,
-# so a driver answering from its own installed copy cannot pass. It declares
-# only the runner-driven side, which is what makes this package persistent.
+# Nothing the shipped contracts describe: every route, status and body differs,
+# so a driver answering from its own installed copy cannot pass. `driver:
+# runner` is what makes this package persistent.
 _CUSTOM_CONTRACT = """
-variants:
-  measured-server:
-    description: The runner drives the instrumented server from outside.
-    driver: runner
+driver: runner
 
 readiness:
   description: Checks whether the custom server is ready.
@@ -115,10 +119,9 @@ scenarios:
         status: 201
         body: '{"created": 1}'
     expect:
-      measured-server:
-        spans: []
-        metrics: []
-        events: []
+      spans: []
+      metrics: []
+      events: []
 
   - description: Sends a request to the other custom route.
     action:
@@ -129,10 +132,9 @@ scenarios:
         status: 202
         body: '{"accepted": 2}'
     expect:
-      measured-server:
-        spans: []
-        metrics: []
-        events: []
+      spans: []
+      metrics: []
+      events: []
 """
 
 
@@ -181,40 +183,62 @@ def test_all_http_packages_use_the_contract_execution_model() -> None:
     assert len(clients) == 23
     assert len(servers) == 27
 
-    contract = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
-    scenario_count = len(contract["scenarios"])
-    roles = {
-        name: variant["driver"]
-        for name, variant in contract["variants"].items()
+    # Two independent contracts. Each says who drives it and what that one
+    # instrumented side emits; nothing keeps them aligned.
+    contracts = {
+        side: yaml.safe_load(path.read_text(encoding="utf-8"))
+        for side, path in CONTRACTS.items()
     }
-    # One catalog of actions, two execution roles over it.
-    assert roles == {"client": "instrumentation", "server": "runner"}
+    assert contracts["client"]["driver"] == "instrumentation"
+    assert contracts["server"]["driver"] == "runner"
     assert all(
-        set(entry["expect"]) == set(roles) for entry in contract["scenarios"]
+        set(entry["expect"]) <= {"spans", "metrics", "events"}
+        for contract in contracts.values()
+        for entry in contract["scenarios"]
     )
+    assert not any("variants" in contract for contract in contracts.values())
+    # Each contract judges its own side and only its own side.
+    assert {
+        expectation["match"]["kind"]
+        for entry in contracts["client"]["scenarios"]
+        for expectation in entry["expect"]["spans"]
+    } == {"CLIENT"}
+    assert {
+        expectation["match"]["kind"]
+        for entry in contracts["server"]["scenarios"]
+        for expectation in entry["expect"]["spans"]
+    } == {"SERVER"}
 
     for path in declarations:
         package_directory = path.parent
         side = package_directory.name
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
 
-        assert document["scenario_contract"] == CONTRACT_REFERENCE, path
-        assert (package_directory / document["scenario_contract"]).resolve() == CONTRACT
-        assert document["scenario_contract_variant"] == side, path
-        assert document["scenario_contract_variant"] in roles, path
-        assert "scenarios" not in document, path
-
-        package = load_spec(package_directory)
-        assert len(package.scenarios) == scenario_count, path
-        assert len(package.action_table) == scenario_count + 1, path
-
-        # The lifecycle follows from the variant's driver role, so no package
-        # names the internal protocol the runner and a driven process speak,
-        # nor asks the driver for it on the command line.
+        # A package points at one side's contract and says nothing else about
+        # how it runs: no variant selection, no protocol, no lifecycle flag.
+        assert document["scenario_contract"] == CONTRACT_REFERENCES[side], path
+        assert (
+            package_directory / document["scenario_contract"]
+        ).resolve() == CONTRACTS[side]
+        assert "scenario_contract_variant" not in _keys(document), path
+        assert "variants" not in _keys(document), path
         assert "protocol" not in _keys(document), path
+        assert "scenarios" not in document, path
         assert not isinstance(document["scenario_run"], dict), path
         assert "--persistent" not in document["scenario_run"], path
-        protocols = {scenario.protocol for scenario in package.scenarios.values()}
+
+        package = load_spec(package_directory)
+        scenario_count = len(contracts[side]["scenarios"])
+        assert len(package.scenarios) == scenario_count, path
+        # Readiness first, then this contract's own actions.
+        assert len(package.action_table) == scenario_count + 1, path
+        assert package.action_table[0] == (
+            contracts[side]["readiness"]["action"]
+        ), path
+
+        protocols = {
+            scenario.protocol for scenario in package.scenarios.values()
+        }
         if side == "client":
             assert protocols == {None}, path
         else:
@@ -227,6 +251,38 @@ def test_all_http_packages_use_the_contract_execution_model() -> None:
         for token in command:
             if token.endswith((".py", ".js")):
                 assert (package_directory / token).is_file(), (path, token)
+
+
+def test_no_runner_or_http_configuration_mentions_variants() -> None:
+    """The concept is gone, not renamed.
+
+    A leftover would be silently ignored by the package schema's strict key
+    check only if someone re-added it, so assert it is absent at the source.
+    """
+
+    tracked = subprocess.run(
+        [
+            "git",
+            "ls-files",
+            "-z",
+            "tools/runner/src",
+            "tools/http",
+            "scenarios/http",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    offenders: list[str] = []
+    stale = re.compile(r"\bscenario_contract_variant\b|\bvariants\b")
+    for relative in tracked.split("\0"):
+        if not relative or not relative.endswith((".py", ".yaml", ".yml")):
+            continue
+        if stale.search((ROOT / relative).read_text(encoding="utf-8")):
+            offenders.append(relative)
+
+    assert offenders == []
 
 
 class _StubWeaver:
@@ -292,7 +348,7 @@ def test_a_custom_contract_reaches_the_measured_server(
     contract while the package was judged against another.
 
     The command asks for no lifecycle. That the driver runs persistently at
-    all is the runner telling it so, from the variant's driver role.
+    all is the runner telling it so, from the contract's driver role.
     """
     pytest.importorskip("otel_http_test_client")
 
@@ -308,7 +364,6 @@ def test_a_custom_contract_reaches_the_measured_server(
                 "instrumented_library": "custom",
                 "instrumentation_library": "custom-instrumentation",
                 "scenario_contract": "contract.yaml",
-                "scenario_contract_variant": "measured-server",
                 "scenario_run": [
                     sys.executable,
                     "-m",

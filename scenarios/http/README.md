@@ -57,18 +57,22 @@ A Python instrumentation has nothing to build. Its workload is a module in
 `pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
 `scenario.py` that turns it on before handing the workload to the harness.
 
-## The scenario contract
+## The scenario contracts
 
-[`contract.yaml`](../../tools/http/test-client/contract.yaml) combines each
-request and response with client and server telemetry expectations. It also
-declares who drives each side: a `client` variant whose `instrumentation`
-role means the instrumented library initiates the request, and a `server`
-variant whose `runner` role means the runner drives the instrumented process
-from outside. All 50 packages share that one catalog of actions and select
-their side's variant, which is what decides how each package runs. The runner
-turns every entry into
+There are two, and they are independent.
+[`client.yaml`](../../tools/http/contracts/client.yaml) pairs each request
+with what an instrumented client emits for it, and declares
+`driver: instrumentation`, so the library under test initiates the request.
+[`server.yaml`](../../tools/http/contracts/server.yaml) pairs each request
+with what an instrumented server emits for it, and declares `driver: runner`,
+so the runner drives the instrumented process from outside. Each of the 50
+packages points at the contract for its own side, and that contract decides
+how the package runs. The runner turns every entry into
 one action with its own capture window and report, without aggregating
 independent requests.
+
+Both contracts currently describe the traffic below. Nothing enforces that:
+they are separate files, and either can change without the other.
 
 | Request | What it is there for |
 | --- | --- |

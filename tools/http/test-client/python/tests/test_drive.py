@@ -1229,7 +1229,7 @@ class TestTheCommandLine:
     def test_the_protocol_variable_alone_makes_a_run_persistent(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """No package repeats a flag for what its variant already decided."""
+        """No package repeats a flag for what its contract already decided."""
 
         monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v1")
         served: list[bool] = []

@@ -5,8 +5,7 @@ runner: http-conformance
 instrumented_library: wsgi
 instrumentation_library: opentelemetry-instrumentation-wsgi
 
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
-scenario_contract_variant: server
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
 scenario_run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
 
 env:

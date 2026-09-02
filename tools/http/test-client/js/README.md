@@ -34,7 +34,7 @@ await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {
 
 Server helpers decode the complete action table from
 `OTEL_CONFORMANCE_SCENARIO_ACTIONS`. The first entry is readiness. The package
-does not discover or package `contract.yaml`.
+reads no YAML and discovers no contract file.
 
 Each client process handles one action and exits. A measured server decodes the
 action table once, stays up for the selected batch, and receives the requests

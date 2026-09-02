@@ -355,55 +355,52 @@ reach, and the runner owns the table, so a package pointing at a contract of
 its own is driven by that contract rather than by whichever one a driver
 happens to ship.
 
-A contract entry can split its expectations into named variants, one per side
-of the exchange. A variant says who drives the action it describes:
+An indexed contract describes one instrumented side, and says at the top who
+drives the exchange that produces its telemetry:
 
 ```yaml
-variants:
-  client:
-    description: The instrumented HTTP client sends the request.
-    driver: instrumentation
-  server:
-    description: The instrumented HTTP server answers the request.
-    driver: runner
+driver: runner
+
+readiness:
+  description: Checks whether the server is ready.
+  action:
+    request: {method: GET, path: /health}
+    response: {status: 200, body: '{"ok": true}'}
+
+scenarios:
+  - description: Answers one request.
+    action:
+      request: {method: GET, path: /items}
+      response: {status: 200, body: '[]'}
+    expect:
+      spans:
+        - match: {kind: SERVER}
+          expect: {count: 1}
 ```
+
+A package points at it and names a command:
 
 ```yaml
-expect:
-  client:
-    spans: []
-  server:
-    spans: []
+scenario_contract: ../../contracts/server.yaml
+scenario_run: otel-http-drive --serve node server.js
 ```
 
-A package selects one:
-
-```yaml
-scenario_contract: ../../contracts/http.yaml
-scenario_contract_variant: client
-scenario_run: node scenario.js
-```
-
-The runner selects the requested variant before parsing its telemetry
-expectations.
-
-`driver` is what the package is really choosing. `instrumentation` means the
+`driver` is what decides the lifecycle. `instrumentation` means the
 instrumented component initiates the action, so each action runs its own
 process. `runner` means the runner drives one instrumented process through
-every action in the batch, from outside. The package names the command and
-the variant; how that command is run follows, and is never restated.
+every action in the batch, from outside. The package names the contract and
+the command; how that command is run follows, and is never restated.
 
-The catalog is one list of actions shared by every variant, so each entry
-must carry expectations for every declared variant and for nothing else.
-Otherwise a package selecting one side would be silently unjudged on an
-action the other side covers.
+Each contract stands alone: its own `driver`, its own `readiness` where the
+server or driver behind it needs one, its own actions and its own flat
+`expect`. Two contracts describing the two sides of one protocol are two
+files with no relationship, so either can gain an action or change an
+expectation without the other.
 
-A contract that declares no `variants` describes one way of running, and the
-instrumented component drives it: every scenario is one-shot, exactly as it
-was before roles existed. Entries with direct `spans`, `metrics`, or
-`events` under `expect` remain valid there, as does selecting a variant by
-expectation key alone. Local `scenarios` in a package are one-shot for the
-same reason — they name their own command and no contract role applies.
+A contract that declares no `driver` is driven by the instrumented
+component: every scenario is one-shot, exactly as it was before the role was
+written down. Local `scenarios` in a package are one-shot for the same
+reason — they name their own command and no contract role applies.
 
 A shared contract states what every implementation of it emits. One that
 emits more says so in its own directory, so the metric check stays exact
@@ -445,11 +442,11 @@ into an assertion.
 ### The runner-driven protocol
 
 What follows is between the runner and a process it drives. Nothing here is
-package configuration: a package asks for it by selecting a variant whose
+package configuration: a package asks for it by pointing at a contract whose
 `driver` is `runner`.
 
 ```yaml
-scenario_contract_variant: server
+scenario_contract: ../../contracts/server.yaml
 scenario_run: [node, controller.js]
 ```
 

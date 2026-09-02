@@ -1,20 +1,30 @@
 # HTTP conformance test client
 
-The traffic and client telemetry expectations for HTTP conformance scenarios.
-The runner reads [`contract.yaml`](contract.yaml) and injects its actions as
-JSON, so clients send the same requests and the runner checks each request
-independently.
+The traffic and telemetry expectations for HTTP conformance scenarios. There
+are two independent contracts in [`../contracts`](../contracts) — one per
+instrumented side — and the runner injects the actions of whichever one a
+package declares, so every language sends the same requests and the runner
+checks each request independently.
 
-## The contract
+## The contracts
 
-The document has a contract-level `description`, a `readiness` exchange, and a
-`scenarios` list. Each scenario has a human-readable `description`, an
-HTTP-specific `action`, and generic telemetry under `expect`. `readiness` has
-the same `description` and `action`, and no `expect`, because nothing measures
-it. Every language helper needs it, so a contract without it fails to load:
+[`client.yaml`](../contracts/client.yaml) says what an instrumented HTTP
+client emits for each request it sends.
+[`server.yaml`](../contracts/server.yaml) says what an instrumented HTTP
+server emits for each request it answers. Neither refers to the other. They
+happen to start from equivalent traffic, and nothing keeps them that way:
+either can gain an action, drop one, or change an expectation on its own.
+
+Each document has a contract-level `description`, a top-level `driver`, a
+`readiness` exchange, and a `scenarios` list. Each scenario has a
+human-readable `description`, an HTTP-specific `action`, and generic
+telemetry under `expect`. `readiness` has the same `description` and
+`action`, and no `expect`, because nothing measures it. Every language helper
+needs it, so a contract without it fails to load:
 
 ```yaml
-description: Shared HTTP requests and expected telemetry.
+description: What an instrumented HTTP server emits for each request it answers.
+driver: runner
 readiness:
   description: Checks whether the server is ready.
   action:
@@ -34,30 +44,16 @@ scenarios:
         status: 200
         body: '{"id": 123, "name": "Alice"}'
     expect:
-      client:
-        spans:
-          - match:
-              kind: CLIENT
-              attributes:
-                http.request.method: GET
-                http.response.status_code: 200
-            expect:
-              count: 1
-              attributes:
-                url.full:
-                  present: true
-        events: []
-      server:
-        spans:
-          - match:
-              kind: SERVER
-              attributes:
-                http.request.method: GET
-                http.response.status_code: 200
-            expect:
-              count: 1
-        metrics: [http.server.request.duration]
-        events: []
+      spans:
+        - match:
+            kind: SERVER
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 200
+          expect:
+            count: 1
+      metrics: [http.server.request.duration]
+      events: []
 ```
 
 The runner expands each entry into one action with its own capture window and
@@ -93,18 +89,7 @@ so a client cannot pass by sending an empty body.
 
 ## The two scenario shapes
 
-Both shapes measure the same catalog of actions in
-[`contract.yaml`](contract.yaml). What differs is which side of the exchange
-is instrumented, and therefore who drives it. The contract says so, once per
-variant:
-
-```yaml
-variants:
-  client:
-    driver: instrumentation
-  server:
-    driver: runner
-```
+Each shape has its own contract, and the contract says who drives it.
 
 A **server** scenario is a plain server process, in any language:
 
@@ -116,15 +101,14 @@ It never sends the requests itself. `otel-http-drive` does, from its own
 process:
 
 ```yaml
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
-scenario_contract_variant: server
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
 scenario_run: otel-http-drive --serve <the server scenario command>
 ```
 
-Selecting `server` is what makes this persistent. The variant's `runner`
-role tells the runner to drive one process through the whole batch, and the
-runner tells the driver so through the environment. The package names a
-command and nothing about how it is run.
+That contract's `driver: runner` is what makes this persistent: it tells the
+runner to drive one process through the whole batch, and the runner tells the
+driver so through the environment. The package names a contract and a command,
+and nothing about how it is run.
 
 The driver picks a free port, starts the command, waits on the fixed readiness
 request, sends the measured requests with the Python
@@ -173,23 +157,27 @@ out-of-sequence action, early child exit, or shutdown failure becomes an
 an action error, and the runner marks the rest of the batch unexecuted.
 
 A **client** scenario is the sender, so it decodes the runner-selected action
-and sends that request with the library under test. Selecting the `client`
-variant is what makes it one-shot: the variant's `instrumentation` role says
-the instrumented component initiates the action, so each action gets its own
-process. The runner starts
+and sends that request with the library under test.
+[`client.yaml`](../contracts/client.yaml)'s `driver: instrumentation` is what
+makes it one-shot: the instrumented component initiates the action, so each
+action gets its own process. The runner starts
 [`http-mock-server`](../mock-server) for it, because the directory declares it
 under `server:`, and publishes the base URL as `${MOCK_SERVER_URL}`. That mock
-server answers the same injected exchanges, so a client is measured against
-what a server scenario would have answered. Each client
-package points `scenario_contract` at `contract.yaml`, selects the `client`
-variant, and declares one `scenario_run` command.
+server answers the client contract's own injected exchanges, including its
+readiness route, which is the one the runner polls before the first action:
+
+```yaml
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
+scenario_run: node scenario.js
+```
 
 ## Per language
 
 Each language gets a small helper here to decode the injected JSON, look up
 server answers, and decode one client action. None needs an HTTP client beyond
-the one under test. The helpers consume JSON environment handoffs; only the
-runner and `otel-http-drive` need the contract's complete action table.
+the one under test, and none reads YAML. The helpers consume JSON environment
+handoffs; only the runner and `otel-http-drive` read a contract file, and
+`otel-http-drive` reads the server contract because that is what it drives.
 
 - [`python/`](python) — `otel_http_test_client`: the `otel-http-drive` command
   every language's server scenarios are driven by, `respond()` for answering

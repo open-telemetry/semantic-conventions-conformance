@@ -47,10 +47,17 @@ _POLL_INTERVAL_SECONDS = 0.1
 
 
 def _contract_path() -> Path:
-    packaged = Path(__file__).parent / "contract.yaml"
+    """The server contract, which is the one this driver drives.
+
+    Installed beside this module, or — in a checkout — read where it lives.
+    """
+
+    packaged = Path(__file__).parent / "server.yaml"
     if packaged.is_file():
         return packaged
-    return Path(__file__).resolve().parents[3] / "contract.yaml"
+    return (
+        Path(__file__).resolve().parents[4] / "contracts" / "server.yaml"
+    )
 
 
 def _load_contract() -> tuple[Exchange, ...]:

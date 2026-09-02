@@ -9,8 +9,7 @@ instrumentation_library: OpenTelemetry.Instrumentation.AspNetCore
 # process: a `dotnet run` would restore and compile on the clock.
 setup: otel-conformance-dotnet build
 
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
-scenario_contract_variant: server
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
 scenario_run: otel-http-drive --serve otel-conformance-dotnet run
 
 # What this instrumentation emits beyond the shared HTTP server contract.
