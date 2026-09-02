@@ -11,9 +11,10 @@ Parameters use named `${parameter}` markers instead of a client library's bind
 syntax. Each language helper renders those markers for its driver and binds the
 listed values in order.
 
-The database runner still supplies connection details and `DATABASE_BACKEND` at
-runtime. These values depend on the container it started. Queries and parameters
-are static contract data and do not pass through environment variables.
+The database runner supplies connection details and `DATABASE_BACKEND` at
+runtime. These values depend on the container it started. The generic
+conformance runner supplies the selected scenario's `action` as compact JSON in
+`OTEL_CONFORMANCE_SCENARIO_ACTION`.
 
 ## Operation kinds
 
@@ -34,16 +35,14 @@ conformance runner reads `expect` using its generic `spans`, `metrics`, and
 the action. Tests also require every matching conformance package to reference
 the same YAML contract and declare one `scenario_run` command.
 
-The conformance runner creates a separate live-check for every list entry and
-injects its zero-based position as `OTEL_CONFORMANCE_SCENARIO_INDEX`. Language
-helpers select that same position from the backend contract, keeping the action
-and expectation aligned without an authored scenario ID. Descriptions are
-labels and may repeat.
+The conformance runner creates a separate live-check for every list entry. The
+same selected entry provides both the injected action and the telemetry
+expectations, so language helpers do not load the full backend contract.
+Descriptions are labels and may repeat.
 
 ## Per language
 
-Each language gets a small SQL helper that reads the selected backend file:
+Each language gets a small SQL helper that parses the selected action:
 
-- [`java/`](java) provides `SqlContract`. The build copies
-  `contracts/*.yaml` onto the classpath, and JDBC scenarios translate named
+- [`java/`](java) provides `SqlContract`, and JDBC scenarios translate named
   parameters and stored procedures into JDBC calls.

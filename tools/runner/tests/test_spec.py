@@ -192,6 +192,8 @@ scenario_run: python client.py
     assert first.description == second.description
     assert first.index == 0
     assert second.index == 1
+    assert first.action == {"request": {"method": "GET", "path": "/one"}}
+    assert second.action == {"request": {"method": "GET", "path": "/two"}}
     assert first.run == second.run == ("python", "client.py")
     assert first.spans is not None
     assert first.spans[0].match.attributes == {"url.full": "${SERVER}/one"}
@@ -267,6 +269,11 @@ scenario_run: python client.py
             "scenarios:\n  - description: test\n    action: request\n    expect: {}",
             "scenario_run: run",
             "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {date: 2026-01-01}\n    expect: {}",
+            "scenario_run: run",
+            "represented as JSON",
         ),
         (
             "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: []",

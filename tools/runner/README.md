@@ -308,11 +308,13 @@ scenario_run: node client.js
 ```
 
 The runner creates one scenario per indexed entry and rejects local `scenarios`
-overrides for this contract form. Each runs under a fresh weaver
-report with `OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index.
-The command reads that index to select the same action. Reports use stable
-zero-padded ordinal filenames, while CLI and pytest output prefix `description`
-with its index; repeated descriptions do not merge entries.
+overrides for this contract form. Each runs under a fresh weaver report with
+`OTEL_CONFORMANCE_SCENARIO_ACTION` set to the selected `action` as JSON and
+`OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index. The command
+reads the action directly, or uses the index when its language helper owns a
+full-contract representation. Reports use stable zero-padded ordinal filenames,
+while CLI and pytest output prefix `description` with its index; repeated
+descriptions do not merge entries.
 
 `--scenario` takes the zero-padded ordinal, not the displayed label. To run the
 first entry above, pass `--scenario 0000` rather than `[0] Sends one request.`.

@@ -283,6 +283,12 @@ class ConformanceSession:
         }
         if scenario.index is not None:
             injected["OTEL_CONFORMANCE_SCENARIO_INDEX"] = str(scenario.index)
+        if scenario.action is not None:
+            injected["OTEL_CONFORMANCE_SCENARIO_ACTION"] = json.dumps(
+                scenario.action,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
         return _run_command(
             scenario.run,
             cwd=scenario.directory,

@@ -26,8 +26,7 @@ public final class JdbcScenario {
   private JdbcScenario() {}
 
   public static void run() throws SQLException {
-    Operation operation =
-        SqlContract.selectedScenario(ScenarioEnvironment.require("DATABASE_BACKEND"));
+    Operation operation = SqlContract.selectedScenario();
     try (Connection connection =
         DriverManager.getConnection(
             ScenarioEnvironment.require("JDBC_URL"),
