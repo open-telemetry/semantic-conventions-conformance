@@ -99,6 +99,7 @@ deny contains _span_finding(
 	]),
 ) if {
 	input.sample.span
+	not _is_mcp_span(input.sample.span)
 	op := _attr_value(input.sample.span, "gen_ai.operation.name")
 	keyed_attr := _span_name_keyed_attr[op]
 	not _valid_op_and_attr_span_name(input.sample.span, op, keyed_attr)
@@ -167,6 +168,7 @@ deny contains _span_finding(
 	),
 ) if {
 	input.sample.span
+	not _is_mcp_span(input.sample.span)
 	op := _attr_value(input.sample.span, "gen_ai.operation.name")
 	expected := _expected_for_op(op, input.sample.span.kind)
 	some attr_name in expected
@@ -215,6 +217,7 @@ deny contains _span_finding(
 	),
 ) if {
 	input.sample.span
+	not _is_mcp_span(input.sample.span)
 	op := _attr_value(input.sample.span, "gen_ai.operation.name")
 	expected_kinds := _expected_kinds_for_op[op]
 	not expected_kinds[input.sample.span.kind]
@@ -253,6 +256,17 @@ deny contains _span_finding(
 # ─── Helpers ────────────────────────────────────────────────────────────────
 
 # Span attributes arrive as `[{"name": ..., "value": ..., "type": ...}]`.
+
+# MCP spans can carry GenAI compatibility attributes for tool calls, but their
+# shape and name are governed by the MCP span conventions.
+_mcp_span_type["client"] := "mcp.client"
+_mcp_span_type["server"] := "mcp.server"
+
+_is_mcp_span(span) if {
+	_has_attr(span, "mcp.method.name")
+	span_type := _mcp_span_type[span.kind]
+	data["coverage-model"].spans[span_type]
+}
 
 # True when the span has an attribute named `name`.
 _has_attr(span, name) if {
