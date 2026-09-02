@@ -103,7 +103,7 @@ PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
 ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION"
 ACTIONS_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTIONS"
 
-# Set by the runner only when the selected contract variant made this run
+# Set by the runner only when the contract's driver role made this run
 # persistent, which is how ``otel-http-drive --serve`` learns it is being
 # driven rather than sending one pass of its own.
 PROTOCOL_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_PROTOCOL"

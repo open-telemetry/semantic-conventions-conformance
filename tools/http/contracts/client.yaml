@@ -1,0 +1,135 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: What an instrumented HTTP client emits for each request it sends.
+
+# The instrumented client initiates each action, so the runner starts one
+# process per action and the library under test sends the request itself. The
+# requests go to `http-mock-server`, which the runner starts.
+driver: instrumentation
+
+# No readiness exchange is sent by an instrumented client. This one exists
+# because `http-mock-server` answers from this table and the runner waits on
+# its health endpoint before starting the first action. No telemetry
+# expectation covers it.
+readiness:
+  description: Checks whether the mock server is ready.
+  action:
+    request:
+      method: GET
+      path: /health
+    response:
+      status: 200
+      body: '{"ok": true}'
+
+scenarios:
+  - description: Sends a request to a parameterized user route.
+    action:
+      request:
+        method: GET
+        path: /users/123
+      response:
+        status: 200
+        body: '{"id": 123, "name": "Alice"}'
+    expect:
+      spans:
+        - match:
+            kind: CLIENT
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 200
+          expect:
+            count: 1
+            attributes:
+              url.full:
+                present: true
+      events: []
+
+  - description: Sends a request with a query string.
+    action:
+      request:
+        method: GET
+        path: /users/123?fields=name&verbose=true
+      response:
+        status: 200
+        body: '{"id": 123, "name": "Alice"}'
+    expect:
+      spans:
+        - match:
+            kind: CLIENT
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 200
+          expect:
+            count: 1
+            attributes:
+              url.full:
+                present: true
+      events: []
+
+  - description: Sends a POST request carrying a JSON body.
+    action:
+      request:
+        method: POST
+        path: /items
+        body: '{"name": "widget"}'
+      response:
+        status: 201
+        body: '{"created": true, "payload": ${requestBody}}'
+    expect:
+      spans:
+        - match:
+            kind: CLIENT
+            attributes:
+              http.request.method: POST
+              http.response.status_code: 201
+          expect:
+            count: 1
+            attributes:
+              url.full:
+                present: true
+      events: []
+
+  - description: Sends a request that returns a 404 response.
+    action:
+      request:
+        method: GET
+        path: /status/404
+      response:
+        status: 404
+        body: '{"message": "status 404"}'
+    expect:
+      spans:
+        - match:
+            kind: CLIENT
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 404
+          expect:
+            count: 1
+            attributes:
+              url.full:
+                present: true
+      events: []
+
+  - description: Sends a request that returns a 500 response.
+    action:
+      request:
+        method: GET
+        path: /status/500
+      response:
+        status: 500
+        body: '{"message": "status 500"}'
+    expect:
+      spans:
+        - match:
+            kind: CLIENT
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 500
+          expect:
+            count: 1
+            attributes:
+              url.full:
+                present: true
+      events: []

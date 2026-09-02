@@ -341,7 +341,7 @@ class ConformanceSession:
             "OTEL_EXPORTER_OTLP_ENDPOINT": self._capture.endpoint,
             "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
             # The command says what to start, not how it is driven. That
-            # follows from the selected variant's role, so the runner tells
+            # follows from the contract's driver role, so the runner tells
             # the process here rather than every package repeating a flag.
             SCENARIO_PROTOCOL_VARIABLE: protocol,
             **PERSISTENT_ENV,

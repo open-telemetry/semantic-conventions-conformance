@@ -4,8 +4,7 @@
 runner: http-conformance
 instrumented_library: requests
 instrumentation_library: opentelemetry-instrumentation-requests
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
-scenario_contract_variant: client
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 env:
   # Python's HTTP instrumentations still emit the pre-stable attributes by

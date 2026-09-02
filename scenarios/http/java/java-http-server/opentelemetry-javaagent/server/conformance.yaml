@@ -5,8 +5,7 @@ runner: http-conformance
 instrumented_library: java-http-server
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
 
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
-scenario_contract_variant: server
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
 scenario_run: otel-http-drive --serve otel-conformance-java run --agent java-http-server:opentelemetry-javaagent JavaHttpServerJavaagentServerScenario
 
 env:

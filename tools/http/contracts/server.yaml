@@ -1,0 +1,128 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: What an instrumented HTTP server emits for each request it answers.
+
+# The runner drives the measured server from outside, through
+# `otel-http-drive --serve`, so one server process answers every action below
+# in turn.
+driver: runner
+
+# Not one of the scenarios below: the driver sends it to learn the measured
+# server is listening, and no telemetry expectation covers it.
+readiness:
+  description: Checks whether the server is ready.
+  action:
+    request:
+      method: GET
+      path: /health
+    response:
+      status: 200
+      body: '{"ok": true}'
+
+scenarios:
+  - description: Sends a request to a parameterized user route.
+    action:
+      request:
+        method: GET
+        path: /users/123
+      response:
+        status: 200
+        body: '{"id": 123, "name": "Alice"}'
+    expect:
+      spans:
+        - match:
+            kind: SERVER
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 200
+          expect:
+            count: 1
+      metrics:
+        - http.server.request.duration
+      events: []
+
+  - description: Sends a request with a query string.
+    action:
+      request:
+        method: GET
+        path: /users/123?fields=name&verbose=true
+      response:
+        status: 200
+        body: '{"id": 123, "name": "Alice"}'
+    expect:
+      spans:
+        - match:
+            kind: SERVER
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 200
+          expect:
+            count: 1
+      metrics:
+        - http.server.request.duration
+      events: []
+
+  - description: Sends a POST request carrying a JSON body.
+    action:
+      request:
+        method: POST
+        path: /items
+        body: '{"name": "widget"}'
+      response:
+        status: 201
+        body: '{"created": true, "payload": ${requestBody}}'
+    expect:
+      spans:
+        - match:
+            kind: SERVER
+            attributes:
+              http.request.method: POST
+              http.response.status_code: 201
+          expect:
+            count: 1
+      metrics:
+        - http.server.request.duration
+      events: []
+
+  - description: Sends a request that returns a 404 response.
+    action:
+      request:
+        method: GET
+        path: /status/404
+      response:
+        status: 404
+        body: '{"message": "status 404"}'
+    expect:
+      spans:
+        - match:
+            kind: SERVER
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 404
+          expect:
+            count: 1
+      metrics:
+        - http.server.request.duration
+      events: []
+
+  - description: Sends a request that returns a 500 response.
+    action:
+      request:
+        method: GET
+        path: /status/500
+      response:
+        status: 500
+        body: '{"message": "status 500"}'
+    expect:
+      spans:
+        - match:
+            kind: SERVER
+            attributes:
+              http.request.method: GET
+              http.response.status_code: 500
+          expect:
+            count: 1
+      metrics:
+        - http.server.request.duration
+      events: []

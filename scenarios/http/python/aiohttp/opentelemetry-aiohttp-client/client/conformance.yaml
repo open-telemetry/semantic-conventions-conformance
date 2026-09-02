@@ -4,8 +4,7 @@
 runner: http-conformance
 instrumented_library: aiohttp
 instrumentation_library: opentelemetry-instrumentation-aiohttp-client
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
-scenario_contract_variant: client
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 env:
   OTEL_SEMCONV_STABILITY_OPT_IN: http
