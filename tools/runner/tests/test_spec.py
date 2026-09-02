@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from textwrap import indent
 
 import pytest
 
 from opentelemetry.conformance import (
+    ScenarioRunSpec,
     ServerSpec,
     SpanMatch,
     SpecError,
@@ -38,95 +38,18 @@ def write(tmp_path: Path, document: str) -> Path:
     return tmp_path
 
 
-def test_minimal_spec_leaves_signal_expectations_unchecked(
+def test_minimal_spec_leaves_every_expectation_unchecked(
     tmp_path: Path,
 ) -> None:
     spec = load_spec(write(tmp_path, MINIMAL))
 
     assert spec.instrumented_library == "demo"
     assert spec.instrumentation_library == "demo-instrumentation"
-    assert spec.otlp_protocol == "grpc"
     scenario = spec.scenarios["inference"]
     assert scenario.run == ("python", "inference.py")
     assert scenario.spans is None
     assert scenario.metrics is None
     assert scenario.events is None
-    assert scenario.expected_violations == ()
-
-
-def test_instrumentation_scope_exact_match_is_scoped_to_signal(
-    tmp_path: Path,
-) -> None:
-    spec = load_spec(
-        write(
-            tmp_path,
-            """
-instrumented_library: demo
-instrumentation_library: demo-instrumentation
-scenarios:
-  inference:
-    run: python inference.py
-    spans:
-      - match:
-          attributes: {operation: chat}
-        expect:
-          count: 1
-          instrumentation_scope:
-            name: demo.instrumentation
-            version: 1.2.3
-            schema_url: {present: true}
-""",
-        )
-    )
-
-    scope = spec.scenarios["inference"].spans[0].instrumentation_scope
-    assert scope is not None
-    assert scope.name is not None
-    assert scope.name.equals == "demo.instrumentation"
-    assert scope.version is not None
-    assert scope.version.equals == "1.2.3"
-    assert scope.schema_url is not None
-    assert scope.schema_url.present is True
-
-
-@pytest.mark.parametrize(
-    ("scope", "message"),
-    [
-        ("{}", "declare at least one field"),
-        ("name: null", "non-empty string or a presence matcher"),
-        ("name: demo\nunknown: value", "unknown key"),
-        ("name: demo\nversion: ''", "non-empty string"),
-        ("name: demo\nversion: {distinct: 2}", "unknown key"),
-        (
-            "name: demo\nschema_url: {present: 1}",
-            "present must be a boolean",
-        ),
-    ],
-)
-def test_instrumentation_scope_is_strict(
-    tmp_path: Path, scope: str, message: str
-) -> None:
-    with pytest.raises(SpecError, match=message):
-        load_spec(
-            write(
-                tmp_path,
-                """
-instrumented_library: demo
-instrumentation_library: demo-instrumentation
-scenarios:
-  inference:
-    run: python inference.py
-    spans:
-      - match:
-          attributes: {operation: chat}
-        expect:
-          count: 1
-          instrumentation_scope:
-"""
-                + indent(scope, "            ")
-                + "\n",
-            )
-        )
 
 
 def test_runner_config_is_available_to_the_selected_runner(
@@ -272,6 +195,7 @@ scenario_run: python client.py
     assert first.action == {"request": {"method": "GET", "path": "/one"}}
     assert second.action == {"request": {"method": "GET", "path": "/two"}}
     assert first.run == second.run == ("python", "client.py")
+    assert first.run_spec == ScenarioRunSpec(("python", "client.py"))
     assert first.spans is not None
     assert first.spans[0].match.attributes == {"url.full": "${SERVER}/one"}
     assert second.events == ()
@@ -349,6 +273,16 @@ scenario_run: python client.py
         ),
         (
             "scenarios:\n  - description: test\n    action: {date: 2026-01-01}\n    expect: {}",
+            "scenario_run: run",
+            "represented as JSON",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {nested: {1: value}}\n    expect: {}",
+            "scenario_run: run",
+            "mapping keys must be strings",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {value: .nan}\n    expect: {}",
             "scenario_run: run",
             "represented as JSON",
         ),
@@ -465,6 +399,280 @@ scenarios:
         )
 
 
+def test_indexed_contract_keeps_default_expectations_beside_variant(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "contract.yaml").write_text(
+        """
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect:
+      spans:
+        - match: {kind: CLIENT}
+          expect: {count: 1}
+      server:
+        spans:
+          - match: {kind: SERVER}
+            expect: {count: 1}
+"""
+    )
+    default = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: run
+""",
+        )
+    )
+    server = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_contract_variant: server
+scenario_run: run
+""",
+        )
+    )
+
+    assert default.scenarios["0000"].spans[0].match.kind == "CLIENT"
+    assert server.scenarios["0000"].spans[0].match.kind == "SERVER"
+
+
+def test_indexed_contract_selects_expectation_variant(tmp_path: Path) -> None:
+    (tmp_path / "contract.yaml").write_text(
+        """
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect:
+      client:
+        spans:
+          - match: {kind: CLIENT}
+            expect: {count: 1}
+      server: {events: []}
+  - description: shared expectation
+    action: {method: POST}
+    expect: {metrics: []}
+"""
+    )
+
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_contract_variant: server
+scenario_run: run
+""",
+        )
+    )
+
+    variant_scenario = spec.scenarios["0000"]
+    direct_scenario = spec.scenarios["0001"]
+    assert variant_scenario.spans is None
+    assert variant_scenario.events == ()
+    assert direct_scenario.metrics == ()
+
+
+@pytest.mark.parametrize(
+    ("variant", "expectation", "message"),
+    [
+        (
+            "",
+            "client: {events: []}\n      server: {events: []}",
+            "scenario_contract_variant is required",
+        ),
+        (
+            "proxy",
+            "client: {events: []}\n      server: {events: []}",
+            "unknown scenario contract variant 'proxy'",
+        ),
+        (
+            "client",
+            "client: []",
+            r"expect\.client: expected a mapping",
+        ),
+        (
+            "client",
+            "client: {run: local}",
+            r"expect\.client: unknown key",
+        ),
+        (
+            "client",
+            "{}",
+            "contract has no variant expectations",
+        ),
+    ],
+)
+def test_invalid_contract_variant_raises(
+    tmp_path: Path, variant: str, expectation: str, message: str
+) -> None:
+    (tmp_path / "contract.yaml").write_text(
+        f"""
+scenarios:
+  - description: request
+    action: {{method: GET}}
+    expect:
+      {expectation}
+"""
+    )
+    selected = f"scenario_contract_variant: {variant}\n" if variant else ""
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                f"""
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+{selected}scenario_run: run
+""",
+            )
+        )
+
+
+def test_http_persistent_representatives_share_server_contract() -> None:
+    root = Path(__file__).resolve().parents[3]
+    packages = {
+        root
+        / "scenarios/http/python/wsgi/opentelemetry-wsgi/server": (
+            "http.server.active_requests",
+            "http.server.request.duration",
+        ),
+        root
+        / "scenarios/http/java/java-http-server/opentelemetry-javaagent/server": (
+            "http.server.request.duration",
+        ),
+    }
+
+    for package, metrics in packages.items():
+        spec = load_spec(package)
+        assert tuple(spec.scenarios) == tuple(
+            f"{index:04d}" for index in range(5)
+        )
+        for scenario in spec.scenarios.values():
+            assert scenario.protocol == "jsonl-v1"
+            assert scenario.spans is not None
+            assert len(scenario.spans) == 1
+            assert scenario.spans[0].match.kind == "SERVER"
+            assert scenario.spans[0].count == 1
+            assert scenario.metrics == metrics
+
+    client = load_spec(
+        root
+        / "scenarios/http/python/requests/opentelemetry-requests/client"
+    )
+    assert all(
+        scenario.spans is not None
+        and scenario.spans[0].match.kind == "CLIENT"
+        and scenario.protocol is None
+        for scenario in client.scenarios.values()
+    )
+
+
+def test_additional_metrics_extend_only_declared_metric_checks(
+    tmp_path: Path,
+) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+additional_metrics:
+  - demo.extra
+scenarios:
+  measured:
+    run: echo measured
+    metrics:
+      - demo.requests
+  unchecked:
+    run: echo unchecked
+""",
+        )
+    )
+
+    assert spec.scenarios["measured"].metrics == (
+        "demo.extra",
+        "demo.requests",
+    )
+    assert spec.scenarios["unchecked"].metrics is None
+
+
+def test_optional_metrics_and_additional_spans_permit_without_requiring(
+    tmp_path: Path,
+) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+additional_metrics:
+  - demo.extra
+  - name: demo.sometimes
+    required: false
+additional_spans:
+  - match:
+      kind: INTERNAL
+scenarios:
+  measured:
+    run: echo measured
+    metrics:
+      - demo.requests
+    spans:
+      - match:
+          kind: SERVER
+        expect:
+          count: 1
+  unchecked:
+    run: echo unchecked
+""",
+        )
+    )
+
+    measured = spec.scenarios["measured"]
+    assert measured.metrics == ("demo.extra", "demo.requests")
+    assert measured.optional_metrics == ("demo.sometimes",)
+    assert [
+        (expectation.match.kind, expectation.count)
+        for expectation in measured.spans or ()
+    ] == [("SERVER", 1), ("INTERNAL", None)]
+    unchecked = spec.scenarios["unchecked"]
+    assert unchecked.metrics is None
+    assert unchecked.optional_metrics == ()
+    assert unchecked.spans is None
+
+
+def test_an_optional_metric_needs_a_boolean(tmp_path: Path) -> None:
+    with pytest.raises(SpecError, match="required: expected a boolean"):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+additional_metrics:
+  - name: demo.sometimes
+    required: "no"
+scenarios:
+  measured:
+    run: echo measured
+""",
+            )
+        )
+
+
 def test_command_may_be_a_list(tmp_path: Path) -> None:
     spec = load_spec(
         write(
@@ -482,22 +690,78 @@ scenarios:
     assert spec.scenarios["inference"].run == ("python", "a b.py")
 
 
-def test_package_may_select_otlp_http_protobuf(tmp_path: Path) -> None:
+def test_scenario_run_protocol_is_explicit_in_the_model(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "contract.yaml").write_text(
+        """
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect: {}
+"""
+    )
     spec = load_spec(
         write(
             tmp_path,
             """
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
-otlp_protocol: http/protobuf
-scenarios:
-  inference:
-    run: python inference.py
+scenario_contract: contract.yaml
+scenario_run:
+  command: [python, controller.py]
+  protocol: jsonl-v1
 """,
         )
     )
 
-    assert spec.otlp_protocol == "http/protobuf"
+    scenario = spec.scenarios["0000"]
+    assert scenario.run == ("python", "controller.py")
+    assert scenario.run_spec == ScenarioRunSpec(
+        ("python", "controller.py"), protocol="jsonl-v1"
+    )
+    assert scenario.run_spec.one_shot is False
+
+
+@pytest.mark.parametrize(
+    ("run", "message"),
+    [
+        (
+            "{command: run, protocol: jsonl-v2}",
+            "unknown protocol 'jsonl-v2'",
+        ),
+        ("{command: run}", "protocol is required"),
+        ("{protocol: jsonl-v1}", "command is required"),
+        (
+            "{command: run, protocol: jsonl-v1, extra: true}",
+            "unknown key",
+        ),
+    ],
+)
+def test_invalid_scenario_run_mapping_raises(
+    tmp_path: Path, run: str, message: str
+) -> None:
+    (tmp_path / "contract.yaml").write_text(
+        """
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect: {}
+"""
+    )
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                f"""
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: {run}
+""",
+            )
+        )
 
 
 def test_span_expectation(tmp_path: Path) -> None:
@@ -602,10 +866,10 @@ def test_span_keys_survive_separators_in_a_value() -> None:
             id="span-without-count",
         ),
         pytest.param(
-            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\nscenarios:\n  a:\n    run: x\n"
-            "    expected_violations:\n      - id: some_advice",
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\n"
+            "expected_violations:\n  - id: some_advice\nscenarios:\n  a:\n    run: x",
             "reason is required",
-            id="violation-without-reason",
+            id="package-violation-without-reason",
         ),
         pytest.param(
             "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\nscenarios:\n  a:\n    run: x\n    events: notalist",
@@ -617,18 +881,6 @@ def test_span_keys_survive_separators_in_a_value() -> None:
             "  a:\n    run: x",
             "unknown key",
             id="unknown-server-key",
-        ),
-        pytest.param(
-            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: http/json\nscenarios:\n"
-            "  a:\n    run: x",
-            "expected 'grpc' or 'http/protobuf'",
-            id="unknown-otlp-protocol",
-        ),
-        pytest.param(
-            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: [grpc]\nscenarios:\n"
-            "  a:\n    run: x",
-            "expected 'grpc' or 'http/protobuf'",
-            id="non-string-otlp-protocol",
         ),
     ],
 )
@@ -717,7 +969,7 @@ scenarios:
     assert spec.server.health_path == "/ready"
 
 
-def test_a_violation_context_is_optional_and_distinct_from_an_empty_one(
+def test_package_violation_context_is_optional_and_distinct_from_an_empty_one(
     tmp_path: Path,
 ) -> None:
     """Omitted means "any context"; `{}` means "the finding carried none"."""
@@ -727,23 +979,23 @@ def test_a_violation_context_is_optional_and_distinct_from_an_empty_one(
             """
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
+expected_violations:
+  - id: missing_attribute
+    reason: the implementation's own namespace
+  - id: genai_span_status_ok_set_by_instrumentation
+    context: {}
+    reason: carries no context
+  - id: genai_span_kind_unexpected
+    context: {kind: internal}
+    reason: known
 scenarios:
   inference:
     run: x
-    expected_violations:
-      - id: missing_attribute
-        reason: the implementation's own namespace
-      - id: genai_span_status_ok_set_by_instrumentation
-        context: {}
-        reason: carries no context
-      - id: genai_span_kind_unexpected
-        context: {kind: internal}
-        reason: known
 """,
         )
     )
 
-    bulk, empty, exact = spec.scenarios["inference"].expected_violations
+    bulk, empty, exact = spec.expected_violations
     assert bulk.context is None
     assert empty.context == {}
     assert exact.context == {"kind": "internal"}
@@ -760,38 +1012,18 @@ scenarios:
     run: x
   tool_calling:
     run: x
-    expected_violations:
-      - id: genai_span_kind_unexpected
-        context: {kind: internal}
-        reason: only this one
 """
 
 
-def test_package_violations_reach_every_scenario(tmp_path: Path) -> None:
+def test_package_violations_stay_at_package_level(tmp_path: Path) -> None:
     spec = load_spec(write(tmp_path, PACKAGE_VIOLATIONS))
 
-    inference = spec.scenarios["inference"]
-    tool_calling = spec.scenarios["tool_calling"]
-
     assert [v.id for v in spec.expected_violations] == ["missing_attribute"]
-    # Inherited stays separate from a scenario's own: only its own are
-    # required to still be reported.
-    assert [v.id for v in inference.inherited_violations] == [
-        "missing_attribute"
-    ]
-    assert inference.expected_violations == ()
-    assert [v.id for v in tool_calling.inherited_violations] == [
-        "missing_attribute"
-    ]
-    assert [v.id for v in tool_calling.expected_violations] == [
-        "genai_span_kind_unexpected"
-    ]
 
 
-def test_redeclaring_a_package_violation_in_a_scenario_is_an_error(
+def test_scenario_expected_violations_is_an_unknown_key(
     tmp_path: Path,
 ) -> None:
-    """Two reasons for one id, and no way to tell which still applies."""
     document = """
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
@@ -807,5 +1039,5 @@ scenarios:
         reason: here too
 """
 
-    with pytest.raises(SpecError, match="already declared"):
+    with pytest.raises(SpecError, match="unknown key"):
         load_spec(write(tmp_path, document))

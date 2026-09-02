@@ -7,16 +7,20 @@ const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
 const {
-  SCENARIO_INDEX_VARIABLE,
+  ACTIONS_VARIABLE,
+  ACTION_VARIABLE,
   exchangeFor,
   exchanges,
   renderResponseBody,
   requests,
   scenarioRequest,
 } = require("../src");
+const { ACTIONS, ACTIONS_JSON } = require("./actions");
+
+process.env[ACTIONS_VARIABLE] = ACTIONS_JSON;
 
 describe("the contract", () => {
-  it("is read from the file every language reads", () => {
+  it("decodes the complete runner action table", () => {
     assert.ok(exchanges().length > 0);
   });
 
@@ -26,28 +30,51 @@ describe("the contract", () => {
     assert.equal(requests().length, exchanges().length - 1);
   });
 
-  it("selects each request by its independent ordinal", () => {
+  it("selects each singular client action", () => {
     requests().forEach((exchange, index) => {
-      assert.equal(scenarioRequest(index), exchange);
+      assert.deepEqual(
+        scenarioRequest(JSON.stringify(ACTIONS[index + 1])),
+        exchange,
+      );
     });
-    assert.throws(() => scenarioRequest(-1), /zero-based decimal/);
-    assert.throws(() => scenarioRequest(requests().length), /selects no/);
   });
 
-  it("says when the scenario index is not set", () => {
-    const previous = process.env[SCENARIO_INDEX_VARIABLE];
-    delete process.env[SCENARIO_INDEX_VARIABLE];
+  it("says when the selected action is not set", () => {
+    const previous = process.env[ACTION_VARIABLE];
+    delete process.env[ACTION_VARIABLE];
     try {
       assert.throws(
         () => scenarioRequest(),
-        new RegExp(`${SCENARIO_INDEX_VARIABLE} is not set`),
+        new RegExp(`${ACTION_VARIABLE} is not set`),
       );
     } finally {
       if (previous === undefined) {
-        delete process.env[SCENARIO_INDEX_VARIABLE];
+        delete process.env[ACTION_VARIABLE];
       } else {
-        process.env[SCENARIO_INDEX_VARIABLE] = previous;
+        process.env[ACTION_VARIABLE] = previous;
       }
+    }
+  });
+
+  it("rejects malformed JSON and unknown action fields", () => {
+    assert.throws(() => scenarioRequest("{"), /malformed JSON/);
+    assert.throws(() => exchanges("{"), /malformed JSON/);
+    assert.throws(
+      () => scenarioRequest('{"request":{},"response":{},"extra":true}'),
+      /unknown field/,
+    );
+  });
+
+  it("says when the complete action table is not set", () => {
+    const previous = process.env[ACTIONS_VARIABLE];
+    delete process.env[ACTIONS_VARIABLE];
+    try {
+      assert.throws(
+        () => exchanges(),
+        new RegExp(`${ACTIONS_VARIABLE} is not set`),
+      );
+    } finally {
+      process.env[ACTIONS_VARIABLE] = previous;
     }
   });
 

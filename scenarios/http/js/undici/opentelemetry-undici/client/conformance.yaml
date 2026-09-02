@@ -5,6 +5,7 @@ runner: http-conformance
 instrumented_library: undici
 instrumentation_library: "@opentelemetry/instrumentation-undici"
 scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract_variant: client
 
 setup: otel-conformance-js install
 

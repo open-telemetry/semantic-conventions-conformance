@@ -3,18 +3,17 @@
 
 """The HTTP conformance exchanges a server answers or a client sends.
 
-Coverage files are only comparable if every scenario is exercised the same
-way, so both halves live in ``contract.yaml`` once rather than in each
-language. Both sides of the domain use it:
+The runner supplies each client action and the complete server action table as
+JSON. Both sides of the domain use it:
 
 - A **server** scenario is a plain server process. It declares matching routes
     with the framework under test, listens on the port in
     ``OTEL_HTTP_SCENARIO_PORT``, and stays up until its standard input closes;
-    ``otel-http-drive`` starts it, sends :data:`REQUESTS` at it from outside,
+    ``otel-http-drive`` starts it and sends requests at it from outside,
     then closes standard input so it flushes and exits.
 - A **client** scenario is the sender. It passes its own library as ``send``
   to :func:`drive_selected`, pointed at a server the runner started — see
-  ``tools/http/mock-server``, which answers :data:`EXCHANGES` from this module.
+  ``tools/http/mock-server``, which answers the injected action table.
 
 Nothing under test ever drives a server scenario: the driver is a separate
 process, so no instrumentation loaded into the scenario can pick the driver up
@@ -25,7 +24,8 @@ server scenario declares routes in its framework's native form — that
 declaration is what an instrumentation reads a route from — but every status
 and body is a constant from the shared file because the requests are fixed.
 
-This package adds only the shared YAML parser needed to read the contract.
+Only ``otel-http-drive`` reads the canonical YAML contract, and only when no
+runner gave it a table. Workloads never discover or load it.
 """
 
 from __future__ import annotations
@@ -39,20 +39,15 @@ import time
 import urllib.error
 import urllib.request
 from collections.abc import Awaitable
-from pathlib import Path
-from typing import Any, Callable, Mapping, NamedTuple, Sequence
+from typing import Callable, Mapping, NamedTuple, NoReturn, Sequence, cast
 from wsgiref.simple_server import WSGIRequestHandler, make_server
 
-import yaml
-
 __all__ = [
+    "ACTIONS_VARIABLE",
+    "ACTION_VARIABLE",
     "CONTENT_TYPE",
-    "CONTRACT",
-    "EXCHANGES",
     "PORT_VARIABLE",
     "REQUEST_TIMEOUT_SECONDS",
-    "REQUESTS",
-    "SCENARIO_INDEX_VARIABLE",
     "USER_AGENT",
     "AsyncSend",
     "ContractError",
@@ -103,7 +98,8 @@ AsyncSend = Callable[[str, str, "str | None"], Awaitable["tuple[int, str]"]]
 # The port a server scenario listens on. ``otel-http-drive`` chooses it, which
 # is what lets different scenarios run in parallel without colliding.
 PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
-SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX"
+ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION"
+ACTIONS_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTIONS"
 
 # Fixed rather than the interpreter's default, so a server scenario is driven
 # by the same client whichever Python happens to be installed.
@@ -112,45 +108,6 @@ USER_AGENT = "otel-http-conformance/1"
 _HEALTH_POLL_SECONDS = 0.05
 REQUEST_TIMEOUT_SECONDS = 10
 
-
-def _contract() -> Path:
-    """Where ``contract.yaml`` is.
-
-    Installed beside this module, or — in a checkout — above the Python
-    package, since the contract belongs to every language rather than to this
-    one.
-    """
-    packaged = Path(__file__).parent / "contract.yaml"
-    if packaged.is_file():
-        return packaged
-    return Path(__file__).resolve().parents[3] / "contract.yaml"
-
-
-CONTRACT = _contract()
-
-_DOCUMENT = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
-_SCENARIOS = _DOCUMENT["scenarios"]
-
-
-def _exchange(entry: Mapping[str, Any], *, readiness: bool) -> Exchange:
-    action = entry["action"]
-    return Exchange(
-        method=action["request"]["method"],
-        path=action["request"]["path"],
-        body=action["request"].get("body"),
-        status=action["response"]["status"],
-        response_body=action["response"]["body"],
-        readiness=readiness,
-        description=entry["description"],
-    )
-
-
-REQUESTS: Sequence[Exchange] = tuple(
-    _exchange(entry, readiness=False) for entry in _SCENARIOS
-)
-
-_READINESS = _exchange(_DOCUMENT["readiness"], readiness=True)
-EXCHANGES: Sequence[Exchange] = (_READINESS, *REQUESTS)
 
 # Every route answers JSON, so a scenario that reads the contract has one
 # content type to send rather than a rule per route.
@@ -168,36 +125,118 @@ def mock_server_url() -> str:
     return base_url
 
 
-def scenario_request(index: int | None = None) -> Exchange:
-    """The one request selected by the runner's zero-based contract index."""
-    if index is None:
-        raw = os.environ.get(SCENARIO_INDEX_VARIABLE)
-        if raw is None:
-            raise RuntimeError(f"{SCENARIO_INDEX_VARIABLE} is not set")
-        try:
-            index = int(raw)
-        except ValueError as error:
-            raise RuntimeError(
-                f"{SCENARIO_INDEX_VARIABLE} must be a zero-based decimal "
-                f"index, got {raw!r}"
-            ) from error
-        if str(index) != raw or index < 0:
-            raise RuntimeError(
-                f"{SCENARIO_INDEX_VARIABLE} must be a zero-based decimal "
-                f"index, got {raw!r}"
-            )
-    if index < 0:
-        raise RuntimeError(
-            f"{SCENARIO_INDEX_VARIABLE}={index} selects no contract entry; "
-            f"expected 0..{len(REQUESTS) - 1}"
-        )
+def _reject_json_constant(value: str) -> NoReturn:
+    raise ValueError(f"invalid JSON constant {value}")
+
+
+def _decode_json(raw: str, variable: str) -> object:
     try:
-        return REQUESTS[index]
-    except IndexError as error:
+        return json.loads(raw, parse_constant=_reject_json_constant)
+    except (json.JSONDecodeError, ValueError) as error:
         raise RuntimeError(
-            f"{SCENARIO_INDEX_VARIABLE}={index} selects no contract entry; "
-            f"expected 0..{len(REQUESTS) - 1}"
+            f"{variable} contains malformed JSON: {error}"
         ) from error
+
+
+def _check_keys(
+    value: Mapping[str, object],
+    allowed: set[str],
+    where: str,
+) -> None:
+    unknown = sorted(set(value) - allowed)
+    if unknown:
+        raise RuntimeError(f"{where} has unknown field(s): {unknown}")
+
+
+def _exchange_from_action(
+    value: object,
+    *,
+    variable: str,
+    readiness: bool,
+) -> Exchange:
+    where = f"{variable} action"
+    if not isinstance(value, dict):
+        raise RuntimeError(f"{where} must be a JSON object")
+    action = cast(dict[str, object], value)
+    _check_keys(action, {"request", "response"}, where)
+    if set(action) != {"request", "response"}:
+        raise RuntimeError(f"{where} requires request and response objects")
+
+    request_value = action["request"]
+    response_value = action["response"]
+    if not isinstance(request_value, dict):
+        raise RuntimeError(f"{where}.request must be a JSON object")
+    if not isinstance(response_value, dict):
+        raise RuntimeError(f"{where}.response must be a JSON object")
+    request = cast(dict[str, object], request_value)
+    response = cast(dict[str, object], response_value)
+    _check_keys(request, {"method", "path", "body"}, f"{where}.request")
+    _check_keys(response, {"status", "body"}, f"{where}.response")
+
+    method = request.get("method")
+    path = request.get("path")
+    body = request.get("body")
+    status = response.get("status")
+    response_body = response.get("body")
+    if not isinstance(method, str) or not method:
+        raise RuntimeError(
+            f"{where}.request.method must be a non-empty string"
+        )
+    if not isinstance(path, str) or not path.startswith("/"):
+        raise RuntimeError(f"{where}.request.path must start with '/'")
+    if body is not None and not isinstance(body, str):
+        raise RuntimeError(f"{where}.request.body must be a string")
+    if (
+        not isinstance(status, int)
+        or isinstance(status, bool)
+        or not 100 <= status <= 599
+    ):
+        raise RuntimeError(f"{where}.response.status must be an HTTP status")
+    if not isinstance(response_body, str):
+        raise RuntimeError(f"{where}.response.body must be a string")
+    return Exchange(
+        method,
+        path,
+        body,
+        status,
+        response_body,
+        readiness,
+        "runner readiness action" if readiness else "runner action",
+    )
+
+
+def _action_table(raw: str | None = None) -> tuple[Exchange, ...]:
+    if raw is None:
+        raw = os.environ.get(ACTIONS_VARIABLE)
+    if raw is None:
+        raise RuntimeError(f"{ACTIONS_VARIABLE} is not set")
+    loaded = _decode_json(raw, ACTIONS_VARIABLE)
+    if not isinstance(loaded, list) or not loaded:
+        raise RuntimeError(
+            f"{ACTIONS_VARIABLE} must be a non-empty JSON array of actions"
+        )
+    actions = cast(list[object], loaded)
+    return tuple(
+        _exchange_from_action(
+            action,
+            variable=f"{ACTIONS_VARIABLE}[{index}]",
+            readiness=index == 0,
+        )
+        for index, action in enumerate(actions)
+    )
+
+
+def scenario_request(raw: str | None = None) -> Exchange:
+    """Decode the one request selected by the runner."""
+    if raw is None:
+        raw = os.environ.get(ACTION_VARIABLE)
+    if raw is None:
+        raise RuntimeError(f"{ACTION_VARIABLE} is not set")
+    return _exchange_from_action(
+        _decode_json(raw, ACTION_VARIABLE),
+        variable=ACTION_VARIABLE,
+        readiness=False,
+    )
 
 
 def client_headers(body: str | None) -> dict[str, str]:
@@ -211,7 +250,7 @@ def client_headers(body: str | None) -> dict[str, str]:
 def _exchange_for(method: str, path: str) -> Exchange | None:
     """The concrete exchange answering ``method path``, if there is one."""
     path = path.split("?", 1)[0]
-    for exchange in EXCHANGES:
+    for exchange in _action_table():
         if (
             exchange.method == method
             and exchange.path.split("?", 1)[0] == path
@@ -316,8 +355,16 @@ def drive_selected(
 
 def drive_all(base_url: str, send: Send | None = None) -> None:
     """Send and verify every measured request when driving a server scenario."""
+    _drive_exchanges(base_url, _action_table()[1:], send)
+
+
+def _drive_exchanges(
+    base_url: str,
+    exchanges: Sequence[Exchange],
+    send: Send | None = None,
+) -> None:
     sender = send or request
-    for exchange in REQUESTS:
+    for exchange in exchanges:
         status, response = sender(
             exchange.method,
             f"{base_url}{exchange.path}",
@@ -329,7 +376,7 @@ def drive_all(base_url: str, send: Send | None = None) -> None:
 
 async def drive_async(base_url: str, send: AsyncSend) -> None:
     """Asynchronously send and verify every measured request."""
-    for exchange in REQUESTS:
+    for exchange in _action_table()[1:]:
         status, response = await send(
             exchange.method,
             f"{base_url}{exchange.path}",
@@ -415,9 +462,15 @@ def wait_for_health(base_url: str, timeout: float = 30.0) -> None:
     server scenario request becomes telemetry, so a failed readiness exchange
     is reported rather than retried and recorded again.
     """
+    _wait_for_health_exchange(base_url, _action_table()[0], timeout)
+
+
+def _wait_for_health_exchange(
+    base_url: str, readiness: Exchange, timeout: float = 30.0
+) -> None:
     with urllib.request.urlopen(  # noqa: S310
         urllib.request.Request(  # noqa: S310
-            f"{base_url}{_READINESS.path}",
+            f"{base_url}{readiness.path}",
             headers=client_headers(None),
         ),
         timeout=timeout,
@@ -425,17 +478,26 @@ def wait_for_health(base_url: str, timeout: float = 30.0) -> None:
         return
 
 
-def request(method: str, url: str, body: str | None = None) -> tuple[int, str]:
+def request(
+    method: str,
+    url: str,
+    body: str | None = None,
+    *,
+    headers: Mapping[str, str] | None = None,
+) -> tuple[int, str]:
     """Send one request, reading an error response as a result like any other.
 
     A 404 or 500 is what the scenario asked for, so it comes back as a status
     rather than an exception.
     """
+    request_headers = client_headers(body)
+    if headers is not None:
+        request_headers.update(headers)
     prepared = urllib.request.Request(  # noqa: S310
         url,
         data=None if body is None else body.encode("utf-8"),
         method=method,
-        headers=client_headers(body),
+        headers=request_headers,
     )
     try:
         with urllib.request.urlopen(  # noqa: S310

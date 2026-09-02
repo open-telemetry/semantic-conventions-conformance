@@ -4,109 +4,80 @@
  */
 package io.opentelemetry.conformance.http;
 
-import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class HttpContractTest {
 
   @Test
-  void itIsReadFromTheFileEveryLanguageReads() {
-    assertFalse(HttpContract.exchanges().isEmpty());
+  void completeActionTableIncludesReadinessAndMeasuredRequests() {
+    List<Exchange> exchanges = HttpContract.loadActions(TestActions.JSON);
+
+    assertTrue(exchanges.get(0).readiness());
+    assertTrue(exchanges.stream().skip(1).noneMatch(Exchange::readiness));
+    assertEquals(6, exchanges.size());
   }
 
   @Test
-  void theCombinedExchangesAreCachedWithTheContract() {
-    assertSame(HttpContract.exchanges(), HttpContract.exchanges());
+  void singularClientActionIsDecoded() {
+    Exchange exchange =
+        HttpContract.loadAction(
+            "{\"request\":{\"method\":\"POST\",\"path\":\"/items\",\"body\":\"{}\"},"
+                + "\"response\":{\"status\":201,\"body\":\"{}\"}}");
+
+    assertEquals("POST", exchange.method());
+    assertEquals("/items", exchange.path());
+    assertEquals("{}", exchange.body());
+    assertEquals(201, exchange.status());
   }
 
   @Test
-  void everyExchangeHasADescription() {
-    assertTrue(
-        HttpContract.exchanges().stream().map(Exchange::description).noneMatch(String::isBlank));
-  }
-
-  @Test
-  void readinessIsNotMeasured() {
-    List<Exchange> requests = HttpContract.requests();
-
-    assertTrue(HttpContract.exchanges().stream().anyMatch(Exchange::readiness));
-    assertTrue(requests.stream().noneMatch(Exchange::readiness));
-    assertEquals(HttpContract.exchanges().size() - 1, requests.size());
-  }
-
-  @Test
-  void aContractWithoutScenariosSaysSo() {
-    ByteArrayInputStream contract =
-        new ByteArrayInputStream("readiness: {}\n".getBytes(StandardCharsets.UTF_8));
-
-    IllegalStateException failure =
-        assertThrows(IllegalStateException.class, () -> HttpContract.load(contract));
-
-    assertTrue(requireNonNull(failure.getMessage()).contains("declares no scenarios"));
-  }
-
-  @Test
-  void eachOrdinalSelectsOneIndependentRequest() {
-    for (int index = 0; index < HttpContract.requests().size(); index++) {
-      assertEquals(HttpContract.requests().get(index), HttpContract.request(index));
-    }
-    assertThrows(IllegalArgumentException.class, () -> HttpContract.request(-1));
-    assertThrows(
-        IllegalArgumentException.class, () -> HttpContract.request(HttpContract.requests().size()));
-  }
-
-  @Test
-  void aScenarioIndexThatIsNotSetSaysSo() {
+  void missingSelectedActionNamesTheVariable() {
     IllegalStateException failure =
         assertThrows(IllegalStateException.class, HttpContract::scenarioRequest);
 
-    assertEquals(HttpContract.SCENARIO_INDEX_VARIABLE + " is not set", failure.getMessage());
+    assertEquals(HttpContract.ACTION_VARIABLE + " is not set", failure.getMessage());
   }
 
   @Test
-  void aQueryStringDoesNotChangeWhichExchangeAnswers() {
-    Exchange plain = HttpContract.exchange("GET", "/users/123").orElseThrow();
+  void malformedJsonAndUnknownFieldsAreRejected() {
+    assertTrue(
+        assertThrows(IllegalStateException.class, () -> HttpContract.loadAction("{"))
+            .getMessage()
+            .contains("malformed JSON"));
+    assertTrue(
+        assertThrows(
+                IllegalStateException.class,
+                () -> HttpContract.loadAction("{\"request\":{},\"response\":{},\"extra\":true}"))
+            .getMessage()
+            .contains("unknown field"));
+  }
+
+  @Test
+  void malformedAndEmptyActionTablesAreRejected() {
+    assertThrows(IllegalStateException.class, () -> HttpContract.loadActions("not JSON"));
+    assertThrows(IllegalStateException.class, () -> HttpContract.loadActions("[]"));
+  }
+
+  @Test
+  void requestAndResponseLookupPreservesMethodQueryAndBodyHandling() {
+    Exchange plain =
+        HttpContract.exchange(TestActions.EXCHANGES, "GET", "/users/123").orElseThrow();
     Exchange withQuery =
-        HttpContract.exchange("GET", "/users/123?fields=name&verbose=true").orElseThrow();
+        HttpContract.exchange(TestActions.EXCHANGES, "GET", "/users/123?fields=name&verbose=true")
+            .orElseThrow();
+    Exchange items = HttpContract.exchange(TestActions.EXCHANGES, "POST", "/items").orElseThrow();
 
     assertEquals(plain.status(), withQuery.status());
-    assertEquals(plain.responseBody(), withQuery.responseBody());
-  }
-
-  @Test
-  void theMethodIsPartOfTheLookup() {
-    assertTrue(HttpContract.exchange("DELETE", "/items").isEmpty());
-  }
-
-  @Test
-  void anUnknownPathDescribesNoExchange() {
-    assertTrue(HttpContract.exchange("GET", "/nope").isEmpty());
-  }
-
-  @Test
-  void theBodyThatArrivedIsWhatIsEchoed() {
-    Exchange items = HttpContract.exchange("POST", "/items").orElseThrow();
-
+    assertFalse(HttpContract.exchange(TestActions.EXCHANGES, "DELETE", "/items").isPresent());
     assertEquals(
         "{\"created\": true, \"payload\": {\"name\": \"widget\"}}",
         items.renderResponseBody("{\"name\": \"widget\"}"));
-  }
-
-  @Test
-  void aRequestThatCarriedNoBodyEchoesAnEmptyObject() {
-    Exchange items = HttpContract.exchange("POST", "/items").orElseThrow();
-
-    assertEquals(items.renderResponseBody(null), items.renderResponseBody(""));
-    assertEquals("{\"created\": true, \"payload\": {}}", items.renderResponseBody(null));
   }
 }

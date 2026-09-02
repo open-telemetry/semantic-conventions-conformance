@@ -1,59 +1,42 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""A run's weaver reports, read as "what each signal carried".
-
-One :class:`Observed` over every report in a directory: per span type, per
-metric and per event, the attribute names the run carried on it at least once.
-An attribute missing where the registry requires it is a weaver violation, not
-a coverage gap, so the union is all a reduction needs.
-
-A span becomes a span *type* through a ``classify`` callable — the registry
-declares what a type carries but not how to recognise one, so that knowledge
-belongs to the conventions, not here.
-
-Alongside what a run carried, what weaver found wrong with it: the violations
-the reports hold, deduplicated on what they say and on the signal they say it
-about. A coverage file records the gap, not how many times a run tripped over
-it — but the same gap on two different spans is two gaps, because an
-implementation can fix one and not the other.
-"""
+"""Persist and read captured OTLP telemetry and the aggregate Weaver report."""
 
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterable, Mapping, cast
+from typing import TYPE_CHECKING, Callable, Iterable, Iterator, Mapping, cast
 
+from google.protobuf.json_format import MessageToDict
+
+from opentelemetry.proto.collector.metrics.v1 import metrics_service_pb2
+from opentelemetry.proto.collector.trace.v1 import trace_service_pb2
+
+from ._otlp_capture import CapturedWindow
 from ._spans import span_kind
 
 if TYPE_CHECKING:
     from ._spec import PackageSpec, ScenarioSpec
 
-# A span's name, kind and attributes → the registry span types it belongs to.
-ClassifySpan = Callable[[str, str, Mapping[str, object]], "set[str]"]
+CAPTURE_FORMAT = "opentelemetry-conformance-capture/v1"
+SCENARIO_REPORT_DIR = Path("scenarios")
+READINESS_REPORT = Path("readiness.json")
+UNWINDOWED_REPORT = Path("unwindowed.json")
+WEAVER_REPORT = Path("weaver.json")
 
+ClassifySpan = Callable[[str, str, Mapping[str, object]], "set[str]"]
 _Json = Mapping[str, object]
 Carried = dict[str, "set[str]"]
 
-
-# The weaver advice level a coverage file records as a finding.
 _RECORDED_LEVEL = "violation"
 
 
 @dataclass(frozen=True)
 class Finding:
-    """One thing weaver said about one signal, however often it said it.
-
-    ``context`` is kept serialised so two findings with the same message about
-    different attributes stay apart, and so a finding is hashable.
-
-    ``signal_type`` and ``signal_name`` are what weaver stamps on every piece
-    of advice — the ``span``, ``metric`` or ``log`` it was checking, an event
-    being a log record. Advice about an attribute carries the signal that held
-    it, so a finding says where to go and look.
-    """
+    """One Weaver violation about one signal."""
 
     id: str
     message: str
@@ -71,11 +54,6 @@ class Finding:
         )
 
     def as_dict(self) -> dict[str, object]:
-        """The finding as a coverage file records it.
-
-        A key weaver reported nothing for is left out rather than committed as
-        a null: a resource-level finding names no signal.
-        """
         recorded: dict[str, object] = {"id": self.id, "message": self.message}
         if self.signal_type:
             recorded["signal_type"] = self.signal_type
@@ -89,7 +67,7 @@ class Finding:
 
 @dataclass
 class Observed:
-    """Every signal a run produced, keyed by span type, metric or event name."""
+    """Every captured signal, reduced to the attribute names it carried."""
 
     spans: Carried = field(default_factory=dict[str, "set[str]"])
     metrics: Carried = field(default_factory=dict[str, "set[str]"])
@@ -98,12 +76,125 @@ class Observed:
     resources: set[str] = field(default_factory=set[str])
 
 
-def collect_findings(document: object) -> set[Finding]:
-    """Every violation anywhere in a report.
+def scenario_report_path(report_dir: Path, name: str) -> Path:
+    return report_dir / SCENARIO_REPORT_DIR / f"{name}.json"
 
-    Weaver attaches advice to whatever it checked — a span, an attribute, a
-    resource — so the report is walked rather than read at known keys.
+
+def capture_document(window: CapturedWindow) -> dict[str, object]:
+    """Convert a capture window to stable OTLP JSON without losing hierarchy."""
+
+    traces: list[dict[str, object]] = []
+    metrics: list[dict[str, object]] = []
+    logs: list[dict[str, object]] = []
+    for captured in window.exports:
+        request = captured.request
+        document = cast(
+            "dict[str, object]",
+            MessageToDict(
+                request,
+                always_print_fields_with_no_presence=True,
+                preserving_proto_field_name=True,
+            ),
+        )
+        if isinstance(request, trace_service_pb2.ExportTraceServiceRequest):
+            traces.append(document)
+        elif isinstance(
+            request, metrics_service_pb2.ExportMetricsServiceRequest
+        ):
+            metrics.append(document)
+        else:
+            logs.append(document)
+    return {
+        "format": CAPTURE_FORMAT,
+        "name": window.name,
+        "generation": window.generation,
+        "traces": traces,
+        "metrics": metrics,
+        "logs": logs,
+    }
+
+
+def write_capture(report_dir: Path, window: CapturedWindow) -> Path:
+    """Replace one scenario's normalized capture report."""
+
+    path = scenario_report_path(report_dir, window.name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _write_json(path, capture_document(window))
+    return path
+
+
+def write_readiness(report_dir: Path, window: CapturedWindow) -> Path:
+    """Replace the report for what a persistent batch emitted before its first action.
+
+    A package runs one persistent batch per shared run command; the file
+    holds the most recent one.
     """
+
+    path = report_dir / READINESS_REPORT
+    report_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(path, capture_document(window))
+    return path
+
+
+def write_unwindowed(report_dir: Path, window: CapturedWindow) -> Path:
+    """Replace the report for exports captured outside scenario windows."""
+
+    path = report_dir / UNWINDOWED_REPORT
+    report_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(path, capture_document(window))
+    return path
+
+
+def write_weaver(report_dir: Path, report: object) -> Path:
+    """Replace the one aggregate Weaver report for this run."""
+
+    path = report_dir / WEAVER_REPORT
+    report_dir.mkdir(parents=True, exist_ok=True)
+    _write_json(path, report)
+    return path
+
+
+def _write_json(path: Path, value: object) -> None:
+    path.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
+def load_capture(path: Path) -> _Json:
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise ValueError(f"{path} is not a {CAPTURE_FORMAT} report")
+    capture = cast(_Json, document)
+    if capture.get("format") != CAPTURE_FORMAT:
+        raise ValueError(f"{path} is not a {CAPTURE_FORMAT} report")
+    return capture
+
+
+def capture_documents(
+    report_dir: Path, spec: PackageSpec | None = None
+) -> Iterator[tuple[ScenarioSpec | None, _Json]]:
+    """Yield current scenario captures, then any unwindowed capture."""
+
+    if spec is None:
+        scenario_paths = sorted(
+            (report_dir / SCENARIO_REPORT_DIR).glob("*.json")
+        )
+        for path in scenario_paths:
+            yield None, load_capture(path)
+    else:
+        for name, scenario in spec.scenarios.items():
+            path = scenario_report_path(report_dir, name)
+            if path.is_file():
+                yield scenario, load_capture(path)
+
+    unwindowed = report_dir / UNWINDOWED_REPORT
+    if unwindowed.is_file():
+        yield None, load_capture(unwindowed)
+
+
+def collect_findings(document: object) -> set[Finding]:
+    """Return every violation in a Weaver report."""
+
     found: set[Finding] = set()
     if isinstance(document, dict):
         owner = cast(_Json, document)
@@ -131,11 +222,120 @@ def collect_findings(document: object) -> set[Finding]:
     return found
 
 
+def read_findings(report_dir: Path) -> set[Finding]:
+    path = report_dir / WEAVER_REPORT
+    if not path.is_file():
+        return set()
+    return collect_findings(json.loads(path.read_text(encoding="utf-8")))
+
+
 def finding_list(findings: Iterable[Finding]) -> list[dict[str, object]]:
-    """Findings as a coverage file records them, in a stable committed order."""
     return [
         finding.as_dict() for finding in sorted(findings, key=Finding.sort_key)
     ]
+
+
+def iter_spans(document: _Json) -> Iterator[_Json]:
+    for request in _list(document.get("traces")):
+        for resource_spans in _list(_mapping(request).get("resource_spans")):
+            for scope_spans in _list(
+                _mapping(resource_spans).get("scope_spans")
+            ):
+                for span in _list(_mapping(scope_spans).get("spans")):
+                    yield _mapping(span)
+
+
+def iter_metrics(document: _Json) -> Iterator[_Json]:
+    for request in _list(document.get("metrics")):
+        for resource_metrics in _list(
+            _mapping(request).get("resource_metrics")
+        ):
+            for scope_metrics in _list(
+                _mapping(resource_metrics).get("scope_metrics")
+            ):
+                for metric in _list(_mapping(scope_metrics).get("metrics")):
+                    yield _mapping(metric)
+
+
+def iter_logs(document: _Json) -> Iterator[_Json]:
+    for request in _list(document.get("logs")):
+        for resource_logs in _list(_mapping(request).get("resource_logs")):
+            for scope_logs in _list(_mapping(resource_logs).get("scope_logs")):
+                for record in _list(_mapping(scope_logs).get("log_records")):
+                    yield _mapping(record)
+
+
+def resource_attributes(document: _Json) -> Iterator[Mapping[str, object]]:
+    for signal, resource_key in (
+        ("traces", "resource_spans"),
+        ("metrics", "resource_metrics"),
+        ("logs", "resource_logs"),
+    ):
+        for request in _list(document.get(signal)):
+            for resource_group in _list(_mapping(request).get(resource_key)):
+                resource = _mapping(_mapping(resource_group).get("resource"))
+                yield carried_attributes(resource)
+
+
+def metric_point_attributes(metric: _Json) -> set[str]:
+    """Return the union of attributes on every point in one metric export."""
+
+    for data_type in (
+        "gauge",
+        "sum",
+        "histogram",
+        "exponential_histogram",
+        "summary",
+    ):
+        data = _mapping(metric.get(data_type))
+        if data:
+            return {
+                name
+                for point in _list(data.get("data_points"))
+                for name in carried_attributes(_mapping(point))
+            }
+    return set()
+
+
+def carried_attributes(owner: _Json) -> dict[str, object]:
+    """Decode OTLP JSON attributes into a mapping."""
+
+    attributes: dict[str, object] = {}
+    for record in _list(owner.get("attributes")):
+        attribute = _mapping(record)
+        key = attribute.get("key")
+        if isinstance(key, str) and key:
+            attributes[key] = _any_value(_mapping(attribute.get("value")))
+    return attributes
+
+
+def _any_value(value: _Json) -> object:
+    if "int_value" in value:
+        try:
+            return int(str(value["int_value"]))
+        except ValueError:
+            return value["int_value"]
+    for key in (
+        "string_value",
+        "bool_value",
+        "double_value",
+        "bytes_value",
+    ):
+        if key in value:
+            return value[key]
+    array = _mapping(value.get("array_value"))
+    if array:
+        return [
+            _any_value(_mapping(item)) for item in _list(array.get("values"))
+        ]
+    items = _mapping(value.get("kvlist_value"))
+    if items:
+        return {
+            str(item.get("key")): _any_value(_mapping(item.get("value")))
+            for raw in _list(items.get("values"))
+            if (item := _mapping(raw)).get("key")
+        }
+    return None
 
 
 def read(
@@ -143,149 +343,64 @@ def read(
     classify: ClassifySpan,
     spec: PackageSpec | None = None,
 ) -> Observed:
-    """Read every weaver report under ``report_dir`` into one :class:`Observed`."""
-    observed = Observed()
-    counted: dict[str, set[str]] = {}
+    """Reduce captured OTLP telemetry and aggregate Weaver findings."""
 
-    for path in sorted(report_dir.glob("**/*.json")):
-        scenario_spec = spec.scenarios.get(path.stem) if spec else None
-        if spec is not None and scenario_spec is None:
-            continue
-        report = cast("object", json.loads(path.read_text(encoding="utf-8")))
-        if not isinstance(report, dict):
-            continue
-        document = cast(_Json, report)
-        _merge_counted(counted, _mapping(document.get("statistics")))
-        observed.findings |= collect_findings(document)
-        for sample in _list(document.get("samples")):
-            _read_sample(observed, sample, classify, scenario_spec)
+    observed = Observed(findings=read_findings(report_dir))
+    for scenario, document in capture_documents(report_dir, spec):
+        for resource in resource_attributes(document):
+            observed.resources.update(resource)
 
-    # Weaver counts signals it kept no sample of. Record those too, carrying
-    # nothing — there is nothing to read attributes off.
-    for key, signals in (
-        ("seen_registry_metrics", observed.metrics),
-        ("seen_registry_events", observed.events),
-    ):
-        for name in counted.get(key, set()):
-            signals.setdefault(name, set())
+        for span in iter_spans(document):
+            attributes = carried_attributes(span)
+            types = _declared_types(scenario, span, attributes)
+            if types is None:
+                types = classify(
+                    str(span.get("name", "")),
+                    str(span.get("kind", "")),
+                    attributes,
+                )
+            for span_type in types:
+                observed.spans.setdefault(span_type, set()).update(attributes)
 
+        for metric in iter_metrics(document):
+            name = metric.get("name")
+            if isinstance(name, str) and name:
+                observed.metrics.setdefault(name, set()).update(
+                    metric_point_attributes(metric)
+                )
+
+        for record in iter_logs(document):
+            name = record.get("event_name")
+            if isinstance(name, str) and name:
+                observed.events.setdefault(name, set()).update(
+                    carried_attributes(record)
+                )
     return observed
 
 
-_COUNT_KEYS = ("seen_registry_metrics", "seen_registry_events")
-
-
-def _merge_counted(into: dict[str, set[str]], statistics: _Json) -> None:
-    """Merge the signal names one report saw at least once.
-
-    A directory holds one report per scenario, so the run saw a signal if any
-    scenario did.
-    """
-    for key in _COUNT_KEYS:
-        merged = into.setdefault(key, set())
-        for name, count in _mapping(statistics.get(key)).items():
-            if isinstance(count, int) and count > 0:
-                merged.add(name)
-
-
-def _read_sample(
-    observed: Observed,
-    sample: object,
-    classify: ClassifySpan,
-    scenario_spec: ScenarioSpec | None = None,
-) -> None:
-    if not isinstance(sample, dict):
-        return
-    entry = cast(_Json, sample)
-
-    resource = _mapping(entry.get("resource"))
-    if resource:
-        observed.resources.update(carried_attributes(resource))
-
-    span = _mapping(entry.get("span"))
-    if span:
-        attributes = carried_attributes(span)
-        names = set(attributes)
-
-        span_types = None
-        if scenario_spec and scenario_spec.spans:
-            kind = str(span.get("kind", ""))
-            for expectation in scenario_spec.spans:
-                match = expectation.match
-                if match.type is not None:
-                    if match.kind is not None:
-                        if span_kind(match.kind) != span_kind(kind):
-                            continue
-                    if all(
-                        attributes.get(attr) == val
-                        for attr, val in match.attributes.items()
-                    ):
-                        span_types = {match.type}
-                        break
-
-        if span_types is None:
-            span_types = classify(
-                str(span.get("name", "")),
-                str(span.get("kind", "")),
-                attributes,
-            )
-
-        for span_type in span_types:
-            observed.spans.setdefault(span_type, set()).update(names)
-
-    metric = _mapping(entry.get("metric"))
-    if metric.get("name"):
-        observed.metrics.setdefault(str(metric["name"]), set()).update(
-            _data_point_attributes(metric)
-        )
-
-    log = _mapping(entry.get("log"))
-    if log.get("event_name"):
-        observed.events.setdefault(str(log["event_name"]), set()).update(
-            carried_attributes(log)
-        )
-
-
-def _data_point_attributes(metric: _Json) -> set[str]:
-    """Every attribute name across a metric's data points.
-
-    A metric's attributes are per data point, and a run's points differ by
-    exactly the dimensions being recorded, so the union is what it carried.
-    """
-    return {
-        name
-        for point in _list(metric.get("data_points"))
-        for name in carried_attributes(_mapping(point))
-    }
-
-
-def carried_attributes(owner: _Json) -> dict[str, object]:
-    """The owner's attributes by name, dropping any weaver rejected."""
-    attributes: dict[str, object] = {}
-    for record in _list(owner.get("attributes")):
-        attribute = _mapping(record)
-        name = attribute.get("name")
-        if isinstance(name, str) and name and _counts_as_present(attribute):
-            attributes[name] = attribute.get("value")
-    return attributes
-
-
-def _counts_as_present(attribute: _Json) -> bool:
-    """An attribute whose value weaver rejected didn't really arrive.
-
-    A ``type_mismatch`` means the name is there but holding something the
-    registry doesn't allow — recording it as coverage would claim conformance
-    the run didn't have.
-    """
-    result = _mapping(attribute.get("live_check_result"))
-    return not any(
-        _mapping(advice).get("id") == "type_mismatch"
-        for advice in _list(result.get("all_advice"))
-    )
+def _declared_types(
+    scenario: ScenarioSpec | None,
+    span: _Json,
+    attributes: Mapping[str, object],
+) -> set[str] | None:
+    if scenario is None or not scenario.spans:
+        return None
+    kind = str(span.get("kind", ""))
+    for expectation in scenario.spans:
+        match = expectation.match
+        if match.type is None:
+            continue
+        if match.kind is not None and span_kind(match.kind) != span_kind(kind):
+            continue
+        if all(
+            attributes.get(key) == value
+            for key, value in match.attributes.items()
+        ):
+            return {match.type}
+    return None
 
 
 def _mapping(value: object) -> _Json:
-    """A JSON object, or an empty one — reports are read defensively."""
     return cast(_Json, value) if isinstance(value, dict) else {}
 
 

@@ -5,9 +5,21 @@ runner: http-conformance
 instrumented_library: wsgi
 instrumentation_library: opentelemetry-instrumentation-wsgi
 
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract_variant: server
+scenario_run:
+  command: otel-http-drive --persistent --serve uv run --frozen --project . otel-conformance-python scenario.py
+  protocol: jsonl-v1
+
 env:
   OTEL_SEMCONV_STABILITY_OPT_IN: http
 
-scenarios:
-  server:
-    run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
+# What this instrumentation emits beyond the shared HTTP server contract.
+additional_metrics:
+  - http.server.active_requests
+
+expected_violations:
+  - id: http_route_not_present
+    reason: >-
+      WSGI is the interface below any router, so the middleware has no
+      matched route to report.

@@ -4,28 +4,17 @@
  */
 package io.opentelemetry.conformance.http;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Set;
 
-/**
- * The HTTP conformance exchanges, as the JVM reads them.
- *
- * <p>Read from {@code otel-http-contract.yaml} on the classpath, which the build copies from {@code
- * tools/http/test-client/contract.yaml} — the one place it is written down, so a Java scenario and
- * a scenario in any other language are measured against the same traffic.
- *
- * <p>{@link #exchanges()} carries the concrete traffic and its answers. Every Java framework shares
- * this class rather than restating them, while server scenarios declare routes in their framework's
- * native form.
- */
+/** The HTTP conformance exchanges supplied by the runner as JSON. */
 public final class HttpContract {
 
   /** Every route answers JSON, so a scenario has one content type rather than a rule per route. */
@@ -37,17 +26,13 @@ public final class HttpContract {
    */
   public static final String USER_AGENT = "otel-http-conformance/1";
 
-  public static final String SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX";
+  public static final String ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION";
+  public static final String ACTIONS_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTIONS";
 
-  private static final String RESOURCE = "/otel-http-contract.yaml";
-
-  private static final ObjectMapper YAML =
-      new ObjectMapper(new YAMLFactory())
-          .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-
-  // Loaded on first use rather than in a static initializer, so a classpath problem arrives as the
-  // message below rather than wrapped in ExceptionInInitializerError.
-  private static volatile Contract contract;
+  private static final ObjectMapper JSON =
+      new ObjectMapper()
+          .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+          .enable(DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY);
 
   private HttpContract() {}
 
@@ -73,125 +58,164 @@ public final class HttpContract {
     }
   }
 
-  private record Request(String method, String path, String body) {}
+  /** A status and a body: what a request came back as, and what a route answers. */
+  public record Response(int statusCode, String body) {}
 
-  private record ExpectedResponse(int status, String body) {}
-
-  private record Action(Request request, ExpectedResponse response) {}
-
-  private record ContractDocument(
-      String description, ScenarioEntry readiness, List<ScenarioEntry> scenarios) {}
-
-  private record ScenarioEntry(String description, Action action) {
-    Exchange exchange(boolean readiness) {
-      return new Exchange(
-          action.request.method,
-          action.request.path,
-          action.request.body,
-          action.response.status,
-          action.response.body,
-          readiness,
-          description);
-    }
-  }
-
-  /** The readiness exchange and the measured requests, as one load of the file. */
-  record Contract(List<Exchange> exchanges, List<Exchange> requests) {}
-
-  /** Every exchange the contract describes, including readiness, in order. */
+  /** Every exchange supplied by the runner, including readiness, in order. */
   public static List<Exchange> exchanges() {
-    return contract().exchanges();
+    return loadActions(requiredEnvironment(ACTIONS_VARIABLE));
   }
 
-  /** The measured requests to send, in order. */
+  /** The measured requests supplied by the runner. */
   public static List<Exchange> requests() {
-    return contract().requests();
+    List<Exchange> exchanges = exchanges();
+    return exchanges.subList(1, exchanges.size());
   }
 
-  private static Contract contract() {
-    Contract loaded = contract;
-    if (loaded == null) {
-      loaded = load();
-      contract = loaded;
-    }
-    return loaded;
-  }
-
-  /** The one request selected by the runner's zero-based contract index. */
+  /** The one request selected by the runner. */
   public static Exchange scenarioRequest() {
-    String raw = System.getenv(SCENARIO_INDEX_VARIABLE);
-    if (raw == null) {
-      throw new IllegalStateException(SCENARIO_INDEX_VARIABLE + " is not set");
-    }
-    if (!raw.matches("0|[1-9][0-9]*")) {
+    return loadAction(requiredEnvironment(ACTION_VARIABLE));
+  }
+
+  static Exchange loadAction(String raw) {
+    return exchange(parse(raw, ACTION_VARIABLE), ACTION_VARIABLE + " action", false);
+  }
+
+  static List<Exchange> loadActions(String raw) {
+    JsonNode document = parse(raw, ACTIONS_VARIABLE);
+    if (!document.isArray() || document.isEmpty()) {
       throw new IllegalStateException(
-          SCENARIO_INDEX_VARIABLE + " must be a zero-based decimal index, got " + raw);
+          ACTIONS_VARIABLE + " must be a non-empty JSON array of actions");
     }
-    return request(Integer.parseInt(raw));
+    List<Exchange> result = new ArrayList<>();
+    for (int index = 0; index < document.size(); index++) {
+      result.add(
+          exchange(document.get(index), ACTIONS_VARIABLE + "[" + index + "] action", index == 0));
+    }
+    return List.copyOf(result);
   }
 
   static Exchange request(int index) {
-    if (index < 0 || index >= requests().size()) {
+    List<Exchange> requests = requests();
+    if (index < 0 || index >= requests.size()) {
       throw new IllegalArgumentException(
-          SCENARIO_INDEX_VARIABLE
-              + "="
+          "action index "
               + index
-              + " selects no contract entry; expected 0.."
-              + (requests().size() - 1));
+              + " selects no runner action; expected 0.."
+              + (requests.size() - 1));
     }
-    return requests().get(index);
+    return requests.get(index);
   }
 
-  /**
-   * A status and a body: what a request came back as, and what a route answers.
-   *
-   * <p>One type for both directions, because they are the same pair — which is why the other
-   * languages carry it as a plain tuple.
-   */
-  public record Response(int statusCode, String body) {}
-
-  /** The exchange answering {@code method path}, if the contract describes one. */
+  /** The exchange answering {@code method path}, if the runner supplied one. */
   static Optional<Exchange> exchange(String method, String path) {
+    return exchange(exchanges(), method, path);
+  }
+
+  static Optional<Exchange> exchange(List<Exchange> exchanges, String method, String path) {
     String withoutQuery = withoutQuery(path);
-    return exchanges().stream()
+    return exchanges.stream()
         .filter(exchange -> exchange.method().equals(method))
         .filter(exchange -> withoutQuery(exchange.path()).equals(withoutQuery))
         .findFirst();
   }
 
+  private static String requiredEnvironment(String variable) {
+    String value = System.getenv(variable);
+    if (value == null) {
+      throw new IllegalStateException(variable + " is not set");
+    }
+    return value;
+  }
+
+  private static JsonNode parse(String raw, String variable) {
+    try {
+      JsonNode result = JSON.readTree(raw);
+      if (result == null) {
+        throw new IllegalStateException(variable + " contains no JSON value");
+      }
+      return result;
+    } catch (JsonProcessingException error) {
+      throw new IllegalStateException(
+          variable + " contains malformed JSON: " + error.getMessage(), error);
+    }
+  }
+
+  private static Exchange exchange(JsonNode action, String where, boolean readiness) {
+    requireObject(action, where);
+    checkKeys(action, Set.of("request", "response"), where);
+    JsonNode request = action.get("request");
+    JsonNode response = action.get("response");
+    if (request == null || response == null) {
+      throw new IllegalStateException(where + " requires request and response objects");
+    }
+    requireObject(request, where + ".request");
+    requireObject(response, where + ".response");
+    checkKeys(request, Set.of("method", "path", "body"), where + ".request");
+    checkKeys(response, Set.of("status", "body"), where + ".response");
+
+    String method = requiredText(request.get("method"), where + ".request.method");
+    String path = requiredText(request.get("path"), where + ".request.path");
+    if (!path.startsWith("/")) {
+      throw new IllegalStateException(where + ".request.path must start with '/'");
+    }
+    JsonNode bodyNode = request.get("body");
+    String body = null;
+    if (bodyNode != null && !bodyNode.isNull()) {
+      if (!bodyNode.isTextual()) {
+        throw new IllegalStateException(where + ".request.body must be a string");
+      }
+      body = bodyNode.textValue();
+    }
+    JsonNode statusNode = response.get("status");
+    if (statusNode == null
+        || !statusNode.isIntegralNumber()
+        || !statusNode.canConvertToInt()
+        || statusNode.intValue() < 100
+        || statusNode.intValue() > 599) {
+      throw new IllegalStateException(where + ".response.status must be an HTTP status");
+    }
+    String responseBody = requiredText(response.get("body"), where + ".response.body", true);
+    return new Exchange(
+        method,
+        path,
+        body,
+        statusNode.intValue(),
+        responseBody,
+        readiness,
+        readiness ? "runner readiness action" : "runner action");
+  }
+
+  private static void requireObject(JsonNode value, String where) {
+    if (!value.isObject()) {
+      throw new IllegalStateException(where + " must be a JSON object");
+    }
+  }
+
+  private static String requiredText(JsonNode value, String where) {
+    return requiredText(value, where, false);
+  }
+
+  private static String requiredText(JsonNode value, String where, boolean allowEmpty) {
+    if (value == null || !value.isTextual() || (!allowEmpty && value.textValue().isEmpty())) {
+      throw new IllegalStateException(
+          where + (allowEmpty ? " must be a string" : " must be a non-empty string"));
+    }
+    return value.textValue();
+  }
+
+  private static void checkKeys(JsonNode value, Set<String> allowed, String where) {
+    Iterator<String> fields = value.fieldNames();
+    while (fields.hasNext()) {
+      String field = fields.next();
+      if (!allowed.contains(field)) {
+        throw new IllegalStateException(where + " has unknown field: " + field);
+      }
+    }
+  }
+
   private static String withoutQuery(String path) {
     int query = path.indexOf('?');
     return query == -1 ? path : path.substring(0, query);
-  }
-
-  private static Contract load() {
-    try (InputStream stream = HttpContract.class.getResourceAsStream(RESOURCE)) {
-      if (stream == null) {
-        throw new IllegalStateException(
-            RESOURCE
-                + " is not on the classpath — the build copies it from"
-                + " tools/http/test-client/contract.yaml");
-      }
-      return load(stream);
-    } catch (IOException e) {
-      throw new UncheckedIOException("could not read " + RESOURCE, e);
-    }
-  }
-
-  static Contract load(InputStream stream) throws IOException {
-    ContractDocument document = YAML.readValue(stream, ContractDocument.class);
-    if (document.readiness() == null) {
-      throw new IllegalStateException(RESOURCE + " declares no readiness exchange");
-    }
-    List<ScenarioEntry> scenarios = document.scenarios();
-    if (scenarios == null || scenarios.isEmpty()) {
-      throw new IllegalStateException(RESOURCE + " declares no scenarios");
-    }
-    Exchange readiness = document.readiness().exchange(true);
-    List<Exchange> requests =
-        scenarios.stream()
-            .map(entry -> entry.exchange(false))
-            .collect(Collectors.toUnmodifiableList());
-    return new Contract(Stream.concat(Stream.of(readiness), requests.stream()).toList(), requests);
   }
 }
