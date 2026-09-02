@@ -9,8 +9,6 @@ import argparse
 import ctypes
 import json
 import os
-import re
-import secrets
 import signal
 import subprocess
 import sys
@@ -40,8 +38,6 @@ from . import (
 )
 
 _PROTOCOL_VERSION = "jsonl-v1"
-_BOOTSTRAP_TRACE_ID = "00000000000000000000000000000001"
-_TRACE_ID = re.compile(r"[0-9a-f]{32}")
 
 # A cold runtime with instrumentation enabled can take a while to answer.
 _STARTUP_TIMEOUT_SECONDS = 60
@@ -362,12 +358,7 @@ def _drive_persistent(
 ) -> int:
     last_sequence = 0
     started_unix_nano = time.time_ns()
-    status, response = _request_exchange(
-        readiness,
-        base_url,
-        _BOOTSTRAP_TRACE_ID,
-        span_id="0000000000000001",
-    )
+    status, response = _request_exchange(readiness, base_url)
     completed_unix_nano = time.time_ns()
     verify(readiness, status, response)
     _write_record(
@@ -385,14 +376,13 @@ def _drive_persistent(
         try:
             record = _parse_action_record(raw, expected)
             exchange = _exchange_from_action(record["action"])
-            trace_id = cast(str, record["correlation_trace_id"])
             if process.poll() is not None:
                 raise RuntimeError(
                     f"the server scenario exited with {process.returncode} "
                     "before the request"
                 )
             started_unix_nano = time.time_ns()
-            status, response = _request_exchange(exchange, base_url, trace_id)
+            status, response = _request_exchange(exchange, base_url)
             completed_unix_nano = time.time_ns()
             verify(exchange, status, response)
         except Exception as error:
@@ -444,17 +434,6 @@ def _parse_action_record(raw: str, expected: int) -> Mapping[str, object]:
     ):
         raise ValueError(
             f"expected action sequence {expected}, got {sequence!r}"
-        )
-    trace_id = record.get("correlation_trace_id")
-    if (
-        not isinstance(trace_id, str)
-        or _TRACE_ID.fullmatch(trace_id) is None
-        or int(trace_id, 16) == 0
-        or trace_id == _BOOTSTRAP_TRACE_ID
-    ):
-        raise ValueError(
-            "correlation_trace_id must be a nonzero lowercase 32-digit hex "
-            "trace ID distinct from the reserved bootstrap trace ID"
         )
     if not isinstance(record.get("action"), dict):
         raise ValueError("action must be a JSON object")
@@ -521,17 +500,20 @@ def _exchange_from_action(value: object) -> Exchange:
 def _request_exchange(
     exchange: Exchange,
     base_url: str,
-    trace_id: str,
-    *,
-    span_id: str | None = None,
 ) -> tuple[int, str]:
-    parent_span_id = span_id or secrets.token_hex(8)
-    traceparent = f"00-{trace_id}-{parent_span_id}-01"
+    """Send one contract exchange exactly as the contract describes it.
+
+    Nothing is added to what the action declares. A ``traceparent`` the
+    driver invented would make the measured server a child of a remote
+    parent, which changes the root of the trace, the sampling decision it
+    inherits, and whether the server extracts context at all. The runner
+    attributes telemetry by timestamp instead.
+    """
+
     return request(
         exchange.method,
         f"{base_url}{exchange.path}",
         exchange.body,
-        headers={"traceparent": traceparent},
     )
 
 

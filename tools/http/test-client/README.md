@@ -119,17 +119,21 @@ never meant to produce cannot land in the report.
 
 For a `jsonl-v1` run, the driver starts one measured server process for the
 selected batch and sends readiness once. It then sends one HTTP request for each
-action record from the runner. Each request carries the runner's trace ID in a
-valid `traceparent`; readiness uses a reserved trace ID. The driver checks the
-response before it writes `action_complete`.
+action record from the runner. Every request carries exactly what the action
+declares, plus the fixed `User-Agent` and, where there is a body,
+`Content-Type`. The driver never adds a `traceparent`: a remote parent would
+change what is under test, reparenting the server span, handing it a sampling
+decision it did not make, and exercising context extraction the scenario never
+asked for. The driver checks the response before it writes `action_complete`.
 
 Startup first waits for the child to listen, then the driver sends the contract's
 readiness exchange. The runner keeps that bootstrap telemetry outside the first
-action. It advances only after the driver acknowledges the response, expected
-telemetry arrives, in-flight exports drain, and the action has stayed unchanged
-for the settle period. Metric intervals must close within one action or the
-readiness window; a point that crosses a response boundary fails instead of
-being assigned by export order.
+action, by its timestamps rather than by anything marking it. It advances only
+after the driver acknowledges the response, expected telemetry arrives,
+in-flight exports drain, and the action has stayed unchanged for the settle
+period. Metric intervals must close within one action or the readiness window;
+a point that crosses a response boundary fails instead of being assigned by
+export order.
 
 Every measured server and runner-managed mock server receives
 `OTEL_CONFORMANCE_SCENARIO_ACTIONS` as canonical

@@ -146,7 +146,11 @@ def app(environ, start_response):
         {
             "method": method,
             "path": path,
-            "traceparent": environ.get("HTTP_TRACEPARENT"),
+            "headers": sorted(
+                key[5:].replace("_", "-").lower()
+                for key in environ
+                if key.startswith("HTTP_")
+            ),
         }
     )
     status, text = respond(method, path, request_body)
@@ -337,9 +341,7 @@ def _send_protocol(
     return _read_protocol(process)
 
 
-def _action_record(
-    exchange: Exchange, sequence: int, trace_id: str
-) -> dict[str, object]:
+def _action_record(exchange: Exchange, sequence: int) -> dict[str, object]:
     request_document: dict[str, object] = {
         "method": exchange.method,
         "path": exchange.path,
@@ -351,7 +353,6 @@ def _action_record(
         "type": "action",
         "sequence": sequence,
         "scenario": f"{sequence - 1:04d}",
-        "correlation_trace_id": trace_id,
         "action": {
             "request": request_document,
             "response": {
@@ -363,7 +364,7 @@ def _action_record(
 
 
 def _action_json(exchange: Exchange) -> str:
-    return json.dumps(_action_record(exchange, 1, "11" * 16)["action"])
+    return json.dumps(_action_record(exchange, 1)["action"])
 
 
 def _finish_persistent_driver(
@@ -886,12 +887,8 @@ class TestPersistentServerDriving:
             "type": "ready",
             "version": "jsonl-v1",
         }
-        trace_ids = tuple(f"{sequence + 16:032x}" for sequence in range(1, 6))
         responses = [
-            _send_protocol(
-                process,
-                _action_record(exchange, sequence, trace_ids[sequence - 1]),
-            )
+            _send_protocol(process, _action_record(exchange, sequence))
             for sequence, exchange in enumerate(REQUESTS, start=1)
         ]
         stopped, stderr = _finish_persistent_driver(process)
@@ -931,16 +928,16 @@ class TestPersistentServerDriving:
             *[exchange.path for exchange in REQUESTS],
         ]
         assert len(requests) == 1 + len(REQUESTS)
-        traceparents = [item["traceparent"] for item in requests]
+        # Readiness and every measured request carry the fixed client headers
+        # and nothing that propagates context. A traceparent the driver
+        # invented would make the measured server the child of a remote
+        # parent, changing the root of the trace, the sampling decision it
+        # inherits, and whether it extracts context at all.
+        propagation = {"traceparent", "tracestate", "baggage", "b3"}
         assert all(
-            re.fullmatch(r"00-[0-9a-f]{32}-[0-9a-f]{16}-01", value)
-            for value in traceparents
+            propagation.isdisjoint(item["headers"]) for item in requests
         )
-        assert traceparents[0].split("-")[1] == driver._BOOTSTRAP_TRACE_ID
-        assert [value.split("-")[1] for value in traceparents[1:]] == list(
-            trace_ids
-        )
-        assert traceparents[0].split("-")[1] not in trace_ids
+        assert all("user-agent" in item["headers"] for item in requests)
         assert recorded["actions"] == json.loads(
             driver._canonical_action_table()
         )
@@ -961,7 +958,7 @@ class TestPersistentServerDriving:
         assert _read_protocol(process)["type"] == "ready"
 
         response = _send_protocol(
-            process, _action_record(exchange, 1, "33" * 16)
+            process, _action_record(exchange, 1)
         )
         stopped, _stderr = _finish_persistent_driver(process)
 
@@ -977,12 +974,55 @@ class TestPersistentServerDriving:
             exchange.path,
         ]
 
+    def test_an_action_that_declares_headers_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        """No action can declare a header, so none can be stripped.
+
+        The driver sends exactly what the action describes. An action that
+        tried to add a header would be silently ignored otherwise, which is
+        the one way a declared ``traceparent`` could go missing.
+        """
+
+        exchange = REQUESTS[0]
+        request_document: dict[str, object] = {
+            "method": exchange.method,
+            "path": exchange.path,
+            "headers": {"traceparent": f"00-{'0' * 32}-{'0' * 16}-01"},
+        }
+        if exchange.body is not None:
+            request_document["body"] = exchange.body
+        record = {
+            "version": "jsonl-v1",
+            "type": "action",
+            "sequence": 1,
+            "scenario": "0000",
+            "action": {
+                "request": request_document,
+                "response": {
+                    "status": exchange.status,
+                    "body": exchange.response_body,
+                },
+            },
+        }
+        process, result_path = _start_persistent_driver(tmp_path)
+        assert _read_protocol(process)["type"] == "ready"
+
+        response = _send_protocol(process, record)
+        stopped, _stderr = _finish_persistent_driver(process)
+
+        assert response["type"] == "action_error"
+        assert "unknown field(s): ['headers']" in str(response["error"])
+        assert stopped["type"] == "stopped"
+        recorded = json.loads(result_path.read_text(encoding="utf-8"))
+        assert [item["path"] for item in recorded["requests"]] == ["/health"]
+
     @pytest.mark.parametrize(
         "invalid, expected",
         [
             ("not json", "malformed jsonl-v1 action"),
             (
-                _action_record(REQUESTS[0], 2, "44" * 16),
+                _action_record(REQUESTS[0], 2),
                 "expected action sequence 1",
             ),
         ],
@@ -1000,7 +1040,7 @@ class TestPersistentServerDriving:
 
         assert process.stdin is not None
         process.stdin.write(
-            json.dumps(_action_record(REQUESTS[0], 1, "55" * 16)) + "\n"
+            json.dumps(_action_record(REQUESTS[0], 1)) + "\n"
         )
         process.stdin.flush()
         stopped, _stderr = _finish_persistent_driver(process)
@@ -1035,7 +1075,7 @@ class TestPersistentServerDriving:
         time.sleep(0.5)
 
         response = _send_protocol(
-            process, _action_record(REQUESTS[0], 1, "66" * 16)
+            process, _action_record(REQUESTS[0], 1)
         )
         stopped, _stderr = _finish_persistent_driver(process)
 
@@ -1207,7 +1247,7 @@ class TestTheRunnerOwnedActionTable:
             "GET", "/custom/first", None, 201, '{"created": 1}', False, ""
         )
         complete = _send_protocol(
-            process, _action_record(exchange, 1, "22" * 16)
+            process, _action_record(exchange, 1)
         )
         assert complete["type"] == "action_complete", complete
         _finish_persistent_driver(process)

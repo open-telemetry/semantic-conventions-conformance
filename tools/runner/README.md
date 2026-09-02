@@ -425,9 +425,15 @@ Only `jsonl-v1` is recognized. The runner starts one controller, and therefore
 one measured process behind that controller, for each selected consecutive batch
 that shares the command. It waits for a `ready` record, sends one `action` record
 per scenario, and closes stdin after the batch. Each record has `version`,
-`type`, and an integer `sequence`; action records also carry the scenario name,
-selected action, and a unique W3C trace ID. The controller answers each action
-with `action_complete` or `action_error`, then answers EOF with `stopped`.
+`type`, and an integer `sequence`; action records also carry the scenario name
+and the selected action. The controller answers each action with
+`action_complete` or `action_error`, then answers EOF with `stopped`.
+
+The runner puts nothing of its own into the traffic the controller drives. A
+correlation identifier would have to travel as a `traceparent`, which makes
+what is measured the child of a remote parent: it changes the root of the
+trace, the sampling decision the measured process inherits, and whether it
+extracts context at all. Attribution comes from timestamps instead.
 
 `ready` and `action_complete` carry `started_unix_nano` and
 `completed_unix_nano`, stamped where the controller sent the exchange and
@@ -445,6 +451,19 @@ An action window is bounded by the timestamps the instrumentation itself
 reported, never by the order exports arrived in, so a cold runtime whose
 first export is slow does not spill readiness telemetry into the first
 action. What ran before the first action is the readiness window.
+
+A span is placed by the interval between its start and its end, and its events
+travel with it. A log record is placed by its own timestamp, falling back to
+its observed timestamp. Spans of one trace describe one exchange, so a trace
+whose spans fall in different windows is ambiguous and fails. So does a span
+or record that reaches across a boundary, or lands in no window at all:
+nothing is guessed.
+
+Actions run one at a time, so a record that arrives while a later action is
+running still belongs to whichever action its timestamps place it in. It can
+never be counted toward the running one. It does mean the earlier action was
+judged on a window that has since changed, so the batch fails there rather
+than reporting either window.
 
 A metric point must be safely assignable to one window. A monotonic sum or a
 histogram must use delta temporality, and its interval may not cross another
