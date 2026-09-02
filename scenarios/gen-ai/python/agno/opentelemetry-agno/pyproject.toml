@@ -3,7 +3,7 @@ name = "agno-opentelemetry-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "agno==2.9.0",
+    "agno==3.0.4",
     "openai==3.3.1",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",

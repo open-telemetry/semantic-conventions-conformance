@@ -347,11 +347,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'bedrock.converse'",
+      "message": "chat span name should be 'chat anthropic.claude-3-5-sonnet-20240620-v1:0', got 'bedrock.converse'",
       "signal_type": "span",
       "signal_name": "bedrock.converse",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -577,11 +577,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'bedrock.converse_stream'",
+      "message": "chat span name should be 'chat anthropic.claude-3-5-sonnet-20240620-v1:0', got 'bedrock.converse_stream'",
       "signal_type": "span",
       "signal_name": "bedrock.converse_stream",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat anthropic.claude-3-5-sonnet-20240620-v1:0",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }

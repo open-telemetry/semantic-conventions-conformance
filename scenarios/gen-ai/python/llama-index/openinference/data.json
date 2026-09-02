@@ -593,11 +593,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "execute_tool span name should be 'execute_tool' or 'execute_tool <value of gen_ai.tool.name>', got 'FunctionTool.acall'",
+      "message": "execute_tool span name should be 'execute_tool get_current_weather', got 'FunctionTool.acall'",
       "signal_type": "span",
       "signal_name": "FunctionTool.acall",
       "context": {
-        "expected_form": "execute_tool or 'execute_tool <gen_ai.tool.name>'",
+        "expected_form": "execute_tool get_current_weather",
         "keyed_attr": "gen_ai.tool.name",
         "operation": "execute_tool"
       }
@@ -754,11 +754,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAI._prepare_chat_with_tools'",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'OpenAI._prepare_chat_with_tools'",
       "signal_type": "span",
       "signal_name": "OpenAI._prepare_chat_with_tools",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -957,11 +957,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAI.achat'",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'OpenAI.achat'",
       "signal_type": "span",
       "signal_name": "OpenAI.achat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -1295,11 +1295,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAI.astream_chat'",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'OpenAI.astream_chat'",
       "signal_type": "span",
       "signal_name": "OpenAI.astream_chat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }

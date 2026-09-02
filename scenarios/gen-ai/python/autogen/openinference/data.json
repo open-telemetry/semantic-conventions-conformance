@@ -274,11 +274,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'OpenAIChatCompletionClient.create'",
+      "message": "chat span name should be 'chat gpt-4o-mini-2024-07-18', got 'OpenAIChatCompletionClient.create'",
       "signal_type": "span",
       "signal_name": "OpenAIChatCompletionClient.create",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini-2024-07-18",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -366,11 +366,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "execute_tool span name should be 'execute_tool' or 'execute_tool <value of gen_ai.tool.name>', got 'weather_assistant.get_current_weather'",
+      "message": "execute_tool span name should be 'execute_tool get_current_weather', got 'weather_assistant.get_current_weather'",
       "signal_type": "span",
       "signal_name": "weather_assistant.get_current_weather",
       "context": {
-        "expected_form": "execute_tool or 'execute_tool <gen_ai.tool.name>'",
+        "expected_form": "execute_tool get_current_weather",
         "keyed_attr": "gen_ai.tool.name",
         "operation": "execute_tool"
       }
@@ -461,11 +461,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'weather_assistant.on_messages_stream'",
+      "message": "invoke_agent span name should be 'invoke_agent', got 'weather_assistant.on_messages_stream'",
       "signal_type": "span",
       "signal_name": "weather_assistant.on_messages_stream",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }

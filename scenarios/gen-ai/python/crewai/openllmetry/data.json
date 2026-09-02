@@ -256,11 +256,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'Say this is a test.task'",
+      "message": "invoke_agent span name should be 'invoke_agent', got 'Say this is a test.task'",
       "signal_type": "span",
       "signal_name": "Say this is a test.task",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }
@@ -486,11 +486,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'What's the weather in Seattle today?.task'",
+      "message": "invoke_agent span name should be 'invoke_agent', got 'What's the weather in Seattle today?.task'",
       "signal_type": "span",
       "signal_name": "What's the weather in Seattle today?.task",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }
@@ -716,11 +716,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'crewai.workflow'",
+      "message": "invoke_agent span name should be 'invoke_agent', got 'crewai.workflow'",
       "signal_type": "span",
       "signal_name": "crewai.workflow",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }
@@ -1054,11 +1054,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "invoke_agent span name should be 'invoke_agent' or 'invoke_agent <value of gen_ai.agent.name>', got 'weather_assistant.agent'",
+      "message": "invoke_agent span name should be 'invoke_agent weather_assistant', got 'weather_assistant.agent'",
       "signal_type": "span",
       "signal_name": "weather_assistant.agent",
       "context": {
-        "expected_form": "invoke_agent or 'invoke_agent <gen_ai.agent.name>'",
+        "expected_form": "invoke_agent weather_assistant",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
       }

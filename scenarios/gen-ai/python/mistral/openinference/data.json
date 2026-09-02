@@ -282,11 +282,33 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'MistralClient.chat'",
+      "message": "chat span name should be 'chat mistral-small-latest', got 'MistralClient.chat'",
       "signal_type": "span",
       "signal_name": "MistralClient.chat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat mistral-small-latest",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat pixtral-12b-latest', got 'MistralClient.chat'",
+      "signal_type": "span",
+      "signal_name": "MistralClient.chat",
+      "context": {
+        "expected_form": "chat pixtral-12b-latest",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat voxtral-mini-latest', got 'MistralClient.chat'",
+      "signal_type": "span",
+      "signal_name": "MistralClient.chat",
+      "context": {
+        "expected_form": "chat voxtral-mini-latest",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }

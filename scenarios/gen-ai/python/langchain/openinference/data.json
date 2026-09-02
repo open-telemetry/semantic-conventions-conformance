@@ -364,11 +364,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'ChatOpenAI'",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'ChatOpenAI'",
       "signal_type": "span",
       "signal_name": "ChatOpenAI",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -546,11 +546,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "execute_tool span name should be 'execute_tool' or 'execute_tool <value of gen_ai.tool.name>', got 'get_current_weather'",
+      "message": "execute_tool span name should be 'execute_tool get_current_weather', got 'get_current_weather'",
       "signal_type": "span",
       "signal_name": "get_current_weather",
       "context": {
-        "expected_form": "execute_tool or 'execute_tool <gen_ai.tool.name>'",
+        "expected_form": "execute_tool get_current_weather",
         "keyed_attr": "gen_ai.tool.name",
         "operation": "execute_tool"
       }
