@@ -5,9 +5,7 @@
 package io.opentelemetry.conformance.database.sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,70 +14,164 @@ import io.opentelemetry.conformance.database.sql.SqlContract.Parameter;
 import io.opentelemetry.conformance.database.sql.SqlContract.PreparedQuery;
 import io.opentelemetry.conformance.database.sql.SqlContract.Query;
 import io.opentelemetry.conformance.database.sql.SqlContract.StoredProcedure;
-import io.opentelemetry.conformance.database.sql.SqlContract.Workload;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class SqlContractTest {
 
   @Test
-  void loadsEveryBackendContract() throws IOException {
-    List<String> backends;
-    InputStream stream = SqlContract.class.getResourceAsStream("/otel-sql-contracts/index.txt");
-    assertNotNull(stream);
-    try (BufferedReader reader =
-        new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-      backends = reader.lines().toList();
-    }
+  void parsesEveryOperationKind() {
+    Query query =
+        assertInstanceOf(
+            Query.class, SqlContract.parseAction("{\"kind\":\"query\",\"sql\":\"SELECT 1\"}"));
+    assertEquals("SELECT 1", query.sql());
 
-    assertFalse(backends.isEmpty());
-    for (String backend : backends) {
-      Workload workload = SqlContract.workload(backend);
-      assertEquals(backend, workload.backend());
-      assertFalse(workload.description().isBlank());
-      assertFalse(workload.scenarios().isEmpty());
-      assertTrue(
-          workload.scenarios().stream()
-              .map(SqlContract.Operation::description)
-              .noneMatch(String::isBlank));
-      for (int index = 0; index < workload.scenarios().size(); index++) {
-        assertEquals(index, workload.scenarios().get(index).index());
-      }
-    }
+    PreparedQuery prepared =
+        assertInstanceOf(
+            PreparedQuery.class,
+            SqlContract.parseAction(
+                """
+                {
+                  "kind": "prepared_query",
+                  "sql": "SELECT name FROM items WHERE id = ${id}",
+                  "parameters": [
+                    {"name": "id", "type": "integer", "value": -1}
+                  ]
+                }
+                """));
+    assertEquals("SELECT name FROM items WHERE id = ?", prepared.renderSql(ignored -> "?"));
+    assertEquals(-1, prepared.parameters().get(0).integer());
+
+    Batch batch =
+        assertInstanceOf(
+            Batch.class,
+            SqlContract.parseAction(
+                """
+                {
+                  "kind": "batch",
+                  "statements": ["INSERT INTO items VALUES (1)", "DELETE FROM items"]
+                }
+                """));
+    assertEquals(2, batch.statements().size());
+
+    StoredProcedure procedure =
+        assertInstanceOf(
+            StoredProcedure.class,
+            SqlContract.parseAction(
+                "{\"kind\":\"stored_procedure\",\"procedure\":\"conformance.noop\"}"));
+    assertEquals("conformance.noop", procedure.procedure());
   }
 
   @Test
-  void resolvesPostgresqlForAClientAdapter() {
-    Workload workload = SqlContract.workload("postgresql");
-
-    Query query = assertInstanceOf(Query.class, workload.scenario(0));
-    assertEquals("SELECT count(*) >= 0 FROM conformance.items", query.sql());
-
-    PreparedQuery prepared = assertInstanceOf(PreparedQuery.class, workload.scenario(1));
+  void rejectsMissingOrMalformedActionJson() {
     assertEquals(
-        "SELECT name FROM conformance.items WHERE id = ?", prepared.renderSql(index -> "?"));
+        "OTEL_CONFORMANCE_SCENARIO_ACTION is not set",
+        assertThrows(IllegalStateException.class, () -> SqlContract.parseAction(null))
+            .getMessage());
     assertEquals(
-        "SELECT name FROM conformance.items WHERE id = $1",
-        prepared.renderSql(index -> "$" + index));
-    assertEquals(-1, prepared.parameters().get(0).integer());
+        "OTEL_CONFORMANCE_SCENARIO_ACTION must not be blank",
+        assertThrows(IllegalStateException.class, () -> SqlContract.parseAction(" ")).getMessage());
+    assertTrue(
+        assertThrows(IllegalArgumentException.class, () -> SqlContract.parseAction("{"))
+            .getMessage()
+            .startsWith("OTEL_CONFORMANCE_SCENARIO_ACTION contains invalid JSON:"));
+    assertTrue(
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SqlContract.parseAction("{\"kind\":\"query\",\"sql\":\"SELECT 1\"} {}"))
+            .getMessage()
+            .startsWith("OTEL_CONFORMANCE_SCENARIO_ACTION contains invalid JSON:"));
+    assertEquals(
+        "OTEL_CONFORMANCE_SCENARIO_ACTION must contain a JSON object",
+        assertThrows(IllegalArgumentException.class, () -> SqlContract.parseAction("[]"))
+            .getMessage());
+  }
 
-    Batch batch = assertInstanceOf(Batch.class, workload.scenario(2));
-    assertEquals(2, batch.statements().size());
-
-    StoredProcedure procedure = assertInstanceOf(StoredProcedure.class, workload.scenario(3));
-    assertEquals("conformance.noop", procedure.procedure());
+  @Test
+  void rejectsUnknownAndDuplicateFields() {
+    assertEquals(
+        "query has unknown field(s): [statements]",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"query\",\"sql\":\"SELECT 1\",\"statements\":[]}"))
+            .getMessage());
+    assertTrue(
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"query\",\"sql\":\"SELECT 1\",\"sql\":\"SELECT 2\"}"))
+            .getMessage()
+            .startsWith("OTEL_CONFORMANCE_SCENARIO_ACTION contains invalid JSON:"));
   }
 
   @Test
   void rejectsAnUnknownOperationKind() {
     assertEquals(
-        "unknown SQL operation kind for scenario[0]: invalid",
-        assertThrows(IllegalArgumentException.class, () -> SqlContract.workload("invalid_kind"))
+        "unknown SQL operation kind: invalid",
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SqlContract.parseAction("{\"kind\":\"invalid\"}"))
+            .getMessage());
+  }
+
+  @Test
+  void rejectsMissingAndWronglyTypedOperationFields() {
+    assertEquals(
+        "query sql must be a non-blank string",
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SqlContract.parseAction("{\"kind\":\"query\"}"))
+            .getMessage());
+    assertEquals(
+        "batch statements must be a JSON array",
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SqlContract.parseAction("{\"kind\":\"batch\",\"statements\":\"SELECT 1\"}"))
+            .getMessage());
+    assertEquals(
+        "stored procedure procedure must be a non-blank string",
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SqlContract.parseAction("{\"kind\":\"stored_procedure\"}"))
+            .getMessage());
+  }
+
+  @Test
+  void rejectsInvalidParameters() {
+    assertEquals(
+        "prepared query parameter[0] id has unsupported parameter type: string",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        """
+                        {
+                          "kind": "prepared_query",
+                          "sql": "SELECT ${id}",
+                          "parameters": [
+                            {"name": "id", "type": "string", "value": "1"}
+                          ]
+                        }
+                        """))
+            .getMessage());
+    assertEquals(
+        "prepared query parameter[0] id must have an integer value",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        """
+                        {
+                          "kind": "prepared_query",
+                          "sql": "SELECT ${id}",
+                          "parameters": [
+                            {"name": "id", "type": "integer", "value": 1.0}
+                          ]
+                        }
+                        """))
             .getMessage());
   }
 
@@ -87,74 +179,21 @@ class SqlContractTest {
   void rendersEveryParameterOccurrenceWithItsOwnBindMarker() {
     PreparedQuery query =
         new PreparedQuery(
-            0,
-            "Uses one value twice.",
-            "SELECT ${id} = ${id}",
-            List.of(new Parameter("id", 1), new Parameter("id", 1)));
+            "SELECT ${id} = ${id}", List.of(new Parameter("id", 1), new Parameter("id", 1)));
 
     assertEquals("SELECT $1 = $2", query.renderSql(index -> "$" + index));
   }
 
   @Test
-  void allowsDuplicateDescriptions() {
-    Workload workload =
-        new Workload(
-            "postgresql",
-            "Duplicate labels.",
-            List.of(
-                new Query(0, "Same label.", "SELECT 1"), new Query(1, "Same label.", "SELECT 2")));
-
-    assertEquals(workload.scenario(0).description(), workload.scenario(1).description());
-  }
-
-  @Test
-  void rejectsIndexesOutsideTheContract() {
-    assertThrows(
-        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario(-1));
-    assertThrows(
-        IllegalArgumentException.class, () -> SqlContract.workload("postgresql").scenario(4));
-  }
-
-  @Test
-  void rejectsABackendWithNoContractOnTheClasspath() {
-    assertTrue(
-        assertThrows(IllegalStateException.class, () -> SqlContract.workload("no_such_backend"))
-            .getMessage()
-            .startsWith("/otel-sql-contracts/no_such_backend.yaml is not on the classpath"));
-  }
-
-  @Test
-  void selectsTheScenarioTheRunnerIndexNames() {
-    assertInstanceOf(Query.class, SqlContract.selectedScenario("postgresql", "0"));
-    assertInstanceOf(Batch.class, SqlContract.selectedScenario("postgresql", "2"));
-  }
-
-  @Test
-  void identifiesBlankScenarioIndexValues() {
+  void requiresMarkersToMatchParametersInOrder() {
     assertEquals(
-        "OTEL_CONFORMANCE_SCENARIO_INDEX must be a zero-based decimal index, got null",
+        "prepared query SQL markers must match its parameters in order: expected [name, id], got [id, name]",
         assertThrows(
-                IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", null))
+                IllegalArgumentException.class,
+                () ->
+                    new PreparedQuery(
+                        "SELECT ${id}, ${name}",
+                        List.of(new Parameter("name", 1), new Parameter("id", 2))))
             .getMessage());
-    assertEquals(
-        "OTEL_CONFORMANCE_SCENARIO_INDEX must be a zero-based decimal index, got \"\"",
-        assertThrows(
-                IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", ""))
-            .getMessage());
-    assertEquals(
-        "OTEL_CONFORMANCE_SCENARIO_INDEX must be a zero-based decimal index, got \" \"",
-        assertThrows(
-                IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", " "))
-            .getMessage());
-  }
-
-  @Test
-  void rejectsAScenarioIndexTheRunnerWouldNeverSet() {
-    for (String raw : new String[] {null, "", " ", "one", "01", "-1", "1.0", "99999999999"}) {
-      assertThrows(
-          IllegalStateException.class, () -> SqlContract.selectedScenario("postgresql", raw), raw);
-    }
-    assertThrows(
-        IllegalArgumentException.class, () -> SqlContract.selectedScenario("postgresql", "4"));
   }
 }

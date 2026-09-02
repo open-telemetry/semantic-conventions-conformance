@@ -6,12 +6,12 @@ Java agent and the OpenTelemetry JDBC library instrumentation.
 The language-neutral SQL actions and telemetry expectations live together in
 backend-specific files under
 [`tools/database/sql-test-client/contracts`](../../../tools/database/sql-test-client/contracts).
-The `shared:jdbc:scenarios` Gradle project reads the selected backend through
-`SqlContract` and translates the runner-selected list entry into JDBC. Its launcher
-projects configure either the Java agent or `opentelemetry-jdbc`. Vendor
-directories contain the conformance configuration and coverage, so another
-PostgreSQL client such as Vert.x SQL can sit beside JDBC without duplicating the
-shared JDBC code.
+The runner injects the selected action as JSON. The `shared:jdbc:scenarios`
+Gradle project parses it through `SqlContract` and translates it into JDBC. Its
+launcher projects configure either the Java agent or `opentelemetry-jdbc`.
+Vendor directories contain the conformance configuration and coverage, so
+another PostgreSQL client such as Vert.x SQL can sit beside JDBC without
+duplicating the shared JDBC code.
 
 The Java code only connects and performs measured operations. Database
 lifecycle and schema creation stay in the Python runner, where later languages
