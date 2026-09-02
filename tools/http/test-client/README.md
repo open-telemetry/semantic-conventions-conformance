@@ -93,6 +93,19 @@ so a client cannot pass by sending an empty body.
 
 ## The two scenario shapes
 
+Both shapes measure the same catalog of actions in
+[`contract.yaml`](contract.yaml). What differs is which side of the exchange
+is instrumented, and therefore who drives it. The contract says so, once per
+variant:
+
+```yaml
+variants:
+  client:
+    driver: instrumentation
+  server:
+    driver: runner
+```
+
 A **server** scenario is a plain server process, in any language:
 
 1. listen on the port in `OTEL_HTTP_SCENARIO_PORT`,
@@ -105,10 +118,12 @@ process:
 ```yaml
 scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 scenario_contract_variant: server
-scenario_run:
-  command: otel-http-drive --persistent --serve <the server scenario command>
-  protocol: jsonl-v1
+scenario_run: otel-http-drive --persistent --serve <the server scenario command>
 ```
+
+Selecting `server` is what makes this persistent. The variant's `runner`
+role tells the runner to drive one process through the whole batch, so the
+package names a command and nothing about how it is run.
 
 The driver picks a free port, starts the command, waits on the fixed readiness
 request, sends the measured requests with the Python
@@ -117,8 +132,9 @@ exit code. Driving from outside is what keeps a server run honest: no
 instrumentation the scenario loads can reach the sender, so client spans it
 never meant to produce cannot land in the report.
 
-For a `jsonl-v1` run, the driver starts one measured server process for the
-selected batch and sends readiness once. It then sends one HTTP request for each
+When the runner drives it, the driver starts one measured server process for
+the selected batch and sends readiness once. It then sends one HTTP request
+for each
 action record from the runner. Every request carries exactly what the action
 declares, plus the fixed `User-Agent` and, where there is a body,
 `Content-Type`. The driver never adds a `traceparent`: a remote parent would
@@ -156,13 +172,16 @@ out-of-sequence action, early child exit, or shutdown failure becomes an
 an action error, and the runner marks the rest of the batch unexecuted.
 
 A **client** scenario is the sender, so it decodes the runner-selected action
-and sends that request with the library under test. The runner starts
+and sends that request with the library under test. Selecting the `client`
+variant is what makes it one-shot: the variant's `instrumentation` role says
+the instrumented component initiates the action, so each action gets its own
+process. The runner starts
 [`http-mock-server`](../mock-server) for it, because the directory declares it
 under `server:`, and publishes the base URL as `${MOCK_SERVER_URL}`. That mock
 server answers the same injected exchanges, so a client is measured against
 what a server scenario would have answered. Each client
-package points `scenario_contract` at `contract.yaml` and declares one
-`scenario_run` command.
+package points `scenario_contract` at `contract.yaml`, selects the `client`
+variant, and declares one `scenario_run` command.
 
 ## Per language
 

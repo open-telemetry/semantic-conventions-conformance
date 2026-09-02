@@ -60,8 +60,13 @@ A Python instrumentation has nothing to build. Its workload is a module in
 ## The scenario contract
 
 [`contract.yaml`](../../tools/http/test-client/contract.yaml) combines each
-request and response with client and server telemetry expectations. All 50
-packages select their side's contract variant. The runner turns every entry into
+request and response with client and server telemetry expectations. It also
+declares who drives each side: a `client` variant whose `instrumentation`
+role means the instrumented library initiates the request, and a `server`
+variant whose `runner` role means the runner drives the instrumented process
+from outside. All 50 packages share that one catalog of actions and select
+their side's variant, which is what decides how each package runs. The runner
+turns every entry into
 one action with its own capture window and report, without aggregating
 independent requests.
 

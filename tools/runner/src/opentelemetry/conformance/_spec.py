@@ -20,6 +20,18 @@ import yaml
 SPEC_FILE = "conformance.yaml"
 _SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
 
+# Who initiates the action a scenario measures. ``instrumentation`` means the
+# instrumented component does, which is one action per process. ``runner``
+# means the runner drives the instrumented component from outside, which is
+# one process for the whole batch. Everything else about a run follows from
+# this, including the internal protocol a driven process speaks.
+DriverRole = Literal["instrumentation", "runner"]
+
+_ROLE_PROTOCOLS: Mapping[str, "Literal['jsonl-v1'] | None"] = {
+    "instrumentation": None,
+    "runner": "jsonl-v1",
+}
+
 
 class SpecError(ValueError):
     """The package's ``conformance.yaml`` is invalid."""
@@ -139,7 +151,12 @@ class ExpectedViolation:
 
 @dataclass(frozen=True)
 class ScenarioRunSpec:
-    """How the runner communicates with a scenario command."""
+    """How the runner communicates with a scenario command.
+
+    ``protocol`` is not package configuration. It follows from the driver
+    role the selected contract variant declares, and names the wire format
+    the runner and a driven process speak between themselves.
+    """
 
     command: tuple[str, ...]
     protocol: Literal["jsonl-v1"] | None = None
@@ -332,24 +349,84 @@ def _parse_command(value: object, where: str) -> tuple[str, ...]:
     return command
 
 
-def _parse_scenario_run(value: object, where: str) -> ScenarioRunSpec:
-    if not isinstance(value, Mapping):
-        return ScenarioRunSpec(_parse_command(value, where))
+def _parse_scenario_run(
+    value: object, where: str, *, lifecycle: str
+) -> tuple[str, ...]:
+    """The command that runs a scenario, and nothing else.
 
-    run = cast("Mapping[str, object]", value)
-    _check_keys(run, ("command", "protocol"), where)
-    if "command" not in run:
-        raise SpecError(f"{where}.command is required")
-    protocol = _required_string(run, "protocol", where)
-    if protocol != "jsonl-v1":
+    How the runner talks to that command is not declared here.
+    ``lifecycle`` says what decides it instead, which is the question an
+    author who reached for a ``protocol`` key was trying to answer.
+    """
+
+    if isinstance(value, Mapping):
+        run = cast("Mapping[str, object]", value)
         raise SpecError(
-            f"{where}.protocol: unknown protocol {protocol!r}; "
-            "allowed: ['jsonl-v1']"
+            f"{where}: expected a command string or list, got a mapping "
+            f"with key(s) {sorted(run)}; {lifecycle}"
         )
-    return ScenarioRunSpec(
-        command=_parse_command(run["command"], f"{where}.command"),
-        protocol="jsonl-v1",
-    )
+    return _parse_command(value, where)
+
+
+def _parse_contract_variants(
+    contract: Mapping[str, object], path: Path
+) -> Mapping[str, DriverRole]:
+    """The selectable variants a contract declares, and who drives each.
+
+    A contract that declares none is judged on flat expectations, and the
+    instrumented component drives its own action. That is what every
+    contract did before roles existed, so those keep working unchanged.
+    """
+
+    if "variants" not in contract:
+        return {}
+    where = f"{path}.variants"
+    declared = _require_mapping(contract["variants"], where)
+    if not declared:
+        raise SpecError(f"{where}: declares no variants")
+    roles: dict[str, DriverRole] = {}
+    for name, value in declared.items():
+        variant_where = f"{where}.{name}"
+        variant = _require_mapping(value or {}, variant_where)
+        _check_keys(variant, ("description", "driver"), variant_where)
+        _optional_string(variant, "description", variant_where)
+        if "driver" not in variant:
+            raise SpecError(
+                f"{variant_where}.driver is required; allowed: "
+                f"{sorted(_ROLE_PROTOCOLS)}"
+            )
+        role = _required_string(variant, "driver", variant_where)
+        if role not in _ROLE_PROTOCOLS:
+            raise SpecError(
+                f"{variant_where}.driver: unknown driver role {role!r}; "
+                f"allowed: {sorted(_ROLE_PROTOCOLS)}"
+            )
+        roles[name] = cast("DriverRole", role)
+    return roles
+
+
+def _select_variant_role(
+    roles: Mapping[str, DriverRole], variant: str | None, where: str
+) -> DriverRole:
+    """The role the package selected.
+
+    A contract that declares no variants describes one way of running, and
+    the instrumented component drives it.
+    """
+
+    if not roles:
+        return "instrumentation"
+    if variant is None:
+        raise SpecError(
+            f"{where} is required; the contract declares variants "
+            f"{sorted(roles)}"
+        )
+    if variant not in roles:
+        raise SpecError(
+            f"{where}: unknown scenario contract variant {variant!r}; "
+            f"the contract declares {sorted(roles)}"
+        )
+    return roles[variant]
 
 
 def _parse_action(value: object, where: str) -> Mapping[str, object]:
@@ -595,7 +672,13 @@ def _parse_scenario(
             "scenario, e.g. 'otel-conformance-python <scenario>.py'"
         )
     parsed_run = (
-        _parse_scenario_run(scenario["run"], f"{where}.run")
+        ScenarioRunSpec(
+            _parse_scenario_run(
+                scenario["run"],
+                f"{where}.run",
+                lifecycle="a scenario declared here is always one-shot",
+            )
+        )
         if run_spec is None
         else run_spec
     )
@@ -666,6 +749,7 @@ def _list_contract_scenarios(
     directory: Path,
     variant: str | None,
     variant_where: str,
+    roles: Mapping[str, DriverRole],
 ) -> Mapping[str, ScenarioSpec]:
     contract = _require_mapping(document or {}, str(path))
     entries = _require_list(contract.get("scenarios"), f"{path}.scenarios")
@@ -686,6 +770,10 @@ def _list_contract_scenarios(
         expectation_where = f"{where}.expect"
         telemetry_keys = set(expect) & set(_SCENARIO_CONTRACT_KEYS)
         variant_keys = set(expect) - set(_SCENARIO_CONTRACT_KEYS)
+        if roles:
+            _check_variant_expectations(
+                roles, telemetry_keys, variant_keys, expectation_where
+            )
         if variant is not None and variant in expect:
             expectation_where = f"{expectation_where}.{variant}"
             expect = _require_mapping(expect[variant], expectation_where)
@@ -727,6 +815,37 @@ def _list_contract_scenarios(
             "the contract has no variant expectations"
         )
     return parsed
+
+
+def _check_variant_expectations(
+    roles: Mapping[str, DriverRole],
+    telemetry_keys: set[str],
+    variant_keys: set[str],
+    where: str,
+) -> None:
+    """Every declared variant expects something, and nothing else does.
+
+    One catalog of actions serves every variant, so a scenario that covers
+    one side and not the other would leave a package selecting the other
+    side silently unjudged.
+    """
+
+    if telemetry_keys:
+        raise SpecError(
+            f"{where}: expectations must be nested under a declared variant "
+            f"{sorted(roles)}, got {sorted(telemetry_keys)}"
+        )
+    undeclared = sorted(variant_keys - set(roles))
+    if undeclared:
+        raise SpecError(
+            f"{where}: expectations for undeclared variant(s) {undeclared}; "
+            f"the contract declares {sorted(roles)}"
+        )
+    missing = sorted(set(roles) - variant_keys)
+    if missing:
+        raise SpecError(
+            f"{where}: no expectations for declared variant(s) {missing}"
+        )
 
 
 def _merge_scenarios(
@@ -826,18 +945,36 @@ def load_spec(directory: Path) -> PackageSpec:
             if "scenario_contract_variant" in document
             else None
         )
+        contract = _require_mapping(
+            cast("object", contract_document), str(contract_path)
+        )
+        _check_keys(
+            contract,
+            ("description", "variants", "readiness", "scenarios"),
+            str(contract_path),
+        )
+        variant_roles = _parse_contract_variants(contract, contract_path)
+        role = _select_variant_role(
+            variant_roles, variant, f"{path}.scenario_contract_variant"
+        )
         parsed_scenarios = _list_contract_scenarios(
             cast("object", contract_document),
             contract_path,
-            _parse_scenario_run(
-                document["scenario_run"], f"{path}.scenario_run"
+            ScenarioRunSpec(
+                _parse_scenario_run(
+                    document["scenario_run"],
+                    f"{path}.scenario_run",
+                    lifecycle=(
+                        "the process lifecycle follows from the selected "
+                        "contract variant's driver role"
+                    ),
+                ),
+                _ROLE_PROTOCOLS[role],
             ),
             directory,
             variant,
             f"{path}.scenario_contract_variant",
-        )
-        contract = _require_mapping(
-            cast("object", contract_document), str(contract_path)
+            variant_roles,
         )
         readiness_value = contract.get("readiness")
         if readiness_value is None:
