@@ -51,6 +51,12 @@ class HttpClientWorkloadTest {
   }
 
   @Test
+  void aNullResponseBodyDoesNotFailTheScenario() throws Exception {
+    HttpClientWorkload.drive(
+        BASE_URL, (method, url, body) -> new Response(200, null), HttpContract.request(0));
+  }
+
+  @Test
   void aBlankBaseUrlIsRefusedBeforeAnythingIsSent() {
     assertThrows(
         IllegalArgumentException.class,

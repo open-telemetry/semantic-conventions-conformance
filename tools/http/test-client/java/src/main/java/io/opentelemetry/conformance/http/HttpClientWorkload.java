@@ -56,6 +56,9 @@ public final class HttpClientWorkload {
   }
 
   private static String abbreviate(String value) {
+    if (value == null) {
+      return "null";
+    }
     String singleLine = value.replace('\r', ' ').replace('\n', ' ');
     return singleLine.length() <= 60 ? singleLine : singleLine.substring(0, 60);
   }
