@@ -10,6 +10,9 @@ opentelemetry = "1.65.0"
 opentelemetry-instrumentation = "2.31.1"
 opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 postgresql = "42.7.13"
+r2dbc-postgresql = "1.1.2.RELEASE"
+r2dbc-spi = "1.0.0.RELEASE"
+reactor = "3.8.7"
 
 [libraries]
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
@@ -18,6 +21,10 @@ opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref
 opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
 opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
 opentelemetry-instrumentation-jdbc = { module = "io.opentelemetry.instrumentation:opentelemetry-jdbc" }
+opentelemetry-instrumentation-r2dbc = { module = "io.opentelemetry.instrumentation:opentelemetry-r2dbc-1.0" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "r2dbc-postgresql" }
+r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc-spi" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
