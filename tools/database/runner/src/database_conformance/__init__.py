@@ -22,6 +22,7 @@ from opentelemetry.conformance import (
 
 from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
+from ._hbase import HBase1, HBase2
 from ._mariadb import MariaDB
 from ._postgres import Postgres
 
@@ -35,6 +36,8 @@ DOMAIN = Domain(
 )
 
 _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
+    "hbase-1": HBase1,
+    "hbase-2": HBase2,
     "mariadb": MariaDB,
     "postgresql": Postgres,
 }
