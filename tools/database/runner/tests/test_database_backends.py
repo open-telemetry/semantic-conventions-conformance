@@ -13,9 +13,10 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _mariadb, _postgres, _sql_server
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
+from database_conformance._sql_server import SQL_SERVER_IMAGE, SQLServer
 
 
 @dataclass
@@ -91,7 +92,15 @@ def install_stub(
 
 
 @pytest.mark.parametrize(
-    ("module", "backend_type", "port", "expected_environment"),
+    (
+        "module",
+        "backend_type",
+        "port",
+        "expected_environment",
+        "expected_user",
+        "expected_password",
+        "expected_schema_environment",
+    ),
     [
         (
             _postgres,
@@ -102,6 +111,9 @@ def install_stub(
                 "POSTGRES_USER": "conformance",
                 "POSTGRES_PASSWORD": "conformance",
             },
+            "conformance",
+            "conformance",
+            {"PGPASSWORD": "conformance"},
         ),
         (
             _mariadb,
@@ -113,15 +125,34 @@ def install_stub(
                 "MARIADB_PASSWORD": "conformance",
                 "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
             },
+            "conformance",
+            "conformance",
+            {"MYSQL_PWD": "conformance"},
+        ),
+        (
+            _sql_server,
+            SQLServer,
+            1433,
+            {
+                "ACCEPT_EULA": "Y",
+                "MSSQL_PID": "Developer",
+                "MSSQL_SA_PASSWORD": "Conformance1!",
+            },
+            "sa",
+            "Conformance1!",
+            {"SQLCMDPASSWORD": "Conformance1!"},
         ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB],
+    backend_type: type[Postgres] | type[MariaDB] | type[SQLServer],
     port: int,
     expected_environment: dict[str, str],
+    expected_user: str,
+    expected_password: str,
+    expected_schema_environment: dict[str, str],
 ) -> None:
     container = StubContainer(port=port)
     install_stub(monkeypatch, module, container)
@@ -131,8 +162,8 @@ def test_starts_initializes_publishes_and_removes_database(
             "DATABASE_HOST": "127.0.0.1",
             "DATABASE_PORT": "32768",
             "DATABASE_NAME": "conformance",
-            "DATABASE_USER": "conformance",
-            "DATABASE_PASSWORD": "conformance",
+            "DATABASE_USER": expected_user,
+            "DATABASE_PASSWORD": expected_password,
         }
 
     assert container.started
@@ -146,6 +177,7 @@ def test_starts_initializes_publishes_and_removes_database(
     assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
+    assert container.exec_config.environment == expected_schema_environment
 
 
 def test_start_failure_cleans_up_the_container(
@@ -193,6 +225,24 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"Incorrect syntax"),
+        port=1433,
+    )
+    install_stub(monkeypatch, _sql_server, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Incorrect syntax.*ready to accept connections",
+    ):
+        SQLServer().start()
+
+    assert container.stopped
+
+
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -218,6 +268,11 @@ def test_the_image_is_pinned_by_digest() -> None:
     assert separator == "@"
     assert digest.startswith("sha256:")
 
+    name, separator, digest = SQL_SERVER_IMAGE.partition("@")
+    assert name == "mcr.microsoft.com/mssql/server:2025-CU8-ubuntu-24.04"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -236,3 +291,11 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("sql_server.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE TABLE [conformance].[items]" in schema
+    assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
