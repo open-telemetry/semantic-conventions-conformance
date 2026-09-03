@@ -1,0 +1,26 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: redis
+instrumented_library: redisson
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+scenario_contract: ../../../../contracts/redis-redisson.yaml
+
+env:
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:redis:redisson:opentelemetry-javaagent
+
+scenarios:
+  set_get:
+    run: otel-conformance-java run --agent shared:redis:redisson:opentelemetry-javaagent RedissonJavaagentScenario set_get
+  batch:
+    run: otel-conformance-java run --agent shared:redis:redisson:opentelemetry-javaagent RedissonJavaagentScenario batch
+  error:
+    run: otel-conformance-java run --agent shared:redis:redisson:opentelemetry-javaagent RedissonJavaagentScenario error
