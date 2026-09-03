@@ -136,7 +136,8 @@ def _parser(prog: str) -> argparse.ArgumentParser:
         type=Path,
         metavar="DIR",
         help=(
-            "one raw weaver report per scenario (default "
+            "normalized scenario captures and one aggregate Weaver report "
+            "(default "
             f"<DIRECTORY>/{DEFAULT_REPORT_DIR})"
         ),
     )
@@ -318,7 +319,6 @@ def _run(
     run_data_command: Callable[[Path, PackageSpec], object],
 ) -> bool:
     """Run the requested scenarios; True if any of them fell short."""
-    failed = False
     with session(
         args.directory,
         report_dir=args.report_dir,
@@ -353,30 +353,38 @@ def _run(
                 "bold",
             )
         )
-        for name in args.scenarios or opened.spec.scenarios:
-            report = opened.run(name)
-            # --report-only downgrades violations to warnings; a scenario that
-            # crashed or missed what it declared still fails.
-            violation_mark = _WARN if args.report_only else _FAIL
-            if report.failures or (
-                report.violations and violation_mark is _FAIL
-            ):
+        opened.run_all(args.scenarios or opened.spec.scenarios)
+        package = opened.finalize()
+
+        failed = False
+        violation_mark = _WARN if args.report_only else _FAIL
+        for report in package.scenarios:
+            if report.failures:
                 failed = True
                 _status(_FAIL, f"scenario: {report.name}, status: FAIL")
-            elif report.violations:
-                _status(_WARN, f"scenario: {report.name}, status: WARN")
             else:
                 _status(_OK, f"scenario: {report.name}, status: ok")
             _findings(_FAIL, "Failures", report.failures)
-            _findings(violation_mark, "Violations", report.violations)
-            if report.violations and violation_mark is _FAIL:
-                print(
-                    _paint(
-                        "  declare them under expected_violations with a "
-                        "reason, or fix them",
-                        "dim",
-                    )
+
+        live_check_failed = bool(package.failures) or bool(
+            package.violations and violation_mark is _FAIL
+        )
+        if live_check_failed:
+            failed = True
+            _status(_FAIL, "package live-check: status: FAIL")
+        elif package.violations:
+            _status(_WARN, "package live-check: status: WARN")
+        else:
+            _status(_OK, "package live-check: status: ok")
+        _findings(_FAIL, "Live-check failures", package.failures)
+        _findings(violation_mark, "Live-check violations", package.violations)
+        if package.violations and violation_mark is _FAIL:
+            print(
+                _paint(
+                    "  declare expected violations with a reason, or fix them",
+                    "dim",
                 )
+            )
     return failed
 
 

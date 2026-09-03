@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import socket
 import subprocess
@@ -15,18 +16,19 @@ import time
 from pathlib import Path
 
 import pytest
-import yaml
 
 import otel_http_test_client.__main__ as driver
 from otel_http_test_client import (
-    CONTRACT,
-    EXCHANGES,
+    ACTION_VARIABLE,
+    ACTIONS_VARIABLE,
     PORT_VARIABLE,
-    REQUESTS,
-    SCENARIO_INDEX_VARIABLE,
+    PROTOCOL_VARIABLE,
     ContractError,
     Exchange,
+    _action_table,
     _carries_the_contracts_body,
+    _decode_action_table,
+    _exchange_for,
     client_headers,
     drive,
     drive_async,
@@ -40,6 +42,15 @@ from otel_http_test_client import (
     wait_for_port,
 )
 from otel_http_test_client.__main__ import main
+
+EXCHANGES = driver._DRIVER_EXCHANGES
+REQUESTS = EXCHANGES[1:]
+
+
+@pytest.fixture(autouse=True)
+def runner_action_table(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(ACTIONS_VARIABLE, driver._canonical_action_table())
+
 
 # A server scenario, in the language these tools are written in: bind the port
 # the driver chose, answer the shared exchanges, stop when standard input
@@ -115,6 +126,68 @@ def app(environ, start_response):
 
 serve(lambda: app)
 print(json.dumps(SEEN), file=sys.stderr)
+"""
+
+# A measured server that records the persistent driver's requests after EOF.
+_PERSISTENT_SCENARIO = """
+import json
+import os
+import sys
+import threading
+from pathlib import Path
+
+from otel_http_test_client import CONTENT_TYPE, respond, serve
+
+SEEN = []
+
+
+def app(environ, start_response):
+    method = environ["REQUEST_METHOD"]
+    path = environ.get("RAW_URI", environ["PATH_INFO"])
+    length = int(environ.get("CONTENT_LENGTH") or 0)
+    request_body = environ["wsgi.input"].read(length).decode() or None
+    SEEN.append(
+        {
+            "method": method,
+            "path": path,
+            "headers": sorted(
+                key[5:].replace("_", "-").lower()
+                for key in environ
+                if key.startswith("HTTP_")
+            ),
+        }
+    )
+    status, text = respond(method, path, request_body)
+    if os.environ.get("BAD_RESPONSE") == path:
+        text = '{"wrong": true}'
+    body = text.encode()
+    start_response(
+        f"{status} Status",
+        [
+            ("Content-Type", CONTENT_TYPE),
+            ("Content-Length", str(len(body))),
+        ],
+    )
+    if path == "/health" and os.environ.get("EXIT_AFTER_HEALTH"):
+        threading.Timer(0.2, lambda: os._exit(7)).start()
+    return [body]
+
+
+print("inherited child diagnostic", file=sys.stderr, flush=True)
+serve(lambda: app)
+Path(sys.argv[1]).write_text(
+    json.dumps(
+        {
+            "requests": SEEN,
+            "actions": json.loads(
+                os.environ["OTEL_CONFORMANCE_SCENARIO_ACTIONS"]
+            ),
+            "port": os.environ["OTEL_HTTP_SCENARIO_PORT"],
+        }
+    ),
+    encoding="utf-8",
+)
+sys.exit(int(os.environ.get("CHILD_EXIT_CODE", "0")))
 """
 
 # A scenario command that is a launcher rather than the server itself: it
@@ -215,6 +288,102 @@ def _drive(scenario: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _start_persistent_driver(
+    tmp_path: Path, **environment: str
+) -> tuple[subprocess.Popen[str], Path]:
+    """Start the driver the way the runner does: no flag, just the variable."""
+
+    scenario = tmp_path / "persistent_scenario.py"
+    scenario.write_text(_PERSISTENT_SCENARIO, encoding="utf-8")
+    result = tmp_path / "persistent-result.json"
+    env = {**os.environ, PROTOCOL_VARIABLE: "jsonl-v1", **environment}
+    process = subprocess.Popen(  # noqa: S603
+        [
+            sys.executable,
+            "-m",
+            "otel_http_test_client",
+            "--serve",
+            sys.executable,
+            str(scenario),
+            str(result),
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        env=env,
+    )
+    return process, result
+
+
+def _envelope(record: dict[str, object]) -> dict[str, object]:
+    stamps = {"started_unix_nano", "completed_unix_nano"}
+    return {
+        key: value for key, value in record.items() if key not in stamps
+    }
+
+
+def _read_protocol(process: subprocess.Popen[str]) -> dict[str, object]:
+    assert process.stdout is not None
+    line = process.stdout.readline()
+    assert line, (
+        f"driver exited before a protocol record with {process.poll()}: "
+        f"{process.stderr.read() if process.stderr is not None else ''}"
+    )
+    record = json.loads(line)
+    assert isinstance(record, dict)
+    return record
+
+
+def _send_protocol(
+    process: subprocess.Popen[str], record: object
+) -> dict[str, object]:
+    assert process.stdin is not None
+    line = record if isinstance(record, str) else json.dumps(record)
+    process.stdin.write(f"{line}\n")
+    process.stdin.flush()
+    return _read_protocol(process)
+
+
+def _action_record(exchange: Exchange, sequence: int) -> dict[str, object]:
+    request_document: dict[str, object] = {
+        "method": exchange.method,
+        "path": exchange.path,
+    }
+    if exchange.body is not None:
+        request_document["body"] = exchange.body
+    return {
+        "version": "jsonl-v1",
+        "type": "action",
+        "sequence": sequence,
+        "scenario": f"{sequence - 1:04d}",
+        "action": {
+            "request": request_document,
+            "response": {
+                "status": exchange.status,
+                "body": exchange.response_body,
+            },
+        },
+    }
+
+
+def _action_json(exchange: Exchange) -> str:
+    return json.dumps(_action_record(exchange, 1)["action"])
+
+
+def _finish_persistent_driver(
+    process: subprocess.Popen[str],
+) -> tuple[dict[str, object], str]:
+    assert process.stdin is not None
+    assert process.stderr is not None
+    process.stdin.close()
+    stopped = _read_protocol(process)
+    stderr = process.stderr.read()
+    process.wait(timeout=30)
+    return stopped, stderr
+
+
 def _launched(tmp_path: Path, source: str) -> list[str]:
     """A scenario command whose real server is its child, not itself."""
     launcher = tmp_path / "launcher.py"
@@ -248,17 +417,10 @@ def _stopped_answering(port_file: Path, timeout: float = 30.0) -> bool:
 
 
 class TestTheContract:
-    def test_it_is_read_from_the_shared_file(self) -> None:
-        assert CONTRACT.name == "contract.yaml"
-        declared = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
-        assert declared["description"]
-        scenarios = declared["scenarios"]
-        assert len(REQUESTS) == len(scenarios)
+    def test_the_complete_runner_table_includes_readiness(self) -> None:
         assert len(REQUESTS) == len(EXCHANGES) - 1
-        assert all(
-            set(entry) == {"description", "action", "expect"}
-            for entry in scenarios
-        )
+        assert EXCHANGES[0].readiness
+        assert all(not exchange.readiness for exchange in REQUESTS)
 
     def test_every_request_has_a_description(self) -> None:
         assert all(exchange.description for exchange in EXCHANGES)
@@ -315,8 +477,8 @@ class TestTheContract:
             seen.append(f"{method} {url}")
             return respond(method, url.removeprefix("http://server"), body)
 
-        for index in range(len(REQUESTS)):
-            monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, str(index))
+        for request_exchange in REQUESTS:
+            monkeypatch.setenv(ACTION_VARIABLE, _action_json(request_exchange))
             drive_selected("http://server", send)
 
         assert seen == [
@@ -335,8 +497,8 @@ class TestTheContract:
             seen.append(f"{method} {url}")
             return respond(method, url.removeprefix("http://server"), body)
 
-        for index in range(len(REQUESTS)):
-            monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, str(index))
+        for request_exchange in REQUESTS:
+            monkeypatch.setenv(ACTION_VARIABLE, _action_json(request_exchange))
             asyncio.run(drive_selected_async("http://server", send))
 
         assert seen == [
@@ -344,20 +506,64 @@ class TestTheContract:
             for exchange in REQUESTS
         ]
 
-    def test_request_body_is_the_only_response_placeholder(self) -> None:
-        placeholders = re.findall(
-            r"\$\{[^}]+}", CONTRACT.read_text(encoding="utf-8")
+    def test_each_singular_action_selects_one_independent_request(
+        self,
+    ) -> None:
+        selected = [
+            scenario_request(_action_json(request)) for request in REQUESTS
+        ]
+        assert [
+            (request.method, request.path, request.body, request.status)
+            for request in selected
+        ] == [
+            (request.method, request.path, request.body, request.status)
+            for request in REQUESTS
+        ]
+
+    def test_missing_and_malformed_action_variables_say_which_one(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv(ACTION_VARIABLE, raising=False)
+        with pytest.raises(
+            RuntimeError, match=f"{ACTION_VARIABLE} is not set"
+        ):
+            scenario_request()
+        monkeypatch.setenv(ACTION_VARIABLE, "{")
+        with pytest.raises(RuntimeError, match="malformed JSON"):
+            scenario_request()
+
+    def test_unknown_action_fields_are_rejected(self) -> None:
+        action = json.loads(_action_json(REQUESTS[0]))
+        action["extra"] = True
+        with pytest.raises(RuntimeError, match="unknown field"):
+            scenario_request(json.dumps(action))
+
+    def test_repeated_lookups_reuse_one_parsed_table(self) -> None:
+        """A server answers every request from this table.
+
+        Parsing it per request would charge the measured process on the very
+        path its instrumentation is timing.
+        """
+
+        first = _action_table()
+
+        assert _action_table() is first
+        assert _exchange_for("GET", "/users/123") is first[1]
+        assert _decode_action_table(driver._canonical_action_table()) is not (
+            first
         )
 
-        assert placeholders
-        assert set(placeholders) == {"${requestBody}"}
-
-    def test_each_ordinal_selects_one_independent_request(self) -> None:
-        assert [scenario_request(index) for index in range(len(REQUESTS))] == [
-            *REQUESTS
-        ]
-        with pytest.raises(RuntimeError, match="selects no"):
-            scenario_request(len(REQUESTS))
+    def test_missing_action_table_says_which_variable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv(ACTIONS_VARIABLE)
+        with pytest.raises(
+            RuntimeError, match=f"{ACTIONS_VARIABLE} is not set"
+        ):
+            respond("GET", "/health")
+        monkeypatch.setenv(ACTIONS_VARIABLE, "{")
+        with pytest.raises(RuntimeError, match="malformed JSON"):
+            respond("GET", "/health")
 
 
 class TestClientWorkloads:
@@ -390,14 +596,14 @@ class TestClientWorkloads:
     def test_a_response_outside_the_contract_does_not_fail_the_scenario(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
+        monkeypatch.setenv(ACTION_VARIABLE, _action_json(REQUESTS[0]))
 
         drive_selected("http://server", lambda *_args: (599, "not json"))
 
     def test_the_async_client_does_not_validate_the_response(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
+        monkeypatch.setenv(ACTION_VARIABLE, _action_json(REQUESTS[0]))
 
         async def send(*_args: object) -> tuple[int, str]:
             return 599, "not json"
@@ -405,7 +611,7 @@ class TestClientWorkloads:
         asyncio.run(drive_selected_async("http://server", send))
 
     def test_json_numbers_do_not_stand_in_for_booleans(self) -> None:
-        exchange = scenario_request(2)
+        exchange = scenario_request(_action_json(REQUESTS[2]))
 
         with pytest.raises(ContractError, match="contract's request answers"):
             verify(
@@ -688,10 +894,232 @@ class TestDrivingAServerScenario:
         assert "ContractError" in completed.stderr
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32",
-    reason="no killable process group, as in the runner's own server teardown",
-)
+class TestPersistentServerDriving:
+    def test_protocol_frames_each_request_and_keeps_readiness_isolated(
+        self, tmp_path: Path
+    ) -> None:
+        started = time.time_ns()
+        process, result_path = _start_persistent_driver(tmp_path)
+
+        ready = _read_protocol(process)
+        assert _envelope(ready) == {
+            "sequence": 0,
+            "type": "ready",
+            "version": "jsonl-v1",
+        }
+        responses = [
+            _send_protocol(process, _action_record(exchange, sequence))
+            for sequence, exchange in enumerate(REQUESTS, start=1)
+        ]
+        stopped, stderr = _finish_persistent_driver(process)
+
+        assert [_envelope(response) for response in responses] == [
+            {
+                "sequence": sequence,
+                "type": "action_complete",
+                "version": "jsonl-v1",
+            }
+            for sequence in range(1, 6)
+        ]
+        # Each exchange is stamped where the driver sent it and where it saw
+        # the answer, so the runner never judges an aggregation interval by
+        # when it read the record. They only ever move forward.
+        stamps = [
+            stamp
+            for record in (ready, *responses)
+            for stamp in (
+                record["started_unix_nano"],
+                record["completed_unix_nano"],
+            )
+        ]
+        assert all(isinstance(stamp, int) for stamp in stamps)
+        assert stamps == sorted(stamps)
+        assert started < stamps[0] and stamps[-1] <= time.time_ns()
+        assert stopped == {
+            "sequence": 6,
+            "type": "stopped",
+            "version": "jsonl-v1",
+        }
+        assert process.returncode == 0
+        recorded = json.loads(result_path.read_text(encoding="utf-8"))
+        requests = recorded["requests"]
+        assert [item["path"] for item in requests] == [
+            "/health",
+            *[exchange.path for exchange in REQUESTS],
+        ]
+        assert len(requests) == 1 + len(REQUESTS)
+        # Readiness and every measured request carry the fixed client headers
+        # and nothing that propagates context. A traceparent the driver
+        # invented would make the measured server the child of a remote
+        # parent, changing the root of the trace, the sampling decision it
+        # inherits, and whether it extracts context at all.
+        propagation = {"traceparent", "tracestate", "baggage", "b3"}
+        assert all(
+            propagation.isdisjoint(item["headers"]) for item in requests
+        )
+        assert all("user-agent" in item["headers"] for item in requests)
+        assert recorded["actions"] == json.loads(
+            driver._canonical_action_table()
+        )
+        assert len(recorded["actions"]) == len(EXCHANGES)
+        assert recorded["actions"][0]["request"]["path"] == "/health"
+        assert recorded["port"].isdigit()
+        assert "inherited child diagnostic" in stderr
+        assert process.stdout is not None
+        assert process.stdout.read() == ""
+
+    def test_response_drift_emits_action_error_before_shutdown(
+        self, tmp_path: Path
+    ) -> None:
+        exchange = REQUESTS[0]
+        process, result_path = _start_persistent_driver(
+            tmp_path, BAD_RESPONSE=exchange.path
+        )
+        assert _read_protocol(process)["type"] == "ready"
+
+        response = _send_protocol(
+            process, _action_record(exchange, 1)
+        )
+        stopped, _stderr = _finish_persistent_driver(process)
+
+        assert response["type"] == "action_error"
+        assert response["sequence"] == 1
+        assert "ContractError" in str(response["error"])
+        assert "answers" in str(response["error"])
+        assert stopped["type"] == "stopped"
+        assert stopped["sequence"] == 2
+        recorded = json.loads(result_path.read_text(encoding="utf-8"))
+        assert [item["path"] for item in recorded["requests"]] == [
+            "/health",
+            exchange.path,
+        ]
+
+    def test_an_action_that_declares_headers_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        """No action can declare a header, so none can be stripped.
+
+        The driver sends exactly what the action describes. An action that
+        tried to add a header would be silently ignored otherwise, which is
+        the one way a declared ``traceparent`` could go missing.
+        """
+
+        exchange = REQUESTS[0]
+        request_document: dict[str, object] = {
+            "method": exchange.method,
+            "path": exchange.path,
+            "headers": {"traceparent": f"00-{'0' * 32}-{'0' * 16}-01"},
+        }
+        if exchange.body is not None:
+            request_document["body"] = exchange.body
+        record = {
+            "version": "jsonl-v1",
+            "type": "action",
+            "sequence": 1,
+            "scenario": "0000",
+            "action": {
+                "request": request_document,
+                "response": {
+                    "status": exchange.status,
+                    "body": exchange.response_body,
+                },
+            },
+        }
+        process, result_path = _start_persistent_driver(tmp_path)
+        assert _read_protocol(process)["type"] == "ready"
+
+        response = _send_protocol(process, record)
+        stopped, _stderr = _finish_persistent_driver(process)
+
+        assert response["type"] == "action_error"
+        assert "unknown field(s): ['headers']" in str(response["error"])
+        assert stopped["type"] == "stopped"
+        recorded = json.loads(result_path.read_text(encoding="utf-8"))
+        assert [item["path"] for item in recorded["requests"]] == ["/health"]
+
+    @pytest.mark.parametrize(
+        "invalid, expected",
+        [
+            ("not json", "malformed jsonl-v1 action"),
+            (
+                _action_record(REQUESTS[0], 2),
+                "expected action sequence 1",
+            ),
+        ],
+    )
+    def test_invalid_input_fails_closed_without_an_external_action(
+        self, tmp_path: Path, invalid: object, expected: str
+    ) -> None:
+        process, result_path = _start_persistent_driver(tmp_path)
+        assert _read_protocol(process)["type"] == "ready"
+
+        response = _send_protocol(process, invalid)
+        assert response["type"] == "action_error"
+        assert response["sequence"] == 1
+        assert expected in str(response["error"])
+
+        assert process.stdin is not None
+        process.stdin.write(
+            json.dumps(_action_record(REQUESTS[0], 1)) + "\n"
+        )
+        process.stdin.flush()
+        stopped, _stderr = _finish_persistent_driver(process)
+
+        assert stopped["type"] == "stopped"
+        recorded = json.loads(result_path.read_text(encoding="utf-8"))
+        assert [item["path"] for item in recorded["requests"]] == ["/health"]
+
+    def test_eof_waits_for_child_and_returns_its_result(
+        self, tmp_path: Path
+    ) -> None:
+        process, result_path = _start_persistent_driver(
+            tmp_path, CHILD_EXIT_CODE="3"
+        )
+        assert _read_protocol(process)["type"] == "ready"
+
+        stopped, _stderr = _finish_persistent_driver(process)
+
+        assert stopped == {
+            "sequence": 1,
+            "type": "stopped",
+            "version": "jsonl-v1",
+        }
+        assert process.returncode == 3
+        assert result_path.exists()
+
+    def test_early_child_exit_is_an_action_error(self, tmp_path: Path) -> None:
+        process, _result_path = _start_persistent_driver(
+            tmp_path, EXIT_AFTER_HEALTH="1"
+        )
+        assert _read_protocol(process)["type"] == "ready"
+        time.sleep(0.5)
+
+        response = _send_protocol(
+            process, _action_record(REQUESTS[0], 1)
+        )
+        stopped, _stderr = _finish_persistent_driver(process)
+
+        assert response["type"] == "action_error"
+        assert "exited with 7 before the request" in str(response["error"])
+        assert stopped["type"] == "stopped"
+        assert process.returncode == 7
+
+    def test_readiness_response_is_validated_before_ready(
+        self, tmp_path: Path
+    ) -> None:
+        process, _result_path = _start_persistent_driver(
+            tmp_path, BAD_RESPONSE="/health"
+        )
+        assert process.stdout is not None
+        assert process.stderr is not None
+
+        stdout, stderr = process.communicate(timeout=30)
+
+        assert process.returncode != 0
+        assert stdout == ""
+        assert "ContractError" in stderr
+
+
 class TestStoppingWhatAScenarioStarted:
     """A scenario command is often a launcher, so killing it is not enough.
 
@@ -719,6 +1147,34 @@ class TestStoppingWhatAScenarioStarted:
 
         with pytest.raises(RuntimeError, match="did not exit within"):
             driver._serve_and_drive(_launched(tmp_path, _DEAF_SERVER))
+
+        assert _stopped_answering(tmp_path / "port")
+
+    def test_external_abort_takes_the_measured_process_tree_with_it(
+        self, tmp_path: Path
+    ) -> None:
+        command = _launched(tmp_path, _DEAF_SERVER)
+        process = subprocess.Popen(  # noqa: S603
+            [
+                sys.executable,
+                "-m",
+                "otel_http_test_client",
+                "--persistent",
+                "--serve",
+                *command,
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+        )
+        assert _read_protocol(process)["type"] == "ready"
+
+        process.terminate()
+        process.wait(timeout=30)
+        if process.stderr is not None:
+            process.stderr.read()
 
         assert _stopped_answering(tmp_path / "port")
 
@@ -770,6 +1226,59 @@ class TestTheCommandLine:
             main(["--serve"])
         assert "--serve requires COMMAND" in capsys.readouterr().err
 
+    def test_the_protocol_variable_alone_makes_a_run_persistent(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """No package repeats a flag for what its contract already decided."""
+
+        monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v1")
+        served: list[bool] = []
+        monkeypatch.setattr(
+            driver,
+            "_serve_and_drive",
+            lambda _command, *, persistent: served.append(persistent) or 0,
+        )
+
+        assert main(["--serve", "true"]) == 0
+        assert served == [True]
+
+    def test_an_unset_protocol_variable_leaves_a_manual_run_one_shot(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv(PROTOCOL_VARIABLE, raising=False)
+        served: list[bool] = []
+        monkeypatch.setattr(
+            driver,
+            "_serve_and_drive",
+            lambda _command, *, persistent: served.append(persistent) or 0,
+        )
+
+        assert main(["--serve", "true"]) == 0
+        assert served == [False]
+
+    def test_an_unknown_protocol_fails_before_a_server_is_started(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A runner this driver cannot answer must not be answered badly."""
+
+        monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v2")
+        monkeypatch.setattr(
+            driver,
+            "_serve_and_drive",
+            lambda *_args, **_kwargs: pytest.fail("the server was started"),
+        )
+
+        with pytest.raises(SystemExit, match="jsonl-v2"):
+            main(["--serve", "true"])
+
+    def test_a_driven_base_url_is_rejected(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v1")
+
+        with pytest.raises(SystemExit):
+            main(["http://127.0.0.1:1"])
+        assert "requires --serve COMMAND" in capsys.readouterr().err
 
 def test_the_port_variable_is_documented() -> None:
     """Every language's server scenarios read it, so it is part of the API."""
@@ -778,3 +1287,97 @@ def test_the_port_variable_is_documented() -> None:
     assert re.search(
         rf"\b{PORT_VARIABLE}\b", readme.read_text(encoding="utf-8")
     )
+
+
+class TestTheRunnerOwnedActionTable:
+    """The runner parses the contract; the driver only hands the table on."""
+
+    def test_it_reaches_the_scenario_exactly_as_it_arrived(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        table = json.dumps(
+            [
+                {
+                    "request": {"method": "GET", "path": "/custom/ready"},
+                    "response": {"status": 200, "body": '{"ready": true}'},
+                },
+                {
+                    "request": {"method": "GET", "path": "/custom/first"},
+                    "response": {"status": 201, "body": '{"created": 1}'},
+                },
+            ]
+        )
+        monkeypatch.setenv(ACTIONS_VARIABLE, table)
+        process, result = _start_persistent_driver(tmp_path)
+
+        ready = _read_protocol(process)
+        assert _envelope(ready) == {
+            "version": "jsonl-v1",
+            "type": "ready",
+            "sequence": 0,
+        }
+        exchange = Exchange(
+            "GET", "/custom/first", None, 201, '{"created": 1}', False, ""
+        )
+        complete = _send_protocol(
+            process, _action_record(exchange, 1)
+        )
+        assert complete["type"] == "action_complete", complete
+        _finish_persistent_driver(process)
+
+        received = json.loads(result.read_text(encoding="utf-8"))
+        assert json.dumps(received["actions"]) == table
+        assert [
+            request["path"] for request in received["requests"]
+        ] == ["/custom/ready", "/custom/first"]
+
+    def test_a_malformed_table_fails_before_the_scenario_starts(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv(ACTIONS_VARIABLE, "[]")
+        process, result = _start_persistent_driver(tmp_path)
+
+        assert process.stdout is not None
+        assert process.stderr is not None
+        assert process.stdout.read() == ""
+        assert "non-empty JSON array of actions" in process.stderr.read()
+        assert process.wait(timeout=30) != 0
+        assert not result.exists()
+
+    def test_a_served_run_drives_it_rather_than_the_packaged_contract(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """``--serve`` without ``--persistent`` is driven by the same table.
+
+        The scenario answers whatever table it was given, so driving the
+        packaged contract instead would send requests the server has no route
+        for — and would measure a package against exchanges it never declared.
+        """
+        monkeypatch.setenv(
+            ACTIONS_VARIABLE,
+            json.dumps(
+                [
+                    {
+                        "request": {"method": "GET", "path": "/custom/ready"},
+                        "response": {
+                            "status": 200,
+                            "body": '{"ready": true}',
+                        },
+                    },
+                    {
+                        "request": {"method": "GET", "path": "/custom/first"},
+                        "response": {
+                            "status": 201,
+                            "body": '{"created": 1}',
+                        },
+                    },
+                ]
+            ),
+        )
+
+        completed = _drive(_scenario(tmp_path))
+
+        assert completed.returncode == 0, completed.stderr
+        seen = json.loads(completed.stderr.strip().splitlines()[-1])
+        assert seen == ["GET /custom/ready", "GET /custom/first"]
+        assert "GET /custom/first -> 201" in completed.stdout

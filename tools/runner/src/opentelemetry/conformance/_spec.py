@@ -11,14 +11,27 @@ from __future__ import annotations
 
 import json
 import shlex
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Mapping, Sequence, cast
+from typing import Literal, Mapping, Sequence, cast
 
 import yaml
 
 SPEC_FILE = "conformance.yaml"
 _SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
+
+# Who initiates the action a scenario measures, declared once at the top of a
+# contract. ``instrumentation`` means the instrumented component does, which is
+# one action per process. ``runner`` means the runner drives the instrumented
+# component from outside, which is one process for the whole batch. Everything
+# else about a run follows from this, including the internal protocol a driven
+# process speaks.
+DriverRole = Literal["instrumentation", "runner"]
+
+_ROLE_PROTOCOLS: Mapping[str, "Literal['jsonl-v1'] | None"] = {
+    "instrumentation": None,
+    "runner": "jsonl-v1",
+}
 
 
 class SpecError(ValueError):
@@ -138,19 +151,32 @@ class ExpectedViolation:
 
 
 @dataclass(frozen=True)
+class ScenarioRunSpec:
+    """How the runner communicates with a scenario command.
+
+    ``protocol`` is not package configuration. It follows from the driver
+    role the scenario contract declares, and names the wire format the
+    runner and a driven process speak between themselves.
+    """
+
+    command: tuple[str, ...]
+    protocol: Literal["jsonl-v1"] | None = None
+
+    @property
+    def one_shot(self) -> bool:
+        """Whether each selected action starts a new process."""
+        return self.protocol is None
+
+
+@dataclass(frozen=True)
 class ScenarioSpec:
     """One scenario's expectations.
 
     ``spans``, ``metrics`` and ``events`` are ``None`` when the scenario
-    doesn't declare them, which means "not checked" — a scenario with no
-    expectations at all only has to run and stay free of semconv violations.
-    Declaring one makes its check exact.
-
-    ``expected_violations`` are this scenario's own and are checked both ways:
-    reported, they pass; no longer reported, the run says to remove them.
-    ``inherited_violations`` come from the package and only ever suppress —
-    a gap the package declares because it is everywhere shouldn't fail the one
-    scenario that happens not to reach it.
+    doesn't declare them, which means "not checked". Declaring one makes its
+    check exact. ``optional_metrics`` names what an implementation records
+    only for some of its actions: emitting one is never undeclared, and
+    never emitting it is never missing.
     """
 
     name: str
@@ -160,10 +186,16 @@ class ScenarioSpec:
     spans: tuple[SpanExpectation, ...] | None
     metrics: tuple[str, ...] | None
     events: tuple[str, ...] | None
-    expected_violations: tuple[ExpectedViolation, ...]
-    inherited_violations: tuple[ExpectedViolation, ...] = ()
     description: str = ""
     index: int | None = None
+    action: Mapping[str, object] | None = None
+    protocol: Literal["jsonl-v1"] | None = None
+    optional_metrics: tuple[str, ...] = ()
+
+    @property
+    def run_spec(self) -> ScenarioRunSpec:
+        """The command and its selected process protocol."""
+        return ScenarioRunSpec(self.run, self.protocol)
 
     @property
     def display_name(self) -> str:
@@ -249,7 +281,7 @@ class PackageSpec:
     server: ServerSpec
     setup: tuple[str, ...] | None
     scenarios: Mapping[str, ScenarioSpec]
-    # Also merged into every scenario as ``inherited_violations``.
+    action_table: tuple[Mapping[str, object], ...] = ()
     expected_violations: tuple[ExpectedViolation, ...] = ()
     # Which wrapper supplies the registry and the reduction (see
     # :mod:`._runners`). None means the caller supplies all available runners.
@@ -316,6 +348,77 @@ def _parse_command(value: object, where: str) -> tuple[str, ...]:
     if not command:
         raise SpecError(f"{where}: expected a non-empty command")
     return command
+
+
+def _parse_scenario_run(
+    value: object, where: str, *, lifecycle: str
+) -> tuple[str, ...]:
+    """The command that runs a scenario, and nothing else.
+
+    How the runner talks to that command is not declared here.
+    ``lifecycle`` says what decides it instead, which is the question an
+    author who reached for a ``protocol`` key was trying to answer.
+    """
+
+    if isinstance(value, Mapping):
+        run = cast("Mapping[str, object]", value)
+        raise SpecError(
+            f"{where}: expected a command string or list, got a mapping "
+            f"with key(s) {sorted(run)}; {lifecycle}"
+        )
+    return _parse_command(value, where)
+
+
+def _parse_contract_driver(
+    contract: Mapping[str, object], path: Path
+) -> DriverRole:
+    """Who drives the actions this contract describes.
+
+    A contract is self-contained: it says what one instrumented side emits,
+    and who initiates the exchange that produces it. A contract that says
+    nothing is driven by the instrumented component, which is what every
+    contract did before the role was written down.
+    """
+
+    if "driver" not in contract:
+        return "instrumentation"
+    where = f"{path}.driver"
+    role = _required_string(contract, "driver", str(path))
+    if role not in _ROLE_PROTOCOLS:
+        raise SpecError(
+            f"{where}: unknown driver role {role!r}; "
+            f"allowed: {sorted(_ROLE_PROTOCOLS)}"
+        )
+    return cast("DriverRole", role)
+
+
+def _parse_action(value: object, where: str) -> Mapping[str, object]:
+    action = _require_mapping(value, where)
+    if not action:
+        raise SpecError(f"{where}: expected a non-empty mapping")
+
+    def check_keys(entry: object, location: str) -> None:
+        if isinstance(entry, Mapping):
+            mapping = cast("Mapping[object, object]", entry)
+            for key, child in mapping.items():
+                if not isinstance(key, str):
+                    raise SpecError(
+                        f"{location}: action mapping keys must be strings"
+                    )
+                check_keys(child, f"{location}.{key}")
+        elif isinstance(entry, list):
+            items = cast("list[object]", entry)
+            for index, child in enumerate(items):
+                check_keys(child, f"{location}[{index}]")
+
+    check_keys(action, where)
+    try:
+        json.dumps(action, allow_nan=False)
+    except (TypeError, ValueError) as error:
+        raise SpecError(
+            f"{where}: action must be represented as JSON: {error}"
+        ) from error
+    return action
 
 
 def _parse_matcher(value: object, where: str) -> AttributeMatcher:
@@ -436,6 +539,65 @@ def _parse_server(value: object, where: str) -> ServerSpec:
     )
 
 
+def _parse_additional_metrics(
+    value: object, where: str
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Split the package's extra metrics into required and optional ones.
+
+    A bare name is recorded by every action, so it joins the exact check.
+    ``{name: ..., required: false}`` is recorded by only some of them —
+    a request body size, say — which no flat list of names can say.
+    """
+    required: list[str] = []
+    optional: list[str] = []
+    for index, item in enumerate(_require_list(value or [], where)):
+        position = f"{where}[{index}]"
+        if isinstance(item, str):
+            required.append(item)
+            continue
+        entry = _require_mapping(item, position)
+        _check_keys(entry, ("name", "required"), position)
+        name = _required_string(entry, "name", position)
+        is_required = entry.get("required", True)
+        if not isinstance(is_required, bool):
+            raise SpecError(f"{position}.required: expected a boolean")
+        (required if is_required else optional).append(name)
+    return tuple(required), tuple(optional)
+
+
+def _with_package_additions(
+    scenario: ScenarioSpec,
+    additional_metrics: Sequence[str],
+    optional_metrics: Sequence[str],
+    additional_spans: Sequence[SpanExpectation],
+) -> ScenarioSpec:
+    """Join what only this implementation emits onto one scenario.
+
+    A scenario that declares nothing of a kind stays unchecked, so nothing
+    the package adds turns an unchecked kind into a checked one.
+    """
+    metrics = (
+        scenario.metrics
+        if scenario.metrics is None or not additional_metrics
+        else tuple(sorted({*scenario.metrics, *additional_metrics}))
+    )
+    spans = (
+        scenario.spans
+        if scenario.spans is None or not additional_spans
+        else (*scenario.spans, *additional_spans)
+    )
+    return replace(
+        scenario,
+        metrics=metrics,
+        spans=spans,
+        optional_metrics=(
+            tuple(sorted({*scenario.optional_metrics, *optional_metrics}))
+            if scenario.metrics is not None
+            else scenario.optional_metrics
+        ),
+    )
+
+
 def _parse_string_list(value: object, where: str) -> tuple[str, ...]:
     if value is None:
         return ()
@@ -451,14 +613,15 @@ def _parse_scenario(
     directory: Path,
     where: str,
     *,
-    inherited: tuple[ExpectedViolation, ...] = (),
     description: str | None = None,
     index: int | None = None,
+    action: Mapping[str, object] | None = None,
+    run_spec: ScenarioRunSpec | None = None,
 ) -> ScenarioSpec:
     scenario = _require_mapping(value or {}, where)
     _check_keys(
         scenario,
-        ("env", "run", "spans", "metrics", "events", "expected_violations"),
+        ("env", "run", "spans", "metrics", "events"),
         where,
     )
     spans = (
@@ -466,30 +629,27 @@ def _parse_scenario(
         if "spans" in scenario
         else None
     )
-    violations = _require_list(
-        scenario.get("expected_violations") or [],
-        f"{where}.expected_violations",
-    )
-    if "run" not in scenario:
+    if "run" not in scenario and run_spec is None:
         raise SpecError(
             f"{where}: run is required — name the command that runs this "
             "scenario, e.g. 'otel-conformance-python <scenario>.py'"
         )
-    own = tuple(
-        _parse_violation(violation, f"{where}.expected_violations[{index}]")
-        for index, violation in enumerate(violations)
-    )
-    if clashing := {v.id for v in own} & {v.id for v in inherited}:
-        raise SpecError(
-            f"{where}.expected_violations: {sorted(clashing)} is already "
-            "declared for every scenario at the top level — remove one of "
-            "the two"
+    parsed_run = (
+        ScenarioRunSpec(
+            _parse_scenario_run(
+                scenario["run"],
+                f"{where}.run",
+                lifecycle="a scenario declared here is always one-shot",
+            )
         )
+        if run_spec is None
+        else run_spec
+    )
     return ScenarioSpec(
         name=name,
         directory=directory,
         env=_parse_env(scenario.get("env"), f"{where}.env"),
-        run=_parse_command(scenario["run"], f"{where}.run"),
+        run=parsed_run.command,
         spans=None
         if spans is None
         else tuple(
@@ -502,10 +662,10 @@ def _parse_scenario(
         events=_parse_string_list(scenario["events"], f"{where}.events")
         if "events" in scenario
         else None,
-        expected_violations=own,
-        inherited_violations=inherited,
         description=description or name,
         index=index,
+        action=action,
+        protocol=parsed_run.protocol,
     )
 
 
@@ -548,9 +708,8 @@ def _named_contract_scenarios(
 def _list_contract_scenarios(
     document: object,
     path: Path,
-    run: tuple[str, ...],
+    run: ScenarioRunSpec,
     directory: Path,
-    inherited: tuple[ExpectedViolation, ...],
 ) -> Mapping[str, ScenarioSpec]:
     contract = _require_mapping(document or {}, str(path))
     entries = _require_list(contract.get("scenarios"), f"{path}.scenarios")
@@ -563,22 +722,22 @@ def _list_contract_scenarios(
         entry = _require_mapping(value, where)
         _check_keys(entry, ("description", "action", "expect"), where)
         description = _required_string(entry, "description", where)
-        action = _require_mapping(entry.get("action"), f"{where}.action")
-        if not action:
-            raise SpecError(f"{where}.action: expected a non-empty mapping")
+        action = _parse_action(entry.get("action"), f"{where}.action")
         if "expect" not in entry:
             raise SpecError(f"{where}.expect is required")
-        expect = _require_mapping(entry["expect"], f"{where}.expect")
-        _check_keys(expect, _SCENARIO_CONTRACT_KEYS, f"{where}.expect")
+        expectation_where = f"{where}.expect"
+        expect = _require_mapping(entry["expect"], expectation_where)
+        _check_keys(expect, _SCENARIO_CONTRACT_KEYS, expectation_where)
         name = f"{index:04d}"
         parsed[name] = _parse_scenario(
             name,
-            {**expect, "run": list(run)},
+            expect,
             directory,
-            where,
-            inherited=inherited,
+            expectation_where,
             description=description,
             index=index,
+            action=action,
+            run_spec=run,
         )
     return parsed
 
@@ -620,6 +779,8 @@ def load_spec(directory: Path) -> PackageSpec:
             "server",
             "setup",
             "scenarios",
+            "additional_metrics",
+            "additional_spans",
             "expected_violations",
         ),
         str(path),
@@ -635,7 +796,7 @@ def load_spec(directory: Path) -> PackageSpec:
     local_scenarios = _require_mapping(
         document.get("scenarios") or {}, f"{path}.scenarios"
     )
-    inherited = tuple(
+    expected_violations = tuple(
         _parse_violation(violation, f"{path}.expected_violations[{index}]")
         for index, violation in enumerate(
             _require_list(
@@ -672,14 +833,59 @@ def load_spec(directory: Path) -> PackageSpec:
                 f"{path}: scenario_run is required for an indexed contract"
             )
         assert contract_path is not None
+        contract = _require_mapping(
+            cast("object", contract_document), str(contract_path)
+        )
+        _check_keys(
+            contract,
+            ("description", "driver", "readiness", "scenarios"),
+            str(contract_path),
+        )
+        role = _parse_contract_driver(contract, contract_path)
         parsed_scenarios = _list_contract_scenarios(
             cast("object", contract_document),
             contract_path,
-            _parse_command(document["scenario_run"], f"{path}.scenario_run"),
+            ScenarioRunSpec(
+                _parse_scenario_run(
+                    document["scenario_run"],
+                    f"{path}.scenario_run",
+                    lifecycle=(
+                        "the process lifecycle follows from the contract's "
+                        "driver role"
+                    ),
+                ),
+                _ROLE_PROTOCOLS[role],
+            ),
             directory,
-            inherited,
         )
+        readiness_value = contract.get("readiness")
+        if readiness_value is None:
+            action_table = ()
+        else:
+            readiness = _require_mapping(
+                readiness_value, f"{contract_path}.readiness"
+            )
+            _check_keys(
+                readiness,
+                ("description", "action"),
+                f"{contract_path}.readiness",
+            )
+            _required_string(
+                readiness, "description", f"{contract_path}.readiness"
+            )
+            action_table = (
+                _parse_action(
+                    readiness.get("action"),
+                    f"{contract_path}.readiness.action",
+                ),
+                *(
+                    scenario.action
+                    for scenario in parsed_scenarios.values()
+                    if scenario.action is not None
+                ),
+            )
     else:
+        action_table = ()
         if "scenario_run" in document:
             raise SpecError(
                 f"{path}: scenario_run requires an indexed contract"
@@ -700,9 +906,31 @@ def load_spec(directory: Path) -> PackageSpec:
                 scenario,
                 directory,
                 f"{path}.scenarios.{name}",
-                inherited=inherited,
             )
             for name, scenario in declared.items()
+        }
+
+    additional_metrics, optional_metrics = _parse_additional_metrics(
+        document.get("additional_metrics"), f"{path}.additional_metrics"
+    )
+    additional_spans = tuple(
+        _parse_span(span, f"{path}.additional_spans[{index}]")
+        for index, span in enumerate(
+            _require_list(
+                document.get("additional_spans") or [],
+                f"{path}.additional_spans",
+            )
+        )
+    )
+    if additional_metrics or optional_metrics or additional_spans:
+        parsed_scenarios = {
+            name: _with_package_additions(
+                scenario,
+                additional_metrics,
+                optional_metrics,
+                additional_spans,
+            )
+            for name, scenario in parsed_scenarios.items()
         }
 
     return PackageSpec(
@@ -723,8 +951,9 @@ def load_spec(directory: Path) -> PackageSpec:
         setup=_parse_command(document["setup"], f"{path}.setup")
         if "setup" in document
         else None,
-        expected_violations=inherited,
+        expected_violations=expected_violations,
         scenarios=parsed_scenarios,
+        action_table=action_table,
     )
 
 

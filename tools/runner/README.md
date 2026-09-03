@@ -1,9 +1,19 @@
 # opentelemetry-conformance
 
-Runs scenario programs, collects what they emit through
-[Weaver live-check](https://github.com/open-telemetry/weaver), and checks it
-against expectations declared in YAML. It carries no semantic conventions of
-its own — you tell it which registry and policies to validate against.
+Runs scenario programs and checks their telemetry against expectations declared
+in YAML and [Weaver live-check](https://github.com/open-telemetry/weaver). It
+carries no semantic conventions of its own. You tell it which registry and
+policies to validate against.
+
+One session owns one Weaver process for the whole package. Scenarios export to a
+stable local OTLP/gRPC capture endpoint, which assigns exports to the active
+window and forwards the same requests to Weaver. Exports outside a window are
+quarantined. The endpoint does not change between actions. Finalizing the
+package stops the endpoint accepting exports and waits for the calls it had
+already admitted, so nothing can arrive behind the quarantine check. The
+runner, rather than Weaver or the scenario, owns action boundaries and
+evaluates the per-scenario span, metric, and event assertions from captured
+OTLP.
 
 Not on PyPI yet — install it from a checkout: `pip install -e tools/runner`.
 A Python scenario also wants [`tools/python`](../python), the launcher its
@@ -108,55 +118,75 @@ From the command line:
 ```sh
 otel-conformance path/to/directory --registry …/model --policies …/policies
 otel-conformance path/to/directory --scenario inference   # just this one
+pytest path/to/directory
 ```
 
 Each scenario prints one line — green `✔`, yellow `▲` for a violation under
 `--report-only`, red `✖` — with the findings under it. Colour follows
 `NO_COLOR`/`FORCE_COLOR` and is off when stdout isn't a terminal.
 
+Pytest collects each `conformance.yaml` as one `package` item. All of its
+scenarios, its one Weaver process, finalization, and data reduction stay in that
+item, so xdist cannot split a package lifecycle across workers.
+
 Or as a library, when you want the results rather than an exit code:
 
 ```python
 with conformance_session(directory) as session:
-    report = session.run("inference")
-    print(report.failures)
+    scenario = session.run("inference")
+    package = session.finalize()
+    print(scenario.failures, package.violations)
 ```
 
-Anything the scenario got wrong — a mismatch, a crash, a command that won't
-start or overruns — lands in `report.failures` rather than raising, and what
-it emitted that departs from the conventions lands in `report.violations`,
-kept apart because callers weigh the two differently. The weaver report is
-written out before anything is checked. (Problems with the harness itself
-still raise: an unknown scenario name, a registry that won't load, a missing
-`weaver` binary.) Deciding what a finding means is the caller's job, which is
-what makes two things easy:
+Anything the scenario got wrong, including a telemetry mismatch, crash, command
+that won't start, or timeout, lands in `scenario.failures`. `finalize()` drains
+and closes capture, stops Weaver once, and returns a `PackageReport` containing
+the completed scenario reports, package failures, unexpected violations, and
+Weaver's aggregate report. Repeated calls return the same report. Stale
+`expected_violations` declarations land in `package.failures`. Problems with the
+harness itself still raise.
 
 - **Collecting data without failing.** Run everything and report semconv
   violations as warnings — `--report-only`. Useful for measuring attribute
   coverage across a whole repo, or for checking implementations you don't own.
-  It only softens `report.violations`; a scenario that crashed, missed a
+  It only softens `package.violations`; a scenario that crashed, missed a
   declared span or broke `--data-command` still exits 1, because then there is
   nothing to measure.
 - **Bringing up a new scenario.** Declare it with no expectations, run it,
   read the dumped report, and write the expectations from what you see.
 
-A run writes two things, configured independently: one raw weaver report per
-scenario under `--report-dir`, and one reduction over the whole run to
-`--data-file` (`data.json` in the directory by default, and committed).
+A run writes two things, configured independently: a report bundle under
+`--report-dir`, and one reduction over the whole run to `--data-file`
+(`data.json` in the directory by default, and committed).
 
-A scenario's report is replaced each time that scenario runs, and left alone
-otherwise — so running one scenario doesn't discard what the others last
-reported. The default path sits inside the conformance directory, so sibling
-implementations, which run the same scenario names, don't collide — and so a
-run lands in the same place however it was invoked:
+A scenario's capture is replaced when that scenario runs and left alone
+otherwise. A filtered run therefore preserves the other diagnostic captures,
+but does not rewrite `data.json`. The default path sits inside the conformance
+directory, so sibling implementations with the same scenario names do not
+collide:
 
+```text
+<conformance directory>/output/reports/
+    scenarios/<scenario>.json
+    weaver.json
+    readiness.json
+    unwindowed.json
 ```
-<conformance directory>/output/weaver-reports/<scenario>.json
-```
 
-The reduction is the coverage this package computes — for each span a scenario
-declares, the attributes it actually carried, plus the metrics and events
-seen, plus what weaver said about them:
+Files under `scenarios/` contain normalized OTLP exports captured while that
+scenario ran. They retain resource and instrumentation scope data, span
+identity and timing, log identity and timing, and metric points and
+temporality. `weaver.json` is Weaver's one aggregate report.
+`readiness.json` holds the latest persistent batch's telemetry before its first
+action. `unwindowed.json` appears only when telemetry arrives outside a
+scenario window. Neither enters scenario assertions. A complete run cleans
+stale scenario files and derives coverage from the normalized scenario captures
+plus `unwindowed.json`; `weaver.json` supplies its findings. Readiness telemetry
+does not count as coverage.
+
+The reduction is the coverage this package computes. For each span a scenario
+declares, it records the attributes the captured spans carried, plus captured
+metrics and events and the findings from `weaver.json`:
 
 ```json
 {
@@ -183,9 +213,9 @@ seen, plus what weaver said about them:
 Each span entry pairs a `match` — written the way the scenario declared it —
 with the attributes the spans it selected carried.
 
-`findings` is every
-violation weaver reported over it, deduplicated on id, message, context and
-the signal it was reported on. Weaver's lesser advice — `improvement`,
+`findings` is every violation Weaver reported over the aggregate run,
+deduplicated on id, message, context and the signal it was reported on.
+Weaver's lesser advice — `improvement`,
 `information` — is left out: it says what could be better, not what an
 implementation got wrong. `signal_type` and `signal_name` say which signal
 weaver was looking at — `span`, `metric` or `log`, an event being a log record
@@ -197,7 +227,9 @@ same gap on two signals is two, because an implementation can fix one and
 leave the other.
 
 Diff it to notice an attribute quietly disappearing. `--data-command` replaces
-it when you want a different shape.
+the built-in reduction when you want a different shape. Its first positional
+argument is the report bundle directory above, not a directory of per-scenario
+Weaver reports.
 
 ## Expectations
 
@@ -307,12 +339,213 @@ scenario_contract: ../../contracts/http-client.yaml
 scenario_run: node client.js
 ```
 
-The runner creates one scenario per indexed entry and rejects local `scenarios`
-overrides for this contract form. Each runs under a fresh weaver
-report with `OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index.
-The command reads that index to select the same action. Reports use stable
-zero-padded ordinal filenames, while CLI and pytest output prefix `description`
-with its index; repeated descriptions do not merge entries.
+The runner creates one scenario per contract entry and rejects local `scenarios`
+overrides for this contract form. Each action gets a separate raw OTLP capture
+window and scenario report. For a one-shot command, it serializes the selected
+`action` as compact, key-sorted JSON in
+`OTEL_CONFORMANCE_SCENARIO_ACTION`. Actions must be non-empty mappings with
+string keys and JSON-representable values.
+
+A contract that declares `readiness:` also gives the runner a whole action
+table: readiness first, then every entry in declaration order. The runner
+passes it as compact, key-sorted JSON in `OTEL_CONFORMANCE_SCENARIO_ACTIONS`
+to a runner-managed `server:` and to a runner-driven process. A process that
+answers actions rather than performing them needs every action the run may
+reach, and the runner owns the table, so a package pointing at a contract of
+its own is driven by that contract rather than by whichever one a driver
+happens to ship.
+
+An indexed contract describes one instrumented side, and says at the top who
+drives the exchange that produces its telemetry:
+
+```yaml
+driver: runner
+
+readiness:
+  description: Checks whether the server is ready.
+  action:
+    request: {method: GET, path: /health}
+    response: {status: 200, body: '{"ok": true}'}
+
+scenarios:
+  - description: Answers one request.
+    action:
+      request: {method: GET, path: /items}
+      response: {status: 200, body: '[]'}
+    expect:
+      spans:
+        - match: {kind: SERVER}
+          expect: {count: 1}
+```
+
+A package points at it and names a command:
+
+```yaml
+scenario_contract: ../../contracts/server.yaml
+scenario_run: otel-http-drive --serve node server.js
+```
+
+`driver` is what decides the lifecycle. `instrumentation` means the
+instrumented component initiates the action, so each action runs its own
+process. `runner` means the runner drives one instrumented process through
+every action in the batch, from outside. The package names the contract and
+the command; how that command is run follows, and is never restated.
+
+Each contract stands alone: its own `driver`, its own `readiness` where the
+server or driver behind it needs one, its own actions and its own flat
+`expect`. Two contracts describing the two sides of one protocol are two
+files with no relationship, so either can gain an action or change an
+expectation without the other.
+
+A contract that declares no `driver` is driven by the instrumented
+component: every scenario is one-shot, exactly as it was before the role was
+written down. Local `scenarios` in a package are one-shot for the same
+reason — they name their own command and no contract role applies.
+
+A shared contract states what every implementation of it emits. One that
+emits more says so in its own directory, so the metric check stays exact
+without weakening the contract for everyone else:
+
+```yaml
+additional_metrics:
+  - http.server.active_requests
+```
+
+Each name joins the `metrics` of every scenario that declares any. A
+scenario that declares none stays unchecked. A metric only some actions
+record — a request body size, say — says so instead of joining them all:
+
+```yaml
+additional_metrics:
+  - name: http.server.request.body.size
+    required: false
+```
+
+`required: false` adds an optional allow-list entry. Emitting that metric is not
+an undeclared-metric failure, and omitting it is not a missing-metric failure.
+Everything else in a declared metric list stays exact.
+
+Spans an implementation adds are declared the same way, as `match` rules
+appended to every scenario that declares spans:
+
+```yaml
+additional_spans:
+  - match:
+      kind: INTERNAL
+```
+
+A rule with no `expect.count` is an optional allow-list entry. It marks matching
+extra spans as declared without requiring one. This fits spans whose count
+follows the runtime rather than the contract. Give the rule a `count` to turn it
+into an assertion.
+
+### The runner-driven protocol
+
+What follows is between the runner and a process it drives. Nothing here is
+package configuration: a package asks for it by pointing at a contract whose
+`driver` is `runner`.
+
+```yaml
+scenario_contract: ../../contracts/server.yaml
+scenario_run: [node, controller.js]
+```
+
+The runner then speaks `jsonl-v1` on that command's standard input and
+output, and sets `OTEL_CONFORMANCE_SCENARIO_PROTOCOL` to that name so the
+command knows it is being driven. A command that starts a measured process
+of its own — `otel-http-drive --serve` does — reads it rather than taking a
+flag every package would have to repeat. It is set only for a persistent
+run, so its absence is what makes a manual run one-shot, and a value the
+command does not speak fails before the measured process is started.
+
+The runner starts one controller, and therefore one measured process behind
+that controller, for each selected consecutive batch that shares the
+command. It waits for a `ready` record, sends one `action` record
+per scenario, and closes stdin after the batch. Each record has `version`,
+`type`, and an integer `sequence`; action records also carry the scenario name
+and the selected action. The controller answers each action with
+`action_complete` or `action_error`, then answers EOF with `stopped`.
+
+The runner puts nothing of its own into the traffic the controller drives. A
+correlation identifier would have to travel as a `traceparent`, which makes
+what is measured the child of a remote parent: it changes the root of the
+trace, the sampling decision the measured process inherits, and whether it
+extracts context at all. Attribution comes from timestamps instead.
+
+`ready` and `action_complete` carry `started_unix_nano` and
+`completed_unix_nano`, stamped where the controller sent the exchange and
+where it saw the answer. An instrumentation records what it measured before
+it answers, so the aggregation interval holding that measurement can close
+while the response is still travelling — and the runner reads the record
+later still. Only the controller's own clock bounds the exchange.
+
+Telemetry remains tentative until the controller acknowledges the action, its
+positive expectations arrive, and a short quiet period passes. The capture
+records a complete OTLP request before forwarding it upstream, so a window
+already holds everything it will be judged on while that forward is still in
+flight; waiting for Weaver's round trip would only charge every action for
+the collector's latency. Ingress still closes and drains before the final
+Weaver and quarantine checks. Those checks happen only after `stopped`,
+process exit, and that final drain.
+
+An action window is bounded by the timestamps the instrumentation itself
+reported, never by the order exports arrived in, so a cold runtime whose
+first export is slow does not spill readiness telemetry into the first
+action. What ran before the first action is the readiness window. The action
+still running has no end at all: the runner and the measured process read
+different clocks, and bounding the open window on the runner's would make a
+record the process stamps a moment later belong to no window. The batch's
+real end is applied once, when everything is reconciled.
+
+A span is placed by the interval between its start and its end, and its events
+travel with it. A log record is placed by its own timestamp, falling back to
+its observed timestamp. Spans of one trace describe one exchange, so a trace
+whose spans fall in different windows is ambiguous and fails. So does a span
+or record that reaches across a sealed boundary, or lands in no window at
+all: nothing is guessed.
+
+Actions run one at a time, so a record that arrives while a later action is
+running still belongs to whichever action its timestamps place it in. It can
+never be counted toward the running one. It does mean the earlier action was
+judged on a window that has since changed, so the batch fails there rather
+than reporting either window.
+
+A metric point must be safely assignable to one window. A monotonic sum or a
+histogram must use delta temporality, and its interval may not cross another
+action's response or the readiness boundary, because a point spanning two
+exchanges belongs to neither. A gauge and a cumulative UpDownCounter report
+the value at one instant, so their timestamp places them; only a delta
+interval counts as an action's metric boundary.
+
+An SDK reports on its own processors and exporters for as long as the process
+runs, under the `otel.sdk.` metric namespace or an SDK-internal scope. That
+describes the exporter the runner configured, so a scenario is neither
+credited nor charged for it, it never keeps an action from settling, and it
+stays out of the committed coverage. The raw exports still reach the report
+and Weaver.
+
+Reports use stable zero-padded ordinal filenames, while CLI and pytest output
+prefix `description` with its index; repeated descriptions do not merge
+entries.
+
+The protocol fails closed. A malformed, out-of-sequence, timed-out, or error
+record aborts the batch. The failed action reports the protocol error and later
+actions report that they were not executed; the runner never advances after an
+uncertain result.
+
+### Timeouts
+
+Timeouts are seconds and can be overridden through the process environment:
+
+| variable | default | covers |
+| --- | ---: | --- |
+| `OTEL_CONFORMANCE_SCENARIO_TIMEOUT` | 600 | setup and one-shot commands; persistent startup |
+| `OTEL_CONFORMANCE_SCENARIO_WINDOW_TIMEOUT` | 10 | persistent readiness isolation, action response and settling, shutdown |
+| `OTEL_CONFORMANCE_SCENARIO_SETTLE_DELAY` | 0.25 | quiet period after expected telemetry arrives |
+| `OTEL_CONFORMANCE_CAPTURE_DRAIN_TIMEOUT` | 120 | in-flight OTLP forwarding |
+| `OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT` | 120 | final Weaver report |
+| `OTEL_CONFORMANCE_SERVER_STARTUP_TIMEOUT` | 30 | runner-managed server readiness |
+| `OTEL_CONFORMANCE_SERVER_STOP_TIMEOUT` | 10 | runner-managed server shutdown |
 
 `--scenario` takes the zero-padded ordinal, not the displayed label. To run the
 first entry above, pass `--scenario 0000` rather than `[0] Sends one request.`.
@@ -324,30 +557,31 @@ instead of a mock. What the runner injects — the OTLP endpoint, the server URL
 
 ### Known violations
 
-Violations weaver reports are failures unless you declare them, with a reason:
+Violations Weaver reports are failures unless the package declares them at the
+top level with a reason:
 
 ```yaml
-  tool_calling:
-    expected_violations:
-      - id: genai_expected_attribute_missing
-        context:
-          operation: execute_tool
-          missing_attribute: gen_ai.tool.call.id
-        reason: >-
-          The SDK does not expose the tool call id — https://github.com/…/86
+expected_violations:
+  - id: genai_expected_attribute_missing
+    context:
+      operation: execute_tool
+      missing_attribute: gen_ai.tool.call.id
+    reason: The SDK does not expose the tool call id.
 ```
 
-A declared violation weaver *stops* reporting fails too, so suppressions don't
-outlive the gap that caused them.
+A declared violation Weaver stops reporting fails a complete run, so
+suppressions do not outlive the gap that caused them. A filtered run still
+fails on unexpected findings, but it cannot prove a package declaration is
+stale.
 
 `context` is matched in full — the same finding `id` with a different context
 is a different finding. Leave it out to accept **every** finding with that
 `id`, which is what you want when they're one gap seen many times:
 
 ```yaml
-    expected_violations:
-      - id: missing_attribute
-        reason: This implementation's own attribute namespace.
+expected_violations:
+  - id: missing_attribute
+    reason: This implementation's own attribute namespace.
 ```
 
 That trades away some of the signal: a declaration covering a whole class
@@ -355,23 +589,6 @@ stops telling you when the class *shrinks*, only when it empties. Reach for it
 when the members are interchangeable, and write them out when each is its own
 gap. (`context: {}` is not the same thing — it declares a finding that carried
 no context at all.)
-
-Declare them at the top level instead, and every scenario gets them — the
-right place for a gap that belongs to the instrumentation rather than to one
-program:
-
-```yaml
-expected_violations:
-  - id: genai_span_kind_unexpected
-    context: {operation: chat, kind: internal}
-    reason: Inference is a remote call, so semconv expects kind=client.
-```
-
-A scenario's own list is merged on top. The two levels differ in one way
-besides scope: a top-level entry only ever *suppresses*, so a scenario that
-doesn't reach that gap isn't failed for it, while a scenario's own is still
-required to be reported. Declaring the same `id` at both levels is an error —
-two reasons for one finding, and no way to tell which one is stale.
 
 ## Advice policies
 
@@ -500,4 +717,5 @@ that file, paths on the command line to your shell.
   `${PORT}` and answer a health endpoint. Anything with a different lifecycle
   — a container pool, a shared staging backend — you run yourself and pass the
   URL in with `--env`.
-- **Scenarios run one at a time**, each under its own live-check.
+- **Scenarios run one at a time.** They share the package's Weaver live-check
+  and use separate runner-owned capture windows.

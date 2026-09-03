@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from opentelemetry.conformance import (
+    ScenarioRunSpec,
     ServerSpec,
     SpanMatch,
     SpecError,
@@ -49,7 +50,6 @@ def test_minimal_spec_leaves_every_expectation_unchecked(
     assert scenario.spans is None
     assert scenario.metrics is None
     assert scenario.events is None
-    assert scenario.expected_violations == ()
 
 
 def test_runner_config_is_available_to_the_selected_runner(
@@ -161,7 +161,6 @@ def test_scenario_list_contract_generates_one_scenario_per_entry(
     (tmp_path / "client.yaml").write_text(
         """
 description: Shared HTTP requests.
-owner: http
 scenarios:
   - description: The same description may repeat.
     action: {request: {method: GET, path: /one}}
@@ -192,7 +191,10 @@ scenario_run: python client.py
     assert first.description == second.description
     assert first.index == 0
     assert second.index == 1
+    assert first.action == {"request": {"method": "GET", "path": "/one"}}
+    assert second.action == {"request": {"method": "GET", "path": "/two"}}
     assert first.run == second.run == ("python", "client.py")
+    assert first.run_spec == ScenarioRunSpec(("python", "client.py"))
     assert first.spans is not None
     assert first.spans[0].match.attributes == {"url.full": "${SERVER}/one"}
     assert second.events == ()
@@ -267,6 +269,21 @@ scenario_run: python client.py
             "scenarios:\n  - description: test\n    action: request\n    expect: {}",
             "scenario_run: run",
             "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {date: 2026-01-01}\n    expect: {}",
+            "scenario_run: run",
+            "represented as JSON",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {nested: {1: value}}\n    expect: {}",
+            "scenario_run: run",
+            "mapping keys must be strings",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {value: .nan}\n    expect: {}",
+            "scenario_run: run",
+            "represented as JSON",
         ),
         (
             "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: []",
@@ -381,6 +398,211 @@ scenarios:
         )
 
 
+def test_an_indexed_contract_expects_one_side_flatly(tmp_path: Path) -> None:
+    """A contract says what one instrumented side emits, and nothing else."""
+
+    (tmp_path / "contract.yaml").write_text(
+        """
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect:
+      spans:
+        - match: {kind: CLIENT}
+          expect: {count: 1}
+  - description: another request
+    action: {method: POST}
+    expect: {metrics: []}
+"""
+    )
+
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: run
+""",
+        )
+    )
+
+    assert spec.scenarios["0000"].spans[0].match.kind == "CLIENT"
+    assert spec.scenarios["0001"].metrics == ()
+
+
+@pytest.mark.parametrize(
+    ("expectation", "message"),
+    [
+        ("[]", r"expect: expected a mapping"),
+        ("{run: local}", r"expect: unknown key\(s\) \['run'\]"),
+        (
+            "{client: {events: []}}",
+            r"expect: unknown key\(s\) \['client'\]",
+        ),
+    ],
+)
+def test_invalid_contract_expectations_raise(
+    tmp_path: Path, expectation: str, message: str
+) -> None:
+    """Nesting by side is gone: each contract owns one side outright."""
+
+    (tmp_path / "contract.yaml").write_text(
+        f"""
+scenarios:
+  - description: request
+    action: {{method: GET}}
+    expect: {expectation}
+"""
+    )
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: run
+""",
+            )
+        )
+
+
+def test_http_representatives_resolve_their_own_side_contract() -> None:
+    root = Path(__file__).resolve().parents[3]
+    packages = {
+        root
+        / "scenarios/http/python/wsgi/opentelemetry-wsgi/server": (
+            "http.server.active_requests",
+            "http.server.request.duration",
+        ),
+        root
+        / "scenarios/http/java/java-http-server/opentelemetry-javaagent/server": (
+            "http.server.request.duration",
+        ),
+    }
+
+    for package, metrics in packages.items():
+        spec = load_spec(package)
+        assert tuple(spec.scenarios) == tuple(
+            f"{index:04d}" for index in range(5)
+        )
+        for scenario in spec.scenarios.values():
+            assert scenario.protocol == "jsonl-v1"
+            assert scenario.spans is not None
+            assert len(scenario.spans) == 1
+            assert scenario.spans[0].match.kind == "SERVER"
+            assert scenario.spans[0].count == 1
+            assert scenario.metrics == metrics
+
+    client = load_spec(
+        root
+        / "scenarios/http/python/requests/opentelemetry-requests/client"
+    )
+    assert all(
+        scenario.spans is not None
+        and scenario.spans[0].match.kind == "CLIENT"
+        and scenario.protocol is None
+        for scenario in client.scenarios.values()
+    )
+
+
+def test_additional_metrics_extend_only_declared_metric_checks(
+    tmp_path: Path,
+) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+additional_metrics:
+  - demo.extra
+scenarios:
+  measured:
+    run: echo measured
+    metrics:
+      - demo.requests
+  unchecked:
+    run: echo unchecked
+""",
+        )
+    )
+
+    assert spec.scenarios["measured"].metrics == (
+        "demo.extra",
+        "demo.requests",
+    )
+    assert spec.scenarios["unchecked"].metrics is None
+
+
+def test_optional_metrics_and_additional_spans_permit_without_requiring(
+    tmp_path: Path,
+) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+additional_metrics:
+  - demo.extra
+  - name: demo.sometimes
+    required: false
+additional_spans:
+  - match:
+      kind: INTERNAL
+scenarios:
+  measured:
+    run: echo measured
+    metrics:
+      - demo.requests
+    spans:
+      - match:
+          kind: SERVER
+        expect:
+          count: 1
+  unchecked:
+    run: echo unchecked
+""",
+        )
+    )
+
+    measured = spec.scenarios["measured"]
+    assert measured.metrics == ("demo.extra", "demo.requests")
+    assert measured.optional_metrics == ("demo.sometimes",)
+    assert [
+        (expectation.match.kind, expectation.count)
+        for expectation in measured.spans or ()
+    ] == [("SERVER", 1), ("INTERNAL", None)]
+    unchecked = spec.scenarios["unchecked"]
+    assert unchecked.metrics is None
+    assert unchecked.optional_metrics == ()
+    assert unchecked.spans is None
+
+
+def test_an_optional_metric_needs_a_boolean(tmp_path: Path) -> None:
+    with pytest.raises(SpecError, match="required: expected a boolean"):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+additional_metrics:
+  - name: demo.sometimes
+    required: "no"
+scenarios:
+  measured:
+    run: echo measured
+""",
+            )
+        )
+
+
 def test_command_may_be_a_list(tmp_path: Path) -> None:
     spec = load_spec(
         write(
@@ -396,6 +618,338 @@ scenarios:
     )
 
     assert spec.scenarios["inference"].run == ("python", "a b.py")
+
+
+_CLIENT_CONTRACT = """
+driver: instrumentation
+
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect: {events: []}
+"""
+
+_SERVER_CONTRACT = """
+driver: runner
+
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect: {metrics: []}
+"""
+
+
+def _driver_package(tmp_path: Path, contract: str) -> Path:
+    (tmp_path / "contract.yaml").write_text(contract, encoding="utf-8")
+    return write(
+        tmp_path,
+        """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: [python, controller.py]
+""",
+    )
+
+
+@pytest.mark.parametrize(
+    ("contract", "protocol", "one_shot", "expectation"),
+    [
+        (_CLIENT_CONTRACT, None, True, "events"),
+        (_SERVER_CONTRACT, "jsonl-v1", False, "metrics"),
+    ],
+)
+def test_the_contracts_driver_role_decides_the_lifecycle(
+    tmp_path: Path,
+    contract: str,
+    protocol: str | None,
+    one_shot: bool,
+    expectation: str,
+) -> None:
+    """A contract says who drives it, and the lifecycle follows.
+
+    The package names a command and a contract. Whether that command is
+    started once per action or driven for the whole batch is the contract's
+    doing, not something the package restates.
+    """
+
+    spec = load_spec(_driver_package(tmp_path, contract))
+
+    scenario = spec.scenarios["0000"]
+    assert scenario.run == ("python", "controller.py")
+    assert scenario.run_spec == ScenarioRunSpec(
+        ("python", "controller.py"), protocol=protocol
+    )
+    assert scenario.run_spec.one_shot is one_shot
+    assert getattr(scenario, expectation) == ()
+
+
+def test_a_contract_without_a_driver_stays_one_shot(tmp_path: Path) -> None:
+    """What every contract did before the role was written down.
+
+    Nothing says who drives, so the instrumented component does, and each
+    action starts its own process.
+    """
+
+    (tmp_path / "contract.yaml").write_text(
+        """
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect: {events: []}
+"""
+    )
+
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: [python, client.py]
+""",
+        )
+    )
+
+    assert spec.scenarios["0000"].run_spec.one_shot is True
+    assert spec.scenarios["0000"].protocol is None
+
+
+def test_two_contracts_describe_their_own_side_independently(
+    tmp_path: Path,
+) -> None:
+    """Nothing keeps two contracts aligned, so either may be edited alone.
+
+    They are separate files with separate actions and separate
+    expectations; the parser never reads one while loading the other.
+    """
+
+    (tmp_path / "client.yaml").write_text(
+        """
+driver: instrumentation
+
+scenarios:
+  - description: sends one request
+    action: {request: {method: GET, path: /only-here}}
+    expect:
+      spans:
+        - match: {kind: CLIENT}
+          expect: {count: 1}
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "server.yaml").write_text(
+        """
+driver: runner
+
+readiness:
+  description: ready
+  action: {request: {method: GET, path: /health}}
+
+scenarios:
+  - description: answers one request
+    action: {request: {method: POST, path: /elsewhere}}
+    expect:
+      spans:
+        - match: {kind: SERVER}
+          expect: {count: 1}
+  - description: answers a second the client never sends
+    action: {request: {method: GET, path: /extra}}
+    expect: {metrics: []}
+""",
+        encoding="utf-8",
+    )
+    package = """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: {contract}
+scenario_run: run
+"""
+
+    client = load_spec(write(tmp_path, package.format(contract="client.yaml")))
+    (tmp_path / "conformance.yaml").unlink()
+    server = load_spec(write(tmp_path, package.format(contract="server.yaml")))
+
+    # Different action counts, kinds and readiness: neither constrains the
+    # other, and no parser rule asks them to match.
+    assert len(client.scenarios) == 1
+    assert len(server.scenarios) == 2
+    assert client.scenarios["0000"].spans[0].match.kind == "CLIENT"
+    assert server.scenarios["0000"].spans[0].match.kind == "SERVER"
+    assert client.action_table == ()
+    assert len(server.action_table) == 3
+    assert client.scenarios["0000"].run_spec.one_shot is True
+    assert server.scenarios["0000"].run_spec.one_shot is False
+
+
+@pytest.mark.parametrize(
+    ("contract", "message"),
+    [
+        (
+            "driver: proxy",
+            r"contract\.yaml\.driver: unknown driver role 'proxy'; "
+            r"allowed: \['instrumentation', 'runner'\]",
+        ),
+        (
+            "driver: []",
+            r"contract\.yaml\.driver: expected a non-empty string",
+        ),
+        (
+            "variants:\n  client: {driver: instrumentation}",
+            r"contract\.yaml: unknown key\(s\) \['variants'\]; allowed: "
+            r"\['description', 'driver', 'readiness', 'scenarios'\]",
+        ),
+    ],
+)
+def test_invalid_contract_drivers_raise(
+    tmp_path: Path, contract: str, message: str
+) -> None:
+    """`variants` is gone, so a stale contract fails on the unknown key."""
+
+    (tmp_path / "contract.yaml").write_text(
+        f"""
+{contract}
+
+scenarios:
+  - description: request
+    action: {{method: GET}}
+    expect: {{events: []}}
+"""
+    )
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: run
+""",
+            )
+        )
+
+
+def test_a_stale_variant_selection_is_an_unknown_package_key(
+    tmp_path: Path,
+) -> None:
+    """Nothing selects a side any more: the contract is the selection."""
+
+    (tmp_path / "contract.yaml").write_text(_CLIENT_CONTRACT, encoding="utf-8")
+
+    with pytest.raises(
+        SpecError, match=r"unknown key\(s\) \['scenario_contract_variant'\]"
+    ):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_contract_variant: client
+scenario_run: run
+""",
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    ("run", "message"),
+    [
+        (
+            "{command: run, protocol: jsonl-v1}",
+            r"scenario_run: expected a command string or list, got a mapping "
+            r"with key\(s\) \['command', 'protocol'\]; the process lifecycle "
+            r"follows from the contract's driver role",
+        ),
+        (
+            "{command: run}",
+            r"scenario_run: expected a command string or list, got a mapping "
+            r"with key\(s\) \['command'\]; the process lifecycle",
+        ),
+    ],
+)
+def test_scenario_run_no_longer_declares_a_protocol(
+    tmp_path: Path, run: str, message: str
+) -> None:
+    """`jsonl-v1` is between the runner and a driven process, not config."""
+
+    (tmp_path / "contract.yaml").write_text(
+        _SERVER_CONTRACT, encoding="utf-8"
+    )
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                f"""
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: {run}
+""",
+            )
+        )
+
+
+def test_a_local_scenario_run_says_it_is_one_shot(tmp_path: Path) -> None:
+    """No contract role reaches a scenario the package declares itself.
+
+    Pointing its author at a driver role would name a mechanism the parser
+    forbids here, so say what actually decides its lifecycle.
+    """
+
+    with pytest.raises(
+        SpecError,
+        match=(
+            r"scenarios\.local\.run: expected a command string or list, got "
+            r"a mapping with key\(s\) \['command', 'protocol'\]; a scenario "
+            r"declared here is always one-shot"
+        ),
+    ):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenarios:
+  local:
+    run: {command: run, protocol: jsonl-v1}
+""",
+            )
+        )
+
+
+def test_a_contract_key_typo_is_rejected(tmp_path: Path) -> None:
+    """A misspelled `driver` would silently make a package one-shot."""
+
+    (tmp_path / "contract.yaml").write_text(
+        """
+drivers: runner
+
+scenarios:
+  - description: request
+    action: {method: GET}
+    expect: {events: []}
+"""
+    )
+
+    with pytest.raises(SpecError, match=r"unknown key\(s\) \['drivers'\]"):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: run
+""",
+            )
+        )
 
 
 def test_span_expectation(tmp_path: Path) -> None:
@@ -500,10 +1054,10 @@ def test_span_keys_survive_separators_in_a_value() -> None:
             id="span-without-count",
         ),
         pytest.param(
-            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\nscenarios:\n  a:\n    run: x\n"
-            "    expected_violations:\n      - id: some_advice",
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\n"
+            "expected_violations:\n  - id: some_advice\nscenarios:\n  a:\n    run: x",
             "reason is required",
-            id="violation-without-reason",
+            id="package-violation-without-reason",
         ),
         pytest.param(
             "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\nscenarios:\n  a:\n    run: x\n    events: notalist",
@@ -603,7 +1157,7 @@ scenarios:
     assert spec.server.health_path == "/ready"
 
 
-def test_a_violation_context_is_optional_and_distinct_from_an_empty_one(
+def test_package_violation_context_is_optional_and_distinct_from_an_empty_one(
     tmp_path: Path,
 ) -> None:
     """Omitted means "any context"; `{}` means "the finding carried none"."""
@@ -613,23 +1167,23 @@ def test_a_violation_context_is_optional_and_distinct_from_an_empty_one(
             """
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
+expected_violations:
+  - id: missing_attribute
+    reason: the implementation's own namespace
+  - id: genai_span_status_ok_set_by_instrumentation
+    context: {}
+    reason: carries no context
+  - id: genai_span_kind_unexpected
+    context: {kind: internal}
+    reason: known
 scenarios:
   inference:
     run: x
-    expected_violations:
-      - id: missing_attribute
-        reason: the implementation's own namespace
-      - id: genai_span_status_ok_set_by_instrumentation
-        context: {}
-        reason: carries no context
-      - id: genai_span_kind_unexpected
-        context: {kind: internal}
-        reason: known
 """,
         )
     )
 
-    bulk, empty, exact = spec.scenarios["inference"].expected_violations
+    bulk, empty, exact = spec.expected_violations
     assert bulk.context is None
     assert empty.context == {}
     assert exact.context == {"kind": "internal"}
@@ -646,38 +1200,18 @@ scenarios:
     run: x
   tool_calling:
     run: x
-    expected_violations:
-      - id: genai_span_kind_unexpected
-        context: {kind: internal}
-        reason: only this one
 """
 
 
-def test_package_violations_reach_every_scenario(tmp_path: Path) -> None:
+def test_package_violations_stay_at_package_level(tmp_path: Path) -> None:
     spec = load_spec(write(tmp_path, PACKAGE_VIOLATIONS))
 
-    inference = spec.scenarios["inference"]
-    tool_calling = spec.scenarios["tool_calling"]
-
     assert [v.id for v in spec.expected_violations] == ["missing_attribute"]
-    # Inherited stays separate from a scenario's own: only its own are
-    # required to still be reported.
-    assert [v.id for v in inference.inherited_violations] == [
-        "missing_attribute"
-    ]
-    assert inference.expected_violations == ()
-    assert [v.id for v in tool_calling.inherited_violations] == [
-        "missing_attribute"
-    ]
-    assert [v.id for v in tool_calling.expected_violations] == [
-        "genai_span_kind_unexpected"
-    ]
 
 
-def test_redeclaring_a_package_violation_in_a_scenario_is_an_error(
+def test_scenario_expected_violations_is_an_unknown_key(
     tmp_path: Path,
 ) -> None:
-    """Two reasons for one id, and no way to tell which still applies."""
     document = """
 instrumented_library: demo
 instrumentation_library: demo-instrumentation
@@ -693,5 +1227,5 @@ scenarios:
         reason: here too
 """
 
-    with pytest.raises(SpecError, match="already declared"):
+    with pytest.raises(SpecError, match="unknown key"):
         load_spec(write(tmp_path, document))

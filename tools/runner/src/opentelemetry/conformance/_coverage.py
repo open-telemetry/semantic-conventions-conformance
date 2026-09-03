@@ -1,13 +1,13 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""What a run observed, reduced to one file.
+"""Captured telemetry from a run, reduced to one file.
 
 The default reduction, and the reason a repo needs no code of its own to get
 a coverage artifact: for every span expectation a scenario declares, the
 attributes its spans actually carried, plus the metrics and events the run
-produced, plus the violations weaver found in them. A caller wanting a
-different shape passes its own reduction.
+produced, plus the violations Weaver found in the aggregate report. A caller
+wanting a different shape passes its own reduction.
 
 A run *always* reduces to what it saw, however badly it went. Coverage is an
 observation, and an implementation that violates the conventions everywhere is
@@ -18,45 +18,66 @@ by its kind.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-from ._checks import observed_spans, seen_events, seen_metrics, selects
-from ._report import Finding, collect_findings, finding_list
+from ._checks import ObservedSpan, selects
+from ._otlp_capture import self_monitoring
+from ._report import (
+    capture_documents,
+    carried_attributes,
+    finding_list,
+    iter_logs,
+    iter_metrics,
+    iter_spans,
+    read_findings,
+)
 from ._spec import PackageSpec, SpanMatch
 
 
 def coverage(report_dir: Path, spec: PackageSpec) -> dict[str, object]:
-    """Reduce a run's weaver reports into observed coverage."""
+    """Reduce captured OTLP and aggregate Weaver findings into coverage."""
     matches: dict[str, SpanMatch] = {}
     attributes: dict[str, set[str]] = {}
     metrics: set[str] = set()
     events: set[str] = set()
-    findings: set[Finding] = set()
 
     def bucket(match: SpanMatch) -> set[str]:
         key = match.key()
         matches.setdefault(key, match)
         return attributes.setdefault(key, set())
 
-    for name, scenario in spec.scenarios.items():
-        report_file = report_dir / f"{name}.json"
-        if not report_file.is_file():
-            continue
-        report = json.loads(report_file.read_text())
-        statistics = report.get("statistics", {})
-        metrics |= seen_metrics(statistics)
-        events |= seen_events(statistics)
-        findings |= collect_findings(report)
-
-        spans = observed_spans(report)
+    for scenario, document in capture_documents(report_dir, spec):
+        # The same rule the scenario checks were judged by. An SDK reporting
+        # on its own exporter describes the runner's plumbing, so counting it
+        # here would put it in the committed record of what an
+        # instrumentation emits.
+        metrics.update(
+            str(metric["name"])
+            for scope_name, metric in iter_metrics(document)
+            if metric.get("name")
+            and not self_monitoring(scope_name, str(metric["name"]))
+        )
+        events.update(
+            str(record["event_name"])
+            for record in iter_logs(document)
+            if record.get("event_name")
+        )
+        spans = [
+            ObservedSpan(
+                name=str(span.get("name", "")),
+                kind=str(span.get("kind", "")),
+                attributes=carried_attributes(span),
+            )
+            for span in iter_spans(document)
+        ]
         selected: set[int] = set()
-        for expectation in scenario.spans or ():
-            matched = bucket(expectation.match)
-            for index, span in enumerate(spans):
-                if selects(expectation, span):
-                    matched.update(span.attributes)
-                    selected.add(index)
+        if scenario is not None:
+            for expectation in scenario.spans or ():
+                matched = bucket(expectation.match)
+                for index, span in enumerate(spans):
+                    if selects(expectation, span):
+                        matched.update(span.attributes)
+                        selected.add(index)
 
         for index, span in enumerate(spans):
             if index in selected:
@@ -78,5 +99,5 @@ def coverage(report_dir: Path, spec: PackageSpec) -> dict[str, object]:
         ],
         "metrics": sorted(metrics),
         "events": sorted(events),
-        "findings": finding_list(findings),
+        "findings": finding_list(read_findings(report_dir)),
     }

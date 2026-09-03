@@ -8,6 +8,9 @@ instrumentation_library: opentelemetry-instrumentation-django
 env:
   OTEL_SEMCONV_STABILITY_OPT_IN: http
 
-scenarios:
-  server:
-    run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
+
+# What this instrumentation emits beyond the shared HTTP server contract.
+additional_metrics:
+  - http.server.active_requests

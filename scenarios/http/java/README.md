@@ -1,7 +1,8 @@
 # HTTP conformance scenarios in Java
 
-Java HTTP instrumentations, measured against
-[the shared HTTP contract](../../../tools/http/test-client/contract.yaml).
+Java HTTP instrumentations, measured against the
+[client](../../../tools/http/contracts/client.yaml) and
+[server](../../../tools/http/contracts/server.yaml) HTTP contracts.
 
 Each `<library>/scenarios` project contains the workload. Its sibling
 instrumentation projects launch that workload. The dependency versions are

@@ -14,11 +14,13 @@ import sys
 from contextlib import contextmanager
 from inspect import signature
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Callable, Iterator, Mapping
 
 import pytest
 
 from opentelemetry.conformance import (
+    PackageReport,
     PackageSpec,
     ScenarioReport,
     ServerSpec,
@@ -27,14 +29,15 @@ from opentelemetry.conformance import (
     coverage,
     load_spec,
 )
-from opentelemetry.conformance._cli import _DataCommandError, main
+from opentelemetry.conformance._cli import _DataCommandError, _parser, main
+from opentelemetry.conformance._otlp_capture import CapturedWindow
 from opentelemetry.conformance._session import ConformanceSession
 
 # Emits {"library": …, "instrumentation": …, "reports": …} from the three
 # inputs and a glob.
 DATA_COMMAND = (
     r"""printf '{"library": "%s", "instrumentation": "%s", "reports": %s}' """
-    r'"$2" "$3" "$(ls "$1"/*.json | wc -l)"'
+    r'"$2" "$3" "$(ls "$1"/scenarios/*.json | wc -l)"'
 )
 POSIX_SHELL_ONLY = pytest.mark.skipif(
     sys.platform == "win32",
@@ -61,25 +64,70 @@ scenario_run: python scenario.py
 """
 
 
+def test_report_dir_help_describes_the_report_bundle() -> None:
+    help_text = _parser("otel-conformance").format_help()
+
+    assert "normalized scenario captures" in help_text
+    assert "output\\reports" in help_text or "output/reports" in help_text
+
+
+EMPTY_WINDOW = CapturedWindow(
+    name="test",
+    generation=1,
+    exports=(),
+    spans=(),
+    metric_names=(),
+    event_names=(),
+)
+
+
 class FakeSession:
     """Records what ran; never starts weaver or a server."""
 
     def __init__(
-        self, spec: PackageSpec, failing: set[str], violating: set[str]
+        self,
+        spec: PackageSpec,
+        failing: set[str],
+        violating: set[str],
+        package_failures: list[str],
     ) -> None:
         self.spec = spec
         self.ran: list[str] = []
+        self.reports: list[ScenarioReport] = []
         self._failing = failing
         self._violating = violating
+        self._package_failures = package_failures
 
     def run(self, name: str) -> ScenarioReport:
         self.ran.append(name)
-        return ScenarioReport(
+        report = ScenarioReport(
             name=self.spec.scenarios[name].display_name,
             failures=[f"{name}: nope"] if name in self._failing else [],
-            violations=[f"{name} is missing server.address, id=some_advice"]
-            if name in self._violating
-            else [],
+            telemetry=EMPTY_WINDOW,
+        )
+        self.reports.append(report)
+        return report
+
+    def run_all(
+        self, selected_names: Iterator[str] | None = None
+    ) -> tuple[ScenarioReport, ...]:
+        names = (
+            selected_names
+            if selected_names is not None
+            else self.spec.scenarios
+        )
+        return tuple(self.run(name) for name in names)
+
+    def finalize(self) -> PackageReport:
+        return PackageReport(
+            scenarios=tuple(self.reports),
+            failures=self._package_failures,
+            violations=[
+                f"{name} is missing server.address, id=some_advice"
+                for name in self.ran
+                if name in self._violating
+            ],
+            report=SimpleNamespace(violations=[]),
         )
 
 
@@ -113,6 +161,7 @@ def factory(
     failing: set[str] | None = None,
     *,
     violating: set[str] | None = None,
+    package_failures: list[str] | None = None,
     reduce_on_close: bool = False,
 ) -> Callable[..., Any]:
     @contextmanager
@@ -121,7 +170,10 @@ def factory(
     ) -> Iterator[FakeSession]:
         calls.append({"directory": directory, **kwargs})
         session = FakeSession(
-            load_spec(Path(directory)), failing or set(), violating or set()
+            load_spec(Path(directory)),
+            failing or set(),
+            violating or set(),
+            package_failures or [],
         )
         sessions.append(session)
         yield session
@@ -215,9 +267,22 @@ def test_report_only_warns_about_violations(
         == 0
     )
     out = capsys.readouterr().out
-    assert "scenario: inference, status: WARN" in out
-    assert "Violations:" in out
+    assert "scenario: inference, status: ok" in out
+    assert "package live-check: status: WARN" in out
+    assert "Live-check violations:" in out
     assert "is missing server.address" in out
+
+
+def test_unexpected_package_violation_fails_by_default(
+    directory: Path,
+) -> None:
+    assert (
+        main(
+            [str(directory)],
+            session=factory([], [], violating={"inference"}),
+        )
+        == 1
+    )
 
 
 def test_colour_follows_the_environment(
@@ -241,6 +306,24 @@ def test_report_only_still_fails_on_a_broken_scenario(directory: Path) -> None:
         main(
             [str(directory), "--report-only"],
             session=factory([], [], failing={"inference"}),
+        )
+        == 1
+    )
+
+
+def test_report_only_still_fails_on_a_stale_package_declaration(
+    directory: Path,
+) -> None:
+    assert (
+        main(
+            [str(directory), "--report-only"],
+            session=factory(
+                [],
+                [],
+                package_failures=[
+                    "[missing] any context is no longer reported"
+                ],
+            ),
         )
         == 1
     )
@@ -314,9 +397,10 @@ def test_data_command_runs_in_a_shell(directory: Path, tmp_path: Path) -> None:
     reduction script.
     """
     reports = tmp_path / "reports"
-    reports.mkdir()
-    (reports / "inference.json").write_text("{}")
-    (reports / "tool_calling.json").write_text("{}")
+    captures = reports / "scenarios"
+    captures.mkdir(parents=True)
+    (captures / "inference.json").write_text("{}")
+    (captures / "tool_calling.json").write_text("{}")
 
     calls: list[dict[str, Any]] = []
     main(

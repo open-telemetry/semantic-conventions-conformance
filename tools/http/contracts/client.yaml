@@ -1,12 +1,19 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-description: Shared HTTP client requests and expected telemetry.
+description: What an instrumented HTTP client emits for each request it sends.
 
-# Not one of the scenarios below: a driver sends it to learn a server is
-# listening, and no telemetry expectation covers it.
+# The instrumented client initiates each action, so the runner starts one
+# process per action and the library under test sends the request itself. The
+# requests go to `http-mock-server`, which the runner starts.
+driver: instrumentation
+
+# No readiness exchange is sent by an instrumented client. This one exists
+# because `http-mock-server` answers from this table and the runner waits on
+# its health endpoint before starting the first action. No telemetry
+# expectation covers it.
 readiness:
-  description: Checks whether the server is ready.
+  description: Checks whether the mock server is ready.
   action:
     request:
       method: GET

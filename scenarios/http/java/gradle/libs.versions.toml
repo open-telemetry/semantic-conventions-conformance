@@ -44,7 +44,6 @@ helidon-webserver = { module = "io.helidon.webserver:helidon-webserver", version
 httpasyncclient = { module = "org.apache.httpcomponents:httpasyncclient", version.ref = "httpasyncclient" }
 httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
-jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 jetty-client = { module = "org.eclipse.jetty:jetty-client", version.ref = "jetty" }
 jodd-http = { module = "org.jodd:jodd-http", version.ref = "jodd-http" }
 netty-codec-http = { module = "io.netty:netty-codec-http", version.ref = "netty" }

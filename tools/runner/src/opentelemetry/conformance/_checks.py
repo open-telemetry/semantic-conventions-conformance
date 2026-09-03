@@ -1,22 +1,19 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Scenario expectations vs. the weaver live-check report.
-
-Every check returns failure strings instead of raising, and none of them
-short-circuit: one run reports every problem it found.
-"""
+"""Checks for scenario telemetry and aggregate package violations."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
+from typing import TYPE_CHECKING, Hashable, Mapping, Sequence
 
-from ._report import carried_attributes
+from ._otlp_capture import CapturedSpan, CapturedWindow
 from ._spans import span_kind
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
+    PackageSpec,
     ScenarioSpec,
     SpanExpectation,
 )
@@ -26,107 +23,76 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
+class PackageFindings:
+    """Unexpected findings and stale declarations from one package report."""
+
+    failures: list[str]
+    violations: list[str]
+
+
+@dataclass(frozen=True)
 class ObservedSpan:
+    """A span read from a normalized capture for coverage reduction."""
+
     name: str
     kind: str
     attributes: Mapping[str, object]
 
 
-def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
-    """One entry per span sample in the report.
-
-    Attributes weaver rejected are dropped, so an expectation cannot pass on a
-    value live-check refused — the same rule the coverage reduction applies.
-    """
+def check_scenario_telemetry(
+    spec: ScenarioSpec, window: CapturedWindow
+) -> list[str]:
+    """Evaluate one scenario contract against its raw captured OTLP window."""
     return [
-        ObservedSpan(
-            name=entry["span"].get("name", ""),
-            kind=entry["span"].get("kind", ""),
-            attributes=carried_attributes(
-                cast("Mapping[str, object]", entry["span"])
-            ),
-        )
-        for entry in report["samples"]
-        if "span" in entry
+        *(() if spec.spans is None else _check_spans(spec, window.spans)),
+        *(
+            ()
+            if spec.metrics is None
+            else _check_names(
+                "metric",
+                expected=set(spec.metrics),
+                seen=set(window.metric_names) - set(spec.optional_metrics),
+            )
+        ),
+        *(
+            ()
+            if spec.events is None
+            else _check_names(
+                "event",
+                expected=set(spec.events),
+                seen=set(window.event_names),
+            )
+        ),
     ]
 
 
-def _seen(statistics: Mapping[str, object], *keys: str) -> set[str]:
-    """The names weaver counted at least once under any of ``keys``."""
-    counted: set[str] = set()
-    for key in keys:
-        counts = statistics.get(key)
-        if not isinstance(counts, Mapping):
-            continue
-        counted |= {
-            str(name)
-            for name, count in cast("Mapping[object, object]", counts).items()
-            if count
-        }
-    return counted
-
-
-def seen_metrics(statistics: Mapping[str, object]) -> set[str]:
-    """Every metric name the run produced, registry or not."""
-    return _seen(
-        statistics, "seen_registry_metrics", "seen_non_registry_metrics"
+def check_package_violations(
+    spec: PackageSpec, report: LiveCheckReport, *, complete: bool
+) -> PackageFindings:
+    """Evaluate Weaver's aggregate findings once for the package."""
+    violations = report.violations
+    expected = spec.expected_violations
+    unexpected = sorted(
+        describe_violation(violation)
+        for violation in violations
+        if not any(_matches(violation, item) for item in expected)
     )
-
-
-def seen_events(statistics: Mapping[str, object]) -> set[str]:
-    """Every event name the run produced, registry or not."""
-    return _seen(
-        statistics, "seen_registry_events", "seen_non_registry_events"
+    stale = (
+        sorted(
+            f"{item.describe()} is no longer reported, remove it "
+            f"({item.reason})"
+            for item in expected
+            if not any(_matches(violation, item) for violation in violations)
+        )
+        if complete
+        else []
     )
+    return PackageFindings(failures=stale, violations=unexpected)
 
 
-@dataclass(frozen=True)
-class Findings:
-    """Two kinds of problem, kept apart because callers weigh them apart.
-
-    ``failures`` mean the scenario didn't do its job. ``violations`` mean it
-    did, and what it produced departs from the conventions — a result a caller
-    may want to record rather than fail on.
-    """
-
-    failures: list[str]
-    violations: list[str]
-
-    def all(self) -> list[str]:
-        return [*self.failures, *self.violations]
-
-
-def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
-    """Return every way the report fails to match the scenario spec."""
-    statistics = report["statistics"]
-    spans = observed_spans(report)
-    return Findings(
-        failures=[
-            *(() if spec.spans is None else _check_spans(spec, spans)),
-            *(
-                ()
-                if spec.metrics is None
-                else _check_names(
-                    "metric",
-                    expected=set(spec.metrics),
-                    seen=seen_metrics(statistics),
-                )
-            ),
-            *(
-                ()
-                if spec.events is None
-                else _check_names(
-                    "event",
-                    expected=set(spec.events),
-                    seen=seen_events(statistics),
-                )
-            ),
-        ],
-        violations=_check_violations(spec, report),
-    )
-
-
-def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
+def selects(
+    expectation: SpanExpectation, span: CapturedSpan | ObservedSpan
+) -> bool:
     match = expectation.match
     return all(
         span.attributes.get(attribute) == value
@@ -135,13 +101,11 @@ def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
 
 
 def _check_spans(
-    spec: ScenarioSpec, spans: Sequence[ObservedSpan]
+    spec: ScenarioSpec, spans: Sequence[CapturedSpan]
 ) -> list[str]:
     """Check each declared expectation, and that no span went undeclared."""
     failures: list[str] = []
     expectations = spec.spans or ()
-    # Spans some expectation selected, so undeclared ones can be reported
-    # without a second pass. Indices because a span isn't hashable.
     selected: set[int] = set()
     has_assertions = False
 
@@ -153,7 +117,7 @@ def _check_spans(
             continue
 
         has_assertions = True
-        matched: list[ObservedSpan] = []
+        matched: list[CapturedSpan] = []
         for index, span in enumerate(spans):
             if selects(expectation, span):
                 matched.append(span)
@@ -183,7 +147,7 @@ def _check_spans(
 
 
 def _check_attribute(
-    spans: Sequence[ObservedSpan],
+    spans: Sequence[CapturedSpan],
     attribute: str,
     matcher: AttributeMatcher,
 ) -> str | None:
@@ -239,37 +203,12 @@ def _matches(
 ) -> bool:
     if violation.get("id") != expected.id:
         return False
-    if expected.context is None:  # declared without one: any context matches
+    if expected.context is None:
         return True
     return (violation.get("context") or {}) == dict(expected.context)
 
 
-def _check_violations(
-    spec: ScenarioSpec, report: LiveCheckReport
-) -> list[str]:
-    violations = report.violations
-    expected = spec.expected_violations
-    accepted = expected + spec.inherited_violations
-
-    failures = sorted(
-        _describe(violation)
-        for violation in violations
-        if not any(_matches(violation, e) for e in accepted)
-    )
-    # Only the scenario's own must still be reported; inherited ones only
-    # suppress, since not every scenario reaches a package-wide gap.
-    failures += sorted(
-        f"{e.describe()} is no longer reported, remove it ({e.reason})"
-        for e in expected
-        if not any(_matches(violation, e) for violation in violations)
-    )
-    return failures
-
-
-def _describe(violation: Mapping[str, object]) -> str:
-    """One line: the advice id, and what weaver said about it.
-
-    Not the context — weaver's message already spells out what is in it.
-    """
+def describe_violation(violation: Mapping[str, object]) -> str:
+    """Return the advice id and Weaver's message on one line."""
     message = str(violation.get("message") or "").strip().rstrip(".")
     return f"[{violation.get('id')}] {message}".rstrip()

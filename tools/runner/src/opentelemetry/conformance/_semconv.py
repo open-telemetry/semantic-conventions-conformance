@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The registry-shaped reduction of a run: what each signal carried.
+"""The registry-shaped reduction of captured telemetry.
 
 The default reduction in :mod:`._coverage` keys spans by what a scenario
 *declares*, which is all it can do without knowing the conventions. This one
@@ -18,7 +18,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Mapping
 
-from ._report import ClassifySpan, Observed, finding_list, read
+from ._report import (
+    SCENARIO_REPORT_DIR,
+    ClassifySpan,
+    Observed,
+    finding_list,
+    read,
+)
 
 if TYPE_CHECKING:
     from ._spec import PackageSpec
@@ -36,9 +42,9 @@ def semconv_coverage(
     """
 
     def build(report_dir: Path, spec: PackageSpec) -> object:
-        if not report_dir.is_dir():
+        if not (report_dir / SCENARIO_REPORT_DIR).is_dir():
             raise RuntimeError(
-                f"no weaver reports to reduce under {report_dir} — the run "
+                f"no captured scenario reports under {report_dir}; the run "
                 "produced nothing to record"
             )
         return _reduce(read(report_dir, classify, spec), coverage_model())
@@ -46,9 +52,7 @@ def semconv_coverage(
     return build
 
 
-def _reduce(
-    observed: Observed, model: Mapping[str, Any]
-) -> dict[str, object]:
+def _reduce(observed: Observed, model: Mapping[str, Any]) -> dict[str, object]:
     """A parsed run, reduced to the committed data-file shape.
 
     Every key is always there, empty or not: a run that emitted no metrics has

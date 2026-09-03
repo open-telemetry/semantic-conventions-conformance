@@ -13,7 +13,7 @@ class HttpServerWorkloadTest {
 
   @Test
   void anAnswerComesFromTheContract() {
-    Response answer = HttpServerWorkload.respond("GET", "/status/500", null);
+    Response answer = HttpServerWorkload.respond("GET", "/status/500", null, TestActions.EXCHANGES);
 
     assertEquals(500, answer.statusCode());
     assertEquals("{\"message\": \"status 500\"}", answer.body());
@@ -21,14 +21,17 @@ class HttpServerWorkloadTest {
 
   @Test
   void theRouteIsFoundThroughTheConcretePathTheFrameworkReports() {
-    Response answer = HttpServerWorkload.respond("GET", "/users/123?fields=name", null);
+    Response answer =
+        HttpServerWorkload.respond("GET", "/users/123?fields=name", null, TestActions.EXCHANGES);
 
     assertEquals(200, answer.statusCode());
   }
 
   @Test
   void aScenarioThatNeverReadTheBodyWouldNotEchoIt() {
-    Response answer = HttpServerWorkload.respond("POST", "/items", "{\"name\": \"widget\"}");
+    Response answer =
+        HttpServerWorkload.respond(
+            "POST", "/items", "{\"name\": \"widget\"}", TestActions.EXCHANGES);
 
     assertEquals(201, answer.statusCode());
     assertEquals("{\"created\": true, \"payload\": {\"name\": \"widget\"}}", answer.body());
@@ -36,7 +39,7 @@ class HttpServerWorkloadTest {
 
   @Test
   void trafficTheContractDoesNotDescribeIsRefused() {
-    Response answer = HttpServerWorkload.respond("GET", "/nope", null);
+    Response answer = HttpServerWorkload.respond("GET", "/nope", null, TestActions.EXCHANGES);
 
     assertEquals(404, answer.statusCode());
   }

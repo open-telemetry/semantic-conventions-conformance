@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: System.Net.Http
 instrumentation_library: OpenTelemetry.Instrumentation.Http
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 # Publishing here rather than in `run:` keeps the toolchain out of the measured
 # process: a `dotnet run` would restore and compile on the clock.

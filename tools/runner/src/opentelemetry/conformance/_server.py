@@ -20,6 +20,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from pathlib import Path
 from string import Template
 from types import TracebackType
@@ -42,7 +43,11 @@ class Server:
     """
 
     def __init__(
-        self, command: tuple[str, ...], *, health_path: str = "/health"
+        self,
+        command: tuple[str, ...],
+        *,
+        health_path: str = "/health",
+        env: Mapping[str, str] | None = None,
     ) -> None:
         # The socket is held open until the child is spawned; releasing it
         # here would leave the port free for a parallel run to take.
@@ -54,6 +59,7 @@ class Server:
             for part in command
         )
         self._health_path = health_path
+        self._env = {**os.environ, **(env or {})}
         self._process: subprocess.Popen[bytes] | None = None
         # A file rather than a pipe: nothing drains the output until something
         # goes wrong, and a full pipe buffer would wedge a chatty server.
@@ -80,6 +86,7 @@ class Server:
             stdout=self._log,
             stderr=subprocess.STDOUT,
             start_new_session=True,
+            env=self._env,
         )
         try:
             self._wait_for_ready()
@@ -128,7 +135,9 @@ class Server:
         if process is None or process.poll() is not None:
             return
         try:
-            os.killpg(os.getpgid(process.pid), number)
+            getpgid = getattr(os, "getpgid")
+            killpg = getattr(os, "killpg")
+            killpg(getpgid(process.pid), number)
         except (AttributeError, OSError):
             process.send_signal(number)
 

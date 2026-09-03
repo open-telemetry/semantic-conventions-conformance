@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: jodd-http
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 env:
   # Keep Java runtime metrics out of this HTTP-only conformance report.
