@@ -22,11 +22,13 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql` or `mariadb`.
-Each session starts one pinned container, applies that backend's packaged SQL
-schema, and removes the container when the session closes. The schemas create
-the same logical objects but no rows; scenarios own any data their operations
-need.
+`runner_config` must contain only `backend`, whose supported values are
+`postgresql`, `mariadb`, and `mongodb`. Each session starts one pinned
+container, applies that backend's packaged bootstrap, and removes the container
+when the session closes. The relational schemas create the same logical objects
+but no rows. The MongoDB bootstrap recreates the `items` collection with
+deterministic documents for isolated read, update, delete, and aggregation
+operations.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -44,7 +46,8 @@ JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
-backend also requires adding its span classification and conformance scenarios.
+use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and MongoDB
+spans use `db.mongodb.client`. Adding a backend also requires adding its span
+classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
