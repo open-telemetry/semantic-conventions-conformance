@@ -265,7 +265,7 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
-def test_contract_index_is_injected_into_the_scenario_process(
+def test_contract_selection_is_injected_into_the_scenario_process(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -284,11 +284,16 @@ def test_contract_index_is_injected_into_the_scenario_process(
     scenario = replace(
         opened.spec.scenarios["inference"],
         index=3,
+        action={"request": {"method": "POST", "path": "/items"}},
     )
 
     opened._execute(scenario, "http://collector")
 
     assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
+    assert (
+        captured["OTEL_CONFORMANCE_SCENARIO_ACTION"]
+        == '{"request":{"method":"POST","path":"/items"}}'
+    )
 
 
 def test_a_missing_registry_is_a_spec_error(

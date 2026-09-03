@@ -10,12 +10,12 @@ public final class JdbcLibraryScenario {
   private JdbcLibraryScenario() {}
 
   public static void main(String[] args) throws Exception {
-    if (args.length != 1) {
-      throw new IllegalArgumentException("expected one JDBC operation argument");
+    if (args.length != 0) {
+      throw new IllegalArgumentException("expected no JDBC operation arguments");
     }
     try (ScenarioSdk sdk = ScenarioSdk.initialize()) {
       OpenTelemetryDriver.install(sdk.openTelemetry());
-      JdbcScenario.run(args[0]);
+      JdbcScenario.run();
     }
   }
 }

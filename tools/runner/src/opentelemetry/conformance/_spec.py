@@ -146,6 +146,9 @@ class ScenarioSpec:
     expectations at all only has to run and stay free of semconv violations.
     Declaring one makes its check exact.
 
+    ``action`` is the protocol-neutral mapping from an indexed contract. The
+    runner passes only the selected mapping to the scenario process as JSON.
+
     ``expected_violations`` are this scenario's own and are checked both ways:
     reported, they pass; no longer reported, the run says to remove them.
     ``inherited_violations`` come from the package and only ever suppress —
@@ -164,6 +167,7 @@ class ScenarioSpec:
     inherited_violations: tuple[ExpectedViolation, ...] = ()
     description: str = ""
     index: int | None = None
+    action: Mapping[str, object] | None = None
 
     @property
     def display_name(self) -> str:
@@ -273,6 +277,29 @@ def _require_list(value: object, where: str) -> list[object]:
             f"{where}: expected a list, got {type(value).__name__}"
         )
     return cast("list[object]", value)
+
+
+def _parse_action(value: object, where: str) -> Mapping[str, object]:
+    action = _require_mapping(value, where)
+    if not action:
+        raise SpecError(f"{where}: expected a non-empty mapping")
+    try:
+        encoded = json.dumps(
+            action,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    except (TypeError, ValueError) as error:
+        raise SpecError(
+            f"{where}: expected values that can be represented as JSON: {error}"
+        ) from error
+    decoded = json.loads(encoded)
+    if decoded != action:
+        raise SpecError(
+            f"{where}: expected an object with string keys and JSON values"
+        )
+    return cast("Mapping[str, object]", decoded)
 
 
 def _check_keys(
@@ -454,6 +481,7 @@ def _parse_scenario(
     inherited: tuple[ExpectedViolation, ...] = (),
     description: str | None = None,
     index: int | None = None,
+    action: Mapping[str, object] | None = None,
 ) -> ScenarioSpec:
     scenario = _require_mapping(value or {}, where)
     _check_keys(
@@ -506,6 +534,7 @@ def _parse_scenario(
         inherited_violations=inherited,
         description=description or name,
         index=index,
+        action=action,
     )
 
 
@@ -563,9 +592,7 @@ def _list_contract_scenarios(
         entry = _require_mapping(value, where)
         _check_keys(entry, ("description", "action", "expect"), where)
         description = _required_string(entry, "description", where)
-        action = _require_mapping(entry.get("action"), f"{where}.action")
-        if not action:
-            raise SpecError(f"{where}.action: expected a non-empty mapping")
+        action = _parse_action(entry.get("action"), f"{where}.action")
         if "expect" not in entry:
             raise SpecError(f"{where}.expect is required")
         expect = _require_mapping(entry["expect"], f"{where}.expect")
@@ -579,6 +606,7 @@ def _list_contract_scenarios(
             inherited=inherited,
             description=description,
             index=index,
+            action=action,
         )
     return parsed
 
