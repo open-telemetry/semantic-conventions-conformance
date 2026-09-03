@@ -1,0 +1,16 @@
+{
+  "name": "@otel-conformance/browser-runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runs a bundled browser conformance workload and bridges its OTLP telemetry.",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/index.test.js"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "1.14.4",
+    "@playwright/test": "1.62.1",
+    "esbuild": "0.28.2"
+  }
+}
