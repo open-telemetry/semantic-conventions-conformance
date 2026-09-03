@@ -13,6 +13,8 @@ http/scenarios/                       built-in client and server, no OTel
 http/opentelemetry-http/              client.js, server.js, client/, server/
 undici/scenarios/                     what the client does, no OTel
 undici/opentelemetry-undici/          client.js, client/
+xml-http-request/scenarios/           what the browser XMLHttpRequest client does, no OTel
+xml-http-request/opentelemetry-xml-http-request/ browser.js, client/
 ```
 
 This directory is the build root: one npm workspace, whose `package.json` and
@@ -76,6 +78,14 @@ Chrome is unavailable:
 npm exec playwright install chromium
 ```
 
+## XMLHttpRequest
+
+The XMLHttpRequest scenario uses the same browser runner and shared HTTP
+contract as Fetch, but drives it with the browser's `XMLHttpRequest` API. Its
+workload contains only request and response handling; telemetry configuration
+belongs to the instrumentation package. The exporter endpoint is excluded from
+instrumentation so the resulting signal contains only contract client spans.
+
 ## Running one
 
 Use Node 22.19.0 or newer. The lockfile pins `undici@8.10.0`, which requires
@@ -89,6 +99,7 @@ otel-conformance scenarios/http/js/fetch/opentelemetry-fetch/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
+otel-conformance scenarios/http/js/xml-http-request/opentelemetry-xml-http-request/client
 ```
 
 Each package's `setup:` is `otel-conformance-js install`, which installs this
