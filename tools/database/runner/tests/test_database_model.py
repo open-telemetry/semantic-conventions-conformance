@@ -26,6 +26,7 @@ def _model():
 @pytest.mark.parametrize(
     ("system", "span_type"),
     [
+        ("elasticsearch", "db.elasticsearch.client"),
         ("mariadb", "db.mariadb.client"),
         ("postgresql", "db.postgresql.client"),
     ],
