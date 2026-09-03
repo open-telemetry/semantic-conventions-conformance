@@ -12,9 +12,11 @@ from typing import Any
 import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
+from testcontainers.core.wait_strategies import ExecWaitStrategy
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _mariadb, _oracle, _postgres
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
+from database_conformance._oracle import ORACLE_IMAGE, Oracle
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
 
@@ -91,12 +93,19 @@ def install_stub(
 
 
 @pytest.mark.parametrize(
-    ("module", "backend_type", "port", "expected_environment"),
+    (
+        "module",
+        "backend_type",
+        "port",
+        "expected_database",
+        "expected_environment",
+    ),
     [
         (
             _postgres,
             Postgres,
             5432,
+            "conformance",
             {
                 "POSTGRES_DB": "conformance",
                 "POSTGRES_USER": "conformance",
@@ -107,6 +116,7 @@ def install_stub(
             _mariadb,
             MariaDB,
             3306,
+            "conformance",
             {
                 "MARIADB_DATABASE": "conformance",
                 "MARIADB_USER": "conformance",
@@ -114,13 +124,25 @@ def install_stub(
                 "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
             },
         ),
+        (
+            _oracle,
+            Oracle,
+            1521,
+            "FREEPDB1",
+            {
+                "ORACLE_PASSWORD": "conformance",
+                "APP_USER": "conformance",
+                "APP_USER_PASSWORD": "conformance",
+            },
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB],
+    backend_type: type[Postgres] | type[MariaDB] | type[Oracle],
     port: int,
+    expected_database: str,
     expected_environment: dict[str, str],
 ) -> None:
     container = StubContainer(port=port)
@@ -130,7 +152,7 @@ def test_starts_initializes_publishes_and_removes_database(
         assert database.variables == {
             "DATABASE_HOST": "127.0.0.1",
             "DATABASE_PORT": "32768",
-            "DATABASE_NAME": "conformance",
+            "DATABASE_NAME": expected_database,
             "DATABASE_USER": "conformance",
             "DATABASE_PASSWORD": "conformance",
         }
@@ -146,6 +168,44 @@ def test_starts_initializes_publishes_and_removes_database(
     assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
+
+
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port", "override", "expected_timeout"),
+    [
+        (_postgres, Postgres, 5432, None, 60.0),
+        (_oracle, Oracle, 1521, None, 180.0),
+        (_oracle, Oracle, 1521, "240", 240.0),
+    ],
+)
+def test_a_backend_waits_for_its_own_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[Oracle],
+    port: int,
+    override: str | None,
+    expected_timeout: float,
+) -> None:
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
+    )
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", raising=False
+    )
+    if override is not None:
+        monkeypatch.setenv(
+            "OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", override
+        )
+    container = StubContainer(port=port)
+    install_stub(monkeypatch, module, container)
+
+    with backend_type():
+        pass
+
+    strategy = container.wait_strategy
+    assert isinstance(strategy, ExecWaitStrategy)
+    # Testcontainers keeps the configured startup timeout private.
+    assert strategy._startup_timeout == expected_timeout
 
 
 def test_start_failure_cleans_up_the_container(
@@ -193,6 +253,24 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+def test_oracle_schema_failure_reports_sqlplus_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"ORA-00900: invalid SQL"),
+        port=1521,
+    )
+    install_stub(monkeypatch, _oracle, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)ORA-00900.*ready to accept connections",
+    ):
+        Oracle().start()
+
+    assert container.stopped
+
+
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -218,6 +296,11 @@ def test_the_image_is_pinned_by_digest() -> None:
     assert separator == "@"
     assert digest.startswith("sha256:")
 
+    name, separator, digest = ORACLE_IMAGE.partition("@")
+    assert name == "gvenzl/oracle-free:23.26.2-slim-faststart"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -236,3 +319,12 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("oracle.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE TABLE items" in schema
+    assert "CREATE OR REPLACE PROCEDURE noop" in schema
+    assert "INSERT INTO" not in schema
