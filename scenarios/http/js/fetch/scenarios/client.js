@@ -28,7 +28,7 @@ async function drive(baseUrl, exchanges) {
     }
     const expected = exchange.responseBody.replace(
       "${requestBody}",
-      exchange.body ?? "{}",
+      () => exchange.body ?? "{}",
     );
     if (!isJsonEqual(JSON.parse(body), JSON.parse(expected))) {
       throw new Error(
