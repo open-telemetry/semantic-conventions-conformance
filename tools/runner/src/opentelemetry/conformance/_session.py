@@ -36,7 +36,7 @@ from ._env import (
     build_env,
     timeout_seconds,
 )
-from ._registry import check_weaver
+from ._registry import check_weaver, local_registry, parse_git_registry
 from ._server import Server
 from ._spec import (
     PackageSpec,
@@ -218,7 +218,13 @@ class ConformanceSession:
                 inactivity_timeout=int(
                     timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
                 ),
-                registry=self._resolve_path(self._registry),
+                registry=str(
+                    registry_path(
+                        self._registry,
+                        directory=self._spec.directory,
+                        variables=self._variables,
+                    )
+                ),
                 policies_dir=self._resolve_path(weaver_spec.policies)
                 if weaver_spec.policies
                 else None,
@@ -426,6 +432,21 @@ def _default_report_dir(directory: Path) -> Path:
     lands in the same place however it was invoked.
     """
     return directory / DEFAULT_REPORT_DIR
+
+
+def registry_path(
+    value: str, *, directory: Path, variables: Mapping[str, str]
+) -> Path:
+    """A declared registry as a directory, fetched when it is a git URL.
+
+    A relative path is relative to the package that declared it, the way every
+    other path in a ``conformance.yaml`` is.
+    """
+    resolved = Template(value).safe_substitute(variables)
+    if parse_git_registry(resolved) is not None:
+        return local_registry(resolved)
+    path = Path(resolved)
+    return path if path.is_absolute() else directory / path
 
 
 @contextmanager

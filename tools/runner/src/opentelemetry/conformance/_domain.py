@@ -33,8 +33,9 @@ from ._session import (
     ConformanceSession,
     SessionFactory,
     conformance_session,
+    registry_path,
 )
-from ._spec import PackageSpec, ServerSpec, WeaverSpec
+from ._spec import PackageSpec, ServerSpec, WeaverSpec, load_spec
 
 # Span invariants every domain is checked against; see policies/.
 _RUNNER_POLICIES = Path(__file__).parent / "policies"
@@ -207,8 +208,18 @@ class Domain:
         # Up front: resolving the coverage model shells out to weaver too, and
         # a missing binary should be reported here rather than from there.
         check_weaver()
+        # Read here rather than in the session, because whichever registry the
+        # package ends up checked against is the one to reduce its run against.
+        spec = spec or load_spec(Path(directory))
+        declared = spec.weaver.registry or (weaver.registry if weaver else None)
         override = (
-            Path(weaver.registry) if weaver and weaver.registry else None
+            registry_path(
+                declared,
+                directory=spec.directory,
+                variables=variables or {},
+            )
+            if declared
+            else None
         )
         with ExitStack() as stack:
             resolved_build_data, model_path = self._coverage(stack, override)

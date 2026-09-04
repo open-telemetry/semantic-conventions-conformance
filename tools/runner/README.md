@@ -483,6 +483,18 @@ field by field — `server: {health: /ready}` keeps your server and only changes
 where it is probed. Paths declared inside a `conformance.yaml` are relative to
 that file, paths on the command line to your shell.
 
+`registry` also takes a git URL in weaver's own syntax, with an optional ref
+and sub folder:
+
+```yaml
+weaver:
+  registry: https://github.com/open-telemetry/semantic-conventions-genai.git@67dff024[model]
+```
+
+It is downloaded into `$SEMCONV_CACHE` under its ref and reused, so a ref that
+moves is fetched once until the cache is cleared. Only `github.com` URLs, since
+what is fetched is a GitHub archive.
+
 ## Limitations
 
 - **Only exercised against Python scenarios** so far. That is a convention of

@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import shutil
 import subprocess
 import tarfile
 import tempfile
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
@@ -27,6 +29,17 @@ logger = logging.getLogger(__name__)
 # the OS-level socket timeout.
 _FETCH_TIMEOUT_SECONDS = 60
 _VERSION_TIMEOUT_SECONDS = 10
+
+_GITHUB = "https://github.com/"
+
+# Weaver's registry-as-git-URL syntax: <url>.git, optionally @<ref>, optionally
+# [<sub folder>]. See the --registry argument of any weaver command. The scheme
+# is what tells it apart from a local checkout named `<something>.git`.
+_GIT_REGISTRY = re.compile(
+    r"^(?P<url>[a-zA-Z][a-zA-Z0-9+.-]*://[^\s\[\]]+\.git)"
+    r"(?:@(?P<ref>[^\s\[\]]+))?"
+    r"(?:\[(?P<sub_folder>[^\]]+)\])?$"
+)
 
 
 def load_version_pins(path: Path) -> dict[str, str]:
@@ -52,6 +65,51 @@ def require_pin(path: Path, name: str) -> str:
         raise RuntimeError(f"{path} is missing the pin {name}") from None
 
 
+@dataclass(frozen=True)
+class GitRegistry:
+    """A registry declared as a git URL rather than as a path on disk."""
+
+    url: str
+    ref: str | None = None
+    sub_folder: str | None = None
+
+    @property
+    def repo(self) -> str:
+        """The ``org/name`` to fetch an archive of."""
+        if not self.url.startswith(_GITHUB):
+            raise RuntimeError(
+                f"{self.url}: a registry URL is fetched as a GitHub archive, "
+                "so only github.com URLs work here"
+            )
+        return self.url[len(_GITHUB) :].removesuffix(".git")
+
+
+def parse_git_registry(value: str) -> GitRegistry | None:
+    """Read ``<url>.git@<ref>[<sub folder>]``; None if it isn't one."""
+    match = _GIT_REGISTRY.match(value.strip())
+    if match is None:
+        return None
+    return GitRegistry(**match.groupdict())
+
+
+def local_registry(value: str) -> Path:
+    """A declared registry as a directory, fetching it when it is a git URL.
+
+    Weaver takes a URL itself, but a domain's advice data is built by reading
+    files out of the registry, which no weaver command hands back. So a URL is
+    fetched once here and everything downstream sees an ordinary checkout.
+    """
+    declared = parse_git_registry(value)
+    if declared is None:
+        return Path(value)
+    repo = declared.repo
+    # No ref is the default branch, which is what GitHub serves for HEAD.
+    checkout = provision(
+        repo, declared.ref or "HEAD", label=repo.rpartition("/")[2]
+    )
+    return checkout / declared.sub_folder if declared.sub_folder else checkout
+
+
 def cache_dir() -> Path:
     """Where fetched registries live. ``SEMCONV_CACHE`` overrides it."""
     override = os.environ.get("SEMCONV_CACHE")
@@ -67,7 +125,7 @@ def provision(repo: str, ref: str, *, label: str) -> Path:
     registries at the same ref don't collide. A completed fetch leaves a stamp
     file, which is what makes this a no-op on every later run.
     """
-    target = cache_dir() / f"{label}-{ref}"
+    target = cache_dir() / _safe_name(f"{label}-{ref}")
     stamp = target / ".provisioned"
     if stamp.is_file():
         return target
@@ -76,6 +134,11 @@ def provision(repo: str, ref: str, *, label: str) -> Path:
     _download_and_extract(url, target, label=label)
     stamp.touch()
     return target
+
+
+def _safe_name(value: str) -> str:
+    """``value`` as one path component: a ref can hold slashes and worse."""
+    return re.sub(r"[^A-Za-z0-9._-]", "-", value)
 
 
 def _download_and_extract(url: str, target: Path, *, label: str) -> None:
