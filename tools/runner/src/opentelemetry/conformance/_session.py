@@ -199,8 +199,6 @@ class ConformanceSession:
                 f"{name!r} is not declared in {self._spec.directory}; "
                 f"declared: {sorted(self._spec.scenarios)}"
             )
-        self._ran.add(name)
-
         from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
@@ -238,18 +236,20 @@ class ConformanceSession:
 
         # Before the checks, so a failing run still leaves a report to read.
         self._dump(name, report)
+        self._ran.add(name)
 
         failures: list[str] = []
         if completed.returncode != 0:
             failures.append(
-                f"{name}: scenario exited with {completed.returncode}\n"
+                f"{scenario.display_name}: scenario exited with "
+                f"{completed.returncode}\n"
                 f"--- stdout ---\n{completed.stdout}\n"
                 f"--- stderr ---\n{completed.stderr}"
             )
         findings = check(scenario, report)
         failures += findings.failures
         return ScenarioReport(
-            name=name,
+            name=scenario.display_name,
             failures=failures,
             violations=findings.violations,
             report=report,
@@ -276,19 +276,17 @@ class ConformanceSession:
     def _execute(
         self, scenario: ScenarioSpec, otlp_endpoint: str
     ) -> subprocess.CompletedProcess[str]:
+        injected = {
+            "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
+            "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            "OTEL_METRIC_EXPORT_INTERVAL": str(METRIC_EXPORT_INTERVAL_MILLIS),
+        }
+        if scenario.index is not None:
+            injected["OTEL_CONFORMANCE_SCENARIO_INDEX"] = str(scenario.index)
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
-            env=self._env(
-                scenario.env,
-                {
-                    "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-                    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
-                    "OTEL_METRIC_EXPORT_INTERVAL": str(
-                        METRIC_EXPORT_INTERVAL_MILLIS
-                    ),
-                },
-            ),
+            env=self._env(scenario.env, injected),
         )
 
     def _env(
@@ -345,6 +343,10 @@ class ConformanceSession:
         """
         if self._ran != set(self._spec.scenarios):
             return
+        expected_reports = {f"{name}.json" for name in self._spec.scenarios}
+        for report in self._report_dir.glob("*/*.json"):
+            if report.name in expected_reports:
+                report.unlink()
         data = self._build_data(self._report_dir, self._spec)
         self._data_file.parent.mkdir(parents=True, exist_ok=True)
         self._data_file.write_text(json.dumps(data, indent=2) + "\n")

@@ -397,7 +397,7 @@ jobs:
       - coverage-model
       - discover-scenarios
       - scenarios
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ always() }}
     steps:
       - if: |

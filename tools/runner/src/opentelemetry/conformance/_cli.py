@@ -339,9 +339,7 @@ def _run(
         spec=spec,
         # Passed only when asked: a wrapping session factory may have its own
         # reduction, which an explicit default would override.
-        **(
-            {"build_data": run_data_command} if args.data_command else {}
-        ),
+        **({"build_data": run_data_command} if args.data_command else {}),
     ) as opened:
         spec = opened.spec
         print(
@@ -364,11 +362,11 @@ def _run(
                 report.violations and violation_mark is _FAIL
             ):
                 failed = True
-                _status(_FAIL, f"scenario: {name}, status: FAIL")
+                _status(_FAIL, f"scenario: {report.name}, status: FAIL")
             elif report.violations:
-                _status(_WARN, f"scenario: {name}, status: WARN")
+                _status(_WARN, f"scenario: {report.name}, status: WARN")
             else:
-                _status(_OK, f"scenario: {name}, status: ok")
+                _status(_OK, f"scenario: {report.name}, status: ok")
             _findings(_FAIL, "Failures", report.failures)
             _findings(violation_mark, "Violations", report.violations)
             if report.violations and violation_mark is _FAIL:

@@ -8,6 +8,9 @@
   "files": [
     "src"
   ],
+  "dependencies": {
+    "yaml": "^2.8.3"
+  },
   "scripts": {
     "test": "node --test"
   }
