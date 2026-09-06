@@ -6,7 +6,14 @@ import re
 
 from flask import Blueprint, Response, request
 
-from ._common import mock_json_schema_value, mock_tool_arguments, sse
+from ._common import (
+    mock_json_schema_value,
+    mock_tool_arguments,
+    next_tool_call_index,
+    offered_tool,
+    should_call_tool,
+    sse,
+)
 
 bp = Blueprint("openai", __name__)
 
@@ -123,10 +130,7 @@ CHAT_AUDIO_RESPONSE = {
         # OpenAI breaks out audio (and cached) tokens within the prompt total.
         "prompt_tokens_details": {"audio_tokens": 0, "cached_tokens": 0},
         "completion_tokens": 20,
-        "completion_tokens_details": {
-            "audio_tokens": 0,
-            "reasoning_tokens": 0,
-        },
+        "completion_tokens_details": {"audio_tokens": 0, "reasoning_tokens": 0},
         "total_tokens": 60,
     },
 }
@@ -208,10 +212,7 @@ def _has_audio_input(body):
         content = message.get("content")
         if isinstance(content, list):
             for part in content:
-                if (
-                    isinstance(part, dict)
-                    and part.get("type") == "input_audio"
-                ):
+                if isinstance(part, dict) and part.get("type") == "input_audio":
                     return True
     return False
 
@@ -234,43 +235,26 @@ def _chat_audio_response(body):
     return response
 
 
-def _get_offered_tool(body):
-    tools = body.get("tools") or []
-    if not tools:
-        return None, None
-    tool = tools[0]
-    function = tool.get("function", tool)
-    name = function.get("name") or tool.get("name")
-    return tool, name
-
-
-def _current_turn(messages):
-    """Messages since the last user message.
-
-    A tool called in an earlier turn must not stop the model from calling it
-    again when the user asks a new question.
-    """
+def _responses_current_turn(request_input):
+    """Input items since the last user message."""
     last_user = -1
-    for index, message in enumerate(messages):
-        if message.get("role") == "user":
+    for index, item in enumerate(request_input):
+        if item.get("role") == "user":
             last_user = index
-    return messages[last_user + 1 :]
+    return request_input[last_user + 1 :]
 
 
-def _get_called_tool_info(messages):
+def _responses_called_tool_info(items):
+    """Tool names called, and every call id seen, in Responses input shape."""
     called_names = set()
     call_ids = []
-    for m in messages:
-        if m.get("role") == "assistant":
-            for tc in m.get("tool_calls", []):
-                call_id = tc.get("id")
-                if call_id:
-                    call_ids.append(call_id)
-                name = tc.get("function", {}).get("name")
-                if name:
-                    called_names.add(name)
-        elif m.get("role") == "tool":
-            call_id = m.get("tool_call_id")
+    for item in items:
+        if item.get("type") == "function_call":
+            name = item.get("name")
+            if name:
+                called_names.add(name)
+        if item.get("type") in ("function_call", "function_call_output"):
+            call_id = item.get("call_id")
             if call_id:
                 call_ids.append(call_id)
     return called_names, call_ids
@@ -300,10 +284,7 @@ def _mock_chat_content(body, message_text):
     # CrewAI converter retry, recognised by its schema-conversion system prompt
     # (crewai/translations/en.json, formatted_task_instructions): answer with a
     # PlannerTaskPydanticOutput-shaped body so the conversion succeeds.
-    if (
-        "Format your final answer according to the following OpenAPI schema"
-        in message_text
-    ):
+    if "Format your final answer according to the following OpenAPI schema" in message_text:
         return json.dumps(
             {
                 "list_of_plans_per_task": [
@@ -356,10 +337,7 @@ def _mock_chat_content(body, message_text):
     if response_format.get("type") != "json_object":
         return "This is a response from the mock server."
 
-    if (
-        "Relevance-Judge" in message_text
-        or "Relevance Evaluator" in message_text
-    ):
+    if "Relevance-Judge" in message_text or "Relevance Evaluator" in message_text:
         return json.dumps(
             {
                 "explanation": "The response directly answers the user's question and stays fully on topic.",
@@ -394,9 +372,7 @@ def _text_protocol_tool_call(body, message_text):
     tools = []
     # The instructions mention an empty <tools></tools> pair before the real
     # one, so every section is scanned rather than just the first.
-    for section in re.findall(
-        r"<tools>(.*?)</tools>", message_text, re.DOTALL
-    ):
+    for section in re.findall(r"<tools>(.*?)</tools>", message_text, re.DOTALL):
         for line in section.strip().splitlines():
             try:
                 tools.append(json.loads(line))
@@ -428,32 +404,6 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
-def _should_call_tool(body):
-    """Whether this request should be answered with a call to its first tool.
-
-    Offered tools and, in the current turn, no result yet for that tool. The
-    streaming and non-streaming paths share the rule so a framework sees the
-    same exchange either way.
-    """
-    if not body.get("tools"):
-        return False
-    tool, tool_name = _get_offered_tool(body)
-    if not tool or not tool_name:
-        return False
-    turn = _current_turn(body.get("messages", []))
-    called_names, _ = _get_called_tool_info(turn)
-    has_tool_result = any(m.get("role") == "tool" for m in turn)
-
-    if not has_tool_result:
-        return True
-
-    # A result with no call to attribute it to: answer rather than loop.
-    if called_names:
-        return tool_name not in called_names
-
-    return False
-
-
 def _stream_tool_call(body, model, chunk_id):
     """Yield the SSE chunks of a streamed tool call.
 
@@ -466,17 +416,10 @@ def _stream_tool_call(body, model, chunk_id):
     name = function.get("name") or "get_weather"
     arguments = json.dumps(mock_tool_arguments(tool))
 
-    messages = body.get("messages", [])
-    _, call_ids = _get_called_tool_info(messages)
-    call_idx = len(set(call_ids)) + 1
-    call_id = f"call_mock_{call_idx:03d}"
+    call_id = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
 
     for delta in (
-        {
-            "id": call_id,
-            "type": "function",
-            "function": {"name": name, "arguments": ""},
-        },
+        {"id": call_id, "type": "function", "function": {"name": name, "arguments": ""}},
         {"function": {"arguments": arguments}},
     ):
         yield sse(
@@ -501,9 +444,7 @@ def _stream_tool_call(body, model, chunk_id):
             "object": "chat.completion.chunk",
             "created": 1700000000,
             "model": model,
-            "choices": [
-                {"index": 0, "delta": {}, "finish_reason": "tool_calls"}
-            ],
+            "choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}],
             "usage": {
                 "prompt_tokens": 50,
                 "completion_tokens": 20,
@@ -527,17 +468,11 @@ def _stream_chat(body):
             "created": 1700000000,
             "model": model,
             "service_tier": _served_service_tier(body),
-            "choices": [
-                {
-                    "index": 0,
-                    "delta": {"role": "assistant", "content": ""},
-                    "finish_reason": None,
-                }
-            ],
+            "choices": [{"index": 0, "delta": {"role": "assistant", "content": ""}, "finish_reason": None}],
         }
     )
 
-    if _should_call_tool(body):
+    if should_call_tool(body):
         yield from _stream_tool_call(body, model, chunk_id)
         return
 
@@ -559,13 +494,7 @@ def _stream_chat(body):
                 "object": "chat.completion.chunk",
                 "created": 1700000000,
                 "model": model,
-                "choices": [
-                    {
-                        "index": 0,
-                        "delta": {"content": word},
-                        "finish_reason": None,
-                    }
-                ],
+                "choices": [{"index": 0, "delta": {"content": word}, "finish_reason": None}],
             }
         )
 
@@ -575,9 +504,7 @@ def _stream_chat(body):
             "object": "chat.completion.chunk",
             "created": 1700000000,
             "model": model,
-            "choices": [
-                {"index": 0, "delta": {"content": ""}, "finish_reason": "stop"}
-            ],
+            "choices": [{"index": 0, "delta": {"content": ""}, "finish_reason": "stop"}],
             "usage": {
                 "prompt_tokens": 25,
                 "completion_tokens": 6,
@@ -591,9 +518,7 @@ def _stream_chat(body):
 
 @bp.route("/v1/chat/completions", methods=["POST"])
 @bp.route("/openai/v1/chat/completions", methods=["POST"])
-@bp.route(
-    "/openai/deployments/<deployment>/chat/completions", methods=["POST"]
-)
+@bp.route("/openai/deployments/<deployment>/chat/completions", methods=["POST"])
 @bp.route("/chat/completions", methods=["POST"])
 def chat_completions(deployment=None):
     body = request.get_json(silent=True) or {}
@@ -602,31 +527,20 @@ def chat_completions(deployment=None):
         return Response(_stream_chat(body), mimetype="text/event-stream")
 
     message_text = "\n".join(
-        message.get("content", "")
-        for message in body.get("messages", [])
-        if isinstance(message.get("content"), str)
+        message.get("content", "") for message in body.get("messages", []) if isinstance(message.get("content"), str)
     )
 
-    # Offered tools: call the offered tool unless it was already called in this conversation.
-    if _should_call_tool(body):
-        messages = body.get("messages", [])
-        tool, tool_name = _get_offered_tool(body)
-        called_names, call_ids = _get_called_tool_info(messages)
-        if tool:
-            call_idx = len(set(call_ids)) + 1
-            call_id = f"call_mock_{call_idx:03d}"
-            resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
-            resp["model"] = body.get("model", resp["model"])
-            resp["choices"][0]["message"]["tool_calls"][0]["id"] = call_id
-            if tool_name:
-                resp["choices"][0]["message"]["tool_calls"][0]["function"][
-                    "name"
-                ] = tool_name
-            resp["choices"][0]["message"]["tool_calls"][0]["function"][
-                "arguments"
-            ] = json.dumps(mock_tool_arguments(tool))
-            resp["service_tier"] = _served_service_tier(body)
-            return resp
+    # Offered tools with no result for them in this turn: call the tool.
+    if should_call_tool(body):
+        tool, tool_name = offered_tool(body)
+        resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
+        resp["model"] = body.get("model", resp["model"])
+        call = resp["choices"][0]["message"]["tool_calls"][0]
+        call["id"] = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
+        call["function"]["name"] = tool_name
+        call["function"]["arguments"] = json.dumps(mock_tool_arguments(tool))
+        resp["service_tier"] = _served_service_tier(body)
+        return resp
 
     # CrewAI planner natural-retry path: a refusal, then a schema-invalid
     # answer, drives CrewAI through three LLM round-trips under one plan span.
@@ -655,9 +569,7 @@ def chat_completions(deployment=None):
         # convert_with_instructions and a third LLM round-trip.
         resp = copy.deepcopy(CHAT_RESPONSE)
         resp["model"] = body.get("model", resp["model"])
-        resp["choices"][0]["message"]["content"] = (
-            "I drafted this plan but it is not in the requested schema."
-        )
+        resp["choices"][0]["message"]["content"] = "I drafted this plan but it is not in the requested schema."
         resp["service_tier"] = _served_service_tier(body)
         return resp
 
@@ -721,45 +633,31 @@ def responses():
     body = request.get_json(silent=True) or {}
     raw_request_input = body.get("input")
     if isinstance(raw_request_input, list):
-        request_input = [
-            item for item in raw_request_input if isinstance(item, dict)
-        ]
+        request_input = [item for item in raw_request_input if isinstance(item, dict)]
     else:
         request_input = []
-    # Call the first offered tool unless it has already been called in this
-    # input. Keying on the offered tool rather than on the presence of any
+    # Call the first offered tool unless the current turn already called it.
+    # Keying on the offered tool rather than on the presence of any
     # function_call_output lets a multi-agent run still exercise the tool of
     # the agent it handed off to, whose own handoff already produced one.
     offered = {
         tool.get("name") or (tool.get("function") or {}).get("name")
         for tool in body.get("tools") or []
     }
-    called = {
-        item.get("name")
-        for item in request_input
-        if item.get("type") == "function_call"
-    }
-    if (
-        body.get("tools")
-        and "agent_reference" not in body
-        and not (offered & called)
-    ):
-        call_index = len(called) + 1
-        return _responses_tool_call_response(body, call_index=call_index)
+    # Scoped to the current turn: a completed call must not stop the same tool
+    # from being called again after the user asks a second question.
+    called, _ = _responses_called_tool_info(_responses_current_turn(request_input))
+    _, call_ids = _responses_called_tool_info(request_input)
+    if body.get("tools") and "agent_reference" not in body and not (offered & called):
+        return _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
 
     resp = copy.deepcopy(RESPONSES_RESPONSE)
     resp["model"] = body.get("model", resp["model"])
     if body.get("instructions") is not None:
         resp["instructions"] = body["instructions"]
     context_management = body.get("context_management") or []
-    if any(
-        item.get("type") == "compaction"
-        for item in context_management
-        if isinstance(item, dict)
-    ):
-        resp["output"][0]["content"][0]["text"] = (
-            "Great question. Here is Jevons Paradox in simple terms."
-        )
+    if any(item.get("type") == "compaction" for item in context_management if isinstance(item, dict)):
+        resp["output"][0]["content"][0]["text"] = "Great question. Here is Jevons Paradox in simple terms."
         resp["output"].append(
             {
                 "type": "compaction",
@@ -787,20 +685,8 @@ def _stream_response(response):
     in_progress["status"] = "in_progress"
     in_progress["output"] = []
     in_progress["usage"] = None
-    yield sse(
-        {
-            "type": "response.created",
-            "sequence_number": 0,
-            "response": in_progress,
-        }
-    )
-    yield sse(
-        {
-            "type": "response.in_progress",
-            "sequence_number": 1,
-            "response": in_progress,
-        }
-    )
+    yield sse({"type": "response.created", "sequence_number": 0, "response": in_progress})
+    yield sse({"type": "response.in_progress", "sequence_number": 1, "response": in_progress})
 
     item = copy.deepcopy(response["output"][0])
     sequence = 2
@@ -859,11 +745,7 @@ def _stream_response(response):
                 "item_id": item["id"],
                 "output_index": 0,
                 "content_index": 0,
-                "part": {
-                    "type": "output_text",
-                    "text": text,
-                    "annotations": [],
-                },
+                "part": {"type": "output_text", "text": text, "annotations": []},
             }
         )
         sequence += 1
@@ -876,13 +758,7 @@ def _stream_response(response):
         }
     )
     sequence += 1
-    yield sse(
-        {
-            "type": "response.completed",
-            "sequence_number": sequence,
-            "response": response,
-        }
-    )
+    yield sse({"type": "response.completed", "sequence_number": sequence, "response": response})
 
 
 def _stream_create(response):
@@ -895,20 +771,8 @@ def _stream_create(response):
     in_progress["status"] = "in_progress"
     in_progress["output"] = []
     in_progress["usage"] = None
-    yield sse(
-        {
-            "type": "response.created",
-            "sequence_number": 0,
-            "response": in_progress,
-        }
-    )
-    yield sse(
-        {
-            "type": "response.in_progress",
-            "sequence_number": 1,
-            "response": in_progress,
-        }
-    )
+    yield sse({"type": "response.created", "sequence_number": 0, "response": in_progress})
+    yield sse({"type": "response.in_progress", "sequence_number": 1, "response": in_progress})
 
 
 @bp.route("/v1/responses/<response_id>", methods=["GET"])
@@ -946,18 +810,13 @@ def retrieve_response(response_id):
                 }
             }, 400
         starting_after = request.args.get("starting_after")
-        return Response(
-            _stream_retrieve(stored, starting_after),
-            mimetype="text/event-stream",
-        )
+        return Response(_stream_retrieve(stored, starting_after), mimetype="text/event-stream")
     return dict(stored)
 
 
 def _stream_retrieve(response, starting_after):
     """Yield SSE events resuming a stored response stream after `starting_after`."""
-    sequence_number = (
-        int(starting_after) + 1 if starting_after is not None else 0
-    )
+    sequence_number = int(starting_after) + 1 if starting_after is not None else 0
     yield sse(
         {
             "type": "response.completed",

@@ -11,7 +11,13 @@ import json
 
 from flask import Blueprint, Response, request
 
-from ._common import mock_json_schema_value, mock_tool_arguments, sse
+from ._common import (
+    mock_json_schema_value,
+    mock_tool_arguments,
+    next_tool_call_index,
+    should_call_tool,
+    sse,
+)
 
 bp = Blueprint("mistral", __name__, url_prefix="/mistral")
 
@@ -40,7 +46,8 @@ CHAT_RESPONSE = {
 
 # Mistral validates a tool call id as exactly nine alphanumeric characters,
 # and rejects the result message that carries it back otherwise.
-TOOL_CALL_ID = "callmock1"
+def _tool_call_id(messages):
+    return f"callmock{(next_tool_call_index(messages) - 1) % 9 + 1}"
 
 
 def _tool_call_response(body):
@@ -53,7 +60,7 @@ def _tool_call_response(body):
     choice["message"]["content"] = ""
     choice["message"]["tool_calls"] = [
         {
-            "id": TOOL_CALL_ID,
+            "id": _tool_call_id(body.get("messages", [])),
             "type": "function",
             "index": 0,
             "function": {
@@ -79,14 +86,6 @@ def _structured_content(response_format):
     return json.dumps(mock_json_schema_value(schema))
 
 
-def _wants_tool_call(body):
-    if not body.get("tools"):
-        return False
-    return not any(
-        message.get("role") == "tool" for message in body.get("messages", [])
-    )
-
-
 def _has_audio_input(body):
     for message in body.get("messages", []):
         content = message.get("content")
@@ -98,7 +97,7 @@ def _has_audio_input(body):
 
 
 def _chat_response(body):
-    if _wants_tool_call(body):
+    if should_call_tool(body):
         return _tool_call_response(body)
 
     resp = copy.deepcopy(CHAT_RESPONSE)
