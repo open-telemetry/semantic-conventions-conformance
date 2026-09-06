@@ -26,7 +26,6 @@
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
-      "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
@@ -137,69 +136,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.content"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.tool_call_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "ChatCompletion",
@@ -232,33 +168,6 @@
       "signal_name": "ChatCompletion",
       "context": {
         "attribute_key": "llm.output_messages.0.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
       }
     },
     {
@@ -331,15 +240,6 @@
       "signal_name": "ChatCompletion",
       "context": {
         "attribute_key": "llm.token_count.total"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "ChatCompletion",
-      "context": {
-        "attribute_key": "llm.tools.0.tool.json_schema"
       }
     },
     {

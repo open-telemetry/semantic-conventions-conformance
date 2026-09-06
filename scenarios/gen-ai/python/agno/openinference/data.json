@@ -1,13 +1,5 @@
 {
   "spans": {
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.arguments",
-      "gen_ai.tool.call.result",
-      "gen_ai.tool.description",
-      "gen_ai.tool.name",
-      "gen_ai.tool.type"
-    ],
     "gen_ai.inference.client": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
@@ -17,7 +9,6 @@
       "gen_ai.request.model",
       "gen_ai.request.temperature",
       "gen_ai.response.finish_reasons",
-      "gen_ai.tool.definitions",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
     ],
@@ -87,69 +78,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.content"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.tool_call_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "OpenAIChat.invoke",
@@ -186,33 +114,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'llm.provider' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "OpenAIChat.invoke",
@@ -245,15 +146,6 @@
       "signal_name": "OpenAIChat.invoke",
       "context": {
         "attribute_key": "llm.token_count.prompt"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "OpenAIChat.invoke",
-      "context": {
-        "attribute_key": "llm.tools.0.tool.json_schema"
       }
     },
     {
@@ -331,98 +223,6 @@
         "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'input.mime_type' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "input.mime_type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'input.value' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "input.value"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "openinference.span.kind"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.mime_type' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "output.mime_type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.value' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "output.value"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'tool.description' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "tool.description"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'tool.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "tool.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'tool.parameters' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "attribute_key": "tool.parameters"
-      }
-    },
-    {
-      "id": "span_status_ok_set_by_instrumentation",
-      "message": "Span 'get_current_weather' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "status_code": "ok"
-      }
-    },
-    {
-      "id": "genai_span_name_format",
-      "message": "execute_tool span name should be 'execute_tool get_current_weather', got 'get_current_weather'",
-      "signal_type": "span",
-      "signal_name": "get_current_weather",
-      "context": {
-        "expected_form": "execute_tool get_current_weather",
-        "keyed_attr": "gen_ai.tool.name",
-        "operation": "execute_tool"
       }
     },
     {
