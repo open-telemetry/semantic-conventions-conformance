@@ -372,6 +372,70 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
+def _wants_tool_call(body):
+    """Whether this request should be answered with a call to its first tool.
+
+    Offered tools and no tool result yet, which is the same rule the
+    non-streaming path follows so a framework sees the same exchange either
+    way.
+    """
+    if not body.get("tools"):
+        return False
+    return not any(
+        message.get("role") == "tool" for message in body.get("messages", [])
+    )
+
+
+def _stream_tool_call(body, model, chunk_id):
+    """Yield the SSE chunks of a streamed tool call.
+
+    The call arrives split across deltas, name first and arguments after, the
+    way OpenAI sends one: a client that only reassembles the first delta is
+    wrong in a way a single-chunk mock would hide.
+    """
+    tool = body.get("tools", [{}])[0]
+    function = tool.get("function", tool)
+    name = function.get("name") or "get_weather"
+    arguments = json.dumps(mock_tool_arguments(tool))
+
+    for delta in (
+        {"id": "call_mock_001", "type": "function", "function": {"name": name, "arguments": ""}},
+        {"function": {"arguments": arguments}},
+    ):
+        yield sse(
+            {
+                "id": chunk_id,
+                "object": "chat.completion.chunk",
+                "created": 1700000000,
+                "model": model,
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {"tool_calls": [{"index": 0, **delta}]},
+                        "finish_reason": None,
+                    }
+                ],
+            }
+        )
+
+    yield sse(
+        {
+            "id": chunk_id,
+            "object": "chat.completion.chunk",
+            "created": 1700000000,
+            "model": model,
+            "choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}],
+            "usage": {
+                "prompt_tokens": 50,
+                "completion_tokens": 20,
+                "total_tokens": 70,
+            },
+        }
+    )
+
+    yield "data: [DONE]\n\n"
+
+
 def _stream_chat(body):
     """Yield SSE chunks for an OpenAI streaming chat completion."""
     model = body.get("model", "gpt-4o-mini")
@@ -387,6 +451,10 @@ def _stream_chat(body):
             "choices": [{"index": 0, "delta": {"role": "assistant", "content": ""}, "finish_reason": None}],
         }
     )
+
+    if _wants_tool_call(body):
+        yield from _stream_tool_call(body, model, chunk_id)
+        return
 
     message_text = "\n".join(
         message.get("content", "")

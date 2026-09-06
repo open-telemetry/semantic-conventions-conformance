@@ -27,10 +27,13 @@ for what else changes in those directories.
   not add a class the README does not list without adding it there first.
 - **A program never imports OpenTelemetry** and never names an
   instrumentation. Instrumentation is zero-code, from the packages the
-  implementation directory's `pyproject.toml` installs.
+  implementation directory's `pyproject.toml` installs. Instrumentation needing
+  programmatic configuration gets an entry program beside `conformance.yaml`,
+  importing the shared scenario.
 - **A program reads no configuration of its own.** It reaches the mock server
   through the client library's own base-URL environment variable, which
-  `conformance.yaml` maps from `${MOCK_SERVER_URL}`.
+  `conformance.yaml` maps from `${MOCK_SERVER_URL}`. Where an SDK has no such
+  variable the program reads one and passes it.
 - **One instrumentation per environment.** An implementation directory's
   dependencies must hold only its own instrumentation. A neighbour's would put
   someone else's spans in the results.
@@ -60,4 +63,8 @@ otel-conformance scenarios/gen-ai/python/<library>/<instrumentation> --report-on
   the stimulus, fix the scenario.
 - Findings are expected and are the point. Do not add `expected_violations`,
   and do not declare span, metric or event expectations. Scenarios here
-  measure; they do not assert.
+  measure; they do not assert. A `match` carrying `type` and no `expect`
+  beside it is the exception, and only for a span the reduction cannot place:
+  it says which type the span is, asserts nothing, and leaves every finding on
+  it recorded. Comment why it is there, and drop it once the span identifies
+  itself.

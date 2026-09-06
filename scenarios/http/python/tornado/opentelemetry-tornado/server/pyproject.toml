@@ -8,12 +8,12 @@ dependencies = [
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
     "opentelemetry-instrumentation-tornado==0.65b0",
-    "opentelemetry-conformance[python]",
+    "otel-conformance-python",
     "otel-http-test-client",
 ]
 
 [tool.uv.sources]
-opentelemetry-conformance = { path = "../../../../../../tools/runner", editable = true }
+otel-conformance-python = { path = "../../../../../../tools/python", editable = true }
 otel-http-test-client = { path = "../../../../../../tools/http/test-client/python", editable = true }
 
 [tool.uv]

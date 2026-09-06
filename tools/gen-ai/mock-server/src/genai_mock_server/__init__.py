@@ -1,9 +1,9 @@
 """Deterministic mock LLM server for GenAI conformance scenarios.
 
 Provides OpenAI-compatible, Anthropic-compatible, Google GenAI, AWS Bedrock,
-Cohere, OpenAI Assistants, and hosted-agent (Anthropic Managed Agents, Mistral
-Agents) endpoints that return deterministic responses. No real LLM calls are
-made.
+Cohere, Ollama, OpenAI Assistants, and hosted-agent (Anthropic Managed Agents,
+Mistral Agents) endpoints that return deterministic responses. No real LLM
+calls are made.
 
 Provider endpoints are split across per-provider modules and registered as
 Flask blueprints on a single app.
@@ -28,7 +28,9 @@ from . import (
     bedrock_agentcore,
     cohere,
     google_genai,
+    mistral,
     mistral_agents,
+    ollama,
     openai,
 )
 
@@ -44,7 +46,9 @@ for module in (
     bedrock_agentcore,
     cohere,
     assistants,
+    mistral,
     mistral_agents,
+    ollama,
 ):
     app.register_blueprint(module.bp)
 

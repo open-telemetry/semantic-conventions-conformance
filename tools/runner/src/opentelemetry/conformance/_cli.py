@@ -28,7 +28,7 @@ from ._session import (
     DEFAULT_REPORT_DIR,
     SessionFactory,
 )
-from ._spec import PackageSpec, ServerSpec, SpecError, WeaverSpec
+from ._spec import PackageSpec, ServerSpec, SpecError, WeaverSpec, load_spec
 
 
 class _DataCommandError(RuntimeError):
@@ -265,7 +265,8 @@ def main(
     )
 
     try:
-        factory = session or resolve_runner(args.directory)
+        spec = load_spec(Path(args.directory))
+        factory = session or resolve_runner(args.directory, spec=spec)
     except SpecError as error:
         _status(_FAIL, f"FAIL {error}")
         return 1
@@ -303,7 +304,7 @@ def main(
     # The reduction runs on session close, so a broken --data-command surfaces
     # here, after every scenario has already been reported.
     try:
-        failed = _run(args, factory, run_data_command)
+        failed = _run(args, factory, spec, run_data_command)
     except (_DataCommandError, SpecError, WeaverNotInstalledError) as error:
         failed = True
         _status(_FAIL, f"FAIL {error}")
@@ -313,6 +314,7 @@ def main(
 def _run(
     args: argparse.Namespace,
     session: SessionFactory,
+    spec: PackageSpec,
     run_data_command: Callable[[Path, PackageSpec], object],
 ) -> bool:
     """Run the requested scenarios; True if any of them fell short."""
@@ -334,11 +336,10 @@ def _run(
         ),
         env=dict(args.env),
         variables=dict(args.var),
+        spec=spec,
         # Passed only when asked: a wrapping session factory may have its own
         # reduction, which an explicit default would override.
-        **(
-            {"build_data": run_data_command} if args.data_command else {}
-        ),
+        **({"build_data": run_data_command} if args.data_command else {}),
     ) as opened:
         spec = opened.spec
         print(
@@ -361,11 +362,11 @@ def _run(
                 report.violations and violation_mark is _FAIL
             ):
                 failed = True
-                _status(_FAIL, f"scenario: {name}, status: FAIL")
+                _status(_FAIL, f"scenario: {report.name}, status: FAIL")
             elif report.violations:
-                _status(_WARN, f"scenario: {name}, status: WARN")
+                _status(_WARN, f"scenario: {report.name}, status: WARN")
             else:
-                _status(_OK, f"scenario: {name}, status: ok")
+                _status(_OK, f"scenario: {report.name}, status: ok")
             _findings(_FAIL, "Failures", report.failures)
             _findings(violation_mark, "Violations", report.violations)
             if report.violations and violation_mark is _FAIL:

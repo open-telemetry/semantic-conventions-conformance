@@ -9,6 +9,7 @@ cassette replay — so each case asserts the shape a scenario reads, not just a
 """
 
 import json
+import re
 
 import pytest
 
@@ -114,6 +115,49 @@ ENDPOINTS = [
         "post",
         "/v2/chat",
         {"model": "command-r", "messages": [{"role": "user", "content": "hi"}]},
+    ),
+    (
+        "cohere-embed",
+        "post",
+        "/v2/embed",
+        {"model": "embed-v4.0", "texts": ["hi", "there"], "input_type": "search_document"},
+    ),
+    (
+        "mistral-chat",
+        "post",
+        "/mistral/v1/chat/completions",
+        {
+            "model": "mistral-small-latest",
+            "messages": [{"role": "user", "content": "hi"}],
+        },
+    ),
+    (
+        "mistral-fim",
+        "post",
+        "/mistral/v1/fim/completions",
+        {"model": "codestral-latest", "prompt": "def add(a, b):"},
+    ),
+    (
+        "mistral-embeddings",
+        "post",
+        "/mistral/v1/embeddings",
+        {"model": "mistral-embed", "inputs": ["hi", "there"]},
+    ),
+    (
+        "ollama-chat",
+        "post",
+        "/api/chat",
+        {
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": False,
+        },
+    ),
+    (
+        "ollama-embed",
+        "post",
+        "/api/embed",
+        {"model": "nomic-embed-text", "input": ["hi", "there"]},
     ),
 ]
 
@@ -522,6 +566,198 @@ def test_chat_streams_when_asked(client):
     assert chunks.rstrip().endswith("data: [DONE]")
 
 
+def test_streaming_chat_calls_an_offered_tool(client):
+    """A framework that only streams still has to see the tool exchange."""
+    tool = {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "parameters": {
+                "type": "object",
+                "properties": {"location": {"type": "string"}},
+            },
+        },
+    }
+    response = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [tool],
+            "stream": True,
+        },
+    )
+    deltas = [
+        json.loads(line[len("data: ") :])
+        for line in response.get_data(as_text=True).splitlines()
+        if line.startswith("data: ") and line != "data: [DONE]"
+    ]
+    calls = [
+        call
+        for chunk in deltas
+        for call in chunk["choices"][0]["delta"].get("tool_calls", [])
+    ]
+    assert [call["function"].get("name") for call in calls] == [
+        "get_current_weather",
+        None,
+    ]
+    assert json.loads("".join(call["function"]["arguments"] for call in calls)) == {
+        "location": "Seattle"
+    }
+    assert deltas[-1]["choices"][0]["finish_reason"] == "tool_calls"
+
+
+def test_streaming_chat_answers_once_the_tool_has_replied(client):
+    """The second round trip is an answer, not the same call again."""
+    response = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "assistant", "tool_calls": []},
+                {"role": "tool", "content": "70 degrees", "tool_call_id": "call_mock_001"},
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+            "stream": True,
+        },
+    )
+    body = response.get_data(as_text=True)
+    assert "tool_calls" not in body
+    assert '"finish_reason": "stop"' in body
+
+
+def test_mistral_chat_calls_an_offered_tool(client):
+    """The id has to be nine alphanumerics or Mistral rejects it coming back."""
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "mistral-medium-latest",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["choices"][0]["message"]["tool_calls"][0]
+    assert re.fullmatch(r"[A-Za-z0-9]{9}", call["id"])
+    assert call["function"]["name"] == "get_current_weather"
+    assert json.loads(call["function"]["arguments"]) == {"location": "Seattle"}
+    assert response.json["choices"][0]["finish_reason"] == "tool_calls"
+    assert response.json["model"] == "mistral-medium-latest"
+
+
+def test_mistral_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "mistral-small-latest",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {
+                    "role": "tool",
+                    "name": "get_current_weather",
+                    "content": "70 degrees",
+                    "tool_call_id": "callmock1",
+                },
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert response.json["choices"][0]["message"]["tool_calls"] is None
+    assert response.json["choices"][0]["finish_reason"] == "stop"
+
+
+def test_mistral_chat_meters_audio_input_in_seconds(client):
+    """Mistral has no audio token count: the usage figure is a duration."""
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "voxtral-mini-latest",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "what do you hear?"},
+                        {"type": "input_audio", "input_audio": "bW9jaw=="},
+                    ],
+                }
+            ],
+        },
+    )
+    assert response.json["usage"]["prompt_audio_seconds"] > 0
+
+
+def test_mistral_chat_streams_the_same_answer_it_would_return(client):
+    """Streamed and non-streamed are one response, so they cannot drift."""
+    body = {
+        "model": "mistral-small-latest",
+        "messages": [{"role": "user", "content": "hi"}],
+    }
+    complete = client.post("/mistral/v1/chat/completions", json=body)
+    streamed = client.post("/mistral/v1/chat/completions", json={**body, "stream": True})
+    chunks = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.get_data(as_text=True).splitlines()
+        if line.startswith("data: ") and line != "data: [DONE]"
+    ]
+    content = "".join(
+        chunk["choices"][0]["delta"].get("content", "") for chunk in chunks
+    )
+    assert content.strip() == complete.json["choices"][0]["message"]["content"]
+    assert chunks[-1]["usage"] == complete.json["usage"]
+    assert streamed.get_data(as_text=True).rstrip().endswith("data: [DONE]")
+
+
+def test_mistral_answers_a_json_schema_request_with_that_schema(client):
+    response = client.post(
+        "/mistral/v1/chat/completions",
+        json={
+            "model": "mistral-small-latest",
+            "messages": [{"role": "user", "content": "weather?"}],
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "forecast",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": {"type": "string"},
+                            "temperature": {"type": "integer"},
+                        },
+                        "required": ["location", "temperature"],
+                    },
+                },
+            },
+        },
+    )
+    answer = json.loads(response.json["choices"][0]["message"]["content"])
+    assert answer == {"location": "Seattle", "temperature": 1}
+
+
+def test_mistral_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/mistral/v1/embeddings",
+        json={
+            "model": "mistral-embed",
+            "inputs": ["one", "two", "three"],
+            "output_dimension": 8,
+        },
+    )
+    data = response.json["data"]
+    assert [entry["index"] for entry in data] == [0, 1, 2]
+    assert all(len(entry["embedding"]) == 8 for entry in data)
+
+
 # Azure routes the same operation under a deployment path; instrumentations
 # read the URL, so the alias has to serve the identical body.
 def test_azure_deployment_path_matches_the_plain_one(client):
@@ -716,3 +952,244 @@ def test_google_breaks_usage_down_by_input_and_output_modality(client):
     assert [d["modality"] for d in usage["candidatesTokensDetails"]] == ["TEXT", "IMAGE"]
     assert sum(d["tokenCount"] for d in usage["candidatesTokensDetails"]) == usage["candidatesTokenCount"]
     assert usage["cachedContentTokenCount"] < usage["promptTokenCount"]
+
+
+def test_ollama_chat_calls_an_offered_tool(client):
+    """Ollama carries the arguments as an object, not as a JSON string."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": False,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_current_weather"
+    assert call["function"]["arguments"] == {"location": "Seattle"}
+
+
+def test_ollama_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "tool", "content": "70 degrees"},
+            ],
+            "stream": False,
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert "tool_calls" not in response.json["message"]
+    assert response.json["done_reason"] == "stop"
+
+
+def test_ollama_streams_newline_delimited_json(client):
+    """Ollama streams NDJSON, not SSE, and only the last line is done."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": True,
+        },
+    )
+    lines = [json.loads(line) for line in response.get_data(as_text=True).splitlines()]
+    assert [line["done"] for line in lines] == [False] * (len(lines) - 1) + [True]
+    streamed = "".join(line["message"]["content"] for line in lines).strip()
+    assert streamed == "This is a response from the mock server."
+    assert lines[-1]["eval_count"] == 12
+
+
+def test_ollama_answers_a_format_request_with_that_schema(client):
+    """`format` carries the schema itself, so the answer is built from it."""
+    response = client.post(
+        "/api/chat",
+        json={
+            "model": "llama3.2",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": False,
+            "format": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string"},
+                    "temperature": {"type": "integer"},
+                },
+            },
+        },
+    )
+    assert json.loads(response.json["message"]["content"]) == {
+        "location": "Seattle",
+        "temperature": 1,
+    }
+
+
+def test_ollama_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/api/embed",
+        json={"model": "nomic-embed-text", "input": ["one", "two"], "dimensions": 64},
+    )
+    assert len(response.json["embeddings"]) == 2
+    assert len(response.json["embeddings"][0]) == 64
+    assert response.json["prompt_eval_count"] == 16
+
+
+def test_cohere_chat_calls_an_offered_tool(client):
+    """Cohere narrates the call in a tool_plan field of its own."""
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    call = response.json["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_current_weather"
+    assert json.loads(call["function"]["arguments"]) == {"location": "Seattle"}
+    assert response.json["message"]["tool_plan"]
+    assert response.json["finish_reason"] == "TOOL_CALL"
+
+
+def test_cohere_chat_answers_once_the_tool_has_replied(client):
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "tool", "tool_call_id": "x", "content": "70 degrees"},
+            ],
+            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+        },
+    )
+    assert "tool_calls" not in response.json["message"]
+    assert response.json["finish_reason"] == "COMPLETE"
+
+
+def test_cohere_chat_streams_the_same_answer_it_would_return(client):
+    streamed = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "hi"}],
+            "stream": True,
+        },
+    ).get_data(as_text=True)
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.splitlines()
+        if line.startswith("data: ")
+    ]
+    text = "".join(
+        event["delta"]["message"]["content"]["text"]
+        for event in events
+        if event["type"] == "content-delta"
+    ).strip()
+    assert text == "This is a response from the mock server."
+    assert events[-1]["delta"]["finish_reason"] == "COMPLETE"
+
+
+def test_cohere_streams_a_tool_call_it_would_have_returned(client):
+    """The streamed call has to reassemble into the non-streamed one."""
+    streamed = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "stream": True,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"location": {"type": "string"}},
+                        },
+                    },
+                }
+            ],
+        },
+    ).get_data(as_text=True)
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in streamed.splitlines()
+        if line.startswith("data: ")
+    ]
+    by_type = {event["type"]: event for event in events}
+    assert "tool-plan-delta" in by_type
+    start = by_type["tool-call-start"]["delta"]["message"]["tool_calls"]
+    assert start["function"]["name"] == "get_current_weather"
+    arguments = "".join(
+        event["delta"]["message"]["tool_calls"]["function"]["arguments"]
+        for event in events
+        if event["type"] in ("tool-call-start", "tool-call-delta")
+    )
+    assert json.loads(arguments) == {"location": "Seattle"}
+    assert "tool-call-end" in by_type
+    assert events[-1]["delta"]["finish_reason"] == "TOOL_CALL"
+
+
+def test_cohere_answers_a_json_object_request_with_its_schema(client):
+    response = client.post(
+        "/v2/chat",
+        json={
+            "model": "command-a-03-2025",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "response_format": {
+                "type": "json_object",
+                "json_schema": {
+                    "type": "object",
+                    "properties": {
+                        "location": {"type": "string"},
+                        "temperature": {"type": "integer"},
+                    },
+                },
+            },
+        },
+    )
+    assert json.loads(response.json["message"]["content"][0]["text"]) == {
+        "location": "Seattle",
+        "temperature": 1,
+    }
+
+
+def test_cohere_embeddings_answer_one_vector_per_input(client):
+    response = client.post(
+        "/v2/embed",
+        json={
+            "model": "embed-v4.0",
+            "texts": ["one", "two"],
+            "input_type": "search_document",
+            "output_dimension": 64,
+        },
+    )
+    vectors = response.json["embeddings"]["float"]
+    assert len(vectors) == 2
+    assert len(vectors[0]) == 64

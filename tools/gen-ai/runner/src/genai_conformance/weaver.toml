@@ -15,4 +15,6 @@ signal_type = "span"
 exclude_samples = [
   "cloud.region",
   "rpc.method",
+  "http.request.method",
+  "http.response.status_code",
 ]

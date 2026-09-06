@@ -1,0 +1,12 @@
+{
+  "name": "@otel-conformance/node-http-opentelemetry-http",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Node.js built-in HTTP measured through @opentelemetry/instrumentation-http.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@otel-conformance/node-http-scenarios": "*",
+    "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
+    "@opentelemetry/instrumentation-http": "0.221.0"
+  }
+}

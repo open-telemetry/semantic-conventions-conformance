@@ -1,0 +1,16 @@
+[project]
+name = "google-adk-openinference-conformance"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "google-adk==2.7.1",
+    "openinference-instrumentation-google-adk==0.1.20",
+    # ADK caps the SDK below the version the other directories pin.
+    "opentelemetry-api==1.42.0",
+    "opentelemetry-sdk==1.42.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.42.0",
+    "opentelemetry-distro==0.63b0",
+]
+
+[tool.uv]
+package = false

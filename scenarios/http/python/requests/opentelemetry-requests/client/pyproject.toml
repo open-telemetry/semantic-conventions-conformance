@@ -11,12 +11,12 @@ dependencies = [
     # `otel-conformance-python` installs the SDK providers and loads no
     # instrumentation, which is what leaves the one above the only one
     # measured; the contract is what the workload sends.
-    "opentelemetry-conformance[python]",
+    "otel-conformance-python",
     "otel-http-test-client",
 ]
 
 [tool.uv.sources]
-opentelemetry-conformance = { path = "../../../../../../tools/runner", editable = true }
+otel-conformance-python = { path = "../../../../../../tools/python", editable = true }
 otel-http-test-client = { path = "../../../../../../tools/http/test-client/python", editable = true }
 
 [tool.uv]

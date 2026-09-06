@@ -17,6 +17,9 @@ import akka.http.javadsl.unmarshalling.Unmarshaller;
 import io.opentelemetry.conformance.http.HttpContract.Response;
 import io.opentelemetry.conformance.http.HttpServerWorkload;
 import io.opentelemetry.conformance.scenario.ScenarioLifecycle;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Hosts the shared HTTP exchanges on Akka HTTP's routing DSL until the driver says stop.
@@ -43,9 +46,19 @@ public final class AkkaHttpServerScenario {
         binding.unbind().toCompletableFuture().get();
       }
     } finally {
+      // Akka's shutdown has been seen to abort partway, leaving non-daemon threads that keep the
+      // JVM alive. Bound the wait and leave through System.exit below instead — that still runs the
+      // agent's shutdown hook, and it is that flush which exports the metrics.
       system.terminate();
-      system.getWhenTerminated().toCompletableFuture().get();
+      try {
+        system.getWhenTerminated().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException | TimeoutException e) {
+        System.err.println("the actor system did not terminate cleanly: " + e);
+      }
     }
+    System.exit(0);
   }
 
   /** The contract's exchanges, composed as Akka HTTP directives. */

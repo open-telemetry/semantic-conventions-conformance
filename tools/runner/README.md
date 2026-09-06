@@ -5,7 +5,9 @@ Runs scenario programs, collects what they emit through
 against expectations declared in YAML. It carries no semantic conventions of
 its own — you tell it which registry and policies to validate against.
 
-Not on PyPI yet — install it from a checkout: `pip install -e tools/runner[python]`.
+Not on PyPI yet — install it from a checkout: `pip install -e tools/runner`.
+A Python scenario also wants [`tools/python`](../python), the launcher its
+`run` command names.
 
 A *wrapper* supplies those for one set of conventions;
 [`gen-ai/runner`](../gen-ai/runner) is one. A directory names the wrapper it
@@ -85,11 +87,6 @@ run: uv run --project . opentelemetry-instrument python inference.py
 Installing into whatever environment happened to be active instead — the
 runner's own, say — puts every implementation in one environment, which is
 exactly the case above.
-
-If you'd rather set the SDK up in the program itself, this package also ships
-`otel-conformance-python <script>`, which installs the global providers and
-nothing else — no instrumentation is loaded, so the scenario must turn on its
-own.
 
 A directory can also declare one `setup` command, run once before any
 scenario:
@@ -267,6 +264,59 @@ called two *different* tools, without pinning down which.
 key you write is checked exactly: nothing missing, nothing extra, including
 when empty — `events: []` means "emits no events".
 
+Several implementations can share telemetry expectations while keeping their
+commands and configuration local. A named contract's only top-level key is
+`scenarios`; each scenario may declare `spans`, `metrics` and `events`, but not
+`run` or environment:
+
+```yaml
+scenario_contract: ../../contracts/http-client.yaml
+
+scenarios:
+  client:
+    run: node client.js
+```
+
+The local scenario is merged over the contract by field, so it can replace one
+expectation when an implementation intentionally has a different contract.
+Relative paths start at the directory containing `conformance.yaml`.
+
+A domain contract can instead use a `scenarios` list. Every entry must have
+exactly `description`, a non-empty domain-owned `action` mapping, and a generic
+`expect` mapping. Other contract fields are domain-owned metadata and ignored
+by the generic runner:
+
+```yaml
+description: Shared HTTP client requests.
+protocol: http
+scenarios:
+  - description: Sends one request.
+    action:
+      request: {method: GET, path: /items}
+    expect:
+      spans:
+        - match: {kind: CLIENT}
+          expect: {count: 1, attributes: {url.full: {present: true}}}
+      events: []
+```
+
+The package declares one command template for the list:
+
+```yaml
+scenario_contract: ../../contracts/http-client.yaml
+scenario_run: node client.js
+```
+
+The runner creates one scenario per indexed entry and rejects local `scenarios`
+overrides for this contract form. Each runs under a fresh weaver
+report with `OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index.
+The command reads that index to select the same action. Reports use stable
+zero-padded ordinal filenames, while CLI and pytest output prefix `description`
+with its index; repeated descriptions do not merge entries.
+
+`--scenario` takes the zero-padded ordinal, not the displayed label. To run the
+first entry above, pass `--scenario 0000` rather than `[0] Sends one request.`.
+
 `env` configures the scenario process. The real process environment wins over
 it, so exporting a real key and base URL points a scenario at a real provider
 instead of a mock. What the runner injects — the OTLP endpoint, the server URL
@@ -378,6 +428,8 @@ and a directory asks for it by that name:
 
 ```yaml
 runner: genai-conformance
+runner_config:
+  provider: example
 ```
 
 `otel-conformance <dir>` and `pytest <dir>` both resolve it, so several
@@ -385,7 +437,8 @@ conventions domains coexist in one checkout — each directory gets its own
 registry and reduction. A factory is `conformance_session` with defaults
 applied; [`genai_conformance/__init__.py`](../gen-ai/runner/src/genai_conformance/__init__.py)
 is a whole one. A directory naming no runner runs against whatever the command
-line passes.
+line passes. The optional `runner_config` mapping reaches the selected factory
+as `PackageSpec.runner_config`; the factory validates its own keys and values.
 
 Everything a wrapper supplies can also be passed on the command line, which is
 how you try one out before writing it:

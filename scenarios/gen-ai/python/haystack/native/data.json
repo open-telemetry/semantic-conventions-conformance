@@ -1,0 +1,260 @@
+{
+  "spans": {},
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.exit_conditions' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.run",
+      "context": {
+        "attribute_key": "haystack.agent.exit_conditions"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.run",
+      "context": {
+        "attribute_key": "haystack.agent.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.max_steps' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.run",
+      "context": {
+        "attribute_key": "haystack.agent.max_steps"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.run",
+      "context": {
+        "attribute_key": "haystack.agent.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.state_schema' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.run",
+      "context": {
+        "attribute_key": "haystack.agent.state_schema"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.steps_taken' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.run",
+      "context": {
+        "attribute_key": "haystack.agent.steps_taken"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.tools' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.run",
+      "context": {
+        "attribute_key": "haystack.agent.tools"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.step' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.step",
+      "context": {
+        "attribute_key": "haystack.agent.step"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.step.llm.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.step.llm",
+      "context": {
+        "attribute_key": "haystack.agent.step.llm.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.step.llm.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.step.llm",
+      "context": {
+        "attribute_key": "haystack.agent.step.llm.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.step.tool.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.step.tool",
+      "context": {
+        "attribute_key": "haystack.agent.step.tool.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.agent.step.tool.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.step.tool",
+      "context": {
+        "attribute_key": "haystack.agent.step.tool.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.tool.description' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.step.tool",
+      "context": {
+        "attribute_key": "haystack.tool.description"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.tool.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.agent.step.tool",
+      "context": {
+        "attribute_key": "haystack.tool.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.fully_qualified_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.fully_qualified_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.input_spec' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.input_spec"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.input_types' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.input_types"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.output_spec' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.output_spec"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.component.visits' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.component.run",
+      "context": {
+        "attribute_key": "haystack.component.visits"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.pipeline.execution_mode' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.pipeline.run",
+      "context": {
+        "attribute_key": "haystack.pipeline.execution_mode"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.pipeline.input_data' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.pipeline.run",
+      "context": {
+        "attribute_key": "haystack.pipeline.input_data"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.pipeline.max_runs_per_component' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.pipeline.run",
+      "context": {
+        "attribute_key": "haystack.pipeline.max_runs_per_component"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.pipeline.metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.pipeline.run",
+      "context": {
+        "attribute_key": "haystack.pipeline.metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'haystack.pipeline.output_data' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "haystack.pipeline.run",
+      "context": {
+        "attribute_key": "haystack.pipeline.output_data"
+      }
+    }
+  ]
+}

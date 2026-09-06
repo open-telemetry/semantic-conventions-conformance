@@ -7,10 +7,10 @@
 so one call from the scenario is two model calls and one tool execution.
 tool_calling.py is the same exchange driven by hand.
 
-This scenario contributes nothing to the directory's coverage today, and that
-is the finding: the instrumentation wraps ``Messages.create``/``stream``/
-``parse``, and the beta namespace is a different class, so a tool_runner run
-emits no telemetry at all.
+``tool_runner`` calls the model through ``client.beta.messages``. An
+instrumentation that wraps only ``Messages.create``/``stream``/``parse``
+emits nothing for this scenario; one that also wraps the beta methods does.
+Which of those happens is what this scenario measures.
 """
 
 from anthropic import Anthropic, beta_tool
