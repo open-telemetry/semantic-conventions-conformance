@@ -8,6 +8,7 @@ itself, and the command that installs a Node build.
 scenarios/<domain>/js/      a domain's npm build root — workspaces and the lockfile
 tools/js/scenario-support/  what a scenario needs before any telemetry
 tools/js/scenario-sdk/      the SDK a library-instrumentation scenario owns
+tools/js/browser-runner/    browser launch and OTLP/HTTP-to-gRPC bridge
 tools/js/src/               `otel-conformance-js`, the launcher
 tools/js/tests/             the launcher's tests
 ```
