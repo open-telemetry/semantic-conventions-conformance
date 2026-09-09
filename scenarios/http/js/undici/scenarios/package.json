@@ -8,6 +8,6 @@
   "dependencies": {
     "@otel-conformance/http-test-client": "file:../../../../../tools/http/test-client/js",
     "@otel-conformance/scenario-support": "file:../../../../../tools/js/scenario-support",
-    "undici": "8.10.0"
+    "undici": "8.10.2"
   }
 }

@@ -30,6 +30,10 @@ try {
 }
 check(count($requests) === 5, 'the measured contract has five requests');
 check(
+    Contract::scenarioRequest('2') === $requests[2],
+    'the runner selects one request by its zero-based index',
+);
+check(
     Contract::exchange('GET', '/users/123?fields=name')?->path
         === '/users/123',
     'lookup ignores the query string',
@@ -50,6 +54,7 @@ check(
 );
 
 $sent = [];
+putenv('OTEL_CONFORMANCE_SCENARIO_INDEX=2');
 ClientWorkload::drive(
     'http://example.test',
     static function (
@@ -68,7 +73,8 @@ ClientWorkload::drive(
         return ServerWorkload::respond($method, $target, $body);
     },
 );
-check(count($sent) === 5, 'the client sends every measured request');
+check(count($sent) === 1, 'the client sends only the selected request');
+check($sent[0][0] === 'POST', 'the selected request is sent');
 
 try {
     ClientWorkload::verify($requests[0], new Response(500, '{}'));

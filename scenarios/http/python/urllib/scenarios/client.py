@@ -11,7 +11,7 @@ import urllib.request
 from otel_http_test_client import (
     REQUEST_TIMEOUT_SECONDS,
     client_headers,
-    drive,
+    drive_selected,
     mock_server_url,
 )
 
@@ -32,4 +32,4 @@ def run() -> None:
         except urllib.error.HTTPError as error:
             return error.code, error.read().decode()
 
-    drive(mock_server_url(), send)
+    drive_selected(mock_server_url(), send)

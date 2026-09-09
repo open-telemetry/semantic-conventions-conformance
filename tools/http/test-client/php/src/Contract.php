@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace OpenTelemetry\Conformance\Http;
 
 use JsonException;
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
 
 final class Contract
 {
@@ -15,7 +17,9 @@ final class Contract
     public const USER_AGENT = 'otel-http-conformance/1';
 
     private const ABBREVIATION_BYTES = 60;
-    private const CHECKOUT_PATH = 'tools/http/test-client/contract.json';
+    private const CHECKOUT_PATH = 'tools/http/test-client/contract.yaml';
+    private const SCENARIO_INDEX_VARIABLE =
+        'OTEL_CONFORMANCE_SCENARIO_INDEX';
 
     /** @var list<Exchange>|null */
     private static ?array $exchanges = null;
@@ -52,6 +56,34 @@ final class Contract
         }
 
         return null;
+    }
+
+    public static function scenarioRequest(?string $index = null): Exchange
+    {
+        $raw = $index ?? getenv(self::SCENARIO_INDEX_VARIABLE);
+        if ($raw === false) {
+            throw new ContractException(
+                self::SCENARIO_INDEX_VARIABLE . ' is not set',
+            );
+        }
+        if (!preg_match('/^(0|[1-9][0-9]*)$/D', $raw)) {
+            throw new ContractException(
+                self::SCENARIO_INDEX_VARIABLE
+                . ' must be a zero-based decimal index, got '
+                . json_encode($raw, JSON_THROW_ON_ERROR),
+            );
+        }
+
+        $requests = self::requests();
+        $selected = (int) $raw;
+        if (!isset($requests[$selected])) {
+            throw new ContractException(
+                self::SCENARIO_INDEX_VARIABLE . "={$raw} selects no contract "
+                . 'entry; expected 0..' . (count($requests) - 1),
+            );
+        }
+
+        return $requests[$selected];
     }
 
     public static function parse(string $json): mixed
@@ -95,41 +127,51 @@ final class Contract
         }
 
         try {
-            $document = json_decode(
-                $contents,
-                true,
-                512,
-                JSON_THROW_ON_ERROR,
-            );
-        } catch (JsonException $exception) {
+            $document = Yaml::parse($contents);
+        } catch (ParseException $exception) {
             throw new ContractException(
                 "could not parse {$path}",
                 0,
                 $exception,
             );
         }
-        if (!is_array($document) || !isset($document['requests'])
-            || !is_array($document['requests']) || $document['requests'] === []
+        if (!is_array($document) || !isset($document['readiness'])
+            || !is_array($document['readiness'])
+            || !isset($document['scenarios'])
+            || !is_array($document['scenarios'])
+            || $document['scenarios'] === []
         ) {
             throw new ContractException("{$path} describes no requests");
         }
 
         $exchanges = [];
-        foreach ($document['requests'] as $entry) {
+        foreach ([
+            [$document['readiness'], true],
+            ...array_map(
+                static fn (mixed $entry): array => [$entry, false],
+                $document['scenarios'],
+            ),
+        ] as [$entry, $readiness]) {
             if (!is_array($entry)) {
                 throw new ContractException("{$path} has an invalid request");
             }
+            $action = $entry['action'] ?? null;
+            $request = is_array($action) ? ($action['request'] ?? null) : null;
+            $response = is_array($action)
+                ? ($action['response'] ?? null)
+                : null;
+            if (!is_array($request) || !is_array($response)) {
+                throw new ContractException("{$path} has an invalid request");
+            }
             $exchanges[] = new Exchange(
-                self::stringField($entry, 'method', $path),
-                self::stringField($entry, 'path', $path),
-                isset($entry['body'])
-                    ? self::stringField($entry, 'body', $path)
+                self::stringField($request, 'method', $path),
+                self::stringField($request, 'path', $path),
+                isset($request['body'])
+                    ? self::stringField($request, 'body', $path)
                     : null,
-                self::intField($entry, 'status', $path),
-                self::stringField($entry, 'responseBody', $path),
-                isset($entry['readiness'])
-                    ? self::boolField($entry, 'readiness', $path)
-                    : false,
+                self::intField($response, 'status', $path),
+                self::stringField($response, 'body', $path),
+                $readiness,
                 self::stringField($entry, 'description', $path),
             );
         }
@@ -139,7 +181,7 @@ final class Contract
 
     private static function locate(): string
     {
-        $beside = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'contract.json';
+        $beside = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'contract.yaml';
         if (is_file($beside)) {
             return $beside;
         }
@@ -195,18 +237,4 @@ final class Contract
         return $entry[$field];
     }
 
-    /** @param array<mixed> $entry */
-    private static function boolField(
-        array $entry,
-        string $field,
-        string $path,
-    ): bool {
-        if (!isset($entry[$field]) || !is_bool($entry[$field])) {
-            throw new ContractException(
-                "{$path} request field {$field} must be a boolean",
-            );
-        }
-
-        return $entry[$field];
-    }
 }

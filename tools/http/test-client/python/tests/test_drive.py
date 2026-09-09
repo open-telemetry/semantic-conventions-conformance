@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 import pytest
+import yaml
 
 import otel_http_test_client.__main__ as driver
 from otel_http_test_client import (
@@ -22,12 +23,18 @@ from otel_http_test_client import (
     EXCHANGES,
     PORT_VARIABLE,
     REQUESTS,
+    SCENARIO_INDEX_VARIABLE,
     ContractError,
     Exchange,
+    _carries_the_contracts_body,
     client_headers,
+    drive,
     drive_async,
+    drive_selected,
+    drive_selected_async,
     mock_server_url,
     respond,
+    scenario_request,
     verify,
     wait_for_health,
     wait_for_port,
@@ -242,11 +249,16 @@ def _stopped_answering(port_file: Path, timeout: float = 30.0) -> bool:
 
 class TestTheContract:
     def test_it_is_read_from_the_shared_file(self) -> None:
-        assert CONTRACT.name == "contract.json"
-        declared = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        assert CONTRACT.name == "contract.yaml"
+        declared = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
         assert declared["description"]
-        assert len(EXCHANGES) == len(declared["requests"])
+        scenarios = declared["scenarios"]
+        assert len(REQUESTS) == len(scenarios)
         assert len(REQUESTS) == len(EXCHANGES) - 1
+        assert all(
+            set(entry) == {"description", "action", "expect"}
+            for entry in scenarios
+        )
 
     def test_every_request_has_a_description(self) -> None:
         assert all(exchange.description for exchange in EXCHANGES)
@@ -264,7 +276,21 @@ class TestTheContract:
             )
             verify(exchange, status, body)
 
-    def test_the_async_driver_sends_the_same_contract(self) -> None:
+    def test_the_driver_keeps_sending_every_request(self) -> None:
+        seen: list[str] = []
+
+        def send(method: str, url: str, body: str | None) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return respond(method, url.removeprefix("http://server"), body)
+
+        drive("http://server", send)
+
+        assert seen == [
+            f"{exchange.method} http://server{exchange.path}"
+            for exchange in REQUESTS
+        ]
+
+    def test_the_async_driver_keeps_sending_every_request(self) -> None:
         seen: list[str] = []
 
         async def send(
@@ -280,6 +306,44 @@ class TestTheContract:
             for exchange in REQUESTS
         ]
 
+    def test_the_selected_driver_sends_one_request(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen: list[str] = []
+
+        def send(method: str, url: str, body: str | None) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return respond(method, url.removeprefix("http://server"), body)
+
+        for index in range(len(REQUESTS)):
+            monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, str(index))
+            drive_selected("http://server", send)
+
+        assert seen == [
+            f"{exchange.method} http://server{exchange.path}"
+            for exchange in REQUESTS
+        ]
+
+    def test_the_selected_async_driver_sends_one_request(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen: list[str] = []
+
+        async def send(
+            method: str, url: str, body: str | None
+        ) -> tuple[int, str]:
+            seen.append(f"{method} {url}")
+            return respond(method, url.removeprefix("http://server"), body)
+
+        for index in range(len(REQUESTS)):
+            monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, str(index))
+            asyncio.run(drive_selected_async("http://server", send))
+
+        assert seen == [
+            f"{exchange.method} http://server{exchange.path}"
+            for exchange in REQUESTS
+        ]
+
     def test_request_body_is_the_only_response_placeholder(self) -> None:
         placeholders = re.findall(
             r"\$\{[^}]+}", CONTRACT.read_text(encoding="utf-8")
@@ -287,6 +351,13 @@ class TestTheContract:
 
         assert placeholders
         assert set(placeholders) == {"${requestBody}"}
+
+    def test_each_ordinal_selects_one_independent_request(self) -> None:
+        assert [scenario_request(index) for index in range(len(REQUESTS))] == [
+            *REQUESTS
+        ]
+        with pytest.raises(RuntimeError, match="selects no"):
+            scenario_request(len(REQUESTS))
 
 
 class TestClientWorkloads:
@@ -316,6 +387,33 @@ class TestClientWorkloads:
             "Content-Type": "application/json",
         }
 
+    def test_a_response_outside_the_contract_does_not_fail_the_scenario(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
+
+        drive_selected("http://server", lambda *_args: (599, "not json"))
+
+    def test_the_async_client_does_not_validate_the_response(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv(SCENARIO_INDEX_VARIABLE, "0")
+
+        async def send(*_args: object) -> tuple[int, str]:
+            return 599, "not json"
+
+        asyncio.run(drive_selected_async("http://server", send))
+
+    def test_json_numbers_do_not_stand_in_for_booleans(self) -> None:
+        exchange = scenario_request(2)
+
+        with pytest.raises(ContractError, match="contract's request answers"):
+            verify(
+                exchange,
+                exchange.status,
+                '{"created": 1, "payload": {"name": "widget"}}',
+            )
+
 
 class TestAnsweringTheExchanges:
     def test_a_path_parameter_reaches_the_response(self) -> None:
@@ -342,6 +440,64 @@ class TestAnsweringTheExchanges:
 
     def test_the_method_is_part_of_the_route(self) -> None:
         assert respond("GET", "/items")[0] == 404
+
+
+class TestCheckingTheRequestBody:
+    """What the mock server asks for, and a server scenario does not.
+
+    ``otel-http-drive`` compares the echoed body, so a server scenario that
+    never read the request already fails. Nothing reads the answer a client
+    scenario receives, so the mock server is the only place a client that
+    never sent the body can be caught.
+    """
+
+    def test_a_body_the_contract_declares_must_arrive(self) -> None:
+        assert respond("POST", "/items", check_request_body=True)[0] == 400
+
+    def test_a_different_body_is_refused(self) -> None:
+        answer = respond(
+            "POST", "/items", '{"name": "gadget"}', check_request_body=True
+        )
+
+        assert answer[0] == 400
+
+    def test_a_body_that_is_not_json_is_refused(self) -> None:
+        answer = respond("POST", "/items", "<html>", check_request_body=True)
+
+        assert answer[0] == 400
+
+    def test_formatting_is_not_part_of_the_contract(self) -> None:
+        """Spacing and key order are the client library's JSON writer's call."""
+        status, body = respond(
+            "POST", "/items", '{"name":"widget"}', check_request_body=True
+        )
+
+        assert status == 201
+        assert json.loads(body)["payload"] == {"name": "widget"}
+
+    def test_a_number_does_not_stand_in_for_a_boolean(self) -> None:
+        """Python reads ``1`` and ``true`` as equal, and the contract does not.
+
+        No request the contract declares carries a boolean today, so this
+        asks the check itself rather than going through the mock server.
+        """
+        exchange = Exchange(
+            method="POST",
+            path="/items",
+            body='{"created": true}',
+            status=201,
+            response_body="{}",
+            readiness=False,
+            description="a request whose body carries a JSON boolean",
+        )
+
+        assert _carries_the_contracts_body(exchange, '{"created": true}')
+        assert not _carries_the_contracts_body(exchange, '{"created": 1}')
+
+    def test_a_request_the_contract_sends_no_body_for_is_answered(
+        self,
+    ) -> None:
+        assert respond("GET", "/users/123", check_request_body=True)[0] == 200
 
 
 class TestVerifyingAnAnswer:

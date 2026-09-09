@@ -4,6 +4,7 @@
 runner: http-conformance
 instrumented_library: guzzle
 instrumentation_library: open-telemetry/opentelemetry-auto-guzzle
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 env:
   OTEL_PHP_AUTOLOAD_ENABLED: "true"
@@ -17,8 +18,6 @@ setup: otel-conformance-php install
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    # Guzzle reports 4xx and 5xx as responses because the workload disables
-    # http_errors; both statuses are measured and checked like every other.
-    run: php ../client.php
+# Guzzle reports 4xx and 5xx as responses because the workload disables
+# http_errors; both statuses are measured like every other response.
+scenario_run: php ../client.php

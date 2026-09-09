@@ -22,21 +22,19 @@ final class ClientWorkload
             throw new ContractException('base URL must not be blank');
         }
 
-        foreach (Contract::requests() as $exchange) {
-            $response = $sender(
-                $exchange->method,
-                rtrim($baseUrl, '/') . $exchange->path,
-                $exchange->body,
-            );
-            printf(
-                "%s %s -> %d %s\n",
-                $exchange->method,
-                $exchange->path,
-                $response->statusCode,
-                Contract::abbreviate($response->body),
-            );
-            self::verify($exchange, $response);
-        }
+        $exchange = Contract::scenarioRequest();
+        $response = $sender(
+            $exchange->method,
+            rtrim($baseUrl, '/') . $exchange->path,
+            $exchange->body,
+        );
+        printf(
+            "%s %s -> %d %s\n",
+            $exchange->method,
+            $exchange->path,
+            $response->statusCode,
+            Contract::abbreviate($response->body),
+        );
     }
 
     public static function verify(

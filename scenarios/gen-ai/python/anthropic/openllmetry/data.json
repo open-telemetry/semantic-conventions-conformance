@@ -115,11 +115,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'anthropic.chat'",
+      "message": "chat span name should be 'chat claude-sonnet-4-20250514', got 'anthropic.chat'",
       "signal_type": "span",
       "signal_name": "anthropic.chat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat claude-sonnet-4-20250514",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
