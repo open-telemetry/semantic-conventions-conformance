@@ -3,8 +3,8 @@
 
 """The verbs, and the freshness check a maintainer leans on.
 
-`check` is not a CI gate — resolving the denominator needs weaver and a fetched
-registry — so these tests are the only thing standing behind it.
+`check` is not a CI gate, because resolving the denominator needs weaver and a
+fetched registry, so these tests are the only thing standing behind it.
 """
 
 from __future__ import annotations

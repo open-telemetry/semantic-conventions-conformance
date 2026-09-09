@@ -3,18 +3,17 @@
 
 """The report this repo actually produces, read as the site reads it.
 
-Invariants of the report alone, never a comparison against the scenario tree.
-The report is a generated artifact that `.github/workflows/report.yml` rebuilds
-nightly, so between a scenario landing on main and that rebuild the two are
-legitimately out of step — and a test that compared them would fail every open
-pull request, none of which is the one that moved the tree.
+These assert invariants of the report alone, never a comparison against the
+scenario tree. `.github/workflows/report.yml` rebuilds the report nightly, so
+between a scenario landing on main and that rebuild the two are legitimately
+out of step, and a test that compared them would fail unrelated pull requests.
 
-That leaves the tree-derived properties to the unit tests, which build their
-own fixtures and do not care what is committed: `test_discover` for which
-directories become targets, `test_aggregate` for what a target carries.
+Tree-derived properties belong to the unit tests, which build their own
+fixtures: `test_discover` for which directories become targets, and
+`test_aggregate` for what a target carries.
 
-Skipped when the committed report is absent — rebuilding it needs weaver and a
-fetched registry, which not every checkout has.
+Skipped when the committed report is absent, because rebuilding it needs weaver
+and a fetched registry.
 """
 
 from __future__ import annotations
@@ -23,6 +22,8 @@ import json
 from pathlib import Path
 
 import pytest
+
+from conformance_report._aggregate import GENERATED_BY
 
 ROOT = Path(__file__).parents[3]
 REPORT = ROOT / "docs" / "data" / "conformance.json"
@@ -48,9 +49,9 @@ def test_the_domain_and_language_are_the_ones_the_path_names(
 ) -> None:
     """The facets are path-derived, and nothing else in the tree says them.
 
-    A reduction names its runner, and one runner spans four languages, so a
-    target whose language does not match its directory is a target the site
-    would colour and group wrong.
+    A `data.json` names its runner, and one runner spans four languages, so a
+    target whose language does not match its directory is one the site would
+    colour and group wrong.
     """
     for target in targets(report):
         domain, language, *rest = str(target["id"]).split("/")
@@ -62,12 +63,11 @@ def test_the_domain_and_language_are_the_ones_the_path_names(
 def test_the_finding_count_agrees_with_the_findings(
     report: dict[str, object],
 ) -> None:
-    """The per-target count the site sorts and filters on agrees with the
-    list it is a count of.
+    """The count the site sorts on agrees with the list it counts.
 
     That findings reach the report unaltered is
-    `test_aggregate.test_findings_pass_through_verbatim`; here it is only the
-    denormalised count that could drift from what it counts.
+    `test_aggregate.test_findings_pass_through_verbatim`. Here it is only the
+    denormalised count that could drift.
     """
     for target in targets(report):
         assert target["summary"]["findings"] == len(target["findings"])
@@ -79,7 +79,7 @@ def test_a_fully_conforming_target_is_not_scored_down_for_opt_ins(
     """The reason there is no blended score.
 
     okhttp through the java agent carries every required and every recommended
-    attribute on its span, and none of the eleven opt-ins — which is correct
+    attribute on its span, and none of the eleven opt-ins, which is correct
     behaviour. A single percentage over all five levels would rank it around
     40% and read as a failing implementation.
     """
@@ -103,12 +103,12 @@ def test_competing_implementations_of_one_library_are_distinguishable(
     """The comparison the repo exists to make.
 
     Three instrumentations exercise the openai client directly, and two of them
-    have coordinates that shorten to the same word — OpenLLMetry publishes
+    have coordinates that shorten to the same word: OpenLLMetry publishes
     `opentelemetry-instrumentation-openai` and OpenTelemetry's own is
-    `opentelemetry-instrumentation-genai-openai` — so the label has to come
-    from the tree rather than from the package name.
+    `opentelemetry-instrumentation-genai-openai`. So the label has to come from
+    the tree rather than from the package name.
 
-    A fourth reaches OpenAI through langchain, and declares `langchain-openai`
+    A fourth reaches OpenAI through langchain and declares `langchain-openai`
     as what it instruments, which is why it is not in this list.
     """
     labels = sorted(
@@ -150,3 +150,8 @@ def test_the_report_carries_no_timestamp(report: dict[str, object]) -> None:
     text = REPORT.read_text(encoding="utf-8").lower()
     for word in ("timestamp", "generated_at", '"date"', "built_at"):
         assert word not in text
+
+
+def test_the_report_says_what_generates_it(report: dict[str, object]) -> None:
+    """The marker that tells a reader not to edit the file by hand."""
+    assert report["generated_by"] == GENERATED_BY

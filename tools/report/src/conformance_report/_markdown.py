@@ -13,8 +13,8 @@ from ._aggregate import SCORED_LEVELS
 _ROWS = 15
 
 # A registry ref that renames a signal moves every target at once. GitHub caps
-# a job summary at 1 MiB and fails the step over it, taking the rebuild — and
-# the pull request it would have opened — with it.
+# a job summary at 1 MiB and fails the step over it, which would take the
+# rebuild and its pull request down too.
 _CHANGES = 200
 
 
@@ -26,7 +26,7 @@ def _ratio(tally: Mapping[str, int] | None) -> str:
 
 
 def _shortfall(target: Mapping[str, Any]) -> tuple[int, int]:
-    """How badly a target wants looking at: gaps first, then findings."""
+    """Sort key that puts the targets with the most gaps first."""
     summary = target.get("summary", {})
     missed = sum(
         summary.get(level, {}).get("declared", 0)
@@ -104,11 +104,10 @@ def render(document: Mapping[str, Any]) -> str:
 def render_diff(before: Mapping[str, Any], after: Mapping[str, Any]) -> str:
     """What changed between two reports, or nothing if they agree.
 
-    Both halves of a coverage ratio, not only the numerator: moving a registry
-    pin changes what the registry declares with no instrumentation having
-    changed, and that denominator-only move is the whole reason the report is
-    rebuilt when a pin moves. A diff that only compared emitted attributes
-    would open that pull request with nothing to say. See the README.
+    Both halves of a coverage ratio, not only the numerator. Moving a registry
+    pin changes what the registry declares without any instrumentation having
+    changed, and a diff that compared only emitted attributes would open that
+    pull request with nothing to say.
     """
 
     def index(document: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
@@ -136,7 +135,7 @@ def render_diff(before: Mapping[str, Any], after: Mapping[str, Any]) -> str:
 def _registry_diff(
     before: Mapping[str, Any], after: Mapping[str, Any]
 ) -> Iterable[str]:
-    """Which pin moved: one ref moves every denominator underneath it."""
+    """Which pin moved. One ref moves every denominator underneath it."""
     old: Mapping[str, Mapping[str, Any]] = before.get("domains", {})
     new: Mapping[str, Mapping[str, Any]] = after.get("domains", {})
     for name in sorted(set(old) | set(new)):
@@ -166,7 +165,7 @@ def _declared(signal: Mapping[str, Any]) -> dict[str, int] | None:
     """How many attributes each level declares: the ratio's denominator.
 
     ``None`` where the pinned registry declares nothing for the signal, which
-    is "unknown" rather than "none" — the same distinction the report draws.
+    means "unknown" rather than "none".
     """
     coverage: Mapping[str, Mapping[str, int]] | None = signal.get("coverage")
     if coverage is None:
@@ -210,9 +209,9 @@ def _target_diff(
     was, now = _signals(old), _signals(new)
     for signal in sorted(set(was) | set(now)):
         before, after = was.get(signal), now.get(signal)
-        # A signal appearing or going is one line, not one per attribute: a
-        # renamed signal is every target at once, and the itemised form would
-        # be most of the cap on its own.
+        # A signal appearing or going is one line, not one per attribute. A
+        # renamed signal moves every target at once, and the itemised form
+        # would use most of the cap on its own.
         if before is None:
             yield f"- `{target_id}` `{signal}` **added**"
         elif after is None:

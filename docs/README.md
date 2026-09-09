@@ -1,8 +1,16 @@
 # The site
 
 A static page over the committed report. No build step, no bundler, and no
-dependencies: `index.html` loads ES modules straight from `assets/`, and the
-whole of the data layer is one `fetch` of `data/conformance.json`.
+dependencies: `index.html` loads ES modules straight from `assets/`, and the whole
+data layer is one `fetch` of `data/conformance.json`.
+
+`data/conformance.json` is **generated — do not edit it by hand.** It is written by
+`otel-conformance-report build` (see [`tools/report`](../tools/report)) and rebuilt
+nightly by the [`Report`](../.github/workflows/report.yml) workflow, which opens a
+pull request when it changed. Publishing is a push to `main`, so a merge that moves
+a reduction shows up on the site once that pull request lands, not with the merge
+itself. `otel-conformance-report check` says locally whether the committed file is
+still current.
 
 | | |
 | --- | --- |
@@ -11,9 +19,4 @@ whole of the data layer is one `fetch` of `data/conformance.json`.
 | `assets/data.js` | fetch, and the index every view reads from |
 | `assets/ui.js` | the element helpers |
 | `assets/views/` | one module per route |
-| `data/conformance.json` | committed, written by `otel-conformance-report build` |
-
-`data/conformance.json` is rebuilt nightly by the
-[`Report`](../.github/workflows/report.yml) workflow, which opens a pull request
-when it moved; publishing is a push to `main`. So a merge that moves a reduction
-shows up on the site once that pull request lands, not with the merge itself.
+| `data/conformance.json` | generated, do not edit by hand |

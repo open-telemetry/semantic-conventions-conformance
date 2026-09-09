@@ -3,11 +3,18 @@
 
 // The report, and the indices every view reads it through.
 //
-// Built in memory rather than precomputed into the file, so the report stays
-// one shape: it says what was observed, and derived answers cannot drift from
-// it.
+// The indices are built in memory rather than precomputed into the file, so the
+// report keeps one shape and derived answers cannot drift from it.
+//
+// The report is written by `otel-conformance-report build`; its shape is defined
+// in `tools/report/src/conformance_report/_aggregate.py`.
 
-/** Requirement levels, ordered by how much an absence from one means. */
+/**
+ * Requirement levels, ordered by how much an absence from one means.
+ *
+ * The vocabulary is the registry's. Which of these are scored is decided by
+ * `SCORED_LEVELS` in `tools/report/src/conformance_report/_aggregate.py`.
+ */
 export const LEVELS = [
   'required',
   'conditionally_required_conditional',
@@ -32,6 +39,10 @@ const LEVEL_VAR = {
   opt_in: '--optin',
 };
 
+/**
+ * @param {string} level a requirement level from {@link LEVELS}
+ * @returns {string} a CSS `var()` reference to that level's colour
+ */
 export const levelColor = (level) => `var(${LEVEL_VAR[level] ?? '--optin'})`;
 
 /**
@@ -44,6 +55,10 @@ const LANGUAGE_SLOT = new Map();
 /** How many `--lang-N` tokens `style.css` defines. */
 const LANGUAGE_SLOTS = 6;
 
+/**
+ * @param {string} language a target's `language` facet
+ * @returns {string} a CSS `var()` reference to that language's colour
+ */
 export const languageColor = (language) =>
   `var(--lang-${LANGUAGE_SLOT.get(language) ?? LANGUAGE_SLOTS})`;
 
@@ -54,12 +69,21 @@ async function fetchJson(url) {
 }
 
 /**
- * The report shape this file knows how to read. The level vocabulary above is
- * the report's, restated here because the site cannot import Python — so a
- * rename upstream has to fail loudly rather than render every bar as zero.
+ * The report shape this file knows how to read.
+ *
+ * The source of truth is `SCHEMA_VERSION` in
+ * `tools/report/src/conformance_report/_aggregate.py`. The site cannot import
+ * Python, so the constant is duplicated here and checked on load: a rename
+ * upstream fails loudly rather than rendering every bar as zero.
  */
 const SCHEMA_VERSION = 1;
 
+/**
+ * Fetch `data/conformance.json` and index it.
+ *
+ * @returns {Promise<Data>} the indexed report
+ * @throws if the fetch fails or the report is a schema this file cannot read
+ */
 export async function load() {
   const report = await fetchJson('data/conformance.json');
   if (report.schema_version !== SCHEMA_VERSION) {
@@ -71,9 +95,32 @@ export async function load() {
   return index(report);
 }
 
-/** How a signal is addressed — in the index below, and in a `#/signals/` link. */
+/** How a signal is addressed, in the index below and in a `#/signals/` link. */
 const signalKey = (type, name) => `${type}:${name}`;
 
+/**
+ * @typedef {object} Signal
+ * @property {string} key `${type}:${name}`, as a `#/signals/` link spells it
+ * @property {string} name the signal's name in the registry
+ * @property {string} type `span`, `metric` or `event`
+ * @property {string|null} kind a span's kind, or null
+ * @property {string} runner the domain the declaration was read from
+ * @property {Object<string,string>|null} attributes declared attribute to
+ *   requirement level, or null where no target's registry declares the signal
+ * @property {{target: object, signal: object}[]} rows one per target emitting it
+ */
+
+/**
+ * @typedef {object} Data
+ * @property {object} report the report as committed
+ * @property {object[]} targets `report.targets`, unwrapped
+ * @property {Map<string,Signal>} signals keyed by `${type}:${name}`
+ */
+
+/**
+ * @param {object} report a parsed `data/conformance.json`
+ * @returns {Data}
+ */
 function index(report) {
   const languages = [...new Set(report.targets.map((t) => t.language))].sort();
   LANGUAGE_SLOT.clear();
@@ -122,8 +169,12 @@ function index(report) {
 /**
  * The least that still tells a set of targets apart: the library, plus the
  * report's `label` only where two of them share a library, plus the side only
- * where the set mixes both. Computed per set — what distinguishes a target is
- * a fact about its company, not about the target.
+ * where the set mixes both. Computed per set, because what distinguishes a
+ * target depends on which others it is shown beside.
+ *
+ * @param {object[]} targets the targets being shown together
+ * @returns {Map<string,{primary: string, secondary: string|null, full: string}>}
+ *   keyed by `target.id`
  */
 export function distinguish(targets) {
   const byLibrary = new Map();
@@ -153,7 +204,12 @@ export function distinguish(targets) {
   );
 }
 
-/** Everything about a target's identity, for a tooltip or a label. */
+/**
+ * Everything about a target's identity, for a tooltip or a label.
+ *
+ * @param {object} target one report target
+ * @returns {string}
+ */
 export function fullLabel(target) {
   const side = target.side ? ` ${target.side}` : '';
   return `${target.instrumented_library} · ${target.label}${side}`;

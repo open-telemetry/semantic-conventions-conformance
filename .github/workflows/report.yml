@@ -1,22 +1,21 @@
 name: Report
 
-# Rebuilds `docs/data/conformance.json` — the aggregate the site reads — and
-# opens a pull request when it moved.
+# Rebuilds `docs/data/conformance.json`, the aggregate the site reads, and opens
+# a pull request when it changed.
 #
-# Nightly rather than per-pull-request: rebuilding needs weaver and a fetched
-# registry, which no scenario change should have to wait on. The trade is that
-# the committed report, and so the site, can be a day behind the tree. The
-# `Runner` workflow still gates the reductions themselves.
+# It runs nightly rather than on every pull request because rebuilding needs
+# weaver and a fetched registry. The trade-off is that the committed report, and
+# so the site, can be a day behind the tree.
 on:
   schedule:
-    # Off the hour: GitHub's scheduler is busiest at :00 and queues runs.
+    # Off the hour: GitHub's scheduler queues runs scheduled at :00.
     - cron: "17 5 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# One rebuild at a time. Two runs would race on the same branch, and the loser
+# One rebuild at a time: two runs would race on the same branch, and the loser
 # would force-push a report built from the older tree.
 concurrency:
   group: report
@@ -56,13 +55,15 @@ jobs:
           path: ~/.cache/otel-conformance/semconv
           key: semconv-${{ hashFiles('tools/**/versions.env') }}
 
-      # Only the two domain wrappers: the report resolves a `runner:` and never
-      # builds or runs a scenario, so the per-language launchers are not needed.
+      # Every domain wrapper a `runner:` can name, because the report imports
+      # one to read what its registry declares. The per-language launchers are
+      # not needed: the report never builds or runs a scenario.
       - name: Install the report tool
         run: |
           python -m pip install --upgrade pip
           python -m pip install \
             -e tools/runner \
+            -e tools/database/runner \
             -e tools/gen-ai/mock-server \
             -e tools/gen-ai/runner \
             -e tools/http/mock-server \
@@ -70,8 +71,8 @@ jobs:
             -e tools/http/runner \
             -e tools/report
 
-      # Kept before the rebuild overwrites it, so the summary below can say
-      # what moved rather than only where things stand.
+      # Kept before the rebuild overwrites it, so the summary below can say what
+      # changed rather than only where things stand.
       - name: Keep the committed report to diff against
         run: cp docs/data/conformance.json "$RUNNER_TEMP/base.json"
 

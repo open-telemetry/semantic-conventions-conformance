@@ -21,8 +21,8 @@ scenarios:
 {scenarios}
 """
 
-# One span type, one metric, one entity, across every requirement level — so a
-# test can tell a level that is scored from one that is only counted.
+# One span type, one metric and one entity, across every requirement level, so
+# a test can tell a scored level from one that is only counted.
 MODEL: dict[str, Any] = {
     "spans": {
         "demo.client": {

@@ -16,7 +16,16 @@ import {
 } from '../data.js';
 import { el, levelLegend, toolbar } from '../ui.js';
 
-/** The signal a route names, and whether it named one that exists. */
+/**
+ * The signal a route names, and whether it named one that exists.
+ *
+ * @param {import('../data.js').Data} data the indexed report
+ * @param {string|null} key a `${type}:${name}` signal key from the route
+ * @returns {{available: import('../data.js').Signal[],
+ *   chosen: import('../data.js').Signal, unknown: boolean}}
+ *   every signal, most-emitted first; the one to show, falling back to the
+ *   first; and whether `key` named one the report does not hold
+ */
 function choose(data, key) {
   const available = [...data.signals.values()].sort(
     (a, b) => b.rows.length - a.rows.length || a.name.localeCompare(b.name),
@@ -29,11 +38,23 @@ function choose(data, key) {
   };
 }
 
+/**
+ * @param {import('../data.js').Data} data the indexed report
+ * @param {string|null} key a `${type}:${name}` signal key from the route
+ * @returns {string} the document title for this route
+ */
 export function title(data, key) {
   const { chosen } = choose(data, key);
   return chosen ? `${chosen.name} · conformance` : 'signals · conformance';
 }
 
+/**
+ * Render the signal parity heatmap.
+ *
+ * @param {import('../data.js').Data} data the indexed report
+ * @param {string|null} key a `${type}:${name}` signal key from the route
+ * @returns {HTMLElement} the view, to be appended to `<main>`
+ */
 export default function signals(data, key) {
   const { available, chosen, unknown } = choose(data, key);
   if (!available.length) {
@@ -228,7 +249,7 @@ function attributeRow(attribute, columns) {
 /**
  * One column header: the library, plus only what tells it from its neighbours.
  *
- * Two elements rather than one string — rotated, they sit side by side, so the
+ * Two elements rather than one string: rotated, they sit side by side, so the
  * header height is the longer line rather than their sum. See `style.css`.
  */
 function columnHeader(target, label) {
@@ -256,8 +277,8 @@ function columnHeader(target, label) {
 }
 
 /**
- * A band naming each language over the columns it covers, or null when they
- * are all one language — the caption already says that.
+ * A band naming each language over the columns it covers, or null when they are
+ * all one language, which the caption already says.
  */
 function languageBands(columns) {
   const groups = [];
@@ -287,9 +308,9 @@ function languageBands(columns) {
 }
 
 /**
- * What every column has in common — where the parts `distinguish` stopped
- * printing go. Only genuinely constant fields, so the line is a fact about the
- * whole table rather than about most of it.
+ * What every column has in common: where the parts `distinguish` stopped
+ * printing go. Only fields shared by every column, so the line is a fact about
+ * the whole table rather than about most of it.
  */
 function caption(columns) {
   const shared = (pick) => {

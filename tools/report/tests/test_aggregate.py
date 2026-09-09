@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Joining a reduction to what the registry declared."""
+"""Joining a `data.json` to what the registry declares."""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def test_missing_is_what_was_declared_and_did_not_arrive() -> None:
 
 
 def test_an_attribute_outside_the_registry_is_not_counted() -> None:
-    """The reduction already dropped it; the join must not resurrect it."""
+    """The `data.json` already dropped it, and the join must not restore it."""
     signals = coverage_of(
         {**EMPTY, "spans": {"demo.client": ["demo.required", "made.up"]}}
     )
@@ -84,7 +84,7 @@ def test_a_metric_is_keyed_by_name_alone() -> None:
     """No identity block at all: an attribute set would split one metric.
 
     The explorer keys a metric by name, so two observations under one name are
-    one metric there however differently they were attributed.
+    one metric there, however differently they were attributed.
     """
     signals = coverage_of({**EMPTY, "metrics": {"demo.duration": []}})
     assert "identity" not in signals["demo.duration"]
@@ -108,7 +108,7 @@ def test_the_summary_sums_only_the_scored_levels() -> None:
 
 
 def test_the_registry_slice_holds_only_what_was_referenced() -> None:
-    """The registries declare thousands of signals; these touch a handful."""
+    """The registries declare thousands of signals. These touch a handful."""
     referenced = _aggregate._referenced(
         MODEL, [{**EMPTY, "spans": {"demo.client": []}}]
     )
@@ -145,7 +145,7 @@ def test_a_target_with_no_runner_is_a_failure_not_an_empty_score(
 
 @pytest.mark.usefixtures("one_domain")
 def test_findings_pass_through_verbatim(tmp_path: Path) -> None:
-    """The report must not reinterpret a finding; weaver decided already."""
+    """The report must not reinterpret a finding. Weaver already decided."""
     finding = {
         "id": "unit_mismatch",
         "message": "Unit should be '{token}', but found 'token'.",

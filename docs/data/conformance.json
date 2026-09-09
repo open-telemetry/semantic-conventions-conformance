@@ -11,6 +11,7 @@
       "registry_repo": "open-telemetry/semantic-conventions"
     }
   },
+  "generated_by": "otel-conformance-report build",
   "registry": {
     "genai-conformance": {
       "entities": {},

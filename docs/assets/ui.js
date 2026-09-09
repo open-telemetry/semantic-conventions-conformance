@@ -1,15 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// The pieces every view draws with. Hand-rolled: every visualization here is a
-// table or a grid of cells, which is not worth a charting dependency.
+// The pieces every view draws with. Hand-rolled because every visualization
+// here is a table or a grid of cells, which is not worth a charting dependency.
 
 import { LEVELS, LEVEL_LABEL, levelColor } from './data.js';
 
 /**
- * Build an element. `attrs` may carry `class`, `text`, or `on*` handlers.
+ * Build an element. There is no `html` escape hatch on purpose: nest a child
+ * element instead.
  *
- * No `html` escape hatch on purpose — nest a child element instead.
+ * @param {string} tag the element name
+ * @param {Object<string,*>} [attrs] attributes, plus `text` for text content
+ *   and `on*` for event handlers; null, undefined and false are skipped
+ * @param {(Node|string|null|false)[]|Node|string} [children] appended in order,
+ *   flattened, with nullish and false entries skipped
+ * @returns {HTMLElement}
  */
 export function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
@@ -26,6 +32,10 @@ export function el(tag, attrs = {}, children = []) {
   return node;
 }
 
+/**
+ * @param {string[]} [levels] the requirement levels to show, in order
+ * @returns {HTMLElement} a `<p>` with one swatch and label per level
+ */
 export function levelLegend(levels = LEVELS) {
   return el(
     'p',
@@ -42,8 +52,16 @@ export function levelLegend(levels = LEVELS) {
 /**
  * A search box plus select filters, calling back on any change.
  *
- * A filter may name its own starting `value`, and `all: null` says it has no
- * all-state — a selector whose choice the view below cannot do without.
+ * @param {object} options
+ * @param {string} options.search placeholder for the search box
+ * @param {{key: string, label: string, all: string|null, value?: string,
+ *   options: (string|{value: string, label: string})[]}[]} [options.filters]
+ *   one select each. `all` is the label of the no-filter choice, or null where
+ *   the view below cannot do without a choice; `value` is the starting one.
+ * @param {(state: Object<string,string>) => string|undefined} options.onChange
+ *   called with `{q, ...filterKeys}` on every change; its return value is shown
+ *   as the result count
+ * @returns {HTMLElement}
  */
 export function toolbar({ search, filters = [], onChange }) {
   const state = {

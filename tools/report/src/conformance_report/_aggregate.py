@@ -1,16 +1,15 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Every committed reduction, joined to what the registry declared.
+"""Every committed ``data.json``, joined to what the registry declares.
 
-A ``data.json`` records which of a signal's declared attributes a run carried;
-the denominator is in the coverage model, which is a cache rather than a
-committed file. Joining them here is what lets the site read the report
-without weaver or a registry. See ``README.md``.
+A ``data.json`` holds only the numerator: which of a signal's declared
+attributes a run carried. The denominator is in the coverage model, which is
+cached rather than committed, so joining them here is what lets the site read
+the report without weaver or a registry. See ``README.md``.
 
-Output is deterministic — sorted keys, sorted sequences, no timestamp. The
-committed file is compared byte-for-byte against a rebuild, and the ecosystem
-registry downstream content-addresses what it ingests.
+Output is deterministic: sorted keys, sorted sequences, no timestamp. The
+committed file is compared byte-for-byte against a rebuild.
 """
 
 from __future__ import annotations
@@ -24,7 +23,13 @@ from opentelemetry.conformance import domain as load_domain
 
 from ._discover import DATA_FILE, Target, discover
 
+# Read by ``docs/assets/data.js``, which checks it before rendering. Bump it
+# when the shape below changes, and bump the copy there to match.
 SCHEMA_VERSION = 1
+
+# Recorded in the report so nobody edits it by hand. Constant, because anything
+# per-run would open a nightly pull request saying nothing.
+GENERATED_BY = "otel-conformance-report build"
 
 # The signal kinds a reduction records attributes for, mapped to the singular
 # the report names one by. Entities are shaped differently and handled apart.
@@ -39,16 +44,14 @@ SCORED_LEVELS = ("required", "recommended")
 def _runner(target: Target) -> str:
     """The runner a target declared, which the report cannot do without.
 
-    ``runner:`` is optional to the runner itself — a caller may supply the
-    runners instead — but it is the only thing that names the registry the
-    coverage denominator comes from. Without one there is nothing to score
-    against, and a report published anyway would read as a target that
-    declares nothing rather than as one that was never measured.
+    ``runner:`` is optional to the runner itself, but it is the only thing that
+    names the registry the denominator comes from. A target without one would
+    be published as declaring nothing, rather than as never measured.
     """
     if target.runner is None:
         raise RuntimeError(
-            f"{target.path} declares no `runner:` — the report cannot tell "
-            "what registry it was measured against, so it has no denominator"
+            f"{target.path} declares no `runner:`, so the report cannot tell "
+            "what registry it was measured against"
         )
     return target.runner
 
@@ -56,8 +59,8 @@ def _runner(target: Target) -> str:
 def _domains(targets: Iterable[Target]) -> dict[str, Domain]:
     """The domain behind each ``runner:`` the targets name.
 
-    Resolved once per distinct runner: resolving one fetches a registry and
-    runs weaver the first time.
+    Resolved once per distinct runner, because resolving one fetches a registry
+    and runs weaver the first time.
     """
     resolved: dict[str, Domain] = {}
     for target in targets:
@@ -68,7 +71,7 @@ def _domains(targets: Iterable[Target]) -> dict[str, Domain]:
         if found is None:
             raise RuntimeError(
                 f"{target.path} names runner {name!r}, which exposes no "
-                "DOMAIN — the report cannot tell what registry it was "
+                "DOMAIN, so the report cannot tell what registry it was "
                 "measured against"
             )
         resolved[name] = found
@@ -95,8 +98,8 @@ def signal_coverage(
     """Each signal the run recorded, against what the registry declares.
 
     A signal the model does not declare keeps ``declared: null`` rather than
-    scoring zero — only reachable when the report is built against a different
-    pin than the data was, where the answer is "unknown", not "none".
+    scoring zero: the answer is "unknown", not "none". It is only reachable
+    when the report is built against a different pin than the data was.
     """
     built: list[dict[str, Any]] = []
     for kind, singular in _SIGNAL_KINDS.items():
@@ -116,7 +119,7 @@ def signal_coverage(
             entry["missing"] = sorted(set(attributes) - set(emitted))
             entry["coverage"] = _coverage(attributes, emitted)
             # The identity the ecosystem explorer keys telemetry on. A span is
-            # keyed by kind and attribute set — two shapes under one name are
+            # keyed by kind and attribute set, so two shapes under one name are
             # two spans there. A metric or event is keyed by name alone, which
             # ``name`` above already carries: giving one an attribute set would
             # split two observations of the same metric into two identities.
@@ -148,8 +151,8 @@ def _referenced(
 ) -> dict[str, Any]:
     """The slice of one domain's model its targets actually referenced.
 
-    The registries declare hundreds of signals; these scenarios touch a couple
-    of dozen, and the whole model would be most of the file.
+    The registries declare hundreds of signals and these scenarios touch a
+    couple of dozen, so the whole model would be most of the file.
     """
     wanted: dict[str, set[str]] = {kind: set() for kind in _SIGNAL_KINDS}
     entities: set[str] = set()
@@ -234,6 +237,7 @@ def build(root: Path) -> dict[str, Any]:
 
     return {
         "schema_version": SCHEMA_VERSION,
+        "generated_by": GENERATED_BY,
         "domains": {
             name: {
                 "registry_repo": found.repo,

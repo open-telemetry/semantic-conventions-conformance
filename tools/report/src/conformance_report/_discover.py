@@ -3,10 +3,10 @@
 
 """Every conformance directory in a checkout, with what it declared.
 
-Identity comes from the ``conformance.yaml`` beside the data — except the
-language, which nothing declares (``runner:`` names the domain, and one domain
-spans four languages). So the layout is a contract of the *reporting* layer
-rather than of the runner::
+Identity comes from the ``conformance.yaml`` beside the data, except the
+language: nothing declares it, because ``runner:`` names the domain and one
+domain spans four languages. The layout below is therefore a contract of the
+reporting layer rather than of the runner::
 
     scenarios/<domain>/<language>/<library>/<instrumentation>[/<side>]
 """
@@ -29,10 +29,9 @@ SCENARIO_ROOT = "scenarios"
 _SIDES = ("client", "server")
 
 # A checkout that has run the scenarios holds an interpreter, a package tree
-# and build output inside the very directories being walked, and a `data.json`
-# or `conformance.yaml` in one of those belongs to a dependency rather than to
-# this repo. Pruned rather than filtered afterwards, so the walk does not
-# descend into a `node_modules` at all.
+# and build output inside the directories being walked, and a `data.json` there
+# belongs to a dependency rather than to this repo. Pruned rather than filtered
+# afterwards, so the walk does not descend into a `node_modules` at all.
 _NOT_SOURCE = frozenset(
     {
         ".git",
@@ -56,8 +55,8 @@ def walk(scenarios: Path, name: str) -> Iterator[Path]:
     """Every file called ``name`` under ``scenarios``, top-down.
 
     ``Path.rglob`` would also return the ones a dependency or a build brought
-    into the tree; see :data:`_NOT_SOURCE`. Callers that care about the order
-    of the whole set sort what comes back.
+    into the tree; see :data:`_NOT_SOURCE`. Callers that need a stable order
+    sort what comes back.
     """
     for directory, subdirectories, files in os.walk(scenarios):
         subdirectories[:] = sorted(
@@ -104,11 +103,11 @@ def _facets(relative: Path) -> tuple[str, str, str, str, str | None]:
 
 
 def discover(root: Path) -> list[Target]:
-    """Every conformance directory under ``root`` that has a reduction.
+    """Every conformance directory under ``root`` that has a ``data.json``.
 
-    A spec with no ``data.json`` was never run to completion. Skipped, rather
-    than reported as empty coverage — an absent measurement is not a failing
-    implementation.
+    A spec with no ``data.json`` was never run to completion. It is skipped
+    rather than reported as empty coverage, because an absent measurement is
+    not a failing implementation.
     """
     scenarios = root / SCENARIO_ROOT
     found: list[Target] = []

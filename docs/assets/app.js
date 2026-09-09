@@ -3,7 +3,7 @@
 
 // The shell: load the report once, then render whichever view the hash names.
 //
-// Hash routing rather than paths: Pages has no rewrite rules, so `#/signals/x`
+// Hash routing rather than paths, because Pages has no rewrite rules: `#/signals/x`
 // survives a cold load where `/signals/x` would 404.
 
 import { load } from './data.js';
@@ -12,8 +12,8 @@ import { el } from './ui.js';
 // A view module exports a default renderer and, optionally, a `title`.
 import * as signals from './views/signals.js';
 
-// `#/` is the front door and `#/signals/<key>` is what the selector writes;
-// separate entries so the front door can be repointed at a landing view
+// `#/` is the front door and `#/signals/<key>` is what the selector writes.
+// Separate entries, so the front door can be repointed at a landing view
 // without touching the deep link.
 const ROUTES = [
   { name: 'signals', match: /^\/?$/, view: signals },
@@ -23,8 +23,8 @@ const ROUTES = [
 const main = document.querySelector('main');
 
 // `decodeURIComponent` throws on a stray percent (`#/signals/50%`). A bad
-// address is not an unreadable report, so it falls through to the front door
-// rather than letting a URIError escape and read as a failed load.
+// address falls through to the front door, rather than letting a URIError
+// escape and read as a failed load.
 function decode(hash) {
   try {
     return decodeURIComponent(hash);
@@ -83,8 +83,8 @@ load()
         el('p', {
           text:
             'The page reads data/conformance.json over fetch, which a browser ' +
-            'refuses to do from a file:// URL — the usual cause. Serve the ' +
-            'directory instead: python -m http.server -d docs',
+            'refuses to do from a file:// URL. Serve the directory instead: ' +
+            'python -m http.server -d docs',
         }),
         el('p', { class: 'ver', text: String(error) }),
       ]),

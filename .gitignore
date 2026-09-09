@@ -19,3 +19,5 @@ node_modules/
 # .NET: what a build writes, which the artifacts output layout collects into
 # one directory per build root.
 artifacts/
+
+.DS_Store

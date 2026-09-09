@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""``otel-conformance-report`` — build, check, or summarise the report."""
+"""``otel-conformance-report``: build, check, or summarise the report."""
 
 from __future__ import annotations
 
@@ -49,8 +49,8 @@ def _parser() -> argparse.ArgumentParser:
         "--against",
         type=Path,
         help=(
-            "a report to diff against, so the summary says what moved rather "
-            "than only where things stand"
+            "a report to diff against, so the summary says what changed "
+            "rather than only where things stand"
         ),
     )
     return parser
@@ -76,14 +76,14 @@ def cli(argv: Sequence[str] | None = None) -> int:
         committed = root / DEFAULT_REPORT
         if not committed.is_file():
             print(
-                f"{DEFAULT_REPORT} is missing — run "
+                f"{DEFAULT_REPORT} is missing; run "
                 "`otel-conformance-report build`",
                 file=sys.stderr,
             )
             return 1
         if committed.read_text(encoding="utf-8") != expected:
             print(
-                f"{DEFAULT_REPORT} is out of date — run "
+                f"{DEFAULT_REPORT} is out of date; run "
                 "`otel-conformance-report build` and commit the result",
                 file=sys.stderr,
             )
