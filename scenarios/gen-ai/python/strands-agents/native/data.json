@@ -20,6 +20,8 @@
       "gen_ai.operation.name",
       "gen_ai.request.model",
       "gen_ai.tool.definitions",
+      "gen_ai.usage.cache_creation.input_tokens",
+      "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
     ]
@@ -289,11 +291,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'chat'",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'chat'",
       "signal_type": "span",
       "signal_name": "chat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -442,24 +444,6 @@
       "context": {
         "attribute": "gen_ai.tool.definitions",
         "errors": "{\"description\":\"Get the current weather in a given location.\",\"inputSchema\":{\"json\":{\"properties\":{\"location\":{\"description\":\"Parameter location\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}},\"name\":\"get_current_weather\",\"outputSchema\":null} is not valid under any of the schemas listed in the 'anyOf' keyword"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.usage.cache_read_input_tokens' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "invoke_agent weather_assistant",
-      "context": {
-        "attribute_key": "gen_ai.usage.cache_read_input_tokens"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.usage.cache_write_input_tokens' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "invoke_agent weather_assistant",
-      "context": {
-        "attribute_key": "gen_ai.usage.cache_write_input_tokens"
       }
     },
     {

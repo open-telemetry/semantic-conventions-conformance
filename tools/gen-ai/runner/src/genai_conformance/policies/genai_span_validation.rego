@@ -90,12 +90,11 @@ deny contains _span_finding(
 	{
 		"operation":     op,
 		"keyed_attr":    keyed_attr,
-		"expected_form": concat("", [op, " or '", op, " <", keyed_attr, ">'"]),
+		"expected_form": expected,
 	},
 	concat("", [
 		op, " span name should be '",
-		op, "' or '",
-		op, " <value of ", keyed_attr, ">', got '",
+		expected, "', got '",
 		input.sample.span.name, "'",
 	]),
 ) if {
@@ -103,6 +102,7 @@ deny contains _span_finding(
 	op := _attr_value(input.sample.span, "gen_ai.operation.name")
 	keyed_attr := _span_name_keyed_attr[op]
 	not _valid_op_and_attr_span_name(input.sample.span, op, keyed_attr)
+	expected := _expected_span_name(input.sample.span, op, keyed_attr)
 }
 
 # ─── Per-operation expected attributes (violation) ──────────────────────────
@@ -267,6 +267,15 @@ _attr_value(span, name) := value if {
 	some attr in span.attributes
 	attr.name == name
 	value := attr.value
+}
+
+_expected_span_name(span, op, attr_key) := concat(" ", [op, val]) if {
+	val := _attr_value(span, attr_key)
+	is_string(val)
+}
+
+_expected_span_name(span, op, attr_key) := op if {
+	not _has_attr(span, attr_key)
 }
 
 # A valid span name is either exactly `{op}` (when the keyed attribute is

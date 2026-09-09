@@ -84,7 +84,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24.19.0"
+          node-version: "24.20.0"
 
       # Installs, formats and unit-tests every Node package the HTTP scenarios
       # use, including the ones shared with other domains.
@@ -308,7 +308,7 @@ jobs:
         if: matrix.language == 'js'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "24.19.0"
+          node-version: "24.20.0"
           cache: npm
           cache-dependency-path: "scenarios/**/package-lock.json"
 
@@ -397,7 +397,7 @@ jobs:
       - coverage-model
       - discover-scenarios
       - scenarios
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ always() }}
     steps:
       - if: |
