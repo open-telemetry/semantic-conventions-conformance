@@ -1058,7 +1058,7 @@ wheels = [
 
 [[package]]
 name = "strands-agents"
-version = "1.53.0"
+version = "1.55.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
@@ -1075,9 +1075,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "watchdog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/61/40/9dde87f43a4e81c7292787a21424d881ffc0041f9502e5ad6c0704ce22c5/strands_agents-1.53.0.tar.gz", hash = "sha256:b8a3ebf34c844ece7292288bbf7063a81dfc2f31ab54358993854ecbfc39c691", size = 1425290, upload-time = "2026-08-21T16:25:18.487Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/37/04f19549c24bd7dbdbf5010317ed9b090f454aae550ed188b8b030b1be50/strands_agents-1.55.0.tar.gz", hash = "sha256:8ad2ad0b5306e1e0419cde03534d3a725d8fb80aa19ed7065c844bb2ffbd7dc1", size = 1599495, upload-time = "2026-09-08T16:55:24.132Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/5f/dc7e0716bd83619e8aabbd08ec481d8a5258c6773d222f3de75915969915/strands_agents-1.53.0-py3-none-any.whl", hash = "sha256:35b28436208486320ed121cbfe425368318847193d57c175823e82e5cc7700de", size = 708005, upload-time = "2026-08-21T16:25:16.672Z" },
+    { url = "https://files.pythonhosted.org/packages/33/90/6db60946626fb7f83249ac9f8e3037947f3aeac9b93bbbf116a4edd7be6c/strands_agents-1.55.0-py3-none-any.whl", hash = "sha256:01cd3ebd0606042b0e0c099aa6e549080a945ed3f4e063c223bf34f11373cd75", size = 807217, upload-time = "2026-09-08T16:55:22.37Z" },
 ]
 
 [package.optional-dependencies]
@@ -1104,7 +1104,7 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
     { name = "opentelemetry-sdk", specifier = "==1.44.0" },
     { name = "otel-conformance-python", editable = "../../../../../tools/python" },
-    { name = "strands-agents", extras = ["openai"], specifier = "==1.53.0" },
+    { name = "strands-agents", extras = ["openai"], specifier = "==1.55.0" },
 ]
 
 [[package]]

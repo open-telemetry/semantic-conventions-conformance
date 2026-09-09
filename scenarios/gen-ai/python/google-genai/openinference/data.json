@@ -131,11 +131,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "embeddings span name should be 'embeddings' or 'embeddings <value of gen_ai.request.model>', got 'EmbedContent'",
+      "message": "embeddings span name should be 'embeddings text-embedding-004', got 'EmbedContent'",
       "signal_type": "span",
       "signal_name": "EmbedContent",
       "context": {
-        "expected_form": "embeddings or 'embeddings <gen_ai.request.model>'",
+        "expected_form": "embeddings text-embedding-004",
         "keyed_attr": "gen_ai.request.model",
         "operation": "embeddings"
       }
@@ -543,11 +543,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'GenerateContent'",
+      "message": "chat span name should be 'chat gemini-2.0-flash', got 'GenerateContent'",
       "signal_type": "span",
       "signal_name": "GenerateContent",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gemini-2.0-flash",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -766,11 +766,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'GenerateContentStream'",
+      "message": "chat span name should be 'chat gemini-2.0-flash', got 'GenerateContentStream'",
       "signal_type": "span",
       "signal_name": "GenerateContentStream",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gemini-2.0-flash",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }

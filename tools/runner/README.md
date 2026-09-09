@@ -265,9 +265,9 @@ key you write is checked exactly: nothing missing, nothing extra, including
 when empty — `events: []` means "emits no events".
 
 Several implementations can share telemetry expectations while keeping their
-commands and configuration local. Point `scenario_contract` at a YAML file
-whose only top-level key is `scenarios`; each scenario may declare `spans`,
-`metrics` and `events`, but not `run` or environment:
+commands and configuration local. A named contract's only top-level key is
+`scenarios`; each scenario may declare `spans`, `metrics` and `events`, but not
+`run` or environment:
 
 ```yaml
 scenario_contract: ../../contracts/http-client.yaml
@@ -280,6 +280,42 @@ scenarios:
 The local scenario is merged over the contract by field, so it can replace one
 expectation when an implementation intentionally has a different contract.
 Relative paths start at the directory containing `conformance.yaml`.
+
+A domain contract can instead use a `scenarios` list. Every entry must have
+exactly `description`, a non-empty domain-owned `action` mapping, and a generic
+`expect` mapping. Other contract fields are domain-owned metadata and ignored
+by the generic runner:
+
+```yaml
+description: Shared HTTP client requests.
+protocol: http
+scenarios:
+  - description: Sends one request.
+    action:
+      request: {method: GET, path: /items}
+    expect:
+      spans:
+        - match: {kind: CLIENT}
+          expect: {count: 1, attributes: {url.full: {present: true}}}
+      events: []
+```
+
+The package declares one command template for the list:
+
+```yaml
+scenario_contract: ../../contracts/http-client.yaml
+scenario_run: node client.js
+```
+
+The runner creates one scenario per indexed entry and rejects local `scenarios`
+overrides for this contract form. Each runs under a fresh weaver
+report with `OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index.
+The command reads that index to select the same action. Reports use stable
+zero-padded ordinal filenames, while CLI and pytest output prefix `description`
+with its index; repeated descriptions do not merge entries.
+
+`--scenario` takes the zero-padded ordinal, not the displayed label. To run the
+first entry above, pass `--scenario 0000` rather than `[0] Sends one request.`.
 
 `env` configures the scenario process. The real process environment wins over
 it, so exporting a real key and base URL points a scenario at a real provider

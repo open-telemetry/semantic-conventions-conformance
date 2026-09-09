@@ -3,7 +3,7 @@
 
 // Package httpcontract is the HTTP conformance exchanges, as Go reads them.
 //
-// The traffic is written down once, in tools/http/test-client/contract.json,
+// The traffic is written down once, in tools/http/test-client/contract.yaml,
 // so a Go scenario and a scenario in any other language are measured against
 // the same requests and their coverage files stay comparable. Every Go
 // framework shares this package rather than restating the answers, while
@@ -14,13 +14,17 @@
 package httpcontract
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
+
+	"encoding/json"
+
+	"go.yaml.in/yaml/v3"
 )
 
 // ContentType is what every route answers, so a scenario has one content type
@@ -36,23 +40,27 @@ const UserAgent = "otel-http-conformance/1"
 // escape hatch for a binary run away from the checkout it was built in.
 const PathVariable = "OTEL_HTTP_CONTRACT"
 
+// ScenarioIndexVariable names the zero-based contract entry selected by the
+// runner for this process.
+const ScenarioIndexVariable = "OTEL_CONFORMANCE_SCENARIO_INDEX"
+
 // checkoutPath is where the contract sits in a checkout, searched for upwards
 // from the working directory — which the runner sets to the scenario
 // directory, and `go test` to the package's own.
-const checkoutPath = "tools/http/test-client/contract.json"
+const checkoutPath = "tools/http/test-client/contract.yaml"
 
 // Exchange is one concrete request and the answer the contract requires.
 //
 // Body is empty for a request that carries none. The only substitution in
 // ResponseBody is the literal ${requestBody}, for the body that arrived.
 type Exchange struct {
-	Method       string `json:"method"`
-	Path         string `json:"path"`
-	Body         string `json:"body"`
-	Status       int    `json:"status"`
-	ResponseBody string `json:"responseBody"`
-	Readiness    bool   `json:"readiness"`
-	Description  string `json:"description"`
+	Method       string
+	Path         string
+	Body         string
+	Status       int
+	ResponseBody string
+	Readiness    bool
+	Description  string
 }
 
 // RenderResponseBody is the response body with the request body inserted.
@@ -84,7 +92,29 @@ func contractError(format string, arguments ...any) error {
 }
 
 type document struct {
-	Requests []Exchange `json:"requests"`
+	Readiness entry   `yaml:"readiness"`
+	Scenarios []entry `yaml:"scenarios"`
+}
+
+type entry struct {
+	Description string `yaml:"description"`
+	Action      action `yaml:"action"`
+}
+
+type action struct {
+	Request  request  `yaml:"request"`
+	Response response `yaml:"response"`
+}
+
+type request struct {
+	Method string `yaml:"method"`
+	Path   string `yaml:"path"`
+	Body   string `yaml:"body"`
+}
+
+type response struct {
+	Status int    `yaml:"status"`
+	Body   string `yaml:"body"`
 }
 
 // Read once: the contract is a constant for the life of a scenario, and every
@@ -103,13 +133,31 @@ func Requests() ([]Exchange, error) {
 	if err != nil {
 		return nil, err
 	}
-	measured := make([]Exchange, 0, len(exchanges))
-	for _, exchange := range exchanges {
-		if !exchange.Readiness {
-			measured = append(measured, exchange)
-		}
+	return exchanges[1:], nil
+}
+
+// ScenarioRequest is the one request selected by the runner's zero-based
+// contract index.
+func ScenarioRequest() (Exchange, error) {
+	raw, ok := os.LookupEnv(ScenarioIndexVariable)
+	if !ok {
+		return Exchange{}, fmt.Errorf("%s is not set", ScenarioIndexVariable)
 	}
-	return measured, nil
+	index, err := strconv.Atoi(raw)
+	if err != nil || index < 0 || strconv.Itoa(index) != raw {
+		return Exchange{}, fmt.Errorf(
+			"%s must be a zero-based decimal index, got %q", ScenarioIndexVariable, raw)
+	}
+	requests, err := Requests()
+	if err != nil {
+		return Exchange{}, err
+	}
+	if index >= len(requests) {
+		return Exchange{}, fmt.Errorf(
+			"%s=%d selects no contract entry; expected 0..%d",
+			ScenarioIndexVariable, index, len(requests)-1)
+	}
+	return requests[index], nil
 }
 
 // Lookup is the exchange answering "method path", if the contract describes
@@ -161,13 +209,30 @@ func load() ([]Exchange, error) {
 		return nil, fmt.Errorf("could not read %s: %w", path, err)
 	}
 	var parsed document
-	if err := json.Unmarshal(raw, &parsed); err != nil {
+	if err := yaml.Unmarshal(raw, &parsed); err != nil {
 		return nil, fmt.Errorf("could not parse %s: %w", path, err)
 	}
-	if len(parsed.Requests) == 0 {
+	if len(parsed.Scenarios) == 0 {
 		return nil, fmt.Errorf("%s describes no requests", path)
 	}
-	return parsed.Requests, nil
+	exchanges := make([]Exchange, 0, len(parsed.Scenarios)+1)
+	exchanges = append(exchanges, parsed.Readiness.exchange(true))
+	for _, scenario := range parsed.Scenarios {
+		exchanges = append(exchanges, scenario.exchange(false))
+	}
+	return exchanges, nil
+}
+
+func (e entry) exchange(readiness bool) Exchange {
+	return Exchange{
+		Method:       e.Action.Request.Method,
+		Path:         e.Action.Request.Path,
+		Body:         e.Action.Request.Body,
+		Status:       e.Action.Response.Status,
+		ResponseBody: e.Action.Response.Body,
+		Readiness:    readiness,
+		Description:  e.Description,
+	}
 }
 
 func locate() (string, error) {

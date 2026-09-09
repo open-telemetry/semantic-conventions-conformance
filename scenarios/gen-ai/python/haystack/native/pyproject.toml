@@ -3,7 +3,7 @@ name = "haystack-native-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "haystack-ai==3.1.0",
+    "haystack-ai==3.1.1",
     # deepset's own OpenTelemetry integration: the tracer Haystack documents,
     # not a third-party instrumentation of it.
     "opentelemetry-haystack==1.0.0",

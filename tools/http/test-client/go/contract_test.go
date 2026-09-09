@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -22,13 +23,20 @@ const baseURL = "http://127.0.0.1:0"
 func driveAgainstTheContract(t *testing.T, output io.Writer) []string {
 	t.Helper()
 	var sent []string
-	err := Drive(baseURL, output, func(method, url, body string) (Response, error) {
-		path := strings.TrimPrefix(url, baseURL)
-		sent = append(sent, method+" "+path)
-		return Respond(method, path, body)
-	})
+	requests, err := Requests()
 	if err != nil {
-		t.Fatalf("driving the contract against itself failed: %v", err)
+		t.Fatal(err)
+	}
+	for index := range requests {
+		t.Setenv(ScenarioIndexVariable, strconv.Itoa(index))
+		err := Drive(baseURL, output, func(method, url, body string) (Response, error) {
+			path := strings.TrimPrefix(url, baseURL)
+			sent = append(sent, method+" "+path)
+			return Respond(method, path, body)
+		})
+		if err != nil {
+			t.Fatalf("driving contract entry %d against itself failed: %v", index, err)
+		}
 	}
 	return sent
 }
@@ -43,6 +51,41 @@ func TestBothSidesOfTheContractAgree(t *testing.T) {
 	}
 	if got := driveAgainstTheContract(t, io.Discard); !reflect.DeepEqual(got, want) {
 		t.Errorf("sent %v, want %v", got, want)
+	}
+}
+
+func TestScenarioRequestSelectsEveryMeasuredRequest(t *testing.T) {
+	requests, err := Requests()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index, want := range requests {
+		t.Setenv(ScenarioIndexVariable, strconv.Itoa(index))
+		got, err := ScenarioRequest()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != want {
+			t.Errorf("ScenarioRequest() = %v, want %v", got, want)
+		}
+	}
+}
+
+func TestScenarioRequestRequiresAValidIndex(t *testing.T) {
+	for _, value := range []string{"", "-1", "01", "5"} {
+		t.Run(value, func(t *testing.T) {
+			if value == "" {
+				t.Setenv(ScenarioIndexVariable, "")
+				if err := os.Unsetenv(ScenarioIndexVariable); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				t.Setenv(ScenarioIndexVariable, value)
+			}
+			if _, err := ScenarioRequest(); err == nil {
+				t.Errorf("ScenarioRequest() accepted %q", value)
+			}
+		})
 	}
 }
 
@@ -246,7 +289,7 @@ func TestRespondReportsAContractLoadFailure(t *testing.T) {
 }
 
 func TestADeclaredContractOverridesDiscovery(t *testing.T) {
-	declared := filepath.Join(t.TempDir(), "declared.json")
+	declared := filepath.Join(t.TempDir(), "declared.yaml")
 	t.Setenv(PathVariable, declared)
 
 	path, err := locate()
@@ -293,6 +336,7 @@ func TestMissingContractSaysHowToDeclareIt(t *testing.T) {
 }
 
 func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
+	t.Setenv(ScenarioIndexVariable, "0")
 	err := Drive("  ", io.Discard, func(string, string, string) (Response, error) {
 		t.Error("a request was sent despite a blank base URL")
 		return Response{}, nil
@@ -304,6 +348,7 @@ func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
 }
 
 func TestANilSenderIsRefusedBeforeAnythingIsSent(t *testing.T) {
+	t.Setenv(ScenarioIndexVariable, "0")
 	err := Drive(baseURL, io.Discard, nil)
 
 	if err == nil || !strings.Contains(err.Error(), "sender") {
@@ -312,6 +357,7 @@ func TestANilSenderIsRefusedBeforeAnythingIsSent(t *testing.T) {
 }
 
 func TestATrailingSlashOnTheBaseURLIsNotRepeated(t *testing.T) {
+	t.Setenv(ScenarioIndexVariable, "0")
 	var firstURL string
 	err := Drive(baseURL+"/", io.Discard, func(method, url, body string) (Response, error) {
 		if firstURL == "" {

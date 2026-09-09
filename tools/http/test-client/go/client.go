@@ -16,8 +16,8 @@ const progressBodyLimit = 60
 // empty for a request that carries none.
 type Sender func(method, url, body string) (Response, error)
 
-// Drive sends Requests at baseURL through send, checking every answer and
-// writing one progress line per response to output.
+// Drive sends the runner-selected request at baseURL through send, checks its
+// answer, and writes one progress line to output.
 //
 // Only a client scenario needs this: it is the sender, so the requests have to
 // leave the library under test. A server scenario is driven from outside its
@@ -36,25 +36,20 @@ func Drive(baseURL string, output io.Writer, send Sender) error {
 		return contractError("sender must not be nil")
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
-	requests, err := Requests()
+	exchange, err := ScenarioRequest()
 	if err != nil {
 		return err
 	}
-	for _, exchange := range requests {
-		response, err := send(exchange.Method, baseURL+exchange.Path, exchange.Body)
-		if err != nil {
-			return fmt.Errorf("%s %s: %w", exchange.Method, exchange.Path, err)
-		}
-		if _, err := fmt.Fprintf(output, "%s %s -> %d %s\n",
-			exchange.Method, exchange.Path, response.StatusCode, abbreviate(response.Body)); err != nil {
-			return fmt.Errorf("writing result for %s %s: %w",
-				exchange.Method, exchange.Path, err)
-		}
-		if err := Verify(exchange, response); err != nil {
-			return err
-		}
+	response, err := send(exchange.Method, baseURL+exchange.Path, exchange.Body)
+	if err != nil {
+		return fmt.Errorf("%s %s: %w", exchange.Method, exchange.Path, err)
 	}
-	return nil
+	if _, err := fmt.Fprintf(output, "%s %s -> %d %s\n",
+		exchange.Method, exchange.Path, response.StatusCode, abbreviate(response.Body)); err != nil {
+		return fmt.Errorf("writing result for %s %s: %w",
+			exchange.Method, exchange.Path, err)
+	}
+	return Verify(exchange, response)
 }
 
 // Verify checks one answer against the exchange that describes it.
