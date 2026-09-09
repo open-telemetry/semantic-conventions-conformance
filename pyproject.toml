@@ -28,6 +28,8 @@ detect-same-package = false
 known-first-party = [
   "database_conformance",
   "opentelemetry",
+  "conformance_report",
+  "conftest",
   "genai_conformance",
   "genai_mock_server",
   "http_conformance",
@@ -50,6 +52,7 @@ pythonVersion = "3.10"
 include = [
   "tools/runner/src",
   "tools/database/runner/src",
+  "tools/report/src",
   "tools/gen-ai/runner/src",
   "tools/http/runner/src",
   "tools/http/mock-server/src",

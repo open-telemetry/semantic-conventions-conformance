@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opentelemetry-conformance-report"
+version = "0.1.0.dev0"
+description = "Aggregates the committed conformance coverage into one report, and the site that reads it."
+requires-python = ">=3.10"
+dependencies = [
+  "opentelemetry-conformance",
+]
+
+[project.scripts]
+otel-conformance-report = "conformance_report._cli:cli"
+
+# Not on PyPI; install it editable from a checkout.
+[tool.uv.sources]
+opentelemetry-conformance = { path = "../runner", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/conformance_report"]
