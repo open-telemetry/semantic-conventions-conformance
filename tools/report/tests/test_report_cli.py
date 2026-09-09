@@ -1,11 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The verbs, and the freshness check a maintainer leans on.
-
-`check` is not a CI gate, because resolving the denominator needs weaver and a
-fetched registry, so these tests are the only thing standing behind it.
-"""
+"""Tests for report generation, freshness checks and Markdown summaries."""
 
 from __future__ import annotations
 
@@ -166,7 +162,33 @@ def test_the_diff_names_a_denominator_that_moved_on_its_own() -> None:
     assert changes.splitlines()[2] == (
         "- registry `demo-conformance` ref `v1.0.0` → `v1.1.0`"
     )
-    assert "`required` declared 1 → 2" in changes
+    assert "`required` coverage 1/1 → 1/2" in changes
+
+
+def test_the_diff_reports_requirement_changes_with_equal_denominators() -> (
+    None
+):
+    data = {"spans": {"demo.client": ["a"]}}
+
+    def report(required: str, recommended: str) -> dict[str, Any]:
+        signals = _aggregate.signal_coverage(
+            data,
+            {
+                "spans": {
+                    "demo.client": {
+                        "attributes": {
+                            required: "required",
+                            recommended: "recommended",
+                        },
+                    }
+                }
+            },
+        )
+        return {"targets": [{"id": TARGET, "signals": signals}]}
+
+    changes = _markdown.render_diff(report("a", "b"), report("b", "a"))
+    assert "`required` coverage 1/1 → 0/1" in changes
+    assert "`recommended` coverage 0/1 → 1/1" in changes
 
 
 def test_the_diff_names_a_signal_that_appeared() -> None:

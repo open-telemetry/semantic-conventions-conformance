@@ -104,7 +104,44 @@ def test_the_summary_sums_only_the_scored_levels() -> None:
     assert _aggregate._summary(signals) == {
         "required": {"emitted": 1, "declared": 3},
         "recommended": {"emitted": 1, "declared": 2},
+        "findings": 0,
     }
+
+
+def test_opt_ins_do_not_reduce_scored_coverage() -> None:
+    signals = signal_coverage(
+        {
+            "spans": {
+                "demo.client": [
+                    "demo.required",
+                    "demo.also_required",
+                    "demo.recommended",
+                ]
+            }
+        },
+        MODEL,
+    )
+    summary = _aggregate._summary(signals)
+    for level in _aggregate.SCORED_LEVELS:
+        assert summary[level]["emitted"] == summary[level]["declared"] > 0
+    assert signals[0]["coverage"]["opt_in"] == {"emitted": 0, "declared": 1}
+
+
+@pytest.mark.usefixtures("one_domain")
+def test_database_metadata_preserves_backend_and_instrumentation(
+    tmp_path: Path,
+) -> None:
+    write_target(
+        tmp_path,
+        "database/java/mariadb/jdbc/opentelemetry-javaagent",
+        library="jdbc",
+        instrumentation="io.opentelemetry.javaagent",
+    )
+    (target,) = build(tmp_path)["targets"]
+    assert target["backend"] == "mariadb"
+    assert target["label"] == "opentelemetry-javaagent"
+    assert target["instrumented_library"] == "jdbc"
+    assert target["instrumentation_library"] == "io.opentelemetry.javaagent"
 
 
 def test_the_registry_slice_holds_only_what_was_referenced() -> None:

@@ -1,54 +1,45 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// The report, and the indices every view reads it through.
-//
-// The indices are built in memory rather than precomputed into the file, so the
-// report keeps one shape and derived answers cannot drift from it.
-//
-// The report is written by `otel-conformance-report build`; its shape is defined
-// in `tools/report/src/conformance_report/_aggregate.py`.
+// The report is written by `otel-conformance-report build`. Its output types
+// are defined in `tools/report/src/conformance_report/_types.py`.
 
 /**
- * Requirement levels, ordered by how much an absence from one means.
- *
- * The vocabulary is the registry's. Which of these are scored is decided by
- * `SCORED_LEVELS` in `tools/report/src/conformance_report/_aggregate.py`.
+ * Requirement levels from the registry. Scoring is defined by `SCORED_LEVELS`
+ * in `tools/report/src/conformance_report/_aggregate.py`.
  */
 export const LEVELS = [
-  'required',
-  'conditionally_required_conditional',
-  'recommended',
-  'recommended_conditional',
-  'opt_in',
+  "required",
+  "conditionally_required_conditional",
+  "recommended",
+  "recommended_conditional",
+  "opt_in",
 ];
 
 export const LEVEL_LABEL = {
-  required: 'Required',
-  conditionally_required_conditional: 'Conditionally required',
-  recommended: 'Recommended',
-  recommended_conditional: 'Recommended (conditional)',
-  opt_in: 'Opt-in',
+  required: "Required",
+  conditionally_required_conditional: "Conditionally required",
+  recommended: "Recommended",
+  recommended_conditional: "Recommended (conditional)",
+  opt_in: "Opt-in",
 };
 
 const LEVEL_VAR = {
-  required: '--required',
-  conditionally_required_conditional: '--conditional',
-  recommended: '--recommended',
-  recommended_conditional: '--conditional',
-  opt_in: '--optin',
+  required: "--required",
+  conditionally_required_conditional: "--conditional",
+  recommended: "--recommended",
+  recommended_conditional: "--conditional",
+  opt_in: "--optin",
 };
 
 /**
  * @param {string} level a requirement level from {@link LEVELS}
  * @returns {string} a CSS `var()` reference to that level's colour
  */
-export const levelColor = (level) => `var(${LEVEL_VAR[level] ?? '--optin'})`;
+export const levelColor = (level) => `var(${LEVEL_VAR[level] ?? "--optin"})`;
 
 /**
- * A stable colour per language, assigned by sorted name rather than by first
- * appearance so it is the same colour on every view. Filled in by `index()`,
- * so `languageColor` only answers after `load()`.
+ * Assigned in sorted language order when the report is indexed.
  */
 const LANGUAGE_SLOT = new Map();
 
@@ -63,18 +54,14 @@ export const languageColor = (language) =>
   `var(--lang-${LANGUAGE_SLOT.get(language) ?? LANGUAGE_SLOTS})`;
 
 async function fetchJson(url) {
-  const response = await fetch(url, { cache: 'no-cache' });
+  const response = await fetch(url, { cache: "no-cache" });
   if (!response.ok) throw new Error(`${url}: ${response.status}`);
   return response.json();
 }
 
 /**
- * The report shape this file knows how to read.
- *
- * The source of truth is `SCHEMA_VERSION` in
- * `tools/report/src/conformance_report/_aggregate.py`. The site cannot import
- * Python, so the constant is duplicated here and checked on load: a rename
- * upstream fails loudly rather than rendering every bar as zero.
+ * Copied from `SCHEMA_VERSION` in
+ * `tools/report/src/conformance_report/_aggregate.py`.
  */
 const SCHEMA_VERSION = 1;
 
@@ -85,7 +72,7 @@ const SCHEMA_VERSION = 1;
  * @throws if the fetch fails or the report is a schema this file cannot read
  */
 export async function load() {
-  const report = await fetchJson('data/conformance.json');
+  const report = await fetchJson("data/conformance.json");
   if (report.schema_version !== SCHEMA_VERSION) {
     throw new Error(
       `data/conformance.json is schema_version ${report.schema_version}; ` +
@@ -107,18 +94,48 @@ const signalKey = (type, name) => `${type}:${name}`;
  * @property {string} runner the domain the declaration was read from
  * @property {Object<string,string>|null} attributes declared attribute to
  *   requirement level, or null where no target's registry declares the signal
- * @property {{target: object, signal: object}[]} rows one per target emitting it
+ * @property {{target: Target, signal: ReportSignal}[]} rows one per target emitting it
+ */
+
+/**
+ * Report fields consumed by the site; copied from the Python output types above.
+ * @typedef {{emitted: number, declared: number}} Tally
+ * @typedef {object} ReportSignal
+ * @property {string} type
+ * @property {string} name
+ * @property {string[]} emitted
+ * @property {Object<string,Tally>} [coverage]
+ * @property {string[]} [missing]
+ * @property {null} [declared]
+ * @typedef {object} Target
+ * @property {string} id
+ * @property {string} path
+ * @property {string} domain
+ * @property {string} language
+ * @property {string} runner
+ * @property {string} instrumented_library
+ * @property {string} instrumentation_library
+ * @property {string} label
+ * @property {string|null} side
+ * @property {string|null} [backend]
+ * @property {ReportSignal[]} signals
+ * @typedef {{attributes: Object<string,string>, kind?: string}} Declaration
+ * @typedef {object} Report
+ * @property {number} schema_version
+ * @property {Target[]} targets
+ * @property {Object<string,Object<string,Object<string,Declaration>>>} registry
+ * @property {Object<string,{registry_repo: string, registry_ref: string, registry_dir: string}>} domains
  */
 
 /**
  * @typedef {object} Data
- * @property {object} report the report as committed
- * @property {object[]} targets `report.targets`, unwrapped
+ * @property {Report} report the report as committed
+ * @property {Target[]} targets `report.targets`, unwrapped
  * @property {Map<string,Signal>} signals keyed by `${type}:${name}`
  */
 
 /**
- * @param {object} report a parsed `data/conformance.json`
+ * @param {Report} report a parsed `data/conformance.json`
  * @returns {Data}
  */
 function index(report) {
@@ -130,9 +147,6 @@ function index(report) {
 
   const targets = report.targets;
 
-  // Signals, each with the registry's declaration and everyone who emits it.
-  // Keyed by type and name together: a metric and a span may share a name, and
-  // the entry carries the declaration every column is drawn against.
   const signals = new Map();
   for (const target of targets) {
     for (const signal of target.signals) {
@@ -146,18 +160,19 @@ function index(report) {
           key,
           name: signal.name,
           type: signal.type,
-          kind: null,
+          kind: declared?.kind ?? null,
           runner: target.runner,
-          attributes: null,
+          attributes: declared?.attributes ?? null,
           rows: [],
         };
         signals.set(key, entry);
-      }
-      // First declaration wins, but an absent one never does.
-      if (entry.attributes === null && declared?.attributes) {
-        entry.attributes = declared.attributes;
-        entry.kind = declared.kind ?? null;
-        entry.runner = target.runner;
+      } else if (
+        entry.kind !== (declared?.kind ?? null) ||
+        !sameAttributes(entry.attributes, declared?.attributes ?? null)
+      ) {
+        throw new Error(
+          `Conflicting declarations for ${key} in ${entry.runner} and ${target.runner}`,
+        );
       }
       entry.rows.push({ target, signal });
     }
@@ -166,13 +181,18 @@ function index(report) {
   return { report, targets, signals };
 }
 
+function sameAttributes(left, right) {
+  if (left === null || right === null) return left === right;
+  return (
+    Object.keys(left).length === Object.keys(right).length &&
+    Object.entries(left).every(([name, level]) => right[name] === level)
+  );
+}
+
 /**
- * The least that still tells a set of targets apart: the library, plus the
- * report's `label` only where two of them share a library, plus the side only
- * where the set mixes both. Computed per set, because what distinguishes a
- * target depends on which others it is shown beside.
+ * Return display labels that distinguish the supplied targets.
  *
- * @param {object[]} targets the targets being shown together
+ * @param {Target[]} targets the targets being shown together
  * @returns {Map<string,{primary: string, secondary: string|null, full: string}>}
  *   keyed by `target.id`
  */
@@ -183,11 +203,12 @@ export function distinguish(targets) {
     if (!byLibrary.has(key)) byLibrary.set(key, new Set());
     byLibrary.get(key).add(target.label);
   }
-  const sides = new Set(targets.map((target) => target.side ?? ''));
+  const sides = new Set(targets.map((target) => target.side ?? ""));
 
   return new Map(
     targets.map((target) => {
       const parts = [];
+      if (target.backend) parts.push(target.backend);
       if (byLibrary.get(target.instrumented_library).size > 1) {
         parts.push(target.label);
       }
@@ -196,7 +217,7 @@ export function distinguish(targets) {
         target.id,
         {
           primary: target.instrumented_library,
-          secondary: parts.join(' · ') || null,
+          secondary: parts.join(" · ") || null,
           full: fullLabel(target),
         },
       ];
@@ -205,12 +226,16 @@ export function distinguish(targets) {
 }
 
 /**
- * Everything about a target's identity, for a tooltip or a label.
- *
- * @param {object} target one report target
+ * @param {Target} target one report target
  * @returns {string}
  */
 export function fullLabel(target) {
-  const side = target.side ? ` ${target.side}` : '';
-  return `${target.instrumented_library} · ${target.label}${side}`;
+  return [
+    target.instrumented_library,
+    target.backend,
+    target.label,
+    target.side,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }

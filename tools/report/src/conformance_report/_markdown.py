@@ -12,9 +12,7 @@ from ._aggregate import SCORED_LEVELS
 
 _ROWS = 15
 
-# A registry ref that renames a signal moves every target at once. GitHub caps
-# a job summary at 1 MiB and fails the step over it, which would take the
-# rebuild and its pull request down too.
+# Limit large diffs so the job summary and PR body remain readable.
 _CHANGES = 200
 
 
@@ -102,19 +100,13 @@ def render(document: Mapping[str, Any]) -> str:
 
 
 def render_diff(before: Mapping[str, Any], after: Mapping[str, Any]) -> str:
-    """What changed between two reports, or nothing if they agree.
-
-    Both halves of a coverage ratio, not only the numerator. Moving a registry
-    pin changes what the registry declares without any instrumentation having
-    changed, and a diff that compared only emitted attributes would open that
-    pull request with nothing to say.
-    """
+    """Return a Markdown list of conformance changes between two reports."""
 
     def index(document: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
         return {t["id"]: t for t in document.get("targets", [])}
 
     old, new = index(before), index(after)
-    # First, so the cap below can never drop the change that explains the rest.
+    # Keep registry changes visible even when the diff is truncated.
     changes: list[str] = list(_registry_diff(before, after))
     for target_id in sorted(set(old) | set(new)):
         if target_id not in old:
@@ -135,7 +127,7 @@ def render_diff(before: Mapping[str, Any], after: Mapping[str, Any]) -> str:
 def _registry_diff(
     before: Mapping[str, Any], after: Mapping[str, Any]
 ) -> Iterable[str]:
-    """Which pin moved. One ref moves every denominator underneath it."""
+    """Yield changes to registry pins between two reports."""
     old: Mapping[str, Mapping[str, Any]] = before.get("domains", {})
     new: Mapping[str, Mapping[str, Any]] = after.get("domains", {})
     for name in sorted(set(old) | set(new)):
@@ -161,18 +153,6 @@ def _signals(target: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     return {f"{s['type']} {s['name']}": s for s in target.get("signals", [])}
 
 
-def _declared(signal: Mapping[str, Any]) -> dict[str, int] | None:
-    """How many attributes each level declares: the ratio's denominator.
-
-    ``None`` where the pinned registry declares nothing for the signal, which
-    means "unknown" rather than "none".
-    """
-    coverage: Mapping[str, Mapping[str, int]] | None = signal.get("coverage")
-    if coverage is None:
-        return None
-    return {level: tally["declared"] for level, tally in coverage.items()}
-
-
 def _signal_diff(
     target_id: str,
     signal: str,
@@ -186,9 +166,9 @@ def _signal_diff(
     for attribute in sorted(old_emitted - new_emitted):
         yield f"- `{target_id}` `{signal}` **−** `{attribute}`"
 
-    # A pin move can change what the registry declares without any run having
-    # changed: the denominator moves on its own.
-    was, now = _declared(old), _declared(new)
+    # Requirement changes can move coverage without changing emitted names.
+    was: Mapping[str, Mapping[str, int]] | None = old.get("coverage")
+    now: Mapping[str, Mapping[str, int]] | None = new.get("coverage")
     if was is None and now is None:
         return
     if was is None or now is None:
@@ -196,10 +176,13 @@ def _signal_diff(
         yield f"- `{target_id}` `{signal}` {state} declared by the registry"
         return
     for level in sorted(set(was) | set(now)):
-        if was.get(level, 0) != now.get(level, 0):
+        before = was.get(level, {"emitted": 0, "declared": 0})
+        after = now.get(level, {"emitted": 0, "declared": 0})
+        if before != after:
             yield (
-                f"- `{target_id}` `{signal}` `{level}` declared "
-                f"{was.get(level, 0)} → {now.get(level, 0)}"
+                f"- `{target_id}` `{signal}` `{level}` coverage "
+                f"{before['emitted']}/{before['declared']} → "
+                f"{after['emitted']}/{after['declared']}"
             )
 
 
@@ -209,9 +192,7 @@ def _target_diff(
     was, now = _signals(old), _signals(new)
     for signal in sorted(set(was) | set(now)):
         before, after = was.get(signal), now.get(signal)
-        # A signal appearing or going is one line, not one per attribute. A
-        # renamed signal moves every target at once, and the itemised form
-        # would use most of the cap on its own.
+        # Report added and removed signals once, without listing each attribute.
         if before is None:
             yield f"- `{target_id}` `{signal}` **added**"
         elif after is None:

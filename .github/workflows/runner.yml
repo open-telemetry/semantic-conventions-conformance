@@ -96,6 +96,12 @@ jobs:
           npm --prefix scenarios/http/js run format:check
           npm --prefix scenarios/http/js test
 
+      - name: Check the site
+        run: |
+          npm --prefix docs ci --ignore-scripts
+          npm --prefix docs run format:check
+          npm --prefix docs test
+
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:

@@ -40,12 +40,34 @@ def test_the_side_segment_is_recognised(tmp_path: Path) -> None:
     assert target.instrumentation == "opentelemetry-javaagent"
 
 
-def test_a_trailing_segment_that_is_not_a_side_is_not_one(
-    tmp_path: Path,
+@pytest.mark.parametrize(
+    "identifier",
+    [
+        "demo/python/demo/opentelemetry-demo/extra",
+        "http/java/okhttp/opentelemetry-javaagent/unknown",
+        "database/java/jdbc/opentelemetry-javaagent",
+    ],
+)
+def test_an_unsupported_layout_is_an_error(
+    tmp_path: Path, identifier: str
 ) -> None:
-    """Only the two the HTTP domain splits on. Anything else is a slug."""
-    write_target(tmp_path, "demo/python/demo/opentelemetry-demo/extra")
+    write_target(tmp_path, identifier)
+    with pytest.raises(ValueError, match="supported"):
+        discover(tmp_path)
+
+
+@pytest.mark.parametrize("backend", ["mariadb", "postgresql"])
+@pytest.mark.parametrize(
+    "instrumentation", ["opentelemetry-javaagent", "opentelemetry-library"]
+)
+def test_database_layout(
+    tmp_path: Path, backend: str, instrumentation: str
+) -> None:
+    write_target(tmp_path, f"database/java/{backend}/jdbc/{instrumentation}")
     (target,) = discover(tmp_path)
+    assert target.backend == backend
+    assert target.library == "jdbc"
+    assert target.instrumentation == instrumentation
     assert target.side is None
 
 
@@ -69,7 +91,8 @@ def test_what_a_dependency_or_a_build_left_behind_is_not_a_target(
     write_target(tmp_path, "demo/python/demo/opentelemetry-demo")
     for artifact in (".venv", "node_modules", "build"):
         write_target(
-            tmp_path, f"demo/python/demo/opentelemetry-demo/{artifact}/vendored"
+            tmp_path,
+            f"demo/python/demo/opentelemetry-demo/{artifact}/vendored",
         )
 
     assert [t.id for t in discover(tmp_path)] == [

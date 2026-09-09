@@ -1,15 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Every conformance directory in a checkout, with what it declared.
-
-Identity comes from the ``conformance.yaml`` beside the data, except the
-language: nothing declares it, because ``runner:`` names the domain and one
-domain spans four languages. The layout below is therefore a contract of the
-reporting layer rather than of the runner::
-
-    scenarios/<domain>/<language>/<library>/<instrumentation>[/<side>]
-"""
+"""Discover measured targets using the layouts documented in README.md."""
 
 from __future__ import annotations
 
@@ -24,14 +16,9 @@ SPEC_FILE = "conformance.yaml"
 DATA_FILE = "data.json"
 SCENARIO_ROOT = "scenarios"
 
-# HTTP gives each side its own directory: coverage reduces everything a package
-# emitted, so a server run must not be able to hide a client span.
 _SIDES = ("client", "server")
 
-# A checkout that has run the scenarios holds an interpreter, a package tree
-# and build output inside the directories being walked, and a `data.json` there
-# belongs to a dependency rather than to this repo. Pruned rather than filtered
-# afterwards, so the walk does not descend into a `node_modules` at all.
+# Exclude dependencies and build output, which may contain their own specs.
 _NOT_SOURCE = frozenset(
     {
         ".git",
@@ -52,12 +39,7 @@ _NOT_SOURCE = frozenset(
 
 
 def walk(scenarios: Path, name: str) -> Iterator[Path]:
-    """Every file called ``name`` under ``scenarios``, top-down.
-
-    ``Path.rglob`` would also return the ones a dependency or a build brought
-    into the tree; see :data:`_NOT_SOURCE`. Callers that need a stable order
-    sort what comes back.
-    """
+    """Yield files named ``name`` under ``scenarios``, excluding build output."""
     for directory, subdirectories, files in os.walk(scenarios):
         subdirectories[:] = sorted(
             subdirectory
@@ -80,6 +62,7 @@ class Target:
     library: str
     instrumentation: str
     side: str | None
+    backend: str | None
     # Declared, and authoritative over anything the path suggests.
     spec: PackageSpec
     directory: Path
@@ -89,26 +72,28 @@ class Target:
         return self.spec.runner
 
 
-def _facets(relative: Path) -> tuple[str, str, str, str, str | None]:
-    """Split a directory under ``scenarios/`` into the layout above."""
-    parts = relative.parts
-    if len(parts) < 4:
+def _facets(
+    relative: Path,
+) -> tuple[str, str, str, str, str | None, str | None]:
+    """Return domain, language, library, instrumentation, side and backend."""
+    parts = list(relative.parts)
+    side = None
+    if parts and parts[0] == "http" and parts[-1] in _SIDES:
+        side = parts.pop()
+    backend = None
+    if len(parts) == 5 and parts[0] == "database":
+        backend = parts.pop(2)
+    if len(parts) != 4 or (parts[0] == "database" and backend is None):
         raise ValueError(
-            f"{relative} is not <domain>/<language>/<library>/"
-            "<instrumentation>[/<side>]"
+            f"{relative} does not match a supported <domain>/<language>/"
+            "layout; see tools/report/README.md"
         )
-    domain, language, library, instrumentation = parts[:4]
-    side = parts[4] if len(parts) > 4 and parts[4] in _SIDES else None
-    return domain, language, library, instrumentation, side
+    domain, language, library, instrumentation = parts
+    return domain, language, library, instrumentation, side, backend
 
 
 def discover(root: Path) -> list[Target]:
-    """Every conformance directory under ``root`` that has a ``data.json``.
-
-    A spec with no ``data.json`` was never run to completion. It is skipped
-    rather than reported as empty coverage, because an absent measurement is
-    not a failing implementation.
-    """
+    """Return targets under ``root/scenarios`` that have a ``data.json``."""
     scenarios = root / SCENARIO_ROOT
     found: list[Target] = []
     for spec_file in sorted(walk(scenarios, SPEC_FILE)):
@@ -116,7 +101,9 @@ def discover(root: Path) -> list[Target]:
         if not (directory / DATA_FILE).is_file():
             continue
         relative = directory.relative_to(scenarios)
-        domain, language, library, instrumentation, side = _facets(relative)
+        domain, language, library, instrumentation, side, backend = _facets(
+            relative
+        )
         found.append(
             Target(
                 id=relative.as_posix(),
@@ -126,6 +113,7 @@ def discover(root: Path) -> list[Target]:
                 library=library,
                 instrumentation=instrumentation,
                 side=side,
+                backend=backend,
                 spec=load_spec(directory),
                 directory=directory,
             )
