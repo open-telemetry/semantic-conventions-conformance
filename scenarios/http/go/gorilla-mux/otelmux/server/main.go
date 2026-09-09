@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 
 	muxscenarios "github.com/open-telemetry/semantic-conventions-conformance/scenarios/http/go/gorilla-mux/scenarios"
-	"github.com/open-telemetry/semantic-conventions-conformance/scenarios/http/go/internal/httpserver"
 	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenario"
 	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenariosdk"
 )
@@ -36,7 +35,7 @@ func run(ctx context.Context, stopping <-chan error) (err error) {
 	defer func() { err = errors.Join(err, sdk.Shutdown(ctx)) }()
 
 	return muxscenarios.RunServer(
-		otelmux.Middleware(httpserver.Host),
+		otelmux.Middleware(""),
 		stopping,
 	)
 }
