@@ -4,6 +4,7 @@
 runner: http-conformance
 instrumented_library: awc
 instrumentation_library: opentelemetry-instrumentation-actix-web
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 # Compiling before measurement keeps Cargo and rustc out of the scenario.
 setup: otel-conformance-rust build
@@ -11,8 +12,4 @@ setup: otel-conformance-rust build
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    # awc returns 4xx and 5xx responses normally; the workload verifies them
-    # as contract results instead of converting them into transport failures.
-    run: otel-conformance-rust run
+scenario_run: otel-conformance-rust run
