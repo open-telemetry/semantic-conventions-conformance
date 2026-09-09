@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -168,6 +169,7 @@ def session(
     )
 
 
+@pytest.mark.parametrize("index", [None, 3])
 @pytest.mark.parametrize(
     ("otlp_protocol", "otlp_endpoint"),
     [
@@ -181,6 +183,7 @@ def test_scenario_uses_only_generic_otlp_configuration(
     monkeypatch: pytest.MonkeyPatch,
     otlp_protocol: Literal["grpc", "http/protobuf"],
     otlp_endpoint: str,
+    index: int | None,
 ) -> None:
     captured: dict[str, str] = {}
 
@@ -210,12 +213,14 @@ def test_scenario_uses_only_generic_otlp_configuration(
     )
 
     opened._execute(  # noqa: SLF001
-        opened.spec.scenarios["inference"],
+        replace(opened.spec.scenarios["inference"], index=index),
         otlp_endpoint,
     )
 
     assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == otlp_endpoint
     assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == otlp_protocol
+    if index is not None:
+        assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == str(index)
     for signal in ("TRACES", "METRICS", "LOGS"):
         assert f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT" not in captured
         assert f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL" not in captured
@@ -323,6 +328,32 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
+def test_contract_index_is_injected_into_the_scenario_process(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def run(
+        command: tuple[str, ...], *, cwd: Path, env: Mapping[str, str]
+    ) -> subprocess.CompletedProcess[str]:
+        del command, cwd
+        captured.update(env)
+        return subprocess.CompletedProcess([], 0, "", "")
+
+    monkeypatch.setattr(_session, "_run_command", run)
+    opened = session(directory, tmp_path / "data.json")
+    scenario = replace(
+        opened.spec.scenarios["inference"],
+        index=3,
+    )
+
+    opened._execute(scenario, "http://collector")
+
+    assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
+
+
 def test_a_missing_registry_is_a_spec_error(
     directory: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -374,6 +405,36 @@ def test_a_scenario_replaces_only_its_own_report(
     assert json.loads((reports / "tool_calling.json").read_text()) == {
         "run": "first"
     }
+
+
+def test_a_complete_run_removes_only_immediate_nested_duplicates(
+    directory: Path, tmp_path: Path
+) -> None:
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "inference.json").write_text("{}")
+    (reports / "tool_calling.json").write_text("{}")
+    unrelated = reports / "metadata.json"
+    unrelated.write_text("{}")
+    nested = reports / "old"
+    nested.mkdir()
+    nested_stale = nested / "inference.json"
+    nested_stale.write_text("{}")
+    nested_unrelated = nested / "metadata.json"
+    nested_unrelated.write_text("{}")
+    deep = nested / "unrelated"
+    deep.mkdir()
+    deep_duplicate = deep / "inference.json"
+    deep_duplicate.write_text("{}")
+    opened = session(directory, tmp_path / "data.json", report_dir=reports)
+    opened._ran.update(opened.spec.scenarios)
+
+    opened.close()
+
+    assert not nested_stale.exists()
+    assert unrelated.exists()
+    assert nested_unrelated.exists()
+    assert deep_duplicate.exists()
 
 
 def test_reports_default_to_inside_the_scenario_directory(

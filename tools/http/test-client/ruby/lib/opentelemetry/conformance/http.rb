@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 require "json"
+require "yaml"
 require_relative "http/version"
 
 module OpenTelemetry
@@ -12,7 +13,7 @@ module OpenTelemetry
       USER_AGENT = "otel-http-conformance/1".freeze
       PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT".freeze
       MOCK_SERVER_URL_VARIABLE = "MOCK_SERVER_URL".freeze
-      CONTRACT = File.expand_path("../../../../contract.json", __dir__).freeze
+      CONTRACT = File.expand_path("../../../../contract.yaml", __dir__).freeze
 
       class ContractError < StandardError; end
       class ConfigurationError < StandardError; end
@@ -57,15 +58,19 @@ module OpenTelemetry
         end
       end
 
-      document = JSON.parse(File.read(CONTRACT, encoding: "UTF-8"))
-      EXCHANGES = document.fetch("requests").map do |entry|
+      document = YAML.safe_load(File.read(CONTRACT, encoding: "UTF-8"))
+      entries = [document.fetch("readiness"), *document.fetch("scenarios")]
+      EXCHANGES = entries.each_with_index.map do |entry, index|
+        action = entry.fetch("action")
+        request = action.fetch("request")
+        response = action.fetch("response")
         Exchange.new(
-          method: entry.fetch("method"),
-          path: entry.fetch("path"),
-          body: entry["body"],
-          status: entry.fetch("status"),
-          response_body: entry.fetch("responseBody"),
-          readiness: entry.fetch("readiness", false),
+          method: request.fetch("method"),
+          path: request.fetch("path"),
+          body: request["body"],
+          status: response.fetch("status"),
+          response_body: response.fetch("body"),
+          readiness: index.zero?,
           description: entry.fetch("description")
         )
       end.freeze

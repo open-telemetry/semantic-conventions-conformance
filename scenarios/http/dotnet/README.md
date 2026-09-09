@@ -48,7 +48,7 @@ app.MapGet("/users/{userId}", AnswerAsync);
 
 `/users/123` arrives, `GET /users/{userId}` is recorded. Answering is a lookup
 of the concrete request in the shared
-[contract](../../../tools/http/test-client/contract.json), identical for every
+[contract](../../../tools/http/test-client/contract.yaml), identical for every
 framework, so a route here says only what its template is.
 
 ## Versions
