@@ -21,6 +21,7 @@ _CONTRACT = Path(__file__).parents[2] / "test-client/contract.yaml"
 _HTTP_POLICY_IDS = {
     "http_route_not_present",
     "http_span_name_format",
+    "http_url_path_format",
     "required_attribute_not_present",
 }
 
@@ -146,6 +147,37 @@ def policy_advice(
                     route="/users/{with_query}",
                     path=_QUERY_PATH,
                     query=_QUERY_STRING,
+                ),
+                _server_span(
+                    "GET /users/{leaked_query}",
+                    route="/users/{leaked_query}",
+                    path=f"{_QUERY_PATH}?{_QUERY_STRING}",
+                ),
+                _server_span(
+                    "GET /users/{leaked_with_query}",
+                    route="/users/{leaked_with_query}",
+                    path=f"{_QUERY_PATH}?{_QUERY_STRING}",
+                    query=_QUERY_STRING,
+                ),
+                _server_span(
+                    "GET /users/{query_free}",
+                    route="/users/{query_free}",
+                    path="/users/123",
+                ),
+                _server_span(
+                    "GET /users/{prefix_match}",
+                    route="/users/{prefix_match}",
+                    path=f"{_QUERY_PATH}7",
+                ),
+                _server_span(
+                    "GET /users/{encoded_question_mark}",
+                    route="/users/{encoded_question_mark}",
+                    path=f"{_QUERY_PATH}%3Fname",
+                ),
+                _server_span(
+                    "GET /users/{other_query}",
+                    route="/users/{other_query}",
+                    path=f"/users/123?{_QUERY_STRING}",
                 ),
             ]
         ),
@@ -281,3 +313,43 @@ def test_contract_query_request_with_url_query_has_no_finding(
     policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
 ) -> None:
     assert policy_advice[("server", "GET /users/{with_query}")] == {}
+
+
+@pytest.mark.parametrize(
+    ("target", "expected"),
+    [
+        (
+            "leaked_query",
+            {"required_attribute_not_present", "http_url_path_format"},
+        ),
+        ("leaked_with_query", {"http_url_path_format"}),
+        ("other_query", {"http_url_path_format"}),
+    ],
+)
+def test_query_string_in_url_path_reports_a_leak(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+    target: str,
+    expected: set[str],
+) -> None:
+    advice = policy_advice[("server", f"GET /users/{{{target}}}")]
+
+    assert set(advice) == expected
+    assert advice["http_url_path_format"]["context"] == {
+        "attribute_key": "url.path",
+        "kind": "server",
+    }
+    if "required_attribute_not_present" in expected:
+        assert advice["required_attribute_not_present"]["context"] == {
+            "attribute_key": "url.query",
+            "kind": "server",
+        }
+
+
+@pytest.mark.parametrize(
+    "target", ["query_free", "prefix_match", "encoded_question_mark"]
+)
+def test_other_paths_do_not_require_url_query(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+    target: str,
+) -> None:
+    assert policy_advice[("server", f"GET /users/{{{target}}}")] == {}
