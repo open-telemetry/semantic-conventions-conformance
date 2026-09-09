@@ -419,7 +419,7 @@ wheels = [
 
 [[package]]
 name = "crewai"
-version = "1.15.18"
+version = "1.15.20"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -454,14 +454,14 @@ dependencies = [
     { name = "tomli" },
     { name = "tomli-w" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/41/02/a27f1448ef687534a1a21c91aa6801375fd86633ae921249d47bdb6e3c58/crewai-1.15.18.tar.gz", hash = "sha256:e9a4c17fa8a74e8babe515f2819365f890d6a9ee7ebdccbb583751bf2f0b448c", size = 7946195, upload-time = "2026-08-27T18:11:48.483Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/07/3a6d94fbb3bd465c653208a28d3e59d539d00cb5bef55626188a46ed7457/crewai-1.15.20.tar.gz", hash = "sha256:c4a4d02c27eca7502479ce8cf3fcdd1658fcc9948aa86962ad19e581530032b4", size = 7965515, upload-time = "2026-09-04T12:42:59.848Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/ee/b732a5ce52d52e8f656e0f8a4cd6a472a1e777445899c4c229a8617aa127/crewai-1.15.18-py3-none-any.whl", hash = "sha256:9223d2827f5d372ace9764ecdc8ccaa48f7e05bc52c88f851bca3ce78b21a580", size = 1136088, upload-time = "2026-08-27T18:11:45.677Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/cd/fa00e87bf061e8bb02546cd00f58c4d85694b0fe027afae5eb1f578c610c/crewai-1.15.20-py3-none-any.whl", hash = "sha256:8bf272a687ad3320b681f23a183a6ac445f2fa7fc78b52943b835acc2eb158d6", size = 1141815, upload-time = "2026-09-04T12:42:58.166Z" },
 ]
 
 [[package]]
 name = "crewai-cli"
-version = "1.15.18"
+version = "1.15.20"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -481,14 +481,14 @@ dependencies = [
     { name = "tomli-w" },
     { name = "uv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/c9/74b9fd9ab14bbfc9122a20b50d843387667d676ddb49b0c0a19299ac9218/crewai_cli-1.15.18.tar.gz", hash = "sha256:e73ee216c283899cbb7f2635f6b5e965e4860ccf45c10b892607f108de6c7c09", size = 231228, upload-time = "2026-08-27T18:11:52.324Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/30/8521f26795a71179b684c5b2d8135e78f8b4fcabe79acae93e0b3d9a42e2/crewai_cli-1.15.20.tar.gz", hash = "sha256:21f1735ee7e6818f658f46d59844d6f04700af5398c632a3e0fd42c8e6180c93", size = 233643, upload-time = "2026-09-04T12:43:02.502Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/c0/d4d212e0269d250cd3e899ae33c788899c48494026704242e4e91e6f79bb/crewai_cli-1.15.18-py3-none-any.whl", hash = "sha256:bd9bb480d793c72343ba412ca9fdf4813c0552401fd5f1dde8c4f4deb7854f95", size = 197172, upload-time = "2026-08-27T18:11:50.455Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/eb/a04ae71e6226c10ae921911a8b8216cef6ae5d1db98c5b36f941058728c3/crewai_cli-1.15.20-py3-none-any.whl", hash = "sha256:2d692143cb4a46ef97f927fc1a2f6035790d2ee2fe4d1bb50fad9f884576ce6a", size = 198183, upload-time = "2026-09-04T12:43:01.266Z" },
 ]
 
 [[package]]
 name = "crewai-core"
-version = "1.15.18"
+version = "1.15.20"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -504,9 +504,9 @@ dependencies = [
     { name = "rich" },
     { name = "tomli" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d9/be/5086b2e5d0dc37ca49ec2d6eb221fa9059889380611a38e4c514868ea9ff/crewai_core-1.15.18.tar.gz", hash = "sha256:88325609f7bc0300d7ee49f5ad91bd01fea1bec6f031e1e5066fd5e652684706", size = 36940, upload-time = "2026-08-27T18:11:55.184Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/7f/75b9f75f90f6639edb68e1591bc6fd54ef1381cbdd4f10f41f62ef12b985/crewai_core-1.15.20.tar.gz", hash = "sha256:5a3ad81107172f24b6ee14a24aff87f93e3b56da7220a0e5584992d9b9476939", size = 39207, upload-time = "2026-09-04T12:43:04.352Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/ec/c9a1438b3ba032f61e07a26434d371fcf0737671e927fb57a7dd453576e5/crewai_core-1.15.18-py3-none-any.whl", hash = "sha256:3468d26292a2ba4cb66ff8907363782e4c8457694e7ad27eac7428ad4115b1d4", size = 41416, upload-time = "2026-08-27T18:11:53.561Z" },
+    { url = "https://files.pythonhosted.org/packages/b8/6a/f5e1f1114a6900275e240feffae6580ddccc6f5e4716372b3ec97511e3ab/crewai_core-1.15.20-py3-none-any.whl", hash = "sha256:09a96fbd08e2f849e4a521ecfdab88b62fcb3b94292f4e7039c0bc3b9de67d40", size = 42481, upload-time = "2026-09-04T12:43:03.421Z" },
 ]
 
 [[package]]
@@ -524,8 +524,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "crewai", specifier = "==1.15.18" },
-    { name = "openinference-instrumentation-crewai", specifier = "==1.1.15" },
+    { name = "crewai", specifier = "==1.15.20" },
+    { name = "openinference-instrumentation-crewai", specifier = "==1.1.16" },
     { name = "opentelemetry-api", specifier = "==1.42.0" },
     { name = "opentelemetry-distro", specifier = "==0.63b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.42.0" },
@@ -1426,7 +1426,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation"
-version = "0.1.59"
+version = "0.1.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-semantic-conventions" },
@@ -1434,14 +1434,14 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e8/1d/26b7ddff8fd4337fa81f1f205bee4df6da420a2cec27405a3fcb26fafb0e/openinference_instrumentation-0.1.59.tar.gz", hash = "sha256:d9947cf0c984e61eb7628edc3163a23c2a84fa74d985ea527075a54a2ad55b3a", size = 41281, upload-time = "2026-08-25T16:51:41.098Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/15/a0e849bca3994fe503ce695dfc2da844ef51ca400813f1d171cd39538286/openinference_instrumentation-0.1.61.tar.gz", hash = "sha256:eb5aaad5b377cad7f3454b87b1a00444a8ae3be03e00ded350499bd99f98fbf4", size = 43268, upload-time = "2026-09-04T20:16:12.351Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/4a/e78714992424dd5b8d217eebb8411bc2d710e0fd08c14f38d30206a44801/openinference_instrumentation-0.1.59-py3-none-any.whl", hash = "sha256:96eb1b9a29bc934e06db69fb2d10c9ccd676c3d5c328110db6c1a861e7c084bc", size = 48953, upload-time = "2026-08-25T16:51:39.769Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/35/f1e9968eaf99f3097a57e55734a7494d4124663a1da2547acc5fa26d3dd2/openinference_instrumentation-0.1.61-py3-none-any.whl", hash = "sha256:e5b52563e2fffbe95da6979369b085aeaa22ec429e8b0350d991c373b148a3cb", size = 50962, upload-time = "2026-09-04T20:16:10.69Z" },
 ]
 
 [[package]]
 name = "openinference-instrumentation-crewai"
-version = "1.1.15"
+version = "1.1.16"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -1452,18 +1452,18 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/b2/731d7507e72d3b15424e60b94579174c81c48e27422153a07b28aae5b09d/openinference_instrumentation_crewai-1.1.15.tar.gz", hash = "sha256:5233de0f621de89daa78cfbf5c7cdb57d93048689b839996cec9847243e1659d", size = 27568, upload-time = "2026-08-28T04:50:53.344Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/1f/04bc69f39e46b460d1b3a90917bf83cb2392ca867098c9c6eed6ce9b7907/openinference_instrumentation_crewai-1.1.16.tar.gz", hash = "sha256:5a0dea341fb771d0c38ad214c2fca4b14b4e81a781e29a1f712b2dca01d39d56", size = 27569, upload-time = "2026-09-04T20:16:20.336Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/92/bd4aa6c35e8935198d857a9d0f4132061cc9349fcee74ae5c0e5a983486e/openinference_instrumentation_crewai-1.1.15-py3-none-any.whl", hash = "sha256:0fa6b8eb59dd0db64dd81822188d98b2a3d03b30cdd9449cd3fdb35fc3c99a15", size = 30469, upload-time = "2026-08-28T04:50:51.816Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/85/d19358c16a5f6c0ade915e99ab44f7f4a827452a518e8b23ee44ae36d8e5/openinference_instrumentation_crewai-1.1.16-py3-none-any.whl", hash = "sha256:dbee67aa5a3ad3d5b6fcd0cd8478f455d8abe396f887d3dd466907cd095a1bf2", size = 30467, upload-time = "2026-09-04T20:16:19.062Z" },
 ]
 
 [[package]]
 name = "openinference-semantic-conventions"
-version = "0.1.33"
+version = "0.1.35"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2a/ba/a749f287fc09de1886f038603be18089f35f202488218bc4f87408a9cf0d/openinference_semantic_conventions-0.1.33.tar.gz", hash = "sha256:c029a06d34cb75d8698289d266eb78749c5ed627032e1ccdc164860c3b2341e4", size = 14145, upload-time = "2026-08-24T23:47:28.777Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/cd/1c26841447249b9fc402e342b9b3c042f8916b5abb485b8eb4e63ea6397c/openinference_semantic_conventions-0.1.35.tar.gz", hash = "sha256:b64864a5961fee7bf37d2e11491499baab223fac18efe671065dede55ccd5a3a", size = 14262, upload-time = "2026-09-04T20:16:04.645Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/9f/7bb1c5b0a2e16074db637ea2010ffdd5ee4edbaec7b942916a0f22e7cd4d/openinference_semantic_conventions-0.1.33-py3-none-any.whl", hash = "sha256:ae7207177afa97c0607a49313f57607bd3958750a3ec3078d98a540dfe3b88ad", size = 11397, upload-time = "2026-08-24T23:47:27.522Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/34/434cedb6f39b14e6eb8f203c33e97cee3907fc7f994d7c3cfcfbd4575787/openinference_semantic_conventions-0.1.35-py3-none-any.whl", hash = "sha256:a418df584fb3ec41d4214ac44562908f596df042c382d1445fafb26df2834cb2", size = 11484, upload-time = "2026-09-04T20:16:03.668Z" },
 ]
 
 [[package]]
