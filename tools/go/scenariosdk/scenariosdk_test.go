@@ -19,6 +19,7 @@ import (
 
 func TestInitializeRequiresAnExporterEndpoint(t *testing.T) {
 	restoreGlobals(t)
+	t.Setenv(EndpointVariable, "")
 	if err := os.Unsetenv(EndpointVariable); err != nil {
 		t.Fatal(err)
 	}

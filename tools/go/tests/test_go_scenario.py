@@ -7,8 +7,10 @@ import os
 from pathlib import Path
 
 import pytest
+import yaml
 
 import otel_conformance_go
+from opentelemetry.conformance import load_spec
 from otel_conformance_go import (
     MODULE_MARKER,
     LayoutError,
@@ -110,3 +112,30 @@ class TestRunning:
         assert otel_conformance_go.main(["build"]) == 0
         assert otel_conformance_go.main(["run"]) == 0
         assert commands[0][commands[0].index("-o") + 1] == commands[1][0]
+
+
+def test_http_client_runs_each_contract_request_with_its_index() -> None:
+    checkout = Path(__file__).resolve().parents[3]
+    spec = load_spec(
+        checkout.joinpath(
+            "scenarios", "http", "go", "net-http", "otelhttp", "client"
+        )
+    )
+    contract = yaml.safe_load(
+        checkout.joinpath(
+            "tools", "http", "test-client", "contract.yaml"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert [scenario.index for scenario in spec.scenarios.values()] == list(
+        range(len(contract["scenarios"]))
+    )
+    for scenario, entry in zip(
+        spec.scenarios.values(), contract["scenarios"], strict=True
+    ):
+        assert scenario.run == ("otel-conformance-go", "run")
+        assert scenario.description == entry["description"]
+        assert scenario.spans is not None
+        assert len(scenario.spans) == 1
+        assert scenario.spans[0].match.kind == "CLIENT"
+        assert scenario.spans[0].count == 1

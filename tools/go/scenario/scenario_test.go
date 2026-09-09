@@ -28,6 +28,7 @@ func TestRequire(t *testing.T) {
 			if test.present {
 				t.Setenv(name, test.value)
 			} else {
+				t.Setenv(name, "")
 				if err := os.Unsetenv(name); err != nil {
 					t.Fatal(err)
 				}
