@@ -34,6 +34,8 @@ given.
 The shared server contract uses `/users/456` only for its query request. The
 HTTP policy uses that path to report a missing conditionally required
 `url.query` attribute without flagging the query-free `/users/123` request.
+It matches the path before any `?` and separately reports query strings
+included in `url.path`.
 
 The span-name policy checks the HTTP method token separately from its target.
 When a server span name has a target but no `http.route`, it reports

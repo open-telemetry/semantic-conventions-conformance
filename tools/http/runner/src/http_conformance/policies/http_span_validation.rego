@@ -82,8 +82,26 @@ deny contains _http_span_finding(
 	),
 ) if {
 	_http_span_kind(input.sample.span) == "server"
-	_http_attr_value(input.sample.span, "url.path") == "/users/456"
+	path := _http_attr_value(input.sample.span, "url.path")
+	is_string(path)
+	split(path, "?")[0] == "/users/456"
 	not _http_has_attr(input.sample.span, "url.query")
+}
+
+deny contains _http_span_finding(
+	"http_url_path_format",
+	"violation",
+	input.sample.span,
+	{"attribute_key": "url.path", "kind": "server"},
+	sprintf(
+		"Server span '%v' includes a query string in 'url.path'; query strings belong in 'url.query'.",
+		[input.sample.span.name],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "server"
+	path := _http_attr_value(input.sample.span, "url.path")
+	is_string(path)
+	contains(path, "?")
 }
 
 deny contains _http_span_finding(
