@@ -233,21 +233,26 @@ print(json.dumps({{"version": "jsonl-v1", "type": "stopped", "sequence": 2}}), f
 
 
 def test_final_shutdown_telemetry_is_reconciled(tmp_path: Path) -> None:
+    shutdown_file = tmp_path / "shutdown-unix-nano"
     command = _driver(
         tmp_path,
-        """
-import json, sys, time
-print(json.dumps({"version": "jsonl-v1", "type": "ready", "sequence": 0, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}), flush=True)
+        f"""
+import json, pathlib, sys, time
+print(json.dumps({{"version": "jsonl-v1", "type": "ready", "sequence": 0, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}}), flush=True)
 json.loads(sys.stdin.readline())
-print(json.dumps({"version": "jsonl-v1", "type": "action_complete", "sequence": 1, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}), flush=True)
+print(json.dumps({{"version": "jsonl-v1", "type": "action_complete", "sequence": 1, "started_unix_nano": time.time_ns(), "completed_unix_nano": time.time_ns()}}), flush=True)
 sys.stdin.read()
-print(json.dumps({"version": "jsonl-v1", "type": "stopped", "sequence": 2}), flush=True)
+pathlib.Path({str(shutdown_file)!r}).write_text(str(time.time_ns()), encoding="utf-8")
+print(json.dumps({{"version": "jsonl-v1", "type": "stopped", "sequence": 2}}), flush=True)
 """,
     )
 
+    # The driver stamps its shutdown span while it is still running, and the
+    # capture only delivers it once the controller drains, which is where a
+    # real exporter flushes what it was still holding.
     def emit_at_shutdown(capture: _Capture) -> None:
-        now = time.time_ns()
-        capture.exports = (_trace("07" * 16, now, now + 1),)
+        stamped = int(shutdown_file.read_text(encoding="utf-8"))
+        capture.exports = (_trace("07" * 16, stamped, stamped + 1),)
 
     capture = _Capture(on_drain=emit_at_shutdown)
     (result,) = PersistentController(
