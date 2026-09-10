@@ -9,6 +9,7 @@ import io.opentelemetry.conformance.http.HttpContract.Response;
 import io.opentelemetry.conformance.http.HttpServerWorkload;
 import io.opentelemetry.conformance.scenario.ScenarioLifecycle;
 import java.util.Map;
+import java.util.function.Consumer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -30,7 +31,12 @@ public final class SpringWebfluxServerScenario {
   private SpringWebfluxServerScenario() {}
 
   public static void run() throws Exception {
+    run(application -> {});
+  }
+
+  public static void run(Consumer<SpringApplication> applicationCustomizer) throws Exception {
     SpringApplication application = new SpringApplication(ConformanceApplication.class);
+    applicationCustomizer.accept(application);
     application.setDefaultProperties(
         Map.<String, Object>of(
             "server.address", "127.0.0.1", "server.port", HttpServerWorkload.scenarioPort()));

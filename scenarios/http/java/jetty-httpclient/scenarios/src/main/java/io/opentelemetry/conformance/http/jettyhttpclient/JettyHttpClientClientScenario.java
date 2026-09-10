@@ -7,6 +7,7 @@ package io.opentelemetry.conformance.http.jettyhttpclient;
 import io.opentelemetry.conformance.http.HttpClientWorkload;
 import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import java.util.function.Supplier;
 import org.eclipse.jetty.client.ContentResponse;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.Request;
@@ -17,7 +18,11 @@ public final class JettyHttpClientClientScenario {
   private JettyHttpClientClientScenario() {}
 
   public static void run() throws Exception {
-    HttpClient client = new HttpClient();
+    run(HttpClient::new);
+  }
+
+  public static void run(Supplier<HttpClient> clientFactory) throws Exception {
+    HttpClient client = clientFactory.get();
     client.start();
     try {
       HttpClientWorkload.drive(
