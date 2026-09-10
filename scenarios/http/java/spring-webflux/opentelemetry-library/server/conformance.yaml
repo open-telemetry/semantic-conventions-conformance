@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: spring-webflux
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-spring-webflux-5.3
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare spring-webflux:opentelemetry-library
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-java run spring-webflux:opentelemetry-library SpringWebfluxLibraryServerScenario

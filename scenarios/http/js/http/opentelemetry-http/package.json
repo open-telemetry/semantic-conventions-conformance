@@ -7,6 +7,6 @@
   "dependencies": {
     "@otel-conformance/node-http-scenarios": "*",
     "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
-    "@opentelemetry/instrumentation-http": "0.221.0"
+    "@opentelemetry/instrumentation-http": "0.222.0"
   }
 }

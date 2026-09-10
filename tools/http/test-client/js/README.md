@@ -4,13 +4,12 @@ The two halves of [the contract](../README.md) a Node scenario needs: answering
 a concrete request, and sending the measured ones.
 
 ```text
-src/contract.js         reads contract.json
+src/contract.js         reads contract.yaml
 src/server-workload.js  answers one concrete request
-src/client-workload.js  sends the measured requests and checks every answer
+src/client-workload.js  sends one selected request
 ```
 
-No dependencies at all, deliberately: a third-party HTTP client would be
-instrumented alongside a scenario and its spans would land in the report.
+The only dependency is the YAML parser used before the measured request.
 
 ## Answering
 
@@ -24,9 +23,9 @@ on `127.0.0.1`.
 
 ## Sending
 
-`drive(baseUrl, send)` sends the measured requests in order and checks every
-answer. `send` is the call being measured, so the library under test is the
-scenario's to choose:
+`drive(baseUrl, send)` sends the request selected by
+`OTEL_CONFORMANCE_SCENARIO_INDEX`. `send` is the call
+being measured, so the library under test is the scenario's to choose:
 
 ```js
 await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {
@@ -35,13 +34,9 @@ await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {
 });
 ```
 
-Statuses are compared exactly; bodies are compared as parsed JSON, since
-whitespace and key order are the JSON writer's business rather than the
-contract's.
-
 ## Finding the contract
 
-`contract.json` is one directory above this package, and npm packs only a
+`contract.yaml` is one directory above this package, and npm packs only a
 package's own directory. Rather than generating a copy into the source tree,
 the lookup walks up from this module until it finds the file at its place in
 the repository. That works both where this package lives and where npm

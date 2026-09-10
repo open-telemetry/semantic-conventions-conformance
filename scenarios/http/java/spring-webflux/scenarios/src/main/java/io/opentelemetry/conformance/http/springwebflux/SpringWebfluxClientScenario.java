@@ -7,6 +7,7 @@ package io.opentelemetry.conformance.http.springwebflux;
 import io.opentelemetry.conformance.http.HttpClientWorkload;
 import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import java.util.function.Consumer;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -15,7 +16,13 @@ public final class SpringWebfluxClientScenario {
   private SpringWebfluxClientScenario() {}
 
   public static void run() throws Exception {
-    WebClient client = WebClient.builder().build();
+    run(builder -> {});
+  }
+
+  public static void run(Consumer<WebClient.Builder> builderCustomizer) throws Exception {
+    WebClient.Builder builder = WebClient.builder();
+    builderCustomizer.accept(builder);
+    WebClient client = builder.build();
 
     HttpClientWorkload.drive(
         ScenarioEnvironment.require("MOCK_SERVER_URL"),

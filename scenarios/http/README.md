@@ -15,15 +15,16 @@ one: the version-pinned Gradle build under `java/` and the solution under
 explains the npm workspace it roots.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
-one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
-the Gradle project that builds its `main` classes, while `scenarios/` holds
-what both of them run — the same sharing `gen-ai/python/<library>/scenarios/`
-has, where one program is run by every instrumentation of that library:
+one holds its `pyproject.toml` beside its `conformance.yaml`. Java uses a
+Gradle project that builds its `main` classes, while PHP uses one locked
+Composer package per side. `scenarios/` holds telemetry-free workload code:
 
 ```text
 java/armeria/scenarios/                  what the client and server do, no OTel
 java/armeria/opentelemetry-javaagent/    build.gradle.kts, src/, client/, server/
 java/armeria/opentelemetry-library/      build.gradle.kts, src/, client/, server/
+php/slim/scenarios/                      Slim routes and responses, no OTel
+php/slim/opentelemetry-slim/             composer.json, lock, server/
 ```
 
 The `main` classes are per instrumentation because attaching library
@@ -59,15 +60,15 @@ A Python instrumentation has nothing to build. Its workload is a module in
 
 ## The scenario contract
 
-[`contract.json`](../../tools/http/test-client/contract.json) is the concrete
-traffic every HTTP scenario is measured against, written down once and read by
-every language, so a client's and a server's coverage are comparable. The
-document and each request carry a `description`; each request's description
-says what it is in the sequence for and what dropping it would stop measuring.
+[`contract.yaml`](../../tools/http/test-client/contract.yaml) combines each
+client request and response with its telemetry expectations. The runner turns
+every list entry into a separate scenario, while language helpers select the
+same entry through `OTEL_CONFORMANCE_SCENARIO_INDEX`. This keeps the traffic
+shared without aggregating independent requests into one report.
 
 | Request | What it is there for |
 | --- | --- |
-| `GET /health` | Readiness only. Sent before the sequence, never measured. |
+| `GET /health` | Readiness only. It is not a contract-list scenario. |
 | `GET /users/123` | A parameterized route, so `http.route` is the template rather than the concrete path. |
 | `GET /users/123?fields=name&verbose=true` | A query string, which is `url.query` and must not leak into `http.route`, `url.path` or the span name. |
 | `POST /items` | A non-GET carrying a body. The answer echoes it, so a scenario that never read the body fails. |
@@ -82,10 +83,10 @@ routing and Servlet mappings have different construction models and may report
 different native templates. What they share is the concrete traffic those
 routes must answer.
 
-It is checked, not just written down. Statuses are compared exactly and bodies
-as parsed JSON, since whitespace and key order are each language's JSON
-writer's business. A scenario that disagrees fails the run rather than quietly
-recording coverage that cannot be compared with the rest.
+Server responses are checked centrally by `otel-http-drive`: statuses exactly
+and bodies as parsed JSON, since whitespace and key order are each language's
+JSON writer's business. Client conformance is decided by the common telemetry
+contract instead.
 
 See [`tools/http/test-client`](../../tools/http/test-client) for the per-
 language helpers that read it.
@@ -110,7 +111,7 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js \
-  -e tools/dotnet
+  -e tools/dotnet -e tools/php
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
@@ -136,6 +137,8 @@ otel-conformance scenarios/http/python/tornado/opentelemetry-tornado/server
 otel-conformance scenarios/http/python/urllib/opentelemetry-urllib/client
 otel-conformance scenarios/http/python/urllib3/opentelemetry-urllib3/client
 otel-conformance scenarios/http/python/wsgi/opentelemetry-wsgi/server
+otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
+otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 ```
 
 Every Java package is built and started the same way, so
@@ -155,6 +158,12 @@ scenario directory sits inside the project that produces it, so `build`
 publishes that project and `run` starts what it published from
 `dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
 neither a configuration nor an assembly path.
+
+PHP packages use `otel-conformance-php install` to install their own committed
+lockfile. A Slim server runs through `otel-conformance-php serve`, which owns
+the driver's shutdown protocol while `php -S` keeps PHP's request-scoped
+lifecycle and flushes telemetry at each request shutdown. See
+[`php/`](php/README.md).
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
