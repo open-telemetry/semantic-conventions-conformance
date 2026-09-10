@@ -17,6 +17,5 @@ setup: otel-conformance-php install
 server:
   run: http-mock-server --port ${PORT}
 
-scenarios:
-  client:
-    run: php ../client.php
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_run: php ../client.php
