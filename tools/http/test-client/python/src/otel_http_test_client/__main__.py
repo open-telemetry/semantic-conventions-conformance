@@ -300,8 +300,9 @@ class _WindowsJob:
 
 
 def _raise_windows_error(message: str) -> NoReturn:
-    error = ctypes.get_last_error()
-    raise OSError(error, f"{message}: {ctypes.FormatError(error).strip()}")
+    error = getattr(ctypes, "get_last_error")()
+    format_error = getattr(ctypes, "FormatError")
+    raise OSError(error, f"{message}: {format_error(error).strip()}")
 
 
 def _serve_and_drive(
