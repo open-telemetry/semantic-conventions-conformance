@@ -418,6 +418,7 @@ class PersistentController:
             captured = decode_window(
                 batch_window, self._capture.snapshot(batch_window).exports
             )
+            can_settle = not required_metrics
             if required_metrics:
                 closed = [
                     end
@@ -428,16 +429,15 @@ class PersistentController:
                 ]
                 if closed:
                     return ready_unix_nano
-                if required_metrics.issubset(
+                can_settle = required_metrics.issubset(
                     _snapshot_metric_names(
                         captured, frozenset(required_metrics)
                     )
-                ):
-                    return ready_unix_nano
-            else:
-                # No metric window to close, so nothing can aggregate
-                # readiness together with an action. Settling on the
-                # bootstrap window's own content is enough.
+                )
+            if can_settle:
+                # Snapshots cannot aggregate readiness with an action. Wait
+                # for the rest of the bootstrap window to stop changing so
+                # a span still in flight cannot cross the first boundary.
                 current = _window_fingerprint(captured, None)
                 if current != fingerprint:
                     fingerprint = current
