@@ -172,7 +172,7 @@ class _Capture:
 
     def __init__(self, upstream_endpoint: str) -> None:
         self.upstream_endpoint = upstream_endpoint
-        self.endpoint = "http://capture"
+        self.endpoint = "http://127.0.0.1:4317"
         self.windows: list[str] = []
         self.closed = 0
         self.calls: list[str] = []
@@ -355,6 +355,24 @@ def test_scenario_uses_only_generic_otlp_configuration(
         assert f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL" not in captured
 
 
+def test_otlp_http_runs_through_the_package_capture(
+    directory: Path, tmp_path: Path
+) -> None:
+    opened = session(
+        directory,
+        tmp_path / "data.json",
+        otlp_protocol="http/protobuf",
+    )
+
+    opened.start()
+
+    assert opened._capture is not None  # noqa: SLF001
+    assert opened._otlp_endpoint is not None  # noqa: SLF001
+    assert opened._otlp_endpoint.startswith("http://127.0.0.1:")  # noqa: SLF001
+    assert opened._otlp_endpoint != opened._capture.endpoint  # noqa: SLF001
+    opened._shutdown()  # noqa: SLF001
+
+
 def test_a_complete_run_writes_the_data_file(
     directory: Path, tmp_path: Path
 ) -> None:
@@ -397,7 +415,7 @@ def test_run_all_uses_one_weaver_and_one_stable_capture_endpoint(
     assert opened.finalize() is package
 
     assert len(reports) == 2
-    assert endpoints == ["http://capture", "http://capture"]
+    assert endpoints == ["http://127.0.0.1:4317", "http://127.0.0.1:4317"]
     assert len(_SessionWeaver.instances) == 1
     assert _SessionWeaver.instances[0].starts == 1
     assert _SessionWeaver.instances[0].ends == 1
@@ -467,7 +485,7 @@ def test_persistent_process_gets_runner_owned_export_settings(
     monkeypatch.setattr(_session, "PersistentController", Controller)
 
     assert opened._run_persistent((scenario,)) == ()
-    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://capture"
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://127.0.0.1:4317"
     assert captured["OTEL_BSP_SCHEDULE_DELAY"] == "50"
     assert captured["OTEL_BLRP_SCHEDULE_DELAY"] == "50"
     assert captured["OTEL_METRIC_EXPORT_INTERVAL"] == "100"

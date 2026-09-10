@@ -8,30 +8,37 @@ declare(strict_types=1);
 namespace OpenTelemetry\Conformance\Http;
 
 use JsonException;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Yaml;
 
 final class Contract
 {
     public const CONTENT_TYPE = 'application/json';
     public const USER_AGENT = 'otel-http-conformance/1';
+    public const ACTION_VARIABLE = 'OTEL_CONFORMANCE_SCENARIO_ACTION';
+    public const ACTIONS_VARIABLE = 'OTEL_CONFORMANCE_SCENARIO_ACTIONS';
 
     private const ABBREVIATION_BYTES = 60;
-    private const CHECKOUT_PATH = 'tools/http/test-client/contract.yaml';
-    private const SCENARIO_INDEX_VARIABLE =
-        'OTEL_CONFORMANCE_SCENARIO_INDEX';
 
     /** @var list<Exchange>|null */
     private static ?array $exchanges = null;
+    private static ?string $actionsRaw = null;
 
     private function __construct()
     {
     }
 
     /** @return list<Exchange> */
-    public static function exchanges(): array
+    public static function exchanges(?string $raw = null): array
     {
-        return self::$exchanges ??= self::load();
+        $raw ??= getenv(self::ACTIONS_VARIABLE) ?: null;
+        if ($raw === null) {
+            throw new ContractException(self::ACTIONS_VARIABLE . ' is not set');
+        }
+        if (self::$actionsRaw === $raw && self::$exchanges !== null) {
+            return self::$exchanges;
+        }
+
+        self::$actionsRaw = $raw;
+        return self::$exchanges = self::decodeTable($raw);
     }
 
     /** @return list<Exchange> */
@@ -58,32 +65,14 @@ final class Contract
         return null;
     }
 
-    public static function scenarioRequest(?string $index = null): Exchange
+    public static function scenarioRequest(?string $raw = null): Exchange
     {
-        $raw = $index ?? getenv(self::SCENARIO_INDEX_VARIABLE);
-        if ($raw === false) {
-            throw new ContractException(
-                self::SCENARIO_INDEX_VARIABLE . ' is not set',
-            );
-        }
-        if (!preg_match('/^(0|[1-9][0-9]*)$/D', $raw)) {
-            throw new ContractException(
-                self::SCENARIO_INDEX_VARIABLE
-                . ' must be a zero-based decimal index, got '
-                . json_encode($raw, JSON_THROW_ON_ERROR),
-            );
+        $raw ??= getenv(self::ACTION_VARIABLE) ?: null;
+        if ($raw === null) {
+            throw new ContractException(self::ACTION_VARIABLE . ' is not set');
         }
 
-        $requests = self::requests();
-        $selected = (int) $raw;
-        if (!isset($requests[$selected])) {
-            throw new ContractException(
-                self::SCENARIO_INDEX_VARIABLE . "={$raw} selects no contract "
-                . 'entry; expected 0..' . (count($requests) - 1),
-            );
-        }
-
-        return $requests[$selected];
+        return self::decodeAction($raw, self::ACTION_VARIABLE, false);
     }
 
     public static function parse(string $json): mixed
@@ -118,92 +107,105 @@ final class Contract
     }
 
     /** @return list<Exchange> */
-    private static function load(): array
+    private static function decodeTable(string $raw): array
     {
-        $path = self::locate();
-        $contents = file_get_contents($path);
-        if ($contents === false) {
-            throw new ContractException("could not read {$path}");
-        }
-
         try {
-            $document = Yaml::parse($contents);
-        } catch (ParseException $exception) {
+            $document = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
             throw new ContractException(
-                "could not parse {$path}",
+                self::ACTIONS_VARIABLE . ' contains malformed JSON',
                 0,
                 $exception,
             );
         }
-        if (!is_array($document) || !isset($document['readiness'])
-            || !is_array($document['readiness'])
-            || !isset($document['scenarios'])
-            || !is_array($document['scenarios'])
-            || $document['scenarios'] === []
-        ) {
-            throw new ContractException("{$path} describes no requests");
+        if (!is_array($document) || $document === [] || !array_is_list($document)) {
+            throw new ContractException(
+                self::ACTIONS_VARIABLE
+                . ' must be a non-empty JSON array of actions',
+            );
         }
 
         $exchanges = [];
-        foreach ([
-            [$document['readiness'], true],
-            ...array_map(
-                static fn (mixed $entry): array => [$entry, false],
-                $document['scenarios'],
-            ),
-        ] as [$entry, $readiness]) {
-            if (!is_array($entry)) {
-                throw new ContractException("{$path} has an invalid request");
-            }
-            $action = $entry['action'] ?? null;
-            $request = is_array($action) ? ($action['request'] ?? null) : null;
-            $response = is_array($action)
-                ? ($action['response'] ?? null)
-                : null;
-            if (!is_array($request) || !is_array($response)) {
-                throw new ContractException("{$path} has an invalid request");
-            }
-            $exchanges[] = new Exchange(
-                self::stringField($request, 'method', $path),
-                self::stringField($request, 'path', $path),
-                isset($request['body'])
-                    ? self::stringField($request, 'body', $path)
-                    : null,
-                self::intField($response, 'status', $path),
-                self::stringField($response, 'body', $path),
-                $readiness,
-                self::stringField($entry, 'description', $path),
+        foreach ($document as $index => $action) {
+            $exchanges[] = self::action(
+                $action,
+                self::ACTIONS_VARIABLE . "[{$index}]",
+                $index === 0,
             );
         }
 
         return $exchanges;
     }
 
-    private static function locate(): string
-    {
-        $beside = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'contract.yaml';
-        if (is_file($beside)) {
-            return $beside;
+    private static function decodeAction(
+        string $raw,
+        string $variable,
+        bool $readiness,
+    ): Exchange {
+        try {
+            $action = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new ContractException(
+                "{$variable} contains malformed JSON",
+                0,
+                $exception,
+            );
         }
 
-        $directory = getcwd();
-        if ($directory === false) {
-            throw new ContractException('could not read the working directory');
+        return self::action($action, $variable, $readiness);
+    }
+
+    private static function action(
+        mixed $action,
+        string $where,
+        bool $readiness,
+    ): Exchange
+    {
+        if (!is_array($action) || array_is_list($action)) {
+            throw new ContractException("{$where} action must be a JSON object");
         }
-        while (true) {
-            $candidate = $directory . DIRECTORY_SEPARATOR
-                . str_replace('/', DIRECTORY_SEPARATOR, self::CHECKOUT_PATH);
-            if (is_file($candidate)) {
-                return $candidate;
-            }
-            $parent = dirname($directory);
-            if ($parent === $directory) {
-                throw new ContractException(
-                    'no ' . self::CHECKOUT_PATH
-                    . ' at or above the working directory',
-                );
-            }
-            $directory = $parent;
+        self::checkKeys($action, ['request', 'response'], "{$where} action");
+        $request = $action['request'] ?? null;
+        $response = $action['response'] ?? null;
+        if (!is_array($request) || !is_array($response)) {
+            throw new ContractException(
+                "{$where} action requires request and response objects",
+            );
+        }
+        self::checkKeys($request, ['method', 'path', 'body'], "{$where}.request");
+        self::checkKeys($response, ['status', 'body'], "{$where}.response");
+
+        $method = self::stringField($request, 'method', $where);
+        $path = self::stringField($request, 'path', $where);
+        if ($method === '' || !str_starts_with($path, '/')) {
+            throw new ContractException("{$where} has an invalid request");
+        }
+
+        return new Exchange(
+            $method,
+            $path,
+            isset($request['body'])
+                ? self::stringField($request, 'body', $where)
+                : null,
+            self::intField($response, 'status', $where),
+            self::stringField($response, 'body', $where),
+            $readiness,
+            $readiness ? 'runner readiness action' : 'runner action',
+        );
+    }
+
+    /** @param array<mixed> $value @param list<string> $allowed */
+    private static function checkKeys(
+        array $value,
+        array $allowed,
+        string $where,
+    ): void {
+        $unknown = array_diff(array_keys($value), $allowed);
+        if ($unknown !== []) {
+            sort($unknown);
+            throw new ContractException(
+                "{$where} has unknown field(s): " . implode(', ', $unknown),
+            );
         }
     }
 

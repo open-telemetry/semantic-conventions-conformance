@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: spring-web
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-spring-web-3.1
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 weaver:
   config: ../../../../../../tools/java/weaver.toml

@@ -14,8 +14,7 @@ env:
 
 setup: otel-conformance-php install
 
-scenarios:
-  server:
-    # The launcher owns the driver's stdin protocol while php -S keeps PHP's
-    # real request-scoped lifecycle and flushes telemetry at request shutdown.
-    run: otel-http-drive --serve otel-conformance-php serve ../router.php
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+# The launcher owns the driver's stdin protocol while php -S keeps PHP's
+# real request-scoped lifecycle and flushes telemetry at request shutdown.
+scenario_run: otel-http-drive --serve otel-conformance-php serve ../router.php
