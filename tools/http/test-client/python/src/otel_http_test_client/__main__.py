@@ -46,6 +46,10 @@ _SHUTDOWN_TIMEOUT_SECONDS = 30
 _POLL_INTERVAL_SECONDS = 0.1
 
 
+class _SignalExit(SystemExit):
+    pass
+
+
 def _contract_path() -> Path:
     """The server contract, which is the one this driver drives.
 
@@ -342,6 +346,9 @@ def _serve_and_drive(
                 )
             else:
                 _drive_exchanges(base_url, exchanges[1:])
+        except _SignalExit:
+            _kill_tree(tree)
+            raise
         except BaseException:
             _kill_tree(tree)
             raise
@@ -559,7 +566,7 @@ def _reject_json_constant(value: str) -> NoReturn:
 
 
 def _exit_on_signal(signum: int, _frame: object) -> NoReturn:
-    raise SystemExit(128 + signum)
+    raise _SignalExit(128 + signum)
 
 
 def _kill_tree(tree: _ProcessTree) -> None:
