@@ -20,18 +20,63 @@ function check(bool $condition, string $message): void
     }
 }
 
-$workingDirectory = getcwd();
-check($workingDirectory !== false, 'the working directory is available');
-check(chdir(sys_get_temp_dir()), 'the test can leave the checkout');
-try {
-    $requests = Contract::requests();
-} finally {
-    check(chdir($workingDirectory), 'the test restores the working directory');
-}
+$actions = [
+    [
+        'request' => ['method' => 'GET', 'path' => '/health'],
+        'response' => ['status' => 200, 'body' => '{"ok": true}'],
+    ],
+    [
+        'request' => ['method' => 'GET', 'path' => '/users/123'],
+        'response' => [
+            'status' => 200,
+            'body' => '{"id": 123, "name": "Alice"}',
+        ],
+    ],
+    [
+        'request' => [
+            'method' => 'GET',
+            'path' => '/users/123?fields=name&verbose=true',
+        ],
+        'response' => [
+            'status' => 200,
+            'body' => '{"id": 123, "name": "Alice"}',
+        ],
+    ],
+    [
+        'request' => [
+            'method' => 'POST',
+            'path' => '/items',
+            'body' => '{"name": "widget"}',
+        ],
+        'response' => [
+            'status' => 201,
+            'body' => '{"created": true, "payload": ${requestBody}}',
+        ],
+    ],
+    [
+        'request' => ['method' => 'GET', 'path' => '/status/404'],
+        'response' => [
+            'status' => 404,
+            'body' => '{"message": "status 404"}',
+        ],
+    ],
+    [
+        'request' => ['method' => 'GET', 'path' => '/status/500'],
+        'response' => [
+            'status' => 500,
+            'body' => '{"message": "status 500"}',
+        ],
+    ],
+];
+$actionTable = json_encode($actions, JSON_THROW_ON_ERROR);
+putenv(Contract::ACTIONS_VARIABLE . "={$actionTable}");
+$requests = Contract::requests();
 check(count($requests) === 5, 'the measured contract has five requests');
 check(
-    Contract::scenarioRequest('2') === $requests[2],
-    'the runner selects one request by its zero-based index',
+    Contract::scenarioRequest(
+        json_encode($actions[3], JSON_THROW_ON_ERROR),
+    ) == $requests[2],
+    'the runner supplies one request as JSON',
 );
 check(
     Contract::exchange('GET', '/users/123?fields=name')?->path
@@ -54,7 +99,10 @@ check(
 );
 
 $sent = [];
-putenv('OTEL_CONFORMANCE_SCENARIO_INDEX=2');
+putenv(
+    Contract::ACTION_VARIABLE . '='
+    . json_encode($actions[3], JSON_THROW_ON_ERROR),
+);
 ClientWorkload::drive(
     'http://example.test',
     static function (

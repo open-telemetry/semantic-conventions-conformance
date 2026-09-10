@@ -172,7 +172,7 @@ class _Capture:
 
     def __init__(self, upstream_endpoint: str) -> None:
         self.upstream_endpoint = upstream_endpoint
-        self.endpoint = "http://capture"
+        self.endpoint = "http://127.0.0.1:4317"
         self.windows: list[str] = []
         self.closed = 0
         self.calls: list[str] = []
@@ -293,6 +293,81 @@ def session(
     )
 
 
+@pytest.mark.parametrize("index", [None, 3])
+@pytest.mark.parametrize(
+    ("otlp_protocol", "otlp_endpoint"),
+    [
+        ("grpc", "http://localhost:4317"),
+        ("http/protobuf", "http://127.0.0.1:12345"),
+    ],
+)
+def test_scenario_uses_only_generic_otlp_configuration(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    otlp_protocol: Literal["grpc", "http/protobuf"],
+    otlp_endpoint: str,
+    index: int | None,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def run(
+        command: tuple[str, ...],
+        *,
+        cwd: Path,
+        env: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        captured.update(env)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(_session, "_run_command", run)
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT",
+            "http://example.com:4317",
+        )
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL",
+            "ambient",
+        )
+    opened = session(
+        directory,
+        tmp_path / "data.json",
+        otlp_protocol=otlp_protocol,
+    )
+
+    opened._execute(  # noqa: SLF001
+        replace(opened.spec.scenarios["inference"], index=index),
+        otlp_endpoint,
+    )
+
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == otlp_endpoint
+    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == otlp_protocol
+    if index is not None:
+        assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == str(index)
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        assert f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT" not in captured
+        assert f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL" not in captured
+
+
+def test_otlp_http_runs_through_the_package_capture(
+    directory: Path, tmp_path: Path
+) -> None:
+    opened = session(
+        directory,
+        tmp_path / "data.json",
+        otlp_protocol="http/protobuf",
+    )
+
+    opened.start()
+
+    assert opened._capture is not None  # noqa: SLF001
+    assert opened._otlp_endpoint is not None  # noqa: SLF001
+    assert opened._otlp_endpoint.startswith("http://127.0.0.1:")  # noqa: SLF001
+    assert opened._otlp_endpoint != opened._capture.endpoint  # noqa: SLF001
+    opened._shutdown()  # noqa: SLF001
+
+
 def test_a_complete_run_writes_the_data_file(
     directory: Path, tmp_path: Path
 ) -> None:
@@ -335,7 +410,7 @@ def test_run_all_uses_one_weaver_and_one_stable_capture_endpoint(
     assert opened.finalize() is package
 
     assert len(reports) == 2
-    assert endpoints == ["http://capture", "http://capture"]
+    assert endpoints == ["http://127.0.0.1:4317", "http://127.0.0.1:4317"]
     assert len(_SessionWeaver.instances) == 1
     assert _SessionWeaver.instances[0].starts == 1
     assert _SessionWeaver.instances[0].ends == 1
@@ -405,7 +480,7 @@ def test_persistent_process_gets_runner_owned_export_settings(
     monkeypatch.setattr(_session, "PersistentController", Controller)
 
     assert opened._run_persistent((scenario,)) == ()
-    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://capture"
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == "http://127.0.0.1:4317"
     assert captured["OTEL_BSP_SCHEDULE_DELAY"] == "50"
     assert captured["OTEL_BLRP_SCHEDULE_DELAY"] == "50"
     assert captured["OTEL_METRIC_EXPORT_INTERVAL"] == "100"

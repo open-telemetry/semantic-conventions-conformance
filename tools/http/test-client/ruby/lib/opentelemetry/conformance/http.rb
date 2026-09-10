@@ -2,18 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 require "json"
-require "yaml"
 require_relative "http/version"
 
 module OpenTelemetry
   module Conformance
-    # Reads and exercises the shared HTTP conformance contract.
+    # Decodes and exercises the HTTP conformance actions from the runner.
     module HTTP
       CONTENT_TYPE = "application/json".freeze
       USER_AGENT = "otel-http-conformance/1".freeze
       PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT".freeze
       MOCK_SERVER_URL_VARIABLE = "MOCK_SERVER_URL".freeze
-      CONTRACT = File.expand_path("../../../../contract.yaml", __dir__).freeze
+      ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION".freeze
+      ACTIONS_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTIONS".freeze
 
       class ContractError < StandardError; end
       class ConfigurationError < StandardError; end
@@ -58,40 +58,49 @@ module OpenTelemetry
         end
       end
 
-      document = YAML.safe_load(File.read(CONTRACT, encoding: "UTF-8"))
-      entries = [document.fetch("readiness"), *document.fetch("scenarios")]
-      EXCHANGES = entries.each_with_index.map do |entry, index|
-        action = entry.fetch("action")
-        request = action.fetch("request")
-        response = action.fetch("response")
-        Exchange.new(
-          method: request.fetch("method"),
-          path: request.fetch("path"),
-          body: request["body"],
-          status: response.fetch("status"),
-          response_body: response.fetch("body"),
-          readiness: index.zero?,
-          description: entry.fetch("description")
-        )
-      end.freeze
-      REQUESTS = EXCHANGES.reject(&:readiness).freeze
-
       module_function
 
-      # Every exchange, including readiness, in contract order.
-      def exchanges
-        EXCHANGES
+      # Every exchange supplied by the runner, including readiness.
+      def exchanges(raw = ENV[ACTIONS_VARIABLE])
+        raise ConfigurationError, "#{ACTIONS_VARIABLE} is not set" if raw.nil?
+        return @exchanges if @actions_raw == raw
+
+        parsed = decode_json(raw, ACTIONS_VARIABLE)
+        unless parsed.is_a?(Array) && !parsed.empty?
+          raise ConfigurationError,
+                "#{ACTIONS_VARIABLE} must be a non-empty JSON array of actions"
+        end
+
+        @actions_raw = raw
+        @exchanges = parsed.each_with_index.map do |action, index|
+          exchange_from_action(
+            action,
+            variable: "#{ACTIONS_VARIABLE}[#{index}]",
+            readiness: index.zero?
+          )
+        end.freeze
       end
 
-      # The measured exchanges, in contract order.
-      def requests
-        REQUESTS
+      # The measured exchanges supplied by the runner.
+      def requests(raw = ENV[ACTIONS_VARIABLE])
+        exchanges(raw).drop(1).freeze
+      end
+
+      # The one request selected by the runner.
+      def scenario_request(raw = ENV[ACTION_VARIABLE])
+        raise ConfigurationError, "#{ACTION_VARIABLE} is not set" if raw.nil?
+
+        exchange_from_action(
+          decode_json(raw, ACTION_VARIABLE),
+          variable: ACTION_VARIABLE,
+          readiness: false
+        )
       end
 
       # Finds an exchange by exact method and path, ignoring its query.
       def exchange_for(method, target)
         path = without_query(target)
-        EXCHANGES.find do |exchange|
+        exchanges.find do |exchange|
           exchange.method == method && without_query(exchange.path) == path
         end
       end
@@ -107,7 +116,7 @@ module OpenTelemetry
         )
       end
 
-      # Sends the measured exchanges through the caller's HTTP library.
+      # Sends the runner-selected exchange through the caller's HTTP library.
       def drive(base_url = mock_server_url, sender = nil, &block)
         raise ArgumentError, "base URL must not be blank" if blank?(base_url)
 
@@ -115,15 +124,14 @@ module OpenTelemetry
         raise ArgumentError, "sender must be supplied" unless send_request
 
         normalized_base_url = base_url.sub(%r{/+\z}, "")
-        REQUESTS.each do |exchange|
-          response = send_request.call(
-            exchange.method,
-            "#{normalized_base_url}#{exchange.path}",
-            exchange.body
-          )
-          puts "#{exchange.method} #{exchange.path} -> #{response.status} #{abbreviate(response.body)}"
-          verify(exchange, response)
-        end
+        exchange = scenario_request
+        response = send_request.call(
+          exchange.method,
+          "#{normalized_base_url}#{exchange.path}",
+          exchange.body
+        )
+        puts "#{exchange.method} #{exchange.path} -> #{response.status} #{abbreviate(response.body)}"
+        verify(exchange, response)
         nil
       end
 
@@ -186,6 +194,77 @@ module OpenTelemetry
         raise ContractError, "not JSON: #{value}", error.backtrace
       end
       private_class_method :parse_json
+
+      def decode_json(value, where)
+        JSON.parse(value)
+      rescue JSON::ParserError => error
+        raise ConfigurationError,
+              "#{where} contains malformed JSON: #{error.message}",
+              error.backtrace
+      end
+      private_class_method :decode_json
+
+      def exchange_from_action(value, variable:, readiness:)
+        where = "#{variable} action"
+        unless value.is_a?(Hash)
+          raise ConfigurationError, "#{where} must be a JSON object"
+        end
+        check_keys(value, %w[request response], where)
+        request = value["request"]
+        response = value["response"]
+        unless request.is_a?(Hash) && response.is_a?(Hash)
+          raise ConfigurationError,
+                "#{where} requires request and response objects"
+        end
+        check_keys(request, %w[method path body], "#{where}.request")
+        check_keys(response, %w[status body], "#{where}.response")
+
+        method = request["method"]
+        path = request["path"]
+        body = request["body"]
+        status = response["status"]
+        response_body = response["body"]
+        unless method.is_a?(String) && !method.empty?
+          raise ConfigurationError,
+                "#{where}.request.method must be a non-empty string"
+        end
+        unless path.is_a?(String) && path.start_with?("/")
+          raise ConfigurationError,
+                "#{where}.request.path must start with '/'"
+        end
+        unless body.nil? || body.is_a?(String)
+          raise ConfigurationError,
+                "#{where}.request.body must be a string"
+        end
+        unless status.is_a?(Integer) && status.between?(100, 599)
+          raise ConfigurationError,
+                "#{where}.response.status must be an HTTP status"
+        end
+        unless response_body.is_a?(String)
+          raise ConfigurationError,
+                "#{where}.response.body must be a string"
+        end
+
+        Exchange.new(
+          method: method,
+          path: path,
+          body: body,
+          status: status,
+          response_body: response_body,
+          readiness: readiness,
+          description: readiness ? "runner readiness action" : "runner action"
+        )
+      end
+      private_class_method :exchange_from_action
+
+      def check_keys(value, allowed, where)
+        unknown = value.keys - allowed
+        return if unknown.empty?
+
+        raise ConfigurationError,
+              "#{where} has unknown field(s): #{unknown.sort.join(", ")}"
+      end
+      private_class_method :check_keys
 
       def blank?(value)
         value.nil? || value.strip.empty?

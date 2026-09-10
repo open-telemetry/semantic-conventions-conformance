@@ -179,9 +179,9 @@ def test_all_http_packages_use_the_contract_execution_model() -> None:
     clients = [path for path in declarations if path.parent.name == "client"]
     servers = [path for path in declarations if path.parent.name == "server"]
 
-    assert len(declarations) == 50
-    assert len(clients) == 23
-    assert len(servers) == 27
+    assert len(declarations) == 78
+    assert len(clients) == 35
+    assert len(servers) == 43
 
     # Two independent contracts. Each says who drives it and what that one
     # instrumented side emits; nothing keeps them aligned.
@@ -232,8 +232,8 @@ def test_all_http_packages_use_the_contract_execution_model() -> None:
         assert len(package.scenarios) == scenario_count, path
         # Readiness first, then this contract's own actions.
         assert len(package.action_table) == scenario_count + 1, path
-        assert package.action_table[0] == (
-            contracts[side]["readiness"]["action"]
+        assert (
+            package.action_table[0] == (contracts[side]["readiness"]["action"])
         ), path
 
         protocols = {

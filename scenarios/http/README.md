@@ -90,7 +90,7 @@ with what an instrumented client emits for it, and declares
 `driver: instrumentation`, so the library under test initiates the request.
 [`server.yaml`](../../tools/http/contracts/server.yaml) pairs each request
 with what an instrumented server emits for it, and declares `driver: runner`,
-so the runner drives the instrumented process from outside. Each of the 50
+so the runner drives the instrumented process from outside. Each of the 78
 packages points at the contract for its own side, and that contract decides
 how the package runs. The runner turns every entry into
 one action with its own capture window and report, without aggregating

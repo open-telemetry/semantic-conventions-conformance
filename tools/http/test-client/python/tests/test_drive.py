@@ -319,9 +319,7 @@ def _start_persistent_driver(
 
 def _envelope(record: dict[str, object]) -> dict[str, object]:
     stamps = {"started_unix_nano", "completed_unix_nano"}
-    return {
-        key: value for key, value in record.items() if key not in stamps
-    }
+    return {key: value for key, value in record.items() if key not in stamps}
 
 
 def _read_protocol(process: subprocess.Popen[str]) -> dict[str, object]:
@@ -911,7 +909,9 @@ class TestDrivingAServerScenario:
 
         monkeypatch.setattr(driver, "_SHUTDOWN_TIMEOUT_SECONDS", 3)
 
-        driver._stop_after_error(Process())  # type: ignore[arg-type]
+        driver._stop_after_error(  # type: ignore[arg-type]
+            driver._ProcessTree(Process(), None)
+        )
 
         assert events == ["closed", "waited 3"]
 
@@ -924,15 +924,16 @@ class TestDrivingAServerScenario:
 
         original = RuntimeError("startup failed")
         process = object()
+        tree = driver._ProcessTree(process, None)  # type: ignore[arg-type]
         cleanup: list[str] = []
 
         def stop_after_error(received: object) -> None:
-            assert received is process
+            assert received is tree
             cleanup.append("stop")
             raise OSError("cleanup failed")
 
         def kill_tree(received: object) -> None:
-            assert received is process
+            assert received is tree
             cleanup.append("kill")
             raise ValueError("fallback failed")
 
@@ -940,12 +941,12 @@ class TestDrivingAServerScenario:
             driver, "reserve_port", lambda: (1234, Reservation())
         )
         monkeypatch.setattr(
-            driver.subprocess, "Popen", lambda *_args, **_kwargs: process
+            driver, "_start_process", lambda *_args, **_kwargs: tree
         )
         monkeypatch.setattr(
             driver,
             "_wait_for_start",
-            lambda *_args: (_ for _ in ()).throw(original),
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(original),
         )
         monkeypatch.setattr(driver, "_stop_after_error", stop_after_error)
         monkeypatch.setattr(driver, "_kill_tree", kill_tree)
@@ -1040,9 +1041,7 @@ class TestPersistentServerDriving:
         )
         assert _read_protocol(process)["type"] == "ready"
 
-        response = _send_protocol(
-            process, _action_record(exchange, 1)
-        )
+        response = _send_protocol(process, _action_record(exchange, 1))
         stopped, _stderr = _finish_persistent_driver(process)
 
         assert response["type"] == "action_error"
@@ -1122,9 +1121,7 @@ class TestPersistentServerDriving:
         assert expected in str(response["error"])
 
         assert process.stdin is not None
-        process.stdin.write(
-            json.dumps(_action_record(REQUESTS[0], 1)) + "\n"
-        )
+        process.stdin.write(json.dumps(_action_record(REQUESTS[0], 1)) + "\n")
         process.stdin.flush()
         stopped, _stderr = _finish_persistent_driver(process)
 
@@ -1157,9 +1154,7 @@ class TestPersistentServerDriving:
         assert _read_protocol(process)["type"] == "ready"
         time.sleep(0.5)
 
-        response = _send_protocol(
-            process, _action_record(REQUESTS[0], 1)
-        )
+        response = _send_protocol(process, _action_record(REQUESTS[0], 1))
         stopped, _stderr = _finish_persistent_driver(process)
 
         assert response["type"] == "action_error"
@@ -1335,13 +1330,16 @@ class TestTheCommandLine:
             main(["--serve", "true"])
 
     def test_a_driven_base_url_is_rejected(
-        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
         monkeypatch.setenv(PROTOCOL_VARIABLE, "jsonl-v1")
 
         with pytest.raises(SystemExit):
             main(["http://127.0.0.1:1"])
         assert "requires --serve COMMAND" in capsys.readouterr().err
+
 
 def test_the_port_variable_is_documented() -> None:
     """Every language's server scenarios read it, so it is part of the API."""
@@ -1382,17 +1380,16 @@ class TestTheRunnerOwnedActionTable:
         exchange = Exchange(
             "GET", "/custom/first", None, 201, '{"created": 1}', False, ""
         )
-        complete = _send_protocol(
-            process, _action_record(exchange, 1)
-        )
+        complete = _send_protocol(process, _action_record(exchange, 1))
         assert complete["type"] == "action_complete", complete
         _finish_persistent_driver(process)
 
         received = json.loads(result.read_text(encoding="utf-8"))
         assert json.dumps(received["actions"]) == table
-        assert [
-            request["path"] for request in received["requests"]
-        ] == ["/custom/ready", "/custom/first"]
+        assert [request["path"] for request in received["requests"]] == [
+            "/custom/ready",
+            "/custom/first",
+        ]
 
     def test_a_malformed_table_fails_before_the_scenario_starts(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
