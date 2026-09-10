@@ -106,13 +106,14 @@ jobs:
         run: |
           bundle exec rake
           bundle exec ruby -I../../../ruby/scenario-support/lib ../../../ruby/scenario-support/test/scenario_support_test.rb
-          bundle exec ruby -I../../../ruby/scenario-support/lib -I../../../ruby/scenario-sdk/lib ../../../ruby/scenario-sdk/test/scenario_sdk_test.rb
 
       - name: Test Ruby Net::HTTP scenario
         working-directory: scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_http/client
         run: |
           bundle install
           bundle exec rake
+          bundle exec ruby -I../../../../../../tools/ruby/scenario-support/lib -I../../../../../../tools/ruby/scenario-sdk/lib ../../../../../../tools/ruby/scenario-sdk/test/scenario_sdk_test.rb
+          bundle exec ruby -I../../../../../../tools/ruby/scenario-sdk/lib ../../../../../../tools/ruby/scenario-sdk/test/scenario_sdk_integration_test.rb
 
       - name: Test Ruby Rack scenario
         working-directory: scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server

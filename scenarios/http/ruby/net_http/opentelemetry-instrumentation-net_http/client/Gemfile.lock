@@ -8,6 +8,8 @@ PATH
   specs:
     otel-conformance-scenario-sdk (0.1.0)
       opentelemetry-exporter-otlp
+      opentelemetry-exporter-otlp-metrics
+      opentelemetry-metrics-sdk
       opentelemetry-sdk
       otel-conformance-scenario-support (= 0.1.0)
 
@@ -65,12 +67,27 @@ GEM
       opentelemetry-common (~> 0.20)
       opentelemetry-sdk (~> 1.10)
       opentelemetry-semantic_conventions
+    opentelemetry-exporter-otlp-metrics (0.12.0)
+      google-protobuf (>= 3.18, < 5.0)
+      googleapis-common-protos-types (~> 1.3)
+      opentelemetry-api (~> 1.1)
+      opentelemetry-common (~> 0.20)
+      opentelemetry-metrics-api (~> 0.2)
+      opentelemetry-metrics-sdk (~> 0.5)
+      opentelemetry-sdk (~> 1.2)
+      opentelemetry-semantic_conventions
     opentelemetry-instrumentation-base (0.26.1)
       opentelemetry-api (~> 1.7)
       opentelemetry-common (~> 0.21)
       opentelemetry-registry (~> 0.1)
     opentelemetry-instrumentation-net_http (0.29.0)
       opentelemetry-instrumentation-base (~> 0.25)
+    opentelemetry-metrics-api (0.7.0)
+      opentelemetry-api (~> 1.0)
+    opentelemetry-metrics-sdk (0.18.0)
+      opentelemetry-api (~> 1.1)
+      opentelemetry-metrics-api (~> 0.2)
+      opentelemetry-sdk (~> 1.13.0)
     opentelemetry-registry (0.6.3)
       opentelemetry-api (~> 1.1)
     opentelemetry-sdk (1.13.0)
@@ -100,7 +117,9 @@ DEPENDENCIES
   minitest (~> 5.0)
   opentelemetry-conformance-http!
   opentelemetry-exporter-otlp (= 0.34.1)
+  opentelemetry-exporter-otlp-metrics (= 0.12.0)
   opentelemetry-instrumentation-net_http (= 0.29.0)
+  opentelemetry-metrics-sdk (= 0.18.0)
   opentelemetry-sdk (= 1.13.0)
   otel-conformance-scenario-sdk!
   otel-conformance-scenario-support!

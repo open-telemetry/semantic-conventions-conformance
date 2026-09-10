@@ -6,7 +6,7 @@ and explicit OpenTelemetry setup in separate pieces.
 ```text
 scenarios/<domain>/ruby/      a domain's Ruby scenario packages
 tools/ruby/scenario-support/  environment and stdin-EOF lifecycle
-tools/ruby/scenario-sdk/      explicit instrumentation and tracing SDK setup
+tools/ruby/scenario-sdk/      explicit instrumentation and telemetry SDK setup
 tools/ruby/src/               `otel-conformance-ruby`, the launcher
 tools/ruby/tests/             the launcher's tests
 ```
@@ -63,9 +63,9 @@ OpenTelemetry::Conformance::ScenarioLifecycle.wait_for_eof
 ```
 
 The SDK gem is for scenarios that register library instrumentation explicitly.
-It configures the HTTP trace exporter from `opentelemetry-exporter-otlp`,
-registers only the named instrumentation, and flushes and shuts down even when
-the workload fails:
+It configures OTLP/HTTP protobuf exporters for traces and metrics, registers
+only the named instrumentation, and flushes and shuts down both providers even
+when the workload fails:
 
 ```ruby
 require "opentelemetry/instrumentation/net/http"

@@ -12,6 +12,8 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.1"
 
   spec.add_dependency "opentelemetry-exporter-otlp"
+  spec.add_dependency "opentelemetry-exporter-otlp-metrics"
+  spec.add_dependency "opentelemetry-metrics-sdk"
   spec.add_dependency "opentelemetry-sdk"
   spec.add_dependency "otel-conformance-scenario-support", "= 0.1.0"
 end
