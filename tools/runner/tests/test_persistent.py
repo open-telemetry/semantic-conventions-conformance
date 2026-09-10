@@ -1552,6 +1552,52 @@ def test_snapshot_metrics_do_not_hold_the_first_action(
     )
 
 
+def test_snapshot_metrics_wait_for_readiness_spans(
+    tmp_path: Path,
+) -> None:
+    ready_unix_nano = time.time_ns()
+    readiness_trace = "0" * 31 + "1"
+    snapshot = _metric(
+        ready_unix_nano,
+        ready_unix_nano + 1,
+        metrics_pb2.AGGREGATION_TEMPORALITY_CUMULATIVE,
+        name="http.server.active_requests",
+        monotonic=False,
+    )
+
+    def finish_readiness(capture: _Capture) -> None:
+        if len(capture.exports) != 1:
+            return
+        capture.exports += (
+            _trace(
+                readiness_trace,
+                ready_unix_nano,
+                ready_unix_nano + 2,
+            ),
+        )
+        capture.announce()
+
+    capture = _Capture(
+        exports=(snapshot,), after_snapshot=finish_readiness
+    )
+    controller, _watch = _watched(
+        tmp_path, capture, timeout=0.1, settle_delay=0.0
+    )
+    capture.set_change_notifier(controller._notify)
+    controller._scenarios = (
+        replace(
+            controller._scenarios[0],
+            metrics=("http.server.active_requests",),
+        ),
+    )
+
+    controller._wait_for_bootstrap(
+        capture.open_window("batch"), ready_unix_nano
+    )
+
+    assert capture.snapshot_calls >= 2
+
+
 def test_bootstrap_that_never_isolates_times_out_without_spinning(
     tmp_path: Path,
 ) -> None:
