@@ -37,8 +37,9 @@ final class Contract
             return self::$exchanges;
         }
 
+        $exchanges = self::decodeTable($raw);
         self::$actionsRaw = $raw;
-        return self::$exchanges = self::decodeTable($raw);
+        return self::$exchanges = $exchanges;
     }
 
     /** @return list<Exchange> */

@@ -72,6 +72,18 @@ $actionTable = json_encode($actions, JSON_THROW_ON_ERROR);
 putenv(Contract::ACTIONS_VARIABLE . "={$actionTable}");
 $requests = Contract::requests();
 check(count($requests) === 5, 'the measured contract has five requests');
+$invalidActions = $actions;
+$invalidActions[1]['request']['method'] = null;
+$invalidActionTable = json_encode($invalidActions, JSON_THROW_ON_ERROR);
+for ($attempt = 0; $attempt < 2; ++$attempt) {
+    $rejected = false;
+    try {
+        Contract::exchanges($invalidActionTable);
+    } catch (ContractException) {
+        $rejected = true;
+    }
+    check($rejected, 'an invalid table is rejected on every decode attempt');
+}
 check(
     Contract::scenarioRequest(
         json_encode($actions[3], JSON_THROW_ON_ERROR),
