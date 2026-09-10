@@ -71,14 +71,15 @@ module OpenTelemetry
                 "#{ACTIONS_VARIABLE} must be a non-empty JSON array of actions"
         end
 
-        @actions_raw = raw
-        @exchanges = parsed.each_with_index.map do |action, index|
+        exchanges = parsed.each_with_index.map do |action, index|
           exchange_from_action(
             action,
             variable: "#{ACTIONS_VARIABLE}[#{index}]",
             readiness: index.zero?
           )
         end.freeze
+        @actions_raw = raw
+        @exchanges = exchanges
       end
 
       # The measured exchanges supplied by the runner.
