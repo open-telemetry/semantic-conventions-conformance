@@ -423,6 +423,28 @@ def test_run_all_uses_one_weaver_and_one_stable_capture_endpoint(
     assert _Capture.instances[0].windows == ["inference", "tool_calling"]
 
 
+@pytest.mark.parametrize(
+    ("already_run", "selected"),
+    [
+        ((), ("inference", "inference")),
+        (("inference",), ("tool_calling", "inference")),
+    ],
+)
+def test_run_all_rejects_repeated_scenarios_before_starting(
+    directory: Path,
+    tmp_path: Path,
+    already_run: tuple[str, ...],
+    selected: tuple[str, ...],
+) -> None:
+    opened = session(directory, tmp_path / "data.json")
+    opened._ran.update(already_run)
+
+    with pytest.raises(ValueError, match="cannot run more than once"):
+        opened.run_all(selected)
+
+    assert opened._resources is None
+
+
 def test_run_all_batches_scenarios_that_share_a_persistent_command(
     directory: Path,
     tmp_path: Path,

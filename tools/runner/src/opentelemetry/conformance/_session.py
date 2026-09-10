@@ -251,14 +251,24 @@ class ConformanceSession:
     def spec(self) -> PackageSpec:
         return self._spec
 
+    def _validate_scenario_names(self, names: Sequence[str]) -> None:
+        seen = set(self._ran)
+        for name in names:
+            if name not in self._spec.scenarios:
+                raise KeyError(
+                    f"{name!r} is not declared in {self._spec.directory}; "
+                    f"declared: {sorted(self._spec.scenarios)}"
+                )
+            if name in seen:
+                raise ValueError(
+                    f"{name!r} cannot run more than once in a package session"
+                )
+            seen.add(name)
+
     def run(self, name: str) -> ScenarioReport:
         """Run one scenario in its own window of the package capture."""
-        scenario = self._spec.scenarios.get(name)
-        if scenario is None:
-            raise KeyError(
-                f"{name!r} is not declared in {self._spec.directory}; "
-                f"declared: {sorted(self._spec.scenarios)}"
-            )
+        self._validate_scenario_names((name,))
+        scenario = self._spec.scenarios[name]
         if self._ending or self._package_report is not None:
             raise RuntimeError(
                 "The conformance package has already been finalized"
@@ -307,12 +317,7 @@ class ConformanceSession:
             if selected_names is None
             else tuple(selected_names)
         )
-        for name in names:
-            if name not in self._spec.scenarios:
-                raise KeyError(
-                    f"{name!r} is not declared in {self._spec.directory}; "
-                    f"declared: {sorted(self._spec.scenarios)}"
-                )
+        self._validate_scenario_names(names)
         reports: list[ScenarioReport] = []
         index = 0
         while index < len(names):
