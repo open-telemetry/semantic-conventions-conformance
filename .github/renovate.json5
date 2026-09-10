@@ -38,6 +38,12 @@
       "groupName": "javascript-minor"
     },
     {
+      // group all non-major Ruby dependency updates into a single PR
+      "matchManagers": ["bundler"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "ruby-minor"
+    },
+    {
       // group all non-major .NET dependency updates into a single PR
       "matchManagers": ["nuget"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -53,6 +59,12 @@
       "matchManagers": ["pep621", "poetry"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "python-minor"
+    },
+    {
+      // group all non-major Go dependency updates into a single PR
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "go-minor"
     },
     {
       // group all non-major PHP dependency updates into a single PR

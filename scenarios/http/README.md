@@ -11,8 +11,9 @@ What HTTP instrumentations emit, checked against the
 
 A language that needs a build of its own has a build root directly under this
 one: the version-pinned Gradle build under `java/` and the solution under
-`dotnet/`, both described below, and [`js/`](js/README.md), whose README
-explains the npm workspace it roots.
+`dotnet/`, both described below, plus [`go/`](go/README.md) and
+[`js/`](js/README.md), whose READMEs explain the Go module and the npm
+workspace they root.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
 one holds its `pyproject.toml` beside its `conformance.yaml`. Java uses a
@@ -57,6 +58,29 @@ A Python instrumentation has nothing to build. Its workload is a module in
 `python/<library>/scenarios/`, and each `<side>/` directory holds the
 `pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
 `scenario.py` that turns it on before handing the workload to the harness.
+
+Ruby scenarios use MRI 3.4 and keep each side in its own locked Bundler package:
+
+```text
+ruby/net_http/scenarios/client.rb
+ruby/net_http/opentelemetry-instrumentation-net_http/client/
+    Gemfile
+    Gemfile.lock
+    client.rb
+    conformance.yaml
+ruby/rack/scenarios/server.rb
+ruby/rack/opentelemetry-instrumentation-rack/server/
+    Gemfile
+    Gemfile.lock
+    scenario.rb
+    conformance.yaml
+```
+
+[`otel-conformance-ruby`](../../tools/ruby) finds the nearest `Gemfile` and
+`Gemfile.lock`, installs the frozen bundle under that package's `vendor/bundle`,
+and starts its entry point with `bundle exec ruby`. Repository helpers resolve
+through path dependencies, and neither package writes to the user-wide gem
+installation.
 
 ## The scenario contract
 
@@ -111,11 +135,13 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js \
-  -e tools/dotnet -e tools/php
+  -e tools/ruby -e tools/dotnet -e tools/php -e tools/go
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/server
+otel-conformance scenarios/http/go/net-http/otelhttp/client
+otel-conformance scenarios/http/go/net-http/otelhttp/server
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
 otel-conformance scenarios/http/js/http/opentelemetry-http/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/server
@@ -137,6 +163,8 @@ otel-conformance scenarios/http/python/tornado/opentelemetry-tornado/server
 otel-conformance scenarios/http/python/urllib/opentelemetry-urllib/client
 otel-conformance scenarios/http/python/urllib3/opentelemetry-urllib3/client
 otel-conformance scenarios/http/python/wsgi/opentelemetry-wsgi/server
+otel-conformance scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_http/client
+otel-conformance scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server
 otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
 otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 ```
@@ -159,11 +187,28 @@ publishes that project and `run` starts what it published from
 `dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
 neither a configuration nor an assembly path.
 
+Ruby exporters use OTLP/HTTP protobuf, so each Ruby package selects it at the
+package level:
+
+```yaml
+otlp_protocol: http/protobuf
+```
+
+The runner gives the package a generic HTTP endpoint. The Ruby exporters append
+the signal-specific `/v1/traces`, `/v1/metrics`, and `/v1/logs` paths. The
+runner's local bridge accepts those protobuf requests and forwards them to
+Weaver over gRPC. Packages that use the default `grpc` protocol continue to
+export directly to Weaver.
+
 PHP packages use `otel-conformance-php install` to install their own committed
 lockfile. A Slim server runs through `otel-conformance-php serve`, which owns
 the driver's shutdown protocol while `php -S` keeps PHP's request-scoped
 lifecycle and flushes telemetry at each request shutdown. See
 [`php/`](php/README.md).
+
+Go's build root is [`go/`](go), and [`otel-conformance-go`](../../tools/go)
+holds how a Go package is built and started: `setup:` compiles the scenario and
+`run:` is the resulting binary, so the toolchain is not the measured process.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
