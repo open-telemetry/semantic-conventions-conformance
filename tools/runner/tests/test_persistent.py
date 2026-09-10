@@ -265,6 +265,28 @@ print(json.dumps({"version": "jsonl-v1", "type": "stopped", "sequence": 2}), flu
     ]
 
 
+def test_failed_final_reconciliation_keeps_the_action_incomplete(
+    tmp_path: Path,
+) -> None:
+    command = _driver(tmp_path, _SUCCESS_DRIVER)
+
+    def emit_invalid_span_at_shutdown(capture: _Capture) -> None:
+        capture.exports = (_trace("07" * 16, 0, 0),)
+
+    capture = _Capture(on_drain=emit_invalid_span_at_shutdown)
+    (result,) = PersistentController(
+        (_scenario(command),),
+        capture=cast(OtlpCaptureProxy, capture),
+        cwd=tmp_path,
+        env=os.environ,
+        timeout=1.0,
+        settle_delay=0.001,
+    ).run()
+
+    assert "missing valid timestamps" in (result.failure or "")
+    assert not result.executed
+
+
 @pytest.mark.parametrize(
     "record, match",
     [

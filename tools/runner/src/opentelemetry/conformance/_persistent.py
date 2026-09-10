@@ -727,7 +727,7 @@ class PersistentController:
             if index < len(actions):
                 action = actions[index]
                 telemetry = partition.windows[index]
-                executed = action.sent_unix_nano != 0
+                executed = action.sent_unix_nano != 0 and not fail_all
                 action_failure = (
                     diagnostic_failure
                     if failure is not None
