@@ -84,6 +84,20 @@ for ($attempt = 0; $attempt < 2; ++$attempt) {
     }
     check($rejected, 'an invalid table is rejected on every decode attempt');
 }
+$invalidStatus = $actions[1];
+$invalidStatus['response']['status'] = 700;
+$statusRejected = false;
+try {
+    Contract::scenarioRequest(
+        json_encode($invalidStatus, JSON_THROW_ON_ERROR),
+    );
+} catch (ContractException $exception) {
+    $statusRejected = str_contains(
+        $exception->getMessage(),
+        'response.status must be an HTTP status',
+    );
+}
+check($statusRejected, 'an out-of-range HTTP status is rejected');
 check(
     Contract::scenarioRequest(
         json_encode($actions[3], JSON_THROW_ON_ERROR),
