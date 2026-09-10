@@ -15,13 +15,13 @@ import pytest
 import otel_conformance_rust
 from otel_conformance_rust import (
     MANIFEST,
+    CargoPackage,
     LayoutError,
     binary,
     build_command,
+    cargo_package,
     package_manifest,
     run_command,
-    target_directory,
-    workspace_root,
 )
 
 
@@ -40,61 +40,61 @@ def root(tmp_path: Path) -> Path:
     return tmp_path
 
 
-class TestFindingTheWorkspace:
-    def test_it_is_found_from_a_scenario_directory(self, root: Path) -> None:
-        scenario = root / "server" / "scenario"
-        scenario.mkdir()
+@pytest.fixture
+def package(root: Path) -> CargoPackage:
+    return CargoPackage(
+        manifest=(root / "server" / MANIFEST).resolve(),
+        target_directory=root / "custom-target",
+        binary_name="rust-server",
+    )
 
-        assert workspace_root(scenario) == root
 
-    def test_it_honors_a_package_workspace_path(
-        self, tmp_path: Path
-    ) -> None:
-        workspace = tmp_path / "workspace"
-        workspace.mkdir()
-        (workspace / MANIFEST).write_text(
-            "[workspace]\nmembers = []\n",
-            encoding="utf-8",
-        )
-        package = tmp_path / "tools" / "scenario"
-        package.mkdir(parents=True)
-        (package / MANIFEST).write_text(
-            '[package]\nname = "scenario"\nworkspace = "../../workspace"\n',
-            encoding="utf-8",
-        )
+def metadata(
+    package: CargoPackage,
+    *,
+    binaries: tuple[str, ...] | None = None,
+    default_run: str | None = None,
+) -> dict[str, object]:
+    names = binaries or (package.binary_name,)
+    return {
+        "workspace_root": str(package.manifest.parent.parent),
+        "target_directory": str(package.target_directory),
+        "packages": [
+            {
+                "manifest_path": str(package.manifest),
+                "default_run": default_run,
+                "targets": [
+                    {"name": name, "kind": ["bin"]} for name in names
+                ],
+            }
+        ],
+    }
 
-        assert workspace_root(package) == workspace
 
+class TestFindingThePackage:
     def test_the_package_is_the_nearest_manifest(self, root: Path) -> None:
         scenario = root / "server" / "scenario"
         scenario.mkdir()
 
         assert package_manifest(scenario) == root / "server" / MANIFEST
 
-    def test_literal_package_name_is_supported(self, root: Path) -> None:
-        manifest = root / "server" / MANIFEST
-        manifest.write_text(
-            "[package]\nname = 'rust-server'\nversion = '0.1.0'\n",
-            encoding="utf-8",
-        )
-
-        assert package_manifest(root / "server") == manifest
-
-    def test_being_outside_a_workspace_says_so(self, tmp_path: Path) -> None:
-        with pytest.raises(LayoutError, match="workspace"):
-            workspace_root(tmp_path)
+    def test_being_outside_a_package_says_so(self, tmp_path: Path) -> None:
+        with pytest.raises(LayoutError, match="package"):
+            package_manifest(tmp_path)
 
 
 class TestBuilding:
     def test_it_builds_the_current_package_in_release_mode(
-        self, root: Path
+        self, package: CargoPackage
     ) -> None:
-        manifest = root / "server" / MANIFEST
-        command = build_command(manifest)
+        command = build_command(package)
 
         assert "--release" in command
         assert "--locked" in command
-        assert command[command.index("--manifest-path") + 1] == str(manifest)
+        assert command[command.index("--manifest-path") + 1] == str(
+            package.manifest
+        )
+        assert command[command.index("--bin") + 1] == package.binary_name
 
 
 class TestCommandLineErrors:
@@ -126,14 +126,17 @@ class TestCommandLineErrors:
 
     def test_missing_executable_is_reported(
         self,
-        root: Path,
+        package: CargoPackage,
         monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         def missing(command: list[str]) -> int:
             raise FileNotFoundError(2, "No such file or directory")
 
-        monkeypatch.chdir(root / "server")
+        monkeypatch.chdir(package.manifest.parent)
+        monkeypatch.setattr(
+            otel_conformance_rust, "cargo_package", lambda _: package
+        )
         monkeypatch.setattr(otel_conformance_rust.subprocess, "call", missing)
 
         assert otel_conformance_rust.main(["build"]) == 1
@@ -144,7 +147,7 @@ class TestCommandLineErrors:
 
     def test_missing_cargo_is_reported_before_running(
         self,
-        root: Path,
+        package: CargoPackage,
         monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str],
     ) -> None:
@@ -153,7 +156,7 @@ class TestCommandLineErrors:
         ) -> subprocess.CompletedProcess[str]:
             raise FileNotFoundError(2, "No such file or directory")
 
-        monkeypatch.chdir(root / "server")
+        monkeypatch.chdir(package.manifest.parent)
         monkeypatch.setattr(otel_conformance_rust.subprocess, "run", missing)
 
         assert otel_conformance_rust.main(["run"]) == 1
@@ -164,18 +167,16 @@ class TestCommandLineErrors:
 
     def test_missing_scenario_binary_suggests_building(
         self,
-        root: Path,
+        package: CargoPackage,
         monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         def missing(command: list[str]) -> int:
             raise FileNotFoundError(2, "No such file or directory")
 
-        monkeypatch.chdir(root / "server")
+        monkeypatch.chdir(package.manifest.parent)
         monkeypatch.setattr(
-            otel_conformance_rust,
-            "target_directory",
-            lambda _: root / "custom-target",
+            otel_conformance_rust, "cargo_package", lambda _: package
         )
         monkeypatch.setattr(otel_conformance_rust.subprocess, "call", missing)
 
@@ -189,45 +190,101 @@ class TestCommandLineErrors:
 
 class TestRunning:
     def test_the_binary_is_absolute_and_platform_specific(
-        self, root: Path
+        self, package: CargoPackage
     ) -> None:
-        manifest = root / "server" / MANIFEST
-        path = binary(root / "custom-target", manifest)
+        path = binary(package)
 
         assert path.is_absolute()
         assert path.name == f"rust-server{'.exe' if os.name == 'nt' else ''}"
 
-    def test_the_target_directory_comes_from_cargo(
-        self, root: Path, monkeypatch: pytest.MonkeyPatch
+    def test_the_layout_comes_from_cargo(
+        self, package: CargoPackage, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        manifest = root / "server" / MANIFEST
-        expected = root / "custom-target"
         commands: list[list[str]] = []
 
-        def metadata(
+        def cargo_metadata(
             command: list[str], **_: object
         ) -> subprocess.CompletedProcess[str]:
             commands.append(command)
             return subprocess.CompletedProcess(
                 command,
                 0,
-                stdout=json.dumps({"target_directory": str(expected)}),
+                stdout=json.dumps(metadata(package)),
             )
 
-        monkeypatch.setattr(otel_conformance_rust.subprocess, "run", metadata)
-
-        assert target_directory(manifest) == expected
-        assert commands[0][0:2] == ["cargo", "metadata"]
-        assert commands[0][commands[0].index("--manifest-path") + 1] == str(
-            manifest
+        monkeypatch.setattr(
+            otel_conformance_rust.subprocess, "run", cargo_metadata
         )
 
-    def test_cargo_metadata_failure_is_a_layout_error(
-        self, root: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        manifest = root / "server" / MANIFEST
+        assert cargo_package(package.manifest) == package
+        assert commands[0][0:2] == ["cargo", "metadata"]
+        assert commands[0][commands[0].index("--manifest-path") + 1] == str(
+            package.manifest
+        )
 
-        def metadata(
+    def test_the_binary_target_name_comes_from_cargo(
+        self, package: CargoPackage, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        expected = CargoPackage(
+            package.manifest,
+            package.target_directory,
+            "scenario-server",
+        )
+        monkeypatch.setattr(
+            otel_conformance_rust.subprocess,
+            "run",
+            lambda command, **_: subprocess.CompletedProcess(
+                command,
+                0,
+                stdout=json.dumps(metadata(expected)),
+            ),
+        )
+
+        assert cargo_package(package.manifest) == expected
+
+    def test_default_run_selects_one_of_multiple_binaries(
+        self, package: CargoPackage, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            otel_conformance_rust.subprocess,
+            "run",
+            lambda command, **_: subprocess.CompletedProcess(
+                command,
+                0,
+                stdout=json.dumps(
+                    metadata(
+                        package,
+                        binaries=("first", "scenario-server"),
+                        default_run="scenario-server",
+                    )
+                ),
+            ),
+        )
+
+        assert cargo_package(package.manifest).binary_name == "scenario-server"
+
+    def test_multiple_binaries_without_default_run_are_rejected(
+        self, package: CargoPackage, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            otel_conformance_rust.subprocess,
+            "run",
+            lambda command, **_: subprocess.CompletedProcess(
+                command,
+                0,
+                stdout=json.dumps(
+                    metadata(package, binaries=("first", "second"))
+                ),
+            ),
+        )
+
+        with pytest.raises(LayoutError, match="multiple binary targets"):
+            cargo_package(package.manifest)
+
+    def test_cargo_metadata_failure_is_a_layout_error(
+        self, package: CargoPackage, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def cargo_metadata(
             command: list[str], **options: object
         ) -> subprocess.CompletedProcess[str]:
             assert options["check"] is False
@@ -238,17 +295,17 @@ class TestRunning:
                 stderr="invalid Cargo.lock",
             )
 
-        monkeypatch.setattr(otel_conformance_rust.subprocess, "run", metadata)
+        monkeypatch.setattr(
+            otel_conformance_rust.subprocess, "run", cargo_metadata
+        )
 
         with pytest.raises(LayoutError, match="invalid Cargo.lock"):
-            target_directory(manifest)
+            cargo_package(package.manifest)
 
     def test_non_json_cargo_metadata_is_a_layout_error(
-        self, root: Path, monkeypatch: pytest.MonkeyPatch
+        self, package: CargoPackage, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        manifest = root / "server" / MANIFEST
-
-        def metadata(
+        def cargo_metadata(
             command: list[str], **_: object
         ) -> subprocess.CompletedProcess[str]:
             return subprocess.CompletedProcess(
@@ -258,20 +315,20 @@ class TestRunning:
                 stderr="",
             )
 
-        monkeypatch.setattr(otel_conformance_rust.subprocess, "run", metadata)
+        monkeypatch.setattr(
+            otel_conformance_rust.subprocess, "run", cargo_metadata
+        )
 
         with pytest.raises(LayoutError, match="not JSON"):
-            target_directory(manifest)
+            cargo_package(package.manifest)
 
     def test_arguments_reach_the_scenario(
-        self, root: Path, monkeypatch: pytest.MonkeyPatch
+        self, package: CargoPackage, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         commands: list[list[str]] = []
-        monkeypatch.chdir(root / "server")
+        monkeypatch.chdir(package.manifest.parent)
         monkeypatch.setattr(
-            otel_conformance_rust,
-            "target_directory",
-            lambda _: root / "custom-target",
+            otel_conformance_rust, "cargo_package", lambda _: package
         )
         monkeypatch.setattr(
             otel_conformance_rust.subprocess,
@@ -282,8 +339,7 @@ class TestRunning:
         assert otel_conformance_rust.main(["run", "--flag", "value"]) == 0
         assert commands[0][1:] == ["--flag", "value"]
 
-    def test_running_executes_what_building_produced(self, root: Path) -> None:
-        manifest = root / "server" / MANIFEST
-        target = root / "custom-target"
-
-        assert run_command(target, manifest)[0] == str(binary(target, manifest))
+    def test_running_executes_what_building_produced(
+        self, package: CargoPackage
+    ) -> None:
+        assert run_command(package)[0] == str(binary(package))
