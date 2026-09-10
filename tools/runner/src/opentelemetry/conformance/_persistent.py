@@ -797,16 +797,20 @@ def partition_persistent_exports(
     batch_end = (
         _OPEN_END if batch_end_unix_nano is None else batch_end_unix_nano
     )
-    # Where readiness ends and the first action begins. Taken from the
-    # instrumentation's own clock when it reported one, because a coarse
-    # system clock can put the driver's send at the same nanosecond as an
-    # interval that closed before it.
-    first_start = actions[0].sent_unix_nano
+    # Where readiness ends and the first action begins. The driver reports
+    # when it started the request after receiving the control record.
+    first_start = (
+        actions[0].requested_unix_nano or actions[0].sent_unix_nano
+    )
     if bootstrap_unix_nano:
         first_start = max(first_start, bootstrap_unix_nano + 1)
     starts: list[int] = []
     for index, action in enumerate(actions):
-        start = first_start if index == 0 else action.sent_unix_nano
+        start = (
+            first_start
+            if index == 0
+            else action.requested_unix_nano or action.sent_unix_nano
+        )
         if start <= 0:
             raise PersistentProtocolError("invalid action timing boundary")
         # A coarse clock can time two sends to the same nanosecond, which
