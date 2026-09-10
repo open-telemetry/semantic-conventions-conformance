@@ -542,10 +542,10 @@ def _parse_server(value: object, where: str) -> ServerSpec:
     )
 
 
-def _parse_additional_metrics(
+def _parse_metrics(
     value: object, where: str
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    """Split the package's extra metrics into required and optional ones.
+    """Split metric declarations into required and optional names.
 
     A bare name is recorded by every action, so it joins the exact check.
     ``{name: ..., required: false}`` is recorded by only some of them —
@@ -643,6 +643,11 @@ def _parse_scenario(
         if "spans" in scenario
         else None
     )
+    metrics, optional_metrics = (
+        _parse_metrics(scenario["metrics"], f"{where}.metrics")
+        if "metrics" in scenario
+        else (None, ())
+    )
     if "run" not in scenario and run_spec is None:
         raise SpecError(
             f"{where}: run is required — name the command that runs this "
@@ -670,9 +675,7 @@ def _parse_scenario(
             _parse_span(span, f"{where}.spans[{index}]")
             for index, span in enumerate(spans)
         ),
-        metrics=_parse_string_list(scenario["metrics"], f"{where}.metrics")
-        if "metrics" in scenario
-        else None,
+        metrics=metrics,
         events=_parse_string_list(scenario["events"], f"{where}.events")
         if "events" in scenario
         else None,
@@ -680,6 +683,7 @@ def _parse_scenario(
         index=index,
         action=action,
         protocol=parsed_run.protocol,
+        optional_metrics=optional_metrics,
     )
 
 
@@ -925,7 +929,7 @@ def load_spec(directory: Path) -> PackageSpec:
             for name, scenario in declared.items()
         }
 
-    additional_metrics, optional_metrics = _parse_additional_metrics(
+    additional_metrics, optional_metrics = _parse_metrics(
         document.get("additional_metrics"), f"{path}.additional_metrics"
     )
     additional_spans = tuple(

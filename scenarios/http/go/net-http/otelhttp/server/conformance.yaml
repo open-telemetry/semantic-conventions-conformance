@@ -11,3 +11,7 @@ scenario_contract: ../../../../../../tools/http/contracts/server.yaml
 # The external driver prevents server instrumentation from recording client
 # spans and closes stdin after the traffic so the server can flush.
 scenario_run: otel-http-drive --serve otel-conformance-go run
+
+additional_metrics:
+  - http.server.request.body.size
+  - http.server.response.body.size

@@ -476,16 +476,17 @@ def test_http_representatives_resolve_their_own_side_contract() -> None:
     root = Path(__file__).resolve().parents[3]
     packages = {
         root / "scenarios/http/python/wsgi/opentelemetry-wsgi/server": (
-            "http.server.active_requests",
-            "http.server.request.duration",
+            ("http.server.active_requests",),
+            ("http.server.request.duration",),
         ),
         root
         / "scenarios/http/java/java-http-server/opentelemetry-javaagent/server": (
-            "http.server.request.duration",
+            (),
+            ("http.server.request.duration",),
         ),
     }
 
-    for package, metrics in packages.items():
+    for package, (metrics, optional_metrics) in packages.items():
         spec = load_spec(package)
         assert tuple(spec.scenarios) == tuple(
             f"{index:04d}" for index in range(5)
@@ -497,6 +498,7 @@ def test_http_representatives_resolve_their_own_side_contract() -> None:
             assert scenario.spans[0].match.kind == "SERVER"
             assert scenario.spans[0].count == 1
             assert scenario.metrics == metrics
+            assert scenario.optional_metrics == optional_metrics
 
     client = load_spec(
         root / "scenarios/http/python/requests/opentelemetry-requests/client"
@@ -536,6 +538,29 @@ scenarios:
         "demo.requests",
     )
     assert spec.scenarios["unchecked"].metrics is None
+
+
+def test_scenario_metrics_can_be_optional(tmp_path: Path) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenarios:
+  measured:
+    run: echo measured
+    metrics:
+      - demo.required
+      - name: demo.optional
+        required: false
+""",
+        )
+    )
+
+    measured = spec.scenarios["measured"]
+    assert measured.metrics == ("demo.required",)
+    assert measured.optional_metrics == ("demo.optional",)
 
 
 def test_optional_metrics_and_additional_spans_permit_without_requiring(

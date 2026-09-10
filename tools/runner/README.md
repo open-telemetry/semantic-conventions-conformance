@@ -310,6 +310,14 @@ called two *different* tools, without pinning down which.
 key you write is checked exactly: nothing missing, nothing extra, including
 when empty — `events: []` means "emits no events".
 
+An optional metric is allowed without being required:
+
+```yaml
+metrics:
+  - name: http.server.request.duration
+    required: false
+```
+
 Several implementations can share telemetry expectations while keeping their
 commands and configuration local. A named contract's only top-level key is
 `scenarios`; each scenario may declare `spans`, `metrics` and `events`, but not

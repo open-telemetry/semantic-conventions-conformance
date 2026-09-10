@@ -14,6 +14,10 @@ server:
 scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 scenario_run: otel-conformance-ruby run client.rb
 
+additional_spans:
+  - match:
+      kind: INTERNAL
+
 expected_violations:
   - id: error_type_missing_on_error
     reason: The instrumentation does not set error.type on 4xx or 5xx responses.
