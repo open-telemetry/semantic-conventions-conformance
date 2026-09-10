@@ -18,8 +18,7 @@ so every Go framework agrees on the statuses and bodies. `Drive` takes the
 progress output as an `io.Writer` and the sender as a function, so callers
 control the logs and requests leave the library being measured.
 
-Standard library only, so importing it next to a scenario drags no dependency
-into a run.
+The only non-standard dependency parses the shared YAML contract.
 
 ## Finding the contract
 

@@ -16,15 +16,16 @@ one: the version-pinned Gradle build under `java/` and the solution under
 workspace they root.
 
 An instrumentation's directory holds everything about it, the way a gen-ai
-one holds its `pyproject.toml` beside its `conformance.yaml`. For Java that is
-the Gradle project that builds its `main` classes, while `scenarios/` holds
-what both of them run — the same sharing `gen-ai/python/<library>/scenarios/`
-has, where one program is run by every instrumentation of that library:
+one holds its `pyproject.toml` beside its `conformance.yaml`. Java uses a
+Gradle project that builds its `main` classes, while PHP uses one locked
+Composer package per side. `scenarios/` holds telemetry-free workload code:
 
 ```text
 java/armeria/scenarios/                  what the client and server do, no OTel
 java/armeria/opentelemetry-javaagent/    build.gradle.kts, src/, client/, server/
 java/armeria/opentelemetry-library/      build.gradle.kts, src/, client/, server/
+php/slim/scenarios/                      Slim routes and responses, no OTel
+php/slim/opentelemetry-slim/             composer.json, lock, server/
 ```
 
 The `main` classes are per instrumentation because attaching library
@@ -111,7 +112,7 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js \
-  -e tools/dotnet -e tools/go
+  -e tools/dotnet -e tools/php -e tools/go
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
@@ -139,6 +140,8 @@ otel-conformance scenarios/http/python/tornado/opentelemetry-tornado/server
 otel-conformance scenarios/http/python/urllib/opentelemetry-urllib/client
 otel-conformance scenarios/http/python/urllib3/opentelemetry-urllib3/client
 otel-conformance scenarios/http/python/wsgi/opentelemetry-wsgi/server
+otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
+otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 ```
 
 Every Java package is built and started the same way, so
@@ -158,6 +161,12 @@ scenario directory sits inside the project that produces it, so `build`
 publishes that project and `run` starts what it published from
 `dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
 neither a configuration nor an assembly path.
+
+PHP packages use `otel-conformance-php install` to install their own committed
+lockfile. A Slim server runs through `otel-conformance-php serve`, which owns
+the driver's shutdown protocol while `php -S` keeps PHP's request-scoped
+lifecycle and flushes telemetry at each request shutdown. See
+[`php/`](php/README.md).
 
 Go's build root is [`go/`](go), and [`otel-conformance-go`](../../tools/go)
 holds how a Go package is built and started: `setup:` compiles the scenario and

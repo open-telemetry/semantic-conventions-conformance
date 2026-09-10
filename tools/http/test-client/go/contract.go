@@ -8,12 +8,10 @@
 // the same requests and their coverage files stay comparable. Every Go
 // framework shares this package rather than restating the answers, while
 // server scenarios declare their routes in their framework's native form.
-//
-// Only the standard library, so importing it next to a scenario drags no
-// dependency into a run.
 package httpcontract
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -21,8 +19,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"encoding/json"
 
 	"go.yaml.in/yaml/v3"
 )
