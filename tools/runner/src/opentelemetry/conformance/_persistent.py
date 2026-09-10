@@ -400,7 +400,9 @@ class PersistentController:
         close in between and leave nothing left to wait for.
 
         Returns the boundary that divides readiness from the first action,
-        read from the instrumentation's own clock where it reported one.
+        which is when the driver sent the readiness request. A point that
+        aggregates readiness together with an action straddles that instant,
+        so partitioning rejects it rather than attributing it.
         """
         required_metrics = {
             metric
@@ -425,7 +427,7 @@ class PersistentController:
                     if end >= ready_unix_nano
                 ]
                 if closed:
-                    return max(closed)
+                    return ready_unix_nano
             else:
                 # No metric window to close, so nothing can aggregate
                 # readiness together with an action. Settling on the

@@ -1466,6 +1466,59 @@ def test_bootstrap_settles_while_its_export_is_still_going_upstream(
     assert capture.in_flight == 1, "the forward never had to complete"
 
 
+def test_the_bootstrap_boundary_is_the_readiness_request(
+    tmp_path: Path,
+) -> None:
+    """One collection reads the clock once per instrument.
+
+    A sibling instrument's next interval therefore starts at its own
+    reading, microseconds before the declared metric's. Ending readiness at
+    the declared metric's reading would leave that interval straddling the
+    boundary, so the boundary is when the driver sent readiness, which every
+    reading in the collection that answered it comes after.
+    """
+
+    ready_unix_nano = 1_000
+    capture = _Capture(
+        exports=(
+            _metric(100, 1_150, name="body.size"),
+            _metric(100, 1_200, name="duration"),
+        )
+    )
+    controller, _watch = _watched(
+        tmp_path, capture, timeout=5.0, settle_delay=0.0
+    )
+    controller._scenarios = (
+        replace(controller._scenarios[0], metrics=("duration",)),
+    )
+
+    boundary = controller._wait_for_bootstrap(
+        capture.open_window("batch"), ready_unix_nano
+    )
+
+    assert boundary == ready_unix_nano
+
+    partition = partition_persistent_exports(
+        (
+            *capture.exports,
+            _metric(1_150, 2_200, name="body.size"),
+            _metric(1_200, 2_250, name="duration"),
+        ),
+        (_window("first", 1, 1_300),),
+        2_400,
+        boundary,
+    )
+
+    assert sorted(partition.bootstrap.metric_names) == [
+        "body.size",
+        "duration",
+    ]
+    assert sorted(partition.windows[0].metric_names) == [
+        "body.size",
+        "duration",
+    ]
+
+
 def test_bootstrap_that_never_isolates_times_out_without_spinning(
     tmp_path: Path,
 ) -> None:
