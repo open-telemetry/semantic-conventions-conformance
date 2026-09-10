@@ -17,11 +17,11 @@ import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
+from types import ModuleType
 from typing import Literal, cast
 
 import pytest
 
-import opentelemetry.test.weaver_live_check as live_check
 from opentelemetry.conformance import (
     SpecError,
     WeaverSpec,
@@ -722,7 +722,13 @@ def test_weaver_inactivity_timeout_is_disabled_for_the_package(
         options.update(kwargs)
         return _SessionWeaver()
 
-    monkeypatch.setattr(live_check, "WeaverLiveCheck", weaver)
+    # The test job installs the runner without its lazy test-utils
+    # dependency, so the module `_new_live_check` imports has to be a stub.
+    live_check = ModuleType("opentelemetry.test.weaver_live_check")
+    live_check.__dict__["WeaverLiveCheck"] = weaver
+    monkeypatch.setitem(
+        sys.modules, "opentelemetry.test.weaver_live_check", live_check
+    )
 
     _new_live_check(session(directory, tmp_path / "data.json"))
 
