@@ -183,11 +183,7 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
         with:
-          toolchain: 1.88.0
-          components: clippy,rustfmt
-          # The Cargo workspace, which is not the repository root the action's
-          # cache assumes: without this it saves a `target/` no build writes.
-          cache-workspaces: scenarios/http/rust
+          rust-src-dir: scenarios/http/rust
 
       # One workspace includes the scenario binaries and the shared Rust crates
       # under tools/, so these commands cover every Rust package used here.
@@ -455,10 +451,7 @@ jobs:
         if: matrix.language == 'rust'
         uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
         with:
-          toolchain: 1.88.0
-          # The Cargo workspace, which is not the repository root the action's
-          # cache assumes: without this it saves a `target/` no build writes.
-          cache-workspaces: ${{ env.SCENARIO_ROOT }}
+          rust-src-dir: ${{ env.SCENARIO_ROOT }}
 
       - name: Install weaver
         run: |
