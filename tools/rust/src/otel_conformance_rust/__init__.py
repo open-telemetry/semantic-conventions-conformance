@@ -8,9 +8,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence, cast
 
@@ -29,12 +29,21 @@ class LayoutError(RuntimeError):
     """The Rust package or workspace could not be found."""
 
 
+@dataclass(frozen=True)
+class CargoPackage:
+    """The Cargo paths and binary target for a scenario package."""
+
+    manifest: Path
+    target_directory: Path
+    binary_name: str
+
+
 def package_manifest(start: Path | None = None) -> Path:
     """Find the nearest Cargo package manifest at or above ``start``."""
     here = (start or Path.cwd()).resolve()
     for candidate in (here, *here.parents):
         manifest = candidate / MANIFEST
-        if manifest.is_file() and _section_value(manifest, "package", "name"):
+        if manifest.is_file():
             return manifest
     raise LayoutError(
         f"no package {MANIFEST} at or above {here} — "
@@ -42,45 +51,8 @@ def package_manifest(start: Path | None = None) -> Path:
     )
 
 
-def workspace_root(start: Path | None = None) -> Path:
-    """Find the Cargo workspace root for the package at ``start``."""
-    here = (start or Path.cwd()).resolve()
-    for candidate in (here, *here.parents):
-        manifest = candidate / MANIFEST
-        if manifest.is_file() and _has_section(manifest, "workspace"):
-            return candidate
-        declared = (
-            _section_value(manifest, "package", "workspace")
-            if manifest.is_file()
-            else None
-        )
-        if declared is not None:
-            workspace = (candidate / declared).resolve()
-            workspace_manifest = workspace / MANIFEST
-            if workspace_manifest.is_file() and _has_section(
-                workspace_manifest, "workspace"
-            ):
-                return workspace
-            raise LayoutError(
-                f"{manifest} declares workspace {declared!r}, but "
-                f"{workspace_manifest} has no [workspace]"
-            )
-    raise LayoutError(
-        f"no workspace {MANIFEST} at or above {here} — "
-        "`otel-conformance-rust` runs from inside a Cargo workspace"
-    )
-
-
-def package_name(manifest: Path) -> str:
-    """Return the package name declared by ``manifest``."""
-    name = _section_value(manifest, "package", "name")
-    if name is None:
-        raise LayoutError(f"{manifest} has no [package] name")
-    return name
-
-
-def target_directory(manifest: Path) -> Path:
-    """Return the target directory Cargo resolves for ``manifest``."""
+def cargo_package(manifest: Path) -> CargoPackage:
+    """Return Cargo's resolved layout for the scenario package."""
     result = subprocess.run(
         [
             "cargo",
@@ -111,21 +83,84 @@ def target_directory(manifest: Path) -> Path:
         raise LayoutError(
             f"cargo metadata returned invalid JSON for {manifest}: {detail}"
         ) from error
-    target = metadata.get("target_directory")
-    if not isinstance(target, str):
+
+    target_directory = metadata.get("target_directory")
+    package_values = metadata.get("packages")
+    if not isinstance(target_directory, str) or not isinstance(
+        package_values, list
+    ):
         raise LayoutError(
-            f"cargo metadata for {manifest} has no target_directory"
+            f"cargo metadata for {manifest} has an invalid package layout"
         )
-    return Path(target)
+
+    package: dict[str, object] | None = None
+    resolved_manifest = manifest.resolve()
+    for value in cast(list[object], package_values):
+        if not isinstance(value, dict):
+            continue
+        candidate = cast(dict[str, object], value)
+        candidate_manifest = candidate.get("manifest_path")
+        if (
+            isinstance(candidate_manifest, str)
+            and Path(candidate_manifest).resolve() == resolved_manifest
+        ):
+            package = candidate
+            break
+    if package is None:
+        raise LayoutError(f"{manifest} is not a Cargo package manifest")
+
+    target_values = package.get("targets")
+    if not isinstance(target_values, list):
+        raise LayoutError(f"cargo metadata for {manifest} has no targets")
+    binaries: list[str] = []
+    for value in cast(list[object], target_values):
+        if not isinstance(value, dict):
+            continue
+        cargo_target = cast(dict[str, object], value)
+        name = cargo_target.get("name")
+        kinds = cargo_target.get("kind")
+        if (
+            isinstance(name, str)
+            and isinstance(kinds, list)
+            and "bin" in kinds
+        ):
+            binaries.append(name)
+
+    default_run = package.get("default_run")
+    if isinstance(default_run, str):
+        if default_run not in binaries:
+            raise LayoutError(
+                f"cargo metadata for {manifest} has an invalid default-run "
+                f"target {default_run!r}"
+            )
+        binary_name = default_run
+    elif len(binaries) == 1:
+        binary_name = binaries[0]
+    elif not binaries:
+        raise LayoutError(f"{manifest} has no binary target")
+    else:
+        raise LayoutError(
+            f"{manifest} has multiple binary targets and no default-run"
+        )
+
+    return CargoPackage(
+        manifest=resolved_manifest,
+        target_directory=Path(target_directory),
+        binary_name=binary_name,
+    )
 
 
-def binary(target: Path, manifest: Path) -> Path:
-    """Return the absolute release binary path for ``manifest``."""
+def binary(package: CargoPackage) -> Path:
+    """Return the absolute release binary path for ``package``."""
     suffix = ".exe" if os.name == "nt" else ""
-    return (target / PROFILE / f"{package_name(manifest)}{suffix}").resolve()
+    return (
+        package.target_directory
+        / PROFILE
+        / f"{package.binary_name}{suffix}"
+    ).resolve()
 
 
-def build_command(manifest: Path) -> list[str]:
+def build_command(package: CargoPackage) -> list[str]:
     """Build only the scenario package, in release mode."""
     return [
         "cargo",
@@ -133,42 +168,17 @@ def build_command(manifest: Path) -> list[str]:
         "--release",
         "--locked",
         "--manifest-path",
-        str(manifest),
+        str(package.manifest),
+        "--bin",
+        package.binary_name,
     ]
 
 
 def run_command(
-    target: Path, manifest: Path, arguments: Sequence[str] = ()
+    package: CargoPackage, arguments: Sequence[str] = ()
 ) -> list[str]:
     """Execute the binary produced by :func:`build_command`."""
-    return [str(binary(target, manifest)), *arguments]
-
-
-def _has_section(manifest: Path, section: str) -> bool:
-    pattern = re.compile(rf"^\s*\[{re.escape(section)}\]\s*(?:#.*)?$")
-    return any(
-        pattern.match(line)
-        for line in manifest.read_text(encoding="utf-8").splitlines()
-    )
-
-
-def _section_value(
-    manifest: Path, section: str, key: str
-) -> str | None:
-    section_pattern = re.compile(
-        rf"^\s*\[{re.escape(section)}\]\s*(?:#.*)?$"
-    )
-    key_pattern = re.compile(
-        rf"""^\s*{re.escape(key)}\s*=\s*(?:"([^"]+)"|'([^']+)')\s*(?:#.*)?$"""
-    )
-    in_section = False
-    for line in manifest.read_text(encoding="utf-8").splitlines():
-        if line.lstrip().startswith("["):
-            in_section = bool(section_pattern.match(line))
-            continue
-        if in_section and (match := key_pattern.match(line)):
-            return match.group(1) or match.group(2)
-    return None
+    return [str(binary(package)), *arguments]
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -191,19 +201,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     try:
         manifest = package_manifest()
-        workspace_root(manifest.parent)
         # Each call names the program it could not start, because a
         # `FileNotFoundError` says which one only on some platforms: Windows
         # raises it out of `CreateProcess`, which leaves `filename` unset.
+        try:
+            package = cargo_package(manifest)
+        except FileNotFoundError:
+            return _fail(parser, CARGO_MISSING)
         if arguments.command == RUN:
-            try:
-                target = target_directory(manifest)
-            except FileNotFoundError:
-                return _fail(parser, CARGO_MISSING)
-            command = run_command(target, manifest, scenario_arguments)
+            command = run_command(package, scenario_arguments)
             absent = BINARY_MISSING
         else:
-            command = build_command(manifest)
+            command = build_command(package)
             absent = CARGO_MISSING
         try:
             return subprocess.call(command)  # noqa: S603
