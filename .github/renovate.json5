@@ -38,6 +38,12 @@
       "groupName": "javascript-minor"
     },
     {
+      // group all non-major Ruby dependency updates into a single PR
+      "matchManagers": ["bundler"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "ruby-minor"
+    },
+    {
       // group all non-major .NET dependency updates into a single PR
       "matchManagers": ["nuget"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -53,6 +59,18 @@
       "matchManagers": ["pep621", "poetry"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "python-minor"
+    },
+    {
+      // group all non-major Go dependency updates into a single PR
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "go-minor"
+    },
+    {
+      // group all non-major PHP dependency updates into a single PR
+      "matchManagers": ["composer"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "php-minor"
     },
     {
       // Everything under this Maven group ships only `-alpha` versions, so
@@ -93,6 +111,28 @@
         "opentelemetry-util-genai"
       ],
       "ignoreUnstable": false
+    },
+    {
+      // requires-python specifies the supported Python version for a project,
+      // not a dependency to bump to the newest minor.
+      "matchPackageNames": ["python"],
+      "matchDepTypes": ["requires-python"],
+      "enabled": false
+    },
+    {
+      // google-adk and crewai cap opentelemetry-sdk below 1.43, so keep
+      // their core SDK packages pinned.
+      "matchFileNames": [
+        "scenarios/gen-ai/python/google-adk/**",
+        "scenarios/gen-ai/python/crewai/**"
+      ],
+      "matchPackageNames": [
+        "opentelemetry-api",
+        "opentelemetry-sdk",
+        "opentelemetry-exporter-otlp-proto-grpc",
+        "opentelemetry-distro"
+      ],
+      "enabled": false
     }
   ],
   "customManagers": [

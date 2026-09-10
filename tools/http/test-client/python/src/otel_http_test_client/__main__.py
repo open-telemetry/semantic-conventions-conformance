@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import ctypes
 import json
 import os
@@ -55,9 +56,7 @@ def _contract_path() -> Path:
     packaged = Path(__file__).parent / "server.yaml"
     if packaged.is_file():
         return packaged
-    return (
-        Path(__file__).resolve().parents[4] / "contracts" / "server.yaml"
-    )
+    return Path(__file__).resolve().parents[4] / "contracts" / "server.yaml"
 
 
 def _load_contract() -> tuple[Exchange, ...]:
@@ -342,7 +341,11 @@ def _serve_and_drive(
             else:
                 _drive_exchanges(base_url, exchanges[1:])
         except BaseException:
-            _kill_tree(tree)
+            try:
+                _stop_after_error(tree)
+            except Exception:
+                with contextlib.suppress(Exception):
+                    _kill_tree(tree)
             raise
 
         result = _stop(tree)
@@ -384,6 +387,19 @@ def _start_process(
         process.wait()
         raise
     return _ProcessTree(process, job)
+
+
+def _stop_after_error(tree: _ProcessTree) -> None:
+    """Deliver EOF before force-killing a failed scenario."""
+    process = tree.process
+    if process.stdin is not None:
+        process.stdin.close()
+    try:
+        process.wait(timeout=_SHUTDOWN_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        _kill_tree(tree)
+    else:
+        tree.close_owner()
 
 
 def _drive_persistent(

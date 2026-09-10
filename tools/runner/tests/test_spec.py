@@ -45,6 +45,7 @@ def test_minimal_spec_leaves_every_expectation_unchecked(
 
     assert spec.instrumented_library == "demo"
     assert spec.instrumentation_library == "demo-instrumentation"
+    assert spec.otlp_protocol == "grpc"
     scenario = spec.scenarios["inference"]
     assert scenario.run == ("python", "inference.py")
     assert scenario.spans is None
@@ -474,8 +475,7 @@ scenario_run: run
 def test_http_representatives_resolve_their_own_side_contract() -> None:
     root = Path(__file__).resolve().parents[3]
     packages = {
-        root
-        / "scenarios/http/python/wsgi/opentelemetry-wsgi/server": (
+        root / "scenarios/http/python/wsgi/opentelemetry-wsgi/server": (
             "http.server.active_requests",
             "http.server.request.duration",
         ),
@@ -499,8 +499,7 @@ def test_http_representatives_resolve_their_own_side_contract() -> None:
             assert scenario.metrics == metrics
 
     client = load_spec(
-        root
-        / "scenarios/http/python/requests/opentelemetry-requests/client"
+        root / "scenarios/http/python/requests/opentelemetry-requests/client"
     )
     assert all(
         scenario.spans is not None
@@ -877,9 +876,7 @@ def test_scenario_run_no_longer_declares_a_protocol(
 ) -> None:
     """`jsonl-v1` is between the runner and a driven process, not config."""
 
-    (tmp_path / "contract.yaml").write_text(
-        _SERVER_CONTRACT, encoding="utf-8"
-    )
+    (tmp_path / "contract.yaml").write_text(_SERVER_CONTRACT, encoding="utf-8")
 
     with pytest.raises(SpecError, match=message):
         load_spec(
@@ -950,6 +947,23 @@ scenario_run: run
 """,
             )
         )
+
+
+def test_package_may_select_otlp_http_protobuf(tmp_path: Path) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+otlp_protocol: http/protobuf
+scenarios:
+  inference:
+    run: python inference.py
+""",
+        )
+    )
+    assert spec.otlp_protocol == "http/protobuf"
 
 
 def test_span_expectation(tmp_path: Path) -> None:
@@ -1069,6 +1083,18 @@ def test_span_keys_survive_separators_in_a_value() -> None:
             "  a:\n    run: x",
             "unknown key",
             id="unknown-server-key",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: http/json\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="unknown-otlp-protocol",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: [grpc]\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="non-string-otlp-protocol",
         ),
     ],
 )

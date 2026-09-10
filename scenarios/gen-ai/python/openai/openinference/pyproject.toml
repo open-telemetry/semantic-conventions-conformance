@@ -3,8 +3,8 @@ name = "openai-openinference-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "openai==3.6.0",
-    "openinference-instrumentation-openai==0.1.56",
+    "openai==3.10.0",
+    "openinference-instrumentation-openai==0.1.58",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.44.0",

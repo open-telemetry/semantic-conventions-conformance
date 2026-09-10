@@ -1,0 +1,16 @@
+{
+  "name": "open-telemetry-conformance/scenario",
+  "description": "Environment support shared by PHP conformance scenarios.",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "OpenTelemetry\\Conformance\\Scenario\\": "src/"
+    }
+  },
+  "scripts": {
+    "test": "@php tests/run.php"
+  }
+}

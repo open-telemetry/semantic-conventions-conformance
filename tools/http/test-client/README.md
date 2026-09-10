@@ -195,3 +195,14 @@ handoffs; only the runner and `otel-http-drive` read a contract file, and
   `HttpServerWorkload.Respond` looks up answers for any .NET framework, and
   `HttpClientWorkload.DriveAsync` sends one runner-selected request through a
   caller-supplied sender. Its unit tests drive both halves against each other.
+- [`ruby/`](ruby) — `OpenTelemetry::Conformance::HTTP` decodes the environment,
+  `respond` looks up answers for any Ruby framework, and `drive` sends one
+  runner-selected request through a caller-supplied sender. Its unit tests
+  drive both halves against each other.
+- [`php/`](php) — `Contract` decodes the environment,
+  `ServerWorkload::respond` looks up answers, and `ClientWorkload::drive` sends
+  one runner-selected request through a caller-supplied function. Its unit
+  tests drive both halves against each other.
+- [`go/`](go) — `httpcontract`: `Respond` looks up answers for any Go
+  framework and `Drive` sends one runner-selected request, with unit tests over
+  both halves. It decodes the same runner-supplied JSON as every other helper.

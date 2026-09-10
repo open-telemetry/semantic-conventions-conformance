@@ -18,6 +18,8 @@ from typing import Literal, Mapping, Sequence, cast
 import yaml
 
 SPEC_FILE = "conformance.yaml"
+OtlpProtocol = Literal["grpc", "http/protobuf"]
+DEFAULT_OTLP_PROTOCOL: OtlpProtocol = "grpc"
 _SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
 
 # Who initiates the action a scenario measures, declared once at the top of a
@@ -286,6 +288,7 @@ class PackageSpec:
     # Which wrapper supplies the registry and the reduction (see
     # :mod:`._runners`). None means the caller supplies all available runners.
     runner: str | None = None
+    otlp_protocol: OtlpProtocol = DEFAULT_OTLP_PROTOCOL
     runner_config: Mapping[str, object] = field(
         default_factory=dict[str, object]
     )
@@ -598,6 +601,17 @@ def _with_package_additions(
     )
 
 
+def _parse_otlp_protocol(
+    mapping: Mapping[str, object], where: str
+) -> OtlpProtocol:
+    value = mapping.get("otlp_protocol", DEFAULT_OTLP_PROTOCOL)
+    if not isinstance(value, str) or value not in {"grpc", "http/protobuf"}:
+        raise SpecError(
+            f"{where}.otlp_protocol: expected 'grpc' or 'http/protobuf'"
+        )
+    return cast("OtlpProtocol", value)
+
+
 def _parse_string_list(value: object, where: str) -> tuple[str, ...]:
     if value is None:
         return ()
@@ -774,6 +788,7 @@ def load_spec(directory: Path) -> PackageSpec:
             "scenario_run",
             "instrumented_library",
             "instrumentation_library",
+            "otlp_protocol",
             "env",
             "weaver",
             "server",
@@ -951,6 +966,7 @@ def load_spec(directory: Path) -> PackageSpec:
         setup=_parse_command(document["setup"], f"{path}.setup")
         if "setup" in document
         else None,
+        otlp_protocol=_parse_otlp_protocol(document, str(path)),
         expected_violations=expected_violations,
         scenarios=parsed_scenarios,
         action_table=action_table,

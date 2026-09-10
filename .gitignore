@@ -10,12 +10,20 @@ output/
 results/
 
 # Gradle: its caches, and everything a scenario's `setup` builds into them.
+# `build/` is also where a Go scenario's `setup` compiles its binary.
 .gradle/
 build/
 
 # npm: the dependency tree a scenario's `setup` installs. The lockfile is committed.
 node_modules/
 
+# Bundler: local configuration and cached gems. Gemfile.lock is committed.
+**/.bundle/
+**/vendor/bundle/
+
 # .NET: what a build writes, which the artifacts output layout collects into
 # one directory per build root.
 artifacts/
+
+# Composer: installed dependencies. Every package's lockfile is committed.
+vendor/

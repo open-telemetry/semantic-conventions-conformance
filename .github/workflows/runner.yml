@@ -43,11 +43,11 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pyyaml flask testcontainers grpcio opentelemetry-proto
-          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/dotnet
+          python -m pip install pytest pyyaml flask grpcio opentelemetry-proto testcontainers
+          python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/ruby -e tools/dotnet -e tools/php -e tools/go
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/dotnet/tests
+        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests tools/php/tests tools/go/tests
 
   lint:
     name: Lint
@@ -94,6 +94,33 @@ jobs:
           npm --prefix scenarios/http/js run format:check
           npm --prefix scenarios/http/js test
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: tools/http/test-client/ruby
+
+      - name: Test Ruby
+        working-directory: tools/http/test-client/ruby
+        run: |
+          bundle exec rake
+          bundle exec ruby -I../../../ruby/scenario-support/lib ../../../ruby/scenario-support/test/scenario_support_test.rb
+
+      - name: Test Ruby Net::HTTP scenario
+        working-directory: scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_http/client
+        run: |
+          bundle install
+          bundle exec rake
+          bundle exec ruby -I../../../../../../tools/ruby/scenario-support/lib -I../../../../../../tools/ruby/scenario-sdk/lib ../../../../../../tools/ruby/scenario-sdk/test/scenario_sdk_test.rb
+          bundle exec ruby -I../../../../../../tools/ruby/scenario-sdk/lib ../../../../../../tools/ruby/scenario-sdk/test/scenario_sdk_integration_test.rb
+
+      - name: Test Ruby Rack scenario
+        working-directory: scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server
+        run: |
+          bundle install
+          bundle exec rake
+
       - name: Set up .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -109,6 +136,49 @@ jobs:
         run: |
           dotnet build http-dotnet-conformance.slnx
           dotnet test http-dotnet-conformance.slnx --no-build
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.4"
+          extensions: opentelemetry, grpc, protobuf
+          coverage: none
+
+      - name: Build PHP
+        run: |
+          composer --working-dir tools/http/test-client/php validate --strict
+          composer --working-dir tools/http/test-client/php install --no-interaction --no-progress
+          composer --working-dir tools/http/test-client/php test
+          composer --working-dir tools/php/scenario validate --strict
+          composer --working-dir tools/php/scenario install --no-interaction --no-progress
+          composer --working-dir tools/php/scenario test
+          composer --working-dir scenarios/http/php/slim/opentelemetry-slim validate --strict
+          composer --working-dir scenarios/http/php/slim/opentelemetry-slim install --no-interaction --no-progress
+          composer --working-dir scenarios/http/php/guzzle/opentelemetry-guzzle validate --strict
+          composer --working-dir scenarios/http/php/guzzle/opentelemetry-guzzle install --no-interaction --no-progress
+          find tools/http/test-client/php tools/php/scenario scenarios/http/php \
+            -path '*/vendor' -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: scenarios/http/go/go.mod
+
+      # Each directory is a separate Go module, so check and test them
+      # independently.
+      - name: Build Go
+        run: |
+          unformatted="$(find tools/go tools/http/test-client/go scenarios/http/go \
+            -type f -name '*.go' -exec gofmt -l {} +)"
+          if [ -n "$unformatted" ]; then
+            echo "The following Go files need gofmt:"
+            printf '%s\n' "$unformatted"
+            exit 1
+          fi
+          for module in tools/go tools/http/test-client/go scenarios/http/go; do
+            (cd "$module" && go vet ./... && go test ./...)
+          done
 
   types:
     name: Types
@@ -147,7 +217,10 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/ruby \
+            -e tools/dotnet \
+            -e tools/php \
+            -e tools/go
 
       - name: Run pyright
         run: python -m pyright
@@ -245,14 +318,26 @@ jobs:
                 split("\n") |
                 map(
                   select(length > 0) |
-                  split("/") |
-                  if length < 4 then
-                    error("unexpected conformance scenario path: " + join("/"))
+                  split("/") as $parts |
+                  if ($parts | length) < 4 then
+                    error("unexpected conformance scenario path: " + ($parts | join("/")))
+                  elif $parts[2] == "ruby" then
+                    {
+                      domain: $parts[1],
+                      language: $parts[2],
+                      matrix_id: ($parts[1:-1] | join("-")),
+                      scenario_root: ($parts[0:-1] | join("/"))
+                    }
                   else
-                    {domain: .[1], language: .[2]}
+                    {
+                      domain: $parts[1],
+                      language: $parts[2],
+                      matrix_id: ($parts[1:3] | join("-")),
+                      scenario_root: ($parts[0:3] | join("/"))
+                    }
                   end
                 ) |
-                unique |
+                unique_by(.scenario_root) |
                 {include: .}
               '
           )"
@@ -260,13 +345,13 @@ jobs:
 
   scenarios:
     needs: discover-scenarios
-    name: Scenarios (${{ matrix.domain }}, ${{ matrix.language }})
+    name: Scenarios (${{ matrix.matrix_id }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      SCENARIO_ROOT: scenarios/${{ matrix.domain }}/${{ matrix.language }}
+      SCENARIO_ROOT: ${{ matrix.scenario_root }}
     concurrency:
-      group: ${{ github.workflow }}-scenarios-${{ matrix.domain }}-${{ matrix.language }}-${{ github.event.pull_request.number || github.ref }}
+      group: ${{ github.workflow }}-scenarios-${{ matrix.matrix_id }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -321,6 +406,31 @@ jobs:
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
+      - name: Set up Ruby
+        if: matrix.language == 'ruby'
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: ${{ matrix.scenario_root }}
+
+      - name: Set up PHP
+        if: matrix.language == 'php'
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.4"
+          extensions: opentelemetry, grpc, protobuf
+          coverage: none
+
+      # A Go scenario builds itself from source in its `setup:` before it runs,
+      # and a domain's Go scenarios are one module rooted at its own
+      # `scenarios/<domain>/go`, which is where the toolchain is pinned.
+      - name: Set up Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/go.mod
+
       - name: Install weaver
         run: |
           . tools/runner/src/opentelemetry/conformance/versions.env
@@ -345,7 +455,10 @@ jobs:
             -e tools/python \
             -e tools/java \
             -e tools/js \
-            -e tools/dotnet
+            -e tools/ruby \
+            -e tools/dotnet \
+            -e tools/php \
+            -e tools/go
 
       # Keyed by domain too: a matrix job fetches only the registry its own
       # domain pins, so one key per domain keeps every cache complete.
@@ -385,8 +498,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: telemetry-reports-${{ matrix.domain }}-${{ matrix.language }}
-          path: scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/output/reports/**/*.json
+          name: telemetry-reports-${{ matrix.matrix_id }}
+          path: ${{ matrix.scenario_root }}/**/output/reports/**/*.json
           if-no-files-found: warn
 
   required-status-check:

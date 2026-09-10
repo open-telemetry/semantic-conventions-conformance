@@ -48,6 +48,7 @@ from ._otlp_capture import (
     OtlpCaptureProxy,
     UnexpectedExportsError,
 )
+from ._otlp_http import OtlpHttpBridge
 from ._persistent import (
     DEFAULT_SETTLE_DELAY,
     DEFAULT_WINDOW_TIMEOUT,
@@ -91,6 +92,11 @@ _SCENARIO_WINDOW_TIMEOUT = (
 _SCENARIO_SETTLE_DELAY = (
     "OTEL_CONFORMANCE_SCENARIO_SETTLE_DELAY",
     DEFAULT_SETTLE_DELAY,
+)
+_OTLP_SIGNAL_ENV = tuple(
+    f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
+    for signal in ("TRACES", "METRICS", "LOGS")
+    for setting in ("ENDPOINT", "PROTOCOL")
 )
 
 # Both relative to the conformance directory. The reports are diagnostic;
@@ -236,6 +242,7 @@ class ConformanceSession:
         self._resources: ExitStack | None = None
         self._live_check: _WeaverProcess | None = None
         self._capture: OtlpCaptureProxy | None = None
+        self._otlp_endpoint: str | None = None
         self._package_report: PackageReport | None = None
         self._finalize_error: BaseException | None = None
         self._ending = False
@@ -260,9 +267,10 @@ class ConformanceSession:
             return self._run_persistent((scenario,))[0]
         self.start()
         assert self._capture is not None
+        assert self._otlp_endpoint is not None
         window = self._capture.open_window(name)
         try:
-            completed = self._execute(scenario, self._capture.endpoint)
+            completed = self._execute(scenario, self._otlp_endpoint)
         finally:
             telemetry = self._capture.close_window(
                 window,
@@ -334,12 +342,13 @@ class ConformanceSession:
     ) -> tuple[ScenarioReport, ...]:
         self.start()
         assert self._capture is not None
+        assert self._otlp_endpoint is not None
         first = scenarios[0]
         protocol = first.run_spec.protocol
         assert protocol is not None
         injected = {
-            "OTEL_EXPORTER_OTLP_ENDPOINT": self._capture.endpoint,
-            "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            "OTEL_EXPORTER_OTLP_ENDPOINT": self._otlp_endpoint,
+            "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
             # The command says what to start, not how it is driven. That
             # follows from the contract's driver role, so the runner tells
             # the process here rather than every package repeating a flag.
@@ -353,11 +362,14 @@ class ConformanceSession:
             injected[SCENARIO_ACTIONS_VARIABLE] = action_table_json(
                 self._spec.action_table
             )
+        env = self._env(first.env, injected)
+        for variable in _OTLP_SIGNAL_ENV:
+            env.pop(variable, None)
         controller = PersistentController(
             scenarios,
             capture=self._capture,
             cwd=first.directory,
-            env=self._env(first.env, injected),
+            env=env,
             timeout=timeout_seconds(*_SCENARIO_WINDOW_TIMEOUT),
             settle_delay=timeout_seconds(*_SCENARIO_SETTLE_DELAY),
             startup_timeout=timeout_seconds(*_SCENARIO_TIMEOUT),
@@ -405,12 +417,19 @@ class ConformanceSession:
             capture = resources.enter_context(
                 OtlpCaptureProxy(live_check.otlp_endpoint)
             )
+            if self._spec.otlp_protocol == "http/protobuf":
+                otlp_endpoint = resources.enter_context(
+                    OtlpHttpBridge(capture.endpoint)
+                ).url
+            else:
+                otlp_endpoint = capture.endpoint
         except BaseException:
             resources.close()
             raise
         self._resources = resources
         self._live_check = live_check
         self._capture = capture
+        self._otlp_endpoint = otlp_endpoint
 
     def _new_live_check(self) -> _WeaverProcess:
         from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
@@ -528,7 +547,7 @@ class ConformanceSession:
             )
         injected = {
             "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-            "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
             "OTEL_METRIC_EXPORT_INTERVAL": str(METRIC_EXPORT_INTERVAL_MILLIS),
         }
         if scenario.index is not None:
@@ -540,10 +559,13 @@ class ConformanceSession:
                 separators=(",", ":"),
                 sort_keys=True,
             )
+        env = self._env(scenario.env, injected)
+        for variable in _OTLP_SIGNAL_ENV:
+            env.pop(variable, None)
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
-            env=self._env(scenario.env, injected),
+            env=env,
         )
 
     def _env(
