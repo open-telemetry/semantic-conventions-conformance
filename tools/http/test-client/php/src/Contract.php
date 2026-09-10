@@ -181,6 +181,12 @@ final class Contract
         if ($method === '' || !str_starts_with($path, '/')) {
             throw new ContractException("{$where} has an invalid request");
         }
+        $status = self::intField($response, 'status', $where);
+        if ($status < 100 || $status > 599) {
+            throw new ContractException(
+                "{$where}.response.status must be an HTTP status",
+            );
+        }
 
         return new Exchange(
             $method,
@@ -188,7 +194,7 @@ final class Contract
             isset($request['body'])
                 ? self::stringField($request, 'body', $where)
                 : null,
-            self::intField($response, 'status', $where),
+            $status,
             self::stringField($response, 'body', $where),
             $readiness,
             $readiness ? 'runner readiness action' : 'runner action',
