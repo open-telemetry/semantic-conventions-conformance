@@ -37,6 +37,7 @@ known-first-party = [
   "otel_conformance_go",
   "otel_conformance_js",
   "otel_conformance_php",
+  "otel_conformance_ruby",
   "otel_http_test_client",
 ]
 known-third-party = ["pytest"]
@@ -62,4 +63,5 @@ include = [
   "tools/python/src",
   "tools/php/src",
   "tools/go/src",
+  "tools/ruby/src",
 ]

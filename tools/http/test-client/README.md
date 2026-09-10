@@ -134,6 +134,11 @@ under test.
   `HttpClientWorkload.DriveAsync` sends one runner-selected request through a
   caller-supplied sender. The build embeds `contract.yaml` as a manifest
   resource, and its unit tests drive both halves against each other.
+- [`ruby/`](ruby) — `OpenTelemetry::Conformance::HTTP` reads the file,
+  `respond` looks up answers for any Ruby framework, and `drive` sends the
+  measured requests together in one run through a caller-supplied sender.
+  A scenario depends on it by path, so it reads `contract.yaml` where it sits,
+  and its unit tests drive both halves against each other.
 - [`php/`](php) — `Contract` reads the file, `ServerWorkload::respond` looks up
   answers, and `ClientWorkload::drive` sends one runner-selected request
   through a caller-supplied function. Its unit tests drive both halves against

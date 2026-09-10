@@ -59,6 +59,29 @@ A Python instrumentation has nothing to build. Its workload is a module in
 `pyproject.toml` and `uv.lock` that pin one instrumentation, next to the
 `scenario.py` that turns it on before handing the workload to the harness.
 
+Ruby scenarios use MRI 3.4 and keep each side in its own locked Bundler package:
+
+```text
+ruby/net_http/scenarios/client.rb
+ruby/net_http/opentelemetry-instrumentation-net_http/client/
+    Gemfile
+    Gemfile.lock
+    client.rb
+    conformance.yaml
+ruby/rack/scenarios/server.rb
+ruby/rack/opentelemetry-instrumentation-rack/server/
+    Gemfile
+    Gemfile.lock
+    scenario.rb
+    conformance.yaml
+```
+
+[`otel-conformance-ruby`](../../tools/ruby) finds the nearest `Gemfile` and
+`Gemfile.lock`, installs the frozen bundle under that package's `vendor/bundle`,
+and starts its entry point with `bundle exec ruby`. Repository helpers resolve
+through path dependencies, and neither package writes to the user-wide gem
+installation.
+
 ## The scenario contract
 
 [`contract.yaml`](../../tools/http/test-client/contract.yaml) combines each
@@ -112,7 +135,7 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js \
-  -e tools/dotnet -e tools/php -e tools/go
+  -e tools/ruby -e tools/dotnet -e tools/php -e tools/go
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
@@ -140,6 +163,8 @@ otel-conformance scenarios/http/python/tornado/opentelemetry-tornado/server
 otel-conformance scenarios/http/python/urllib/opentelemetry-urllib/client
 otel-conformance scenarios/http/python/urllib3/opentelemetry-urllib3/client
 otel-conformance scenarios/http/python/wsgi/opentelemetry-wsgi/server
+otel-conformance scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_http/client
+otel-conformance scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server
 otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
 otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 ```
@@ -161,6 +186,19 @@ scenario directory sits inside the project that produces it, so `build`
 publishes that project and `run` starts what it published from
 `dotnet/artifacts/scenario-runtime/`. A `conformance.yaml` therefore names
 neither a configuration nor an assembly path.
+
+Ruby exporters use OTLP/HTTP protobuf, so each Ruby package selects it at the
+package level:
+
+```yaml
+otlp_protocol: http/protobuf
+```
+
+The runner gives the package a generic HTTP endpoint. The Ruby exporters append
+the signal-specific `/v1/traces`, `/v1/metrics`, and `/v1/logs` paths. The
+runner's local bridge accepts those protobuf requests and forwards them to
+Weaver over gRPC. Packages that use the default `grpc` protocol continue to
+export directly to Weaver.
 
 PHP packages use `otel-conformance-php install` to install their own committed
 lockfile. A Slim server runs through `otel-conformance-php serve`, which owns
