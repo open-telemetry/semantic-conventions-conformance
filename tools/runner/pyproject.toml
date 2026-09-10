@@ -9,9 +9,10 @@ description = "Runs scenario programs and checks what they emit against semantic
 requires-python = ">=3.10"
 dependencies = [
   "grpcio >= 1.66, < 2",
-  "opentelemetry-proto >= 1.27, < 2",
+  "opentelemetry-proto >= 1.28, < 2",
   # opentelemetry.test.weaver_live_check — imported lazily by the session.
   "opentelemetry-test-utils >= 0.65b0, <1",
+  "protobuf >= 5.27, < 7",
   "PyYAML >= 6.0.2",
 ]
 
