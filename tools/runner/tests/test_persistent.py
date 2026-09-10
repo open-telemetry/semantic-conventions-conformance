@@ -1519,6 +1519,39 @@ def test_the_bootstrap_boundary_is_the_readiness_request(
     ]
 
 
+def test_snapshot_metrics_do_not_hold_the_first_action(
+    tmp_path: Path,
+) -> None:
+    ready_unix_nano = time.time_ns()
+    capture = _Capture(
+        exports=(
+            _metric(
+                ready_unix_nano,
+                ready_unix_nano + 1,
+                metrics_pb2.AGGREGATION_TEMPORALITY_CUMULATIVE,
+                name="http.server.active_requests",
+                monotonic=False,
+            ),
+        )
+    )
+    controller, _watch = _watched(
+        tmp_path, capture, timeout=0.1, settle_delay=0.0
+    )
+    controller._scenarios = (
+        replace(
+            controller._scenarios[0],
+            metrics=("http.server.active_requests",),
+        ),
+    )
+
+    assert (
+        controller._wait_for_bootstrap(
+            capture.open_window("batch"), ready_unix_nano
+        )
+        == ready_unix_nano
+    )
+
+
 def test_bootstrap_that_never_isolates_times_out_without_spinning(
     tmp_path: Path,
 ) -> None:
