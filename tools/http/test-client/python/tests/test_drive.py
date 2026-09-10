@@ -9,6 +9,7 @@ import asyncio
 import json
 import os
 import re
+import signal
 import socket
 import subprocess
 import sys
@@ -914,6 +915,40 @@ class TestDrivingAServerScenario:
         )
 
         assert events == ["closed", "waited 3"]
+
+    def test_a_signal_kills_the_process_tree_immediately(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class Reservation:
+            def close(self) -> None:
+                pass
+
+        class Tree:
+            process = object()
+
+        tree = Tree()
+        killed: list[object] = []
+
+        monkeypatch.setattr(
+            driver, "reserve_port", lambda: (1234, Reservation())
+        )
+        monkeypatch.setattr(
+            driver, "_start_process", lambda *_args, **_kwargs: tree
+        )
+        monkeypatch.setattr(
+            driver,
+            "_wait_for_start",
+            lambda *_args, **_kwargs: driver._exit_on_signal(
+                signal.SIGTERM, None
+            ),
+        )
+        monkeypatch.setattr(driver, "_kill_tree", killed.append)
+
+        with pytest.raises(SystemExit) as raised:
+            driver._serve_and_drive(["scenario"])
+
+        assert raised.value.code == 128 + signal.SIGTERM
+        assert killed == [tree]
 
     def test_cleanup_failure_does_not_mask_the_original_error(
         self, monkeypatch: pytest.MonkeyPatch
