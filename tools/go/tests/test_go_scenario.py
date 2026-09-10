@@ -123,7 +123,7 @@ def test_http_client_runs_each_contract_request_with_its_index() -> None:
     )
     contract = yaml.safe_load(
         checkout.joinpath(
-            "tools", "http", "test-client", "contract.yaml"
+            "tools", "http", "contracts", "client.yaml"
         ).read_text(encoding="utf-8")
     )
 
