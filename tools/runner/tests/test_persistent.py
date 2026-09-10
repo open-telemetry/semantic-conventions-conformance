@@ -381,6 +381,7 @@ def _window(
         sequence=sequence,
         state=ActionState.SEALED,
         sent_unix_nano=start,
+        requested_unix_nano=start,
         response_unix_nano=start + 10,
         sealed_unix_nano=start + 20,
     )
@@ -1046,6 +1047,23 @@ def test_an_ambiguous_span_fails_closed() -> None:
         partition_persistent_exports(
             (_trace("01" * 16, 0, 0),), actions, 300
         )
+
+
+def test_control_delivery_gap_belongs_to_the_previous_window() -> None:
+    actions = (_window("first", 1, 100), _window("second", 2, 200))
+    actions[1].requested_unix_nano = 250
+
+    partition = partition_persistent_exports(
+        (
+            _trace("01" * 16, 220, 230),
+            _trace("02" * 16, 260, 270),
+        ),
+        actions,
+        300,
+    )
+
+    assert [span.name for span in partition.windows[0].spans] == ["0101"]
+    assert [span.name for span in partition.windows[1].spans] == ["0202"]
 
 
 def test_the_open_action_reaches_forward_without_bound() -> None:
