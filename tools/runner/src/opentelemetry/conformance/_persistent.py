@@ -428,6 +428,12 @@ class PersistentController:
                 ]
                 if closed:
                     return ready_unix_nano
+                if required_metrics.issubset(
+                    _snapshot_metric_names(
+                        captured, frozenset(required_metrics)
+                    )
+                ):
+                    return ready_unix_nano
             else:
                 # No metric window to close, so nothing can aggregate
                 # readiness together with an action. Settling on the
@@ -1353,6 +1359,34 @@ def _metric_point_ends(
                         point.time_unix_nano for point in data.data_points
                     )
     return ends
+
+
+def _snapshot_metric_names(
+    window: CapturedWindow, names: frozenset[str]
+) -> set[str]:
+    """Names whose points stand alone and cannot cross a boundary."""
+
+    snapshots: set[str] = set()
+    for item in window.exports:
+        request = item.request
+        if not isinstance(
+            request, metrics_service_pb2.ExportMetricsServiceRequest
+        ):
+            continue
+        for resource in request.resource_metrics:
+            for scope in resource.scope_metrics:
+                for metric in scope.metrics:
+                    if metric.name not in names:
+                        continue
+                    if self_monitoring(scope.scope.name, metric.name):
+                        continue
+                    data_name = metric.WhichOneof("data")
+                    if data_name is None:
+                        continue
+                    data = getattr(metric, data_name)
+                    if _reports_a_snapshot(data_name, data):
+                        snapshots.add(metric.name)
+    return snapshots
 
 
 def _validate_message(
