@@ -428,6 +428,23 @@ def test_an_optional_metric_is_neither_required_nor_undeclared() -> None:
     )
 
 
+def test_a_required_metric_is_not_weakened_by_an_optional_overlap() -> None:
+    declared = scenario(
+        metrics=("gen_ai.client.operation.duration",),
+        optional_metrics=("gen_ai.client.operation.duration",),
+    )
+
+    assert (
+        check(
+            declared,
+            window(metrics=("gen_ai.client.operation.duration",)),
+        )
+        == []
+    )
+    (missing,) = check(declared, window())
+    assert "not emitted" in missing
+
+
 def test_span_events_do_not_count_as_otlp_log_events() -> None:
     captured = window([captured_span()])
 

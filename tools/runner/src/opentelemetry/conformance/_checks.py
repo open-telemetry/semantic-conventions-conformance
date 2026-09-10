@@ -51,7 +51,8 @@ def check_scenario_telemetry(
             else _check_names(
                 "metric",
                 expected=set(spec.metrics),
-                seen=set(window.metric_names) - set(spec.optional_metrics),
+                seen=set(window.metric_names)
+                - (set(spec.optional_metrics) - set(spec.metrics)),
             )
         ),
         *(
