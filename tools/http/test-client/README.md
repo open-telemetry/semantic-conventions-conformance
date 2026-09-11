@@ -19,8 +19,10 @@ Each document has a contract-level `description`, a top-level `driver`, a
 `readiness` exchange, and a `scenarios` list. Each scenario has a
 human-readable `description`, an HTTP-specific `action`, and generic
 telemetry under `expect`. `readiness` has the same `description` and
-`action`, and no `expect`, because nothing measures it. Every language helper
-needs it, so a contract without it fails to load:
+`action`, and no `expect`, because nothing measures it. The runner puts it
+first in the action table it injects, and both contracts declare one: a client
+run polls it against the mock server, and a server run has `otel-http-drive`
+wait on it:
 
 ```yaml
 description: What an instrumented HTTP server emits for each request it answers.
@@ -52,9 +54,15 @@ scenarios:
               http.response.status_code: 200
           expect:
             count: 1
-      metrics: [http.server.request.duration]
+      metrics:
+        - name: http.server.request.duration
+          required: false
       events: []
 ```
+
+A metric written as a bare name is required of every action that declares it.
+The mapping form with `required: false`, as above, permits the metric without
+requiring it.
 
 The runner expands each entry into one action with its own capture window and
 report, and passes the action through `OTEL_CONFORMANCE_SCENARIO_ACTION` as
