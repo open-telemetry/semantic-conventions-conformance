@@ -36,6 +36,7 @@ from ._spec import ScenarioSpec
 PROTOCOL_VERSION = "jsonl-v1"
 DEFAULT_WINDOW_TIMEOUT = 10.0
 DEFAULT_SETTLE_DELAY = 0.25
+COARSE_SPAN_START_TOLERANCE_NS = 1_000_000
 
 # Where the still-running action's window ends: nowhere yet. A clock the
 # runner read would be a boundary the measured process never agreed to, and
@@ -917,6 +918,7 @@ def _partition_traces(
                     span.end_time_unix_nano,
                     ranges,
                     "span",
+                    start_tolerance_ns=COARSE_SPAN_START_TOLERANCE_NS,
                 )
                 trace_id = bytes(span.trace_id)
                 previous = seen_trace_ids.setdefault(trace_id, index)
@@ -1167,6 +1169,8 @@ def _assign_interval(
     end: int,
     ranges: Sequence[tuple[int, int]],
     description: str,
+    *,
+    start_tolerance_ns: int = 0,
 ) -> int:
     """The one window an interval belongs to, by its own timestamps.
 
@@ -1198,6 +1202,14 @@ def _assign_interval(
         )
     index = matches[0]
     if index != last and end > ranges[index][1]:
+        boundary = ranges[index][1]
+        next_index = index + 1
+        if (
+            start_tolerance_ns
+            and boundary - start <= start_tolerance_ns
+            and end <= ranges[next_index][1]
+        ):
+            return next_index
         raise PersistentProtocolError(
             f"{description} overlaps action intervals: point=[{start}, "
             f"{end}], actions={list(ranges)}"
@@ -1282,18 +1294,22 @@ def _positive_expectations_satisfied(
             ):
                 return False
     if scenario.metrics:
-        if not set(scenario.metrics).issubset(window.metric_names):
+        required_metrics = frozenset(scenario.metrics)
+        if not required_metrics.issubset(window.metric_names):
             return False
-        assert action.requested_unix_nano is not None
-        # The interval that recorded this action has to be closed, and only
-        # this action has recorded anything since the last one settled. An
-        # interval closing after the request went out is therefore this
-        # action's, whenever the answer reached the driver.
-        if not any(
-            boundary >= action.requested_unix_nano
-            for boundary in metric_boundaries
+        if not required_metrics.issubset(
+            _snapshot_metric_names(window, required_metrics)
         ):
-            return False
+            assert action.requested_unix_nano is not None
+            # The interval that recorded this action has to be closed, and
+            # only this action has recorded anything since the last one
+            # settled. An interval closing after the request went out is
+            # therefore this action's, whenever the answer reached the driver.
+            if not any(
+                boundary >= action.requested_unix_nano
+                for boundary in metric_boundaries
+            ):
+                return False
     if scenario.events and not set(scenario.events).issubset(
         window.event_names
     ):

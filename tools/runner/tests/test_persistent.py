@@ -34,6 +34,7 @@ from opentelemetry.conformance._persistent import (
     _ActionWindow,
     _delivered_contents,
     _Message,
+    _positive_expectations_satisfied,
     _reject_late_telemetry,
     partition_persistent_exports,
 )
@@ -981,6 +982,32 @@ def test_cumulative_up_down_counter_is_a_snapshot() -> None:
     assert partition.metric_boundaries == ((), ())
 
 
+def test_snapshot_metric_satisfies_an_action_without_a_boundary() -> None:
+    scenario = replace(
+        _scenario(("driver",)),
+        metrics=("http.server.active_requests",),
+    )
+    action = _ActionWindow(
+        scenario=scenario,
+        sequence=1,
+        requested_unix_nano=100,
+    )
+    captured = decode_window(
+        CaptureWindow("action", 1),
+        (
+            _metric(
+                1,
+                150,
+                metrics_pb2.AGGREGATION_TEMPORALITY_CUMULATIVE,
+                name="http.server.active_requests",
+                monotonic=False,
+            ),
+        ),
+    )
+
+    assert _positive_expectations_satisfied(action, captured, ())
+
+
 def test_readiness_telemetry_lands_in_the_bootstrap_window() -> None:
     actions = (_window("first", 1, 100),)
 
@@ -1038,19 +1065,26 @@ def test_a_sealed_window_that_never_changes_is_not_flagged() -> None:
 def test_an_ambiguous_span_fails_closed() -> None:
     """Nothing is guessed: a span the windows cannot place fails the batch."""
 
-    actions = (_window("first", 1, 100), _window("second", 2, 200))
+    actions = (
+        _window("first", 1, 1_000_000_000),
+        _window("second", 2, 2_000_000_000),
+    )
 
     with pytest.raises(PersistentProtocolError, match="overlaps action"):
         partition_persistent_exports(
-            (_trace("01" * 16, 150, 250),), actions, 300
+            (_trace("01" * 16, 1_500_000_000, 2_500_000_000),),
+            actions,
+            3_000_000_000,
         )
     with pytest.raises(PersistentProtocolError, match="unassignable"):
         partition_persistent_exports(
-            (_trace("01" * 16, 400, 500),), actions, 300
+            (_trace("01" * 16, 4_000_000_000, 5_000_000_000),),
+            actions,
+            3_000_000_000,
         )
     with pytest.raises(PersistentProtocolError, match="missing valid"):
         partition_persistent_exports(
-            (_trace("01" * 16, 0, 0),), actions, 300
+            (_trace("01" * 16, 0, 0),), actions, 3_000_000_000
         )
 
 
@@ -1153,6 +1187,28 @@ def test_one_trace_split_across_two_actions_fails_closed() -> None:
         PersistentProtocolError, match="one trace overlaps multiple"
     ):
         partition_persistent_exports((export,), actions, 300)
+
+
+def test_coarse_span_start_uses_the_window_containing_its_end() -> None:
+    actions = (
+        _window("first", 1, 1_000_000_000),
+        _window("second", 2, 2_000_000_000),
+    )
+
+    partition = partition_persistent_exports(
+        (
+            _trace(
+                "01" * 16,
+                1_999_500_000,
+                2_001_000_000,
+            ),
+        ),
+        actions,
+        3_000_000_000,
+    )
+
+    assert partition.windows[0].spans == ()
+    assert [span.name for span in partition.windows[1].spans] == ["0101"]
 
 
 def test_readiness_spans_are_excluded_by_the_bootstrap_window() -> None:
