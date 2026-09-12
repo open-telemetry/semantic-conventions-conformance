@@ -86,12 +86,11 @@ and starts its entry point with `bundle exec ruby`. Repository helpers resolve
 through path dependencies, and neither package writes to the user-wide gem
 installation.
 
-In Rust the split is between crates. Its plain workload crates hold Actix
-Web's native routes and the awc request sequence without importing
-OpenTelemetry. The instrumentation-specific binary crates install
-`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
-workspace at `rust/` includes the shared crates under `tools/` and commits one
-lockfile for all of them.
+In Rust the split is between crates. Its plain workload crates hold native
+Actix Web and Axum/Tower routes and the awc request sequence without importing
+OpenTelemetry. The instrumentation-specific binary crates install their
+middleware around those workloads. One Cargo workspace at `rust/` includes the
+shared crates under `tools/` and commits one lockfile for all of them.
 
 ## The scenario contract
 
@@ -105,7 +104,7 @@ shared without aggregating independent requests into one report.
 | --- | --- |
 | `GET /health` | Readiness only. It is not a contract-list scenario. |
 | `GET /users/123` | A parameterized route, so `http.route` is the template rather than the concrete path. |
-| `GET /users/123?fields=name&verbose=true` | A query string, which is `url.query` and must not leak into `http.route`, `url.path` or the span name. |
+| `GET /users/456?fields=name&verbose=true` | A query string, which is `url.query` and must not leak into `http.route`, `url.path` or the span name. Its distinct path lets validation identify this request when `url.query` is missing. |
 | `POST /items` | A non-GET carrying a body. The answer echoes it, so a scenario that never read the body fails. |
 | `GET /status/404` | A 4xx: `error.type` and `http.response.status_code`, on the span and the duration metric. |
 | `GET /status/500` | A 5xx, which some instrumentations treat differently from a 4xx. |
@@ -184,6 +183,7 @@ otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
 otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
 otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
+otel-conformance scenarios/http/rust/tower/opentelemetry-instrumentation-tower/server
 ```
 
 Every Java package is built and started the same way, so
