@@ -333,7 +333,7 @@ requests = [
 
 [[package]]
 name = "google-genai"
-version = "2.22.0"
+version = "2.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -347,9 +347,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/f1/f2f31b2a6bd826bc2cb73068df880954a026474c03a4315637d20cc13965/google_genai-2.22.0.tar.gz", hash = "sha256:9fa3b5d9ddb635005d8ab2d6206fb2b3d7204b66965bbce7de13ecd1a866ebcd", size = 684719, upload-time = "2026-09-02T18:06:02.906Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ae/9a/db14adffb0144584889e05f433a4e8ce540f9ed2928ed8b23cc65ab96178/google_genai-2.23.0.tar.gz", hash = "sha256:1ceebffdcd2af30c039a922ba05de61cd4054bb61c94be7649c4bf9ff8b33c5f", size = 686707, upload-time = "2026-09-10T22:55:31.12Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/96/0120d214958cb54f2b9c48da9f564a0e6eae269e9dd702415fb1d0551cc7/google_genai-2.22.0-py3-none-any.whl", hash = "sha256:c514001c45470cc0a942440ae1b8215445d12bfb6c373aac94637127e1f74ec6", size = 1088792, upload-time = "2026-09-02T18:06:00.629Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/b0/f6bc58a6a7c8ad7ad2b6a36b0bf4732b3504dd7d48c6674f848304548869/google_genai-2.23.0-py3-none-any.whl", hash = "sha256:1e63211d44d188b8069c2b354d92b9bde25c1e821513fdbe1948b7c0d9f6b922", size = 1093785, upload-time = "2026-09-10T22:55:29.282Z" },
 ]
 
 [[package]]
@@ -367,8 +367,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "google-genai", specifier = "==2.22.0" },
-    { name = "openinference-instrumentation-google-genai", specifier = "==1.4.5" },
+    { name = "google-genai", specifier = "==2.23.0" },
+    { name = "openinference-instrumentation-google-genai", specifier = "==1.4.7" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
     { name = "opentelemetry-distro", specifier = "==0.65b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
@@ -491,7 +491,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-google-genai"
-version = "1.4.5"
+version = "1.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -501,18 +501,18 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0b/db/86dbb481bc71b7f62779c68a10a2f7e1719e3e28568eec0b60300cfe7139/openinference_instrumentation_google_genai-1.4.5.tar.gz", hash = "sha256:4bb484f326f618eec732cb4bee1ffaffa66a00774c9c4a1fab30e92f1a34b00b", size = 155010, upload-time = "2026-09-04T20:16:15.468Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/d0/73368fb49dfc5a91a8362b8b6aa62c1570231ac7c275bba2fab983aacaed/openinference_instrumentation_google_genai-1.4.7.tar.gz", hash = "sha256:6d307b483d6a11de317ecee4f507348a63ae822cf2b4b9cc0e892b29574a21e2", size = 155011, upload-time = "2026-09-10T06:14:44.371Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ed/39/97bc7ae219e1fc27fada6c1eb8d0e4d93adc8a67cb5d88e618e435d6ae03/openinference_instrumentation_google_genai-1.4.5-py3-none-any.whl", hash = "sha256:7b5e6b2332382dfe0964a7752bbc5d103e1d69b503b05e9a0611b51c46b175eb", size = 38154, upload-time = "2026-09-04T20:16:14.153Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/ce/1cde889e23ae15c9b4ff5f37fd5812f7076d0a4cbd85cab9567ec0cb1936/openinference_instrumentation_google_genai-1.4.7-py3-none-any.whl", hash = "sha256:1cb939d72fdefb08c70b9a3920c4d8e34a80c015ea3f0614dc114589b9dc1f84", size = 38157, upload-time = "2026-09-10T05:43:17.129Z" },
 ]
 
 [[package]]
 name = "openinference-semantic-conventions"
-version = "0.1.35"
+version = "0.1.37"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e0/cd/1c26841447249b9fc402e342b9b3c042f8916b5abb485b8eb4e63ea6397c/openinference_semantic_conventions-0.1.35.tar.gz", hash = "sha256:b64864a5961fee7bf37d2e11491499baab223fac18efe671065dede55ccd5a3a", size = 14262, upload-time = "2026-09-04T20:16:04.645Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/14/b97e71d5aa73a838e9e2550e85d7a2e1a7f89831ac4de5425f93bdfcf896/openinference_semantic_conventions-0.1.37.tar.gz", hash = "sha256:ff1d7568bb75427320221ec0eee222a52a020b868e1846505be43af2b76808fd", size = 14575, upload-time = "2026-09-10T01:38:17.587Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/34/434cedb6f39b14e6eb8f203c33e97cee3907fc7f994d7c3cfcfbd4575787/openinference_semantic_conventions-0.1.35-py3-none-any.whl", hash = "sha256:a418df584fb3ec41d4214ac44562908f596df042c382d1445fafb26df2834cb2", size = 11484, upload-time = "2026-09-04T20:16:03.668Z" },
+    { url = "https://files.pythonhosted.org/packages/19/d7/8ddfc990d8af3a9ee328c71435ecbed85df3f6c3b363492be20a1a799777/openinference_semantic_conventions-0.1.37-py3-none-any.whl", hash = "sha256:5adb0b05c6fdd6a6cf1b5bbd5a370460ea1cb076184d46bb895b6b156a036722", size = 11692, upload-time = "2026-09-10T01:38:16.485Z" },
 ]
 
 [[package]]

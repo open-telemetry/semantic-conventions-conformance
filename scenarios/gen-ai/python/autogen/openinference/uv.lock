@@ -104,7 +104,7 @@ dependencies = [
 requires-dist = [
     { name = "autogen-agentchat", specifier = "==0.7.5" },
     { name = "autogen-ext", extras = ["openai"], specifier = "==0.7.5" },
-    { name = "openinference-instrumentation-autogen-agentchat", specifier = "==0.1.15" },
+    { name = "openinference-instrumentation-autogen-agentchat", specifier = "==0.1.17" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
     { name = "opentelemetry-distro", specifier = "==0.65b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
@@ -472,7 +472,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-autogen-agentchat"
-version = "0.1.15"
+version = "0.1.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "autogen-agentchat" },
@@ -483,18 +483,18 @@ dependencies = [
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/80/24/98594560f1b1a553957578f905df7c8d3d42fe974258afbb893a7c30b4e8/openinference_instrumentation_autogen_agentchat-0.1.15.tar.gz", hash = "sha256:7002edc467e68610349caa9fc78456498b2d619a1e9d28ac916bbad2c1c6d47a", size = 14594, upload-time = "2026-09-04T20:16:18.437Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/06/7093395ab5aa4740a6ed57141030ae1336f847123c4fcd9fe88016963bcc/openinference_instrumentation_autogen_agentchat-0.1.17.tar.gz", hash = "sha256:4b3fc8cf1fead02c9a8b7a0afb0f8a8f85ae8f2bd28fab5d765d2b4b93719a93", size = 14595, upload-time = "2026-09-10T05:43:23.181Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/b5/e125e4956cce90d69db3555ebc4fe63bd1da9980a46e5e4e35ae6fb45d38/openinference_instrumentation_autogen_agentchat-0.1.15-py3-none-any.whl", hash = "sha256:f1f9c9e68b587d817cdcd9832a02a2ed004128846963b418ac269824dc38ebac", size = 16534, upload-time = "2026-09-04T20:16:17.335Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/2c/80724a1a2de1ee0601704fddd95427c8a8b637fba8f484dd42ad5617437a/openinference_instrumentation_autogen_agentchat-0.1.17-py3-none-any.whl", hash = "sha256:f3d3150d8599444d47c14fe2cd1e20c6e0115bea8e51102f6ef582ad2a239f1f", size = 16534, upload-time = "2026-09-10T05:43:21.965Z" },
 ]
 
 [[package]]
 name = "openinference-semantic-conventions"
-version = "0.1.35"
+version = "0.1.37"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e0/cd/1c26841447249b9fc402e342b9b3c042f8916b5abb485b8eb4e63ea6397c/openinference_semantic_conventions-0.1.35.tar.gz", hash = "sha256:b64864a5961fee7bf37d2e11491499baab223fac18efe671065dede55ccd5a3a", size = 14262, upload-time = "2026-09-04T20:16:04.645Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/14/b97e71d5aa73a838e9e2550e85d7a2e1a7f89831ac4de5425f93bdfcf896/openinference_semantic_conventions-0.1.37.tar.gz", hash = "sha256:ff1d7568bb75427320221ec0eee222a52a020b868e1846505be43af2b76808fd", size = 14575, upload-time = "2026-09-10T01:38:17.587Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/34/434cedb6f39b14e6eb8f203c33e97cee3907fc7f994d7c3cfcfbd4575787/openinference_semantic_conventions-0.1.35-py3-none-any.whl", hash = "sha256:a418df584fb3ec41d4214ac44562908f596df042c382d1445fafb26df2834cb2", size = 11484, upload-time = "2026-09-04T20:16:03.668Z" },
+    { url = "https://files.pythonhosted.org/packages/19/d7/8ddfc990d8af3a9ee328c71435ecbed85df3f6c3b363492be20a1a799777/openinference_semantic_conventions-0.1.37-py3-none-any.whl", hash = "sha256:5adb0b05c6fdd6a6cf1b5bbd5a370460ea1cb076184d46bb895b6b156a036722", size = 11692, upload-time = "2026-09-10T01:38:16.485Z" },
 ]
 
 [[package]]

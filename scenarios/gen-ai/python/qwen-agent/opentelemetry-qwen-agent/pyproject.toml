@@ -8,7 +8,7 @@ dependencies = [
     "numpy==2.5.3",
     "soundfile==0.14.0",
     "python-dateutil==2.9.0.post0",
-    "tqdm==4.70.0",
+    "tqdm==4.70.1",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
