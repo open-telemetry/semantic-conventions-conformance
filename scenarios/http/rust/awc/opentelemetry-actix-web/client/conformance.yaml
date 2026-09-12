@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: awc
+instrumentation_library: opentelemetry-instrumentation-actix-web
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+
+# Compiling before measurement keeps Cargo and rustc out of the scenario.
+setup: otel-conformance-rust build
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenario_run: otel-conformance-rust run

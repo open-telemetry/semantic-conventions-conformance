@@ -27,3 +27,6 @@ artifacts/
 
 # Composer: installed dependencies. Every package's lockfile is committed.
 vendor/
+
+# Cargo: every workspace member shares this build directory.
+target/

@@ -1,0 +1,22 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "otel-conformance-scenario-sdk"
+version = "0.1.0"
+workspace = "../../../scenarios/http/rust"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+opentelemetry.workspace = true
+opentelemetry-otlp.workspace = true
+opentelemetry_sdk.workspace = true
+otel-conformance-scenario.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true

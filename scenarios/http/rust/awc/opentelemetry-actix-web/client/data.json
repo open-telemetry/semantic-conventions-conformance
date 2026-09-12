@@ -1,0 +1,78 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port",
+      "url.full",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "http_span_name_format",
+      "message": "Client span 'GET 127.0.0.1' should be named one of [\"GET\"]; a name built from the request URL makes every request a new span name.",
+      "signal_type": "span",
+      "signal_name": "GET 127.0.0.1",
+      "context": {
+        "expected": [
+          "GET"
+        ],
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET 127.0.0.1' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "GET 127.0.0.1",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Client span 'POST 127.0.0.1' should be named one of [\"POST\"]; a name built from the request URL makes every request a new span name.",
+      "signal_type": "span",
+      "signal_name": "POST 127.0.0.1",
+      "context": {
+        "expected": [
+          "POST"
+        ],
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST 127.0.0.1' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "POST 127.0.0.1",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    }
+  ]
+}
