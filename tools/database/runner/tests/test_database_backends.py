@@ -13,7 +13,16 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _hbase, _mariadb, _postgres
+from database_conformance._hbase import (
+    HBASE_1_IMAGE,
+    HBASE_2_IMAGE,
+    HBASE_MASTER_PORT,
+    HBASE_REGIONSERVER_PORT,
+    HBASE_ZOOKEEPER_PORT,
+    HBase1,
+    HBase2,
+)
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
@@ -30,14 +39,19 @@ class StubContainer:
         *,
         start_error: BaseException | None = None,
         stop_error: Exception | None = None,
+        log_error: Exception | None = None,
         exec_result: ExecResult | None = None,
         port: int = 5432,
+        published_port: int = 32768,
     ) -> None:
         self.start_error = start_error
         self.stop_error = stop_error
+        self.log_error = log_error
         self.exec_result = exec_result or ExecResult()
         self.port = port
+        self.published_port = published_port
         self.env: dict[str, str] = {}
+        self.kwargs: dict[str, Any] = {}
         self.ports: dict[str, Any] = {}
         self.transfers: list[tuple[bytes, str]] = []
         self.wait_strategy: object | None = None
@@ -55,6 +69,10 @@ class StubContainer:
         self.transfers.append((source, destination))
         return self
 
+    def with_kwargs(self, **kwargs: Any) -> StubContainer:
+        self.kwargs = kwargs
+        return self
+
     def waiting_for(self, strategy: object) -> StubContainer:
         self.wait_strategy = strategy
         return self
@@ -67,13 +85,15 @@ class StubContainer:
 
     def get_exposed_port(self, port: int) -> int:
         assert port == self.port
-        return 32768
+        return self.published_port
 
     def exec(self, config: ExecConfig) -> ExecResult:
         self.exec_config = config
         return self.exec_result
 
     def get_logs(self) -> tuple[bytes, bytes]:
+        if self.log_error is not None:
+            raise self.log_error
         return b"ready to accept connections\n", b""
 
     def stop(self) -> None:
@@ -148,13 +168,140 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.exec_config is not None
 
 
+class StubImage:
+    def __init__(self, *, build_error: DockerException | None = None) -> None:
+        self.build_error = build_error
+        self.built = False
+        self.removed = False
+
+    def build(self) -> StubImage:
+        if self.build_error is not None:
+            raise self.build_error
+        self.built = True
+        return self
+
+    def remove(self) -> None:
+        self.removed = True
+
+
+def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        port=HBASE_ZOOKEEPER_PORT,
+        published_port=HBASE_ZOOKEEPER_PORT,
+    )
+    image = StubImage()
+    image_arguments: dict[str, Any] = {}
+
+    def image_factory(**kwargs: Any) -> StubImage:
+        image_arguments.update(kwargs)
+        return image
+
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", image_factory)
+    with HBase1() as database:
+        assert database.variables == {
+            "DATABASE_HOST": "127.0.0.1",
+            "DATABASE_PORT": "2181",
+            "DATABASE_NAME": "conformance",
+            "DATABASE_USER": "",
+            "DATABASE_PASSWORD": "",
+        }
+
+    assert image.built
+    assert image.removed
+    assert image_arguments["tag"] == HBASE_1_IMAGE
+    assert image_arguments["clean_up"] is True
+    assert image_arguments["buildargs"] == {
+        "HBASE_VERSION": "1.7.2",
+        "HBASE_SHA512": (
+            "43c633606f4316319d0e872862bfee935a191308239ca42ad9545402fb9a83f9"
+            "399845123bdcda60c315bcb09bd7555375b73afcb3d668453d56e3985bf284fa"
+        ),
+    }
+    assert container.started
+    assert container.stopped
+    assert container.kwargs == {"hostname": "localhost"}
+    assert container.ports == {
+        f"{HBASE_ZOOKEEPER_PORT}/tcp": ("127.0.0.1", HBASE_ZOOKEEPER_PORT),
+        f"{HBASE_MASTER_PORT}/tcp": ("127.0.0.1", HBASE_MASTER_PORT),
+        f"{HBASE_REGIONSERVER_PORT}/tcp": (
+            "127.0.0.1",
+            HBASE_REGIONSERVER_PORT,
+        ),
+    }
+    assert container.exec_config is not None
+    assert container.exec_config.command == [
+        "hbase",
+        "shell",
+        "-n",
+        "/tmp/otel-conformance-hbase.rb",
+    ]
+
+
+def test_hbase_image_build_failure_is_actionable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    image = StubImage(build_error=DockerException("builder unavailable"))
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "Could not build the HBase fixture from the Apache HBase "
+            "distribution: builder unavailable"
+        ),
+    ):
+        HBase2().start()
+
+    assert image.removed
+
+
 def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     container = StubContainer(start_error=RuntimeError("startup failed"))
     install_stub(monkeypatch, _postgres, container)
 
-    with pytest.raises(RuntimeError, match="startup failed"):
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not start PostgreSQL: startup failed.*"
+        r"ready to accept connections",
+    ):
+        Postgres().start()
+
+    assert container.stopped
+
+
+@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit])
+def test_start_control_flow_exception_is_preserved_after_cleanup(
+    monkeypatch: pytest.MonkeyPatch,
+    error_type: type[BaseException],
+) -> None:
+    container = StubContainer(start_error=error_type())
+    install_stub(monkeypatch, _postgres, container)
+
+    with pytest.raises(error_type):
+        Postgres().start()
+
+    assert container.stopped
+
+
+def test_start_failure_survives_unavailable_container_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        start_error=RuntimeError("startup failed"),
+        log_error=RuntimeError("container not started"),
+    )
+    install_stub(monkeypatch, _postgres, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not start PostgreSQL: startup failed.*"
+        r"Could not read PostgreSQL logs: container not started",
+    ):
         Postgres().start()
 
     assert container.stopped
@@ -171,7 +318,8 @@ def test_cleanup_failure_is_reported_with_start_failure(
 
     with pytest.raises(
         RuntimeError,
-        match="startup failed\nPostgreSQL cleanup also failed: cleanup failed",
+        match=r"(?s)Could not start PostgreSQL: startup failed.*"
+        r"PostgreSQL cleanup also failed: cleanup failed",
     ):
         Postgres().start()
 
@@ -236,3 +384,30 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("hbase.rb")
+        .read_text(encoding="utf-8")
+    )
+    assert "create 'conformance:items', 'data'" in schema
+    assert "put 'conformance:items', 'seed', 'data:name', 'seed'" in schema
+
+
+def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
+    assert HBASE_1_IMAGE == "otel-conformance-hbase:1.7.2"
+    assert HBASE_2_IMAGE == "otel-conformance-hbase:2.4.18"
+    dockerfile = (
+        resources.files("database_conformance")
+        .joinpath("hbase-image", "Dockerfile")
+        .read_text(encoding="utf-8")
+    )
+
+    assert (
+        "FROM eclipse-temurin:8-jre-jammy@sha256:"
+        "d53aa7811eba390450721b1037978605992f5d9467c4af629384f23a49f78436"
+        in dockerfile
+    )
+    assert f"ARG HBASE_VERSION={_hbase.HBASE_2_VERSION}" in dockerfile
+    assert f"ARG HBASE_SHA512={_hbase._HBASE_2_SHA512}" in dockerfile
+    assert "sha512sum --check --strict" in dockerfile

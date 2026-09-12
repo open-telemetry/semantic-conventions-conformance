@@ -1,0 +1,36 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: hbase-1
+instrumented_library: hbase-client
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+scenario_contract: ../../../../contracts/hbase.yaml
+
+env:
+  HBASE_ZOOKEEPER_QUORUM: ${DATABASE_HOST}
+  HBASE_ZOOKEEPER_PORT: ${DATABASE_PORT}
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+  # HBase client logging activates SDK log-pipeline counters whose export is
+  # not guaranteed before these short-lived scenarios exit.
+  OTEL_LOGS_EXPORTER: none
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare hbase:hbase-1:opentelemetry-javaagent
+
+scenarios:
+  get:
+    run: otel-conformance-java run --agent hbase:hbase-1:opentelemetry-javaagent io.opentelemetry.conformance.database.hbase.HbaseScenario get
+
+  put:
+    run: otel-conformance-java run --agent hbase:hbase-1:opentelemetry-javaagent io.opentelemetry.conformance.database.hbase.HbaseScenario put
+
+  scan:
+    run: otel-conformance-java run --agent hbase:hbase-1:opentelemetry-javaagent io.opentelemetry.conformance.database.hbase.HbaseScenario scan
+
+  batch:
+    run: otel-conformance-java run --agent hbase:hbase-1:opentelemetry-javaagent io.opentelemetry.conformance.database.hbase.HbaseScenario batch
