@@ -147,6 +147,12 @@
       "id": "missing_metric",
       "message": "Metric does not exist in the registry.",
       "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.skill.loads"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
       "signal_name": "adk.experimental.invoke_agent.tool.input_tokens"
     },
     {
