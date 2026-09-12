@@ -1,0 +1,54 @@
+{
+  "spans": {
+    "db.cassandra.client": [
+      "cassandra.consistency.level",
+      "cassandra.coordinator.dc",
+      "cassandra.coordinator.id",
+      "cassandra.page.size",
+      "cassandra.query.idempotent",
+      "cassandra.speculative_execution.count",
+      "db.collection.name",
+      "db.operation.batch.size",
+      "db.operation.name",
+      "db.query.summary",
+      "db.query.text",
+      "error.type",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "db.client.operation.duration": [
+      "db.collection.name",
+      "db.operation.name",
+      "db.query.summary",
+      "db.system.name",
+      "error.type",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": []
+}

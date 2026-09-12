@@ -1,0 +1,101 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  query:
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: SELECT
+            db.collection.name: conformance.items
+            db.query.summary: SELECT conformance.items
+            db.query.text: SELECT name FROM conformance.items WHERE id = ?
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
+    events: []
+
+  prepared:
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: SELECT
+            db.collection.name: conformance.items
+            db.query.summary: SELECT conformance.items
+            db.query.text: SELECT name FROM conformance.items WHERE id = ?
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
+    events: []
+
+  batch:
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: BATCH INSERT
+            db.operation.batch.size: 2
+            db.collection.name: conformance.items
+            db.query.summary: BATCH INSERT conformance.items
+            db.query.text: INSERT INTO conformance.items (id, name) VALUES (?, ?)
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
+    events: []
+
+  error:
+    spans:
+      - match:
+          attributes:
+            db.system.name: cassandra
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: SELECT
+            db.collection.name: conformance.missing_table
+            db.query.summary: SELECT conformance.missing_table
+            db.query.text: SELECT * FROM conformance.missing_table
+            error.type: {present: true}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+      - processedSpans
+      - processedLogs
+      - otlp.exporter.seen
+      - otlp.exporter.exported
+    events: []

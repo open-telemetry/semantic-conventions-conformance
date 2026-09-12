@@ -14,6 +14,12 @@ rootProject.name = "database-java-conformance"
 include("shared:jdbc:scenarios")
 include("shared:jdbc:opentelemetry-javaagent")
 include("shared:jdbc:opentelemetry-library")
+include("shared:cassandra3:scenarios")
+include("shared:cassandra3:opentelemetry-javaagent")
+include("shared:cassandra4:scenarios")
+include("shared:cassandra4:opentelemetry-javaagent")
+include("shared:cassandra44:opentelemetry-javaagent")
+include("shared:cassandra44:opentelemetry-library")
 
 fun shared(name: String, directory: String) {
     include(name)
