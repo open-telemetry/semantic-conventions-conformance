@@ -4,7 +4,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Raw weaver reports from a run — one JSON per scenario, throwaway. The
+# Captured OTLP and aggregate Weaver reports are diagnostic output. The
 # reduction over the whole run (data.json) is committed.
 output/
 results/

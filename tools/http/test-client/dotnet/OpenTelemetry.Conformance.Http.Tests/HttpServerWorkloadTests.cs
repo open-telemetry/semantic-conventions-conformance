@@ -50,7 +50,8 @@ public class HttpServerWorkloadTests
     [Fact]
     public void AnAnswerComesFromTheContract()
     {
-        var answer = HttpServerWorkload.Respond("GET", "/status/500", null);
+        var answer = HttpServerWorkload.Respond(
+            "GET", "/status/500", null, TestActions.Exchanges);
 
         Assert.Equal(500, answer.StatusCode);
         Assert.Equal("{\"message\": \"status 500\"}", answer.Body);
@@ -59,7 +60,8 @@ public class HttpServerWorkloadTests
     [Fact]
     public void TheRouteIsFoundThroughTheConcretePathTheFrameworkReports()
     {
-        var answer = HttpServerWorkload.Respond("GET", "/users/123?fields=name", null);
+        var answer = HttpServerWorkload.Respond(
+            "GET", "/users/123?fields=name", null, TestActions.Exchanges);
 
         Assert.Equal(200, answer.StatusCode);
     }
@@ -67,7 +69,8 @@ public class HttpServerWorkloadTests
     [Fact]
     public void AScenarioThatNeverReadTheBodyWouldNotEchoIt()
     {
-        var answer = HttpServerWorkload.Respond("POST", "/items", "{\"name\": \"widget\"}");
+        var answer = HttpServerWorkload.Respond(
+            "POST", "/items", "{\"name\": \"widget\"}", TestActions.Exchanges);
 
         Assert.Equal(201, answer.StatusCode);
         Assert.Equal("{\"created\": true, \"payload\": {\"name\": \"widget\"}}", answer.Body);
@@ -81,7 +84,8 @@ public class HttpServerWorkloadTests
     [InlineData("")]
     public void AnAbsentBodyIsTheSameWhicheverWayAFrameworkSpellsIt(string? requestBody)
     {
-        var answer = HttpServerWorkload.Respond("POST", "/items", requestBody);
+        var answer = HttpServerWorkload.Respond(
+            "POST", "/items", requestBody, TestActions.Exchanges);
 
         Assert.Equal(201, answer.StatusCode);
         Assert.Equal("{\"created\": true, \"payload\": {}}", answer.Body);
@@ -90,7 +94,8 @@ public class HttpServerWorkloadTests
     [Fact]
     public void TrafficTheContractDoesNotDescribeIsRefused()
     {
-        var answer = HttpServerWorkload.Respond("GET", "/nope", null);
+        var answer = HttpServerWorkload.Respond(
+            "GET", "/nope", null, TestActions.Exchanges);
 
         Assert.Equal(404, answer.StatusCode);
     }

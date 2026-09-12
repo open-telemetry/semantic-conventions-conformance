@@ -6,7 +6,15 @@
 const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
-const { PORT_VARIABLE, respond, scenarioPort } = require("../src");
+const {
+  ACTIONS_VARIABLE,
+  PORT_VARIABLE,
+  respond,
+  scenarioPort,
+} = require("../src");
+const { ACTIONS_JSON } = require("./actions");
+
+process.env[ACTIONS_VARIABLE] = ACTIONS_JSON;
 
 describe("answering the contract", () => {
   it("takes an answer from the contract", () => {

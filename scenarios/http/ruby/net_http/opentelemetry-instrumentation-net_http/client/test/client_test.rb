@@ -8,6 +8,8 @@ require_relative "../../../scenarios/client"
 
 class NetHttpScenarioClientTest < Minitest::Test
   HTTPContract = OpenTelemetry::Conformance::HTTP
+  ACTIONS = '[{"request":{"method":"GET","path":"/health"},"response":{"status":200,"body":"{\"ok\": true}"}},{"request":{"method":"POST","path":"/items","body":"{\"name\": \"widget\"}"},"response":{"status":201,"body":"{\"created\": true, \"payload\": ${requestBody}}"}},{"request":{"method":"GET","path":"/status/500"},"response":{"status":500,"body":"{\"message\": \"status 500\"}"}}]'.freeze
+  ACTION = '{"request":{"method":"POST","path":"/items","body":"{\"name\": \"widget\"}"},"response":{"status":201,"body":"{\"created\": true, \"payload\": ${requestBody}}"}}'.freeze
 
   Response = Struct.new(:code, :body)
 
@@ -45,6 +47,8 @@ class NetHttpScenarioClientTest < Minitest::Test
 
   def setup
     FakeNetHTTP.reset
+    ENV[HTTPContract::ACTIONS_VARIABLE] = ACTIONS
+    ENV[HTTPContract::ACTION_VARIABLE] = ACTION
   end
 
   def test_runs_the_contract_over_one_connection
@@ -61,11 +65,8 @@ class NetHttpScenarioClientTest < Minitest::Test
     assert_equal 8443, connection.port
     assert_equal true, connection.use_ssl
     assert_equal 1, connection.starts
-    assert_equal HTTPContract.requests.length, connection.requests.length
-    assert_equal(
-      HTTPContract.requests.map(&:path),
-      connection.requests.map(&:path)
-    )
+    assert_equal 1, connection.requests.length
+    assert_equal ["/items"], connection.requests.map(&:path)
   end
 
   def test_sends_the_shared_headers_and_body

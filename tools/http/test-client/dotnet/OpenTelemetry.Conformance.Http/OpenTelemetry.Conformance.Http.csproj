@@ -3,13 +3,6 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The contract is shared with every other language, so it is embedded from
-       where it lives rather than copied into this project. -->
-  <ItemGroup>
-    <EmbeddedResource Include="../../contract.yaml" LogicalName="otel-http-contract.yaml" />
-    <PackageReference Include="YamlDotNet" />
-  </ItemGroup>
-
   <!-- The lookup is how this project reads the contract rather than API a
        scenario reaches for, so the tests that cover it reach in through
        `InternalsVisibleTo` rather than through public API. -->

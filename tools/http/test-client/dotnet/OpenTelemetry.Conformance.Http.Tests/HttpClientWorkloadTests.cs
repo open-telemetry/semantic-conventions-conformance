@@ -33,9 +33,10 @@ public class HttpClientWorkloadTests
             {
                 firstUrl ??= url;
                 var path = $"/{new Uri(url).PathAndQuery.TrimStart('/')}";
-                return Task.FromResult(HttpServerWorkload.Respond(method, path, body));
+                return Task.FromResult(
+                    HttpServerWorkload.Respond(method, path, body, TestActions.Exchanges));
             },
-            HttpContract.Request(0));
+            TestActions.Requests[0]);
 
         Assert.Equal($"{BaseUrl}/users/123", firstUrl);
     }
@@ -47,7 +48,7 @@ public class HttpClientWorkloadTests
             BaseUrl,
             (method, url, body) =>
                 Task.FromResult(new HttpContract.Response(599, "not JSON")),
-            HttpContract.Request(0));
+            TestActions.Requests[0]);
     }
 
     [Fact]
@@ -55,14 +56,14 @@ public class HttpClientWorkloadTests
         await Assert.ThrowsAsync<ArgumentException>(() => HttpClientWorkload.DriveAsync(
             "  ",
             (method, url, body) => Task.FromResult(new HttpContract.Response(200, "{}")),
-            HttpContract.Request(0)));
+            TestActions.Requests[0]));
 
     /// <summary>A sender backed by the other side of the same contract, which is what a run
     /// measures.</summary>
     private static async Task<List<string>> DriveAgainstTheContractAsync()
     {
         List<string> sent = [];
-        for (var index = 0; index < HttpContract.Requests.Count; index++)
+        foreach (var exchange in TestActions.Requests)
         {
             await HttpClientWorkload.DriveAsync(
                 BaseUrl,
@@ -70,9 +71,10 @@ public class HttpClientWorkloadTests
                 {
                     var path = url[BaseUrl.Length..];
                     sent.Add($"{method} {path}");
-                    return Task.FromResult(HttpServerWorkload.Respond(method, path, body));
+                    return Task.FromResult(
+                        HttpServerWorkload.Respond(method, path, body, TestActions.Exchanges));
                 },
-                HttpContract.Request(index));
+                exchange);
         }
 
         return sent;

@@ -8,15 +8,38 @@ import (
 	"errors"
 	"io"
 	"os"
-	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
-	"sync"
 	"testing"
 )
 
 const baseURL = "http://127.0.0.1:0"
+const testActions = `[
+{"request":{"method":"GET","path":"/health"},"response":{"status":200,"body":"{\"ok\": true}"}},
+{"request":{"method":"GET","path":"/users/123"},"response":{"status":200,"body":"{\"id\": 123, \"name\": \"Alice\"}"}},
+{"request":{"method":"GET","path":"/users/123?fields=name&verbose=true"},"response":{"status":200,"body":"{\"id\": 123, \"name\": \"Alice\"}"}},
+{"request":{"method":"POST","path":"/items","body":"{\"name\": \"widget\"}"},"response":{"status":201,"body":"{\"created\": true, \"payload\": ${requestBody}}"}},
+{"request":{"method":"GET","path":"/status/404"},"response":{"status":404,"body":"{\"message\": \"status 404\"}"}},
+{"request":{"method":"GET","path":"/status/500"},"response":{"status":500,"body":"{\"message\": \"status 500\"}"}}
+]`
+
+func TestMain(m *testing.M) {
+	if err := os.Setenv(ActionsVariable, testActions); err != nil {
+		panic(err)
+	}
+	if err := os.Setenv(ActionVariable, rawAction(0)); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
+
+func rawAction(index int) string {
+	var actions []json.RawMessage
+	if err := json.Unmarshal([]byte(testActions), &actions); err != nil {
+		panic(err)
+	}
+	return string(actions[index+1])
+}
 
 // driveAgainstTheContract answers with the other side of the same contract,
 // which is what a run measures.
@@ -28,7 +51,7 @@ func driveAgainstTheContract(t *testing.T, output io.Writer) []string {
 		t.Fatal(err)
 	}
 	for index := range requests {
-		t.Setenv(ScenarioIndexVariable, strconv.Itoa(index))
+		t.Setenv(ActionVariable, rawAction(index))
 		err := Drive(baseURL, output, func(method, url, body string) (Response, error) {
 			path := strings.TrimPrefix(url, baseURL)
 			sent = append(sent, method+" "+path)
@@ -54,13 +77,13 @@ func TestBothSidesOfTheContractAgree(t *testing.T) {
 	}
 }
 
-func TestScenarioRequestSelectsEveryMeasuredRequest(t *testing.T) {
+func TestScenarioRequestDecodesEveryMeasuredRequest(t *testing.T) {
 	requests, err := Requests()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for index, want := range requests {
-		t.Setenv(ScenarioIndexVariable, strconv.Itoa(index))
+		t.Setenv(ActionVariable, rawAction(index))
 		got, err := ScenarioRequest()
 		if err != nil {
 			t.Fatal(err)
@@ -71,17 +94,10 @@ func TestScenarioRequestSelectsEveryMeasuredRequest(t *testing.T) {
 	}
 }
 
-func TestScenarioRequestRequiresAValidIndex(t *testing.T) {
-	for _, value := range []string{"", "-1", "01", "5"} {
+func TestScenarioRequestRequiresValidJSON(t *testing.T) {
+	for _, value := range []string{"", "[]", `{"request":{}}`} {
 		t.Run(value, func(t *testing.T) {
-			if value == "" {
-				t.Setenv(ScenarioIndexVariable, "")
-				if err := os.Unsetenv(ScenarioIndexVariable); err != nil {
-					t.Fatal(err)
-				}
-			} else {
-				t.Setenv(ScenarioIndexVariable, value)
-			}
+			t.Setenv(ActionVariable, value)
 			if _, err := ScenarioRequest(); err == nil {
 				t.Errorf("ScenarioRequest() accepted %q", value)
 			}
@@ -275,68 +291,16 @@ func TestAnAnswerThatIsNotJSONSaysSo(t *testing.T) {
 	}
 }
 
-func TestRespondReportsAContractLoadFailure(t *testing.T) {
-	previous := loaded
-	t.Cleanup(func() { loaded = previous })
-	want := errors.New("contract load failed")
-	loaded = sync.OnceValues(func() ([]Exchange, error) {
-		return nil, want
-	})
+func TestRespondReportsAnActionTableFailure(t *testing.T) {
+	t.Setenv(ActionsVariable, "not JSON")
 
-	if _, err := Respond("GET", "/users/123", ""); !errors.Is(err, want) {
-		t.Errorf("Respond() returned %v, want %v", err, want)
-	}
-}
-
-func TestADeclaredContractOverridesDiscovery(t *testing.T) {
-	declared := filepath.Join(t.TempDir(), "declared.yaml")
-	t.Setenv(PathVariable, declared)
-
-	path, err := locate()
-
-	if err != nil || path != declared {
-		t.Errorf("locate() = %q, %v, want %q", path, err, declared)
-	}
-}
-
-func TestTheContractIsFoundAboveTheWorkingDirectory(t *testing.T) {
-	root := t.TempDir()
-	contract := filepath.Join(root, filepath.FromSlash(checkoutPath))
-	if err := os.MkdirAll(filepath.Dir(contract), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(contract, []byte("{}"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	nested := filepath.Join(root, "nested", "scenario")
-	if err := os.MkdirAll(nested, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv(PathVariable, "")
-	t.Chdir(nested)
-
-	path, err := locate()
-
-	if err != nil || path != contract {
-		t.Errorf("locate() = %q, %v, want %q", path, err, contract)
-	}
-}
-
-func TestMissingContractSaysHowToDeclareIt(t *testing.T) {
-	t.Setenv(PathVariable, "")
-	t.Chdir(t.TempDir())
-
-	_, err := locate()
-
-	if err == nil ||
-		!strings.Contains(err.Error(), checkoutPath) ||
-		!strings.Contains(err.Error(), PathVariable) {
-		t.Errorf("locate() returned %v, want a diagnostic naming the contract and override", err)
+	if _, err := Respond("GET", "/users/123", ""); err == nil {
+		t.Error("Respond() accepted malformed action data")
 	}
 }
 
 func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
-	t.Setenv(ScenarioIndexVariable, "0")
+	t.Setenv(ActionVariable, rawAction(0))
 	err := Drive("  ", io.Discard, func(string, string, string) (Response, error) {
 		t.Error("a request was sent despite a blank base URL")
 		return Response{}, nil
@@ -348,7 +312,7 @@ func TestABlankBaseURLIsRefusedBeforeAnythingIsSent(t *testing.T) {
 }
 
 func TestANilSenderIsRefusedBeforeAnythingIsSent(t *testing.T) {
-	t.Setenv(ScenarioIndexVariable, "0")
+	t.Setenv(ActionVariable, rawAction(0))
 	err := Drive(baseURL, io.Discard, nil)
 
 	if err == nil || !strings.Contains(err.Error(), "sender") {
@@ -357,7 +321,7 @@ func TestANilSenderIsRefusedBeforeAnythingIsSent(t *testing.T) {
 }
 
 func TestATrailingSlashOnTheBaseURLIsNotRepeated(t *testing.T) {
-	t.Setenv(ScenarioIndexVariable, "0")
+	t.Setenv(ActionVariable, rawAction(0))
 	var firstURL string
 	err := Drive(baseURL+"/", io.Discard, func(method, url, body string) (Response, error) {
 		if firstURL == "" {

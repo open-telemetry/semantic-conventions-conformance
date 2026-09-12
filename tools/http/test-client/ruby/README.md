@@ -1,6 +1,7 @@
-# HTTP conformance contract for Ruby
+# HTTP conformance test client for Ruby
 
-This local gem reads the shared [HTTP contract](../README.md). It has no runtime dependencies outside Ruby's standard library.
+This local gem decodes the runner-supplied HTTP actions. It has no runtime
+dependencies outside Ruby's standard library.
 
 Add it to a scenario Gemfile:
 
@@ -19,7 +20,8 @@ HTTPContract = OpenTelemetry::Conformance::HTTP
 
 ## Client scenarios
 
-`drive` sends only measured requests. The sender must return an `HTTPContract::Response`:
+`drive` sends the one action in `OTEL_CONFORMANCE_SCENARIO_ACTION`. The sender
+must return an `HTTPContract::Response`:
 
 ```ruby
 HTTPContract.drive(HTTPContract.mock_server_url) do |method, url, body|
@@ -41,3 +43,5 @@ framework_response(answer.status, HTTPContract::CONTENT_TYPE, answer.body)
 ```
 
 Route declarations stay in each framework. `respond` ignores the query when finding an exchange, substitutes the received body where the contract requests it, and returns a 404 response for unknown traffic.
+The lookup table comes from `OTEL_CONFORMANCE_SCENARIO_ACTIONS`, which the
+runner decodes from the server contract before starting the measured process.

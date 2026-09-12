@@ -17,7 +17,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
 
   prepared_statement:
@@ -35,7 +34,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
 
   batch:
@@ -53,7 +51,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
 
   stored_procedure:
@@ -72,5 +69,4 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []

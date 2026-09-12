@@ -7,6 +7,5 @@ instrumentation_library: "@opentelemetry/instrumentation-http"
 
 setup: otel-conformance-js install
 
-scenarios:
-  server:
-    run: otel-http-drive --serve node ../server.js
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve node ../server.js

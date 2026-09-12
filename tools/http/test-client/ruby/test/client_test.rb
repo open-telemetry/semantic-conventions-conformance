@@ -6,7 +6,7 @@ require_relative "test_helper"
 class ClientTest < Minitest::Test
   BASE_URL = "http://127.0.0.1:1".freeze
 
-  def test_drives_measured_requests_through_the_supplied_sender
+  def test_drives_the_selected_request_through_the_supplied_sender
     sent = []
     sender = lambda do |method, url, body|
       target = url.delete_prefix(BASE_URL)
@@ -16,16 +16,7 @@ class ClientTest < Minitest::Test
 
     capture_io { HTTP_CONTRACT.drive("#{BASE_URL}/", sender) }
 
-    assert_equal(
-      [
-        "GET /users/123",
-        "GET /users/123?fields=name&verbose=true",
-        "POST /items",
-        "GET /status/404",
-        "GET /status/500"
-      ],
-      sent
-    )
+    assert_equal ["GET /users/123"], sent
   end
 
   def test_compares_json_by_structure

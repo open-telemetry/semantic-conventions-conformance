@@ -6,20 +6,28 @@
 const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
-const { drive, requests, respond, SCENARIO_INDEX_VARIABLE } = require("../src");
+const {
+  ACTIONS_VARIABLE,
+  ACTION_VARIABLE,
+  drive,
+  requests,
+  respond,
+} = require("../src");
+const { ACTIONS, ACTIONS_JSON } = require("./actions");
 
 const BASE_URL = "http://127.0.0.1:0";
+process.env[ACTIONS_VARIABLE] = ACTIONS_JSON;
 
-async function withScenarioIndex(index, callback) {
-  const previous = process.env[SCENARIO_INDEX_VARIABLE];
-  process.env[SCENARIO_INDEX_VARIABLE] = String(index);
+async function withScenarioAction(index, callback) {
+  const previous = process.env[ACTION_VARIABLE];
+  process.env[ACTION_VARIABLE] = JSON.stringify(ACTIONS[index + 1]);
   try {
     return await callback();
   } finally {
     if (previous === undefined) {
-      delete process.env[SCENARIO_INDEX_VARIABLE];
+      delete process.env[ACTION_VARIABLE];
     } else {
-      process.env[SCENARIO_INDEX_VARIABLE] = previous;
+      process.env[ACTION_VARIABLE] = previous;
     }
   }
 }
@@ -28,7 +36,7 @@ async function withScenarioIndex(index, callback) {
 async function driveAgainstTheContract() {
   const sent = [];
   for (let index = 0; index < requests().length; index += 1) {
-    await withScenarioIndex(index, () =>
+    await withScenarioAction(index, () =>
       drive(BASE_URL, (method, url, body) => {
         const target = url.slice(BASE_URL.length);
         sent.push(`${method} ${target}`);
@@ -51,15 +59,15 @@ describe("driving the contract", () => {
   });
 
   it("does not validate the response", async () => {
-    const previous = process.env[SCENARIO_INDEX_VARIABLE];
-    await withScenarioIndex(0, () =>
+    const previous = process.env[ACTION_VARIABLE];
+    await withScenarioAction(0, () =>
       drive(BASE_URL, () => ({ status: 599, body: "not json" })),
     );
-    assert.equal(process.env[SCENARIO_INDEX_VARIABLE], previous);
+    assert.equal(process.env[ACTION_VARIABLE], previous);
   });
 
   it("refuses a blank base URL before anything is sent", async () => {
-    await withScenarioIndex(0, () =>
+    await withScenarioAction(0, () =>
       assert.rejects(
         () => drive("  ", () => ({ status: 200, body: "{}" })),
         TypeError,

@@ -38,8 +38,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # --no-deps skips the OTel stack: these tests never reach the lazy
-      # opentelemetry-test-utils import, so only the listed packages are needed.
+      # --no-deps skips the SDK and lazy test-utils dependency. The capture
+      # tests need only the listed OTLP transport and protobuf packages.
       - name: Install
         run: |
           python -m pip install --upgrade pip
@@ -494,12 +494,12 @@ jobs:
             exit 1
           fi
 
-      - name: Upload the weaver reports
+      - name: Upload the telemetry reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: weaver-reports-${{ matrix.matrix_id }}
-          path: ${{ matrix.scenario_root }}/**/output/weaver-reports/*.json
+          name: telemetry-reports-${{ matrix.matrix_id }}
+          path: ${{ matrix.scenario_root }}/**/output/reports/**/*.json
           if-no-files-found: warn
 
   required-status-check:

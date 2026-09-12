@@ -15,8 +15,9 @@ otel-http-drive = "otel_http_test_client.__main__:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/otel_http_test_client"]
 
-# The contract belongs to every language, so it lives above this package
-# rather than inside it. A built wheel carries a copy; an editable install
-# reads it where it is, which is what ``_contract`` falls back to.
+# The server contract is what this driver drives, and it belongs to every
+# language rather than to this package, so it lives outside it. A built wheel
+# carries a copy; an editable install reads it where it is, which is what
+# ``_contract_path`` falls back to.
 [tool.hatch.build.targets.wheel.force-include]
-"../contract.yaml" = "otel_http_test_client/contract.yaml"
+"../../contracts/server.yaml" = "otel_http_test_client/server.yaml"

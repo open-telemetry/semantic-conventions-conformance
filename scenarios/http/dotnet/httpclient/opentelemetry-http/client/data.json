@@ -12,9 +12,6 @@
   },
   "events": {},
   "metrics": {
-    "dns.lookup.duration": [
-      "dns.question.name"
-    ],
     "http.client.active_requests": [
       "http.request.method",
       "server.address",

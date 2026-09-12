@@ -5,6 +5,7 @@
 package io.opentelemetry.conformance.http;
 
 import io.opentelemetry.conformance.http.HttpContract.Response;
+import java.util.List;
 
 /**
  * Shared support for JVM server scenarios.
@@ -34,7 +35,12 @@ public final class HttpServerWorkload {
    * requestBody} is null for a request that carried none.
    */
   public static Response respond(String method, String path, String requestBody) {
-    return HttpContract.exchange(method, path)
+    return respond(method, path, requestBody, HttpContract.exchanges());
+  }
+
+  static Response respond(
+      String method, String path, String requestBody, List<HttpContract.Exchange> exchanges) {
+    return HttpContract.exchange(exchanges, method, path)
         .map(exchange -> new Response(exchange.status(), exchange.renderResponseBody(requestBody)))
         .orElseGet(() -> new Response(404, "{\"message\": \"no such route\"}"));
   }

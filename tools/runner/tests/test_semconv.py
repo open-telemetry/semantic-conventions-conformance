@@ -17,7 +17,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from opentelemetry.conformance._report import Observed, finding_list, read
+from opentelemetry.conformance._report import (
+    CAPTURE_FORMAT,
+    WEAVER_REPORT,
+    Observed,
+    finding_list,
+    read,
+)
 from opentelemetry.conformance._semconv import _reduce, semconv_coverage
 from opentelemetry.conformance._spec import load_spec
 
@@ -64,12 +70,136 @@ def attribute(name: str, value: object = "x", *, advice: str | None = None):
 
 
 def write_report(directory: Path, name: str, **report: object) -> None:
-    directory.mkdir(parents=True, exist_ok=True)
-    (directory / f"{name}.json").write_text(json.dumps(report))
+    def value(raw: object) -> dict[str, object]:
+        if isinstance(raw, bool):
+            return {"bool_value": raw}
+        if isinstance(raw, int):
+            return {"int_value": str(raw)}
+        if isinstance(raw, float):
+            return {"double_value": raw}
+        return {"string_value": str(raw)}
+
+    def attributes(owner: dict[str, object]) -> list[dict[str, object]]:
+        return [
+            {
+                "key": item["name"],
+                "value": value(item.get("value")),
+            }
+            for raw in owner.get("attributes", [])
+            if isinstance(raw, dict)
+            for item in [raw]
+            if isinstance(item.get("name"), str)
+        ]
+
+    spans: list[dict[str, object]] = []
+    resources: list[dict[str, object]] = []
+    metrics: list[dict[str, object]] = []
+    logs: list[dict[str, object]] = []
+    for raw_sample in report.get("samples", []):
+        if not isinstance(raw_sample, dict):
+            continue
+        if isinstance(raw_sample.get("span"), dict):
+            span = raw_sample["span"]
+            spans.append(
+                {
+                    "name": span.get("name", ""),
+                    "kind": span.get("kind", ""),
+                    "attributes": attributes(span),
+                }
+            )
+        if isinstance(raw_sample.get("resource"), dict):
+            resources.append(
+                {"attributes": attributes(raw_sample["resource"])}
+            )
+        if isinstance(raw_sample.get("metric"), dict):
+            metric = raw_sample["metric"]
+            metrics.append(
+                {
+                    "name": metric.get("name", ""),
+                    "gauge": {
+                        "data_points": [
+                            {"attributes": attributes(point)}
+                            for point in metric.get("data_points", [])
+                            if isinstance(point, dict)
+                        ]
+                    },
+                }
+            )
+        if isinstance(raw_sample.get("log"), dict):
+            log = raw_sample["log"]
+            logs.append(
+                {
+                    "event_name": log.get("event_name", ""),
+                    "attributes": attributes(log),
+                }
+            )
+
+    statistics = report.get("statistics", {})
+    if isinstance(statistics, dict):
+        for metric_name, count in statistics.get(
+            "seen_registry_metrics", {}
+        ).items():
+            if count and not any(
+                item["name"] == metric_name for item in metrics
+            ):
+                metrics.append({"name": metric_name})
+        for event_name, count in statistics.get(
+            "seen_registry_events", {}
+        ).items():
+            if count and not any(
+                item["event_name"] == event_name for item in logs
+            ):
+                logs.append({"event_name": event_name})
+
+    captures = directory / "scenarios"
+    captures.mkdir(parents=True, exist_ok=True)
+    (captures / f"{name}.json").write_text(
+        json.dumps(
+            {
+                "format": CAPTURE_FORMAT,
+                "name": name,
+                "generation": 1,
+                "traces": [
+                    {
+                        "resource_spans": [
+                            *[
+                                {"resource": resource, "scope_spans": []}
+                                for resource in resources
+                            ],
+                            {"scope_spans": [{"spans": spans}]},
+                        ]
+                    }
+                ],
+                "metrics": [
+                    {
+                        "resource_metrics": [
+                            {"scope_metrics": [{"metrics": metrics}]}
+                        ]
+                    }
+                ],
+                "logs": [
+                    {
+                        "resource_logs": [
+                            {"scope_logs": [{"log_records": logs}]}
+                        ]
+                    }
+                ],
+            }
+        )
+    )
+    aggregate = directory / WEAVER_REPORT
+    documents = (
+        json.loads(aggregate.read_text()).get("reports", [])
+        if aggregate.is_file()
+        else []
+    )
+    aggregate.write_text(json.dumps({"reports": [*documents, report]}))
 
 
 def span_sample(kind: str = "server", *attributes: object) -> dict:
-    return {"span": {"name": "GET /", "kind": kind, "attributes": list(attributes)}}
+    return {
+        "span": {"name": "GET /", "kind": kind, "attributes": list(attributes)}
+    }
 
 
 def resource_sample(*attributes: object) -> dict:
@@ -79,9 +209,13 @@ def resource_sample(*attributes: object) -> dict:
 # ── reading reports ────────────────────────────────────────────────
 
 
-def test_a_span_is_recorded_under_every_type_it_classifies_as(tmp_path) -> None:
+def test_a_span_is_recorded_under_every_type_it_classifies_as(
+    tmp_path,
+) -> None:
     write_report(
-        tmp_path, "one", samples=[span_sample("server", attribute("url.scheme"))]
+        tmp_path,
+        "one",
+        samples=[span_sample("server", attribute("url.scheme"))],
     )
 
     observed = read(tmp_path, by_kind)
@@ -136,8 +270,8 @@ scenarios:
     assert carried == {"http.request.method"}
 
 
-def test_an_attribute_weaver_rejected_did_not_really_arrive(tmp_path) -> None:
-    """A type_mismatch means the name is there holding something disallowed."""
+def test_capture_coverage_keeps_attributes_weaver_rejected(tmp_path) -> None:
+    """Coverage records arrival; Weaver reports validity separately."""
     write_report(
         tmp_path,
         "one",
@@ -152,7 +286,7 @@ def test_an_attribute_weaver_rejected_did_not_really_arrive(tmp_path) -> None:
 
     carried = read(tmp_path, by_kind).spans["http.server"]
 
-    assert carried == {"url.scheme"}
+    assert carried == {"http.route", "url.scheme"}
 
 
 def test_a_metric_carries_the_attributes_of_all_its_data_points(
@@ -260,7 +394,9 @@ def test_the_same_gap_on_two_signals_is_two_findings(tmp_path) -> None:
         samples=[
             advised(
                 advice("missing x", signal_type="span", signal_name="chat"),
-                advice("missing x", signal_type="span", signal_name="embeddings"),
+                advice(
+                    "missing x", signal_type="span", signal_name="embeddings"
+                ),
             )
         ],
     )
@@ -275,7 +411,9 @@ def test_a_finding_about_the_resource_names_no_signal(tmp_path) -> None:
     write_report(
         tmp_path,
         "one",
-        samples=[advised(advice("wrong", signal_type="resource", signal_name=""))],
+        samples=[
+            advised(advice("wrong", signal_type="resource", signal_name=""))
+        ],
     )
 
     assert finding_list(read(tmp_path, by_kind).findings) == [
@@ -369,7 +507,7 @@ def test_the_reduction_records_the_findings_a_run_drew(tmp_path) -> None:
     ]
 
 
-def test_a_resource_carries_its_valid_attributes(tmp_path) -> None:
+def test_a_resource_carries_every_captured_attribute(tmp_path) -> None:
     write_report(
         tmp_path,
         "one",
@@ -384,7 +522,9 @@ def test_a_resource_carries_its_valid_attributes(tmp_path) -> None:
 
     resources = read(tmp_path, by_kind).resources
 
-    assert resources == {"k8s.pod.uid", "k8s.pod.name"}
+    assert resources == {"k8s.pod.uid", "k8s.pod.name", "bad.attr"}
+
+
 # ── reducing against the model ─────────────────────────────────────
 
 
@@ -430,7 +570,9 @@ def test_a_metric_the_run_emitted_bare_is_still_recorded() -> None:
     assert data["spans"] == {}
 
 
-def test_an_entity_is_recorded_when_its_identity_attribute_is_present() -> None:
+def test_an_entity_is_recorded_when_its_identity_attribute_is_present() -> (
+    None
+):
     data = _reduce(
         Observed(resources={"k8s.pod.uid", "k8s.pod.name"}),
         MODEL,
@@ -442,7 +584,9 @@ def test_an_entity_is_recorded_when_its_identity_attribute_is_present() -> None:
     }
 
 
-def test_an_entity_with_no_description_attributes_records_empty_description() -> None:
+def test_an_entity_with_no_description_attributes_records_empty_description() -> (
+    None
+):
     data = _reduce(
         Observed(resources={"k8s.pod.uid"}),
         MODEL,
@@ -454,7 +598,9 @@ def test_an_entity_with_no_description_attributes_records_empty_description() ->
     }
 
 
-def test_an_entity_is_not_recorded_if_only_descriptive_attributes_are_present() -> None:
+def test_an_entity_is_not_recorded_if_only_descriptive_attributes_are_present() -> (
+    None
+):
     """An entity is recognised by its identifying attributes; description alone is not presence."""
     data = _reduce(
         Observed(resources={"k8s.pod.name"}),
@@ -464,7 +610,9 @@ def test_an_entity_is_not_recorded_if_only_descriptive_attributes_are_present() 
     assert data["entities"] == {}
 
 
-def test_an_entity_with_multiple_identity_attributes_requires_all_of_them() -> None:
+def test_an_entity_with_multiple_identity_attributes_requires_all_of_them() -> (
+    None
+):
     model = {
         "entities": {
             "service.instance": {
@@ -540,11 +688,14 @@ def test_the_file_is_written_in_a_stable_order() -> None:
     )
 
     assert list(data) == ["spans", "events", "metrics", "entities", "findings"]
-    for section in (data["spans"], data["events"], data["metrics"], data["entities"]):
+    for section in (
+        data["spans"],
+        data["events"],
+        data["metrics"],
+        data["entities"],
+    ):
         assert list(section) == sorted(section)
-    assert data["spans"]["http.server"] == sorted(
-        data["spans"]["http.server"]
-    )
+    assert data["spans"]["http.server"] == sorted(data["spans"]["http.server"])
     assert data["entities"]["k8s.pod"] == {
         "identity": ["k8s.pod.uid"],
         "description": ["k8s.pod.name"],

@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: guzzle
 instrumentation_library: open-telemetry/opentelemetry-auto-guzzle
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 env:
   OTEL_PHP_AUTOLOAD_ENABLED: "true"

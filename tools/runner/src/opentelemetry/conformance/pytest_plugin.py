@@ -1,12 +1,12 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Collect ``conformance.yaml`` as a test file, one test per scenario.
+"""Collect ``conformance.yaml`` as one atomic package test.
 
 A scenario directory already says everything a test needs — how to run each
 program and what it must produce — so pytest collects the YAML directly rather
-than each repo writing a module to point at it. ``pytest tests/`` reports
-``conformance.yaml::inference``.
+than each repo writing a module to point at it. Keeping every scenario in one
+item prevents xdist from splitting one package lifecycle across workers.
 
 The session is opened once per directory and closed when the run ends, which
 is what lets a complete run write its data file. Which session — which
@@ -43,10 +43,15 @@ def pytest_configure(config: pytest.Config) -> None:
 
 def pytest_unconfigure(config: pytest.Config) -> None:
     # Closing writes each session's data file, which must happen even when the
-    # run failed.
+    # run failed. A session whose own finalize failed reported that through the
+    # item that ran it, so closing only releases what it still holds — the run
+    # ends on the failure that was collected, not on a second copy of it
+    # raised from here.
     stack = config.stash.get(_STACK, None)
-    if stack is not None:
-        stack.close()
+    if stack is None:
+        return
+    del config.stash[_STACK]
+    stack.close()
 
 
 def pytest_collect_file(
@@ -60,7 +65,7 @@ def pytest_collect_file(
 
 
 class ConformanceFile(pytest.File):
-    """One scenario directory: its declared scenarios become the tests."""
+    """One scenario directory collected as one package test."""
 
     def collect(self) -> Any:
         try:
@@ -68,25 +73,30 @@ class ConformanceFile(pytest.File):
         except SpecError as error:
             raise pytest.Collector.CollectError(str(error)) from error
         self.config.stash[_SPECS][self.path.parent] = spec
-        for name, scenario in spec.scenarios.items():
-            item = ConformanceItem.from_parent(  # pyright: ignore[reportUnknownMemberType]
-                self, name=scenario.display_name
-            )
-            item.scenario_name = name
-            yield item
+        yield ConformanceItem.from_parent(  # pyright: ignore[reportUnknownMemberType]
+            self, name="package"
+        )
 
 
 class ConformanceItem(pytest.Item):
-    """One scenario, run under its own live-check."""
-
-    scenario_name: str
+    """Every scenario in one package-scoped live-check."""
 
     def runtest(self) -> None:
         session = _session_for(self.config, self.path.parent)
-        report = session.run(self.scenario_name)
-        problems = [*report.failures, *report.violations]
+        session.run_all()
+        package = session.finalize()
+        problems = [
+            f"{report.name}:\n" + "\n".join(report.failures)
+            for report in package.scenarios
+            if report.failures
+        ]
+        live_check_problems = package.failures + package.violations
+        if live_check_problems:
+            problems.append(
+                "package live-check:\n" + "\n".join(live_check_problems)
+            )
         if problems:
-            raise ConformanceFailure("\n".join(problems))
+            raise ConformanceFailure("\n\n".join(problems))
 
     def repr_failure(self, excinfo: Any, style: Any = None) -> str:
         if isinstance(excinfo.value, ConformanceFailure):
@@ -104,11 +114,7 @@ class ConformanceFailure(Exception):
 
 
 def _session_for(config: pytest.Config, directory: Path) -> ConformanceSession:
-    """The session for ``directory``, opened once and shared by its scenarios.
-
-    Shared so a declared server and the ``setup`` command run once rather than
-    per scenario; weaver is still started and ended around each one.
-    """
+    """Open the package session collected for ``directory``."""
     sessions = config.stash[_SESSIONS]
     if directory in sessions:
         return sessions[directory]
