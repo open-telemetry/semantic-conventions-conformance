@@ -1,0 +1,19 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: cakephp
+instrumentation_library: open-telemetry/opentelemetry-auto-cakephp
+
+env:
+  OTEL_PHP_AUTOLOAD_ENABLED: "true"
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: none
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+setup: otel-conformance-php install
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-php serve ../router.php
