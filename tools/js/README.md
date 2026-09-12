@@ -47,6 +47,10 @@ instrumentation. It takes the instrumentations to register and the workload to
 run, and reads everything else — the endpoint, its protocol, the export
 interval — from the environment the runner injected.
 
+After the workload returns, it starts trace and log flushes and awaits both,
+then flushes metrics, then performs normal SDK shutdown. The flush phases
+share a 15-second budget, and a timeout or failed flush fails the scenario.
+
 The workload arrives as a function rather than as a promise, because a Node
 instrumentation patches a module as it is required and one required earlier is
 never patched at all. Passing a function is what keeps the library under test

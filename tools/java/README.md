@@ -9,6 +9,7 @@ scenarios/<domain>/java/      a domain's Gradle build root — wrapper, settings
 tools/java/gradle-plugins/    the convention plugins, as an included build
 tools/java/scenario-support/  what a scenario needs before any telemetry
 tools/java/scenario-sdk/      the SDK a library-instrumentation scenario owns
+tools/java/agent-control/     the extension controlling an agent-owned SDK
 tools/java/src/               `otel-conformance-java`, the launcher
 tools/java/tests/             the launcher's tests
 ```
@@ -56,6 +57,17 @@ OTLP exporter, and shutdown, for scenarios measuring explicit library
 instrumentation. A framework's launch project supplies only its own decorators.
 Agent launch projects do not depend on it, so those jars never reach a runtime
 that is meant to be measuring the agent.
+
+Both SDK paths use the same pre-shutdown order: start trace and log flushes,
+await both, flush metrics, then let normal SDK and process shutdown continue.
+The 15-second budget is shared across the flush phases. A timeout or failed
+flush fails the scenario.
+
+For `--agent`, `prepare` packages a Java-agent extension that captures the
+agent's processors and metric readers through
+`AutoConfigurationCustomizerProvider`. The shared scenario launcher invokes
+that extension through an in-process JMX control after the scenario main
+returns. Scenario code does not know about the control or call a flush helper.
 
 ## `otel-conformance-java`
 

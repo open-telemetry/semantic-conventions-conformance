@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.Sync
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     id("otel-conformance.java-conventions")
@@ -31,5 +32,9 @@ tasks.register<Sync>("prepareRuntime") {
     from(javaAgent) {
         into("agent")
         rename { "opentelemetry-javaagent.jar" }
+    }
+    from(rootProject.project(":agent-control").tasks.named<Jar>("jar")) {
+        into("agent")
+        rename { "otel-conformance-agent-control.jar" }
     }
 }

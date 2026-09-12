@@ -18,6 +18,8 @@ from __future__ import annotations
 import os
 import runpy
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 from opentelemetry import _logs, metrics, trace
 from opentelemetry.sdk._logs import LoggerProvider
@@ -32,6 +34,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 # OTEL_METRIC_EXPORT_INTERVAL to the same value for every language; this is
 # only the fallback for running a scenario by hand, outside a session.
 METRIC_EXPORT_INTERVAL_MILLIS = 2**31 - 1
+FLUSH_TIMEOUT_MILLIS = 15_000
 
 
 def _install_providers(
@@ -79,6 +82,35 @@ def _install_providers(
     return tracer_provider, meter_provider, logger_provider
 
 
+def _flush_before_shutdown(
+    providers: tuple[TracerProvider, MeterProvider, LoggerProvider],
+    timeout_millis: int = FLUSH_TIMEOUT_MILLIS,
+) -> None:
+    tracer_provider, meter_provider, logger_provider = providers
+    deadline = time.monotonic() + timeout_millis / 1000
+
+    remaining_millis = max(0, int((deadline - time.monotonic()) * 1000))
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        traces = executor.submit(
+            tracer_provider.force_flush, timeout_millis=remaining_millis
+        )
+        logs = executor.submit(
+            logger_provider.force_flush, timeout_millis=remaining_millis
+        )
+
+    for signal, result in (("trace", traces.result()), ("log", logs.result())):
+        if not result:
+            raise RuntimeError(
+                f"{signal} flush did not complete within the shutdown budget"
+            )
+
+    remaining_millis = max(0, int((deadline - time.monotonic()) * 1000))
+    if not meter_provider.force_flush(timeout_millis=remaining_millis):
+        raise RuntimeError(
+            "metric flush did not complete within the shutdown budget"
+        )
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 1:
         raise SystemExit(f"usage: {sys.argv[0]} <scenario.py>")
@@ -91,10 +123,13 @@ def main(argv: list[str]) -> int:
     try:
         runpy.run_path(argv[0], run_name="__main__")
     finally:
-        for provider in providers:
-            provider.force_flush()
-        for provider in providers:
-            provider.shutdown()
+        try:
+            _flush_before_shutdown(providers)
+        finally:
+            tracer_provider, meter_provider, logger_provider = providers
+            tracer_provider.shutdown()
+            logger_provider.shutdown()
+            meter_provider.shutdown()
     return 0
 
 

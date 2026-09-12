@@ -5,9 +5,12 @@
 package io.opentelemetry.conformance.scenario;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** How a long-running scenario learns that the runner is finished with it. */
 public final class ScenarioLifecycle {
+  private static final AtomicBoolean EXIT_AFTER_FLUSH = new AtomicBoolean();
+
   private ScenarioLifecycle() {}
 
   /**
@@ -21,5 +24,14 @@ public final class ScenarioLifecycle {
     while (System.in.read() != -1) {
       // Nothing arrives on standard input; only its close is the signal.
     }
+  }
+
+  /** Requests a forced process exit after the scenario's telemetry has been flushed. */
+  public static void exitAfterFlush() {
+    EXIT_AFTER_FLUSH.set(true);
+  }
+
+  static boolean takeExitAfterFlushRequest() {
+    return EXIT_AFTER_FLUSH.getAndSet(false);
   }
 }

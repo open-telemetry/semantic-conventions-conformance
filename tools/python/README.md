@@ -24,3 +24,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 The launcher is installed into the scenario's own environment, as a path
 dependency on this directory.
+
+Before normal SDK shutdown, the launcher force-flushes traces and logs, waits
+for both, then force-flushes metrics. The shared bounded budget is 15 seconds;
+a failure or timeout fails the scenario.
+
+Programs started directly by upstream `opentelemetry-instrument` are not under
+this launcher's control (not customizable in Python).

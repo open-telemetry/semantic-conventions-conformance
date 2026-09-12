@@ -80,6 +80,24 @@ def seen_events(statistics: Mapping[str, object]) -> set[str]:
     )
 
 
+def _seen_expected_names(
+    statistics: Mapping[str, object],
+    *,
+    expected: set[str],
+    registry_key: str,
+    non_registry_key: str,
+) -> set[str]:
+    """Registry signals plus declared non-registry signals.
+
+    Weaver reports undeclared non-registry signals as findings. Leaving them
+    to that check lets a language config filter SDK-owned telemetry without
+    hiding it from the report.
+    """
+    return _seen(statistics, registry_key) | (
+        expected & _seen(statistics, non_registry_key)
+    )
+
+
 @dataclass(frozen=True)
 class Findings:
     """Two kinds of problem, kept apart because callers weigh them apart.
@@ -100,6 +118,8 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
     """Return every way the report fails to match the scenario spec."""
     statistics = report["statistics"]
     spans = observed_spans(report)
+    expected_metrics = set(spec.metrics or ())
+    expected_events = set(spec.events or ())
     return Findings(
         failures=[
             *(() if spec.spans is None else _check_spans(spec, spans)),
@@ -108,8 +128,13 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
                 if spec.metrics is None
                 else _check_names(
                     "metric",
-                    expected=set(spec.metrics),
-                    seen=seen_metrics(statistics),
+                    expected=expected_metrics,
+                    seen=_seen_expected_names(
+                        statistics,
+                        expected=expected_metrics,
+                        registry_key="seen_registry_metrics",
+                        non_registry_key="seen_non_registry_metrics",
+                    ),
                 )
             ),
             *(
@@ -117,8 +142,13 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
                 if spec.events is None
                 else _check_names(
                     "event",
-                    expected=set(spec.events),
-                    seen=seen_events(statistics),
+                    expected=expected_events,
+                    seen=_seen_expected_names(
+                        statistics,
+                        expected=expected_events,
+                        registry_key="seen_registry_events",
+                        non_registry_key="seen_non_registry_events",
+                    ),
                 )
             ),
         ],
