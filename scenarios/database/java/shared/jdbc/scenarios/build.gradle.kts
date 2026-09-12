@@ -4,5 +4,6 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":sql-test-client"))
     implementation(project(":scenario-support"))
 }
