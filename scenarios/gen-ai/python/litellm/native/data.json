@@ -50,6 +50,30 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'litellm' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "litellm",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'litellm.integrations.opentelemetry' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "litellm.integrations.opentelemetry",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'event_name' does not exist in the registry.",
       "signal_type": "log",

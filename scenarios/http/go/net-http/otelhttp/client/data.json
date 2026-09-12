@@ -50,6 +50,18 @@
   },
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "http_span_name_format",
       "message": "Span 'HTTP GET' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
       "signal_type": "span",

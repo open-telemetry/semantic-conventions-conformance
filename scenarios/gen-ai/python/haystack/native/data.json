@@ -5,6 +5,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'haystack' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "haystack",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'haystack.agent.exit_conditions' does not exist in the registry.",
       "signal_type": "span",

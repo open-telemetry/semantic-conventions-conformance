@@ -17,6 +17,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'opentelemetry.instrumentation.crewai.instrumentation' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "opentelemetry.instrumentation.crewai.instrumentation",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "required_attribute_not_present",
       "message": "Required attribute 'gen_ai.operation.name' is not present.",
       "signal_type": "metric",

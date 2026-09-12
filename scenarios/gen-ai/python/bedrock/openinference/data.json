@@ -18,6 +18,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.bedrock' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.bedrock",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "genai_content_schema",
       "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"toolSpec\":{\"description\":\"Get the current weather in a given location\",\"inputSchema\":{\"json\":{\"properties\":{\"location\":{\"description\":\"The city and state, e.g. Boston, MA\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}},\"name\":\"get_current_weather\"}} is not valid under any of the schemas listed in the 'anyOf' keyword",
       "signal_type": "span",

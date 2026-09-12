@@ -31,6 +31,30 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'strands.telemetry.metrics' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "strands.telemetry.metrics",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'strands.telemetry.tracer' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "strands.telemetry.tracer",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'event_loop_cycle_id' does not exist in the registry.",
       "signal_type": "metric",

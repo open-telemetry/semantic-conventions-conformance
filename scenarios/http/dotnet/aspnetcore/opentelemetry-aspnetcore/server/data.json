@@ -46,6 +46,30 @@
   },
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'Microsoft.AspNetCore' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "Microsoft.AspNetCore",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'Microsoft.AspNetCore.Hosting' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "Microsoft.AspNetCore.Hosting",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "recommended_attribute_not_present",
       "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
       "signal_type": "span",

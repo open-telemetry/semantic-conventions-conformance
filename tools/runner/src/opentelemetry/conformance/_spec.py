@@ -44,6 +44,15 @@ class AttributeMatcher:
 
 
 @dataclass(frozen=True)
+class InstrumentationScopeExpectation:
+    """Expectations for a signal's instrumentation scope."""
+
+    name: AttributeMatcher | None = None
+    version: AttributeMatcher | None = None
+    schema_url: AttributeMatcher | None = None
+
+
+@dataclass(frozen=True)
 class SpanMatch:
     """What selects a span — every declared facet has to hold.
 
@@ -108,6 +117,7 @@ class SpanExpectation:
     attributes: Mapping[str, AttributeMatcher] = field(
         default_factory=dict[str, AttributeMatcher]
     )
+    instrumentation_scope: InstrumentationScopeExpectation | None = None
 
     def describe(self) -> str:
         return self.match.describe()
@@ -340,6 +350,44 @@ def _parse_matcher(value: object, where: str) -> AttributeMatcher:
     return AttributeMatcher(distinct=distinct)
 
 
+def _parse_scope_field(value: object, where: str) -> AttributeMatcher:
+    if isinstance(value, str) and value:
+        return AttributeMatcher(equals=value)
+    if not isinstance(value, Mapping):
+        raise SpecError(
+            f"{where}: expected a non-empty string or a presence matcher"
+        )
+
+    matcher = cast("Mapping[str, object]", value)
+    _check_keys(matcher, ("present",), where)
+    if set(matcher) != {"present"} or not isinstance(matcher["present"], bool):
+        raise SpecError(f"{where}: present must be a boolean")
+    return AttributeMatcher(present=matcher["present"])
+
+
+def _parse_instrumentation_scope(
+    value: object, where: str
+) -> InstrumentationScopeExpectation:
+    scope = _require_mapping(value, where)
+    _check_keys(scope, ("name", "version", "schema_url"), where)
+    if not scope:
+        raise SpecError(f"{where}: declare at least one field to check")
+    expectation = InstrumentationScopeExpectation(
+        name=_parse_scope_field(scope["name"], f"{where}.name")
+        if "name" in scope
+        else None,
+        version=_parse_scope_field(scope["version"], f"{where}.version")
+        if "version" in scope
+        else None,
+        schema_url=_parse_scope_field(
+            scope["schema_url"], f"{where}.schema_url"
+        )
+        if "schema_url" in scope
+        else None,
+    )
+    return expectation
+
+
 def _parse_match(value: object, where: str) -> SpanMatch:
     match = _require_mapping(value or {}, where)
     _check_keys(match, ("attributes", "kind", "type"), where)
@@ -366,7 +414,11 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
         return SpanExpectation(match=match)
 
     expect = _require_mapping(span["expect"], f"{where}.expect")
-    _check_keys(expect, ("count", "attributes"), f"{where}.expect")
+    _check_keys(
+        expect,
+        ("count", "attributes", "instrumentation_scope"),
+        f"{where}.expect",
+    )
     count = expect.get("count")
     if not isinstance(count, int) or isinstance(count, bool):
         raise SpecError(
@@ -382,6 +434,12 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
             name: _parse_matcher(matcher, f"{where}.expect.attributes.{name}")
             for name, matcher in attributes.items()
         },
+        instrumentation_scope=_parse_instrumentation_scope(
+            expect["instrumentation_scope"],
+            f"{where}.expect.instrumentation_scope",
+        )
+        if "instrumentation_scope" in expect
+        else None,
     )
 
 
