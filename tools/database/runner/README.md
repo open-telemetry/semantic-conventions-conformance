@@ -22,11 +22,12 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql` or `mariadb`.
-Each session starts one pinned container, applies that backend's packaged SQL
-schema, and removes the container when the session closes. The schemas create
-the same logical objects but no rows; scenarios own any data their operations
-need.
+`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
+`redis`. Each session starts one pinned container, initializes it, and removes
+it when the session closes. PostgreSQL and MariaDB apply packaged SQL schemas
+that create the same logical objects but no rows. Redis runs `redis-cli` to
+create the `conformance:bootstrap` key. Scenarios own any other data their
+operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -43,8 +44,9 @@ Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
-The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
-backend also requires adding its span classification and conformance scenarios.
+The package classifies only client spans for the backends it can run.
+PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
+`db.mariadb.client`, and Redis spans use `db.redis.client`. Adding a backend
+also requires adding its span classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

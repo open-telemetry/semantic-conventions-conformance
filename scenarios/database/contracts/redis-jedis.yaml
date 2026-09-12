@@ -1,0 +1,80 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  set_get:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "SET conformance:jedis:value ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: GET conformance:jedis:value
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  pipeline:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PIPELINE SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.operation.batch.size: 2
+            db.query.text: "SET conformance:jedis:pipeline:1 ?; SET conformance:jedis:pipeline:2 ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  error:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "SET conformance:jedis:error ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: LPUSH
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "LPUSH conformance:jedis:error ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
