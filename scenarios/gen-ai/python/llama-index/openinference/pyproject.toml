@@ -9,7 +9,7 @@ dependencies = [
     # skips an instrumentation whose dependencies are not met. Nothing here
     # imports it, so its own cap on the LLM binding is overridden below.
     "llama-index-multi-modal-llms-openai==0.6.2",
-    "openinference-instrumentation-llama-index==4.5.0",
+    "openinference-instrumentation-llama-index==4.5.2",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
