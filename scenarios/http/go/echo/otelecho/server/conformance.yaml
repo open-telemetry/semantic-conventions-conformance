@@ -1,0 +1,12 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: github.com/labstack/echo/v4
+instrumentation_library: go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho
+
+setup: otel-conformance-go build
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-go run

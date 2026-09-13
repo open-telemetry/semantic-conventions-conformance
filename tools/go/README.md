@@ -6,6 +6,7 @@ domain it measures, and the command that builds and runs one.
 ```text
 scenarios/<domain>/go/    a domain's Go module — the scenarios and their pins
 tools/go/scenario/        what a scenario needs before any telemetry
+tools/go/scenariomain/    the process lifecycle for an instrumented scenario
 tools/go/scenariosdk/     the SDK a library-instrumentation scenario owns
 tools/go/src/             `otel-conformance-go`, the launcher
 tools/go/tests/           the launcher's tests
@@ -35,6 +36,10 @@ the providers installed globally where instrumentation libraries look for them,
 and the flush that runs before the process exits. Go has no SDK
 autoconfiguration package, so this wiring is written down once rather than in
 each scenario.
+
+[`scenariomain/`](scenariomain) owns the command boundary for an instrumented
+scenario: SDK initialization and shutdown, the driver's standard-input
+shutdown protocol for servers, and reporting a fatal command error.
 
 Go's linker keeps whatever the import graph reaches, and an imported package is
 initialized even when nothing calls it, so the package boundary is what holds
