@@ -124,6 +124,7 @@ CREATE_ENDPOINTS = [
     ("bedrock-agent", "put", "/agents/", {"agentName": "mock-agent"}),
     ("bedrock-agentcore", "post", "/memories/create", {"name": "mock-memory"}),
     ("openai-assistants", "post", "/v1/assistants", {"model": "gpt-4o-mini"}),
+    ("openai-assistants-list-runs", "get", "/v1/threads/thread-mock-001/runs", None),
     ("mistral-agents", "post", "/mistral/v1/agents", {"model": "mistral-medium-latest"}),
 ]
 
