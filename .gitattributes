@@ -1,0 +1,9 @@
+# Git normalizes a text file to LF when it is committed and checks it out with
+# LF. A file written on Windows therefore reaches the repository with LF, and
+# no language needs its own line-ending setting. A file already stored with
+# CRLF keeps it until someone runs `git add --renormalize`.
+* text=auto eol=lf
+
+# Gradle generates gradlew.bat with CRLF. Leave batch files exactly as they are
+# so Git rewrites neither the stored file nor the checkout.
+*.bat -text
