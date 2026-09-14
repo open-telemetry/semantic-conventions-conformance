@@ -8,8 +8,10 @@ cassette replay — so each case asserts the shape a scenario reads, not just a
 200.
 """
 
+import base64
 import json
 import re
+import struct
 
 import pytest
 
@@ -21,7 +23,10 @@ ENDPOINTS = [
         "openai-chat",
         "post",
         "/v1/chat/completions",
-        {"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "hi"}]},
+        {
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": "hi"}],
+        },
     ),
     (
         "openai-chat-json-schema",
@@ -111,16 +116,41 @@ ENDPOINTS = [
         {"messages": [{"role": "user", "content": [{"text": "hi"}]}]},
     ),
     (
+        "bedrock-invoke",
+        "post",
+        "/model/amazon.titan-text-express-v1/invoke",
+        {"inputText": "hi"},
+    ),
+    (
+        "bedrock-invoke-embeddings",
+        "post",
+        "/model/amazon.titan-embed-text-v1/invoke",
+        {"inputText": "hi"},
+    ),
+    (
+        "bedrock-invoke-stream",
+        "post",
+        "/model/amazon.titan-text-express-v1/invoke-with-response-stream",
+        {"inputText": "hi"},
+    ),
+    (
         "cohere",
         "post",
         "/v2/chat",
-        {"model": "command-r", "messages": [{"role": "user", "content": "hi"}]},
+        {
+            "model": "command-r",
+            "messages": [{"role": "user", "content": "hi"}],
+        },
     ),
     (
         "cohere-embed",
         "post",
         "/v2/embed",
-        {"model": "embed-v4.0", "texts": ["hi", "there"], "input_type": "search_document"},
+        {
+            "model": "embed-v4.0",
+            "texts": ["hi", "there"],
+            "input_type": "search_document",
+        },
     ),
     (
         "mistral-chat",
@@ -164,11 +194,21 @@ ENDPOINTS = [
 # Resource-creating endpoints mint a fresh id per call, so only the shape is
 # stable. Kept separate rather than loosening the assertion above.
 CREATE_ENDPOINTS = [
-    ("anthropic-agents", "post", "/v1/agents", {"model": "claude-sonnet-4-20250514"}),
+    (
+        "anthropic-agents",
+        "post",
+        "/v1/agents",
+        {"model": "claude-sonnet-4-20250514"},
+    ),
     ("bedrock-agent", "put", "/agents/", {"agentName": "mock-agent"}),
     ("bedrock-agentcore", "post", "/memories/create", {"name": "mock-memory"}),
     ("openai-assistants", "post", "/v1/assistants", {"model": "gpt-4o-mini"}),
-    ("mistral-agents", "post", "/mistral/v1/agents", {"model": "mistral-medium-latest"}),
+    (
+        "mistral-agents",
+        "post",
+        "/mistral/v1/agents",
+        {"model": "mistral-medium-latest"},
+    ),
 ]
 
 
@@ -200,7 +240,9 @@ def test_endpoint_answers_deterministically(client, method, path, body):
     [case[1:] for case in CREATE_ENDPOINTS],
     ids=[case[0] for case in CREATE_ENDPOINTS],
 )
-def test_create_endpoint_answers_with_a_stable_shape(client, method, path, body):
+def test_create_endpoint_answers_with_a_stable_shape(
+    client, method, path, body
+):
     first = getattr(client, method)(path, json=body)
     assert first.status_code < 300, first.data
 
@@ -212,13 +254,330 @@ def test_create_endpoint_answers_with_a_stable_shape(client, method, path, body)
 def test_chat_echoes_the_requested_model(client):
     response = client.post(
         "/v1/chat/completions",
-        json={"model": "gpt-5", "messages": [{"role": "user", "content": "hi"}]},
+        json={
+            "model": "gpt-5",
+            "messages": [{"role": "user", "content": "hi"}],
+        },
     )
     body = response.json
     assert body["model"] == "gpt-5"
     assert body["choices"][0]["message"]["role"] == "assistant"
     assert body["usage"]["total_tokens"] > 0
     assert body["service_tier"] == "default"
+
+
+def test_chat_multi_turn_tool_call_generates_unique_ids(client):
+    """Multi-turn agent handoff gets unique tool call IDs per turn and answers once all tools replied."""
+    # Turn 1: user asks triage agent
+    r1 = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": "weather in Seattle?"}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {"name": "transfer_to_specialist"},
+                }
+            ],
+        },
+    )
+    tc1 = r1.json["choices"][0]["message"]["tool_calls"][0]
+    assert tc1["id"] == "call_mock_001"
+    assert tc1["function"]["name"] == "transfer_to_specialist"
+
+    # Turn 2: handoff to specialist offering get_weather
+    r2 = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "assistant", "tool_calls": [tc1]},
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_mock_001",
+                    "content": "transferred",
+                },
+            ],
+            "tools": [
+                {"type": "function", "function": {"name": "get_weather"}}
+            ],
+        },
+    )
+    tc2 = r2.json["choices"][0]["message"]["tool_calls"][0]
+    assert tc2["id"] == "call_mock_002"
+    assert tc2["function"]["name"] == "get_weather"
+
+    # Turn 3: get_weather replied -> final answer
+    r3 = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {"role": "assistant", "tool_calls": [tc1]},
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_mock_001",
+                    "content": "transferred",
+                },
+                {"role": "assistant", "tool_calls": [tc2]},
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_mock_002",
+                    "content": "70 degrees",
+                },
+            ],
+            "tools": [
+                {"type": "function", "function": {"name": "get_weather"}}
+            ],
+        },
+    )
+    assert "tool_calls" not in r3.json["choices"][0]["message"]
+    assert r3.json["choices"][0]["finish_reason"] == "stop"
+
+
+def test_anthropic_multi_turn_tool_call_generates_unique_ids(client):
+    """Anthropic multi-turn tool calling gets unique tool IDs per turn."""
+    # Turn 1
+    r1 = client.post(
+        "/v1/messages",
+        json={
+            "model": "claude-sonnet-4-20250514",
+            "messages": [{"role": "user", "content": "weather?"}],
+            "tools": [
+                {"name": "transfer_agent", "input_schema": {"type": "object"}}
+            ],
+        },
+    )
+    block1 = r1.json["content"][0]
+    assert block1["type"] == "tool_use"
+    assert block1["id"] == "toolu_mock_001"
+    assert block1["name"] == "transfer_agent"
+
+    # Turn 2
+    r2 = client.post(
+        "/v1/messages",
+        json={
+            "model": "claude-sonnet-4-20250514",
+            "messages": [
+                {"role": "user", "content": "weather?"},
+                {"role": "assistant", "content": [block1]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_mock_001",
+                            "content": "transferred",
+                        }
+                    ],
+                },
+            ],
+            "tools": [
+                {"name": "get_weather", "input_schema": {"type": "object"}}
+            ],
+        },
+    )
+    block2 = r2.json["content"][0]
+    assert block2["type"] == "tool_use"
+    assert block2["id"] == "toolu_mock_002"
+    assert block2["name"] == "get_weather"
+
+    # Turn 3
+    r3 = client.post(
+        "/v1/messages",
+        json={
+            "model": "claude-sonnet-4-20250514",
+            "messages": [
+                {"role": "user", "content": "weather?"},
+                {"role": "assistant", "content": [block1]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_mock_001",
+                            "content": "transferred",
+                        }
+                    ],
+                },
+                {"role": "assistant", "content": [block2]},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_mock_002",
+                            "content": "70 degrees",
+                        }
+                    ],
+                },
+            ],
+            "tools": [
+                {"name": "get_weather", "input_schema": {"type": "object"}}
+            ],
+        },
+    )
+    assert r3.json["content"][0]["type"] == "text"
+    assert r3.json["stop_reason"] == "end_turn"
+
+
+def test_chat_calls_the_same_tool_again_in_a_later_turn(client):
+    """A completed call does not exhaust the tool: a new user turn calls it again."""
+    response = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "id": "call_mock_001",
+                            "type": "function",
+                            "function": {
+                                "name": "get_weather",
+                                "arguments": "{}",
+                            },
+                        }
+                    ],
+                },
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_mock_001",
+                    "content": "70 degrees",
+                },
+                {"role": "assistant", "content": "It is 70 degrees."},
+                {"role": "user", "content": "and in Portland?"},
+            ],
+            "tools": [
+                {"type": "function", "function": {"name": "get_weather"}}
+            ],
+        },
+    )
+    call = response.json["choices"][0]["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_weather"
+    assert call["id"] == "call_mock_002"
+
+
+def test_anthropic_calls_the_same_tool_again_in_a_later_turn(client):
+    response = client.post(
+        "/v1/messages",
+        json={
+            "model": "claude-sonnet-4-20250514",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "toolu_mock_001",
+                            "name": "get_weather",
+                            "input": {},
+                        }
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_mock_001",
+                            "content": "70 degrees",
+                        }
+                    ],
+                },
+                {"role": "assistant", "content": "It is 70 degrees."},
+                {"role": "user", "content": "and in Portland?"},
+            ],
+            "tools": [
+                {"name": "get_weather", "input_schema": {"type": "object"}}
+            ],
+        },
+    )
+    block = response.json["content"][0]
+    assert block["type"] == "tool_use"
+    assert block["name"] == "get_weather"
+    assert block["id"] == "toolu_mock_002"
+
+
+def test_anthropic_answers_when_a_tool_result_has_no_matching_call(client):
+    """A result the mock cannot attribute to a call ends the exchange, as on the OpenAI side."""
+    response = client.post(
+        "/v1/messages",
+        json={
+            "model": "claude-sonnet-4-20250514",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_x",
+                            "content": "70 degrees",
+                        }
+                    ],
+                },
+            ],
+            "tools": [
+                {"name": "get_weather", "input_schema": {"type": "object"}}
+            ],
+        },
+    )
+    assert response.json["content"][0]["type"] == "text"
+    assert response.json["stop_reason"] == "end_turn"
+
+
+def test_streaming_chat_numbers_tool_calls_across_turns(client):
+    """The streamed path mints the same sequential ids the non-streamed one does."""
+    response = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "user", "content": "weather in Seattle?"},
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "id": "call_mock_001",
+                            "type": "function",
+                            "function": {
+                                "name": "transfer_to_specialist",
+                                "arguments": "{}",
+                            },
+                        }
+                    ],
+                },
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_mock_001",
+                    "content": "transferred",
+                },
+            ],
+            "tools": [
+                {"type": "function", "function": {"name": "get_weather"}}
+            ],
+            "stream": True,
+        },
+    )
+    deltas = [
+        json.loads(line[len("data: ") :])
+        for line in response.get_data(as_text=True).splitlines()
+        if line.startswith("data: ") and line != "data: [DONE]"
+    ]
+    calls = [
+        call
+        for delta in deltas
+        for call in delta["choices"][0]["delta"].get("tool_calls", [])
+    ]
+    assert calls[0]["id"] == "call_mock_002"
+    assert calls[0]["function"]["name"] == "get_weather"
 
 
 def test_chat_returns_a_tool_call_when_tools_are_offered(client):
@@ -325,6 +684,72 @@ def test_bedrock_converse_answers_when_no_tool_is_offered(client):
     assert response.json["stopReason"] == "end_turn"
 
 
+def test_bedrock_invoke_headers(client):
+    response = client.post(
+        "/model/amazon.titan-text-express-v1/invoke",
+        json={"inputText": "hi"},
+    )
+    assert response.status_code == 200
+    assert response.headers["x-amzn-bedrock-input-token-count"] == "5"
+    assert response.headers["x-amzn-bedrock-output-token-count"] == "10"
+    assert (
+        response.headers["x-amzn-bedrock-content-type"] == "application/json"
+    )
+    assert response.json["inputTextTokenCount"] == 5
+    assert (
+        response.json["results"][0]["outputText"]
+        == "This is a response from the mock server."
+    )
+
+
+def test_bedrock_invoke_embeddings_report_input_tokens(client):
+    response = client.post(
+        "/model/amazon.titan-embed-text-v1/invoke",
+        json={"inputText": "hi"},
+    )
+    assert response.headers["x-amzn-bedrock-input-token-count"] == "8"
+    assert response.json["inputTextTokenCount"] == 8
+
+
+def test_bedrock_invoke_stream_returns_eventstream(client):
+    response = client.post(
+        "/model/amazon.titan-text-express-v1/invoke-with-response-stream",
+        json={"inputText": "hi"},
+    )
+    assert response.status_code == 200
+    assert response.mimetype == "application/vnd.amazon.eventstream"
+    assert (
+        response.headers["x-amzn-bedrock-content-type"] == "application/json"
+    )
+
+    data = response.data
+    chunks = []
+    offset = 0
+    while offset < len(data):
+        total_length, headers_length = struct.unpack_from("!II", data, offset)
+        payload = data[
+            offset + 12 + headers_length : offset + total_length - 4
+        ]
+        frame = json.loads(payload.decode("utf-8"))
+        chunk_json = json.loads(
+            base64.b64decode(frame["bytes"]).decode("utf-8")
+        )
+        chunks.append(chunk_json)
+        offset += total_length
+
+    assert len(chunks) == 2
+    assert chunks[0]["outputText"] == "This is "
+    # Titan only fills the running token count on the last chunk.
+    assert chunks[0]["totalOutputTextTokenCount"] is None
+    assert chunks[0]["completionReason"] is None
+    assert chunks[1]["outputText"] == "a test"
+    assert chunks[1]["totalOutputTextTokenCount"] == 10
+    assert chunks[1]["completionReason"] == "FINISH"
+    metrics = chunks[1]["amazon-bedrock-invocationMetrics"]
+    assert metrics["inputTokenCount"] == 5
+    assert metrics["outputTokenCount"] == 10
+
+
 def test_embeddings_treat_token_ids_as_one_input(client):
     response = client.post(
         "/v1/embeddings",
@@ -417,7 +842,10 @@ def test_json_schema_follows_refs_and_skips_null_branches(client):
                                     {"type": "string"},
                                 ]
                             },
-                            "issued": {"type": "string", "format": "date-time"},
+                            "issued": {
+                                "type": "string",
+                                "format": "date-time",
+                            },
                         },
                     },
                 },
@@ -447,7 +875,9 @@ def test_json_schema_cuts_off_a_self_referencing_model(client):
                         "$defs": {
                             "Node": {
                                 "type": "object",
-                                "properties": {"child": {"$ref": "#/$defs/Node"}},
+                                "properties": {
+                                    "child": {"$ref": "#/$defs/Node"}
+                                },
                             }
                         },
                         "properties": {"root": {"$ref": "#/$defs/Node"}},
@@ -533,11 +963,18 @@ def test_chat_answers_a_json_schema_with_a_matching_object(client):
                                 "type": "array",
                                 "items": {
                                     "type": "object",
-                                    "properties": {"summary": {"type": "string"}},
+                                    "properties": {
+                                        "summary": {"type": "string"}
+                                    },
                                 },
                             },
                         },
-                        "required": ["location", "temperature", "conditions", "days"],
+                        "required": [
+                            "location",
+                            "temperature",
+                            "conditions",
+                            "days",
+                        ],
                     },
                 },
             },
@@ -601,9 +1038,9 @@ def test_streaming_chat_calls_an_offered_tool(client):
         "get_current_weather",
         None,
     ]
-    assert json.loads("".join(call["function"]["arguments"] for call in calls)) == {
-        "location": "Seattle"
-    }
+    assert json.loads(
+        "".join(call["function"]["arguments"] for call in calls)
+    ) == {"location": "Seattle"}
     assert deltas[-1]["choices"][0]["finish_reason"] == "tool_calls"
 
 
@@ -616,9 +1053,18 @@ def test_streaming_chat_answers_once_the_tool_has_replied(client):
             "messages": [
                 {"role": "user", "content": "weather in Seattle?"},
                 {"role": "assistant", "tool_calls": []},
-                {"role": "tool", "content": "70 degrees", "tool_call_id": "call_mock_001"},
+                {
+                    "role": "tool",
+                    "content": "70 degrees",
+                    "tool_call_id": "call_mock_001",
+                },
             ],
-            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {"name": "get_current_weather"},
+                }
+            ],
             "stream": True,
         },
     )
@@ -670,7 +1116,12 @@ def test_mistral_chat_answers_once_the_tool_has_replied(client):
                     "tool_call_id": "callmock1",
                 },
             ],
-            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {"name": "get_current_weather"},
+                }
+            ],
         },
     )
     assert response.json["choices"][0]["message"]["tool_calls"] is None
@@ -704,7 +1155,9 @@ def test_mistral_chat_streams_the_same_answer_it_would_return(client):
         "messages": [{"role": "user", "content": "hi"}],
     }
     complete = client.post("/mistral/v1/chat/completions", json=body)
-    streamed = client.post("/mistral/v1/chat/completions", json={**body, "stream": True})
+    streamed = client.post(
+        "/mistral/v1/chat/completions", json={**body, "stream": True}
+    )
     chunks = [
         json.loads(line[len("data: ") :])
         for line in streamed.get_data(as_text=True).splitlines()
@@ -761,7 +1214,10 @@ def test_mistral_embeddings_answer_one_vector_per_input(client):
 # Azure routes the same operation under a deployment path; instrumentations
 # read the URL, so the alias has to serve the identical body.
 def test_azure_deployment_path_matches_the_plain_one(client):
-    body = {"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "hi"}]}
+    body = {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": "hi"}],
+    }
     plain = client.post("/v1/chat/completions", json=body)
     deployment = client.post(
         "/openai/deployments/gpt-4o-mini/chat/completions", json=body
@@ -810,7 +1266,9 @@ def test_text_protocol_tools_get_a_tool_call_in_the_content(client):
 
     content = response.json["choices"][0]["message"]["content"]
     assert content.startswith("<tool_call>")
-    call = json.loads(content.removeprefix("<tool_call>").removesuffix("</tool_call>"))
+    call = json.loads(
+        content.removeprefix("<tool_call>").removesuffix("</tool_call>")
+    )
     assert call["name"] == "get_weather"
     assert "location" in call["arguments"]
 
@@ -818,8 +1276,14 @@ def test_text_protocol_tools_get_a_tool_call_in_the_content(client):
 def test_text_protocol_does_not_loop_once_the_tool_has_answered(client):
     """A second call after the result must not ask for the tool again."""
     answered = _hermes_request(
-        {"role": "assistant", "content": '<tool_call>\n{"name": "get_weather"}\n</tool_call>'},
-        {"role": "user", "content": "<tool_response>\n70 degrees\n</tool_response>"},
+        {
+            "role": "assistant",
+            "content": '<tool_call>\n{"name": "get_weather"}\n</tool_call>',
+        },
+        {
+            "role": "user",
+            "content": "<tool_response>\n70 degrees\n</tool_response>",
+        },
     )
 
     response = client.post("/v1/chat/completions", json=answered)
@@ -855,7 +1319,15 @@ def test_chat_reports_audio_tokens_for_audio_input(client):
             "messages": [
                 {
                     "role": "user",
-                    "content": [{"type": "input_audio", "input_audio": {"data": "bW9jaw==", "format": "wav"}}],
+                    "content": [
+                        {
+                            "type": "input_audio",
+                            "input_audio": {
+                                "data": "bW9jaw==",
+                                "format": "wav",
+                            },
+                        }
+                    ],
                 }
             ],
         },
@@ -869,7 +1341,9 @@ def test_chat_reports_audio_tokens_for_audio_input(client):
 
 
 def test_responses_reports_cache_write_tokens(client):
-    response = client.post("/v1/responses", json={"model": "gpt-4o-mini", "input": "hi"})
+    response = client.post(
+        "/v1/responses", json={"model": "gpt-4o-mini", "input": "hi"}
+    )
 
     details = response.json["usage"]["input_tokens_details"]
     assert details["cache_write_tokens"] > 0
@@ -886,14 +1360,21 @@ def test_google_reports_a_cached_and_per_modality_breakdown(client):
     assert usage["cachedContentTokenCount"] > 0
     assert [d["modality"] for d in usage["promptTokensDetails"]] == ["TEXT"]
     assert [d["modality"] for d in usage["cacheTokensDetails"]] == ["TEXT"]
-    assert [d["modality"] for d in usage["candidatesTokensDetails"]] == ["TEXT"]
+    assert [d["modality"] for d in usage["candidatesTokensDetails"]] == [
+        "TEXT"
+    ]
 
 
 def test_google_bills_tool_use_tokens_separately_from_the_prompt(client):
     tools = [{"functionDeclarations": [{"name": "get_weather"}]}]
-    request = {"contents": [{"role": "user", "parts": [{"text": "weather?"}]}], "tools": tools}
+    request = {
+        "contents": [{"role": "user", "parts": [{"text": "weather?"}]}],
+        "tools": tools,
+    }
 
-    call = client.post("/v1beta/models/gemini-2.0-flash:generateContent", json=request).json
+    call = client.post(
+        "/v1beta/models/gemini-2.0-flash:generateContent", json=request
+    ).json
     usage = call["usageMetadata"]
     assert usage["toolUsePromptTokenCount"] > 0
     # Tool-use tokens are their own component of the total, not part of the prompt.
@@ -910,12 +1391,24 @@ def test_google_answers_in_text_once_the_tool_has_answered(client):
     answered = {
         "contents": [
             {"role": "user", "parts": [{"text": "weather?"}]},
-            {"role": "user", "parts": [{"functionResponse": {"name": "get_weather", "response": {"temp": 70}}}]},
+            {
+                "role": "user",
+                "parts": [
+                    {
+                        "functionResponse": {
+                            "name": "get_weather",
+                            "response": {"temp": 70},
+                        }
+                    }
+                ],
+            },
         ],
         "tools": [{"functionDeclarations": [{"name": "get_weather"}]}],
     }
 
-    body = client.post("/v1beta/models/gemini-2.0-flash:generateContent", json=answered).json
+    body = client.post(
+        "/v1beta/models/gemini-2.0-flash:generateContent", json=answered
+    ).json
 
     parts = body["candidates"][0]["content"]["parts"]
     assert all("functionCall" not in part for part in parts)
@@ -934,7 +1427,12 @@ def test_google_breaks_usage_down_by_input_and_output_modality(client):
                         {"text": "describe"},
                         {"inlineData": blob},
                         {"inlineData": blob},
-                        {"inlineData": {"mimeType": "audio/wav", "data": "bW9jaw=="}},
+                        {
+                            "inlineData": {
+                                "mimeType": "audio/wav",
+                                "data": "bW9jaw==",
+                            }
+                        },
                     ],
                 }
             ],
@@ -944,13 +1442,21 @@ def test_google_breaks_usage_down_by_input_and_output_modality(client):
 
     usage = response.json["usageMetadata"]
     # One entry per modality, not per part: the two images are summed.
-    prompt = {d["modality"]: d["tokenCount"] for d in usage["promptTokensDetails"]}
+    prompt = {
+        d["modality"]: d["tokenCount"] for d in usage["promptTokensDetails"]
+    }
     assert set(prompt) == {"TEXT", "IMAGE", "AUDIO"}
     assert prompt["IMAGE"] == 2 * 258
     assert sum(prompt.values()) == usage["promptTokenCount"]
 
-    assert [d["modality"] for d in usage["candidatesTokensDetails"]] == ["TEXT", "IMAGE"]
-    assert sum(d["tokenCount"] for d in usage["candidatesTokensDetails"]) == usage["candidatesTokenCount"]
+    assert [d["modality"] for d in usage["candidatesTokensDetails"]] == [
+        "TEXT",
+        "IMAGE",
+    ]
+    assert (
+        sum(d["tokenCount"] for d in usage["candidatesTokensDetails"])
+        == usage["candidatesTokenCount"]
+    )
     assert usage["cachedContentTokenCount"] < usage["promptTokenCount"]
 
 
@@ -991,7 +1497,12 @@ def test_ollama_chat_answers_once_the_tool_has_replied(client):
                 {"role": "tool", "content": "70 degrees"},
             ],
             "stream": False,
-            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {"name": "get_current_weather"},
+                }
+            ],
         },
     )
     assert "tool_calls" not in response.json["message"]
@@ -1008,8 +1519,13 @@ def test_ollama_streams_newline_delimited_json(client):
             "stream": True,
         },
     )
-    lines = [json.loads(line) for line in response.get_data(as_text=True).splitlines()]
-    assert [line["done"] for line in lines] == [False] * (len(lines) - 1) + [True]
+    lines = [
+        json.loads(line)
+        for line in response.get_data(as_text=True).splitlines()
+    ]
+    assert [line["done"] for line in lines] == [False] * (len(lines) - 1) + [
+        True
+    ]
     streamed = "".join(line["message"]["content"] for line in lines).strip()
     assert streamed == "This is a response from the mock server."
     assert lines[-1]["eval_count"] == 12
@@ -1041,7 +1557,11 @@ def test_ollama_answers_a_format_request_with_that_schema(client):
 def test_ollama_embeddings_answer_one_vector_per_input(client):
     response = client.post(
         "/api/embed",
-        json={"model": "nomic-embed-text", "input": ["one", "two"], "dimensions": 64},
+        json={
+            "model": "nomic-embed-text",
+            "input": ["one", "two"],
+            "dimensions": 64,
+        },
     )
     assert len(response.json["embeddings"]) == 2
     assert len(response.json["embeddings"][0]) == 64
@@ -1085,7 +1605,12 @@ def test_cohere_chat_answers_once_the_tool_has_replied(client):
                 {"role": "user", "content": "weather in Seattle?"},
                 {"role": "tool", "tool_call_id": "x", "content": "70 degrees"},
             ],
-            "tools": [{"type": "function", "function": {"name": "get_current_weather"}}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {"name": "get_current_weather"},
+                }
+            ],
         },
     )
     assert "tool_calls" not in response.json["message"]
