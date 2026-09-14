@@ -82,6 +82,10 @@ def _install_providers(
     return tracer_provider, meter_provider, logger_provider
 
 
+def _remaining_millis(deadline: float) -> int:
+    return max(0, int((deadline - time.monotonic()) * 1000))
+
+
 def _flush_before_shutdown(
     providers: tuple[TracerProvider, MeterProvider, LoggerProvider],
     timeout_millis: int = FLUSH_TIMEOUT_MILLIS,
@@ -89,7 +93,7 @@ def _flush_before_shutdown(
     tracer_provider, meter_provider, logger_provider = providers
     deadline = time.monotonic() + timeout_millis / 1000
 
-    remaining_millis = max(0, int((deadline - time.monotonic()) * 1000))
+    remaining_millis = _remaining_millis(deadline)
     with ThreadPoolExecutor(max_workers=2) as executor:
         traces = executor.submit(
             tracer_provider.force_flush, timeout_millis=remaining_millis
@@ -104,7 +108,7 @@ def _flush_before_shutdown(
                 f"{signal} flush did not complete within the shutdown budget"
             )
 
-    remaining_millis = max(0, int((deadline - time.monotonic()) * 1000))
+    remaining_millis = _remaining_millis(deadline)
     if not meter_provider.force_flush(timeout_millis=remaining_millis):
         raise RuntimeError(
             "metric flush did not complete within the shutdown budget"
