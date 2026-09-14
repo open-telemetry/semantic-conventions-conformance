@@ -153,6 +153,16 @@
       }
     },
     {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET /users/{userId}' is missing required attribute 'url.query' for contract request '/users/456?fields=name&verbose=true'",
+      "signal_type": "span",
+      "signal_name": "GET /users/{userId}",
+      "context": {
+        "attribute_key": "url.query",
+        "kind": "server"
+      }
+    },
+    {
       "id": "type_mismatch",
       "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
       "signal_type": "span",

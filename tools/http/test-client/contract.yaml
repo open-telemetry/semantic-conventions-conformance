@@ -38,14 +38,15 @@ scenarios:
                 present: true
       events: []
 
+  # The distinct user path identifies this request even when url.query is missing.
   - description: Sends a request with a query string.
     action:
       request:
         method: GET
-        path: /users/123?fields=name&verbose=true
+        path: /users/456?fields=name&verbose=true
       response:
         status: 200
-        body: '{"id": 123, "name": "Alice"}'
+        body: '{"id": 456, "name": "Alice"}'
     expect:
       spans:
         - match:
