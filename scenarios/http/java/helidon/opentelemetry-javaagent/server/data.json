@@ -68,5 +68,54 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'io.helidon.Main' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "io.helidon.Main",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'io.helidon.common.features.HelidonFeatures' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "io.helidon.common.features.HelidonFeatures",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'io.helidon.webserver.LoomServer' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "io.helidon.webserver.LoomServer",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'io.helidon.webserver.ServerListener' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "io.helidon.webserver.ServerListener",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    }
+  ]
 }
