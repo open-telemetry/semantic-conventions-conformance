@@ -76,9 +76,11 @@ def database_session(
 ) -> Generator[ConformanceSession, None, None]:
     """Open a database conformance session with its configured backend."""
     spec = spec or load_spec(Path(directory))
-    with _BACKENDS[_backend_name(spec)]() as backend:
+    backend_name = _backend_name(spec)
+    with _BACKENDS[backend_name]() as backend:
         resolved = dict(variables or {})
         resolved.update(backend.variables)
+        resolved["DATABASE_BACKEND"] = backend_name
         session_context = DOMAIN.session(
             directory,
             report_dir=report_dir,

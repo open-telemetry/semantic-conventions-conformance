@@ -8,9 +8,9 @@ public final class JdbcJavaagentScenario {
   private JdbcJavaagentScenario() {}
 
   public static void main(String[] args) throws Exception {
-    if (args.length != 1) {
-      throw new IllegalArgumentException("expected one JDBC operation argument");
+    if (args.length != 0) {
+      throw new IllegalArgumentException("expected no JDBC operation arguments");
     }
-    JdbcScenario.run(args[0]);
+    JdbcScenario.run();
   }
 }
