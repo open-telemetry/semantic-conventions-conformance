@@ -20,6 +20,7 @@ _OPERATION_NAMES = {
     "gen_ai.embeddings.client": {"embeddings"},
     "gen_ai.execute_tool.internal": {"execute_tool"},
     "gen_ai.fetch_response.client": {"fetch_response"},
+    "gen_ai.generate_live_content.client": {"generate_live_content"},
     "gen_ai.inference.client": {"chat", "generate_content", "text_completion"},
     "gen_ai.invoke_agent.client": {"invoke_agent"},
     "gen_ai.invoke_agent.internal": {"invoke_agent"},
@@ -35,6 +36,7 @@ _OPERATION_NAMES = {
     },
     "gen_ai.plan.internal": {"plan"},
     "gen_ai.retrieval.client": {"retrieval"},
+    "gen_ai.user_input.client": {"user_input"},
 }
 
 # What identifies a span that omits the operation name. create_agent and plan
