@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping
 
 _SUPPORTED_SYSTEM_SPAN_TYPES = {
+    "cassandra": "db.cassandra.client",
     "mariadb": "db.mariadb.client",
     "postgresql": "db.postgresql.client",
 }
