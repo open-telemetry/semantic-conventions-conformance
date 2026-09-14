@@ -1,0 +1,99 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  set_get:
+    spans:
+      - match: &hello
+          type: db.redis.client
+          attributes:
+            db.operation.name: HELLO
+        expect: &startup-one
+          count: 1
+          attributes:
+            db.query.text: HELLO 3
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match: &client
+          type: db.redis.client
+          attributes:
+            db.operation.name: CLIENT
+        expect: &startup-client
+          count: 3
+          attributes:
+            db.query.text: {distinct: 3}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            db.query.text: "SET conformance:lettuce:value ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+        expect:
+          count: 1
+          attributes:
+            db.query.text: GET conformance:lettuce:value
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: &metrics
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  pipeline:
+    spans:
+      - match: *hello
+        expect: *startup-one
+      - match: *client
+        expect: *startup-client
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 2
+          attributes:
+            db.query.text: {distinct: 2}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: *metrics
+    events: []
+
+  error:
+    spans:
+      - match: *hello
+        expect: *startup-one
+      - match: *client
+        expect: *startup-client
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            db.query.text: "SET conformance:lettuce:error ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: LPUSH
+        expect:
+          count: 1
+          attributes:
+            db.query.text: "LPUSH conformance:lettuce:error ?"
+            error.type: io.lettuce.core.RedisCommandExecutionException
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: *metrics
+    events: []

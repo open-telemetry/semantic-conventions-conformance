@@ -1,0 +1,67 @@
+{
+  "spans": {
+    "db.redis.client": [
+      "db.namespace",
+      "db.operation.batch.size",
+      "db.operation.name",
+      "db.query.text",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "db.client.operation.duration": [
+      "db.namespace",
+      "db.operation.name",
+      "db.system.name",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": [
+        "process.runtime.description"
+      ]
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": []
+}

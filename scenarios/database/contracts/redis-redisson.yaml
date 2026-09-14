@@ -1,0 +1,118 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  set_get:
+    spans:
+      - match: &ping
+          type: db.redis.client
+          attributes:
+            db.operation.name: PING
+        expect: &two-startup
+          count: 2
+          attributes:
+            db.namespace: "0"
+            db.query.text: PING
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match: &eval
+          type: db.redis.client
+          attributes:
+            db.operation.name: EVAL
+        expect: &startup-eval
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "EVAL redis.call('get', KEYS[1]) redis.call('get', KEYS[2]) 2 test1 test2"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "SET conformance:redisson:value ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: GET conformance:redisson:value
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: &metrics
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  batch:
+    spans:
+      - match: *ping
+        expect: *two-startup
+      - match: *eval
+        expect: *startup-eval
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PIPELINE SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.operation.batch.size: 2
+            db.query.text: "SET conformance:redisson:batch:1 ?; SET conformance:redisson:batch:2 ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: *metrics
+    events: []
+
+  error:
+    spans:
+      - match: *ping
+        expect: *two-startup
+      - match: *eval
+        expect: *startup-eval
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: DEL
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: DEL conformance:redisson:error
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: RPUSH
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "RPUSH conformance:redisson:error ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: GET conformance:redisson:error
+            error.type: org.redisson.client.RedisException
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: *metrics
+    events: []
