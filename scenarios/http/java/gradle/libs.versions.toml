@@ -15,11 +15,11 @@ httpclient5 = "5.6.4"
 jackson = "2.22.2"
 jetty = "12.1.13"
 jodd-http = "6.3.0"
-kotlin = "2.3.21"
+kotlin = "2.4.20"
 ktor = "3.5.2"
-netty = "4.2.17.Final"
+netty = "4.2.18.Final"
 okhttp = "5.5.0"
-opentelemetry = "1.65.0"
+opentelemetry = "1.66.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
@@ -33,7 +33,7 @@ restlet = "2.4.4"
 spring-boot = "4.1.1"
 tomcat = "11.0.25"
 undertow = "2.4.3.Final"
-vertx = "5.1.7"
+vertx = "5.1.8"
 
 [libraries]
 akka-actor = { module = "com.typesafe.akka:akka-actor_2.13", version.ref = "akka" }
