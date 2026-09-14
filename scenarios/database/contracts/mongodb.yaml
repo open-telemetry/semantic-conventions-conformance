@@ -1,0 +1,105 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  find:
+    spans:
+      - match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: find
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+            db.operation.name: find
+            db.query.text: '{"find": "items", "filter": {"_id": "?"}, "limit": "?", "singleBatch": "?", "$db": "?", "lsid": {"id": "?"}}'
+            db.query.summary: {present: false}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - &end-sessions
+        match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: endSessions
+        expect:
+          count: 1
+          attributes:
+            db.namespace: admin
+            db.collection.name: {present: false}
+            db.operation.name: endSessions
+            db.query.text: '{"endSessions": [{"id": "?"}], "$db": "?", "$readPreference": {"mode": "?"}}'
+            db.query.summary: {present: false}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  update:
+    spans:
+      - match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: update
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+            db.operation.name: update
+            db.query.text: '{"update": "items", "ordered": "?", "$db": "?", "lsid": {"id": "?"}, "updates": [{"q": {"_id": "?"}, "u": {"$set": {"name": "?"}}}]}'
+            db.query.summary: {present: false}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - *end-sessions
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  delete:
+    spans:
+      - match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: delete
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+            db.operation.name: delete
+            db.query.text: '{"delete": "items", "ordered": "?", "$db": "?", "lsid": {"id": "?"}, "deletes": [{"q": {"_id": "?"}, "limit": "?"}]}'
+            db.query.summary: {present: false}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - *end-sessions
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  aggregate:
+    spans:
+      - match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: aggregate
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+            db.operation.name: aggregate
+            db.query.text: '{"aggregate": "items", "pipeline": [{"$match": {"_id": "?"}}], "cursor": {}, "$db": "?", "lsid": {"id": "?"}}'
+            db.query.summary: {present: false}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - *end-sessions
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []

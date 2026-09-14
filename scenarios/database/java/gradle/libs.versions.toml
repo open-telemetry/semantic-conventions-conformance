@@ -3,6 +3,12 @@
 
 [versions]
 mariadb = "3.5.10"
+# MongoDB's legacy async driver (com.mongodb.async.client), superseded by the
+# reactive streams driver and pinned separately because it stopped at 3.x.
+mongodb-driver-async = "3.12.14"
+# The modern MongoDB sync and Reactive Streams drivers are released
+# together from the same source tree, so one version covers both.
+mongodb-driver = "5.11.0"
 opentelemetry = "1.65.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
@@ -10,14 +16,20 @@ opentelemetry = "1.65.0"
 opentelemetry-instrumentation = "2.31.1"
 opentelemetry-instrumentation-alpha = "2.31.1-alpha"
 postgresql = "42.7.13"
+reactivestreams = "1.0.4"
 
 [libraries]
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
+mongodb-driver-async = { module = "org.mongodb:mongodb-driver-async", version.ref = "mongodb-driver-async" }
+mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb-driver" }
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb-driver" }
 opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api" }
 opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
 opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
 opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
 opentelemetry-instrumentation-jdbc = { module = "io.opentelemetry.instrumentation:opentelemetry-jdbc" }
+opentelemetry-instrumentation-mongo = { module = "io.opentelemetry.instrumentation:opentelemetry-mongo-3.1" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+reactivestreams = { module = "org.reactivestreams:reactive-streams", version.ref = "reactivestreams" }
