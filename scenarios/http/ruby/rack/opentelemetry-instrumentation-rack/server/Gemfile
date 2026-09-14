@@ -22,5 +22,5 @@ gem "otel-conformance-scenario-sdk",
 gem "otel-conformance-scenario-support",
     path: "../../../../../../tools/ruby/scenario-support"
 
-gem "minitest", "~> 5.0"
+gem "minitest", "~> 6.0"
 gem "rake", "~> 13.0"
