@@ -46,7 +46,7 @@ dependencies = [
 requires-dist = [
     { name = "agno", specifier = "==3.0.9" },
     { name = "openai", specifier = "==3.14.0" },
-    { name = "openinference-instrumentation-agno", specifier = "==1.0.9" },
+    { name = "openinference-instrumentation-agno", specifier = "==1.0.10" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
     { name = "opentelemetry-distro", specifier = "==0.65b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
@@ -423,7 +423,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-agno"
-version = "1.0.9"
+version = "1.0.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -434,9 +434,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9d/3b/5e762a75c1af01666120d271bb9259e6fcd8ebc20cf6551ab5201b75a1c9/openinference_instrumentation_agno-1.0.9.tar.gz", hash = "sha256:156152b0c2cad2dae73f626b33466c1f8815a4dfeaf1e94321a2aa18db61ddb8", size = 25660, upload-time = "2026-09-10T05:43:27.891Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/59/fe403464dfbc3c6b8485905b667aafc26636638cc7e7c1e5c938db97a7a1/openinference_instrumentation_agno-1.0.10.tar.gz", hash = "sha256:328a72a54534b3882de01f9b4452ae7b7c0ee91a9792f4e73f6b9bd427348234", size = 25764, upload-time = "2026-09-15T04:52:27.648Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/9f/52eccff33ac5022f6935fe84482d9622d800e2eabfe625b7b6d1bf697b04/openinference_instrumentation_agno-1.0.9-py3-none-any.whl", hash = "sha256:c519b77ec82114bbe200a8395b798aeb85ca1e7d1e2014f62673b85f027ec26c", size = 31161, upload-time = "2026-09-10T05:43:26.779Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/c0/90362264d239894dd46f40635c97842b7f58782388c17b0a655b1612b271/openinference_instrumentation_agno-1.0.10-py3-none-any.whl", hash = "sha256:b210212001950258b1f0279e7cbed0ca3feac7a9225bdf7d889def0109b7454b", size = 31216, upload-time = "2026-09-15T04:52:26.223Z" },
 ]
 
 [[package]]

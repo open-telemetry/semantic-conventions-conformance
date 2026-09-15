@@ -50,7 +50,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = "==1.5.0" },
-    { name = "openinference-instrumentation-anthropic", specifier = "==2.1.4" },
+    { name = "openinference-instrumentation-anthropic", specifier = "==2.1.5" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
     { name = "opentelemetry-distro", specifier = "==0.65b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
@@ -274,7 +274,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-anthropic"
-version = "2.1.4"
+version = "2.1.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -285,9 +285,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/17/23/c2adbc44dd29c1a4c7b967c5bcf2aa8fb53dc0599bc6be663010b8c4f6c9/openinference_instrumentation_anthropic-2.1.4.tar.gz", hash = "sha256:d8bf37b46db6170feb8eafa2e92cc0cab99a811a8532ac00bc3ae999e3ee8725", size = 15883, upload-time = "2026-09-10T05:43:14.442Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/ff/53a0d4db6afb793280b20692099b840f9abc2cb685210a1ab4822db7298a/openinference_instrumentation_anthropic-2.1.5.tar.gz", hash = "sha256:36f54ad4d04bb5f5d30a292533f0d1d1c66b2080c7b56ab629c862b0360c7274", size = 16132, upload-time = "2026-09-15T04:52:26.205Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/5d/e3e8549d4290ed0361bf059817188d61b1ea40d9acd83b865ed3023e612d/openinference_instrumentation_anthropic-2.1.4-py3-none-any.whl", hash = "sha256:d140d4ce4c9b421878bd98c20f208185ef03f9b0baab00cbc2721913979fc668", size = 19215, upload-time = "2026-09-10T05:43:13.295Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/62/51ae465de3ae0ccdf45cfaa93cd3650c167fad14946907370755dc7fe669/openinference_instrumentation_anthropic-2.1.5-py3-none-any.whl", hash = "sha256:55d82ada642688ebc59461781be3e6cc50af3b686e226408d88a82b6da1fa486", size = 19493, upload-time = "2026-09-15T04:52:24.949Z" },
 ]
 
 [[package]]
