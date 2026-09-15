@@ -46,6 +46,7 @@ class BackendSpec:
     schema_path: str
     schema_command: tuple[str, ...]
     schema_environment: tuple[tuple[str, str], ...] = ()
+    additional_ports: tuple[tuple[str, int], ...] = ()
 
 
 class DatabaseContainer:
@@ -61,6 +62,7 @@ class DatabaseContainer:
         self._container_factory = container_factory
         self._container: DockerContainer | None = None
         self._published_port: int | None = None
+        self._additional_published_ports: dict[str, int] = {}
 
     @property
     def variables(self) -> Mapping[str, str]:
@@ -68,13 +70,20 @@ class DatabaseContainer:
             raise DatabaseBackendError(
                 f"{self._spec.name} has not been started"
             )
-        return {
+        variables = {
             "DATABASE_HOST": DATABASE_HOST,
             "DATABASE_PORT": str(self._published_port),
             "DATABASE_NAME": self._spec.database,
             "DATABASE_USER": self._spec.user,
             "DATABASE_PASSWORD": self._spec.password,
         }
+        variables.update(
+            {
+                variable: str(self._additional_published_ports[variable])
+                for variable, _ in self._spec.additional_ports
+            }
+        )
+        return variables
 
     def start(self: _DatabaseContainerT) -> _DatabaseContainerT:
         if self._container is not None:
@@ -102,11 +111,17 @@ class DatabaseContainer:
 
         port_bindings = cast(dict[str, _PortBinding], container.ports)
         port_bindings[f"{self._spec.port}/tcp"] = (DATABASE_HOST, 0)
+        for _, port in self._spec.additional_ports:
+            port_bindings[f"{port}/tcp"] = (DATABASE_HOST, 0)
 
         self._container = container
         try:
             container.start()
             self._published_port = container.get_exposed_port(self._spec.port)
+            for variable, port in self._spec.additional_ports:
+                self._additional_published_ports[variable] = (
+                    container.get_exposed_port(port)
+                )
             self._apply_schema(container)
         except BaseException as error:
             try:
@@ -153,6 +168,7 @@ class DatabaseContainer:
         self._container.stop()
         self._container = None
         self._published_port = None
+        self._additional_published_ports.clear()
 
     def __enter__(self: _DatabaseContainerT) -> _DatabaseContainerT:
         return self.start()
