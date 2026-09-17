@@ -824,7 +824,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "litellm", specifier = "==1.101.0" },
-    { name = "openinference-instrumentation-litellm", specifier = "==0.1.44" },
+    { name = "openinference-instrumentation-litellm", specifier = "==0.1.45" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
     { name = "opentelemetry-distro", specifier = "==0.65b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
@@ -1029,7 +1029,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-litellm"
-version = "0.1.44"
+version = "0.1.45"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -1040,9 +1040,9 @@ dependencies = [
     { name = "setuptools" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dc/ac/a407336fa476c42b65b97578b7d7616a3420bca3a62f77ef185335b781c3/openinference_instrumentation_litellm-0.1.44.tar.gz", hash = "sha256:0364bbb375d14bbe3b04f6e5603885f9642052394f3882bad9cd535eb1904317", size = 112788, upload-time = "2026-09-15T04:52:18.836Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/ff/f8d599f5a99b148f43228c195e36ce6102d2a8a09976212ba0ce3228c869/openinference_instrumentation_litellm-0.1.45.tar.gz", hash = "sha256:5370b57c237870371c290f02b28d25dcf3fd5074107eef75c281499d0359965b", size = 113450, upload-time = "2026-09-15T16:34:42.572Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/e4/81b6f49067582d6d8bafb55e4680876f4a5b7654c6eea3e9ca931c1c56df/openinference_instrumentation_litellm-0.1.44-py3-none-any.whl", hash = "sha256:c2632baa8500a14e7ee37b61720cf8a66e451538e66369163f7c236992550fb5", size = 25127, upload-time = "2026-09-15T04:52:17.546Z" },
+    { url = "https://files.pythonhosted.org/packages/b8/4e/9e42a0fc46b6b565334f053f833bd7a0d12d4514ac3f99b9603a67598329/openinference_instrumentation_litellm-0.1.45-py3-none-any.whl", hash = "sha256:4c3b900dba781c5934d04f4e8fc0bc39b34c500a59642c5294ac466ac8ac5c2e", size = 25085, upload-time = "2026-09-15T16:34:41.123Z" },
 ]
 
 [[package]]

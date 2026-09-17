@@ -104,7 +104,7 @@ dependencies = [
 requires-dist = [
     { name = "autogen-agentchat", specifier = "==0.7.5" },
     { name = "autogen-ext", extras = ["openai"], specifier = "==0.7.5" },
-    { name = "openinference-instrumentation-autogen-agentchat", specifier = "==0.1.17" },
+    { name = "openinference-instrumentation-autogen-agentchat", specifier = "==0.1.18" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
     { name = "opentelemetry-distro", specifier = "==0.65b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
@@ -472,7 +472,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-autogen-agentchat"
-version = "0.1.17"
+version = "0.1.18"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "autogen-agentchat" },
@@ -483,9 +483,9 @@ dependencies = [
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/06/7093395ab5aa4740a6ed57141030ae1336f847123c4fcd9fe88016963bcc/openinference_instrumentation_autogen_agentchat-0.1.17.tar.gz", hash = "sha256:4b3fc8cf1fead02c9a8b7a0afb0f8a8f85ae8f2bd28fab5d765d2b4b93719a93", size = 14595, upload-time = "2026-09-10T05:43:23.181Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/b8/02b98b2f60809cd5cc9cfcb4382650046a7698a4198cc2b003bda8bbab87/openinference_instrumentation_autogen_agentchat-0.1.18.tar.gz", hash = "sha256:e43990932501b55fd0d776ed71704385139311f48f548b31a7e52bf6e28af60c", size = 14596, upload-time = "2026-09-15T16:34:46.014Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/2c/80724a1a2de1ee0601704fddd95427c8a8b637fba8f484dd42ad5617437a/openinference_instrumentation_autogen_agentchat-0.1.17-py3-none-any.whl", hash = "sha256:f3d3150d8599444d47c14fe2cd1e20c6e0115bea8e51102f6ef582ad2a239f1f", size = 16534, upload-time = "2026-09-10T05:43:21.965Z" },
+    { url = "https://files.pythonhosted.org/packages/75/9d/91cefc794a00f29daea925f1b78e254a02b6503e17e877a720825e2479fd/openinference_instrumentation_autogen_agentchat-0.1.18-py3-none-any.whl", hash = "sha256:545d9a326bcf16dcbf11b2de00270d687a6779d8a08247141b8b6b568b354fb9", size = 16533, upload-time = "2026-09-15T16:34:44.731Z" },
 ]
 
 [[package]]
