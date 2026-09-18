@@ -46,6 +46,7 @@ class BackendSpec:
     schema_path: str
     schema_command: tuple[str, ...]
     schema_environment: tuple[tuple[str, str], ...] = ()
+    startup_timeout: tuple[str, float] = _STARTUP_TIMEOUT
 
 
 class DatabaseContainer:
@@ -90,7 +91,7 @@ class DatabaseContainer:
         ready = (
             ExecWaitStrategy(list(self._spec.ready_command))
             .with_startup_timeout(
-                timedelta(seconds=timeout_seconds(*_STARTUP_TIMEOUT))
+                timedelta(seconds=timeout_seconds(*self._spec.startup_timeout))
             )
             .with_poll_interval(_POLL_INTERVAL_SECONDS)
         )
