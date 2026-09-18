@@ -530,7 +530,7 @@ wheels = [
 
 [[package]]
 name = "together"
-version = "2.34.0"
+version = "2.35.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -545,9 +545,9 @@ dependencies = [
     { name = "types-pyyaml" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/c3/4685a9b67c9fdccab22d8478953eb85d2bc8951cb9a7a0e7c8513612b642/together-2.34.0.tar.gz", hash = "sha256:3e8fe1b208894ccdcf26ebfc9bfcafd7b612e47f9a8bd78d3de07eec497ce0a7", size = 860099, upload-time = "2026-09-15T20:07:27.789Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/81/38a48c12feefdadc9d8463e504f543b8a1466441e7392f1b49b8133712e5/together-2.35.0.tar.gz", hash = "sha256:f955dd92bcdd652050c674a924690959ea6174ca8b15af591cb7a34a7da7bac4", size = 865972, upload-time = "2026-09-17T20:40:12.695Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/2a/8adab5c12702f2b95d0e84b63d6dac620972e01cab76755b32f4c8677cb8/together-2.34.0-py3-none-any.whl", hash = "sha256:3c04c938404b2c4479e6121957368193548f0c0ca57991667677ba25eff0e7da", size = 725328, upload-time = "2026-09-15T20:07:29.026Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/d6/0fe4c48db1b0d85883c6859951c3895358c40defa2d2f176c82045087d11/together-2.35.0-py3-none-any.whl", hash = "sha256:29774c2a2146c2a0eba1270ec3e2008a11ff1b56f098134f21357242fb948143", size = 749005, upload-time = "2026-09-17T20:40:11.117Z" },
 ]
 
 [[package]]
@@ -570,7 +570,7 @@ requires-dist = [
     { name = "opentelemetry-distro", specifier = "==0.65b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
     { name = "opentelemetry-sdk", specifier = "==1.44.0" },
-    { name = "together", specifier = "==2.34.0" },
+    { name = "together", specifier = "==2.35.0" },
 ]
 
 [[package]]
