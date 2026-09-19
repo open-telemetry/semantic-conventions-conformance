@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -12,12 +13,15 @@ import pytest
 import otel_conformance_java
 from otel_conformance_java import (
     AGENT_CONTROL_JAR,
+    ARTIFACTS_FILE,
     BUILD_MARKER,
     SCENARIO_LAUNCHER,
+    ArtifactMetadataError,
     LayoutError,
     build_root,
     gradle_command,
     java_command,
+    prepare_runtime,
 )
 
 MAIN = "ArmeriaJavaagentServerScenario"
@@ -63,6 +67,202 @@ class TestPreparing:
         command = gradle_command(root, f":{PROJECT}:prepareRuntime")
 
         assert command[command.index("--project-dir") + 1] == str(root)
+
+    @pytest.fixture
+    def prepared_artifacts(self, root: Path) -> bytes:
+        contents = (
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "generated_by": "otel-conformance-java prepare",
+                    "artifacts": [
+                        {
+                            "role": "instrumentation_library",
+                            "ecosystem": "maven",
+                            "coordinate": (
+                                "io.opentelemetry.javaagent:"
+                                "opentelemetry-javaagent"
+                            ),
+                            "version": "2.31.1",
+                        },
+                        {
+                            "role": "instrumented_library",
+                            "ecosystem": "maven",
+                            "coordinate": "com.linecorp.armeria:armeria",
+                            "version": "1.41.1",
+                        },
+                    ],
+                },
+                indent=2,
+            )
+            + "\n"
+        ).encode()
+        runtime = root / "build" / "scenario-runtime" / RUNTIME
+        runtime.mkdir(parents=True)
+        (runtime / ARTIFACTS_FILE).write_bytes(contents)
+        return contents
+
+    def test_success_copies_prepared_artifacts_into_current_target(
+        self,
+        root: Path,
+        tmp_path: Path,
+        prepared_artifacts: bytes,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(
+            otel_conformance_java.subprocess, "call", lambda _: 0
+        )
+        target = tmp_path / "target"
+        target.mkdir()
+
+        assert prepare_runtime(root, PROJECT, target) == 0
+
+        assert (target / ARTIFACTS_FILE).read_bytes() == prepared_artifacts
+
+    def test_failed_gradle_does_not_overwrite_committed_artifacts(
+        self,
+        root: Path,
+        tmp_path: Path,
+        prepared_artifacts: bytes,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        del prepared_artifacts
+        monkeypatch.setattr(
+            otel_conformance_java.subprocess, "call", lambda _: 1
+        )
+        target = tmp_path / "target"
+        target.mkdir()
+        committed = target / ARTIFACTS_FILE
+        committed.write_bytes(b"committed\n")
+
+        assert prepare_runtime(root, PROJECT, target) == 1
+        assert committed.read_bytes() == b"committed\n"
+
+    def test_missing_prepared_artifacts_does_not_overwrite_committed_file(
+        self,
+        root: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(
+            otel_conformance_java.subprocess, "call", lambda _: 0
+        )
+        target = tmp_path / "target"
+        target.mkdir()
+        committed = target / ARTIFACTS_FILE
+        committed.write_bytes(b"committed\n")
+
+        with pytest.raises(ArtifactMetadataError, match="missing"):
+            prepare_runtime(root, PROJECT, target)
+
+        assert committed.read_bytes() == b"committed\n"
+
+    def test_missing_artifacts_remain_optional_for_an_unmigrated_target(
+        self,
+        root: Path,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(
+            otel_conformance_java.subprocess, "call", lambda _: 0
+        )
+        target = tmp_path / "target"
+        target.mkdir()
+
+        assert prepare_runtime(root, PROJECT, target) == 0
+        assert not (target / ARTIFACTS_FILE).exists()
+
+    @pytest.mark.parametrize("contents", ["{", "{}", "null", "[]"])
+    def test_invalid_prepared_artifacts_does_not_overwrite_committed_file(
+        self,
+        root: Path,
+        tmp_path: Path,
+        prepared_artifacts: bytes,
+        monkeypatch: pytest.MonkeyPatch,
+        contents: str,
+    ) -> None:
+        del prepared_artifacts
+        monkeypatch.setattr(
+            otel_conformance_java.subprocess, "call", lambda _: 0
+        )
+        runtime = root / "build" / "scenario-runtime" / RUNTIME
+        (runtime / ARTIFACTS_FILE).write_text(contents, encoding="utf-8")
+        target = tmp_path / "target"
+        target.mkdir()
+        committed = target / ARTIFACTS_FILE
+        committed.write_bytes(b"committed\n")
+
+        with pytest.raises(ArtifactMetadataError, match="invalid artifact metadata"):
+            prepare_runtime(root, PROJECT, target)
+
+        assert committed.read_bytes() == b"committed\n"
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("schema_version", 2),
+            ("schema_version", True),
+            ("generated_by", None),
+            ("artifacts", []),
+            ("artifacts", {}),
+            ("artifacts", [None]),
+            ("role", None),
+            ("role", []),
+            ("ecosystem", "npm"),
+            ("coordinate", ""),
+            ("version", None),
+            ("version", " "),
+            ("version", 1),
+        ],
+    )
+    def test_invalid_fields_do_not_overwrite_committed_artifacts(
+        self,
+        root: Path,
+        tmp_path: Path,
+        prepared_artifacts: bytes,
+        monkeypatch: pytest.MonkeyPatch,
+        field: str,
+        value: object,
+    ) -> None:
+        monkeypatch.setattr(
+            otel_conformance_java.subprocess, "call", lambda _: 0
+        )
+        metadata = json.loads(prepared_artifacts)
+        entry = metadata if field in metadata else metadata["artifacts"][0]
+        if value is None:
+            del entry[field]
+        else:
+            entry[field] = value
+        runtime = root / "build" / "scenario-runtime" / RUNTIME
+        (runtime / ARTIFACTS_FILE).write_text(json.dumps(metadata))
+        target = tmp_path / "target"
+        target.mkdir()
+        committed = target / ARTIFACTS_FILE
+        committed.write_bytes(prepared_artifacts)
+
+        with pytest.raises(ArtifactMetadataError, match="invalid artifact metadata"):
+            prepare_runtime(root, PROJECT, target)
+
+        assert committed.read_bytes() == prepared_artifacts
+
+    def test_unchanged_artifacts_are_not_replaced(
+        self,
+        root: Path,
+        tmp_path: Path,
+        prepared_artifacts: bytes,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(
+            otel_conformance_java.subprocess, "call", lambda _: 0
+        )
+        target = tmp_path / "target"
+        target.mkdir()
+        committed = target / ARTIFACTS_FILE
+        committed.write_bytes(prepared_artifacts)
+        original_inode = committed.stat().st_ino
+
+        assert prepare_runtime(root, PROJECT, target) == 0
+        assert committed.stat().st_ino == original_inode
 
 
 class TestRunning:

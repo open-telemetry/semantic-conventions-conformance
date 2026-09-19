@@ -78,6 +78,7 @@ jobs:
       # Compiles, formats and unit-tests every Java scenario build.
       - name: Build Java
         run: |
+          scenarios/http/java/gradlew --project-dir tools/java/gradle-plugins test
           scenarios/database/java/gradlew --project-dir scenarios/database/java build
           scenarios/http/java/gradlew --project-dir scenarios/http/java build
 

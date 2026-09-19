@@ -6,3 +6,11 @@ dependencies {
     implementation(project(":armeria:scenarios"))
     add("javaAgent", libs.opentelemetry.javaagent)
 }
+
+conformanceArtifacts {
+    instrumentedLibrary("com.linecorp.armeria", "armeria")
+    instrumentationLibrary(
+        "io.opentelemetry.javaagent",
+        "opentelemetry-javaagent",
+    )
+}

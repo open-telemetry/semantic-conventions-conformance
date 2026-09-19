@@ -33,8 +33,9 @@ reuses it instead of restating any of it:
   and Error Prone. Style is the formatter's job, so only Error Prone's own
   errors fail a build here: the patterns that are bugs rather than taste.
 - `otel-conformance.scenario-launcher` — the `javaAgent` configuration and
-  `prepareRuntime`, applied only by the projects that are scenario entry
-  points. Which projects those are is therefore visible in the build files.
+  `prepareRuntime`, plus resolved artifact metadata, applied only by the
+  projects that are scenario entry points. Which projects those are is
+  therefore visible in the build files.
 
 The projects under `tools/java` are shared the same way: a build root includes
 them by directory, so both a `scenario-support` and a domain's own framework
@@ -97,7 +98,10 @@ the resolved classpath and the Java agent into the build root's
 `build/scenario-runtime/<project>`, with the path flattened to one directory
 name. That is under the build root rather than under each project, so where a
 Gradle project sits on disk is the build's business and not something the
-launcher has to know.
+launcher has to know. Migrated launch projects declare exact Maven components
+with `conformanceArtifacts`; Gradle records their selected versions in
+`artifacts.json`, and `prepare` atomically copies that file into the current
+conformance directory.
 
 `run` executes `java` directly rather than through Gradle, so the scenario
 inherits the fresh OTLP endpoint the runner injected instead of whatever a
