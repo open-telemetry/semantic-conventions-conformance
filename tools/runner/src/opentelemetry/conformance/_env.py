@@ -13,6 +13,7 @@ key and base URL and run it.
 from __future__ import annotations
 
 import logging
+import math
 import os
 from string import Template
 from typing import Mapping
@@ -31,7 +32,7 @@ def timeout_seconds(variable: str, default: float) -> float:
     The defaults suit a laptop running one scenario; a loaded CI machine, a
     cold dependency install or a real provider behind a scenario can all need
     more, and none of those should need a code change. A value that isn't a
-    positive number is reported and ignored rather than failing the run.
+    finite positive number is reported and ignored rather than failing the run.
     """
     raw = os.environ.get(variable)
     if not raw:
@@ -40,9 +41,9 @@ def timeout_seconds(variable: str, default: float) -> float:
         seconds = float(raw)
     except ValueError:
         seconds = 0
-    if seconds <= 0:
+    if not math.isfinite(seconds) or seconds <= 0:
         _logger.warning(
-            "%s=%r is not a positive number of seconds; using %s",
+            "%s=%r is not a finite positive number of seconds; using %s",
             variable,
             raw,
             default,
