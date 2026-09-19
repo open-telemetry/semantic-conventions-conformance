@@ -1,0 +1,767 @@
+/* Copyright The OpenTelemetry Authors
+   SPDX-License-Identifier: Apache-2.0 */
+
+/* Light is the base; dark redefines only the tokens, so no colour has its
+   only definition inside a media query. */
+:root {
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --line: #e2e4e9;
+  --line-strong: #c8ccd4;
+  --ink: #16181d;
+  --ink-2: #5b616e;
+  --ink-3: #878d99;
+  --accent: #4338ca;
+  --accent-soft: #eeecfb;
+
+  /* Requirement levels. Ordered by how much an absence means, not by hue
+     family, so the legend reads as a scale. */
+  --required: #b4295c;
+  --recommended: #1d6fa5;
+  --conditional: #7a6a9e;
+  --optin: #8a8f9a;
+
+  --good: #1a7f5a;
+  --miss: #e7e9ee;
+
+  /* Languages. A separate scale from the requirement levels on purpose: it
+     only ever appears on labels — a band, a pill, a group heading — and never
+     on a cell, so the two never have to be told apart in the same place. */
+  --lang-1: #0f7d8c;
+  --lang-2: #b5730f;
+  --lang-3: #7c4bb0;
+  --lang-4: #a33a6e;
+  --lang-5: #3a6ea3;
+  --lang-6: #4f7a2b;
+
+  --radius: 6px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1014;
+    --surface: #16191f;
+    --surface-2: #1d2128;
+    --line: #282d36;
+    --line-strong: #3a4049;
+    --ink: #e7e9ee;
+    --ink-2: #a0a6b2;
+    --ink-3: #6f7682;
+    --accent: #a5a0f5;
+    --accent-soft: #23213a;
+
+    --required: #f07fa5;
+    --recommended: #6fb6e0;
+    --conditional: #b0a2d4;
+    --optin: #7d838f;
+
+    --good: #4fc294;
+    --miss: #262b33;
+
+    --lang-1: #52c3d1;
+    --lang-2: #e0a95a;
+    --lang-3: #b596e6;
+    --lang-4: #e58ab5;
+    --lang-5: #79aede;
+    --lang-6: #a2c96e;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* A class that sets `display` outranks the UA rule for `hidden`, and several
+   of the controls below are flex rows that start out closed. */
+[hidden] {
+  display: none !important;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+code,
+.mono {
+  font-family: var(--mono);
+  font-size: 0.88em;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  background: var(--surface);
+  padding: 0.6rem 1rem;
+  z-index: 10;
+}
+.skip:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* --- masthead ------------------------------------------------------------ */
+
+.masthead {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.masthead-row {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.1rem 1.5rem 0.55rem;
+}
+.masthead h1 {
+  margin: 0;
+  font-size: 1.06rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+  background: linear-gradient(135deg, var(--required), var(--recommended));
+}
+.tagline {
+  margin: 0.3rem 0 0 1.75rem;
+  color: var(--ink-2);
+  font-size: 0.855rem;
+  max-width: 62ch;
+}
+
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.6rem 1.5rem 4rem;
+}
+
+footer {
+  border-top: 1px solid var(--line);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.2rem 1.5rem 2.5rem;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+}
+footer p {
+  margin: 0.2rem 0;
+}
+
+/* --- shared chrome ------------------------------------------------------- */
+
+h2 {
+  font-size: 1.15rem;
+  font-weight: 620;
+  margin: 0 0 0.2rem;
+  letter-spacing: -0.01em;
+}
+.lede {
+  color: var(--ink-2);
+  margin: 0 0 1.2rem;
+  max-width: 76ch;
+  font-size: 0.9rem;
+}
+.lede summary {
+  cursor: pointer;
+}
+.lede p {
+  margin: 0.5rem 0 0;
+}
+
+.loading,
+.empty {
+  color: var(--ink-3);
+  padding: 2.5rem 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* --- controls ------------------------------------------------------------ */
+
+/* The one band that has to stay reachable while a long table scrolls: the
+   masthead gives up `sticky` for it, so this can hold `top: 0` without having
+   to know how tall a wrapped tagline is. Full-bleed across main's padding so
+   nothing shows through beside it. */
+.controls {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: -1.6rem -1.5rem 1rem;
+  padding: 0.8rem 1.5rem 0.65rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.55rem;
+}
+.controls-row h2 {
+  margin: 0;
+  flex: none;
+}
+
+/* --- signal picker ------------------------------------------------------- */
+
+.picker-wrap {
+  position: relative;
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+.picker {
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 34rem;
+  padding: 0.38rem 0.6rem;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}
+.picker:hover {
+  border-color: var(--accent);
+}
+.picker-what {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  flex: none;
+}
+.picker-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+.picker-key {
+  flex: none;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 0.25rem;
+}
+.badge {
+  flex: none;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.08rem 0.3rem;
+  border-radius: 3px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+}
+.palette {
+  position: absolute;
+  z-index: 9;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  width: min(34rem, calc(100vw - 2rem));
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 22%);
+  overflow: hidden;
+}
+.palette-query {
+  font: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.palette-list {
+  max-height: min(24rem, 60vh);
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+.palette-group {
+  margin: 0.35rem 0 0.15rem;
+  padding: 0 0.7rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+.palette-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+/* Pointer and keyboard share one highlight, so arrowing down and hovering
+   cannot disagree about which row Enter would take. */
+.palette-option[data-active] {
+  background: var(--accent-soft);
+}
+.palette-option[aria-selected="true"] .palette-name {
+  font-weight: 600;
+}
+.palette-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+}
+.palette-count,
+.pill-count {
+  flex: none;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.palette-none {
+  margin: 0;
+  padding: 1rem 0.7rem;
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* --- filters ------------------------------------------------------------- */
+
+.filterbar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.search {
+  font: inherit;
+  font-size: 0.875rem;
+  flex: 1 1 18rem;
+  min-width: 9rem;
+  padding: 0.34rem 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.pills,
+.segments {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+.segments {
+  gap: 0;
+}
+.pill,
+.segment,
+.more,
+.chip {
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.24rem 0.5rem;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+}
+.pill:hover,
+.segment:hover,
+.more:hover,
+.chip:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+/* A language keeps its colour from the heatmap's bands, so the pill that
+   filters it and the band it filters to are the same thing. */
+.pill[aria-pressed="true"] {
+  color: var(--pill, var(--accent));
+  border-color: var(--pill, var(--accent));
+  background: color-mix(
+    in srgb,
+    var(--pill, var(--accent)) 12%,
+    var(--surface)
+  );
+  font-weight: 600;
+}
+.segment {
+  border-radius: 0;
+  border-left-width: 0;
+}
+.segment:first-child {
+  border-left-width: 1px;
+  border-radius: 999px 0 0 999px;
+}
+.segment:last-child {
+  border-radius: 0 999px 999px 0;
+}
+.segment[aria-checked="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+/* A left border erased by the neighbour's `border-left-width: 0` has to come
+   back when that neighbour is the selected one. */
+.segment[aria-checked="true"] + .segment {
+  border-left-width: 1px;
+  border-left-color: var(--accent);
+}
+.count {
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  margin-left: auto;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.more[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.more-drawer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  margin-top: 0.5rem;
+}
+.more-row {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.more-row select {
+  font: inherit;
+  font-size: 0.8rem;
+  max-width: 16rem;
+  padding: 0.22rem 0.4rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Only shown when something is on: a row that is always there is a row nobody
+   reads, and what is filtered has to be readable at a glance. */
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.chips-what {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+.chip {
+  color: var(--pill, var(--accent));
+  border-color: var(--pill, var(--accent));
+  background: color-mix(
+    in srgb,
+    var(--pill, var(--accent)) 10%,
+    var(--surface)
+  );
+}
+.chip-clear {
+  color: var(--ink-3);
+  border-color: var(--line-strong);
+  background: none;
+  margin-left: 0.25rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.87rem;
+}
+th,
+td {
+  text-align: left;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-2);
+  z-index: 1;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+tbody tr:hover {
+  background: var(--surface-2);
+}
+/* The last row of the table, not of every row group: the heatmap gives each
+   requirement level its own <tbody>, and the line before the next level's
+   heading has to stay. */
+tbody:last-child tr:last-child td {
+  border-bottom: none;
+}
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ver {
+  color: var(--ink-3);
+  font-size: 0.8em;
+}
+
+.legend {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  margin: 0.5rem 0 0;
+}
+.legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 0.3rem;
+}
+
+/* --- heatmap ------------------------------------------------------------- */
+
+.heatmap {
+  width: auto;
+  font-size: 0.8rem;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.heatmap th.attr {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 2;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+  border-right: 1px solid var(--line-strong);
+  color: var(--ink);
+}
+/* The attribute name is the row's label first and a registry link second, so it
+   keeps the row's colour and only underlines under the pointer. */
+.heatmap th.attr a {
+  color: inherit;
+  text-decoration: none;
+}
+.heatmap th.attr a:hover {
+  text-decoration: underline;
+}
+.heatmap thead th.attr {
+  z-index: 3;
+  background: var(--surface-2);
+}
+.heatmap thead th.col {
+  height: 11.5rem;
+  padding: 0.3rem 0;
+  vertical-align: bottom;
+  background: var(--surface-2);
+  text-transform: none;
+  letter-spacing: 0;
+}
+/* Rotated, and two blocks rather than one string: in vertical writing the block
+   axis runs across the screen, so the lines sit side by side and the height is
+   the longer one rather than their sum. `overflow` is a backstop. */
+.heatmap thead th.col > span {
+  display: block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--mono);
+  font-weight: 400;
+  white-space: nowrap;
+  max-height: 11rem;
+  overflow: hidden;
+  margin: 0 auto;
+  color: var(--ink);
+}
+.heatmap thead th.col b {
+  display: block;
+  font-weight: 400;
+  font-size: 0.74rem;
+}
+.heatmap thead th.col i {
+  display: block;
+  font-style: normal;
+  font-size: 0.68rem;
+  color: var(--ink-3);
+  margin-right: 0.12rem;
+}
+/* The one horizontal header: a count column reads as a count column, not as
+   another rotated name. */
+.heatmap thead th.tally {
+  vertical-align: bottom;
+  text-align: right;
+  white-space: nowrap;
+  background: var(--surface-2);
+  padding: 0.3rem 0.5rem;
+  width: 6rem;
+  min-width: 6rem;
+}
+.heatmap thead tr.band th.band-cell {
+  height: 1.5rem;
+  padding: 0 0.3rem;
+  text-align: center;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-left: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
+}
+/* Two header rows, so the second one has to start where the first one ends. */
+.heatmap thead th.col,
+.heatmap thead th.tally,
+.heatmap thead th.attr {
+  top: 1.5rem;
+}
+.heatmap thead tr.band th {
+  top: 0;
+}
+.heatmap td.cell {
+  width: 1.9rem;
+  min-width: 1.9rem;
+  padding: 0;
+  text-align: center;
+  border-left: 1px solid var(--line);
+}
+.heatmap td.cell > span {
+  display: block;
+  width: 100%;
+  height: 1.55rem;
+  line-height: 1.55rem;
+  font-size: 0.7rem;
+}
+.cell-yes > span {
+  background: var(--good);
+  color: var(--bg);
+}
+.cell-no > span {
+  background: var(--miss);
+  color: var(--ink-3);
+}
+.heatmap tr.level-head th {
+  background: var(--surface-2);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-2);
+  position: sticky;
+  left: 0;
+}
+.heatmap tr.level-head i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 0.4rem;
+}
+.rowcount {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 0.7rem 0.9rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 0.855rem;
+  margin: 0 0 1.3rem;
+  color: var(--ink);
+}
+.note p {
+  margin: 0.25rem 0;
+}
+.note p:first-child {
+  margin-top: 0;
+}
+.note p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .masthead-row {
+    padding: 0.9rem 1rem 0.5rem;
+  }
+  main {
+    padding: 1.2rem 1rem 3rem;
+  }
+  .tagline {
+    margin-left: 0;
+  }
+  .controls {
+    margin: -1.2rem -1rem 1rem;
+    padding: 0.7rem 1rem 0.6rem;
+  }
+  .picker-key {
+    display: none;
+  }
+  .count {
+    margin-left: 0;
+  }
+  /* Wrapped onto six rows this is most of a phone screen, which is no longer
+     worth keeping on top of the table. */
+  .controls {
+    position: static;
+  }
+}
