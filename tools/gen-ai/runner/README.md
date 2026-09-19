@@ -78,3 +78,10 @@ A repo checking its own working tree overrides just the registry:
 ```sh
 otel-conformance path/to/directory --registry ./model
 ```
+
+`--registry` also takes a git URL:
+
+```sh
+otel-conformance path/to/directory \
+    --registry 'https://github.com/open-telemetry/semantic-conventions-genai.git@67dff024[model]'
+```
