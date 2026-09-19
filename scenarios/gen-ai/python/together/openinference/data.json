@@ -28,6 +28,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.together' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.together",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "type_mismatch",
       "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
       "signal_type": "span",

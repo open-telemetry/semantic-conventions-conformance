@@ -45,6 +45,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'pydantic-ai' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "pydantic-ai",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.system' does not exist in the registry.",
       "signal_type": "metric",

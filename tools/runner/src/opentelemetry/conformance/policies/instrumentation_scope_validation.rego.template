@@ -1,0 +1,161 @@
+# Instrumentation scope expectations come from the scenario being run. The
+# runner renders this template into the policy directory before starting
+# weaver, replacing the marker below with a Rego object.
+
+package live_check_advice
+
+import rego.v1
+
+_otel_scope_expectation := __INSTRUMENTATION_SCOPE_EXPECTATION__
+
+deny contains _otel_scope_finding(field, expected, actual, scope) if {
+	scope := input.sample.instrumentation_scope
+	some field, expected in _otel_scope_expectation.global
+	actual := _otel_scope_field(scope, field)
+	not _otel_scope_matches(expected, actual)
+}
+
+deny contains _otel_signal_scope_finding(field, expected, null, null) if {
+	_otel_scope_signal(input.sample)
+	input.instrumentation_scope == null
+	some field, expected in _otel_scope_expectation.global
+	not _otel_scope_matches(expected, null)
+}
+
+deny contains _otel_signal_scope_finding(field, expected, actual, scope) if {
+	span := input.sample.span
+	scope := object.get(input, "instrumentation_scope", null)
+	some signal_expectation in _otel_scope_expectation.spans
+	_otel_scope_span_matches(span, signal_expectation.match)
+	some field, expected in signal_expectation.scope
+	actual := _otel_scope_field(scope, field)
+	not _otel_scope_matches(expected, actual)
+}
+
+_otel_scope_signal(sample) if {
+	is_object(object.get(sample, "span", null))
+}
+
+_otel_scope_signal(sample) if {
+	is_object(object.get(sample, "metric", null))
+}
+
+_otel_scope_signal(sample) if {
+	is_object(object.get(sample, "log", null))
+}
+
+_otel_scope_signal(sample) if {
+	is_object(object.get(sample, "profile", null))
+}
+
+_otel_scope_span_matches(span, expected) if {
+	every name, value in expected.attributes {
+		_otel_scope_span_attr_value(span, name) == value
+	}
+	object.get(expected, "kind", span.kind) == span.kind
+}
+
+_otel_scope_span_attr_value(span, name) := attribute.value if {
+	some attribute in span.attributes
+	attribute.name == name
+}
+
+_otel_scope_field(scope, field) := object.get(scope, field, null) if {
+	is_object(scope)
+}
+
+_otel_scope_field(scope, _) := null if {
+	not is_object(scope)
+}
+
+_otel_scope_name(scope) := name if {
+	name := _otel_scope_field(scope, "name")
+	_otel_scope_value_present(name)
+}
+
+_otel_scope_name(scope) := "<missing>" if {
+	not _otel_scope_value_present(_otel_scope_field(scope, "name"))
+}
+
+_otel_scope_matches(expected, actual) if {
+	expected.equals == actual
+}
+
+_otel_scope_matches(expected, actual) if {
+	expected.present
+	_otel_scope_value_present(actual)
+}
+
+_otel_scope_matches(expected, actual) if {
+	expected.present == false
+	not _otel_scope_value_present(actual)
+}
+
+_otel_scope_value_present(value) if {
+	is_string(value)
+	value != ""
+}
+
+_otel_scope_finding(field, expected, actual, scope) := {
+	"id":          _otel_scope_finding_id(field, expected),
+	"level":       "violation",
+	"signal_type": "instrumentation_scope",
+	"signal_name": _otel_scope_name(scope),
+	"context": {
+		"actual":   actual,
+		"expected": expected,
+	},
+	"message":     _otel_scope_message(field, expected, actual, scope),
+}
+
+_otel_signal_scope_finding(field, expected, actual, scope) := {
+	"id":      _otel_scope_finding_id(field, expected),
+	"level":   "violation",
+	"context": {
+		"actual":   actual,
+		"expected": expected,
+	},
+	"message": _otel_scope_message(field, expected, actual, scope),
+}
+
+_otel_scope_finding_id(field, expected) := sprintf(
+	"instrumentation_scope_%s_mismatch",
+	[field],
+) if {
+	expected.equals
+}
+
+_otel_scope_finding_id(field, expected) := sprintf(
+	"instrumentation_scope_%s_missing",
+	[field],
+) if {
+	expected.present
+}
+
+_otel_scope_finding_id(field, expected) := sprintf(
+	"unexpected_instrumentation_scope_%s",
+	[field],
+) if {
+	expected.present == false
+}
+
+_otel_scope_message(field, expected, actual, scope) := sprintf(
+	"Instrumentation scope '%v' has %s '%v', expected '%v'.",
+	[_otel_scope_name(scope), field, actual, expected.equals],
+) if {
+	expected.equals
+}
+
+_otel_scope_message(field, expected, _, scope) := sprintf(
+	"Instrumentation scope '%v' does not have %s.",
+	[_otel_scope_name(scope), field],
+) if {
+	expected.present
+}
+
+_otel_scope_message(field, expected, actual, scope) := sprintf(
+	"Instrumentation scope '%v' has unexpected %s '%v'.",
+	[_otel_scope_name(scope), field, actual],
+) if {
+	expected.present == false
+}

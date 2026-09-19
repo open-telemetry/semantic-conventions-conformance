@@ -14,11 +14,13 @@ from __future__ import annotations
 import json
 import logging
 import shlex
+import shutil
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from string import Template
+from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -38,6 +40,7 @@ from ._env import (
 )
 from ._otlp_http import OtlpHttpBridge
 from ._registry import check_weaver
+from ._scope_policy import render as render_scope_policy
 from ._server import Server
 from ._spec import (
     PackageSpec,
@@ -71,6 +74,7 @@ _OTLP_SIGNAL_ENV = tuple(
 # the data file is meant to be committed and diffed.
 DEFAULT_REPORT_DIR = Path("output") / "weaver-reports"
 DEFAULT_DATA_FILE = Path("data.json")
+_SCOPE_POLICY_NAME = "instrumentation_scope_validation.rego"
 
 # Fallback only: a config declared by the caller or the package replaces it.
 RUNNER_WEAVER_DEFAULTS = WeaverSpec(
@@ -219,21 +223,20 @@ class ConformanceSession:
                 self._resolve_path(weaver_spec.advice_data),
             ]
 
-        def start_weaver() -> WeaverLiveCheck:
+        def start_weaver(policies: str | None) -> WeaverLiveCheck:
             return WeaverLiveCheck(
                 inactivity_timeout=int(
                     timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
                 ),
                 registry=self._resolve_path(self._registry),
-                policies_dir=self._resolve_path(weaver_spec.policies)
-                if weaver_spec.policies
-                else None,
+                policies_dir=policies,
                 extra_args=extra_args,
             )
 
         with (
+            self._scenario_policies(scenario, weaver_spec) as policies,
             _quiet_connection_retries(),
-            _start_weaver(start_weaver) as weaver,
+            _start_weaver(lambda: start_weaver(policies)) as weaver,
         ):
             if self._spec.otlp_protocol == "http/protobuf":
                 with OtlpHttpBridge(weaver.otlp_endpoint) as bridge:
@@ -266,6 +269,35 @@ class ConformanceSession:
             stdout=completed.stdout,
             stderr=completed.stderr,
         )
+
+    @contextmanager
+    def _scenario_policies(
+        self, scenario: ScenarioSpec, weaver: WeaverSpec
+    ) -> Generator[str | None, None, None]:
+        """Add instrumentation-scope validation to its advice policies."""
+        declared = (
+            self._resolve_path(weaver.policies) if weaver.policies else None
+        )
+        with TemporaryDirectory(prefix="otel-conformance-policies-") as root:
+            policies = Path(root)
+            if declared:
+                source = Path(declared)
+                if source.is_dir():
+                    for policy in source.glob("*.rego"):
+                        shutil.copy(policy, policies / policy.name)
+                else:
+                    shutil.copy(source, policies / source.name)
+            generated = policies / _SCOPE_POLICY_NAME
+            if generated.exists():
+                raise SpecError(
+                    f"declared advice policy conflicts with generated policy: "
+                    f"{_SCOPE_POLICY_NAME}"
+                )
+            generated.write_text(
+                render_scope_policy(scenario.spans),
+                encoding="utf-8",
+            )
+            yield str(policies)
 
     def _resolve(self, value: str) -> str:
         return Template(value).safe_substitute(self._variables)
