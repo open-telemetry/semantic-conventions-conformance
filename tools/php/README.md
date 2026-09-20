@@ -21,6 +21,14 @@ scenarios:
 `composer.json` and runs Composer there. This keeps each instrumentation side
 as its own locked package and also resolves `composer.bat` on Windows.
 
+A scenario lock copies each path package's requirements, and `composer install`
+does not notice when they have changed since. `install` therefore first runs
+`otel-conformance-php check-lock` and fails if the lock disagrees with a path
+package: its requirements or autoload differ from the package's
+`composer.json`, or a dependency it names is locked at a different version than
+in the package's own `composer.lock`. The check is offline and changes nothing;
+regenerate a stale lock with `composer update <package> --with-dependencies`.
+
 `serve` starts `php -S 127.0.0.1:$OTEL_HTTP_SCENARIO_PORT <router>`. The PHP
 built-in server keeps the normal request-scoped lifecycle used by PHP-FPM:
 Composer and the OpenTelemetry SDK initialize for each request, then shutdown
