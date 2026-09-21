@@ -49,12 +49,6 @@ jobs:
           echo "branch=$EXPECTED_HEAD_BRANCH" >> "$GITHUB_OUTPUT"
           echo "sha=$EXPECTED_HEAD_SHA" >> "$GITHUB_OUTPUT"
 
-      - name: Check out the trusted workflow code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: trusted
-          persist-credentials: false
-
       - name: Check out the pull request head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -77,14 +71,44 @@ jobs:
           PATCHES_DIR: ${{ runner.temp }}/renovate-data-patches
         run: |
           set -euo pipefail
-          python trusted/.github/scripts/renovate_data_patches.py \
-            --repository target \
-            "$PATCHES_DIR"
-          if git -C target diff --quiet -- ':(glob)scenarios/**/data.json'; then
+          shopt -s globstar nullglob
+          patches=("$PATCHES_DIR"/**/*.patch)
+          if (( ${#patches[@]} == 0 )); then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          git -C target apply \
+            --check \
+            --whitespace=nowarn \
+            --include='scenarios/**/data.json' \
+            --exclude='*' \
+            "${patches[@]}"
+          git -C target apply \
+            --whitespace=nowarn \
+            --include='scenarios/**/data.json' \
+            --exclude='*' \
+            "${patches[@]}"
+
+          if [[ -n "$(git -C target diff --summary --)" ]]; then
+            echo "::error::generated data patches must not create, remove, rename, or change the mode of files"
+            exit 1
+          fi
+
+          changed=false
+          while IFS= read -r -d '' path; do
+            if [[ "$path" != scenarios/*/data.json ]]; then
+              echo "::error::generated data patch modified a disallowed path: $path"
+              exit 1
+            fi
+            if [[ ! -f "target/$path" || -L "target/$path" ]]; then
+              echo "::error::generated data patch target is not a regular file: $path"
+              exit 1
+            fi
+            jq empty "target/$path"
+            changed=true
+          done < <(git -C target diff --name-only -z --)
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
 
       - name: Recheck the pull request head
         if: steps.apply-patches.outputs.changed == 'true'

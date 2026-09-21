@@ -47,7 +47,7 @@ jobs:
           python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/ruby -e tools/dotnet -e tools/php -e tools/go
 
       - name: Test
-        run: python -m pytest .github/scripts/tests tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests tools/php/tests tools/go/tests tools/python/tests
+        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests tools/php/tests tools/go/tests tools/python/tests
 
   lint:
     name: Lint
