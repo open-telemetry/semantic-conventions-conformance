@@ -47,7 +47,7 @@ jobs:
           python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/ruby -e tools/dotnet -e tools/php -e tools/go
 
       - name: Test
-        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests tools/php/tests tools/go/tests tools/python/tests
+        run: python -m pytest .github/scripts/tests tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests tools/php/tests tools/go/tests tools/python/tests
 
   lint:
     name: Lint
@@ -484,6 +484,28 @@ jobs:
             echo "::endgroup::"
           done
           exit "$status"
+
+      - name: Create the generated data patch
+        id: data-patch
+        if: ${{ !cancelled() }}
+        env:
+          DATA_PATCH: ${{ runner.temp }}/data.patch
+        run: |
+          data_pathspec=":(glob)$SCENARIO_ROOT/**/data.json"
+          git add --intent-to-add -- "$SCENARIO_ROOT"
+          git diff --binary -- "$data_pathspec" > "$DATA_PATCH"
+          if [[ -s "$DATA_PATCH" ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload the generated data patch
+        if: ${{ !cancelled() && steps.data-patch.outputs.exists == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: renovate-data-${{ matrix.matrix_id }}
+          path: ${{ runner.temp }}/data.patch
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Check the committed coverage is up to date
         if: ${{ !cancelled() }}
