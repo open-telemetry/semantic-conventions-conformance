@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     # `instruments` names `langchain`, so zero-code skips the instrumentation
     # when only langchain-anthropic is installed.
-    "langchain==1.4.1",
+    "langchain==1.4.2",
     "langchain-anthropic==1.7.2",
     "opentelemetry-api==1.44.0",
     "opentelemetry-sdk==1.44.0",
