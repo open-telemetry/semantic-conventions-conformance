@@ -19,36 +19,11 @@ jobs:
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.actor.login == 'renovate[bot]' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
       startsWith(github.event.workflow_run.head_branch, 'renovate/') &&
       github.event.workflow_run.pull_requests[0].number
     runs-on: ubuntu-latest
     steps:
-      - name: Validate the pull request
-        id: pull-request
-        env:
-          EXPECTED_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          EXPECTED_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          pull_request="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")"
-          jq -e \
-            --arg branch "$EXPECTED_HEAD_BRANCH" \
-            --arg repository "$REPOSITORY" \
-            --arg sha "$EXPECTED_HEAD_SHA" \
-            '
-              .state == "open" and
-              .user.login == "renovate[bot]" and
-              .base.repo.full_name == $repository and
-              .head.repo.full_name == $repository and
-              .head.ref == $branch and
-              .head.sha == $sha
-            ' <<< "$pull_request"
-          echo "branch=$EXPECTED_HEAD_BRANCH" >> "$GITHUB_OUTPUT"
-          echo "sha=$EXPECTED_HEAD_SHA" >> "$GITHUB_OUTPUT"
-
       - name: Check out the trusted repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -66,7 +41,7 @@ jobs:
         id: apply-patches
         env:
           GIT_INDEX_FILE: ${{ runner.temp }}/renovate-data.index
-          HEAD_SHA: ${{ steps.pull-request.outputs.sha }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           PATCHES_DIR: ${{ runner.temp }}/renovate-data-patches
         run: |
           set -euo pipefail
@@ -98,8 +73,8 @@ jobs:
         if: steps.apply-patches.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
-          HEAD_BRANCH: ${{ steps.pull-request.outputs.branch }}
-          HEAD_SHA: ${{ steps.pull-request.outputs.sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           TREE: ${{ steps.apply-patches.outputs.tree }}
         run: |
           set -euo pipefail
