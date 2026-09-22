@@ -14,6 +14,9 @@ permissions:
   contents: read
 
 jobs:
+  # We validate the input of this workflow (origin, caused by a push from Renovate bot)
+  # before proceeding to the high-privilege section (git push).
+  # This check also prevents infinite loops where a push by the otelbot failing CI triggers another autofix run.
   apply:
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
