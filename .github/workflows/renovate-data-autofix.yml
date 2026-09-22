@@ -150,27 +150,17 @@ jobs:
           private-key: ${{ secrets.OTELBOT_SEMCONV_CONFORMANCE_PRIVATE_KEY }}
           permission-contents: write
 
-      - name: Resolve the otelbot identity
-        if: steps.apply-patches.outputs.changed == 'true'
-        id: otelbot-identity
-        env:
-          APP_SLUG: ${{ steps.otelbot-token.outputs.app-slug }}
-          GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
-        run: echo "user-id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-
       - name: Commit and push the generated data
         if: steps.apply-patches.outputs.changed == 'true'
         env:
-          APP_SLUG: ${{ steps.otelbot-token.outputs.app-slug }}
-          APP_USER_ID: ${{ steps.otelbot-identity.outputs.user-id }}
           GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
           HEAD_BRANCH: ${{ steps.pull-request.outputs.branch }}
           HEAD_SHA: ${{ steps.pull-request.outputs.sha }}
           TREE: ${{ steps.apply-patches.outputs.tree }}
         run: |
           set -euo pipefail
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${APP_USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git config user.name "otelbot-semconv-conformance[bot]"
+          git config user.email "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
           commit="$(printf '%s\n' "Update generated data files" | git commit-tree "$TREE" -p "$HEAD_SHA")"
           gh auth setup-git
           git push --no-verify origin "$commit:refs/heads/$HEAD_BRANCH"
