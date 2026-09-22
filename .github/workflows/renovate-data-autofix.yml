@@ -85,30 +85,6 @@ jobs:
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "tree=$(git write-tree)" >> "$GITHUB_OUTPUT"
 
-      - name: Recheck the pull request head
-        if: steps.apply-patches.outputs.changed == 'true'
-        env:
-          EXPECTED_HEAD_BRANCH: ${{ steps.pull-request.outputs.branch }}
-          EXPECTED_HEAD_SHA: ${{ steps.pull-request.outputs.sha }}
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          pull_request="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")"
-          jq -e \
-            --arg branch "$EXPECTED_HEAD_BRANCH" \
-            --arg repository "$REPOSITORY" \
-            --arg sha "$EXPECTED_HEAD_SHA" \
-            '
-              .state == "open" and
-              .user.login == "renovate[bot]" and
-              .base.repo.full_name == $repository and
-              .head.repo.full_name == $repository and
-              .head.ref == $branch and
-              .head.sha == $sha
-            ' <<< "$pull_request"
-
       - name: Create an otelbot token
         if: steps.apply-patches.outputs.changed == 'true'
         id: otelbot-token
@@ -131,4 +107,8 @@ jobs:
           git config user.email "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
           commit="$(printf '%s\n' "Update generated data files" | git commit-tree "$TREE" -p "$HEAD_SHA")"
           gh auth setup-git
-          git push --no-verify origin "$commit:refs/heads/$HEAD_BRANCH"
+          git push \
+            --no-verify \
+            --force-with-lease="refs/heads/$HEAD_BRANCH:$HEAD_SHA" \
+            origin \
+            "$commit:refs/heads/$HEAD_BRANCH"
