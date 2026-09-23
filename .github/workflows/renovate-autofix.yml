@@ -1,4 +1,4 @@
-name: Renovate data autofix
+name: Renovate autofix
 
 on:
   workflow_run: # zizmor: ignore[dangerous-triggers] the job only handles same-repository Renovate pull requests
