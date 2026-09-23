@@ -143,8 +143,10 @@ jobs:
           php-version: "8.4"
           extensions: opentelemetry, grpc, protobuf
           coverage: none
-          # Composer stamps its plugin API version into composer.lock, so a
-          # floating Composer would make every relock look like a change.
+          # Pinned by hand -- Renovate does not bump this. Composer stamps
+          # its plugin API version (2.9.0) into composer.lock, so this must
+          # stay on 2.9.x, and a floating Composer would make every relock
+          # look like a change.
           tools: composer:2.9.8
 
       - name: Build PHP
@@ -397,7 +399,10 @@ jobs:
           python-version: "3.14"
 
       # Toolchains pinned exactly as in the scenarios job, since the tool
-      # version can change what a lock file says.
+      # version can change what a lock file says. Every setup step below
+      # must keep the exact same version as its counterpart in the
+      # `scenarios` job below, or a lock written by a different tool version
+      # breaks the no-op property the `scenarios` job checks for.
       - name: Set up Node
         if: matrix.ecosystem == 'js'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -431,6 +436,10 @@ jobs:
           php-version: "8.4"
           extensions: opentelemetry, grpc, protobuf
           coverage: none
+          # Pinned by hand -- Renovate does not bump this. Composer stamps
+          # its plugin API version (2.9.0) into composer.lock, so this must
+          # stay on 2.9.x, and a floating Composer would make every relock
+          # look like a change.
           tools: composer:2.9.8
 
       - name: Regenerate the lock files
@@ -458,6 +467,7 @@ jobs:
             python) names=(uv.lock) ;;
             ruby) names=(Gemfile.lock) ;;
             php) names=(composer.lock) ;;
+            *) echo "::error::unknown ecosystem $ECOSYSTEM"; exit 1 ;;
           esac
           pathspecs=()
           for name in "${names[@]}"; do
@@ -587,8 +597,10 @@ jobs:
           php-version: "8.4"
           extensions: opentelemetry, grpc, protobuf
           coverage: none
-          # Composer stamps its plugin API version into composer.lock, so a
-          # floating Composer would make every relock look like a change.
+          # Pinned by hand -- Renovate does not bump this. Composer stamps
+          # its plugin API version (2.9.0) into composer.lock, so this must
+          # stay on 2.9.x, and a floating Composer would make every relock
+          # look like a change.
           tools: composer:2.9.8
 
       # A Go scenario builds itself from source in its `setup:` before it runs,

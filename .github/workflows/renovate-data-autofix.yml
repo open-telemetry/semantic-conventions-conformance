@@ -73,19 +73,31 @@ jobs:
           shopt -s globstar nullglob
 
           # Verify that every tree entry that differs between $1 (the lower
-          # tree) and $2 (the upper tree) is a plain-file add or modify at
-          # mode 100644 whose path matches the layer's allowlist regex $3.
+          # tree) and $2 (the upper tree) is a plain-file change at mode
+          # 100644, with a status matching $3 (a regex: the lock layer only
+          # ever rewrites tracked files, so it is restricted to `^M$`; the
+          # data layer may also create a fresh data.json, so it allows
+          # `^[AM]$`), whose path matches the layer's allowlist regex $4.
           # Rejects renames, deletes, type changes (e.g. symlinks) and mode
           # changes that the `git apply` include/exclude filter does not
           # catch on its own.
+          #
+          # `git diff-tree` is run as an ordinary command into a file first,
+          # not as a `done < <(...)` process substitution: a failing process
+          # substitution's exit status is invisible to the loop and to
+          # `set -e`, which would let a diff-tree error pass the layer
+          # unchecked.
           verify_layer() {
-            local lower="$1" upper="$2" regex="$3"
+            local lower="$1" upper="$2" status_regex="$3" path_regex="$4"
             local meta path old_mode new_mode old_sha new_sha status
+            local diff_file="$RUNNER_TEMP/verify-layer-diff-$$.raw"
+            git diff-tree -r --no-renames --raw -z "$lower" "$upper" \
+              > "$diff_file"
             while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
               read -r old_mode new_mode old_sha new_sha status <<<"${meta#:}"
-              if [[ "$status" != "A" && "$status" != "M" ]]; then
+              if [[ ! "$status" =~ $status_regex ]]; then
                 echo "::error::autofix layer rejected: $path has status" \
-                     "'$status' (expected A or M)"
+                     "'$status' (expected $status_regex)"
                 exit 1
               fi
               if [[ "$new_mode" != "100644" ]]; then
@@ -93,12 +105,13 @@ jobs:
                      "'$new_mode' (expected 100644)"
                 exit 1
               fi
-              if [[ ! "$path" =~ $regex ]]; then
+              if [[ ! "$path" =~ $path_regex ]]; then
                 echo "::error::autofix layer rejected: $path is outside" \
                      "the allowlist"
                 exit 1
               fi
-            done < <(git diff-tree -r --no-renames --raw -z "$lower" "$upper")
+            done < "$diff_file"
+            rm -f "$diff_file"
           }
 
           lock_allow='^(scenarios|tools)/(.+/)?(package-lock\.json|go\.mod|go\.sum|uv\.lock|Gemfile\.lock|composer\.lock)$'
@@ -127,7 +140,7 @@ jobs:
           fi
           lock_tree="$(git write-tree)"
           if [[ "$lock_tree" != "$head_tree" ]]; then
-            verify_layer "$head_tree" "$lock_tree" "$lock_allow"
+            verify_layer "$head_tree" "$lock_tree" '^M$' "$lock_allow"
             echo "lock_tree=$lock_tree" >> "$GITHUB_OUTPUT"
           fi
 
@@ -139,7 +152,7 @@ jobs:
           fi
           data_tree="$(git write-tree)"
           if [[ "$data_tree" != "$lock_tree" ]]; then
-            verify_layer "$lock_tree" "$data_tree" "$data_allow"
+            verify_layer "$lock_tree" "$data_tree" '^[AM]$' "$data_allow"
             echo "data_tree=$data_tree" >> "$GITHUB_OUTPUT"
           fi
 
