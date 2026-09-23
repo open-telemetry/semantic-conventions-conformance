@@ -30,6 +30,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Download regenerated lock file patches
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/renovate-lock-patches
+          pattern: renovate-lock-*
+          run-id: ${{ github.event.workflow_run.id }}
+
       - name: Download generated data patches
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -38,35 +46,60 @@ jobs:
           pattern: renovate-data-*
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Apply generated data patches
+      # Two layers on the PR head: the lock files first, since the data was
+      # generated against them, then data.json. Each layer is output only if
+      # it changes the tree below it.
+      - name: Apply generated patches
         id: apply-patches
         env:
-          GIT_INDEX_FILE: ${{ runner.temp }}/renovate-data.index
+          GIT_INDEX_FILE: ${{ runner.temp }}/renovate-autofix.index
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          PATCHES_DIR: ${{ runner.temp }}/renovate-data-patches
+          LOCK_PATCHES_DIR: ${{ runner.temp }}/renovate-lock-patches
+          DATA_PATCHES_DIR: ${{ runner.temp }}/renovate-data-patches
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
-          patches=("$PATCHES_DIR"/**/*.patch)
-          if (( ${#patches[@]} == 0 )); then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+          lock_patches=("$LOCK_PATCHES_DIR"/**/*.patch)
+          data_patches=("$DATA_PATCHES_DIR"/**/*.patch)
+          if (( ${#lock_patches[@]} + ${#data_patches[@]} == 0 )); then
             exit 0
           fi
 
           git fetch --no-tags --depth=1 origin "$HEAD_SHA"
           git read-tree "$HEAD_SHA"
+          head_tree="$(git write-tree)"
 
-          git apply \
-            --cached \
-            --include='scenarios/**/data.json' \
-            --exclude='*' \
-            "${patches[@]}"
+          if (( ${#lock_patches[@]} > 0 )); then
+            includes=()
+            for root in scenarios tools; do
+              for name in package-lock.json go.mod go.sum uv.lock \
+                          Gemfile.lock composer.lock; do
+                includes+=("--include=$root/**/$name")
+              done
+            done
+            git apply --cached "${includes[@]}" --exclude='*' \
+              "${lock_patches[@]}"
+          fi
+          lock_tree="$(git write-tree)"
+          if [[ "$lock_tree" != "$head_tree" ]]; then
+            echo "lock_tree=$lock_tree" >> "$GITHUB_OUTPUT"
+          fi
 
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "tree=$(git write-tree)" >> "$GITHUB_OUTPUT"
+          if (( ${#data_patches[@]} > 0 )); then
+            git apply --cached \
+              --include='scenarios/**/data.json' \
+              --exclude='*' \
+              "${data_patches[@]}"
+          fi
+          data_tree="$(git write-tree)"
+          if [[ "$data_tree" != "$lock_tree" ]]; then
+            echo "data_tree=$data_tree" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create an otelbot token
-        if: steps.apply-patches.outputs.changed == 'true'
+        if: >-
+          steps.apply-patches.outputs.lock_tree != '' ||
+          steps.apply-patches.outputs.data_tree != ''
         id: otelbot-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -74,21 +107,33 @@ jobs:
           private-key: ${{ secrets.OTELBOT_SEMCONV_CONFORMANCE_PRIVATE_KEY }}
           permission-contents: write
 
-      - name: Commit and push the generated data
-        if: steps.apply-patches.outputs.changed == 'true'
+      - name: Commit and push the generated files
+        if: >-
+          steps.apply-patches.outputs.lock_tree != '' ||
+          steps.apply-patches.outputs.data_tree != ''
         env:
           GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          TREE: ${{ steps.apply-patches.outputs.tree }}
+          LOCK_TREE: ${{ steps.apply-patches.outputs.lock_tree }}
+          DATA_TREE: ${{ steps.apply-patches.outputs.data_tree }}
+        # Both commits go out in one push, so the PR gets one CI run.
         run: |
           set -euo pipefail
           git config user.name "otelbot-semconv-conformance[bot]"
           git config user.email "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
-          commit="$(printf '%s\n' "Update generated data files" | git commit-tree "$TREE" -p "$HEAD_SHA")"
+          parent="$HEAD_SHA"
+          if [[ -n "$LOCK_TREE" ]]; then
+            parent="$(printf '%s\n' "Update lock files" |
+              git commit-tree "$LOCK_TREE" -p "$parent")"
+          fi
+          if [[ -n "$DATA_TREE" ]]; then
+            parent="$(printf '%s\n' "Update generated data files" |
+              git commit-tree "$DATA_TREE" -p "$parent")"
+          fi
           gh auth setup-git
           git push \
             --no-verify \
             --force-with-lease="refs/heads/$HEAD_BRANCH:$HEAD_SHA" \
             origin \
-            "$commit:refs/heads/$HEAD_BRANCH"
+            "$parent:refs/heads/$HEAD_BRANCH"
