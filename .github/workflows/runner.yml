@@ -352,13 +352,15 @@ jobs:
           )"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
-      # Renovate PRs only, the same guard the autofix applies. The runner
-      # image's python3 runs the script by path: it is standard library only.
+      # Renovate PRs only. The PR's author, not `github.actor`: the actor is
+      # whoever acted last on the PR, which is spoofable (zizmor
+      # bot-conditions). The runner image's python3 runs the script by path:
+      # it is standard library only.
       - name: Scope the lock file regeneration
         id: relock-scope
         if: >-
           github.event_name == 'pull_request' &&
-          github.actor == 'renovate[bot]' &&
+          github.event.pull_request.user.login == 'renovate[bot]' &&
           github.event.pull_request.head.repo.full_name == github.repository
         shell: bash
         run: |
