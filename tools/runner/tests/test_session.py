@@ -12,13 +12,16 @@ directly.
 from __future__ import annotations
 
 import json
+import os
+import signal as signal_module
 import subprocess
 import sys
+import time
 from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Literal
+from typing import Literal, cast
 
 import pytest
 
@@ -77,6 +80,131 @@ def test_a_command_that_overruns(
 
     assert completed.returncode == 1
     assert "did not finish within" in completed.stderr
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows has no killable process group",
+)
+def test_a_command_that_overruns_stops_its_process_group(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A timed-out launcher must not leave its workload running."""
+    monkeypatch.setenv("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", "1")
+    launched = tmp_path / "descendant-launched"
+    survived = tmp_path / "descendant-survived"
+    child = (
+        "import pathlib, sys, time; "
+        "time.sleep(1.5); "
+        "pathlib.Path(sys.argv[1]).write_text('alive')"
+    )
+    parent = (
+        "import pathlib, subprocess, sys, time; "
+        "subprocess.Popen([sys.executable, '-c', sys.argv[1], sys.argv[2]]); "
+        "pathlib.Path(sys.argv[3]).write_text('launched'); "
+        "time.sleep(30)"
+    )
+
+    completed = _run_command(
+        (
+            sys.executable,
+            "-c",
+            parent,
+            child,
+            str(survived),
+            str(launched),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+    # Give a surviving child enough time to expose itself. This checks the
+    # externally visible failure mode rather than a platform-specific pid.
+    time.sleep(0.7)
+
+    assert completed.returncode == 1
+    assert launched.exists()
+    assert not survived.exists()
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows has no killable process group",
+)
+def test_process_group_cleanup_does_not_require_a_live_leader(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The group can outlive the launcher used to create it."""
+
+    class Process:
+        pid = 123
+        killed = False
+
+        def kill(self) -> None:
+            self.killed = True
+
+    def missing_leader(_pid: int) -> int:
+        raise ProcessLookupError
+
+    groups: list[tuple[int, signal_module.Signals]] = []
+    monkeypatch.setattr(os, "getpgid", missing_leader)
+    monkeypatch.setattr(
+        os,
+        "killpg",
+        lambda pgid, sig: groups.append((pgid, sig)),
+    )
+    process = Process()
+
+    _session._kill_process_group(cast("subprocess.Popen[str]", process))
+
+    assert groups == [(process.pid, signal_module.SIGKILL)]
+    assert not process.killed
+
+
+def test_timeout_cleanup_does_not_wait_on_inherited_pipes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A descendant may retain the pipes when only its launcher can be killed."""
+
+    class Pipe:
+        closed = False
+
+        def close(self) -> None:
+            self.closed = True
+
+    class Process:
+        def __init__(self) -> None:
+            self.pid = 123
+            self.stdout = Pipe()
+            self.stderr = Pipe()
+            self.waits: list[float] = []
+
+        def communicate(self, timeout: float) -> tuple[str, str]:
+            raise subprocess.TimeoutExpired(
+                "scenario",
+                timeout,
+                output=b"partial stdout",
+                stderr=b"partial stderr",
+            )
+
+        def wait(self, timeout: float) -> int:
+            self.waits.append(timeout)
+            raise subprocess.TimeoutExpired("scenario", timeout)
+
+    process = Process()
+    stopped: list[Process] = []
+    monkeypatch.setattr(_session, "_kill_process_group", stopped.append)
+    monkeypatch.setattr(_session, "_COMMAND_CLEANUP_TIMEOUT_SECONDS", 0.1)
+
+    stdout, stderr = _session._stop_and_drain(
+        cast("subprocess.Popen[str]", process)
+    )
+
+    assert stopped == [process]
+    assert stdout == "partial stdout"
+    assert stderr == "partial stderr"
+    assert process.stdout.closed
+    assert process.stderr.closed
+    assert process.waits == [0.1]
 
 
 def test_weaver_startup_retries_after_a_timeout() -> None:

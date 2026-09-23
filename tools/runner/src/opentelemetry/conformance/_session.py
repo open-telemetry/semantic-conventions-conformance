@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import shlex
+import signal
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass, field
@@ -61,6 +63,10 @@ _WEAVER_INACTIVITY_TIMEOUT = (
 )
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
+# Killing a group should make its output pipes reach EOF immediately. Keep the
+# drain bounded anyway: on platforms that can only kill the launcher, a
+# descendant may still hold those pipes open.
+_COMMAND_CLEANUP_TIMEOUT_SECONDS = 10.0
 _OTLP_SIGNAL_ENV = tuple(
     f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
     for signal in ("TRACES", "METRICS", "LOGS")
@@ -390,24 +396,81 @@ def _run_command(
     """
     limit = timeout_seconds(*_SCENARIO_TIMEOUT)
     try:
-        return subprocess.run(  # noqa: S603
+        process = subprocess.Popen(  # noqa: S603
             command,
             cwd=cwd,
             env=dict(env),
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=limit,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as expired:
-        return _failed(
-            command,
-            f"did not finish within {limit}s",
-            stdout=_text(expired.stdout),
-            stderr=_text(expired.stderr),
+            # On POSIX this makes the process the leader of a group containing
+            # the wrappers and workloads it starts. Windows falls back to the
+            # direct process, as in the runner's server lifecycle.
+            start_new_session=True,
         )
     except OSError as error:
         return _failed(command, str(error))
+
+    try:
+        stdout, stderr = process.communicate(timeout=limit)
+    except subprocess.TimeoutExpired:
+        stdout, stderr = _stop_and_drain(process)
+        return _failed(
+            command,
+            f"did not finish within {limit}s",
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+    assert process.returncode is not None
+    return subprocess.CompletedProcess(
+        args=list(command),
+        returncode=process.returncode,
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+
+def _kill_process_group(process: subprocess.Popen[str]) -> None:
+    """Kill a timed-out command and the process group it started.
+
+    Scenario commands are commonly launchers such as ``uv run``, Gradle or
+    ``dotnet run``. Killing only that launcher leaves the instrumented process
+    exporting into a collector that has already moved on to another scenario.
+
+    Falling back to the direct child covers Windows, where there is no
+    killable process group, and a group that has already gone away.
+    """
+    try:
+        # start_new_session=True makes the child both session and process-group
+        # leader, so its pid is also the pgid. Do not look the pgid up here:
+        # the leader may exit after the timeout while descendants keep the
+        # group (and inherited output pipes) alive.
+        os.killpg(process.pid, signal.SIGKILL)
+    except (AttributeError, OSError):
+        try:
+            process.kill()
+        except OSError:
+            pass
+
+
+def _stop_and_drain(process: subprocess.Popen[str]) -> tuple[str, str]:
+    """Stop a timed-out command and collect output without waiting forever."""
+    _kill_process_group(process)
+    try:
+        return process.communicate(timeout=_COMMAND_CLEANUP_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as expired:
+        # A surviving descendant can keep these pipes open after the launcher
+        # dies. Closing our read ends makes cleanup finite; the exception holds
+        # everything communicate managed to collect before that point.
+        for pipe in (process.stdout, process.stderr):
+            if pipe is not None:
+                pipe.close()
+        try:
+            process.wait(timeout=_COMMAND_CLEANUP_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            pass
+        return _text(expired.stdout), _text(expired.stderr)
 
 
 def _failed(
