@@ -633,7 +633,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/http/test-client/php",
-                "reference": "5ffc19139af15d223fce7e4cd200626a9f805e5f"
+                "reference": "8bd46008ae02e94eaea04cb4ac309373f9e10f0b"
             },
             "require": {
                 "php": ">=8.2",
@@ -665,7 +665,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/php/scenario",
-                "reference": "b2f4210961a7dfcc11124d74a3a636eb54692ee2"
+                "reference": "2aa89a375dbb6b780eb92746c6ef604e59d0177f"
             },
             "require": {
                 "php": ">=8.2"
