@@ -49,6 +49,18 @@ jobs:
       # Two layers on the PR head: the lock files first, since the data was
       # generated against them, then data.json. Each layer is output only if
       # it changes the tree below it.
+      #
+      # `git apply --include/--exclude` filters a rename on its new path
+      # only (its old path is not checked), so a rename can move a tracked
+      # file to an allowlisted path -- or move an allowlisted file out from
+      # under itself -- without the filter ever seeing an excluded name. It
+      # also has no opinion on file mode, so the same filter lets a patch
+      # turn an allowlisted path into an executable or a symlink. And if
+      # every hunk in a patch is filtered out, `git apply` succeeds as a
+      # silent no-op rather than failing. The include/exclude filter is
+      # therefore only a first pass, not the security boundary: after each
+      # layer, the resulting tree is diffed against the tree below it and
+      # every changed entry is re-checked against the same allowlist below.
       - name: Apply generated patches
         id: apply-patches
         env:
@@ -59,6 +71,39 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
+
+          # Verify that every tree entry that differs between $1 (the lower
+          # tree) and $2 (the upper tree) is a plain-file add or modify at
+          # mode 100644 whose path matches the layer's allowlist regex $3.
+          # Rejects renames, deletes, type changes (e.g. symlinks) and mode
+          # changes that the `git apply` include/exclude filter does not
+          # catch on its own.
+          verify_layer() {
+            local lower="$1" upper="$2" regex="$3"
+            local meta path old_mode new_mode old_sha new_sha status
+            while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
+              read -r old_mode new_mode old_sha new_sha status <<<"${meta#:}"
+              if [[ "$status" != "A" && "$status" != "M" ]]; then
+                echo "::error::autofix layer rejected: $path has status" \
+                     "'$status' (expected A or M)"
+                exit 1
+              fi
+              if [[ "$new_mode" != "100644" ]]; then
+                echo "::error::autofix layer rejected: $path has mode" \
+                     "'$new_mode' (expected 100644)"
+                exit 1
+              fi
+              if [[ ! "$path" =~ $regex ]]; then
+                echo "::error::autofix layer rejected: $path is outside" \
+                     "the allowlist"
+                exit 1
+              fi
+            done < <(git diff-tree -r --no-renames --raw -z "$lower" "$upper")
+          }
+
+          lock_allow='^(scenarios|tools)/(.+/)?(package-lock\.json|go\.mod|go\.sum|uv\.lock|Gemfile\.lock|composer\.lock)$'
+          data_allow='^scenarios/(.+/)?data\.json$'
+
           lock_patches=("$LOCK_PATCHES_DIR"/**/*.patch)
           data_patches=("$DATA_PATCHES_DIR"/**/*.patch)
           if (( ${#lock_patches[@]} + ${#data_patches[@]} == 0 )); then
@@ -82,6 +127,7 @@ jobs:
           fi
           lock_tree="$(git write-tree)"
           if [[ "$lock_tree" != "$head_tree" ]]; then
+            verify_layer "$head_tree" "$lock_tree" "$lock_allow"
             echo "lock_tree=$lock_tree" >> "$GITHUB_OUTPUT"
           fi
 
@@ -93,6 +139,7 @@ jobs:
           fi
           data_tree="$(git write-tree)"
           if [[ "$data_tree" != "$lock_tree" ]]; then
+            verify_layer "$lock_tree" "$data_tree" "$data_allow"
             echo "data_tree=$data_tree" >> "$GITHUB_OUTPUT"
           fi
 
