@@ -89,12 +89,13 @@ jobs:
           # unchecked.
           verify_layer() {
             local lower="$1" upper="$2" status_regex="$3" path_regex="$4"
-            local meta path old_mode new_mode old_sha new_sha status
+            local meta path new_mode status
             local diff_file="$RUNNER_TEMP/verify-layer-diff-$$.raw"
             git diff-tree -r --no-renames --raw -z "$lower" "$upper" \
               > "$diff_file"
             while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
-              read -r old_mode new_mode old_sha new_sha status <<<"${meta#:}"
+              # ":<old mode> <new mode> <old sha> <new sha> <status>"
+              read -r _ new_mode _ _ status <<<"${meta#:}"
               if [[ ! "$status" =~ $status_regex ]]; then
                 echo "::error::autofix layer rejected: $path has status" \
                      "'$status' (expected $status_regex)"
