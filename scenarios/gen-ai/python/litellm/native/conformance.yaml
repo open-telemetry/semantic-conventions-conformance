@@ -17,6 +17,11 @@ env:
   OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: SPAN_AND_EVENT
   LITELLM_OTEL_INTEGRATION_ENABLE_METRICS: "true"
   LITELLM_OTEL_INTEGRATION_ENABLE_EVENTS: "true"
+  # LiteLLM downloads its model price map at import and silently falls back
+  # to the copy it ships with when the download fails, so cost attributes
+  # would depend on the network and on upstream edits to that map. Pin the
+  # map to the locked LiteLLM version.
+  LITELLM_LOCAL_MODEL_COST_MAP: "True"
 
 scenarios:
   inference:
