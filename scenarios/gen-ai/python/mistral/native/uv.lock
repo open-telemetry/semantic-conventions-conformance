@@ -169,7 +169,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mistralai", specifier = "==2.10.0" },
+    { name = "mistralai", specifier = "==2.10.1" },
     { name = "opentelemetry-api", specifier = "==1.44.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.44.0" },
     { name = "opentelemetry-sdk", specifier = "==1.44.0" },
@@ -178,7 +178,7 @@ requires-dist = [
 
 [[package]]
 name = "mistralai"
-version = "2.10.0"
+version = "2.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eval-type-backport" },
@@ -190,9 +190,9 @@ dependencies = [
     { name = "python-dateutil" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/f1/77d97d5b716c4ad486f7f16d9f272e3d8094e205db099575413e4ca93027/mistralai-2.10.0.tar.gz", hash = "sha256:af9cb6adc2f11a74cde100c8d29b2b11b1d4fc6e752a949ae36e946e887859d8", size = 572246, upload-time = "2026-09-09T13:27:13.993Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/db/a80c4ab96b1fec9529115dafaa3f14b28d0407fe1cb9b051ec2df9336fb7/mistralai-2.10.1.tar.gz", hash = "sha256:43b61643ba4f120463e5faf7305a6f40eb29f8e3a21321893969e56c20ed3fbc", size = 590127, upload-time = "2026-09-15T08:12:30.79Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/c8/d55ccff7468638ea16cebbe03177cd380d7f43ea9d12af676093d862bfba/mistralai-2.10.0-py3-none-any.whl", hash = "sha256:516b3b37a40fbed8eb27b49eafc198182bd078d4704f264fa7f0c7778815ba9e", size = 1337122, upload-time = "2026-09-09T13:27:11.729Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/98/f64b54166a607ece4e5c8494c843ac1f9c7c0af6f1014272cc420fe1d519/mistralai-2.10.1-py3-none-any.whl", hash = "sha256:443b306392ae1e86edaec39dbafcf79deb735799a00abef4611531004e22b1b2", size = 1392946, upload-time = "2026-09-15T08:12:28.704Z" },
 ]
 
 [[package]]

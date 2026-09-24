@@ -72,7 +72,7 @@ jobs:
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
@@ -103,9 +103,9 @@ jobs:
           npm --prefix docs test
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@bec3f19a76460dbe12f60def7d1a77585f07516c # v1.322.0
+        uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1.325.0
         with:
-          ruby-version: "3.4.10"
+          ruby-version: "4.0.7"
           bundler-cache: true
           working-directory: tools/http/test-client/ruby
 
@@ -378,7 +378,7 @@ jobs:
 
       - name: Set up uv
         if: matrix.language == 'python'
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: true
           # Scope lockfiles to this matrix job so each Python matrix job caches
@@ -391,7 +391,7 @@ jobs:
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
 
       - name: Set up Gradle
         if: matrix.language == 'java'
@@ -417,9 +417,9 @@ jobs:
 
       - name: Set up Ruby
         if: matrix.language == 'ruby'
-        uses: ruby/setup-ruby@bec3f19a76460dbe12f60def7d1a77585f07516c # v1.322.0
+        uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1.325.0
         with:
-          ruby-version: "3.4.10"
+          ruby-version: "4.0.7"
           bundler-cache: true
           working-directory: ${{ matrix.scenario_root }}
 
@@ -493,6 +493,28 @@ jobs:
             echo "::endgroup::"
           done
           exit "$status"
+
+      - name: Create the generated data patch
+        id: data-patch
+        if: ${{ !cancelled() }}
+        env:
+          DATA_PATCH: ${{ runner.temp }}/data.patch
+        run: |
+          data_pathspec=":(glob)$SCENARIO_ROOT/**/data.json"
+          git add --intent-to-add -- "$SCENARIO_ROOT"
+          git diff --binary -- "$data_pathspec" > "$DATA_PATCH"
+          if [[ -s "$DATA_PATCH" ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload the generated data patch
+        if: ${{ !cancelled() && steps.data-patch.outputs.exists == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: renovate-data-${{ matrix.matrix_id }}
+          path: ${{ runner.temp }}/data.patch
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Check the committed coverage is up to date
         if: ${{ !cancelled() }}

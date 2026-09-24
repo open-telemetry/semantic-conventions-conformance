@@ -59,7 +59,7 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
-    opentelemetry-api (1.11.0)
+    opentelemetry-api (1.11.1)
       logger
     opentelemetry-common (0.25.1)
       opentelemetry-api (~> 1.0)
@@ -98,7 +98,7 @@ GEM
       opentelemetry-sdk (~> 1.13.0)
     opentelemetry-registry (0.6.3)
       opentelemetry-api (~> 1.1)
-    opentelemetry-sdk (1.13.0)
+    opentelemetry-sdk (1.13.1)
       logger
       opentelemetry-api (~> 1.1)
       opentelemetry-common (~> 0.20)
@@ -133,7 +133,7 @@ DEPENDENCIES
   opentelemetry-exporter-otlp-metrics (= 0.12.0)
   opentelemetry-instrumentation-rack (= 0.31.1)
   opentelemetry-metrics-sdk (= 0.18.0)
-  opentelemetry-sdk (= 1.13.0)
+  opentelemetry-sdk (= 1.13.1)
   otel-conformance-scenario-sdk!
   otel-conformance-scenario-support!
   rack (= 3.2.7)
@@ -142,7 +142,7 @@ DEPENDENCIES
   webrick (= 1.9.2)
 
 RUBY VERSION
-   ruby 3.4.10p104
+   ruby 4.0.7p0
 
 BUNDLED WITH
    2.6.9

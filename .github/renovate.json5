@@ -4,6 +4,9 @@
     "config:best-practices",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
+  "gitIgnoredAuthors": [
+    "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
+  ],
   "packageRules": [
     {
       "groupName": "all patch versions",

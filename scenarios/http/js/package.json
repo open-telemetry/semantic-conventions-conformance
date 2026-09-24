@@ -15,6 +15,6 @@
     "format:check": "prettier --check . ../../../tools/js ../../../tools/http/test-client/js"
   },
   "devDependencies": {
-    "prettier": "3.9.6"
+    "prettier": "3.9.8"
   }
 }

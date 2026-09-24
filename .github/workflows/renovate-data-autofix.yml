@@ -1,0 +1,94 @@
+name: Renovate data autofix
+
+on:
+  workflow_run: # zizmor: ignore[dangerous-triggers] the job only handles same-repository Renovate pull requests
+    workflows: [Runner]
+    types: [completed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  # We validate the input of this workflow (origin, caused by a push from Renovate bot)
+  # before proceeding to the high-privilege section (git push).
+  # This check also prevents infinite loops where a push by the otelbot failing CI triggers another autofix run.
+  apply:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.actor.login == 'renovate[bot]' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the trusted repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download generated data patches
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/renovate-data-patches
+          pattern: renovate-data-*
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Apply generated data patches
+        id: apply-patches
+        env:
+          GIT_INDEX_FILE: ${{ runner.temp }}/renovate-data.index
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PATCHES_DIR: ${{ runner.temp }}/renovate-data-patches
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          patches=("$PATCHES_DIR"/**/*.patch)
+          if (( ${#patches[@]} == 0 )); then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch --no-tags --depth=1 origin "$HEAD_SHA"
+          git read-tree "$HEAD_SHA"
+
+          git apply \
+            --cached \
+            --include='scenarios/**/data.json' \
+            --exclude='*' \
+            "${patches[@]}"
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "tree=$(git write-tree)" >> "$GITHUB_OUTPUT"
+
+      - name: Create an otelbot token
+        if: steps.apply-patches.outputs.changed == 'true'
+        id: otelbot-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.OTELBOT_SEMCONV_CONFORMANCE_CLIENT_ID }}
+          private-key: ${{ secrets.OTELBOT_SEMCONV_CONFORMANCE_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Commit and push the generated data
+        if: steps.apply-patches.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          TREE: ${{ steps.apply-patches.outputs.tree }}
+        run: |
+          set -euo pipefail
+          git config user.name "otelbot-semconv-conformance[bot]"
+          git config user.email "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
+          commit="$(printf '%s\n' "Update generated data files" | git commit-tree "$TREE" -p "$HEAD_SHA")"
+          gh auth setup-git
+          git push \
+            --no-verify \
+            --force-with-lease="refs/heads/$HEAD_BRANCH:$HEAD_SHA" \
+            origin \
+            "$commit:refs/heads/$HEAD_BRANCH"

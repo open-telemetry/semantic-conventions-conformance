@@ -3,7 +3,7 @@ name = "llama-index-openinference-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "llama-index-core==0.14.24",
+    "llama-index-core==0.14.25",
     "llama-index-llms-openai==0.8.1",
     # The instrumentation declares this among its instruments, and zero-code
     # skips an instrumentation whose dependencies are not met. Nothing here
