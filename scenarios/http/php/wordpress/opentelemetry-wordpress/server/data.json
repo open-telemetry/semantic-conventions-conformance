@@ -1,0 +1,250 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "client.port",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "url.path",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": []
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'wp.is_admin' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "attribute_key": "wp.is_admin"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /health' uses target '/health' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "kind": "server",
+        "target": "/health"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /health' is missing recommended attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET /status/404",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'wp.is_admin' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/404",
+      "context": {
+        "attribute_key": "wp.is_admin"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /status/404' uses target '/status/404' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /status/404",
+      "context": {
+        "kind": "server",
+        "target": "/status/404"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /status/404' is missing recommended attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "GET /status/404",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET /status/500",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'wp.is_admin' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/500",
+      "context": {
+        "attribute_key": "wp.is_admin"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /status/500' uses target '/status/500' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /status/500",
+      "context": {
+        "kind": "server",
+        "target": "/status/500"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /status/500' is missing recommended attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "GET /status/500",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "GET /users/123",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'wp.is_admin' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/123",
+      "context": {
+        "attribute_key": "wp.is_admin"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /users/123' uses target '/users/123' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /users/123",
+      "context": {
+        "kind": "server",
+        "target": "/users/123"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /users/123' is missing recommended attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "GET /users/123",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'http.request.body.size' has type 'string'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "attribute_key": "http.request.body.size",
+        "attribute_type": "string",
+        "expected": "int"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'wp.is_admin' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "attribute_key": "wp.is_admin"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "kind": "server",
+        "target": "/items"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST /items' is missing recommended attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "server"
+      }
+    }
+  ]
+}
