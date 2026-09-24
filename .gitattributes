@@ -1,0 +1,4 @@
+# The report the site reads is written by `otel-conformance-report build` and
+# rebuilt nightly by `.github/workflows/report.yml`. Marking it generated
+# collapses it in pull request diffs and keeps it out of language stats.
+docs/data/conformance.json linguist-generated=true
