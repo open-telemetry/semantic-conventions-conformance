@@ -66,5 +66,30 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.glassfish.grizzly.http.server.HttpServer' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.glassfish.grizzly.http.server.HttpServer",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.glassfish.grizzly.http.server.NetworkListener' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.glassfish.grizzly.http.server.NetworkListener",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    }
+  ]
 }
