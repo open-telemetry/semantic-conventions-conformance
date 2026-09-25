@@ -421,6 +421,11 @@ def _run_command(
             stdout=stdout,
             stderr=stderr,
         )
+    except BaseException:
+        # A new session no longer receives terminal signals sent to the runner,
+        # so an interruption such as Ctrl+C must stop it explicitly.
+        _stop_and_drain(process)
+        raise
 
     assert process.returncode is not None
     return subprocess.CompletedProcess(
@@ -432,7 +437,7 @@ def _run_command(
 
 
 def _kill_process_group(process: subprocess.Popen[str]) -> None:
-    """Kill a timed-out command and the process group it started.
+    """Kill a command and the process group it started.
 
     Scenario commands are commonly launchers such as ``uv run``, Gradle or
     ``dotnet run``. Killing only that launcher leaves the instrumented process
@@ -455,7 +460,7 @@ def _kill_process_group(process: subprocess.Popen[str]) -> None:
 
 
 def _stop_and_drain(process: subprocess.Popen[str]) -> tuple[str, str]:
-    """Stop a timed-out command and collect output without waiting forever."""
+    """Stop a command and collect output without waiting forever."""
     _kill_process_group(process)
     try:
         return process.communicate(timeout=_COMMAND_CLEANUP_TIMEOUT_SECONDS)

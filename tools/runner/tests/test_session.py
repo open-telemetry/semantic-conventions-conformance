@@ -82,6 +82,28 @@ def test_a_command_that_overruns(
     assert "did not finish within" in completed.stderr
 
 
+def test_keyboard_interrupt_stops_command_before_reraising(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Process:
+        def communicate(self, timeout: float) -> tuple[str, str]:
+            raise KeyboardInterrupt
+
+    process = Process()
+    stopped: list[Process] = []
+    monkeypatch.setattr(
+        subprocess,
+        "Popen",
+        lambda *args, **kwargs: process,
+    )
+    monkeypatch.setattr(_session, "_stop_and_drain", stopped.append)
+
+    with pytest.raises(KeyboardInterrupt):
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert stopped == [process]
+
+
 @pytest.mark.skipif(
     sys.platform == "win32",
     reason="Windows has no killable process group",
@@ -146,6 +168,7 @@ def test_process_group_cleanup_does_not_require_a_live_leader(
         raise ProcessLookupError
 
     groups: list[tuple[int, signal_module.Signals]] = []
+    # Guard against reintroducing a pgid lookup after the leader has exited.
     monkeypatch.setattr(os, "getpgid", missing_leader)
     monkeypatch.setattr(
         os,
