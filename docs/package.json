@@ -10,6 +10,6 @@
   },
   "devDependencies": {
     "jsdom": "29.1.1",
-    "prettier": "3.9.6"
+    "prettier": "3.9.9"
   }
 }
