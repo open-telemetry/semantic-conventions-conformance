@@ -80,6 +80,7 @@ jobs:
       # Compiles, formats and unit-tests every Java scenario build.
       - name: Build Java
         run: |
+          scenarios/http/java/gradlew --project-dir tools/java/gradle-plugins test
           scenarios/database/java/gradlew --project-dir scenarios/database/java build
           scenarios/http/java/gradlew --project-dir scenarios/http/java build
 
@@ -500,9 +501,11 @@ jobs:
         env:
           DATA_PATCH: ${{ runner.temp }}/data.patch
         run: |
-          data_pathspec=":(glob)$SCENARIO_ROOT/**/data.json"
           git add --intent-to-add -- "$SCENARIO_ROOT"
-          git diff --binary -- "$data_pathspec" > "$DATA_PATCH"
+          git diff --binary -- \
+            ":(glob)$SCENARIO_ROOT/**/data.json" \
+            ":(glob)$SCENARIO_ROOT/**/artifacts.json" \
+            > "$DATA_PATCH"
           if [[ -s "$DATA_PATCH" ]]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
@@ -521,7 +524,7 @@ jobs:
         run: |
           git add --intent-to-add -- "$SCENARIO_ROOT"
           if ! git diff --exit-code -- "$SCENARIO_ROOT"; then
-            echo "::error::the committed data.json files are out of date — run the scenarios and commit the result"
+            echo "::error::the committed data.json or artifacts.json files are out of date — run the scenarios and commit the result"
             exit 1
           fi
 
