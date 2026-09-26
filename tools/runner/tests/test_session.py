@@ -16,7 +16,6 @@ import os
 import signal as signal_module
 import subprocess
 import sys
-import time
 from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
@@ -127,9 +126,9 @@ def test_a_command_that_overruns_stops_its_process_group(
     parent = (
         "import os, pathlib, subprocess, sys, time\n"
         "ready = pathlib.Path(sys.argv[3])\n"
-        "subprocess.Popen(\n"
-        "    [sys.executable, '-c', sys.argv[1], str(os.getpid()), sys.argv[3], sys.argv[2]]\n"
-        ")\n"
+        "child_args = [sys.executable, '-c', sys.argv[1], str(os.getpid())]\n"
+        "child_args.extend([sys.argv[3], sys.argv[2]])\n"
+        "subprocess.Popen(child_args)\n"
         "while not ready.exists():\n"
         "    time.sleep(0.01)\n"
         "pathlib.Path(sys.argv[4]).write_text('launched')\n"
