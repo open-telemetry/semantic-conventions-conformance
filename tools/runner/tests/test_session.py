@@ -16,11 +16,12 @@ import os
 import signal as signal_module
 import subprocess
 import sys
+import time
 from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import pytest
 
@@ -72,12 +73,20 @@ def test_a_command_that_overruns(
     monkeypatch.setenv("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", "0.5")
 
     completed = _run_command(
-        (sys.executable, "-c", "import time; time.sleep(30)"),
+        (
+            sys.executable,
+            "-c",
+            "import sys, time; print('started', flush=True); "
+            "print('still running', file=sys.stderr, flush=True); "
+            "time.sleep(30)",
+        ),
         cwd=tmp_path,
         env={},
     )
 
     assert completed.returncode == 1
+    assert completed.stdout.strip() == "started"
+    assert "still running" in completed.stderr
     assert "did not finish within" in completed.stderr
 
 
@@ -85,7 +94,7 @@ def test_keyboard_interrupt_stops_command_before_reraising(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     class Process:
-        def communicate(self, timeout: float) -> tuple[str, str]:
+        def wait(self, timeout: float) -> int:
             raise KeyboardInterrupt
 
     process = Process()
@@ -95,7 +104,7 @@ def test_keyboard_interrupt_stops_command_before_reraising(
         "Popen",
         lambda *args, **kwargs: process,
     )
-    monkeypatch.setattr(_session, "_stop_and_drain", stopped.append)
+    monkeypatch.setattr(_session, "_stop_process", stopped.append)
 
     with pytest.raises(KeyboardInterrupt):
         _run_command(("scenario",), cwd=tmp_path, env={})
@@ -189,31 +198,13 @@ def test_process_group_cleanup_does_not_require_a_live_leader(
     assert not process.killed
 
 
-def test_timeout_cleanup_does_not_wait_on_inherited_pipes(
+def test_timeout_cleanup_wait_is_bounded(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A descendant may retain the pipes when only its launcher can be killed."""
-
-    class Pipe:
-        closed = False
-
-        def close(self) -> None:
-            self.closed = True
-
     class Process:
         def __init__(self) -> None:
             self.pid = 123
-            self.stdout = Pipe()
-            self.stderr = Pipe()
             self.waits: list[float] = []
-
-        def communicate(self, timeout: float) -> tuple[str, str]:
-            raise subprocess.TimeoutExpired(
-                "scenario",
-                timeout,
-                output=b"partial stdout",
-                stderr=b"partial stderr",
-            )
 
         def wait(self, timeout: float) -> int:
             self.waits.append(timeout)
@@ -224,16 +215,77 @@ def test_timeout_cleanup_does_not_wait_on_inherited_pipes(
     monkeypatch.setattr(_session, "_kill_process_group", stopped.append)
     monkeypatch.setattr(_session, "_COMMAND_CLEANUP_TIMEOUT_SECONDS", 0.1)
 
-    stdout, stderr = _session._stop_and_drain(
-        cast("subprocess.Popen[str]", process)
-    )
+    _session._stop_process(cast("subprocess.Popen[str]", process))
 
     assert stopped == [process]
-    assert stdout == "partial stdout"
-    assert stderr == "partial stderr"
-    assert process.stdout.closed
-    assert process.stderr.closed
     assert process.waits == [0.1]
+
+
+def test_timeout_does_not_wait_for_inherited_output_handles(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A surviving descendant must not hold timeout cleanup open."""
+    monkeypatch.setenv("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", "0.1")
+    ready = tmp_path / "descendant-ready"
+    child_pid = tmp_path / "descendant-pid"
+    child = (
+        "import pathlib, sys, time\n"
+        "print('child ready', flush=True)\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(10)\n"
+    )
+    parent = (
+        "import pathlib, subprocess, sys, time\n"
+        "child = subprocess.Popen([sys.executable, '-c', sys.argv[1], "
+        "sys.argv[2]])\n"
+        "pathlib.Path(sys.argv[3]).write_text(str(child.pid))\n"
+        "time.sleep(30)\n"
+    )
+    real_popen = subprocess.Popen
+    ready_at: list[float] = []
+
+    def popen_after_descendant_is_ready(
+        *args: Any, **kwargs: Any
+    ) -> subprocess.Popen[str]:
+        process = real_popen(*args, **kwargs)
+        deadline = time.monotonic() + 10
+        while not ready.exists():
+            if time.monotonic() >= deadline:
+                process.kill()
+                pytest.fail("descendant did not start")
+            time.sleep(0.01)
+        ready_at.append(time.monotonic())
+        return cast("subprocess.Popen[str]", process)
+
+    monkeypatch.setattr(subprocess, "Popen", popen_after_descendant_is_ready)
+    monkeypatch.setattr(
+        _session, "_kill_process_group", lambda process: process.kill()
+    )
+    monkeypatch.setattr(_session, "_COMMAND_CLEANUP_TIMEOUT_SECONDS", 0.5)
+    try:
+        completed = _run_command(
+            (
+                sys.executable,
+                "-c",
+                parent,
+                child,
+                str(ready),
+                str(child_pid),
+            ),
+            cwd=tmp_path,
+            env=os.environ,
+        )
+    finally:
+        if child_pid.exists():
+            try:
+                os.kill(int(child_pid.read_text()), signal_module.SIGTERM)
+            except OSError:
+                pass
+
+    assert time.monotonic() - ready_at[0] < 2
+    assert completed.returncode == 1
+    assert "child ready" in completed.stdout
+    assert "did not finish within" in completed.stderr
 
 
 def test_weaver_startup_retries_after_a_timeout() -> None:

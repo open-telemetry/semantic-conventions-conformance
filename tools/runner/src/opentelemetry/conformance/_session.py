@@ -12,11 +12,13 @@ the caller decides what it means. A broken harness still raises.
 from __future__ import annotations
 
 import json
+import locale
 import logging
 import os
 import shlex
 import signal
 import subprocess
+import tempfile
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,6 +26,7 @@ from string import Template
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
+    BinaryIO,
     Callable,
     Generator,
     Mapping,
@@ -63,9 +66,6 @@ _WEAVER_INACTIVITY_TIMEOUT = (
 )
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
-# Killing a group should make its output pipes reach EOF immediately. Keep the
-# drain bounded anyway: on platforms that can only kill the launcher, a
-# descendant may still hold those pipes open.
 _COMMAND_CLEANUP_TIMEOUT_SECONDS = 10.0
 _OTLP_SIGNAL_ENV = tuple(
     f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
@@ -395,45 +395,60 @@ def _run_command(
     wrong — so it comes back as a result rather than an exception.
     """
     limit = timeout_seconds(*_SCENARIO_TIMEOUT)
-    try:
-        process = subprocess.Popen(  # noqa: S603
-            command,
-            cwd=cwd,
-            env=dict(env),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            # On POSIX this makes the process the leader of a group containing
-            # the wrappers and workloads it starts. Windows falls back to the
-            # direct process, as in the runner's server lifecycle.
-            start_new_session=True,
-        )
-    except OSError as error:
-        return _failed(command, str(error))
+    encoding = locale.getpreferredencoding(False)
+    # Regular files avoid relying on pipe EOF. In particular, on Windows a
+    # descendant can inherit a pipe and leave communicate()'s reader thread
+    # blocked after the launcher has been killed.
+    with (
+        tempfile.TemporaryFile() as stdout_capture,
+        tempfile.TemporaryFile() as stderr_capture,
+    ):
+        try:
+            process = subprocess.Popen(  # noqa: S603
+                command,
+                cwd=cwd,
+                env=dict(env),
+                stdout=stdout_capture,
+                stderr=stderr_capture,
+                text=True,
+                encoding=encoding,
+                # On POSIX this makes the process the leader of a group
+                # containing the wrappers and workloads it starts. Windows
+                # falls back to the direct process, as in the runner's server
+                # lifecycle.
+                start_new_session=True,
+            )
+        except OSError as error:
+            return _failed(command, str(error))
 
-    try:
-        stdout, stderr = process.communicate(timeout=limit)
-    except subprocess.TimeoutExpired:
-        stdout, stderr = _stop_and_drain(process)
-        return _failed(
-            command,
-            f"did not finish within {limit}s",
+        try:
+            process.wait(timeout=limit)
+        except subprocess.TimeoutExpired:
+            _stop_process(process)
+            stdout = _captured_text(stdout_capture, encoding)
+            stderr = _captured_text(stderr_capture, encoding)
+            return _failed(
+                command,
+                f"did not finish within {limit}s",
+                stdout=stdout,
+                stderr=stderr,
+            )
+        except BaseException:
+            # A new session no longer receives terminal signals sent to the
+            # runner, so an interruption such as Ctrl+C must stop it
+            # explicitly.
+            _stop_process(process)
+            raise
+
+        stdout = _captured_text(stdout_capture, encoding)
+        stderr = _captured_text(stderr_capture, encoding)
+        assert process.returncode is not None
+        return subprocess.CompletedProcess(
+            args=list(command),
+            returncode=process.returncode,
             stdout=stdout,
             stderr=stderr,
         )
-    except BaseException:
-        # A new session no longer receives terminal signals sent to the runner,
-        # so an interruption such as Ctrl+C must stop it explicitly.
-        _stop_and_drain(process)
-        raise
-
-    assert process.returncode is not None
-    return subprocess.CompletedProcess(
-        args=list(command),
-        returncode=process.returncode,
-        stdout=stdout,
-        stderr=stderr,
-    )
 
 
 def _kill_process_group(process: subprocess.Popen[str]) -> None:
@@ -459,23 +474,23 @@ def _kill_process_group(process: subprocess.Popen[str]) -> None:
             pass
 
 
-def _stop_and_drain(process: subprocess.Popen[str]) -> tuple[str, str]:
-    """Stop a command and collect output without waiting forever."""
+def _stop_process(process: subprocess.Popen[str]) -> None:
+    """Stop a command without waiting indefinitely for its launcher."""
     _kill_process_group(process)
     try:
-        return process.communicate(timeout=_COMMAND_CLEANUP_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired as expired:
-        # A surviving descendant can keep these pipes open after the launcher
-        # dies. Closing our read ends makes cleanup finite; the exception holds
-        # everything communicate managed to collect before that point.
-        for pipe in (process.stdout, process.stderr):
-            if pipe is not None:
-                pipe.close()
-        try:
-            process.wait(timeout=_COMMAND_CLEANUP_TIMEOUT_SECONDS)
-        except subprocess.TimeoutExpired:
-            pass
-        return _text(expired.stdout), _text(expired.stderr)
+        process.wait(timeout=_COMMAND_CLEANUP_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        pass
+
+
+def _captured_text(capture: BinaryIO, encoding: str) -> str:
+    """Read a bounded snapshot of a command's captured output."""
+    size = os.fstat(capture.fileno()).st_size
+    capture.seek(0)
+    return capture.read(size).decode(
+        encoding=encoding,
+        errors="strict",
+    )
 
 
 def _failed(
@@ -491,14 +506,6 @@ def _failed(
         stdout=stdout,
         stderr=f"{shlex.join(command)}: {reason}\n{stderr}",
     )
-
-
-def _text(output: str | bytes | None) -> str:
-    if output is None:
-        return ""
-    if isinstance(output, bytes):
-        return output.decode(errors="replace")
-    return output
 
 
 def _default_report_dir(directory: Path) -> Path:
