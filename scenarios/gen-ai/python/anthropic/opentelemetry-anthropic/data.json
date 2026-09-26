@@ -9,12 +9,15 @@
       "gen_ai.request.model",
       "gen_ai.request.stop_sequences",
       "gen_ai.request.stream",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_k",
+      "gen_ai.request.top_p",
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
       "gen_ai.response.time_to_first_chunk",
       "gen_ai.system_instructions",
-      "gen_ai.usage.cache_creation.input_tokens",
+      "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens",
@@ -32,12 +35,15 @@
       "gen_ai.request.model",
       "gen_ai.request.stop_sequences",
       "gen_ai.request.stream",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_k",
+      "gen_ai.request.top_p",
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
       "gen_ai.response.time_to_first_chunk",
       "gen_ai.system_instructions",
-      "gen_ai.usage.cache_creation.input_tokens",
+      "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens",
@@ -79,5 +85,24 @@
     ]
   },
   "entities": {},
-  "findings": []
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_write.input_tokens' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.client.inference.operation.details",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_write.input_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_write.input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat claude-sonnet-4-20250514",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_write.input_tokens"
+      }
+    }
+  ]
 }

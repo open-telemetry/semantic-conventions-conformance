@@ -11,11 +11,13 @@
       "gen_ai.request.presence_penalty",
       "gen_ai.request.seed",
       "gen_ai.request.stop_sequences",
+      "gen_ai.request.stream",
       "gen_ai.request.temperature",
       "gen_ai.request.top_p",
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.response.time_to_first_chunk",
       "gen_ai.tool.definitions",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
@@ -37,11 +39,13 @@
       "gen_ai.request.presence_penalty",
       "gen_ai.request.seed",
       "gen_ai.request.stop_sequences",
+      "gen_ai.request.stream",
       "gen_ai.request.temperature",
       "gen_ai.request.top_p",
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.response.time_to_first_chunk",
       "gen_ai.tool.definitions",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
@@ -54,12 +58,25 @@
       "gen_ai.request.model",
       "gen_ai.response.model"
     ],
+    "gen_ai.client.operation.time_per_output_chunk": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model"
+    ],
+    "gen_ai.client.operation.time_to_first_chunk": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model"
+    ],
     "gen_ai.client.token.usage": [
       "gen_ai.operation.name",
       "gen_ai.provider.name",
       "gen_ai.request.model",
       "gen_ai.response.model",
       "gen_ai.token.type"
+    ],
+    "gen_ai.invoke_workflow.duration": [
+      "gen_ai.workflow.name"
     ]
   },
   "entities": {},
@@ -71,16 +88,6 @@
       "signal_name": "chat gpt-4o-mini",
       "context": {
         "missing_attribute": "gen_ai.response.id",
-        "operation": "chat"
-      }
-    },
-    {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-mini",
-      "context": {
-        "missing_attribute": "gen_ai.response.model",
         "operation": "chat"
       }
     },
