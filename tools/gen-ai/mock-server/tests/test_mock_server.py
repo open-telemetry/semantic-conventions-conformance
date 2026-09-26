@@ -123,6 +123,17 @@ ENDPOINTS = [
         {"model": "embed-v4.0", "texts": ["hi", "there"], "input_type": "search_document"},
     ),
     (
+        "cohere-rerank",
+        "post",
+        "/v2/rerank",
+        {
+            "model": "rerank-v3.5",
+            "query": "hi",
+            "documents": ["one", "two", "three"],
+            "top_n": 2,
+        },
+    ),
+    (
         "mistral-chat",
         "post",
         "/mistral/v1/chat/completions",
@@ -351,6 +362,30 @@ def test_embeddings_survive_an_unusable_dimension_count(client):
     )
     assert response.status_code == 200
     assert len(response.json["data"][0]["embedding"]) == 256
+
+
+def test_cohere_rerank_ranks_within_the_requested_candidates(client):
+    def rerank(**extra):
+        response = client.post(
+            "/v2/rerank",
+            json={
+                "model": "rerank-v3.5",
+                "query": "hi",
+                "documents": ["one", "two", "three"],
+                **extra,
+            },
+        )
+        assert response.status_code == 200
+        return response.json["results"]
+
+    top_two = rerank(top_n=2)
+    assert [result["index"] for result in top_two] == [0, 1]
+    scores = [result["relevance_score"] for result in top_two]
+    assert scores == sorted(scores, reverse=True)
+    assert all(0 < score <= 1 for score in scores)
+
+    assert len(rerank()) == 3
+    assert len(rerank(top_n=10)) == 3
 
 
 def test_chat_reports_the_service_tier_that_served_the_request(client):
