@@ -1,6 +1,7 @@
 {
   "spans": {
     "gen_ai.execute_tool.internal": [
+      "gen_ai.agent.name",
       "gen_ai.operation.name",
       "gen_ai.tool.call.arguments",
       "gen_ai.tool.call.id",
@@ -24,10 +25,15 @@
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
     ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.agent.name",
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages"
+    ],
     "gen_ai.invoke_workflow.internal": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
-      "gen_ai.output.messages",
       "gen_ai.workflow.name"
     ]
   },
@@ -61,6 +67,17 @@
       "gen_ai.request.model",
       "gen_ai.response.model",
       "gen_ai.token.type"
+    ],
+    "gen_ai.execute_tool.duration": [
+      "gen_ai.agent.name",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.invoke_agent.duration": [
+      "gen_ai.agent.name"
+    ],
+    "gen_ai.invoke_workflow.duration": [
+      "gen_ai.workflow.name"
     ]
   },
   "entities": {},
@@ -73,6 +90,36 @@
       "context": {
         "missing_attribute": "server.address",
         "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
       }
     }
   ]

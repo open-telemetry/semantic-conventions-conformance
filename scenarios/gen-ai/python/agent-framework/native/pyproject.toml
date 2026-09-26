@@ -5,9 +5,9 @@ requires-python = ">=3.12"
 dependencies = [
     "agent-framework-core==1.19.0",
     "agent-framework-openai==1.14.4",
-    "opentelemetry-api==1.44.0",
-    "opentelemetry-sdk==1.44.0",
-    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    "opentelemetry-api==1.45.0",
+    "opentelemetry-sdk==1.45.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.45.0",
     # `otel-conformance-python` installs the SDK providers and loads no
     # instrumentation, which is what leaves the library's own telemetry the
     # only thing measured.
