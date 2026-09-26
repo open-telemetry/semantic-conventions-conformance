@@ -48,6 +48,17 @@ directory, then uses `bundle exec ruby` with the same Gemfile and generated
 bundle. Both commands locate Ruby and Bundler through `PATH`, including Windows
 Bundler shims, and return the child process's exit status.
 
+`relock` is for maintainers: from anywhere in the repository, it runs
+`bundle lock` (without `--update`) for every committed `Gemfile.lock` under
+`scenarios/` and `tools/`, with the frozen setting that `install` and `run` use
+switched off. That way only what the Gemfiles and the `path:` gems require
+changes. CI runs it on Renovate PRs and commits the result. Run it by hand when
+a frozen install reports that the lockfile needs updating:
+
+```sh
+otel-conformance-ruby relock
+```
+
 ## Shared Ruby APIs
 
 `otel-conformance-scenario-support` has no OpenTelemetry dependency:

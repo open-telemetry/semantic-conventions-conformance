@@ -27,6 +27,21 @@ Composer and the OpenTelemetry SDK initialize for each request, then shutdown
 handlers flush that request's telemetry. The Python parent owns the driver's
 standard-input protocol and stops the server when the driver closes it.
 
+`relock` is for maintainers: from anywhere in the repository, it runs
+`composer update --no-install --no-scripts --minimal-changes` for every
+committed `composer.lock` under `scenarios/` and `tools/`. That rewrites the
+lock only, and changes nothing the manifests don't require. A lock records a
+path package's `dist.reference`, a hash of that package's `composer.json`, so
+editing `scenario/` or the HTTP test client's `composer.json` leaves the locks
+that depend on it stale. `composer install` does not notice this. CI runs
+`relock` on Renovate PRs and commits the result. CI pins the Composer version,
+because Composer stamps its plugin API version into every lock. Use the same
+Composer version when running it by hand:
+
+```sh
+otel-conformance-php relock
+```
+
 Run the launcher tests with:
 
 ```sh

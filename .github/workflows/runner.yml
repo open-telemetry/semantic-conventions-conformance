@@ -151,6 +151,11 @@ jobs:
           php-version: "8.4"
           extensions: opentelemetry, grpc, protobuf
           coverage: none
+          # Pinned by hand -- Renovate does not bump this. Composer stamps
+          # its plugin API version (2.9.0) into composer.lock, so this must
+          # stay on 2.9.x, and a floating Composer would make every relock
+          # look like a change.
+          tools: composer:2.9.8
 
       - name: Build PHP
         run: |
@@ -306,11 +311,15 @@ jobs:
       cancel-in-progress: true
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
+      relock_matrix: ${{ steps.relock-scope.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The merge commit and its first parent, the base: their diff is
+          # what the PR changes.
+          fetch-depth: 2
 
       - name: Generate matrix
         id: matrix
@@ -352,8 +361,149 @@ jobs:
           )"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
-  scenarios:
+      # Renovate PRs only. The PR's author, not `github.actor`: the actor is
+      # whoever acted last on the PR, which is spoofable (zizmor
+      # bot-conditions). The runner image's python3 runs the script by path:
+      # it is standard library only.
+      - name: Scope the lock file regeneration
+        id: relock-scope
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.user.login == 'renovate[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          matrix="$(
+            git diff --name-only HEAD^1 HEAD |
+              python3 tools/runner/src/opentelemetry/conformance/_relock_scope.py
+          )"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  # Regenerates the lock files a Renovate PR left stale. Best-effort and not
+  # required: a failure here leaves the scenarios to run against the
+  # committed locks, and a lock that is really stale fails them.
+  relock:
     needs: discover-scenarios
+    if: needs.discover-scenarios.outputs.relock_matrix != ''
+    name: Relock (${{ matrix.ecosystem }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: ${{ github.workflow }}-relock-${{ matrix.ecosystem }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover-scenarios.outputs.relock_matrix) }}
+    env:
+      ECOSYSTEM: ${{ matrix.ecosystem }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Every leg: the relock commands are Python CLIs.
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      # Toolchains pinned exactly as in the scenarios job, since the tool
+      # version can change what a lock file says. Every setup step below
+      # must keep the exact same version as its counterpart in the
+      # `scenarios` job below, or a lock written by a different tool version
+      # breaks the no-op property the `scenarios` job checks for.
+      - name: Set up Node
+        if: matrix.ecosystem == 'js'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.21.0"
+
+      - name: Set up Go
+        if: matrix.ecosystem == 'go'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: scenarios/http/go/go.mod
+
+      - name: Set up uv
+        if: matrix.ecosystem == 'python'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.18"
+
+      # No bundler-cache: it runs a frozen `bundle install`, which fails on
+      # exactly the stale lock this job is here to fix.
+      - name: Set up Ruby
+        if: matrix.ecosystem == 'ruby'
+        uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1.325.0
+        with:
+          ruby-version: "4.0.7"
+
+      - name: Set up PHP
+        if: matrix.ecosystem == 'php'
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.4"
+          extensions: opentelemetry, grpc, protobuf
+          coverage: none
+          # Pinned by hand -- Renovate does not bump this. Composer stamps
+          # its plugin API version (2.9.0) into composer.lock, so this must
+          # stay on 2.9.x, and a floating Composer would make every relock
+          # look like a change.
+          tools: composer:2.9.8
+
+      - name: Regenerate the lock files
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e "tools/$ECOSYSTEM"
+          if [[ "$ECOSYSTEM" == python ]]; then
+            otel-conformance-python-relock
+          else
+            "otel-conformance-$ECOSYSTEM" relock
+          fi
+
+      # Only after every project relocked: a partial patch could leave the
+      # locks inconsistent with each other.
+      - name: Create the lock file patch
+        id: lock-patch
+        env:
+          LOCK_PATCH: ${{ runner.temp }}/lock.patch
+        run: |
+          set -euo pipefail
+          case "$ECOSYSTEM" in
+            js) names=(package-lock.json) ;;
+            go) names=(go.mod go.sum) ;;
+            python) names=(uv.lock) ;;
+            ruby) names=(Gemfile.lock) ;;
+            php) names=(composer.lock) ;;
+            *) echo "::error::unknown ecosystem $ECOSYSTEM"; exit 1 ;;
+          esac
+          pathspecs=()
+          for name in "${names[@]}"; do
+            pathspecs+=(":(glob)scenarios/**/$name" ":(glob)tools/**/$name")
+          done
+          git diff --binary -- "${pathspecs[@]}" > "$LOCK_PATCH"
+          if [[ -s "$LOCK_PATCH" ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- "${pathspecs[@]}"
+          fi
+
+      - name: Upload the lock file patch
+        if: steps.lock-patch.outputs.exists == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: renovate-lock-${{ matrix.ecosystem }}
+          path: ${{ runner.temp }}/lock.patch
+          if-no-files-found: error
+          retention-days: 1
+
+  scenarios:
+    needs: [discover-scenarios, relock]
+    # A skipped relock (every non-Renovate PR) or a failed one must not skip
+    # the scenarios: without a patch they run against the committed locks.
+    if: ${{ !cancelled() && needs.discover-scenarios.result == 'success' }}
     name: Scenarios (${{ matrix.matrix_id }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -371,6 +521,31 @@ jobs:
         with:
           persist-credentials: false
 
+      # Before any toolchain setup: setup-ruby's bundler-cache installs
+      # frozen, and the Node and uv caches hash the lock files.
+      - name: Download the lock file patch
+        if: needs.relock.result != 'skipped'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: renovate-lock-${{ matrix.language }}
+          path: ${{ runner.temp }}/lock-patch
+
+      # Staged, so the worktree-vs-index diffs below still see data.json
+      # changes only.
+      - name: Apply the lock file patch
+        id: lock-patch
+        if: needs.relock.result != 'skipped'
+        env:
+          PATCH_DIR: ${{ runner.temp }}/lock-patch
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          patches=("$PATCH_DIR"/**/*.patch)
+          if (( ${#patches[@]} > 0 )); then
+            git apply --index "${patches[@]}"
+            echo "applied=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -380,6 +555,9 @@ jobs:
         if: matrix.language == 'python'
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          # `uv lock` can rewrite the lock format with a new uv, so relocking
+          # needs the same uv every time.
+          version: "0.12.18"
           enable-cache: true
           # Scope lockfiles to this matrix job so each Python matrix job caches
           # its own package set instead of sharing one.
@@ -430,6 +608,11 @@ jobs:
           php-version: "8.4"
           extensions: opentelemetry, grpc, protobuf
           coverage: none
+          # Pinned by hand -- Renovate does not bump this. Composer stamps
+          # its plugin API version (2.9.0) into composer.lock, so this must
+          # stay on 2.9.x, and a floating Composer would make every relock
+          # look like a change.
+          tools: composer:2.9.8
 
       # A Go scenario builds itself from source in its `setup:` before it runs,
       # and a domain's Go scenarios are one module rooted at its own
@@ -524,6 +707,15 @@ jobs:
             echo "::error::the committed data.json files are out of date — run the scenarios and commit the result"
             exit 1
           fi
+
+      # The required failure for a stale lock: relock itself is best-effort
+      # and not required.
+      - name: Check the committed lock files are up to date
+        if: ${{ !cancelled() && steps.lock-patch.outputs.applied == 'true' }}
+        run: |
+          git diff --cached --stat
+          echo "::error::the committed lock files are out of date — the Renovate autofix will commit the regenerated ones"
+          exit 1
 
       - name: Upload the weaver reports
         if: always()
