@@ -114,17 +114,26 @@ def test_a_command_that_overruns_stops_its_process_group(
     """A timed-out launcher must not leave its workload running."""
     monkeypatch.setenv("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", "1")
     launched = tmp_path / "descendant-launched"
+    ready = tmp_path / "descendant-ready"
     survived = tmp_path / "descendant-survived"
     child = (
-        "import pathlib, sys, time; "
-        "time.sleep(1.5); "
-        "pathlib.Path(sys.argv[1]).write_text('alive')"
+        "import os, pathlib, sys, time\n"
+        "parent_pid = int(sys.argv[1])\n"
+        "pathlib.Path(sys.argv[2]).write_text('ready')\n"
+        "while os.getppid() == parent_pid:\n"
+        "    time.sleep(0.01)\n"
+        "pathlib.Path(sys.argv[3]).write_text('alive')\n"
     )
     parent = (
-        "import pathlib, subprocess, sys, time; "
-        "subprocess.Popen([sys.executable, '-c', sys.argv[1], sys.argv[2]]); "
-        "pathlib.Path(sys.argv[3]).write_text('launched'); "
-        "time.sleep(30)"
+        "import os, pathlib, subprocess, sys, time\n"
+        "ready = pathlib.Path(sys.argv[3])\n"
+        "subprocess.Popen(\n"
+        "    [sys.executable, '-c', sys.argv[1], str(os.getpid()), sys.argv[3], sys.argv[2]]\n"
+        ")\n"
+        "while not ready.exists():\n"
+        "    time.sleep(0.01)\n"
+        "pathlib.Path(sys.argv[4]).write_text('launched')\n"
+        "time.sleep(30)\n"
     )
 
     completed = _run_command(
@@ -134,14 +143,12 @@ def test_a_command_that_overruns_stops_its_process_group(
             parent,
             child,
             str(survived),
+            str(ready),
             str(launched),
         ),
         cwd=tmp_path,
         env=os.environ,
     )
-    # Give a surviving child enough time to expose itself. This checks the
-    # externally visible failure mode rather than a platform-specific pid.
-    time.sleep(0.7)
 
     assert completed.returncode == 1
     assert launched.exists()
