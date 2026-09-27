@@ -225,6 +225,74 @@ def test_termination_signal_stops_a_scenario_group(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_ignored_hangup_remains_ignored(tmp_path: Path) -> None:
+    ready = tmp_path / "ready"
+    runner = (
+        "import os, pathlib, signal, sys\n"
+        "from opentelemetry.conformance._session import _run_command\n"
+        "signal.signal(signal.SIGHUP, signal.SIG_IGN)\n"
+        "child = 'import pathlib, sys, time; ' "
+        "+ 'pathlib.Path(sys.argv[1]).write_text(\"ready\"); time.sleep(0.5)'\n"
+        "result = _run_command((sys.executable, '-c', child, sys.argv[1]), "
+        "cwd=pathlib.Path.cwd(), env=os.environ)\n"
+        "sys.exit(result.returncode)\n"
+    )
+    process = subprocess.Popen(
+        (sys.executable, "-c", runner, str(ready)),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+    try:
+        assert _appears_within(ready, 10)
+        os.kill(process.pid, signal_module.SIGHUP)
+        assert process.wait(timeout=10) == 0
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=10)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_second_signal_during_cleanup_still_stops_scenario(
+    tmp_path: Path,
+) -> None:
+    ready = tmp_path / "ready"
+    survived = tmp_path / "survived"
+    child = (
+        "import pathlib, sys, time\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(0.4)\n"
+        "pathlib.Path(sys.argv[2]).write_text('alive')\n"
+    )
+    runner = (
+        "import os, pathlib, signal, sys\n"
+        "from opentelemetry.conformance import _session\n"
+        "original = _session._stop_process\n"
+        "def stop(process):\n"
+        "    os.kill(os.getpid(), signal.SIGHUP)\n"
+        "    original(process)\n"
+        "_session._stop_process = stop\n"
+        "_session._run_command((sys.executable, '-c', sys.argv[1], "
+        "sys.argv[2], sys.argv[3]), cwd=pathlib.Path.cwd(), env=os.environ)\n"
+    )
+    process = subprocess.Popen(
+        (sys.executable, "-c", runner, child, str(ready), str(survived)),
+        cwd=tmp_path,
+        env=os.environ,
+        start_new_session=True,
+    )
+    try:
+        assert _appears_within(ready, 10)
+        os.kill(process.pid, signal_module.SIGTERM)
+        assert process.wait(timeout=10) == 128 + signal_module.SIGTERM
+        assert not _appears_within(survived, 1)
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid, signal_module.SIGKILL)
+            process.wait(timeout=10)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
 def test_scenario_children_receive_termination_signals(tmp_path: Path) -> None:
     """The launch handoff must not leave SIGTERM blocked in descendants."""
     script = (
@@ -319,6 +387,37 @@ def test_windows_launcher_does_not_leave_its_workload_running(
 
     assert completed.returncode == 0
     assert not _appears_within(survived, 1)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows Job Object only")
+def test_windows_launcher_waits_for_job_assignment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = tmp_path / "started"
+    job_type = _session.WindowsJob
+    assign = job_type.assign
+
+    def delayed_assignment(job: Any, process: subprocess.Popen[str]) -> None:
+        # Even a cold interpreter has time to start before this assignment.
+        assert not _appears_within(started, 3), (
+            "launcher ran before job assignment"
+        )
+        assign(job, process)
+
+    monkeypatch.setattr(job_type, "assign", delayed_assignment)
+    result = _run_command(
+        (
+            sys.executable,
+            "-c",
+            "import pathlib, sys; pathlib.Path(sys.argv[1]).write_text('started')",
+            str(started),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+
+    assert result.returncode == 0
+    assert started.exists()
 
 
 @pytest.mark.skipif(

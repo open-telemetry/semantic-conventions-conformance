@@ -55,6 +55,18 @@ class _ExtendedLimit(ctypes.Structure):
     ]
 
 
+class _ThreadEntry(ctypes.Structure):
+    _fields_ = [
+        ("size", wintypes.DWORD),
+        ("usage", wintypes.DWORD),
+        ("thread_id", wintypes.DWORD),
+        ("owner_pid", wintypes.DWORD),
+        ("base_priority", wintypes.LONG),
+        ("delta_priority", wintypes.LONG),
+        ("flags", wintypes.DWORD),
+    ]
+
+
 _kernel = ctypes.WinDLL("kernel32", use_last_error=True)
 _kernel.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
 _kernel.CreateJobObjectW.restype = wintypes.HANDLE
@@ -71,6 +83,19 @@ _kernel.TerminateJobObject.argtypes = [wintypes.HANDLE, wintypes.UINT]
 _kernel.TerminateJobObject.restype = wintypes.BOOL
 _kernel.CloseHandle.argtypes = [wintypes.HANDLE]
 _kernel.CloseHandle.restype = wintypes.BOOL
+_kernel.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+_kernel.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+_kernel.Thread32First.argtypes = [
+    wintypes.HANDLE,
+    ctypes.POINTER(_ThreadEntry),
+]
+_kernel.Thread32First.restype = wintypes.BOOL
+_kernel.Thread32Next.argtypes = [wintypes.HANDLE, ctypes.POINTER(_ThreadEntry)]
+_kernel.Thread32Next.restype = wintypes.BOOL
+_kernel.OpenThread.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+_kernel.OpenThread.restype = wintypes.HANDLE
+_kernel.ResumeThread.argtypes = [wintypes.HANDLE]
+_kernel.ResumeThread.restype = wintypes.DWORD
 _kernel.CreateFileMappingW.argtypes = [
     wintypes.HANDLE,
     ctypes.c_void_p,
@@ -119,6 +144,33 @@ class WindowsJob:
             self.handle, int(getattr(process, "_handle"))
         ):
             raise ctypes.WinError(ctypes.get_last_error())
+
+    def resume(self, process: subprocess.Popen[str]) -> None:
+        """Start the suspended primary thread only after job assignment."""
+        snapshot = _kernel.CreateToolhelp32Snapshot(
+            0x00000004, 0
+        )  # SNAPTHREAD
+        if snapshot == ctypes.c_void_p(-1).value:
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            entry = _ThreadEntry()
+            entry.size = ctypes.sizeof(entry)
+            found = _kernel.Thread32First(snapshot, ctypes.byref(entry))
+            while found:
+                if entry.owner_pid == process.pid:
+                    thread = _kernel.OpenThread(0x0002, False, entry.thread_id)
+                    if not thread:
+                        raise ctypes.WinError(ctypes.get_last_error())
+                    try:
+                        if _kernel.ResumeThread(thread) == 0xFFFFFFFF:
+                            raise ctypes.WinError(ctypes.get_last_error())
+                    finally:
+                        _kernel.CloseHandle(thread)
+                    return
+                found = _kernel.Thread32Next(snapshot, ctypes.byref(entry))
+            raise OSError(f"No primary thread found for process {process.pid}")
+        finally:
+            _kernel.CloseHandle(snapshot)
 
     def terminate(self) -> None:
         if not _kernel.TerminateJobObject(self.handle, 1):

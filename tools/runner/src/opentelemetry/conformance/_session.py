@@ -19,6 +19,7 @@ import os
 import shlex
 import signal
 import subprocess
+import sys
 import tempfile
 import threading
 from contextlib import (
@@ -75,6 +76,8 @@ class _Capture(Protocol):
 
 class _Job(Protocol):
     def assign(self, process: subprocess.Popen[str]) -> None: ...
+
+    def resume(self, process: subprocess.Popen[str]) -> None: ...
 
     def terminate(self) -> None: ...
 
@@ -441,20 +444,25 @@ def _run_command(
                     encoding=encoding,
                     # POSIX starts a new group; Windows uses the Job Object.
                     start_new_session=True,
+                    # The child cannot start another process before job assignment.
+                    creationflags=0x00000004 if job is not None else 0,
                 )
                 if job is not None:
                     job.assign(process)
                     setattr(process, "_conformance_job", job)
+                    job.resume(process)
 
             process.wait(timeout=limit)
         except OSError as error:
             if process is None:
                 return _failed(command, str(error))
-            _stop_process(process)
+            with _defer_termination():
+                _stop_process(process)
             raise
         except subprocess.TimeoutExpired:
             assert process is not None
-            _stop_process(process)
+            with _defer_termination():
+                _stop_process(process)
             stdout = _captured_text(stdout_capture, encoding)
             stderr = _captured_text(stderr_capture, encoding)
             return _failed(
@@ -466,7 +474,8 @@ def _run_command(
         except BaseException:
             if process is not None:
                 # A new session does not receive the runner's terminal signal.
-                _stop_process(process)
+                with _defer_termination():
+                    _stop_process(process)
             raise
 
         assert process is not None
@@ -503,12 +512,16 @@ def _defer_termination() -> Generator[None, None, None]:
 
     try:
         for signum in (signal.SIGTERM, signal.SIGHUP):
+            if signal.getsignal(signum) is signal.SIG_IGN:
+                continue
             previous[signum] = signal.signal(signum, defer)
         yield
     finally:
         for signum, handler in previous.items():
             signal.signal(signum, handler)
-        if pending:
+        # Keep the original failure (including the first termination signal)
+        # when cleanup itself was interrupted by another signal.
+        if pending and sys.exc_info()[0] is None:
             raise SystemExit(128 + pending[0])
 
 
@@ -529,6 +542,8 @@ def _termination_signals() -> Generator[None, None, None]:
 
     try:
         for signum in (signal.SIGTERM, signal.SIGHUP):
+            if signal.getsignal(signum) is signal.SIG_IGN:
+                continue
             previous[signum] = signal.signal(signum, terminate)
         yield
     finally:
