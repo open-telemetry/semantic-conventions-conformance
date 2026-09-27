@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import locale
 import logging
+import mmap
 import os
 import shlex
 import signal
@@ -440,6 +441,10 @@ def _run_command(
             _stop_process(process)
             raise
 
+        # A launcher that exits without waiting for its workload has left that
+        # workload behind. Stop anything still in its group before the runner
+        # advances to the next scenario and collector lifecycle.
+        _kill_process_group(process)
         stdout = _captured_text(stdout_capture, encoding)
         stderr = _captured_text(stderr_capture, encoding)
         assert process.returncode is not None
@@ -484,13 +489,14 @@ def _stop_process(process: subprocess.Popen[str]) -> None:
 
 
 def _captured_text(capture: BinaryIO, encoding: str) -> str:
-    """Read a bounded snapshot of a command's captured output."""
+    """Read a bounded snapshot without moving an inherited writer offset."""
     size = os.fstat(capture.fileno()).st_size
-    capture.seek(0)
-    return capture.read(size).decode(
-        encoding=encoding,
-        errors="strict",
-    )
+    if size == 0:
+        return ""
+    with mmap.mmap(
+        capture.fileno(), length=size, access=mmap.ACCESS_READ
+    ) as snapshot:
+        return snapshot[:].decode(encoding=encoding, errors="replace")
 
 
 def _failed(

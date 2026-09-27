@@ -130,6 +130,7 @@ def test_a_command_that_overruns_stops_its_process_group(
         "pathlib.Path(sys.argv[2]).write_text('ready')\n"
         "while os.getppid() == parent_pid:\n"
         "    time.sleep(0.01)\n"
+        "time.sleep(0.2)\n"
         "pathlib.Path(sys.argv[3]).write_text('alive')\n"
     )
     parent = (
@@ -160,7 +161,54 @@ def test_a_command_that_overruns_stops_its_process_group(
 
     assert completed.returncode == 1
     assert launched.exists()
-    assert not survived.exists()
+    assert not _appears_within(survived, 1)
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows has no killable process group",
+)
+def test_a_successful_launcher_does_not_leave_its_workload_running(
+    tmp_path: Path,
+) -> None:
+    """A launcher exit must not leak its background workload."""
+    ready = tmp_path / "descendant-ready"
+    survived = tmp_path / "descendant-survived"
+    child = (
+        "import os, pathlib, sys, time\n"
+        "parent_pid = int(sys.argv[1])\n"
+        "pathlib.Path(sys.argv[2]).write_text('ready')\n"
+        "while os.getppid() == parent_pid:\n"
+        "    time.sleep(0.01)\n"
+        "time.sleep(0.2)\n"
+        "pathlib.Path(sys.argv[3]).write_text('alive')\n"
+    )
+    parent = (
+        "import os, pathlib, subprocess, sys, time\n"
+        "ready = pathlib.Path(sys.argv[2])\n"
+        "subprocess.Popen([sys.executable, '-c', sys.argv[1], "
+        "str(os.getpid()), sys.argv[2], sys.argv[3]])\n"
+        "while not ready.exists():\n"
+        "    time.sleep(0.01)\n"
+        "print('launcher done')\n"
+    )
+
+    completed = _run_command(
+        (
+            sys.executable,
+            "-c",
+            parent,
+            child,
+            str(ready),
+            str(survived),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stdout.strip() == "launcher done"
+    assert not _appears_within(survived, 1)
 
 
 @pytest.mark.skipif(
@@ -219,6 +267,32 @@ def test_timeout_cleanup_wait_is_bounded(
 
     assert stopped == [process]
     assert process.waits == [0.1]
+
+
+def test_captured_output_does_not_move_the_writer_offset(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "capture"
+    with path.open("w+b") as capture:
+        capture.write(b"captured output")
+        capture.flush()
+        capture.seek(3)
+
+        output = _session._captured_text(capture, "utf-8")
+
+        assert output == "captured output"
+        assert capture.tell() == 3
+
+
+def test_captured_output_replaces_invalid_bytes(tmp_path: Path) -> None:
+    path = tmp_path / "capture"
+    with path.open("w+b") as capture:
+        capture.write(b"before \xff after")
+        capture.flush()
+
+        output = _session._captured_text(capture, "utf-8")
+
+    assert output == "before \N{REPLACEMENT CHARACTER} after"
 
 
 def test_timeout_does_not_wait_for_inherited_output_handles(
@@ -286,6 +360,15 @@ def test_timeout_does_not_wait_for_inherited_output_handles(
     assert completed.returncode == 1
     assert "child ready" in completed.stdout
     assert "did not finish within" in completed.stderr
+
+
+def _appears_within(path: Path, seconds: float) -> bool:
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if path.exists():
+            return True
+        time.sleep(0.01)
+    return path.exists()
 
 
 def test_weaver_startup_retries_after_a_timeout() -> None:
