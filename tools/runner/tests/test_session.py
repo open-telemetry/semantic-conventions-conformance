@@ -478,6 +478,37 @@ def test_timeout_cleanup_wait_is_bounded(
     assert process.waits == [0.1]
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_signal_during_timeout_cleanup_is_not_dropped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Process:
+        waits = 0
+
+        def wait(self, timeout: float) -> int:
+            self.waits += 1
+            if self.waits == 1:
+                raise subprocess.TimeoutExpired("scenario", timeout)
+            return 0
+
+    process = Process()
+    stopped: list[Process] = []
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+
+    def stop_and_signal(child: Process) -> None:
+        stopped.append(child)
+        os.kill(os.getpid(), signal_module.SIGTERM)
+
+    monkeypatch.setattr(_session, "_kill_process_group", stop_and_signal)
+
+    with pytest.raises(SystemExit) as error:
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert error.value.code == 128 + signal_module.SIGTERM
+    assert stopped == [process]
+    assert process.waits == 2
+
+
 def test_captured_output_does_not_move_the_writer_offset(
     tmp_path: Path,
 ) -> None:

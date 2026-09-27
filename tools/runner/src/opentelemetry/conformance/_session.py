@@ -19,7 +19,6 @@ import os
 import shlex
 import signal
 import subprocess
-import sys
 import tempfile
 import threading
 from contextlib import (
@@ -474,8 +473,10 @@ def _run_command(
         except BaseException:
             if process is not None:
                 # A new session does not receive the runner's terminal signal.
+                # Re-raise inside the guard so a second signal cannot replace it.
                 with _defer_termination():
                     _stop_process(process)
+                    raise
             raise
 
         assert process is not None
@@ -506,6 +507,7 @@ def _defer_termination() -> Generator[None, None, None]:
         return
     previous: dict[int, Any] = {}
     pending: list[int] = []
+    body_failed = False
 
     def defer(signum: int, _frame: object) -> None:
         pending.append(signum)
@@ -515,13 +517,17 @@ def _defer_termination() -> Generator[None, None, None]:
             if signal.getsignal(signum) is signal.SIG_IGN:
                 continue
             previous[signum] = signal.signal(signum, defer)
-        yield
+        try:
+            yield
+        except BaseException:
+            body_failed = True
+            raise
     finally:
         for signum, handler in previous.items():
             signal.signal(signum, handler)
         # Keep the original failure (including the first termination signal)
         # when cleanup itself was interrupted by another signal.
-        if pending and sys.exc_info()[0] is None:
+        if pending and not body_failed:
             raise SystemExit(128 + pending[0])
 
 
