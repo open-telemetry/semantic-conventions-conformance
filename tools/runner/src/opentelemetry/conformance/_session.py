@@ -20,14 +20,20 @@ import shlex
 import signal
 import subprocess
 import tempfile
-from contextlib import AbstractContextManager, ExitStack, contextmanager
+import threading
+from contextlib import (
+    AbstractContextManager,
+    ExitStack,
+    contextmanager,
+    nullcontext,
+)
 from dataclasses import dataclass, field
 from pathlib import Path
 from string import Template
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
-    BinaryIO,
+    Any,
     Callable,
     Generator,
     Mapping,
@@ -57,7 +63,21 @@ from ._spec import (
 if TYPE_CHECKING:
     from opentelemetry.test.weaver_live_check import LiveCheckReport
 
+if os.name == "nt":
+    from ._windows_process import WindowsJob, read_snapshot
+
 logger = logging.getLogger(__name__)
+
+
+class _Capture(Protocol):
+    def fileno(self) -> int: ...
+
+
+class _Job(Protocol):
+    def assign(self, process: subprocess.Popen[str]) -> None: ...
+
+    def terminate(self) -> None: ...
+
 
 # Generous: a cold scenario subprocess can spend a while importing a large
 # framework before it emits anything. Overridable through the environment.
@@ -403,28 +423,37 @@ def _run_command(
     with (
         tempfile.TemporaryFile() as stdout_capture,
         tempfile.TemporaryFile() as stderr_capture,
+        _termination_signals(),
+        _command_job() as job,
     ):
+        process: subprocess.Popen[str] | None = None
         try:
-            process = subprocess.Popen(  # noqa: S603
-                command,
-                cwd=cwd,
-                env=dict(env),
-                stdout=stdout_capture,
-                stderr=stderr_capture,
-                text=True,
-                encoding=encoding,
-                # On POSIX this makes the process the leader of a group
-                # containing the wrappers and workloads it starts. Windows
-                # falls back to the direct process, as in the runner's server
-                # lifecycle.
-                start_new_session=True,
-            )
-        except OSError as error:
-            return _failed(command, str(error))
+            # Defer termination until the new process can be cleaned up. A
+            # signal between Popen and registration must not orphan it.
+            with _defer_termination():
+                process = subprocess.Popen(  # noqa: S603
+                    command,
+                    cwd=cwd,
+                    env=dict(env),
+                    stdout=stdout_capture,
+                    stderr=stderr_capture,
+                    text=True,
+                    encoding=encoding,
+                    # POSIX starts a new group; Windows uses the Job Object.
+                    start_new_session=True,
+                )
+                if job is not None:
+                    job.assign(process)
+                    setattr(process, "_conformance_job", job)
 
-        try:
             process.wait(timeout=limit)
+        except OSError as error:
+            if process is None:
+                return _failed(command, str(error))
+            _stop_process(process)
+            raise
         except subprocess.TimeoutExpired:
+            assert process is not None
             _stop_process(process)
             stdout = _captured_text(stdout_capture, encoding)
             stderr = _captured_text(stderr_capture, encoding)
@@ -435,16 +464,17 @@ def _run_command(
                 stderr=stderr,
             )
         except BaseException:
-            # A new session no longer receives terminal signals sent to the
-            # runner, so an interruption such as Ctrl+C must stop it
-            # explicitly.
-            _stop_process(process)
+            if process is not None:
+                # A new session does not receive the runner's terminal signal.
+                _stop_process(process)
             raise
 
+        assert process is not None
         # A launcher that exits without waiting for its workload has left that
         # workload behind. Stop anything still in its group before the runner
         # advances to the next scenario and collector lifecycle.
-        _kill_process_group(process)
+        with _defer_termination():
+            _kill_process_group(process)
         stdout = _captured_text(stdout_capture, encoding)
         stderr = _captured_text(stderr_capture, encoding)
         assert process.returncode is not None
@@ -456,6 +486,54 @@ def _run_command(
         )
 
 
+@contextmanager
+def _defer_termination() -> Generator[None, None, None]:
+    """Block POSIX termination signals during the launch/cleanup handoff."""
+    if (
+        os.name != "posix"
+        or threading.current_thread() is not threading.main_thread()
+    ):
+        yield
+        return
+    previous = signal.pthread_sigmask(
+        signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGHUP}
+    )
+    try:
+        yield
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous)
+
+
+@contextmanager
+def _termination_signals() -> Generator[None, None, None]:
+    """Make termination enter the normal exception cleanup path on POSIX."""
+    if (
+        os.name != "posix"
+        or threading.current_thread() is not threading.main_thread()
+    ):
+        yield
+        return
+
+    previous: dict[int, Any] = {}
+
+    def terminate(signum: int, _frame: object) -> None:
+        raise SystemExit(128 + signum)
+
+    try:
+        for signum in (signal.SIGTERM, signal.SIGHUP):
+            previous[signum] = signal.signal(signum, terminate)
+        yield
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+
+
+def _command_job() -> AbstractContextManager[_Job | None]:
+    if os.name == "nt":
+        return WindowsJob()
+    return nullcontext(None)
+
+
 def _kill_process_group(process: subprocess.Popen[str]) -> None:
     """Kill a command and the process group it started.
 
@@ -463,15 +541,19 @@ def _kill_process_group(process: subprocess.Popen[str]) -> None:
     ``dotnet run``. Killing only that launcher leaves the instrumented process
     exporting into a collector that has already moved on to another scenario.
 
-    Falling back to the direct child covers Windows, where there is no
-    killable process group, and a group that has already gone away.
+    Windows uses the process's Job Object. The direct child fallback covers
+    a POSIX group that has already gone away and mock processes in tests.
     """
+    job = getattr(process, "_conformance_job", None)
+    if job is not None:
+        job.terminate()
+        return
     try:
         # start_new_session=True makes the child both session and process-group
         # leader, so its pid is also the pgid. Do not look the pgid up here:
         # the leader may exit after the timeout while descendants keep the
         # group (and inherited output pipes) alive.
-        os.killpg(process.pid, signal.SIGKILL)
+        getattr(os, "killpg")(process.pid, getattr(signal, "SIGKILL"))
     except (AttributeError, OSError):
         try:
             process.kill()
@@ -488,11 +570,15 @@ def _stop_process(process: subprocess.Popen[str]) -> None:
         pass
 
 
-def _captured_text(capture: BinaryIO, encoding: str) -> str:
+def _captured_text(capture: _Capture, encoding: str) -> str:
     """Read a bounded snapshot without moving an inherited writer offset."""
     size = os.fstat(capture.fileno()).st_size
     if size == 0:
         return ""
+    if os.name == "nt":
+        return read_snapshot(capture, size).decode(
+            encoding=encoding, errors="replace"
+        )
     with mmap.mmap(
         capture.fileno(), length=size, access=mmap.ACCESS_READ
     ) as snapshot:

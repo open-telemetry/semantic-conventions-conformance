@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Mapping
+from contextlib import nullcontext
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -105,6 +106,7 @@ def test_keyboard_interrupt_stops_command_before_reraising(
         lambda *args, **kwargs: process,
     )
     monkeypatch.setattr(_session, "_stop_process", stopped.append)
+    monkeypatch.setattr(_session, "_command_job", lambda: nullcontext(None))
 
     with pytest.raises(KeyboardInterrupt):
         _run_command(("scenario",), cwd=tmp_path, env={})
@@ -145,6 +147,18 @@ def test_a_command_that_overruns_stops_its_process_group(
         "time.sleep(30)\n"
     )
 
+    real_popen = subprocess.Popen
+
+    def popen_after_child_is_ready(
+        *args: Any, **kwargs: Any
+    ) -> subprocess.Popen[str]:
+        process = real_popen(*args, **kwargs)
+        if not _appears_within(launched, 10):
+            process.kill()
+            pytest.fail("descendant did not start")
+        return cast("subprocess.Popen[str]", process)
+
+    monkeypatch.setattr(subprocess, "Popen", popen_after_child_is_ready)
     completed = _run_command(
         (
             sys.executable,
@@ -162,6 +176,52 @@ def test_a_command_that_overruns_stops_its_process_group(
     assert completed.returncode == 1
     assert launched.exists()
     assert not _appears_within(survived, 1)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_termination_signal_stops_a_scenario_group(tmp_path: Path) -> None:
+    ready = tmp_path / "ready"
+    survived = tmp_path / "survived"
+    child = (
+        "import pathlib, sys, time\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(0.4)\n"
+        "pathlib.Path(sys.argv[2]).write_text('alive')\n"
+    )
+    launcher = (
+        "import subprocess, sys, time\n"
+        "subprocess.Popen([sys.executable, '-c', sys.argv[1], *sys.argv[2:]])\n"
+        "time.sleep(30)\n"
+    )
+    runner = (
+        "import pathlib, os, sys\n"
+        "from opentelemetry.conformance._session import _run_command\n"
+        "_run_command((sys.executable, '-c', sys.argv[1], "
+        "sys.argv[2], sys.argv[3], sys.argv[4]), cwd=pathlib.Path.cwd(), env=os.environ)\n"
+    )
+    process = subprocess.Popen(
+        (
+            sys.executable,
+            "-c",
+            runner,
+            launcher,
+            child,
+            str(ready),
+            str(survived),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+        start_new_session=True,
+    )
+    try:
+        assert _appears_within(ready, 10)
+        os.killpg(process.pid, signal_module.SIGTERM)
+        assert process.wait(timeout=10) == 128 + signal_module.SIGTERM
+        assert not _appears_within(survived, 1)
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid, signal_module.SIGKILL)
+            process.wait(timeout=10)
 
 
 @pytest.mark.skipif(
@@ -208,6 +268,34 @@ def test_a_successful_launcher_does_not_leave_its_workload_running(
 
     assert completed.returncode == 0
     assert completed.stdout.strip() == "launcher done"
+    assert not _appears_within(survived, 1)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows Job Object only")
+def test_windows_launcher_does_not_leave_its_workload_running(
+    tmp_path: Path,
+) -> None:
+    ready = tmp_path / "ready"
+    survived = tmp_path / "survived"
+    child = (
+        "import pathlib, sys, time\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(0.4)\n"
+        "pathlib.Path(sys.argv[2]).write_text('alive')\n"
+    )
+    launcher = (
+        "import pathlib, subprocess, sys, time\n"
+        "subprocess.Popen([sys.executable, '-c', sys.argv[1], *sys.argv[2:]])\n"
+        "while not pathlib.Path(sys.argv[2]).exists():\n"
+        "    time.sleep(0.01)\n"
+    )
+    completed = _run_command(
+        (sys.executable, "-c", launcher, child, str(ready), str(survived)),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+
+    assert completed.returncode == 0
     assert not _appears_within(survived, 1)
 
 
