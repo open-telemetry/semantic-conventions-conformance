@@ -224,6 +224,28 @@ def test_termination_signal_stops_a_scenario_group(tmp_path: Path) -> None:
             process.wait(timeout=10)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_scenario_children_receive_termination_signals(tmp_path: Path) -> None:
+    """The launch handoff must not leave SIGTERM blocked in descendants."""
+    script = (
+        "import signal, subprocess, sys\n"
+        "child = subprocess.Popen([sys.executable, '-c', "
+        "'import time; time.sleep(10)'])\n"
+        "try:\n"
+        "    child.terminate()\n"
+        "    assert child.wait(timeout=1) == -signal.SIGTERM\n"
+        "finally:\n"
+        "    if child.poll() is None:\n"
+        "        child.kill()\n"
+        "        child.wait()\n"
+    )
+    completed = _run_command(
+        (sys.executable, "-c", script), cwd=tmp_path, env=os.environ
+    )
+
+    assert completed.returncode == 0, completed.stderr
+
+
 @pytest.mark.skipif(
     sys.platform == "win32",
     reason="Windows has no killable process group",

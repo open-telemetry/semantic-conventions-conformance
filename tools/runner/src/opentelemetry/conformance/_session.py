@@ -488,20 +488,28 @@ def _run_command(
 
 @contextmanager
 def _defer_termination() -> Generator[None, None, None]:
-    """Block POSIX termination signals during the launch/cleanup handoff."""
+    """Delay termination without passing a blocked signal mask to children."""
     if (
         os.name != "posix"
         or threading.current_thread() is not threading.main_thread()
     ):
         yield
         return
-    previous = signal.pthread_sigmask(
-        signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGHUP}
-    )
+    previous: dict[int, Any] = {}
+    pending: list[int] = []
+
+    def defer(signum: int, _frame: object) -> None:
+        pending.append(signum)
+
     try:
+        for signum in (signal.SIGTERM, signal.SIGHUP):
+            previous[signum] = signal.signal(signum, defer)
         yield
     finally:
-        signal.pthread_sigmask(signal.SIG_SETMASK, previous)
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+        if pending:
+            raise SystemExit(128 + pending[0])
 
 
 @contextmanager
