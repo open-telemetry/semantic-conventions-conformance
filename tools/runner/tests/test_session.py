@@ -540,6 +540,9 @@ def test_timeout_does_not_wait_for_inherited_output_handles(
         ready_at.append(time.monotonic())
         return cast("subprocess.Popen[str]", process)
 
+    # Exercise launcher-only cleanup even on Windows: a Job Object would
+    # suspend the launcher until assignment and terminate this descendant.
+    monkeypatch.setattr(_session, "_command_job", lambda: nullcontext(None))
     monkeypatch.setattr(subprocess, "Popen", popen_after_descendant_is_ready)
     monkeypatch.setattr(
         _session, "_kill_process_group", lambda process: process.kill()
