@@ -59,6 +59,7 @@ jobs:
           git apply \
             --cached \
             --include='scenarios/**/data.json' \
+            --include='scenarios/**/artifacts.json' \
             --exclude='*' \
             "${patches[@]}"
 
