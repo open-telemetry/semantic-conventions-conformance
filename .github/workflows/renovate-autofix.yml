@@ -76,8 +76,8 @@ jobs:
           # tree) and $2 (the upper tree) is a plain-file change at mode
           # 100644, with a status matching $3 (a regex: the lock layer only
           # ever rewrites tracked files, so it is restricted to `^M$`; the
-          # data layer may also create a fresh data.json, so it allows
-          # `^[AM]$`), whose path matches the layer's allowlist regex $4.
+          # data layer is similarly restricted to `^M$`),
+          # whose path matches the layer's allowlist regex $4.
           # Rejects renames, deletes, type changes (e.g. symlinks) and mode
           # changes that the `git apply` include/exclude filter does not
           # catch on its own.
