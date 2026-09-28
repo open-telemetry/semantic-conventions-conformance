@@ -153,7 +153,7 @@ jobs:
           fi
           data_tree="$(git write-tree)"
           if [[ "$data_tree" != "$lock_tree" ]]; then
-            verify_layer "$lock_tree" "$data_tree" '^[AM]$' "$data_allow"
+            verify_layer "$lock_tree" "$data_tree" '^M$' "$data_allow"
             echo "data_tree=$data_tree" >> "$GITHUB_OUTPUT"
           fi
 
