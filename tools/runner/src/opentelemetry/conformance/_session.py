@@ -507,7 +507,7 @@ def _defer_termination() -> Generator[None, None, None]:
         return
     previous: dict[int, Any] = {}
     pending: list[int] = []
-    body_failed = False
+    termination_in_progress = False
 
     def defer(signum: int, _frame: object) -> None:
         pending.append(signum)
@@ -519,15 +519,17 @@ def _defer_termination() -> Generator[None, None, None]:
             previous[signum] = signal.signal(signum, defer)
         try:
             yield
-        except BaseException:
-            body_failed = True
+        except BaseException as error:
+            termination_in_progress = isinstance(
+                error, (SystemExit, KeyboardInterrupt)
+            )
             raise
     finally:
         for signum, handler in previous.items():
             signal.signal(signum, handler)
-        # Keep the original failure (including the first termination signal)
-        # when cleanup itself was interrupted by another signal.
-        if pending and not body_failed:
+        # A failed launch must not swallow a signal. Preserve an existing
+        # interruption when another signal arrives during its cleanup.
+        if pending and not termination_in_progress:
             raise SystemExit(128 + pending[0])
 
 

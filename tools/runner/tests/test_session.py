@@ -68,6 +68,22 @@ def test_a_command_that_does_not_exist(tmp_path: Path) -> None:
     assert "definitely-not-a-command --flag" in completed.stderr
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_signal_during_failed_launch_is_not_dropped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def failed_launch(*args: Any, **kwargs: Any) -> None:
+        os.kill(os.getpid(), signal_module.SIGTERM)
+        raise FileNotFoundError("scenario")
+
+    monkeypatch.setattr(subprocess, "Popen", failed_launch)
+
+    with pytest.raises(SystemExit) as error:
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert error.value.code == 128 + signal_module.SIGTERM
+
+
 def test_a_command_that_overruns(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
