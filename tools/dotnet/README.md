@@ -45,7 +45,7 @@ than a shutdown route, because a route would show up as coverage the scenario
 never meant to record.
 
 [`OpenTelemetry.Conformance.Scenario.Sdk`](OpenTelemetry.Conformance.Scenario.Sdk)
-is the other half: the tracer and meter providers, the OTLP exporter, and the
+is the other half: the tracer, logger, and meter providers, the OTLP exporter, and the
 flush, for scenarios measuring explicit library instrumentation. A scenario
 passes only the instrumentation under test:
 
@@ -58,6 +58,8 @@ using var sdk = ScenarioSdk.Initialize(
 The flush is explicit rather than left to the providers' own shutdown, because
 the runner sets an effectively infinite metric export interval so that a run
 reads one deliberate export rather than whatever the interval happened to catch.
+Traces and logs flush before metrics, all within one 15-second budget. A
+timeout or failed flush fails the scenario before normal SDK disposal returns.
 
 Both projects share the `OpenTelemetry.Conformance.Scenario` namespace: a
 namespace ending in `Sdk` would shadow `OpenTelemetry.Sdk` in every file that

@@ -390,11 +390,22 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'ChatCompletion'",
+      "message": "chat span name should be 'chat gpt-4o-audio-preview', got 'ChatCompletion'",
       "signal_type": "span",
       "signal_name": "ChatCompletion",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-audio-preview",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'ChatCompletion'",
+      "signal_type": "span",
+      "signal_name": "ChatCompletion",
+      "context": {
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -536,11 +547,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "embeddings span name should be 'embeddings' or 'embeddings <value of gen_ai.request.model>', got 'CreateEmbeddings'",
+      "message": "embeddings span name should be 'embeddings text-embedding-3-small', got 'CreateEmbeddings'",
       "signal_type": "span",
       "signal_name": "CreateEmbeddings",
       "context": {
-        "expected_form": "embeddings or 'embeddings <gen_ai.request.model>'",
+        "expected_form": "embeddings text-embedding-3-small",
         "keyed_attr": "gen_ai.request.model",
         "operation": "embeddings"
       }

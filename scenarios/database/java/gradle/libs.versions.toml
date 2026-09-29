@@ -7,7 +7,7 @@ elasticsearch-clients = "7.17.29"
 jackson = "2.20.1"
 log4j = "2.25.3"
 mariadb = "3.5.10"
-opentelemetry = "1.65.0"
+opentelemetry = "1.66.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
