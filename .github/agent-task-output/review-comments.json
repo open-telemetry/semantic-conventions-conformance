@@ -1,0 +1,9 @@
+{
+  "outcome": "complete",
+  "comments": [
+    {
+      "candidate_id": "candidate-001",
+      "body": "[P2] Let explicit absence expectations override the field default\n\nFor a matched span declaring `schema_url: {present: false}`, an absent or empty URL satisfies the explicit expectation but this unconditional scope rule still emits `instrumentation_scope_schema_url_missing`; supplying a URL instead produces `unexpected_instrumentation_scope_schema_url`. Consequently the documented absence expectation cannot produce a clean result without separately suppressing the default finding. The same conflict affects `name`. Apply the default only where the matching expectation does not override that field, including the missing-scope path, and add a regression with an actually absent URL—the current integration test only checks rejection of a present URL."
+    }
+  ]
+}
