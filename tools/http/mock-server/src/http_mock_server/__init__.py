@@ -36,7 +36,15 @@ class _Handler(BaseHTTPRequestHandler):
     def _handle(self, method: str) -> None:
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length).decode("utf-8") if length else None
-        status, payload = respond(method, urlparse(self.path).path, body)
+        # Strict about the request body, which a server scenario's own answers
+        # are not. Answering 400 identifies a client that omitted or changed the
+        # contract's body before response validation sees only the echoed value.
+        status, payload = respond(
+            method,
+            urlparse(self.path).path,
+            body,
+            check_request_body=True,
+        )
         encoded = payload.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", CONTENT_TYPE)
