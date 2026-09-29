@@ -27,3 +27,5 @@ artifacts/
 
 # Composer: installed dependencies. Every package's lockfile is committed.
 vendor/
+
+.DS_Store

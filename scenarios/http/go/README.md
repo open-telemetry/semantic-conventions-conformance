@@ -5,6 +5,8 @@
 <library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
+internal/httpserver/                the listener, the shutdown, the answers
+internal/httpservertest/            the contract assertions the tests share
 ```
 
 This directory is the Go build root for the HTTP domain. It is a single module,
@@ -18,11 +20,15 @@ All Go modules in this repository require Go 1.25. Their current OpenTelemetry
 dependencies require the same version, and CI selects the toolchain from this
 directory's `go.mod`.
 
-`net-http/scenarios/` is the workload, and it imports no OpenTelemetry at all.
-The per-instrumentation `main` packages under `net-http/otelhttp/` are what
-attach `otelhttp` and start the SDK. The difference between two
-instrumentations of one library should be visible as the code that differs, and
-nothing else.
+Each `<library>/scenarios/` package is the workload, and it imports no
+OpenTelemetry. What every workload shares is in
+[`internal/httpserver`](internal/httpserver): the listener, the shutdown, and
+the answer each route writes. Their tests share
+[`internal/httpservertest`](internal/httpservertest), which asserts that a
+handler answers every exchange in the contract. The per-instrumentation `main`
+packages attach `otelhttp`, `otelecho`, `otelgin`, `otelmux`, or `otelrestful`
+and start the SDK. The difference between instrumentations should be visible as
+the code that differs, and nothing else.
 
 Go's `main` package is a directory, so a launch package and its
 `conformance.yaml` land in the same directory naturally, and `<side>` is that
@@ -30,11 +36,12 @@ directory rather than a name inside a build file.
 
 ## Routes
 
-`net/http`'s `ServeMux` takes the method and the path template in the pattern
-itself, so the contract's routes are declared in net/http's own model:
+Every workload declares the contract's routes in its framework's native model.
+For example, `net/http`'s `ServeMux` takes the method and path template in the
+pattern itself:
 
 ```go
-mux.Handle("GET /users/{userId}", answer())
+mux.Handle("GET /users/{userId}", http.HandlerFunc(httpserver.Answer))
 ```
 
 Nothing is attached per route. `ServeMux` records the pattern it matched on the
@@ -51,6 +58,10 @@ pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/go
 otel-conformance scenarios/http/go/net-http/otelhttp/client
 otel-conformance scenarios/http/go/net-http/otelhttp/server
+otel-conformance scenarios/http/go/echo/otelecho/server
+otel-conformance scenarios/http/go/gin/otelgin/server
+otel-conformance scenarios/http/go/gorilla-mux/otelmux/server
+otel-conformance scenarios/http/go/go-restful/otelrestful/server
 ```
 
 Every Go package is built and started the same way, so

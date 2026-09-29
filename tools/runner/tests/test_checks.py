@@ -297,10 +297,8 @@ def test_allowed_metrics_may_be_present_or_absent() -> None:
 def test_allowed_metrics_do_not_weaken_required_or_undeclared_checks() -> None:
     report = Report(
         statistics={
-            "seen_non_registry_metrics": {
-                "queueSize": 1,
-                "unexpected": 1,
-            },
+            "seen_registry_metrics": {"unexpected": 1},
+            "seen_non_registry_metrics": {"queueSize": 1},
         }
     )
 
@@ -320,6 +318,22 @@ def test_zero_count_signals_are_not_seen() -> None:
     report = Report(statistics={"seen_registry_metrics": {"never.emitted": 0}})
 
     assert check(scenario(metrics=()), report) == []
+
+
+def test_filtered_non_registry_metric_is_not_an_undeclared_metric() -> None:
+    report = Report(
+        statistics={"seen_non_registry_metrics": {"sdk.self.metric": 1}}
+    )
+
+    assert check(scenario(metrics=()), report) == []
+
+
+def test_declared_non_registry_metric_is_still_expected() -> None:
+    report = Report(
+        statistics={"seen_non_registry_metrics": {"custom.metric": 1}}
+    )
+
+    assert check(scenario(metrics=("custom.metric",)), report) == []
 
 
 def test_undeclared_violation_fails() -> None:

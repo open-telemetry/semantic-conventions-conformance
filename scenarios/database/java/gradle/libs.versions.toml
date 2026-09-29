@@ -6,7 +6,7 @@ cassandra-driver3 = "3.11.5"
 cassandra-driver43 = "4.3.1"
 cassandra-driver44 = "4.19.3"
 mariadb = "3.5.10"
-opentelemetry = "1.65.0"
+opentelemetry = "1.66.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
