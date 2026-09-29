@@ -84,6 +84,39 @@ def test_signal_during_failed_launch_is_not_dropped(
     assert error.value.code == 128 + signal_module.SIGTERM
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_sigint_during_launch_stops_the_new_process_group(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_popen = subprocess.Popen
+    launched: list[subprocess.Popen[str]] = []
+
+    def interrupt_after_launch(
+        *args: Any, **kwargs: Any
+    ) -> subprocess.Popen[str]:
+        process = original_popen(*args, **kwargs)
+        launched.append(process)
+        os.kill(os.getpid(), signal_module.SIGINT)
+        return process
+
+    monkeypatch.setattr(subprocess, "Popen", interrupt_after_launch)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            _run_command(
+                (sys.executable, "-c", "import time; time.sleep(30)"),
+                cwd=tmp_path,
+                env={},
+            )
+
+        assert len(launched) == 1
+        assert launched[0].poll() is not None
+    finally:
+        for process in launched:
+            if process.poll() is None:
+                os.killpg(process.pid, signal_module.SIGKILL)
+                process.wait(timeout=5)
+
+
 def test_a_command_that_overruns(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

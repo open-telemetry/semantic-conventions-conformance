@@ -513,7 +513,7 @@ def _defer_termination() -> Generator[None, None, None]:
         pending.append(signum)
 
     try:
-        for signum in (signal.SIGTERM, signal.SIGHUP):
+        for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
             if signal.getsignal(signum) is signal.SIG_IGN:
                 continue
             previous[signum] = signal.signal(signum, defer)
@@ -530,6 +530,8 @@ def _defer_termination() -> Generator[None, None, None]:
         # A failed launch must not swallow a signal. Preserve an existing
         # interruption when another signal arrives during its cleanup.
         if pending and not termination_in_progress:
+            if pending[0] == signal.SIGINT:
+                raise KeyboardInterrupt
             raise SystemExit(128 + pending[0])
 
 
