@@ -20,6 +20,7 @@ from opentelemetry.conformance import (
     require_pin,
 )
 
+from ._cassandra import Cassandra
 from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
 from ._mariadb import MariaDB
@@ -35,6 +36,7 @@ DOMAIN = Domain(
 )
 
 _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
+    "cassandra": Cassandra,
     "mariadb": MariaDB,
     "postgresql": Postgres,
 }
