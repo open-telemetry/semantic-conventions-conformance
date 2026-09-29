@@ -11,13 +11,18 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.function.Supplier;
 
 /** Runs the shared request contract through the JDK's {@link HttpClient}. */
 public final class JavaHttpClientClientScenario {
   private JavaHttpClientClientScenario() {}
 
   public static void run() throws Exception {
-    HttpClient client = HttpClient.newBuilder().build();
+    run(() -> HttpClient.newBuilder().build());
+  }
+
+  public static void run(Supplier<HttpClient> clientFactory) throws Exception {
+    HttpClient client = clientFactory.get();
 
     HttpClientWorkload.drive(
         ScenarioEnvironment.require("MOCK_SERVER_URL"),

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-conformance-ruby"
+version = "0.1.0.dev0"
+description = "Installs and runs Ruby conformance scenarios with their locked bundle."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+otel-conformance-ruby = "otel_conformance_ruby:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_conformance_ruby"]

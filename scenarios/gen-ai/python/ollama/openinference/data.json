@@ -292,11 +292,22 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'Chat'",
+      "message": "chat span name should be 'chat llama3.2', got 'Chat'",
       "signal_type": "span",
       "signal_name": "Chat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat llama3.2",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat llama3.2-vision', got 'Chat'",
+      "signal_type": "span",
+      "signal_name": "Chat",
+      "context": {
+        "expected_form": "chat llama3.2-vision",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }

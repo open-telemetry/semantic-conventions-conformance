@@ -1,0 +1,31 @@
+{
+  "name": "open-telemetry-conformance/http-php-guzzle",
+  "description": "Guzzle HTTP client conformance measured by OpenTelemetry auto-instrumentation.",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.2",
+    "guzzlehttp/guzzle": "^7.9",
+    "open-telemetry/exporter-otlp": "^1.4",
+    "open-telemetry/opentelemetry-auto-guzzle": "^1.4",
+    "open-telemetry/sdk": "^1.15",
+    "open-telemetry/transport-grpc": "^1.2",
+    "open-telemetry-conformance/http-test-client": "dev-main",
+    "open-telemetry-conformance/scenario": "dev-main"
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../../../../../tools/http/test-client/php",
+      "options": {
+        "symlink": false
+      }
+    },
+    {
+      "type": "path",
+      "url": "../../../../../tools/php/scenario",
+      "options": {
+        "symlink": false
+      }
+    }
+  ]
+}
