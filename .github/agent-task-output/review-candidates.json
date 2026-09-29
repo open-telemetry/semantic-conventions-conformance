@@ -1,0 +1,12 @@
+{
+  "outcome": "complete",
+  "candidates": [
+    {
+      "path": "tools/runner/src/opentelemetry/conformance/policies/instrumentation_scope_validation.rego.template",
+      "line": 13,
+      "side": "RIGHT",
+      "body": "[P1] Let an explicit absence override the global default\n\nA matched expectation such as `schema_url: {present: false}` can never pass: when the URL is absent this unconditional global rule emits `instrumentation_scope_schema_url_missing`, while when it is present the matched-span rule emits `unexpected_instrumentation_scope_schema_url`. Apply the global field default only when no matching signal expectation overrides that field (including the wholly absent-scope path), and add a regression with an actually absent schema URL.",
+      "evidence": "The renderer always sets global `name` and `schema_url` to `{present: true}` (`_scope_policy.py` lines 29-32), and this rule evaluates those defaults for every standalone scope without consulting `_otel_scope_expectation.spans`. The matched-span rule at lines 25-32 separately evaluates `{present: false}`. The README at lines 295-298 documents `{present: false}` for name/schema_url and says defaults apply to omitted fields, but the integration test at lines 158-160 only tests `{present: false}` against a present URL, so it does not cover the impossible-to-satisfy absent case."
+    }
+  ]
+}
