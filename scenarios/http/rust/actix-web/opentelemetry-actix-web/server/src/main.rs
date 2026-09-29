@@ -29,10 +29,11 @@ async fn run() -> Result<(), BoxError> {
     .bind(("127.0.0.1", port))?
     .run();
     let handle = server.handle();
-    actix_web::rt::spawn(server);
+    let server_task = actix_web::rt::spawn(server);
 
     let eof = actix_web::rt::task::spawn_blocking(otel_conformance_scenario::wait_for_eof).await;
     handle.stop(true).await;
+    server_task.await??;
     eof??;
     Ok(())
 }
