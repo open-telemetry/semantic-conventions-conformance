@@ -18,6 +18,8 @@ LOCKFILE = "Gemfile.lock"
 BUNDLE_DIRECTORY = Path("vendor") / "bundle"
 RUN = "run"
 
+RELOCK = "relock"
+
 
 class LayoutError(RuntimeError):
     """The Ruby package or requested entry point could not be found."""
@@ -107,6 +109,74 @@ def bundle_environment(
     return environment
 
 
+def relock_environment(
+    project: Path, environ: Mapping[str, str] | None = None
+) -> dict[str, str]:
+    """The environment for rewriting ``project``'s lock: never frozen."""
+    environment = dict(os.environ if environ is None else environ)
+    for variable in ("BUNDLE_FROZEN", "BUNDLE_DEPLOYMENT"):
+        environment.pop(variable, None)
+    environment.update(
+        {
+            "BUNDLE_GEMFILE": str(project / GEMFILE),
+            "BUNDLE_IGNORE_CONFIG": "true",
+        }
+    )
+    return environment
+
+
+def repository_root(start: Path | None = None) -> Path:
+    """The top of the git repository ``start`` is in."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],  # noqa: S607
+        cwd=start or Path.cwd(),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return Path(result.stdout.strip())
+
+
+def lock_projects(root: Path) -> list[Path]:
+    """Every directory under scenarios/ or tools/ with a tracked lock."""
+    result = subprocess.run(
+        [  # noqa: S607
+            "git",
+            "ls-files",
+            "-z",
+            "--",
+            f":(glob)scenarios/**/{LOCKFILE}",
+            f":(glob)tools/**/{LOCKFILE}",
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    listed = (path for path in result.stdout.split("\0") if path)
+    return sorted({(root / path).parent for path in listed})
+
+
+def relock(root: Path | None = None) -> int:
+    """``bundle lock`` every package, stopping at the first that fails.
+
+    Without ``--update``: what already resolves keeps its version.
+    """
+    root = root or repository_root()
+    for project in lock_projects(root):
+        name = project.relative_to(root).as_posix()
+        print(f"relocking {name}", flush=True)
+        status = subprocess.call(  # noqa: S603
+            bundle_command("lock"),
+            cwd=project,
+            env=relock_environment(project),
+        )
+        if status != 0:
+            print(f"relocking {name} failed", file=sys.stderr)
+            return status
+    return 0
+
+
 def _entry_path(word: str) -> Path:
     entry = Path(word)
     if not entry.is_absolute():
@@ -135,8 +205,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         nargs=argparse.REMAINDER,
         help="arguments passed to the Ruby program, verbatim",
     )
+    subcommands.add_parser(
+        RELOCK, help="regenerate every committed Gemfile.lock in place"
+    )
 
     arguments = parser.parse_args(argv)
+    if arguments.command == RELOCK:
+        try:
+            return relock()
+        except subprocess.CalledProcessError:
+            print(
+                "`relock` runs inside the conformance git repository",
+                file=sys.stderr,
+            )
+            return 1
+        except (ToolError, FileNotFoundError) as error:
+            print(error, file=sys.stderr)
+            return 1
     try:
         root = package_root()
         environment = bundle_environment(root)

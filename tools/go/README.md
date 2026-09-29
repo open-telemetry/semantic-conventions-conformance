@@ -69,3 +69,15 @@ which is what the launcher is for: Windows resolves a relative command against
 the calling process's directory rather than the working directory it is given,
 and needs an `.exe` suffix that no other platform wants. A scenario file naming
 the binary itself would only run on the platform it was written on.
+
+`relock` is for maintainers, not scenarios: from anywhere in the repository, it
+runs `go mod tidy` in every committed Go module under `scenarios/` and `tools/`.
+The modules under `tools/` go first, because a domain's module pulls them in
+through `replace` and tidies against their requirements. Bumping a `tools/`
+module is what leaves a domain's `go.mod` and `go.sum` stale. CI runs `relock`
+on Renovate PRs and commits the result. Run it by hand when a build complains
+about a missing `go.sum` entry:
+
+```sh
+otel-conformance-go relock
+```
