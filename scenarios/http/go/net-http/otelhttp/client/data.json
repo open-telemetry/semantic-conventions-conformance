@@ -1,0 +1,73 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.client.request.body.size": [
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.name",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.client.request.duration": [
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.name",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'HTTP GET' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
+      "signal_type": "span",
+      "signal_name": "HTTP GET",
+      "context": {
+        "expected_method": "GET",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "http_span_name_format",
+      "message": "Span 'HTTP POST' should use HTTP method name 'POST', either alone or followed by a non-empty target.",
+      "signal_type": "span",
+      "signal_name": "HTTP POST",
+      "context": {
+        "expected_method": "POST",
+        "kind": "client"
+      }
+    }
+  ]
+}

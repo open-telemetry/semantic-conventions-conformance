@@ -6,7 +6,7 @@
 /**
  * The HTTP conformance exchanges, as Node reads them.
  *
- * Read from `tools/http/test-client/contract.json` — the one place the traffic
+ * Read from `tools/http/test-client/contract.yaml` — the one place the traffic
  * is written down, so a Node scenario and a scenario in any other language are
  * measured against the same requests.
  *
@@ -16,8 +16,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-
-const { ContractError } = require("./contract-error");
+const YAML = require("yaml");
 
 /** Every route answers JSON, so a scenario has one content type rather than a rule per route. */
 const CONTENT_TYPE = "application/json";
@@ -27,9 +26,10 @@ const CONTENT_TYPE = "application/json";
  * same client whichever language sent the requests.
  */
 const USER_AGENT = "otel-http-conformance/1";
+const SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX";
 
 /**
- * Where `contract.json` is: beside this package in a checkout, or — once npm
+ * Where `contract.yaml` is: beside this package in a checkout, or — once npm
  * has installed this package as a copy in a dependency tree — at its place in
  * the repository above that tree.
  *
@@ -38,7 +38,7 @@ const USER_AGENT = "otel-http-conformance/1";
  * the source tree first. One lookup that walks up is less machinery than that.
  */
 function contractPath() {
-  const beside = path.join(__dirname, "..", "..", "contract.json");
+  const beside = path.join(__dirname, "..", "..", "contract.yaml");
   if (fs.existsSync(beside)) {
     return beside;
   }
@@ -49,14 +49,14 @@ function contractPath() {
       "tools",
       "http",
       "test-client",
-      "contract.json",
+      "contract.yaml",
     );
     if (fs.existsSync(candidate)) {
       return candidate;
     }
     const parent = path.dirname(directory);
     if (parent === directory) {
-      throw new Error(`no contract.json at or above ${__dirname}`);
+      throw new Error(`no contract.yaml at or above ${__dirname}`);
     }
     directory = parent;
   }
@@ -64,22 +64,28 @@ function contractPath() {
 
 const CONTRACT = contractPath();
 
-const EXCHANGES = Object.freeze(
-  JSON.parse(fs.readFileSync(CONTRACT, "utf8")).requests.map((entry) =>
-    Object.freeze({
-      method: entry.method,
-      path: entry.path,
-      // null rather than absent, so a sender has one shape to check.
-      body: entry.body ?? null,
-      status: entry.status,
-      responseBody: entry.responseBody,
-      readiness: entry.readiness ?? false,
-      // What the request is in the sequence for. Carried as data rather than
-      // as a comment so every language reading the contract has it too.
-      description: entry.description,
-    }),
-  ),
+const DOCUMENT = YAML.parse(fs.readFileSync(CONTRACT, "utf8"));
+
+function exchange(entry, readiness) {
+  return Object.freeze({
+    method: entry.action.request.method,
+    path: entry.action.request.path,
+    // null rather than absent, so a sender has one shape to check.
+    body: entry.action.request.body ?? null,
+    status: entry.action.response.status,
+    responseBody: entry.action.response.body,
+    readiness,
+    description: entry.description,
+  });
+}
+
+const REQUESTS = Object.freeze(
+  DOCUMENT.scenarios.map((entry) => exchange(entry, false)),
 );
+
+const READINESS = exchange(DOCUMENT.readiness, true);
+
+const EXCHANGES = Object.freeze([READINESS, ...REQUESTS]);
 
 /** Every exchange the contract describes, including readiness, in order. */
 function exchanges() {
@@ -88,7 +94,30 @@ function exchanges() {
 
 /** The measured requests to send, in order. */
 function requests() {
-  return EXCHANGES.filter((exchange) => !exchange.readiness);
+  return REQUESTS;
+}
+
+/** The one request selected by the runner's zero-based contract index. */
+function scenarioRequest(index = process.env[SCENARIO_INDEX_VARIABLE]) {
+  if (index === undefined) {
+    throw new Error(`${SCENARIO_INDEX_VARIABLE} is not set`);
+  }
+  if (typeof index === "number") {
+    index = String(index);
+  }
+  if (typeof index !== "string" || !/^(0|[1-9]\d*)$/.test(index)) {
+    throw new Error(
+      `${SCENARIO_INDEX_VARIABLE} must be a zero-based decimal index, got ${JSON.stringify(index)}`,
+    );
+  }
+  const exchange = REQUESTS[Number(index)];
+  if (exchange === undefined) {
+    throw new Error(
+      `${SCENARIO_INDEX_VARIABLE}=${index} selects no contract entry; ` +
+        `expected 0..${REQUESTS.length - 1}`,
+    );
+  }
+  return exchange;
 }
 
 function withoutQuery(target) {
@@ -116,27 +145,14 @@ function renderResponseBody(exchange, requestBody) {
   );
 }
 
-/**
- * Parses `json`, so two bodies compare by structure rather than by spacing.
- *
- * A body that is not JSON is a contract failure rather than a crash: it is the
- * server answering something the contract does not describe.
- */
-function parse(json) {
-  try {
-    return JSON.parse(json);
-  } catch (error) {
-    throw new ContractError(`not JSON: ${json}`, { cause: error });
-  }
-}
-
 module.exports = {
   CONTENT_TYPE,
   CONTRACT,
+  SCENARIO_INDEX_VARIABLE,
   USER_AGENT,
   exchangeFor,
   exchanges,
-  parse,
   renderResponseBody,
   requests,
+  scenarioRequest,
 };

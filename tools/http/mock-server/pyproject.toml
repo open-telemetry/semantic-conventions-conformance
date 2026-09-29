@@ -7,9 +7,8 @@ name = "otel-http-mock-server"
 version = "0.1.0.dev0"
 description = "Serves the HTTP conformance route contract, for client-side scenarios to call."
 requires-python = ">=3.10"
-# The contract only, which is standard library itself: this process must stay
-# uninstrumentable, and a dependency of its own could be picked up by
-# zero-code instrumentation.
+# The contract helper and its YAML parser only. This process must stay
+# uninstrumented so client scenarios cannot report spans from the mock server.
 dependencies = ["otel-http-test-client"]
 
 [project.scripts]

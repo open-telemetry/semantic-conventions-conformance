@@ -36,6 +36,7 @@ from ._env import (
     build_env,
     timeout_seconds,
 )
+from ._otlp_http import OtlpHttpBridge
 from ._registry import check_weaver
 from ._server import Server
 from ._spec import (
@@ -60,6 +61,11 @@ _WEAVER_INACTIVITY_TIMEOUT = (
 )
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
+_OTLP_SIGNAL_ENV = tuple(
+    f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
+    for signal in ("TRACES", "METRICS", "LOGS")
+    for setting in ("ENDPOINT", "PROTOCOL")
+)
 
 # Both relative to the conformance directory. The raw reports are throwaway;
 # the data file is meant to be committed and diffed.
@@ -199,8 +205,6 @@ class ConformanceSession:
                 f"{name!r} is not declared in {self._spec.directory}; "
                 f"declared: {sorted(self._spec.scenarios)}"
             )
-        self._ran.add(name)
-
         from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
@@ -231,25 +235,31 @@ class ConformanceSession:
             _quiet_connection_retries(),
             _start_weaver(start_weaver) as weaver,
         ):
-            completed = self._execute(scenario, weaver.otlp_endpoint)
+            if self._spec.otlp_protocol == "http/protobuf":
+                with OtlpHttpBridge(weaver.otlp_endpoint) as bridge:
+                    completed = self._execute(scenario, bridge.url)
+            else:
+                completed = self._execute(scenario, weaver.otlp_endpoint)
             report = weaver.end(
                 timeout=int(timeout_seconds(*_WEAVER_STOP_TIMEOUT))
             )
 
         # Before the checks, so a failing run still leaves a report to read.
         self._dump(name, report)
+        self._ran.add(name)
 
         failures: list[str] = []
         if completed.returncode != 0:
             failures.append(
-                f"{name}: scenario exited with {completed.returncode}\n"
+                f"{scenario.display_name}: scenario exited with "
+                f"{completed.returncode}\n"
                 f"--- stdout ---\n{completed.stdout}\n"
                 f"--- stderr ---\n{completed.stderr}"
             )
         findings = check(scenario, report)
         failures += findings.failures
         return ScenarioReport(
-            name=name,
+            name=scenario.display_name,
             failures=failures,
             violations=findings.violations,
             report=report,
@@ -276,19 +286,20 @@ class ConformanceSession:
     def _execute(
         self, scenario: ScenarioSpec, otlp_endpoint: str
     ) -> subprocess.CompletedProcess[str]:
+        injected = {
+            "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
+            "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
+            "OTEL_METRIC_EXPORT_INTERVAL": str(METRIC_EXPORT_INTERVAL_MILLIS),
+        }
+        if scenario.index is not None:
+            injected["OTEL_CONFORMANCE_SCENARIO_INDEX"] = str(scenario.index)
+        env = self._env(scenario.env, injected)
+        for variable in _OTLP_SIGNAL_ENV:
+            env.pop(variable, None)
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
-            env=self._env(
-                scenario.env,
-                {
-                    "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-                    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
-                    "OTEL_METRIC_EXPORT_INTERVAL": str(
-                        METRIC_EXPORT_INTERVAL_MILLIS
-                    ),
-                },
-            ),
+            env=env,
         )
 
     def _env(
@@ -345,6 +356,10 @@ class ConformanceSession:
         """
         if self._ran != set(self._spec.scenarios):
             return
+        expected_reports = {f"{name}.json" for name in self._spec.scenarios}
+        for report in self._report_dir.glob("*/*.json"):
+            if report.name in expected_reports:
+                report.unlink()
         data = self._build_data(self._report_dir, self._spec)
         self._data_file.parent.mkdir(parents=True, exist_ok=True)
         self._data_file.write_text(json.dumps(data, indent=2) + "\n")
