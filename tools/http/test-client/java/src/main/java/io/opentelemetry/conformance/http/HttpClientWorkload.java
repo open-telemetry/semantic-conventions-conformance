@@ -4,7 +4,6 @@
  */
 package io.opentelemetry.conformance.http;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
 import io.opentelemetry.conformance.http.HttpContract.Response;
 import java.time.Duration;
@@ -16,14 +15,14 @@ import java.time.Duration;
  * the library under test. A server scenario is driven from outside its own process by {@code
  * otel-http-drive} and never sends anything.
  *
- * <p>Every answer is checked against its exchange, so a server answering different traffic from the
- * rest fails the run rather than quietly producing a coverage file that cannot be compared with the
- * others.
+ * <p>The shared telemetry contract checks what this request emits.
  */
 public final class HttpClientWorkload {
 
   /** Maximum time a client scenario waits for one request to finish. */
   public static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
+
+  private static final Duration INSTRUMENTATION_QUIESCENCE = Duration.ofMillis(100);
 
   private HttpClientWorkload() {}
 
@@ -35,57 +34,31 @@ public final class HttpClientWorkload {
   }
 
   /**
-   * Sends {@link HttpContract#requests()} at {@code baseUrl} through {@code sender}.
+   * Sends the runner-selected contract request at {@code baseUrl} through {@code sender}.
    *
    * <p>No health check: the runner starts the mock server a client scenario calls and waits for it
    * to answer before running the scenario at all.
    */
   public static void drive(String baseUrl, Sender sender) throws Exception {
+    drive(baseUrl, sender, HttpContract.scenarioRequest());
+  }
+
+  static void drive(String baseUrl, Sender sender, Exchange exchange) throws Exception {
     if (baseUrl.isBlank()) {
       throw new IllegalArgumentException("base URL must not be blank");
     }
-    for (Exchange exchange : HttpContract.requests()) {
-      Response response =
-          sender.send(exchange.method(), baseUrl + exchange.path(), exchange.body());
-      System.out.printf(
-          "%s %s -> %d %s%n",
-          exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
-      verify(exchange, response);
-    }
-  }
-
-  /** Checks one answer against the exchange that describes it. */
-  public static void verify(Exchange exchange, Response response) {
-    if (response.statusCode() != exchange.status()) {
-      throw new ContractError(
-          exchange.method()
-              + " "
-              + exchange.path()
-              + " answered "
-              + response.statusCode()
-              + ", but the contract's request"
-              + " answers "
-              + exchange.status());
-    }
-
-    // Parsed, not compared as text: whitespace and key order are a language's choice of JSON
-    // writer, and neither is part of the contract.
-    JsonNode expectedBody = HttpContract.parse(exchange.renderResponseBody(exchange.body()));
-    JsonNode actualBody = HttpContract.parse(response.body());
-    if (!expectedBody.equals(actualBody)) {
-      throw new ContractError(
-          exchange.method()
-              + " "
-              + exchange.path()
-              + " answered "
-              + actualBody
-              + ", but the contract's request"
-              + " answers "
-              + expectedBody);
-    }
+    Response response = sender.send(exchange.method(), baseUrl + exchange.path(), exchange.body());
+    System.out.printf(
+        "%s %s -> %d %s%n",
+        exchange.method(), exchange.path(), response.statusCode(), abbreviate(response.body()));
+    // Some asynchronous clients return the body before their instrumentation completion callback.
+    Thread.sleep(INSTRUMENTATION_QUIESCENCE.toMillis());
   }
 
   private static String abbreviate(String value) {
+    if (value == null) {
+      return "null";
+    }
     String singleLine = value.replace('\r', ' ').replace('\n', ' ');
     return singleLine.length() <= 60 ? singleLine : singleLine.substring(0, 60);
   }

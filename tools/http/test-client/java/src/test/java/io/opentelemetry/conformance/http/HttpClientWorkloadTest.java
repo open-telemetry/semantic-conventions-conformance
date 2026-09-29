@@ -4,12 +4,9 @@
  */
 package io.opentelemetry.conformance.http;
 
-import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.opentelemetry.conformance.http.HttpContract.Exchange;
 import io.opentelemetry.conformance.http.HttpContract.Response;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +19,21 @@ class HttpClientWorkloadTest {
   /** A sender backed by the other side of the same contract, which is what a run measures. */
   private static List<String> driveAgainstTheContract() throws Exception {
     List<String> sent = new ArrayList<>();
-    HttpClientWorkload.drive(
-        BASE_URL,
-        (method, url, body) -> {
-          String path = url.substring(BASE_URL.length());
-          sent.add(method + " " + path);
-          return HttpServerWorkload.respond(method, path, body);
-        });
+    for (int index = 0; index < HttpContract.requests().size(); index++) {
+      HttpClientWorkload.drive(
+          BASE_URL,
+          (method, url, body) -> {
+            String path = url.substring(BASE_URL.length());
+            sent.add(method + " " + path);
+            return HttpServerWorkload.respond(method, path, body);
+          },
+          HttpContract.request(index));
+    }
     return sent;
   }
 
   @Test
-  void bothSidesOfTheContractAgree() throws Exception {
+  void sendsEveryContractRequest() throws Exception {
     assertEquals(
         List.of(
             "GET /users/123",
@@ -45,40 +45,23 @@ class HttpClientWorkloadTest {
   }
 
   @Test
-  void aWrongStatusFailsTheRun() {
-    Exchange users = HttpContract.exchange("GET", "/users/123").orElseThrow();
-
-    ContractError failure =
-        assertThrows(
-            ContractError.class,
-            () -> HttpClientWorkload.verify(users, new Response(500, users.responseBody())));
-    assertTrue(requireNonNull(failure.getMessage()).contains("answered 500"));
+  void aResponseOutsideTheContractDoesNotFailTheScenario() throws Exception {
+    HttpClientWorkload.drive(
+        BASE_URL, (method, url, body) -> new Response(599, "not JSON"), HttpContract.request(0));
   }
 
   @Test
-  void whitespaceAndKeyOrderAreTheJsonWritersBusiness() {
-    Exchange users = HttpContract.exchange("GET", "/users/123").orElseThrow();
-
-    HttpClientWorkload.verify(
-        users, new Response(users.status(), "{ \"name\" :\"Alice\",\n  \"id\": 123 }"));
-  }
-
-  @Test
-  void anAnswerThatIsNotJsonSaysSo() {
-    Exchange users = HttpContract.exchange("GET", "/users/123").orElseThrow();
-
-    ContractError failure =
-        assertThrows(
-            ContractError.class,
-            () -> HttpClientWorkload.verify(users, new Response(users.status(), "<html>")));
-
-    assertTrue(requireNonNull(failure.getMessage()).startsWith("not JSON"));
+  void aNullResponseBodyDoesNotFailTheScenario() throws Exception {
+    HttpClientWorkload.drive(
+        BASE_URL, (method, url, body) -> new Response(200, null), HttpContract.request(0));
   }
 
   @Test
   void aBlankBaseUrlIsRefusedBeforeAnythingIsSent() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> HttpClientWorkload.drive("  ", (method, url, body) -> new Response(200, "{}")));
+        () ->
+            HttpClientWorkload.drive(
+                "  ", (method, url, body) -> new Response(200, "{}"), HttpContract.request(0)));
   }
 }

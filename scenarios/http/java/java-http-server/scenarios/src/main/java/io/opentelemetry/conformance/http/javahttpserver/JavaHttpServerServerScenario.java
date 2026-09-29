@@ -4,6 +4,7 @@
  */
 package io.opentelemetry.conformance.http.javahttpserver;
 
+import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import io.opentelemetry.conformance.http.HttpContract;
@@ -15,20 +16,25 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 /** Hosts the shared HTTP exchanges in the JDK's {@link HttpServer} until the driver says stop. */
 public final class JavaHttpServerServerScenario {
   private JavaHttpServerServerScenario() {}
 
   public static void run() throws Exception {
+    run(context -> {});
+  }
+
+  public static void run(Consumer<HttpContext> contextCustomizer) throws Exception {
     InetAddress loopback = InetAddress.getByName("127.0.0.1");
     HttpServer server =
         HttpServer.create(new InetSocketAddress(loopback, HttpServerWorkload.scenarioPort()), 0);
 
-    server.createContext("/health", JavaHttpServerServerScenario::answer);
-    server.createContext("/users/", JavaHttpServerServerScenario::answer);
-    server.createContext("/items", JavaHttpServerServerScenario::answer);
-    server.createContext("/status/", JavaHttpServerServerScenario::answer);
+    createContext(server, "/health", contextCustomizer);
+    createContext(server, "/users/", contextCustomizer);
+    createContext(server, "/items", contextCustomizer);
+    createContext(server, "/status/", contextCustomizer);
 
     server.start();
     try {
@@ -36,6 +42,12 @@ public final class JavaHttpServerServerScenario {
     } finally {
       server.stop(0);
     }
+  }
+
+  private static void createContext(
+      HttpServer server, String path, Consumer<HttpContext> contextCustomizer) {
+    HttpContext context = server.createContext(path, JavaHttpServerServerScenario::answer);
+    contextCustomizer.accept(context);
   }
 
   private static void answer(HttpExchange exchange) throws IOException {
