@@ -7,7 +7,8 @@ Every Go scenario is built and started the same way — compile the package in
 the scenario directory, then execute what came out — so the toolchain lives
 here rather than being restated in each ``conformance.yaml``.
 
-Two subcommands, matching the two phases a package has:
+Three subcommands, matching the two phases a package has, plus lock
+maintenance:
 
 ``build``
     What a package's ``setup:`` runs. Compiles the scenario ahead of the
@@ -22,6 +23,13 @@ Two subcommands, matching the two phases a package has:
     suffix. Naming the binary in a scenario file would make the file
     platform-specific. Everything after ``run`` is the scenario's own, passed
     on verbatim.
+
+``relock``
+    Runs ``go mod tidy`` in every committed Go module under ``scenarios/``
+    and ``tools/``: the ``tools/`` modules first, because the scenario
+    module pulls them in through ``replace`` and tidies against their
+    requirements. What CI runs on a Renovate PR, and what a maintainer runs
+    by hand when a ``go.sum`` is stale.
 """
 
 from __future__ import annotations
@@ -46,6 +54,8 @@ BUILD_DIR = "build"
 BINARY = "scenario"
 
 RUN = "run"
+
+RELOCK = "relock"
 
 
 class LayoutError(RuntimeError):
@@ -87,6 +97,62 @@ def run_command(
     return [str(binary(directory)), *arguments]
 
 
+def repository_root(start: Path | None = None) -> Path:
+    """The top of the git repository ``start`` is in."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],  # noqa: S607
+        cwd=start or Path.cwd(),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return Path(result.stdout.strip())
+
+
+def lock_projects(root: Path) -> list[Path]:
+    """Every tracked Go module under scenarios/ or tools/, tools/ first."""
+    result = subprocess.run(
+        [  # noqa: S607
+            "git",
+            "ls-files",
+            "-z",
+            "--",
+            f":(glob)scenarios/**/{MODULE_MARKER}",
+            f":(glob)tools/**/{MODULE_MARKER}",
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    listed = (path for path in result.stdout.split("\0") if path)
+    modules = {(root / path).parent for path in listed}
+    return sorted(
+        modules,
+        key=lambda module: (
+            module.relative_to(root).parts[0] != "tools",
+            module,
+        ),
+    )
+
+
+def relock_command() -> list[str]:
+    return ["go", "mod", "tidy"]
+
+
+def relock(root: Path | None = None) -> int:
+    """Tidy every module, stopping at the first that fails."""
+    root = root or repository_root()
+    for module in lock_projects(root):
+        name = module.relative_to(root).as_posix()
+        print(f"relocking {name}", flush=True)
+        status = subprocess.call(relock_command(), cwd=module)  # noqa: S603
+        if status != 0:
+            print(f"relocking {name} failed", file=sys.stderr)
+            return status
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="otel-conformance-go",
@@ -104,6 +170,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="run the built scenario; what follows is the scenario's own",
     )
 
+    subcommands.add_parser(
+        RELOCK,
+        help="tidy every committed Go module in the repository",
+    )
+
     # Split off rather than declared as a trailing positional: argparse reads
     # a leading `-` as an option of this program whatever a positional's
     # `nargs` says, so `run --flag` would be refused before the scenario ever
@@ -115,6 +186,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         words, scenario_arguments = words[:1], words[1:]
 
     arguments = parser.parse_args(words)
+    if arguments.command == RELOCK:
+        try:
+            return relock()
+        except subprocess.CalledProcessError:
+            print(
+                "`relock` runs inside the conformance git repository",
+                file=sys.stderr,
+            )
+            return 1
+        except FileNotFoundError as error:
+            print(f"could not start {error.filename}", file=sys.stderr)
+            return 1
     directory = Path.cwd()
     module_root(directory)
 

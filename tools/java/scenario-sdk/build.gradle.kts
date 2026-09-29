@@ -12,6 +12,6 @@ dependencies {
         exclude(group = "io.opentelemetry", module = "opentelemetry-exporter-sender-okhttp")
     }
     runtimeOnly("io.opentelemetry:opentelemetry-exporter-sender-grpc-managed-channel")
-    runtimeOnly("io.grpc:grpc-netty-shaded:1.83.1")
+    runtimeOnly("io.grpc:grpc-netty-shaded:1.84.0")
     implementation(libs.opentelemetry.sdk.extension.autoconfigure)
 }
