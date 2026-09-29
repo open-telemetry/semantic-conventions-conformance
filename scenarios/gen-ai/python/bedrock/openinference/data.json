@@ -47,6 +47,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "bedrock.converse",
+      "context": {
+        "attribute_key": "llm.finish_reason"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "bedrock.converse",
@@ -372,6 +381,15 @@
       "signal_name": "bedrock.converse_stream",
       "context": {
         "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "bedrock.converse_stream",
+      "context": {
+        "attribute_key": "llm.finish_reason"
       }
     },
     {

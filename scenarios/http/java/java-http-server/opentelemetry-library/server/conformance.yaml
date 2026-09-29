@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: java-http-server
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-java-http-server
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare java-http-server:opentelemetry-library
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-java run java-http-server:opentelemetry-library JavaHttpServerLibraryServerScenario

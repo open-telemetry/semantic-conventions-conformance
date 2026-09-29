@@ -11,7 +11,9 @@ import pytest
 
 import otel_conformance_java
 from otel_conformance_java import (
+    AGENT_CONTROL_JAR,
     BUILD_MARKER,
+    SCENARIO_LAUNCHER,
     LayoutError,
     build_root,
     gradle_command,
@@ -72,6 +74,15 @@ class TestRunning:
             f"{root / 'build' / 'scenario-runtime' / RUNTIME / 'agent'}"
         )
         assert any(argument.startswith(agent) for argument in command)
+        extension = (
+            root
+            / "build"
+            / "scenario-runtime"
+            / RUNTIME
+            / "agent"
+            / AGENT_CONTROL_JAR
+        )
+        assert f"-Dotel.javaagent.extensions={extension}" in command
 
     def test_a_nested_project_gets_its_own_runtime(self, root: Path) -> None:
         """Two libraries can both have a project called `javaagent`."""
@@ -107,7 +118,7 @@ class TestRunning:
         command = java_command(root, PROJECT, MAIN, agent=True)
 
         assert "org.gradle.wrapper.GradleWrapperMain" not in command
-        assert command[-1] == MAIN
+        assert command[-2:] == [SCENARIO_LAUNCHER, MAIN]
 
     def test_the_classpath_is_whatever_the_library_resolved(
         self, root: Path
@@ -122,7 +133,7 @@ class TestRunning:
             root, PROJECT, MAIN, agent=False, arguments=["library"]
         )
 
-        assert command[-1] == "library"
+        assert command[-3:] == [SCENARIO_LAUNCHER, MAIN, "library"]
 
     def test_agent_attachment_is_not_an_application_argument(
         self, root: Path, monkeypatch: pytest.MonkeyPatch
@@ -141,4 +152,4 @@ class TestRunning:
         assert any(
             argument.startswith("-javaagent:") for argument in commands[0]
         )
-        assert commands[0][-1] == MAIN
+        assert commands[0][-2:] == [SCENARIO_LAUNCHER, MAIN]

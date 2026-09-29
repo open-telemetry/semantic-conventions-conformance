@@ -7,7 +7,7 @@
   "dependencies": {
     "@otel-conformance/express-scenarios": "*",
     "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
-    "@opentelemetry/instrumentation-express": "0.69.0",
-    "@opentelemetry/instrumentation-http": "0.221.0"
+    "@opentelemetry/instrumentation-express": "0.70.0",
+    "@opentelemetry/instrumentation-http": "0.222.0"
   }
 }

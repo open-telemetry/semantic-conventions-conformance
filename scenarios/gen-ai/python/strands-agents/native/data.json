@@ -19,7 +19,10 @@
       "gen_ai.agent.name",
       "gen_ai.operation.name",
       "gen_ai.request.model",
+      "gen_ai.system_instructions",
       "gen_ai.tool.definitions",
+      "gen_ai.usage.cache_creation.input_tokens",
+      "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
     ]
@@ -446,24 +449,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.usage.cache_read_input_tokens' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "invoke_agent weather_assistant",
-      "context": {
-        "attribute_key": "gen_ai.usage.cache_read_input_tokens"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.usage.cache_write_input_tokens' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "invoke_agent weather_assistant",
-      "context": {
-        "attribute_key": "gen_ai.usage.cache_write_input_tokens"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.usage.completion_tokens' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "invoke_agent weather_assistant",
@@ -487,15 +472,6 @@
       "signal_name": "invoke_agent weather_assistant",
       "context": {
         "attribute_key": "gen_ai.usage.total_tokens"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'system_prompt' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "invoke_agent weather_assistant",
-      "context": {
-        "attribute_key": "system_prompt"
       }
     },
     {
