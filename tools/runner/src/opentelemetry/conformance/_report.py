@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Iterable, Mapping, cast
 
+from ._spans import span_kind
+
 if TYPE_CHECKING:
     from ._spec import PackageSpec, ScenarioSpec
 
@@ -132,8 +134,7 @@ def collect_findings(document: object) -> set[Finding]:
 def finding_list(findings: Iterable[Finding]) -> list[dict[str, object]]:
     """Findings as a coverage file records them, in a stable committed order."""
     return [
-        finding.as_dict()
-        for finding in sorted(findings, key=Finding.sort_key)
+        finding.as_dict() for finding in sorted(findings, key=Finding.sort_key)
     ]
 
 
@@ -147,13 +148,15 @@ def read(
     counted: dict[str, set[str]] = {}
 
     for path in sorted(report_dir.glob("**/*.json")):
+        scenario_spec = spec.scenarios.get(path.stem) if spec else None
+        if spec is not None and scenario_spec is None:
+            continue
         report = cast("object", json.loads(path.read_text(encoding="utf-8")))
         if not isinstance(report, dict):
             continue
         document = cast(_Json, report)
         _merge_counted(counted, _mapping(document.get("statistics")))
         observed.findings |= collect_findings(document)
-        scenario_spec = spec.scenarios.get(path.stem) if spec else None
         for sample in _list(document.get("samples")):
             _read_sample(observed, sample, classify, scenario_spec)
 
@@ -211,17 +214,20 @@ def _read_sample(
                 match = expectation.match
                 if match.type is not None:
                     if match.kind is not None:
-                        m_kind = match.kind.upper().removeprefix("SPAN_KIND_")
-                        s_kind = kind.upper().removeprefix("SPAN_KIND_")
-                        if m_kind != s_kind:
+                        if span_kind(match.kind) != span_kind(kind):
                             continue
-                    if all(attributes.get(attr) == val for attr, val in match.attributes.items()):
+                    if all(
+                        attributes.get(attr) == val
+                        for attr, val in match.attributes.items()
+                    ):
                         span_types = {match.type}
                         break
 
         if span_types is None:
             span_types = classify(
-                str(span.get("name", "")), str(span.get("kind", "")), attributes
+                str(span.get("name", "")),
+                str(span.get("kind", "")),
+                attributes,
             )
 
         for span_type in span_types:

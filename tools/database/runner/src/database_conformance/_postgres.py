@@ -14,7 +14,7 @@ POSTGRES_USER = "conformance"
 POSTGRES_PASSWORD = "conformance"
 POSTGRES_PORT = 5432
 # renovate: datasource=docker depName=postgres versioning=docker
-POSTGRES_IMAGE = "postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af"
+POSTGRES_IMAGE = "postgres:18.6-bookworm@sha256:3725f4e2499eef5134592b3b4ab79a543ed7f8e533b05b5b637af926630f6650"
 
 POSTGRES = BackendSpec(
     name="PostgreSQL",
