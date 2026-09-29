@@ -43,6 +43,8 @@ BUILD_MARKER = "settings.gradle.kts"
 RUNTIME = Path("build") / "scenario-runtime"
 
 AGENT_JAR = "opentelemetry-javaagent.jar"
+AGENT_CONTROL_JAR = "otel-conformance-agent-control.jar"
+SCENARIO_LAUNCHER = "io.opentelemetry.conformance.scenario.ScenarioLauncher"
 
 
 class LayoutError(RuntimeError):
@@ -96,9 +98,19 @@ def java_command(
     if agent:
         agent_jar = runtime / "agent" / AGENT_JAR
         command.append(f"-javaagent:{agent_jar}")
+        control_jar = runtime / "agent" / AGENT_CONTROL_JAR
+        command += [
+            f"-Dotel.javaagent.extensions={control_jar}",
+            "-Dotel.conformance.agent.control.required=true",
+        ]
     # A wildcard entry, expanded by the JVM itself: the set of jars is
     # whatever the library resolved, which is not known here.
-    command += ["-classpath", str(runtime / "lib" / "*"), main_class]
+    command += [
+        "-classpath",
+        str(runtime / "lib" / "*"),
+        SCENARIO_LAUNCHER,
+        main_class,
+    ]
     command += list(arguments)
     return command
 

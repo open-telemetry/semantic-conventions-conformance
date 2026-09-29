@@ -44,6 +44,7 @@ def test_minimal_spec_leaves_every_expectation_unchecked(
 
     assert spec.instrumented_library == "demo"
     assert spec.instrumentation_library == "demo-instrumentation"
+    assert spec.otlp_protocol == "grpc"
     scenario = spec.scenarios["inference"]
     assert scenario.run == ("python", "inference.py")
     assert scenario.spans is None
@@ -155,6 +156,145 @@ scenarios:
     assert scenario.events == ()
 
 
+def test_scenario_list_contract_generates_one_scenario_per_entry(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "client.yaml").write_text(
+        """
+description: Shared HTTP requests.
+owner: http
+scenarios:
+  - description: The same description may repeat.
+    action: {request: {method: GET, path: /one}}
+    expect:
+      spans:
+        - match:
+            attributes: {url.full: "${SERVER}/one"}
+          expect: {count: 1}
+  - description: The same description may repeat.
+    action: {request: {method: GET, path: /two}}
+    expect: {events: []}
+"""
+    )
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: client.yaml
+scenario_run: python client.py
+""",
+        )
+    )
+
+    assert list(spec.scenarios) == ["0000", "0001"]
+    first, second = spec.scenarios.values()
+    assert first.description == second.description
+    assert first.index == 0
+    assert second.index == 1
+    assert first.run == second.run == ("python", "client.py")
+    assert first.spans is not None
+    assert first.spans[0].match.attributes == {"url.full": "${SERVER}/one"}
+    assert second.events == ()
+
+
+@pytest.mark.parametrize(
+    ("contract", "package", "message"),
+    [
+        ("scenarios: []", "scenario_run: run", "declares no scenarios"),
+        ("[]", "scenario_run: run", "expected a mapping"),
+        (
+            "scenarios:\n  - description: test\n    action: {}\n    expect: {}",
+            "scenario_run: run",
+            "non-empty mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}",
+            "scenario_run: run",
+            "expect is required",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
+            "",
+            "scenario_run is required",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
+            "scenario_run: run\nscenarios: {local: {run: local}}",
+            "cannot be combined",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
+            'scenario_run: ""',
+            "non-empty command",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}",
+            "scenario_run: []",
+            "non-empty command",
+        ),
+        (
+            "scenarios: {client: {events: []}}",
+            "scenario_run: run",
+            "requires an indexed contract",
+        ),
+        (
+            "- description: test\n  action: {kind: request}\n  expect: {}",
+            "scenario_run: run",
+            "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {}\n    id: authored",
+            "scenario_run: run",
+            "unknown key",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: {run: local}",
+            "scenario_run: run",
+            "unknown key",
+        ),
+        (
+            "scenarios:\n  - action: {kind: request}\n    expect: {}",
+            "scenario_run: run",
+            "description is required",
+        ),
+        (
+            "scenarios:\n  - description: test\n    expect: {}",
+            "scenario_run: run",
+            "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: request\n    expect: {}",
+            "scenario_run: run",
+            "expected a mapping",
+        ),
+        (
+            "scenarios:\n  - description: test\n    action: {kind: request}\n    expect: []",
+            "scenario_run: run",
+            "expected a mapping",
+        ),
+    ],
+)
+def test_invalid_scenario_list_contract_raises(
+    tmp_path: Path, contract: str, package: str, message: str
+) -> None:
+    (tmp_path / "client.yaml").write_text(contract)
+
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                f"""
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: client.yaml
+{package}
+""",
+            )
+        )
+
+
 def test_local_scenario_replaces_a_contract_expectation(
     tmp_path: Path,
 ) -> None:
@@ -257,6 +397,24 @@ scenarios:
     )
 
     assert spec.scenarios["inference"].run == ("python", "a b.py")
+
+
+def test_package_may_select_otlp_http_protobuf(tmp_path: Path) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+otlp_protocol: http/protobuf
+scenarios:
+  inference:
+    run: python inference.py
+""",
+        )
+    )
+
+    assert spec.otlp_protocol == "http/protobuf"
 
 
 def test_span_expectation(tmp_path: Path) -> None:
@@ -376,6 +534,18 @@ def test_span_keys_survive_separators_in_a_value() -> None:
             "  a:\n    run: x",
             "unknown key",
             id="unknown-server-key",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: http/json\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="unknown-otlp-protocol",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: [grpc]\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="non-string-otlp-protocol",
         ),
     ],
 )
