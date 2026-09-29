@@ -1,0 +1,156 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.peer.address",
+      "network.protocol.version",
+      "server.address",
+      "url.path",
+      "url.query",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.server.active_requests": [
+      "http.request.method",
+      "url.scheme"
+    ],
+    "http.server.request.body.size": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ],
+    "http.server.request.duration": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ],
+    "http.server.response.body.size": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "unit_mismatch",
+      "message": "Unit should be '{request}', but found 'requests'.",
+      "signal_type": "metric",
+      "signal_name": "http.server.active_requests",
+      "context": {
+        "expected": "{request}",
+        "unit": "requests"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tornado.handler' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "attribute_key": "tornado.handler"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /health' uses target '/health' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /health",
+      "context": {
+        "kind": "server",
+        "target": "/health"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tornado.handler' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code}",
+      "context": {
+        "attribute_key": "tornado.handler"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /status/{code}' uses target '/status/{code}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code}",
+      "context": {
+        "kind": "server",
+        "target": "/status/{code}"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tornado.handler' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id}",
+      "context": {
+        "attribute_key": "tornado.handler"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'GET /users/{user_id}' uses target '/users/{user_id}' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id}",
+      "context": {
+        "kind": "server",
+        "target": "/users/{user_id}"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tornado.handler' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "attribute_key": "tornado.handler"
+      }
+    },
+    {
+      "id": "http_route_not_present",
+      "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "kind": "server",
+        "target": "/items"
+      }
+    }
+  ]
+}

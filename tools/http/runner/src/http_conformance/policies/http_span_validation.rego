@@ -8,9 +8,10 @@
 #      below are the registry's `required` levels, plus the subset of
 #      `recommended` that is unconditional.
 #
-#   2. The span name, which isn't an attribute at all. It matters more here
-#      than almost anywhere: a span named after the request *path* rather than
-#      the route template makes every request a new span name.
+#   2. The span name, which isn't an attribute at all. A target in a server
+#      span name is valid when it comes from a low-cardinality route. Without
+#      `http.route`, the policy can report that missing evidence but can't
+#      decide that the target itself is wrong.
 #
 # Span status and `error.type` are checked by the runner's own policies,
 # loaded alongside this file.
@@ -89,27 +90,22 @@ deny contains _http_span_finding(
 # recognise. Its span is named "HTTP" with no method appended.
 _http_other_method_name := "HTTP"
 
-# Server: `{method} {http.route}`, or `{method}` when there is no route —
-# a request that matched no handler has no low-cardinality template to use.
-_http_expected_names(span, "server") := names if {
-	method := _http_attr_value(span, "http.request.method")
-	names := _http_names_with(method, _http_route(span))
-}
-
 # Client: `{method}`, or `{method} {url.template}` when the instrumentation
 # knows the template. Never the URL — that is unbounded cardinality.
-_http_expected_names(span, "client") := names if {
-	method := _http_attr_value(span, "http.request.method")
-	names := _http_names_with(method, _http_template(span))
+_http_client_expected_names(span) := names if {
+	method := _http_expected_method(span)
+	names := _http_names_from(method, _http_template(span))
 }
 
 # `{method}` is the literal "HTTP" for a method the instrumentation doesn't
-# recognise; the `{method} {target}` form still applies on top of it.
-_http_names_with(method, suffixes) := _http_names_from(_http_other_method_name, suffixes) if {
+# recognise.
+_http_expected_method(span) := _http_other_method_name if {
+	method := _http_attr_value(span, "http.request.method")
 	method == "_OTHER"
 }
 
-_http_names_with(method, suffixes) := _http_names_from(method, suffixes) if {
+_http_expected_method(span) := method if {
+	method := _http_attr_value(span, "http.request.method")
 	method != "_OTHER"
 	# concat raises on a non-string, which aborts the whole advisor run rather
 	# than producing one finding. A method holding a non-string is already
@@ -117,15 +113,28 @@ _http_names_with(method, suffixes) := _http_names_from(method, suffixes) if {
 	is_string(method)
 }
 
+_http_name_uses_expected_method(span) if {
+	span.name == _http_expected_method(span)
+}
+
+_http_name_uses_expected_method(span) if {
+	_http_name_target(span)
+}
+
+# The target is everything after the expected method token and one separating
+# space. Whitespace alone is not a target.
+_http_name_target(span) := target if {
+	method := _http_expected_method(span)
+	prefix := concat(" ", [method, ""])
+	startswith(span.name, prefix)
+	target := trim_prefix(span.name, prefix)
+	trim_space(target) != ""
+}
+
 _http_names_from(method, suffixes) := {method} | {
 	concat(" ", [method, suffix]) |
 	some suffix in suffixes
-}
-
-# A set so the rule stays quiet when the attribute is absent or not a string.
-_http_route(span) := {route |
-	route := _http_attr_value(span, "http.route")
-	is_string(route)
+	trim_space(suffix) != ""
 }
 
 _http_template(span) := {template |
@@ -138,23 +147,102 @@ deny contains _http_span_finding(
 	"violation",
 	input.sample.span,
 	{
-		"kind":     kind,
-		"expected": expected_list,
+		"kind":            kind,
+		"expected_method": expected_method,
 	},
 	sprintf(
-		"Span '%v' should be named one of %v; a name built from the request path or URL makes every request a new span name.",
-		[input.sample.span.name, expected_list],
+		"Span '%v' should use HTTP method name '%v', either alone or followed by a non-empty target.",
+		[input.sample.span.name, expected_method],
 	),
 ) if {
 	kind := _http_span_kind(input.sample.span)
-	expected := _http_expected_names(input.sample.span, kind)
+	expected_method := _http_expected_method(input.sample.span)
+	not _http_name_uses_expected_method(input.sample.span)
+}
+
+deny contains _http_span_finding(
+	"http_span_name_format",
+	"violation",
+	input.sample.span,
+	{
+		"kind":           "server",
+		"expected_route": route,
+	},
+	sprintf(
+		"Server span '%v' uses target '%v', but 'http.route' is '%v'; the span target should match the route.",
+		[input.sample.span.name, target, route],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "server"
+	target := _http_name_target(input.sample.span)
+	route := _http_attr_value(input.sample.span, "http.route")
+	is_string(route)
+	target != route
+}
+
+deny contains _http_span_finding(
+	"http_span_name_format",
+	"violation",
+	input.sample.span,
+	{
+		"kind":     "client",
+		"expected": expected_list,
+	},
+	sprintf(
+		"Client span '%v' should be named one of %v; a name built from the request URL makes every request a new span name.",
+		[input.sample.span.name, expected_list],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "client"
+	target := _http_name_target(input.sample.span)
+	expected := _http_client_expected_names(input.sample.span)
 	not expected[input.sample.span.name]
 
 	# Sorted in the body, not inline in the head: a comprehension in the head
-	# can't see a variable the body binds, and rego reports that only when the
-	# rule actually fires — so a misnamed span would abort the whole advisor
-	# run instead of producing this finding.
+	# can't see a variable the body binds.
 	expected_list := sort([name | some name in expected])
+}
+
+# A name of the method alone says no route matched. When `http.route` is
+# there, one did, and the name is meant to carry it. Anchored on the bare
+# expected name rather than on a missing target, so a name the method-token
+# rule already rejects isn't reported twice.
+deny contains _http_span_finding(
+	"http_span_name_format",
+	"violation",
+	input.sample.span,
+	{
+		"kind":           "server",
+		"expected_route": route,
+	},
+	sprintf(
+		"Server span '%v' has no target, but 'http.route' is '%v'; the span should be named '%v %v'.",
+		[input.sample.span.name, route, input.sample.span.name, route],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "server"
+	input.sample.span.name == _http_expected_method(input.sample.span)
+	route := _http_attr_value(input.sample.span, "http.route")
+	is_string(route)
+	trim_space(route) != ""
+}
+
+deny contains _http_span_finding(
+	"http_route_not_present",
+	"violation",
+	input.sample.span,
+	{
+		"kind":   "server",
+		"target": target,
+	},
+	sprintf(
+		"Server span '%v' uses target '%v' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+		[input.sample.span.name, target],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "server"
+	target := _http_name_target(input.sample.span)
+	not _http_has_attr(input.sample.span, "http.route")
 }
 
 # ─── Helpers ────────────────────────────────────────────────────────────────

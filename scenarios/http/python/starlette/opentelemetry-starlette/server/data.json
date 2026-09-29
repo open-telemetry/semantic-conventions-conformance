@@ -1,0 +1,146 @@
+{
+  "spans": {
+    "http.server": [
+      "client.address",
+      "client.port",
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.path",
+      "url.query",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.server.active_requests": [
+      "http.request.method",
+      "url.scheme"
+    ],
+    "http.server.request.body.size": [
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ],
+    "http.server.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ],
+    "http.server.response.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "http.route",
+      "network.protocol.version",
+      "url.scheme"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /health http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /health http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code} http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /status/{code} http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id} http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/{user_id} http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "POST /items http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "POST /items http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    }
+  ]
+}

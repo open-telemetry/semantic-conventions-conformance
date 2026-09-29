@@ -1,0 +1,61 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.client.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    }
+  ]
+}

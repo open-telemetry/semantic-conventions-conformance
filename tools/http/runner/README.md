@@ -31,12 +31,17 @@ records at that level but whose prose makes them conditional
 sent the header), which would blame the instrumentation for the request it was
 given.
 
+The span-name policy checks the HTTP method token separately from its target.
+When a server span name has a target but no `http.route`, it reports
+`http_route_not_present`: without the matched route, the policy can't verify
+that the target has bounded cardinality.
+
 Span status and `error.type` aren't checked here: neither is HTTP-specific, so
 both live in [the runner's own policies](../../runner/README.md#advice-policies).
 
 Client scenarios call [`http-mock-server`](../mock-server), which installs
 with this package. Server scenarios are driven from outside, by
 [`otel-http-drive --serve`](../test-client). Both use the request sequence
-in [`contract.json`](../test-client/contract.json).
+in [`contract.yaml`](../test-client/contract.yaml).
 
 [http]: https://opentelemetry.io/docs/specs/semconv/http/

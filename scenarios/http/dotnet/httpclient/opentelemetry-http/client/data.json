@@ -46,12 +46,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "missing_metric",
-      "message": "Metric does not exist in the registry."
-    }
-  ],
   "entities": {
     "service": {
       "identity": [
@@ -68,5 +62,13 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "http.client.request.time_in_queue"
+    }
+  ]
 }

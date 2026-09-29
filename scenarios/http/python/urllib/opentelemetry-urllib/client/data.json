@@ -1,0 +1,192 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.client.request.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version"
+    ],
+    "http.client.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version"
+    ],
+    "http.client.response.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'server.address' is not present.",
+      "signal_type": "metric",
+      "signal_name": "http.client.request.body.size",
+      "context": {
+        "attribute_key": "server.address"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'server.port' is not present.",
+      "signal_type": "metric",
+      "signal_name": "http.client.request.body.size",
+      "context": {
+        "attribute_key": "server.port"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'server.address' is not present.",
+      "signal_type": "metric",
+      "signal_name": "http.client.request.duration",
+      "context": {
+        "attribute_key": "server.address"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'server.port' is not present.",
+      "signal_type": "metric",
+      "signal_name": "http.client.request.duration",
+      "context": {
+        "attribute_key": "server.port"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'server.address' is not present.",
+      "signal_type": "metric",
+      "signal_name": "http.client.response.body.size",
+      "context": {
+        "attribute_key": "server.address"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'server.port' is not present.",
+      "signal_type": "metric",
+      "signal_name": "http.client.response.body.size",
+      "context": {
+        "attribute_key": "server.port"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'exception.escaped' has type 'string'. Type should be 'boolean'.",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "exception.escaped",
+        "attribute_type": "string",
+        "expected": "boolean"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'exception.escaped' is deprecated; reason = 'obsoleted', note = 'It's no longer recommended to record exceptions that are handled and do not escape the scope of a span.\n'.",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "exception.escaped",
+        "deprecation_note": "It's no longer recommended to record exceptions that are handled and do not escape the scope of a span.\n",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET' is missing required attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'GET' is missing required attribute 'server.port'",
+      "signal_type": "span",
+      "signal_name": "GET",
+      "context": {
+        "attribute_key": "server.port",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'POST' is missing required attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "server.address",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "required_attribute_not_present",
+      "message": "Span 'POST' is missing required attribute 'server.port'",
+      "signal_type": "span",
+      "signal_name": "POST",
+      "context": {
+        "attribute_key": "server.port",
+        "kind": "client"
+      }
+    }
+  ]
+}

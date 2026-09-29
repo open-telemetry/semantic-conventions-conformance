@@ -8,6 +8,8 @@ version = "0.1.0.dev0"
 description = "Runs scenario programs and checks what they emit against semantic conventions, through Weaver live-check."
 requires-python = ">=3.10"
 dependencies = [
+  "grpcio >= 1.66, <2",
+  "opentelemetry-proto >= 1.27, <2",
   # opentelemetry.test.weaver_live_check — imported lazily by the session.
   "opentelemetry-test-utils >= 0.65b0, <1",
   "PyYAML >= 6.0.2",
@@ -17,12 +19,6 @@ dependencies = [
 pytest = [
   "pytest >= 8",
 ]
-# For `otel-conformance-python` only; the runner drives scenarios as subprocesses.
-python = [
-  "opentelemetry-api ~= 1.43",
-  "opentelemetry-sdk ~= 1.43",
-  "opentelemetry-exporter-otlp-proto-grpc ~= 1.43",
-]
 
 # Lets `pytest` collect conformance.yaml files and run their scenarios.
 [project.entry-points.pytest11]
@@ -30,7 +26,6 @@ conformance = "opentelemetry.conformance.pytest_plugin"
 
 [project.scripts]
 otel-conformance = "opentelemetry.conformance._cli:cli"
-otel-conformance-python = "opentelemetry.conformance.python_runner:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/opentelemetry"]

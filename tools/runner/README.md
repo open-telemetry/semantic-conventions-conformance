@@ -5,7 +5,9 @@ Runs scenario programs, collects what they emit through
 against expectations declared in YAML. It carries no semantic conventions of
 its own — you tell it which registry and policies to validate against.
 
-Not on PyPI yet — install it from a checkout: `pip install -e tools/runner[python]`.
+Not on PyPI yet — install it from a checkout: `pip install -e tools/runner`.
+A Python scenario also wants [`tools/python`](../python), the launcher its
+`run` command names.
 
 A *wrapper* supplies those for one set of conventions;
 [`gen-ai/runner`](../gen-ai/runner) is one. A directory names the wrapper it
@@ -82,14 +84,23 @@ it. In Python, `uv run --project .` syncs a `.venv` beside the directory's
 run: uv run --project . opentelemetry-instrument python inference.py
 ```
 
+The runner uses OTLP/gRPC unless the package selects OTLP/HTTP protobuf:
+
+```yaml
+otlp_protocol: http/protobuf
+```
+
+The only accepted values are `grpc` and `http/protobuf`. The runner sets
+`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_PROTOCOL`, and removes
+their traces, metrics, and logs counterparts from the scenario process
+environment. For HTTP, SDK exporters append their standard `/v1/traces`,
+`/v1/metrics`, and `/v1/logs` paths to the local bridge endpoint.
+The bridge is temporary while
+[Weaver does not accept OTLP/HTTP directly](https://github.com/open-telemetry/weaver/issues/1563).
+
 Installing into whatever environment happened to be active instead — the
 runner's own, say — puts every implementation in one environment, which is
 exactly the case above.
-
-If you'd rather set the SDK up in the program itself, this package also ships
-`otel-conformance-python <script>`, which installs the global providers and
-nothing else — no instrumentation is loaded, so the scenario must turn on its
-own.
 
 A directory can also declare one `setup` command, run once before any
 scenario:
@@ -175,6 +186,8 @@ seen, plus what weaver said about them:
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat gpt-4o-mini' … is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
       "context": {"missing_attribute": "server.address", "operation": "chat"}
     }
   ]
@@ -184,13 +197,18 @@ seen, plus what weaver said about them:
 Each span entry pairs a `match` — written the way the scenario declared it —
 with the attributes the spans it selected carried.
 
-`findings` is every violation weaver reported over the run, deduplicated on
-id, message and context. Weaver's lesser advice — `improvement`,
+`findings` is every
+violation weaver reported over it, deduplicated on id, message, context and
+the signal it was reported on. Weaver's lesser advice — `improvement`,
 `information` — is left out: it says what could be better, not what an
-implementation got wrong. One gap reported on each of a
-hundred spans is one entry; how often it was tripped over is not recorded,
-because a coverage file is about what is true of an implementation, not about
-how much traffic a run happened to send.
+implementation got wrong. `signal_type` and `signal_name` say which signal
+weaver was looking at — `span`, `metric` or `log`, an event being a log record
+— including when the advice was about one of its attributes; a field weaver
+reported nothing for is left out, as it is for advice about the resource. The same
+gap on the same signal a hundred times is one entry — how often a run tripped
+over it says more about the traffic than about the implementation — while the
+same gap on two signals is two, because an implementation can fix one and
+leave the other.
 
 Diff it to notice an attribute quietly disappearing. `--data-command` replaces
 it when you want a different shape.
@@ -259,6 +277,59 @@ called two *different* tools, without pinning down which.
 **not checked** — a scenario with no expectations only has to run cleanly. A
 key you write is checked exactly: nothing missing, nothing extra, including
 when empty — `events: []` means "emits no events".
+
+Several implementations can share telemetry expectations while keeping their
+commands and configuration local. A named contract's only top-level key is
+`scenarios`; each scenario may declare `spans`, `metrics` and `events`, but not
+`run` or environment:
+
+```yaml
+scenario_contract: ../../contracts/http-client.yaml
+
+scenarios:
+  client:
+    run: node client.js
+```
+
+The local scenario is merged over the contract by field, so it can replace one
+expectation when an implementation intentionally has a different contract.
+Relative paths start at the directory containing `conformance.yaml`.
+
+A domain contract can instead use a `scenarios` list. Every entry must have
+exactly `description`, a non-empty domain-owned `action` mapping, and a generic
+`expect` mapping. Other contract fields are domain-owned metadata and ignored
+by the generic runner:
+
+```yaml
+description: Shared HTTP client requests.
+protocol: http
+scenarios:
+  - description: Sends one request.
+    action:
+      request: {method: GET, path: /items}
+    expect:
+      spans:
+        - match: {kind: CLIENT}
+          expect: {count: 1, attributes: {url.full: {present: true}}}
+      events: []
+```
+
+The package declares one command template for the list:
+
+```yaml
+scenario_contract: ../../contracts/http-client.yaml
+scenario_run: node client.js
+```
+
+The runner creates one scenario per indexed entry and rejects local `scenarios`
+overrides for this contract form. Each runs under a fresh weaver
+report with `OTEL_CONFORMANCE_SCENARIO_INDEX` set to its zero-based list index.
+The command reads that index to select the same action. Reports use stable
+zero-padded ordinal filenames, while CLI and pytest output prefix `description`
+with its index; repeated descriptions do not merge entries.
+
+`--scenario` takes the zero-padded ordinal, not the displayed label. To run the
+first entry above, pass `--scenario 0000` rather than `[0] Sends one request.`.
 
 `env` configures the scenario process. The real process environment wins over
 it, so exporting a real key and base URL points a scenario at a real provider
@@ -371,6 +442,8 @@ and a directory asks for it by that name:
 
 ```yaml
 runner: genai-conformance
+runner_config:
+  provider: example
 ```
 
 `otel-conformance <dir>` and `pytest <dir>` both resolve it, so several
@@ -378,7 +451,8 @@ conventions domains coexist in one checkout — each directory gets its own
 registry and reduction. A factory is `conformance_session` with defaults
 applied; [`genai_conformance/__init__.py`](../gen-ai/runner/src/genai_conformance/__init__.py)
 is a whole one. A directory naming no runner runs against whatever the command
-line passes.
+line passes. The optional `runner_config` mapping reaches the selected factory
+as `PackageSpec.runner_config`; the factory validates its own keys and values.
 
 Everything a wrapper supplies can also be passed on the command line, which is
 how you try one out before writing it:

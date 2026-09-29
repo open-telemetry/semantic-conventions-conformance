@@ -43,7 +43,7 @@ client.messages.create(
         }
     ],
     max_tokens=100,
-    temperature=0.5,
+    extra_body={"temperature": 0.5},
 )
 
 client.messages.create(
@@ -66,5 +66,5 @@ client.messages.create(
         }
     ],
     max_tokens=100,
-    temperature=0.5,
+    extra_body={"temperature": 0.5},
 )

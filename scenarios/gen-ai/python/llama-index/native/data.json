@@ -1,0 +1,1511 @@
+{
+  "spans": {},
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'AnswerWorkflow.answer' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.answer",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.run",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.run",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.run",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.run",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.run",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.run",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'AnswerWorkflow.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "AnswerWorkflow.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'BaseWorkflowAgent.aggregate_tool_results' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.aggregate_tool_results",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'BaseWorkflowAgent.call_tool' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.call_tool",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'BaseWorkflowAgent.init_run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.init_run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'BaseWorkflowAgent.parse_agent_output' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.parse_agent_output",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'BaseWorkflowAgent.run_agent_step' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.run_agent_step",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'BaseWorkflowAgent.setup_agent' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "BaseWorkflowAgent.setup_agent",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionAgent.run",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionAgent.run",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionAgent.run",
+      "context": {
+        "attribute_key": "output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionAgent.run",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionAgent.run",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionAgent.run",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'FunctionAgent.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "FunctionAgent.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionTool.acall",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionTool.acall",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "FunctionTool.acall",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'FunctionTool.acall' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "FunctionTool.acall",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI._prepare_chat_with_tools",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI._prepare_chat_with_tools",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI._prepare_chat_with_tools",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAI._prepare_chat_with_tools' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAI._prepare_chat_with_tools",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'messages' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "messages"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "model_dict.class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.context_window' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "model_dict.context_window"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.is_chat_model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "model_dict.is_chat_model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.is_function_calling_model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "model_dict.is_function_calling_model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "model_dict.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.num_output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "model_dict.num_output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.system_role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "model_dict.system_role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.additional_kwargs.completion_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.additional_kwargs.completion_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.additional_kwargs.prompt_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.additional_kwargs.prompt_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.additional_kwargs.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.additional_kwargs.total_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.delta' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.delta"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.logprobs' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.logprobs"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.message.blocks' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.message.blocks"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.choices' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.choices"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.created' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.created"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.moderation' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.moderation"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.object' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.service_tier' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.service_tier"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.system_fingerprint' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.system_fingerprint"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.usage.completion_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.usage.completion_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.usage.completion_tokens_details' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.usage.completion_tokens_details"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.usage.prompt_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.usage.prompt_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.usage.prompt_tokens_details' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.usage.prompt_tokens_details"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'response.raw.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "response.raw.usage.total_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAI.achat' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'additional_kwargs.parallel_tool_calls' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "additional_kwargs.parallel_tool_calls"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'additional_kwargs.tool_choice' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "additional_kwargs.tool_choice"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'additional_kwargs.tools' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "additional_kwargs.tools"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'messages' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "messages"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "model_dict.class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.context_window' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "model_dict.context_window"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.is_chat_model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "model_dict.is_chat_model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.is_function_calling_model' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "model_dict.is_function_calling_model"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "model_dict.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.num_output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "model_dict.num_output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.system_role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "model_dict.system_role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.run_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "tags.llamaindex.run_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_event' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_event"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'tags.llamaindex.step.input_summary' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "tags.llamaindex.step.input_summary"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAI.astream_chat' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "status_code": "ok"
+      }
+    }
+  ]
+}

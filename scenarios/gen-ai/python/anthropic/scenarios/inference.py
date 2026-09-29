@@ -21,8 +21,6 @@ Anthropic().messages.create(
     system="You are a helpful assistant.",
     messages=[{"role": "user", "content": "Say this is a test"}],
     max_tokens=100,
-    temperature=0.5,
-    top_p=0.9,
-    top_k=10,
     stop_sequences=["\n\n"],
+    extra_body={"temperature": 0.5, "top_p": 0.9, "top_k": 10},
 )

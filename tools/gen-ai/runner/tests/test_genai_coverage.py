@@ -4,7 +4,7 @@
 """Classifying GenAI spans, and what the resolved coverage model holds.
 
 The model is what weaver resolved out of the pinned registry: every span type,
-metric and event it declares, without provider refinements — what
+metric and event it declares. A provider refinement keeps its own id, so what
 ``openai.inference.client`` adds is not coverage of ``gen_ai.inference.client``.
 How a run is *reduced* against that model belongs to the runner; see
 ``tools/runner/tests/test_semconv.py``.

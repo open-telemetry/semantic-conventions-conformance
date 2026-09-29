@@ -27,29 +27,6 @@
       "url.scheme"
     ]
   },
-  "findings": [
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'express.name' does not exist in the registry.",
-      "context": {
-        "attribute_key": "express.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'express.type' does not exist in the registry.",
-      "context": {
-        "attribute_key": "express.type"
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET /status/:code' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "context": {
-        "status_code": "error"
-      }
-    }
-  ],
   "entities": {
     "process.runtime": {
       "identity": [
@@ -75,5 +52,106 @@
         "telemetry.sdk.version"
       ]
     }
-  }
+  },
+  "findings": [
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET /status/:code' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "GET /status/:code",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "middleware - textParser",
+      "context": {
+        "attribute_key": "express.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "middleware - textParser",
+      "context": {
+        "attribute_key": "express.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /health",
+      "context": {
+        "attribute_key": "express.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /health",
+      "context": {
+        "attribute_key": "express.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /items",
+      "context": {
+        "attribute_key": "express.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /items",
+      "context": {
+        "attribute_key": "express.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /status/:code",
+      "context": {
+        "attribute_key": "express.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /status/:code",
+      "context": {
+        "attribute_key": "express.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /users/:userId",
+      "context": {
+        "attribute_key": "express.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'express.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "request handler - /users/:userId",
+      "context": {
+        "attribute_key": "express.type"
+      }
+    }
+  ]
 }

@@ -4,6 +4,9 @@
     "config:best-practices",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
+  "gitIgnoredAuthors": [
+    "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
+  ],
   "packageRules": [
     {
       "groupName": "all patch versions",
@@ -38,6 +41,12 @@
       "groupName": "javascript-minor"
     },
     {
+      // group all non-major Ruby dependency updates into a single PR
+      "matchManagers": ["bundler"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "ruby-minor"
+    },
+    {
       // group all non-major .NET dependency updates into a single PR
       "matchManagers": ["nuget"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -55,12 +64,42 @@
       "groupName": "python-minor"
     },
     {
+      // group all non-major Go dependency updates into a single PR
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "go-minor"
+    },
+    {
+      // group all non-major PHP dependency updates into a single PR
+      "matchManagers": ["composer"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "php-minor"
+    },
+    {
       // Everything under this Maven group ships only `-alpha` versions, so
       // Renovate's default of skipping unstable versions would never update it.
       "matchPackageNames": [
         "io.opentelemetry.instrumentation:**"
       ],
       "ignoreUnstable": false
+    },
+    {
+      // Akka 2.7 and later use the Business Source License. Keep the actor
+      // and stream dependencies below 2.7 so this repository depends only
+      // on open-source releases.
+      "matchPackageNames": [
+        "com.typesafe.akka:akka-actor{,_*}",
+        "com.typesafe.akka:akka-stream{,_*}"
+      ],
+      "allowedVersions": "<2.7"
+    },
+    {
+      // Akka HTTP 10.3 and later use the Business Source License. Keep Akka
+      // HTTP below 10.3 so this repository depends only on open-source releases.
+      "matchPackageNames": [
+        "com.typesafe.akka:akka-http{,_*}"
+      ],
+      "allowedVersions": "<10.3"
     },
     {
       // These ship only `bN` prereleases and have never published a stable
@@ -75,6 +114,28 @@
         "opentelemetry-util-genai"
       ],
       "ignoreUnstable": false
+    },
+    {
+      // requires-python specifies the supported Python version for a project,
+      // not a dependency to bump to the newest minor.
+      "matchPackageNames": ["python"],
+      "matchDepTypes": ["requires-python"],
+      "enabled": false
+    },
+    {
+      // google-adk and crewai cap opentelemetry-sdk below 1.43, so keep
+      // their core SDK packages pinned.
+      "matchFileNames": [
+        "scenarios/gen-ai/python/google-adk/**",
+        "scenarios/gen-ai/python/crewai/**"
+      ],
+      "matchPackageNames": [
+        "opentelemetry-api",
+        "opentelemetry-sdk",
+        "opentelemetry-exporter-otlp-proto-grpc",
+        "opentelemetry-distro"
+      ],
+      "enabled": false
     }
   ],
   "customManagers": [
@@ -87,6 +148,15 @@
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?)(?: packageName=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+[A-Z_]+=(?<currentValue>[^\\s]+)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      // The database runner invokes these images directly rather than through
+      // Dockerfiles or Compose files, so Renovate needs their Python assignments.
+      "customType": "regex",
+      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb)\\.py$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?) versioning=(?<versioning>[^\\s]+?)\\s+[A-Z_]+_IMAGE = \"[^:\"]+:(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
+      ]
     }
   ],
   "labels": [

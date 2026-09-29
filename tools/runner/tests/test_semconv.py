@@ -19,6 +19,7 @@ import pytest
 
 from opentelemetry.conformance._report import Observed, finding_list, read
 from opentelemetry.conformance._semconv import _reduce, semconv_coverage
+from opentelemetry.conformance._spec import load_spec
 
 MODEL = {
     "spans": {
@@ -108,6 +109,33 @@ def test_a_span_type_carries_what_any_of_its_samples_had(tmp_path) -> None:
     assert carried == {"http.request.method", "http.route"}
 
 
+def test_reports_for_undeclared_scenarios_are_ignored(tmp_path) -> None:
+    (tmp_path / "conformance.yaml").write_text(
+        """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenarios:
+  current:
+    run: current
+"""
+    )
+    write_report(
+        tmp_path,
+        "current",
+        samples=[span_sample("server", attribute("http.request.method"))],
+    )
+    write_report(
+        tmp_path,
+        "deleted",
+        samples=[span_sample("server", attribute("http.route"))],
+    )
+    (tmp_path / "truncated.json").write_text("{")
+
+    carried = read(tmp_path, by_kind, load_spec(tmp_path)).spans["http.server"]
+
+    assert carried == {"http.request.method"}
+
+
 def test_an_attribute_weaver_rejected_did_not_really_arrive(tmp_path) -> None:
     """A type_mismatch means the name is there holding something disallowed."""
     write_report(
@@ -163,13 +191,20 @@ def advice(
     context: object = None,
     advice_id: str = "some_advice",
     level: str = "violation",
+    signal_type: str | None = None,
+    signal_name: str | None = None,
 ) -> dict:
-    return {
+    said = {
         "id": advice_id,
         "level": level,
         "message": message,
         "context": context,
     }
+    if signal_type is not None:
+        said["signal_type"] = signal_type
+    if signal_name is not None:
+        said["signal_name"] = signal_name
+    return said
 
 
 def test_the_same_finding_seen_twice_is_recorded_once(tmp_path) -> None:
@@ -187,6 +222,67 @@ def test_the_same_finding_seen_twice_is_recorded_once(tmp_path) -> None:
             "id": "some_advice",
             "message": "missing server.address",
             "context": {"attr": "a"},
+        }
+    ]
+
+
+def test_a_finding_records_the_signal_it_was_reported_on(tmp_path) -> None:
+    """Weaver stamps the span or metric it was looking at; a reader needs it."""
+    write_report(
+        tmp_path,
+        "one",
+        samples=[
+            advised(
+                advice(
+                    "missing server.address",
+                    signal_type="span",
+                    signal_name="chat gpt-4o-mini",
+                )
+            )
+        ],
+    )
+
+    assert finding_list(read(tmp_path, by_kind).findings) == [
+        {
+            "id": "some_advice",
+            "message": "missing server.address",
+            "signal_type": "span",
+            "signal_name": "chat gpt-4o-mini",
+        }
+    ]
+
+
+def test_the_same_gap_on_two_signals_is_two_findings(tmp_path) -> None:
+    """One is fixable without the other, so the file has to say both."""
+    write_report(
+        tmp_path,
+        "one",
+        samples=[
+            advised(
+                advice("missing x", signal_type="span", signal_name="chat"),
+                advice("missing x", signal_type="span", signal_name="embeddings"),
+            )
+        ],
+    )
+
+    recorded = finding_list(read(tmp_path, by_kind).findings)
+
+    assert [item["signal_name"] for item in recorded] == ["chat", "embeddings"]
+
+
+def test_a_finding_about_the_resource_names_no_signal(tmp_path) -> None:
+    """Weaver reports one with an empty signal name; it is left out."""
+    write_report(
+        tmp_path,
+        "one",
+        samples=[advised(advice("wrong", signal_type="resource", signal_name=""))],
+    )
+
+    assert finding_list(read(tmp_path, by_kind).findings) == [
+        {
+            "id": "some_advice",
+            "message": "wrong",
+            "signal_type": "resource",
         }
     ]
 
@@ -423,8 +519,8 @@ def test_every_section_is_present_even_when_empty() -> None:
         "spans": {},
         "events": {},
         "metrics": {},
-        "findings": [],
         "entities": {},
+        "findings": [],
     }
 
 
@@ -443,7 +539,7 @@ def test_the_file_is_written_in_a_stable_order() -> None:
         MODEL,
     )
 
-    assert list(data) == ["spans", "events", "metrics", "findings", "entities"]
+    assert list(data) == ["spans", "events", "metrics", "entities", "findings"]
     for section in (data["spans"], data["events"], data["metrics"], data["entities"]):
         assert list(section) == sorted(section)
     assert data["spans"]["http.server"] == sorted(

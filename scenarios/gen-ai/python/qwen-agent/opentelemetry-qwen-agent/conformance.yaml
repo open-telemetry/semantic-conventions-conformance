@@ -1,0 +1,21 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: genai-conformance
+instrumented_library: qwen-agent
+instrumentation_library: opentelemetry-instrumentation-genai-qwen-agent
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  OPENAI_BASE_URL: ${MOCK_SERVER_URL}/v1
+  OPENAI_API_KEY: test_openai_api_key
+  OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT: SPAN_AND_EVENT
+
+scenarios:
+  invoke_agent:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/invoke_agent.py
+
+  automatic_tool_calling:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/automatic_tool_calling.py
