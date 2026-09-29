@@ -1,0 +1,26 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: rack
+instrumentation_library: opentelemetry-instrumentation-rack
+otlp_protocol: http/protobuf
+
+setup: otel-conformance-ruby install
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-ruby run scenario.rb
+    expected_violations:
+      - id: error_type_missing_on_error
+        reason: The instrumentation does not set error.type on 5xx responses.
+      - id: recommended_attribute_not_present
+        context:
+          attribute_key: client.address
+          kind: server
+        reason: The instrumentation does not report client.address.
+      - id: recommended_attribute_not_present
+        context:
+          attribute_key: network.protocol.version
+          kind: server
+        reason: The instrumentation does not report network.protocol.version.

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -22,13 +23,11 @@ public sealed class ScenarioSdk : IDisposable
 {
     private const int TotalFlushTimeoutMilliseconds = 15_000;
 
-    private readonly TracerProvider tracerProvider;
-    private readonly MeterProvider meterProvider;
+    private readonly OpenTelemetrySdk sdk;
 
-    private ScenarioSdk(TracerProvider tracerProvider, MeterProvider meterProvider)
+    private ScenarioSdk(OpenTelemetrySdk sdk)
     {
-        this.tracerProvider = tracerProvider;
-        this.meterProvider = meterProvider;
+        this.sdk = sdk;
     }
 
     /// <summary>
@@ -48,14 +47,18 @@ public sealed class ScenarioSdk : IDisposable
         ArgumentNullException.ThrowIfNull(configureMetrics);
         ScenarioEnvironment.Require("OTEL_EXPORTER_OTLP_ENDPOINT");
 
-        var tracing = Sdk.CreateTracerProviderBuilder();
-        configureTracing(tracing);
-        var metrics = Sdk.CreateMeterProviderBuilder();
-        configureMetrics(metrics);
-
-        return new ScenarioSdk(
-            Built(tracing.AddOtlpExporter().Build(), "tracer"),
-            Built(metrics.AddOtlpExporter().Build(), "meter"));
+        return new ScenarioSdk(OpenTelemetrySdk.Create(builder => builder
+            .WithTracing(tracing =>
+            {
+                configureTracing(tracing);
+                tracing.AddOtlpExporter();
+            })
+            .WithLogging(logging => logging.AddOtlpExporter())
+            .WithMetrics(metrics =>
+            {
+                configureMetrics(metrics);
+                metrics.AddOtlpExporter();
+            })));
     }
 
     /// <summary>Flushes what the scenario emitted, then shuts the SDK down.</summary>
@@ -68,42 +71,57 @@ public sealed class ScenarioSdk : IDisposable
     /// </remarks>
     public void Dispose()
     {
-        var elapsed = Stopwatch.StartNew();
-        var tracingFlushed = false;
-        var metricsFlushed = false;
-
         try
         {
-            tracingFlushed =
-                this.tracerProvider.ForceFlush(RemainingFlushTimeoutMilliseconds(elapsed));
-            metricsFlushed =
-                this.meterProvider.ForceFlush(RemainingFlushTimeoutMilliseconds(elapsed));
+            TelemetryLifecycle.FlushBeforeShutdown(
+                this.sdk.TracerProvider.ForceFlush,
+                this.sdk.LoggerProvider.ForceFlush,
+                this.sdk.MeterProvider.ForceFlush,
+                TotalFlushTimeoutMilliseconds);
         }
         finally
         {
-            try
-            {
-                this.tracerProvider.Dispose();
-            }
-            finally
-            {
-                this.meterProvider.Dispose();
-            }
-        }
-
-        if (!tracingFlushed || !metricsFlushed)
-        {
-            throw new InvalidOperationException(
-                "the OpenTelemetry SDK did not flush completely within its shutdown budget "
-                + $"(tracing: {tracingFlushed}, metrics: {metricsFlushed})");
+            this.sdk.Dispose();
         }
     }
+}
 
-    private static int RemainingFlushTimeoutMilliseconds(Stopwatch elapsed) =>
-        Math.Max(0, TotalFlushTimeoutMilliseconds - (int)elapsed.ElapsedMilliseconds);
+internal static class TelemetryLifecycle
+{
+    internal static void FlushBeforeShutdown(
+        Func<int, bool> flushTraces,
+        Func<int, bool> flushLogs,
+        Func<int, bool> flushMetrics,
+        int timeoutMilliseconds,
+        Func<long>? elapsedMilliseconds = null)
+    {
+        var elapsed = Stopwatch.StartNew();
+        elapsedMilliseconds ??= () => elapsed.ElapsedMilliseconds;
 
-    private static T Built<T>(T? provider, string what)
-        where T : class =>
-        provider ?? throw new InvalidOperationException(
-            $"the OpenTelemetry SDK built no {what} provider");
+        var remaining = Remaining();
+        var traces = Task.Run(() => flushTraces(remaining));
+        var logs = Task.Run(() => flushLogs(remaining));
+        Task.WhenAll(traces, logs).GetAwaiter().GetResult();
+
+        EnsureFlushed("trace", traces.Result);
+        EnsureFlushed("log", logs.Result);
+        Flush("metric", flushMetrics, Remaining());
+
+        int Remaining() =>
+            Math.Max(0, timeoutMilliseconds - (int)elapsedMilliseconds());
+    }
+
+    private static void Flush(string signal, Func<int, bool> operation, int timeoutMilliseconds)
+    {
+        EnsureFlushed(signal, operation(timeoutMilliseconds));
+    }
+
+    private static void EnsureFlushed(string signal, bool flushed)
+    {
+        if (!flushed)
+        {
+            throw new InvalidOperationException(
+                $"{signal} flush did not complete within the shutdown budget");
+        }
+    }
 }
