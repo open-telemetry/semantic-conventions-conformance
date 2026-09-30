@@ -13,7 +13,8 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/gorilla/mux v1.8.1
-	github.com/labstack/echo/v4 v4.16.0
+	github.com/labstack/echo/v4 v4.15.4
+	github.com/labstack/echo/v5 v5.4.0
 	github.com/open-telemetry/semantic-conventions-conformance/tools/go v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/semantic-conventions-conformance/tools/http/test-client/go v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful v0.71.0
