@@ -75,7 +75,7 @@ jobs:
           java-version: "25"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       # Compiles, formats and unit-tests every Java scenario build.
       - name: Build Java
@@ -103,7 +103,7 @@ jobs:
           npm --prefix docs test
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1.325.0
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: "4.0.7"
           bundler-cache: true
@@ -430,13 +430,13 @@ jobs:
         if: matrix.ecosystem == 'python'
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          version: "0.12.18"
+          version: "0.12.20"
 
       # No bundler-cache: it runs a frozen `bundle install`, which fails on
       # exactly the stale lock this job is here to fix.
       - name: Set up Ruby
         if: matrix.ecosystem == 'ruby'
-        uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1.325.0
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: "4.0.7"
 
@@ -557,7 +557,7 @@ jobs:
         with:
           # `uv lock` can rewrite the lock format with a new uv, so relocking
           # needs the same uv every time.
-          version: "0.12.18"
+          version: "0.12.20"
           enable-cache: true
           # Scope lockfiles to this matrix job so each Python matrix job caches
           # its own package set instead of sharing one.
@@ -573,7 +573,7 @@ jobs:
 
       - name: Set up Gradle
         if: matrix.language == 'java'
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       # A Node scenario installs its workspace from the lockfile in its `setup:`.
       - name: Set up Node
@@ -595,7 +595,7 @@ jobs:
 
       - name: Set up Ruby
         if: matrix.language == 'ruby'
-        uses: ruby/setup-ruby@e8944e80fb94b20106697132f8c20c665fab29e9 # v1.325.0
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: "4.0.7"
           bundler-cache: true
