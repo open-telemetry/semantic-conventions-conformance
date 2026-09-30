@@ -7,6 +7,9 @@ instrumentation_library: go.opentelemetry.io/contrib/instrumentation/github.com/
 
 setup: otel-conformance-go build
 
-scenarios:
-  server:
-    run: otel-http-drive --serve otel-conformance-go run
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve otel-conformance-go run
+
+additional_metrics:
+  - http.server.request.body.size
+  - http.server.response.body.size

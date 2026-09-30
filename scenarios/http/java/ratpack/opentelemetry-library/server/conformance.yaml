@@ -10,6 +10,5 @@ weaver:
 
 setup: otel-conformance-java prepare ratpack:opentelemetry-library
 
-scenarios:
-  server:
-    run: otel-http-drive --serve otel-conformance-java run ratpack:opentelemetry-library RatpackLibraryServerScenario
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve otel-conformance-java run ratpack:opentelemetry-library RatpackLibraryServerScenario

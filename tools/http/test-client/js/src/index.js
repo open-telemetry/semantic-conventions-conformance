@@ -6,11 +6,10 @@
 /**
  * The HTTP conformance exchanges a Node scenario answers or sends.
  *
- * One entry point for both halves of the domain: `contract` reads the shared
- * file, `respond` answers concrete requests for any framework, and `drive`
+ * One entry point for both halves of the domain: `contract` decodes runner
+ * JSON, `respond` answers concrete requests for any framework, and `drive`
  * sends the runner-selected request with the library under test.
  *
- * The only dependency is the YAML parser used before the measured request.
  */
 
 const contract = require("./contract");

@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: httpx
 instrumentation_library: opentelemetry-instrumentation-httpx
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 env:
   OTEL_SEMCONV_STABILITY_OPT_IN: http

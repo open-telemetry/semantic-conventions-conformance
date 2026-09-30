@@ -10,6 +10,5 @@ weaver:
 
 setup: otel-conformance-java prepare restlet:opentelemetry-library
 
-scenarios:
-  server:
-    run: otel-http-drive --serve otel-conformance-java run restlet:opentelemetry-library RestletLibraryServerScenario
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve otel-conformance-java run restlet:opentelemetry-library RestletLibraryServerScenario

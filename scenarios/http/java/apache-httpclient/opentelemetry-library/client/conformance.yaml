@@ -4,7 +4,7 @@
 runner: http-conformance
 instrumented_library: apache-httpclient
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-apache-httpclient-5.2
-scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+scenario_contract: ../../../../../../tools/http/contracts/client.yaml
 
 weaver:
   config: ../../../../../../tools/java/weaver.toml

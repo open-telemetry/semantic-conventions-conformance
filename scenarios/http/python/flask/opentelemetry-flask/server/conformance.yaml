@@ -11,9 +11,9 @@ env:
   # so without this a run measures the old conventions.
   OTEL_SEMCONV_STABILITY_OPT_IN: http
 
-scenarios:
-  server:
-    # The requests are sent from outside the scenario, so a server run holds
-    # server telemetry only; the driver starts this command, chooses the port
-    # it binds, and closes its standard input when it is done.
-    run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve uv run --frozen --project . otel-conformance-python scenario.py
+
+# What this instrumentation emits beyond the shared HTTP server contract.
+additional_metrics:
+  - http.server.active_requests

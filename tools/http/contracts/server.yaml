@@ -1,10 +1,15 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-description: Shared HTTP client requests and expected telemetry.
+description: What an instrumented HTTP server emits for each request it answers.
 
-# Not one of the scenarios below: a driver sends it to learn a server is
-# listening, and no telemetry expectation covers it.
+# The runner drives the measured server from outside, through
+# `otel-http-drive --serve`, so one server process answers every action below
+# in turn.
+driver: runner
+
+# Not one of the scenarios below: the driver sends it to learn the measured
+# server is listening, and no telemetry expectation covers it.
 readiness:
   description: Checks whether the server is ready.
   action:
@@ -27,15 +32,15 @@ scenarios:
     expect:
       spans:
         - match:
-            kind: CLIENT
+            kind: SERVER
             attributes:
               http.request.method: GET
               http.response.status_code: 200
           expect:
             count: 1
-            attributes:
-              url.full:
-                present: true
+      metrics:
+        - name: http.server.request.duration
+          required: false
       events: []
 
   - description: Sends a request with a query string.
@@ -49,15 +54,15 @@ scenarios:
     expect:
       spans:
         - match:
-            kind: CLIENT
+            kind: SERVER
             attributes:
               http.request.method: GET
               http.response.status_code: 200
           expect:
             count: 1
-            attributes:
-              url.full:
-                present: true
+      metrics:
+        - name: http.server.request.duration
+          required: false
       events: []
 
   - description: Sends a POST request carrying a JSON body.
@@ -72,15 +77,15 @@ scenarios:
     expect:
       spans:
         - match:
-            kind: CLIENT
+            kind: SERVER
             attributes:
               http.request.method: POST
               http.response.status_code: 201
           expect:
             count: 1
-            attributes:
-              url.full:
-                present: true
+      metrics:
+        - name: http.server.request.duration
+          required: false
       events: []
 
   - description: Sends a request that returns a 404 response.
@@ -94,15 +99,15 @@ scenarios:
     expect:
       spans:
         - match:
-            kind: CLIENT
+            kind: SERVER
             attributes:
               http.request.method: GET
               http.response.status_code: 404
           expect:
             count: 1
-            attributes:
-              url.full:
-                present: true
+      metrics:
+        - name: http.server.request.duration
+          required: false
       events: []
 
   - description: Sends a request that returns a 500 response.
@@ -116,13 +121,13 @@ scenarios:
     expect:
       spans:
         - match:
-            kind: CLIENT
+            kind: SERVER
             attributes:
               http.request.method: GET
               http.response.status_code: 500
           expect:
             count: 1
-            attributes:
-              url.full:
-                present: true
+      metrics:
+        - name: http.server.request.duration
+          required: false
       events: []

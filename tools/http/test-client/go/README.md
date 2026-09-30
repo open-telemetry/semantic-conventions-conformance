@@ -1,8 +1,8 @@
 # HTTP conformance test client for Go
 
-`httpcontract` reads [`contract.yaml`](../contract.yaml), looks up its answers
-for any Go framework, and drives the runner-selected request through a client
-scenario's own library.
+`httpcontract` decodes the runner-supplied actions, looks up answers for any Go
+framework, and drives one selected request through a client scenario's own
+library.
 
 ```text
 Exchanges(), Requests()   the traffic, in order
@@ -18,20 +18,9 @@ so every Go framework agrees on the statuses and bodies. `Drive` takes the
 progress output as an `io.Writer` and the sender as a function, so callers
 control the logs and requests leave the library being measured.
 
-The only non-standard dependency parses the shared YAML contract.
-
-## Finding the contract
-
-`//go:embed` cannot reach outside the package directory it appears in, so this
-package cannot build the contract in. Rather than commit a second copy of the
-traffic, it finds the one copy at run time, searching upwards from the working
-directory for `tools/http/test-client/contract.yaml`. That is the scenario
-directory under the runner and the package's own directory under `go test`,
-both inside a checkout. `OTEL_HTTP_CONTRACT` names the file outright, for a
-binary run somewhere else.
+Clients read `OTEL_CONFORMANCE_SCENARIO_ACTION`. Servers parse
+`OTEL_CONFORMANCE_SCENARIO_ACTIONS` once and reuse the table for route lookups.
 
 ## Tests
 
-`go test ./...` drives both halves against each other: `Drive` sends the
-contract and `Respond` answers it, so the two sides are checked against the
-file rather than against each other's assumptions.
+`go test ./...` drives both halves against the same injected action data.

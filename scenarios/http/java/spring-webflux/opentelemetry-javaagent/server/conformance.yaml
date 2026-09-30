@@ -14,9 +14,5 @@ weaver:
 
 setup: otel-conformance-java prepare spring-webflux:opentelemetry-javaagent
 
-scenarios:
-  server:
-    # The requests are sent from outside the scenario, so a server run holds
-    # server telemetry only; the driver starts this command, chooses the port
-    # it binds, and closes its standard input when it is done.
-    run: otel-http-drive --serve otel-conformance-java run --agent spring-webflux:opentelemetry-javaagent SpringWebfluxJavaagentServerScenario
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve otel-conformance-java run --agent spring-webflux:opentelemetry-javaagent SpringWebfluxJavaagentServerScenario
