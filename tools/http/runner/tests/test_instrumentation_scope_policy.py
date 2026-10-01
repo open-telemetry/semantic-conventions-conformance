@@ -211,3 +211,110 @@ def test_signal_scope_expectation_uses_owning_scope(tmp_path: Path) -> None:
         },
     }
     assert spans["non-matching-span"]["live_check_result"]["all_advice"] == []
+
+
+@pytest.mark.parametrize("field", ["name", "schema_url"])
+@pytest.mark.parametrize("attached_scope", [False, True])
+def test_absent_scope_field_overrides_default_for_matching_span(
+    tmp_path: Path, field: str, attached_scope: bool
+) -> None:
+    try:
+        check_weaver()
+        registry = DOMAIN.registry
+    except (WeaverNotInstalledError, OSError, RuntimeError) as error:
+        pytest.skip(f"scope policy test unavailable: {error}")
+
+    import grpc  # noqa: PLC0415
+
+    from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (  # noqa: PLC0415
+        ExportTraceServiceRequest,
+    )
+    from opentelemetry.proto.collector.trace.v1.trace_service_pb2_grpc import (  # noqa: PLC0415
+        TraceServiceStub,
+    )
+    from opentelemetry.proto.common.v1.common_pb2 import (  # noqa: PLC0415
+        InstrumentationScope,
+    )
+    from opentelemetry.proto.trace.v1.trace_pb2 import (  # noqa: PLC0415
+        ResourceSpans,
+        ScopeSpans,
+        Span,
+    )
+    from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
+        WeaverLiveCheck,
+    )
+
+    policies = tmp_path / "policies"
+    policies.mkdir()
+    expectation = InstrumentationScopeExpectation(
+        **{field: AttributeMatcher(present=False)}
+    )
+    (policies / "instrumentation_scope_validation.rego").write_text(
+        render(
+            (
+                SpanExpectation(
+                    match=SpanMatch(attributes={}, kind="CLIENT"),
+                    instrumentation_scope=expectation,
+                ),
+            )
+        ),
+        encoding="utf-8",
+    )
+    scope_spans = ScopeSpans(
+        spans=[
+            Span(name="matching", kind=Span.SPAN_KIND_CLIENT),
+            Span(name="unmatched", kind=Span.SPAN_KIND_SERVER),
+        ]
+    )
+    if attached_scope:
+        scope_spans.scope.CopyFrom(
+            InstrumentationScope(name="" if field == "name" else "demo")
+        )
+        scope_spans.schema_url = (
+            "" if field == "schema_url" else "https://example.test/schema"
+        )
+
+    weaver = WeaverLiveCheck(
+        registry=str(registry), policies_dir=str(policies)
+    ).start()
+    try:
+        with grpc.insecure_channel(
+            weaver.otlp_endpoint.removeprefix("http://")
+        ) as channel:
+            TraceServiceStub(channel).Export(
+                ExportTraceServiceRequest(
+                    resource_spans=[ResourceSpans(scope_spans=[scope_spans])]
+                ),
+                timeout=10,
+            )
+        report = weaver.end()
+    finally:
+        weaver.close()
+
+    spans = {
+        sample["span"]["name"]: sample["span"]
+        for sample in report["samples"]
+        if "span" in sample
+    }
+    findings = {
+        name: {
+            finding["id"]
+            for finding in span["live_check_result"]["all_advice"]
+        }
+        for name, span in spans.items()
+    }
+    other_field = "schema_url" if field == "name" else "name"
+    other_defaults = (
+        set()
+        if attached_scope
+        else {f"instrumentation_scope_{other_field}_missing"}
+    )
+    assert findings["matching"] == other_defaults
+    assert findings["unmatched"] == other_defaults | {
+        f"instrumentation_scope_{field}_missing"
+    }
+    assert all(
+        not sample["instrumentation_scope"]["live_check_result"]["all_advice"]
+        for sample in report["samples"]
+        if "instrumentation_scope" in sample
+    )

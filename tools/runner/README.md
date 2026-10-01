@@ -296,6 +296,8 @@ A string value is matched exactly. `{present: true}` or `{present: false}`
 checks whether `name`, `version`, or `schema_url` is set without fixing its
 value. Fields omitted from a matched signal still receive the default `name`
 and `schema_url` checks. `version` is unchecked unless declared.
+Explicit field expectations override defaults only for matching spans. Other
+spans retain the defaults, even when they share the same scope.
 
 Each entry has two halves, declared separately so an attribute used to *find*
 a span never reads like one being *checked* on it. `match` selects — by

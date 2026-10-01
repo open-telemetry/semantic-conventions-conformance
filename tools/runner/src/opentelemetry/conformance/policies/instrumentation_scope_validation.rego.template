@@ -11,15 +11,40 @@ _otel_scope_expectation := __INSTRUMENTATION_SCOPE_EXPECTATION__
 deny contains _otel_scope_finding(field, expected, actual, scope) if {
 	scope := input.sample.instrumentation_scope
 	some field, expected in _otel_scope_expectation.global
+	not _otel_scope_field_overridden(field)
 	actual := _otel_scope_field(scope, field)
 	not _otel_scope_matches(expected, actual)
 }
 
-deny contains _otel_signal_scope_finding(field, expected, null, null) if {
+deny contains _otel_signal_scope_finding(field, expected, actual, scope) if {
 	_otel_scope_signal(input.sample)
-	input.instrumentation_scope == null
+	scope := object.get(input, "instrumentation_scope", null)
 	some field, expected in _otel_scope_expectation.global
-	not _otel_scope_matches(expected, null)
+	_otel_scope_default_on_signal(scope, field)
+	not _otel_scope_span_overrides(field)
+	actual := _otel_scope_field(scope, field)
+	not _otel_scope_matches(expected, actual)
+}
+
+# Scope samples cannot see span selectors. Defer configurable fields to each
+# signal so an override cannot suppress defaults for other spans sharing a scope.
+_otel_scope_field_overridden(field) if {
+	some expectation in _otel_scope_expectation.spans
+	field in object.keys(expectation.scope)
+}
+
+_otel_scope_default_on_signal(scope, _) if {
+	scope == null
+}
+
+_otel_scope_default_on_signal(_, field) if {
+	_otel_scope_field_overridden(field)
+}
+
+_otel_scope_span_overrides(field) if {
+	some expectation in _otel_scope_expectation.spans
+	_otel_scope_span_matches(input.sample.span, expectation.match)
+	field in object.keys(expectation.scope)
 }
 
 deny contains _otel_signal_scope_finding(field, expected, actual, scope) if {
