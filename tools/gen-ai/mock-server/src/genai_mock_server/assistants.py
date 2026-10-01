@@ -221,6 +221,22 @@ def get_run(thread_id, run_id):
     }
 
 
+@bp.route("/v1/threads/<thread_id>/runs", methods=["GET"])
+@bp.route("/openai/threads/<thread_id>/runs", methods=["GET"])
+@bp.route("/threads/<thread_id>/runs", methods=["GET"])
+def list_runs(thread_id):
+    runs = [r for r in _runs.values() if r.get("thread_id") == thread_id]
+    if not runs:
+        runs = [_run_response({}, thread_id=thread_id)]
+    return {
+        "object": "list",
+        "data": runs,
+        "first_id": runs[0]["id"],
+        "last_id": runs[-1]["id"],
+        "has_more": False,
+    }
+
+
 @bp.route("/v1/threads/<thread_id>/messages", methods=["GET"])
 @bp.route("/openai/threads/<thread_id>/messages", methods=["GET"])
 @bp.route("/threads/<thread_id>/messages", methods=["GET"])
