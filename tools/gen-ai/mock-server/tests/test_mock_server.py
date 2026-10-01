@@ -351,13 +351,16 @@ ANSWERED_TOOL_CALL = [
 ]
 
 
-def test_chat_calls_the_same_tool_again_in_a_later_turn(client):
+@pytest.mark.parametrize("optional_fields", [{}, {"tool_calls": None}])
+def test_chat_calls_the_same_tool_again_in_a_later_turn(client, optional_fields):
     """A completed call does not exhaust the tool: a new user turn calls it again."""
+    messages = list(ANSWERED_TOOL_CALL)
+    messages[-2] = {**messages[-2], **optional_fields}
     response = client.post(
         "/v1/chat/completions",
         json={
             "model": "gpt-4o-mini",
-            "messages": ANSWERED_TOOL_CALL,
+            "messages": messages,
             "tools": [_openai_tool("get_weather")],
         },
     )
