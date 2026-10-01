@@ -18,6 +18,56 @@
 const { NodeSDK } = require("@opentelemetry/sdk-node");
 const { requireEnv } = require("@otel-conformance/scenario-support");
 
+const FLUSH_TIMEOUT_MILLIS = 15_000;
+
+function remaining(deadline) {
+  return Math.max(0, deadline - performance.now());
+}
+
+async function within(promise, timeoutMillis, phase) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${phase} flush timed out`)),
+      timeoutMillis,
+    );
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function flushBeforeShutdown(sdk) {
+  const deadline = performance.now() + FLUSH_TIMEOUT_MILLIS;
+  // NodeSDK exposes only shutdown publicly. The pinned implementation retains
+  // its providers here, so the adapter can order their flushes.
+  const traceAndLogProviders = [
+    sdk._tracerProvider,
+    sdk._loggerProvider,
+  ].filter(Boolean);
+  const results = await within(
+    Promise.allSettled(
+      traceAndLogProviders.map((provider) => provider.forceFlush()),
+    ),
+    remaining(deadline),
+    "trace and log",
+  );
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure) {
+    throw failure.reason;
+  }
+
+  if (sdk._meterProvider) {
+    await within(
+      sdk._meterProvider.forceFlush(),
+      remaining(deadline),
+      "metric",
+    );
+  }
+}
+
 /**
  * Runs `workload` with the SDK started, then shuts it down.
  *
@@ -25,9 +75,8 @@ const { requireEnv } = require("@otel-conformance/scenario-support");
  * loaded after the instrumentations are registered: Node's instrumentations
  * patch a module as it is required, and one required earlier is never patched.
  *
- * Shutting the SDK down is what flushes, so it happens whether the workload
- * finished or threw. Any SDK lifecycle or workload failure fails the run,
- * because the runner reads a scenario's result from its exit code.
+ * Any SDK lifecycle or workload failure fails the run, because the runner
+ * reads a scenario's result from its exit code.
  */
 async function runScenario({ instrumentations = [] } = {}, workload) {
   try {
@@ -39,7 +88,11 @@ async function runScenario({ instrumentations = [] } = {}, workload) {
     try {
       await workload();
     } finally {
-      await sdk.shutdown();
+      try {
+        await flushBeforeShutdown(sdk);
+      } finally {
+        await sdk.shutdown();
+      }
     }
   } catch (error) {
     console.error(error);

@@ -47,8 +47,7 @@ public final class PekkoHttpServerScenario {
       }
     } finally {
       // Pekko's shutdown has been seen to abort partway, leaving non-daemon threads that keep the
-      // JVM alive. Bound the wait and leave through System.exit below instead — that still runs the
-      // agent's shutdown hook, and it is that flush which exports the metrics.
+      // JVM alive. Bound the wait and ask the launcher to exit after flushing instead.
       system.terminate();
       try {
         system.getWhenTerminated().toCompletableFuture().get(10, TimeUnit.SECONDS);
@@ -58,7 +57,7 @@ public final class PekkoHttpServerScenario {
         System.err.println("the actor system did not terminate cleanly: " + e);
       }
     }
-    System.exit(0);
+    ScenarioLifecycle.exitAfterFlush();
   }
 
   /** The contract's exchanges, composed as Pekko HTTP directives. */
