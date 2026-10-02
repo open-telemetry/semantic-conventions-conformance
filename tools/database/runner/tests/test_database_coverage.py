@@ -30,6 +30,12 @@ def test_an_unsupported_database_system_is_not_classified(system: str) -> None:
     )
 
 
+def test_sql_server_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "SELECT", "CLIENT", {"db.system.name": "microsoft.sql_server"}
+    ) == {"db.sql_server.client"}
+
+
 def test_a_span_without_a_database_system_is_not_a_database_span() -> None:
     assert (
         classify_span("GET", "CLIENT", {"http.request.method": "GET"}) == set()

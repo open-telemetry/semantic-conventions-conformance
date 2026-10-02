@@ -27,6 +27,7 @@ def _model():
     ("system", "span_type"),
     [
         ("mariadb", "db.mariadb.client"),
+        ("microsoft.sql_server", "db.sql_server.client"),
         ("postgresql", "db.postgresql.client"),
     ],
 )
