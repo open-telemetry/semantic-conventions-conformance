@@ -33,6 +33,12 @@ Behaviour follows the request rather than configuration: `stream: true` gets an
 SSE response, offered `tools` get a tool call, and the requested model is
 echoed back. Ids and token counts are fixed.
 
+For OpenAI chat completions, streamed or not, a user message containing
+`[MOCK_EMPTY_COMPLETION]` gets an empty completion whose usage reports `completion_tokens: 0`, and one
+containing `[MOCK_BAD_REQUEST]` gets a 400 `invalid_request_error` with no usage.
+They exist so a scenario can exercise the zero-output and failed-call paths of
+token usage recording.
+
 ## Adding a response
 
 A scenario that needs a field the server doesn't serve is a change here, not a

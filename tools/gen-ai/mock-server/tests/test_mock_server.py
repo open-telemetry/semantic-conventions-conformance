@@ -1620,3 +1620,43 @@ def test_cohere_embeddings_answer_one_vector_per_input(client):
     vectors = response.json["embeddings"]["float"]
     assert len(vectors) == 2
     assert len(vectors[0]) == 64
+
+
+def test_chat_reports_an_explicit_zero_for_an_empty_completion(client):
+    body = {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "[MOCK_EMPTY_COMPLETION] hi"}]}
+    first = client.post("/v1/chat/completions", json=body)
+    assert first.status_code == 200
+    assert first.json["model"] == "gpt-4.1-nano"
+    assert first.json["choices"][0]["message"]["content"] == ""
+    assert first.json["usage"]["completion_tokens"] == 0
+    assert first.json["usage"]["prompt_tokens"] == first.json["usage"]["total_tokens"]
+    assert client.post("/v1/chat/completions", json=body).data == first.data
+
+
+def test_chat_rejects_a_bad_request_without_usage(client):
+    body = {"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "[MOCK_BAD_REQUEST] hi"}]}
+    first = client.post("/v1/chat/completions", json=body)
+    assert first.status_code == 400
+    assert first.json["error"]["type"] == "invalid_request_error"
+    assert "usage" not in first.json
+    assert client.post("/v1/chat/completions", json=body).data == first.data
+
+
+def test_streaming_chat_honours_the_empty_completion_and_bad_request_sentinels(client):
+    empty = {"model": "gpt-4o-mini", "stream": True,
+             "messages": [{"role": "user", "content": "[MOCK_EMPTY_COMPLETION] hi"}]}
+    response = client.post("/v1/chat/completions", json=empty)
+    chunks = [json.loads(line[6:]) for line in response.get_data(as_text=True).splitlines()
+              if line.startswith("data: {")]
+    assert "".join(c["choices"][0]["delta"].get("content") or "" for c in chunks) == ""
+    assert chunks[-1]["usage"]["completion_tokens"] == 0
+    assert client.post("/v1/chat/completions", json=empty).data == response.data
+    with_tools = {**empty, "tools": [{"type": "function", "function": {"name": "get_weather", "parameters": {}}}]}
+    streamed = client.post("/v1/chat/completions", json=with_tools).get_data(as_text=True)
+    assert "tool_calls" not in streamed and '"completion_tokens": 0' in streamed.replace('":0', '": 0')
+
+    rejected = {"model": "gpt-4o-mini", "stream": True,
+                "messages": [{"role": "user", "content": "[MOCK_BAD_REQUEST] hi"}]}
+    response = client.post("/v1/chat/completions", json=rejected)
+    assert response.status_code == 400
+    assert response.json["error"]["type"] == "invalid_request_error"
