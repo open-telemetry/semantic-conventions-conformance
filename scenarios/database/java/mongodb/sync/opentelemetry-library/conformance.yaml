@@ -1,0 +1,32 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: mongodb
+instrumented_library: mongodb-sync
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-mongo-3.1
+scenario_contract: ../../../../contracts/mongodb.yaml
+
+env:
+  OTEL_LOGS_EXPORTER: none
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:mongodb:sync:opentelemetry-library
+
+scenarios:
+  find:
+    run: otel-conformance-java run shared:mongodb:sync:opentelemetry-library MongoSyncLibraryScenario find
+
+  update:
+    run: otel-conformance-java run shared:mongodb:sync:opentelemetry-library MongoSyncLibraryScenario update
+
+  delete:
+    run: otel-conformance-java run shared:mongodb:sync:opentelemetry-library MongoSyncLibraryScenario delete
+
+  aggregate:
+    run: otel-conformance-java run shared:mongodb:sync:opentelemetry-library MongoSyncLibraryScenario aggregate

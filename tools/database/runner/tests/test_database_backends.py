@@ -14,8 +14,9 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _mariadb, _mongodb, _postgres
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
+from database_conformance._mongodb import MONGODB_IMAGE, MongoDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 
 
@@ -92,7 +93,13 @@ def install_stub(
 
 
 @pytest.mark.parametrize(
-    ("module", "backend_type", "port", "expected_environment"),
+    (
+        "module",
+        "backend_type",
+        "port",
+        "expected_environment",
+        "schema_marker",
+    ),
     [
         (
             _postgres,
@@ -103,6 +110,7 @@ def install_stub(
                 "POSTGRES_USER": "conformance",
                 "POSTGRES_PASSWORD": "conformance",
             },
+            b"CREATE TABLE",
         ),
         (
             _mariadb,
@@ -114,15 +122,27 @@ def install_stub(
                 "MARIADB_PASSWORD": "conformance",
                 "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
             },
+            b"CREATE TABLE",
+        ),
+        (
+            _mongodb,
+            MongoDB,
+            27017,
+            {
+                "MONGO_INITDB_ROOT_USERNAME": "root",
+                "MONGO_INITDB_ROOT_PASSWORD": "conformance-root",
+            },
+            b'createCollection("items")',
         ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB],
+    backend_type: type[Postgres] | type[MariaDB] | type[MongoDB],
     port: int,
     expected_environment: dict[str, str],
+    schema_marker: bytes,
 ) -> None:
     container = StubContainer(port=port)
     install_stub(monkeypatch, module, container)
@@ -143,8 +163,7 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.transfers
     schema, path = container.transfers[0]
     assert path.startswith("/tmp/otel-conformance-")
-    assert b"CREATE" in schema
-    assert b"INSERT INTO" not in schema
+    assert schema_marker in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
 
@@ -194,6 +213,24 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+def test_mongodb_bootstrap_failure_reports_output_and_cleans_up(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"MongoServerError"),
+        port=27017,
+    )
+    install_stub(monkeypatch, _mongodb, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not apply the MongoDB schema.*MongoServerError",
+    ):
+        MongoDB().start()
+
+    assert container.stopped
+
+
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -214,6 +251,11 @@ def test_cannot_start_postgres_twice(
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
 
+    name, separator, digest = MONGODB_IMAGE.partition("@")
+    assert name == "mongo:8.0.29-noble"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
@@ -224,6 +266,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
     assert "CREATE TABLE IF NOT EXISTS conformance.items" in schema
     assert "CREATE OR REPLACE PROCEDURE conformance.noop()" in schema
+    assert "INSERT INTO" not in schema
 
     schema = (
         resources.files("database_conformance")
@@ -232,3 +275,13 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+    assert "INSERT INTO" not in schema
+
+    bootstrap = (
+        resources.files("database_conformance")
+        .joinpath("mongodb.js")
+        .read_text(encoding="utf-8")
+    )
+    assert 'createCollection("items")' in bootstrap
+    assert "createUser({" in bootstrap
+    assert bootstrap.count("_id:") == 4
