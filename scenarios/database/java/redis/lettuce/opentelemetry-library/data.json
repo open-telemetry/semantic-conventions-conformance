@@ -1,0 +1,43 @@
+{
+  "spans": {
+    "db.redis.client": [
+      "db.operation.name",
+      "db.query.text",
+      "error.type",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "db.client.operation.duration": [
+      "db.operation.name",
+      "db.system.name",
+      "error.type",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": []
+}

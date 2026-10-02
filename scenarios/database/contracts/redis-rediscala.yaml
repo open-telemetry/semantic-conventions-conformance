@@ -1,0 +1,67 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  set_get:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+        expect:
+          count: 1
+          attributes:
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: &metrics
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  transaction:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: MULTI
+        expect:
+          count: 1
+          attributes:
+            db.operation.batch.size: 2
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: *metrics
+    events: []
+
+  error:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: LPUSH
+        expect:
+          count: 1
+          attributes:
+            error.type: redis.actors.ReplyErrorException
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: *metrics
+    events: []

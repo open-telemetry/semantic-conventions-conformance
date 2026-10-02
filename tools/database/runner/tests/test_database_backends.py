@@ -14,9 +14,10 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres
+from database_conformance import _mariadb, _postgres, _redis
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
+from database_conformance._redis import REDIS_IMAGE, Redis
 
 
 @dataclass
@@ -115,12 +116,18 @@ def install_stub(
                 "MARIADB_RANDOM_ROOT_PASSWORD": "yes",
             },
         ),
+        (
+            _redis,
+            Redis,
+            6379,
+            {},
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB],
+    backend_type: type[Postgres] | type[MariaDB] | type[Redis],
     port: int,
     expected_environment: dict[str, str],
 ) -> None:
@@ -131,20 +138,29 @@ def test_starts_initializes_publishes_and_removes_database(
         assert database.variables == {
             "DATABASE_HOST": "127.0.0.1",
             "DATABASE_PORT": "32768",
-            "DATABASE_NAME": "conformance",
-            "DATABASE_USER": "conformance",
-            "DATABASE_PASSWORD": "conformance",
+            "DATABASE_NAME": "0" if backend_type is Redis else "conformance",
+            "DATABASE_USER": "default" if backend_type is Redis else "conformance",
+            "DATABASE_PASSWORD": "" if backend_type is Redis else "conformance",
         }
 
     assert container.started
     assert container.stopped
     assert container.env == expected_environment
     assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
-    assert container.transfers
-    schema, path = container.transfers[0]
-    assert path.startswith("/tmp/otel-conformance-")
-    assert b"CREATE" in schema
-    assert b"INSERT INTO" not in schema
+    if backend_type is Redis:
+        assert container.transfers == []
+        assert container.exec_config is not None
+        assert container.exec_config.command[-3:] == [
+            "SET",
+            "conformance:bootstrap",
+            "ready",
+        ]
+    else:
+        assert container.transfers
+        schema, path = container.transfers[0]
+        assert path.startswith("/tmp/otel-conformance-")
+        assert b"CREATE" in schema
+        assert b"INSERT INTO" not in schema
     assert container.wait_strategy is not None
     assert container.exec_config is not None
 
@@ -194,6 +210,27 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+def test_command_only_initialization_failure_uses_general_diagnostic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"SET failed"),
+        port=6379,
+    )
+    install_stub(monkeypatch, _redis, container)
+
+    with pytest.raises(RuntimeError) as error:
+        Redis().start()
+
+    message = str(error.value)
+    assert message.startswith(
+        "Could not initialize Redis; the client exited with 1"
+    )
+    assert "schema" not in message
+    assert "SET failed" in message
+    assert container.stopped
+
+
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -213,6 +250,11 @@ def test_cannot_start_postgres_twice(
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
+
+    name, separator, digest = REDIS_IMAGE.partition("@")
+    assert name == "redis:8.2.1-bookworm"
+    assert separator == "@"
+    assert digest.startswith("sha256:")
 
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
