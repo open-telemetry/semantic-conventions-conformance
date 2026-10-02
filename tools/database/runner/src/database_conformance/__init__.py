@@ -22,6 +22,7 @@ from opentelemetry.conformance import (
 
 from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
+from ._elasticsearch import Elasticsearch
 from ._mariadb import MariaDB
 from ._postgres import Postgres
 
@@ -35,6 +36,7 @@ DOMAIN = Domain(
 )
 
 _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
+    "elasticsearch": Elasticsearch,
     "mariadb": MariaDB,
     "postgresql": Postgres,
 }
