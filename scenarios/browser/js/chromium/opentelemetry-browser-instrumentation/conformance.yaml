@@ -1,0 +1,31 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: chromium
+instrumentation_library: "@opentelemetry/browser-instrumentation"
+
+setup: otel-conformance-js install
+
+# A browser exports OTLP/HTTP only. The page posts to its own origin, which
+# relays to the runner's bridge.
+otlp_protocol: http/protobuf
+
+# One module per scenario, so each report holds one instrumentation scope.
+# The events are declared so a page that stops emitting one fails the run
+# instead of dropping it from the coverage.
+scenarios:
+  errors:
+    run: node run.js errors
+    events:
+      - exception
+
+  console:
+    run: node run.js console
+    events:
+      - browser.console
+
+  web_vitals:
+    run: node run.js web-vitals
+    events:
+      - browser.web_vital
