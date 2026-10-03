@@ -211,6 +211,8 @@ def _pin_problems(name: str, scenario: dict[str, Any]) -> list[str]:
     matching the scenario's ``dev-main`` requirement.
     """
     required = scenario.get("require", {}).get(name)
+    if required is None:
+        required = scenario.get("require-dev", {}).get(name)
     pins = [
         repository["options"]["versions"][name]
         for repository in scenario.get("repositories", [])

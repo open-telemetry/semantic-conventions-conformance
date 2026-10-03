@@ -41,7 +41,7 @@ closes standard input. The workload itself stays ordinary Slim routing code.
 
 ## Running
 
-Install PHP 8.4 or later, Composer, and the `opentelemetry`, `grpc`, and
+Install PHP 8.4.1 or later, Composer, and the `opentelemetry`, `grpc`, and
 `protobuf` extensions. Then install the Python runner commands and run either
 side:
 
