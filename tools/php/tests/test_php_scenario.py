@@ -511,8 +511,8 @@ def test_path_repository_without_versions_is_reported(scenario: Path) -> None:
     )
 
     assert lock_problems(scenario) == [
-        'acme/client: path repository has no "versions" pin; add '
-        '"versions": {"acme/client": "dev-main"} to its options'
+        'acme/client: path repository ../client has no "versions" pin; '
+        'add "versions": {"acme/client": "dev-main"} to its options'
     ]
 
 
@@ -528,7 +528,10 @@ def test_versions_that_do_not_name_the_package_are_reported(
 
     [problem] = lock_problems(scenario)
 
-    assert 'acme/client: path repository has no "versions" pin' in problem
+    assert (
+        'acme/client: path repository ../client has no "versions" pin'
+        in problem
+    )
 
 
 def test_pin_is_suggested_from_the_requirement(scenario: Path) -> None:
@@ -604,19 +607,79 @@ def test_pin_is_suggested_from_the_dev_requirement(scenario: Path) -> None:
     assert '"versions": {"acme/client": "dev-feature"}' in problem
 
 
-def test_pin_is_found_in_any_path_repository(scenario: Path) -> None:
+def test_pin_on_a_later_path_repository_is_reported(scenario: Path) -> None:
+    # Composer takes the package from the first path repository that has it
+    # and ignores the same package in later ones, pinned or not.
     def moved(manifest: dict[str, Any]) -> None:
         pin = manifest["repositories"][0]["options"].pop("versions")
-        manifest["repositories"].insert(
-            0, {"type": "vcs", "url": "https://example.com/acme/client.git"}
-        )
         manifest["repositories"].append(
             {"type": "path", "url": "../*", "options": {"versions": pin}}
         )
 
     edit_json(scenario / "composer.json", moved)
 
+    [problem] = lock_problems(scenario)
+
+    assert (
+        'acme/client: path repository ../client has no "versions" pin'
+        in problem
+    )
+
+
+def test_pin_on_an_earlier_glob_repository_is_accepted(scenario: Path) -> None:
+    def globbed(manifest: dict[str, Any]) -> None:
+        pin = manifest["repositories"][0]["options"].pop("versions")
+        manifest["repositories"][0:0] = [
+            {"type": "vcs", "url": "https://example.com/acme/client.git"},
+            {"type": "path", "url": "../*", "options": {"versions": pin}},
+        ]
+
+    edit_json(scenario / "composer.json", globbed)
+
     assert lock_problems(scenario) == []
+
+
+def test_pin_on_a_glob_repository_that_differs_is_reported(
+    scenario: Path,
+) -> None:
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["repositories"][0].update(
+            {"url": "../*", "options": {"versions": {"acme/client": "1.0"}}}
+        ),
+    )
+
+    assert lock_problems(scenario) == [
+        "acme/client: composer.json requires dev-main but its path "
+        "repository pins 1.0"
+    ]
+
+
+def test_repository_url_is_compared_as_a_path(scenario: Path) -> None:
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["repositories"][0].update(
+            {"url": "./../client/"}
+        ),
+    )
+
+    assert lock_problems(scenario) == []
+
+
+def test_path_package_without_a_path_repository_is_reported(
+    scenario: Path,
+) -> None:
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["repositories"][0].update(
+            {"url": "../elsewhere"}
+        ),
+    )
+
+    assert lock_problems(scenario) == [
+        "acme/client: no path repository in composer.json has the lock's "
+        "url ../client"
+    ]
 
 
 def test_transitive_path_package_needs_only_a_pin(scenario: Path) -> None:

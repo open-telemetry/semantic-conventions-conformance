@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import shutil
@@ -188,7 +189,7 @@ def lock_problems(root: Path) -> list[str]:
     problems: list[str] = []
     for name, url in sorted(paths.items()):
         entry = locked[name]
-        problems.extend(_pin_problems(name, scenario))
+        problems.extend(_pin_problems(name, url, root, scenario))
         source = (root / url).resolve()
         manifest = source / "composer.json"
         if not manifest.is_file():
@@ -203,34 +204,64 @@ def lock_problems(root: Path) -> list[str]:
     return problems
 
 
-def _pin_problems(name: str, scenario: dict[str, Any]) -> list[str]:
+def _pin_problems(
+    name: str,
+    url: str,
+    root: Path,
+    scenario: dict[str, Any],
+) -> list[str]:
     """Where the scenario does not pin a path package's version.
 
     Unpinned, Composer names a path package after the current checkout, which
     is ``dev-<sha>`` in a detached CI checkout, so ``composer update`` stops
     matching the scenario's ``dev-main`` requirement.
     """
+    repository = _supplying_repository(url, root, scenario)
+    if repository is None:
+        return [
+            f"{name}: no path repository in composer.json has the lock's "
+            f"url {url}"
+        ]
+
     required = scenario.get("require", {}).get(name)
     if required is None:
         required = scenario.get("require-dev", {}).get(name)
-    pins = [
-        repository["options"]["versions"][name]
-        for repository in scenario.get("repositories", [])
-        if repository.get("type") == "path"
-        and name in repository.get("options", {}).get("versions", {})
-    ]
-    if not pins:
-        pin = json.dumps({name: required or "dev-main"})
+    pin = repository.get("options", {}).get("versions", {}).get(name)
+    if pin is None:
+        suggested = json.dumps({name: required or "dev-main"})
         return [
-            f'{name}: path repository has no "versions" pin; add '
-            f'"versions": {pin} to its options'
+            f"{name}: path repository {repository['url']} has no "
+            f'"versions" pin; add "versions": {suggested} to its options'
         ]
-    if required is not None and pins[0] != required:
+    if required is not None and pin != required:
         return [
             f"{name}: composer.json requires {required} but its path "
-            f"repository pins {pins[0]}"
+            f"repository pins {pin}"
         ]
     return []
+
+
+def _supplying_repository(
+    url: str,
+    root: Path,
+    scenario: dict[str, Any],
+) -> dict[str, Any] | None:
+    """The path repository Composer takes the package at ``url`` from.
+
+    That is the first whose url, or glob, names the package's directory:
+    Composer ignores the same package in any later repository, pinned or not.
+    """
+    source = (root / url).resolve()
+    for repository in scenario.get("repositories", []):
+        if repository.get("type") != "path" or "url" not in repository:
+            continue
+        pattern = root / repository["url"]
+        if pattern.resolve() == source or any(
+            Path(match).resolve() == source
+            for match in glob.glob(str(pattern))
+        ):
+            return repository
+    return None
 
 
 def _snapshot_problems(
