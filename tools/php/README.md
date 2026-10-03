@@ -33,7 +33,10 @@ The check also fails when the scenario's `composer.json` does not pin a path
 package's version with `"versions": {"<package>": "dev-main"}` in the path
 repository's `options`, or pins a different version than it requires. Unpinned,
 Composer names the package after the current checkout, `dev-<sha>` in CI, and
-`relock` then cannot resolve the scenario's `dev-main` requirement.
+`relock` then cannot resolve the scenario's `dev-main` requirement. The pin
+must be on the first path repository whose `url`, or glob, matches the
+package's directory: Composer takes the package from that repository and
+ignores it in any later one.
 
 `serve` starts `php -S 127.0.0.1:$OTEL_HTTP_SCENARIO_PORT <router>`. The PHP
 built-in server keeps the normal request-scoped lifecycle used by PHP-FPM:
