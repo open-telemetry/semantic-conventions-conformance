@@ -29,3 +29,6 @@ artifacts/
 vendor/
 
 .DS_Store
+
+# Cargo: every workspace member shares this build directory.
+target/
