@@ -20,7 +20,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
-      REPORT_BRANCH: chore/conformance-report
+      REPORT_BRANCH: otelbot/conformance-report
     defaults:
       run:
         shell: bash
