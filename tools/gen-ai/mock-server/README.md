@@ -23,7 +23,7 @@ The conformance runner starts it for you: a directory declares it under
 | `assistants` | OpenAI Assistants, threads and runs |
 | `bedrock` | `converse`, `converse-stream`, `invoke` |
 | `bedrock_agent`, `bedrock_agentcore` | agent invocation and the memory APIs |
-| `cohere` | `/v1` and `/v2` chat and embed |
+| `cohere` | `/v1` and `/v2` chat and embed, `/v2` rerank |
 | `google_genai` | Gemini `generateContent` / streaming, and the Vertex `projects/…` paths |
 | `mistral` | chat completions, FIM and embeddings, under `/mistral/v1/…` |
 | `ollama` | `/api/chat`, including tool use and NDJSON streaming, and `/api/embed` |
