@@ -344,6 +344,19 @@ def scenario(tmp_path: Path) -> Path:
         },
     )
     write_json(
+        root / "composer.json",
+        {
+            "require": {"php": ">=8.2", "acme/client": "dev-main"},
+            "repositories": [
+                {
+                    "type": "path",
+                    "url": "../client",
+                    "options": {"versions": {"acme/client": "dev-main"}},
+                }
+            ],
+        },
+    )
+    write_json(
         tmp_path / "client" / "composer.json",
         {
             "name": "acme/client",
@@ -489,6 +502,95 @@ def test_missing_path_package_is_reported(scenario: Path) -> None:
     ]
 
 
+def test_path_repository_without_versions_is_reported(scenario: Path) -> None:
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["repositories"][0]["options"].pop(
+            "versions"
+        ),
+    )
+
+    assert lock_problems(scenario) == [
+        'acme/client: path repository has no "versions" pin; add '
+        '"versions": {"acme/client": "dev-main"} to its options'
+    ]
+
+
+def test_versions_that_do_not_name_the_package_are_reported(
+    scenario: Path,
+) -> None:
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["repositories"][0]["options"].update(
+            {"versions": {"acme/other": "dev-main"}}
+        ),
+    )
+
+    [problem] = lock_problems(scenario)
+
+    assert 'acme/client: path repository has no "versions" pin' in problem
+
+
+def test_pin_is_suggested_from_the_requirement(scenario: Path) -> None:
+    def unpinned(manifest: dict[str, Any]) -> None:
+        manifest["require"]["acme/client"] = "dev-feature"
+        manifest["repositories"][0]["options"].pop("versions")
+
+    edit_json(scenario / "composer.json", unpinned)
+
+    [problem] = lock_problems(scenario)
+
+    assert '"versions": {"acme/client": "dev-feature"}' in problem
+
+
+def test_pin_that_differs_from_the_requirement_is_reported(
+    scenario: Path,
+) -> None:
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["repositories"][0]["options"].update(
+            {"versions": {"acme/client": "dev-feature"}}
+        ),
+    )
+
+    assert lock_problems(scenario) == [
+        "acme/client: composer.json requires dev-main but its path "
+        "repository pins dev-feature"
+    ]
+
+
+def test_pin_is_found_in_any_path_repository(scenario: Path) -> None:
+    def moved(manifest: dict[str, Any]) -> None:
+        pin = manifest["repositories"][0]["options"].pop("versions")
+        manifest["repositories"].insert(
+            0, {"type": "vcs", "url": "https://example.com/acme/client.git"}
+        )
+        manifest["repositories"].append(
+            {"type": "path", "url": "../*", "options": {"versions": pin}}
+        )
+
+    edit_json(scenario / "composer.json", moved)
+
+    assert lock_problems(scenario) == []
+
+
+def test_transitive_path_package_needs_only_a_pin(scenario: Path) -> None:
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["require"].pop("acme/client"),
+    )
+
+    assert lock_problems(scenario) == []
+
+
+def test_missing_scenario_manifest_is_reported(scenario: Path) -> None:
+    (scenario / "composer.json").unlink()
+
+    assert lock_problems(scenario) == [
+        f"there is no composer.json at {scenario} to pin its path packages"
+    ]
+
+
 def test_every_problem_is_reported_together(scenario: Path) -> None:
     def stale(lock: dict[str, Any]) -> None:
         lock["packages"][0]["version"] = "v7.4.18"
@@ -528,7 +630,6 @@ def test_install_fails_before_composer_when_the_lock_is_stale(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    (scenario / BUILD_MARKER).write_text("{}", encoding="utf-8")
     edit_json(
         scenario / "composer.lock",
         lambda lock: lock["packages"][1]["require"].update(
@@ -550,8 +651,6 @@ def test_check_lock_does_not_run_composer(
     scenario: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    (scenario / BUILD_MARKER).write_text("{}", encoding="utf-8")
-
     def composer(command: list[str], cwd: Path) -> int:
         raise AssertionError(command)
 

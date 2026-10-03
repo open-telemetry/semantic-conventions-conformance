@@ -29,6 +29,12 @@ package: its requirements or autoload differ from the package's
 in the package's own `composer.lock`. The check is offline and changes nothing;
 regenerate a stale lock with `composer update <package> --with-dependencies`.
 
+The check also fails when the scenario's `composer.json` does not pin a path
+package's version with `"versions": {"<package>": "dev-main"}` in the path
+repository's `options`, or pins a different version than it requires. Unpinned,
+Composer names the package after the current checkout, `dev-<sha>` in CI, and
+`relock` then cannot resolve the scenario's `dev-main` requirement.
+
 `serve` starts `php -S 127.0.0.1:$OTEL_HTTP_SCENARIO_PORT <router>`. The PHP
 built-in server keeps the normal request-scoped lifecycle used by PHP-FPM:
 Composer and the OpenTelemetry SDK initialize for each request, then shutdown

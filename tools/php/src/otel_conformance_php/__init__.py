@@ -164,20 +164,31 @@ def check_lock(root: Path) -> None:
 def lock_problems(root: Path) -> list[str]:
     """How the lock at ``root`` disagrees with its path packages, if it does.
 
-    Offline: it reads the lock, each path package's ``composer.json`` and, when
-    it has one, its ``composer.lock``.
+    Offline: it reads the lock, the scenario's ``composer.json``, each path
+    package's ``composer.json`` and, when it has one, its ``composer.lock``.
     """
     lock = root / "composer.lock"
     if not lock.is_file():
         return []
 
     locked = _locked_packages(_read_json(lock))
+    paths = {
+        name: entry["dist"].get("url", "")
+        for name, entry in locked.items()
+        if entry.get("dist", {}).get("type") == "path"
+    }
+    if not paths:
+        return []
+    if not (root / BUILD_MARKER).is_file():
+        return [
+            f"there is no composer.json at {root} to pin its path packages"
+        ]
+
+    scenario = _read_json(root / BUILD_MARKER)
     problems: list[str] = []
-    for name, entry in sorted(locked.items()):
-        dist = entry.get("dist", {})
-        if dist.get("type") != "path":
-            continue
-        url = dist.get("url", "")
+    for name, url in sorted(paths.items()):
+        entry = locked[name]
+        problems.extend(_pin_problems(name, scenario))
         source = (root / url).resolve()
         manifest = source / "composer.json"
         if not manifest.is_file():
@@ -190,6 +201,34 @@ def lock_problems(root: Path) -> list[str]:
             _version_problems(name, locked, declared, source / "composer.lock")
         )
     return problems
+
+
+def _pin_problems(name: str, scenario: dict[str, Any]) -> list[str]:
+    """Where the scenario does not pin a path package's version.
+
+    Unpinned, Composer names a path package after the current checkout, which
+    is ``dev-<sha>`` in a detached CI checkout, so ``composer update`` stops
+    matching the scenario's ``dev-main`` requirement.
+    """
+    required = scenario.get("require", {}).get(name)
+    pins = [
+        repository["options"]["versions"][name]
+        for repository in scenario.get("repositories", [])
+        if repository.get("type") == "path"
+        and name in repository.get("options", {}).get("versions", {})
+    ]
+    if not pins:
+        pin = json.dumps({name: required or "dev-main"})
+        return [
+            f'{name}: path repository has no "versions" pin; add '
+            f'"versions": {pin} to its options'
+        ]
+    if required is not None and pins[0] != required:
+        return [
+            f"{name}: composer.json requires {required} but its path "
+            f"repository pins {pins[0]}"
+        ]
+    return []
 
 
 def _snapshot_problems(
