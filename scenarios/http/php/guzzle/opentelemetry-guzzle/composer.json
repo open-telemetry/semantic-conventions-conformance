@@ -3,7 +3,7 @@
   "description": "Guzzle HTTP client conformance measured by OpenTelemetry auto-instrumentation.",
   "license": "Apache-2.0",
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4",
     "guzzlehttp/guzzle": "^7.9",
     "open-telemetry/exporter-otlp": "^1.4",
     "open-telemetry/opentelemetry-auto-guzzle": "^1.4",
