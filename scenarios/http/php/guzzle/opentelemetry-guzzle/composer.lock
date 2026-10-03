@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "86567dfeb9f3400d329f69e45cab1fc3",
+    "content-hash": "cb185be82fb6ca64f2edc5fdf58c282e",
     "packages": [
         {
             "name": "brick/math",
@@ -665,10 +665,10 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/php/scenario",
-                "reference": "52f6e23e90c815d2b2eacb536e26153db800e979"
+                "reference": "2c797da843882097158bfaf6696de32b48c12ec8"
             },
             "require": {
-                "php": ">=8.2"
+                "php": ">=8.4"
             },
             "type": "library",
             "autoload": {
@@ -2256,7 +2256,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.2"
+        "php": ">=8.4"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"

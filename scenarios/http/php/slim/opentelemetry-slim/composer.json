@@ -3,7 +3,7 @@
   "description": "Slim HTTP server conformance measured by OpenTelemetry auto-instrumentation.",
   "license": "Apache-2.0",
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4",
     "open-telemetry/exporter-otlp": "^1.4",
     "open-telemetry/opentelemetry-auto-slim": "^1.5",
     "open-telemetry/sdk": "^1.15",
