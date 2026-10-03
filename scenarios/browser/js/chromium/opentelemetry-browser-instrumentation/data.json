@@ -1,0 +1,89 @@
+{
+  "spans": {},
+  "events": {
+    "browser.web_vital": [
+      "browser.web_vital.delta",
+      "browser.web_vital.id",
+      "browser.web_vital.name",
+      "browser.web_vital.navigation_type",
+      "browser.web_vital.rating",
+      "browser.web_vital.value"
+    ],
+    "exception": [
+      "exception.message",
+      "exception.stacktrace",
+      "exception.type"
+    ]
+  },
+  "metrics": {},
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope '@opentelemetry/browser-instrumentation/console' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "@opentelemetry/browser-instrumentation/console",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope '@opentelemetry/browser-instrumentation/errors' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "@opentelemetry/browser-instrumentation/errors",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope '@opentelemetry/browser-instrumentation/web-vitals' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "@opentelemetry/browser-instrumentation/web-vitals",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'browser.console.method' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "browser.console",
+      "context": {
+        "attribute_key": "browser.console.method"
+      }
+    },
+    {
+      "id": "missing_event",
+      "message": "Event 'browser.console' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "browser.console"
+    }
+  ]
+}
