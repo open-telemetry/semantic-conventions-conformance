@@ -29,3 +29,6 @@ artifacts/
 vendor/
 
 .DS_Store
+scenarios/http/php/codeigniter/opentelemetry-codeigniter/app/
+scenarios/http/php/codeigniter/opentelemetry-codeigniter/writable/
+scenarios/http/php/wordpress/opentelemetry-wordpress/wp-content/
