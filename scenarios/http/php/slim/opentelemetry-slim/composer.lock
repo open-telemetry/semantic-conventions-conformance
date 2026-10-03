@@ -408,10 +408,10 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/http/test-client/php",
-                "reference": "bd8e364aecfe7c189c4e8af8a802252ea840057a"
+                "reference": "0c0e6637069f81dcd6c3c460c1ac3fbccedd7290"
             },
             "require": {
-                "php": ">=8.2",
+                "php": ">=8.4",
                 "symfony/yaml": "^8.0"
             },
             "type": "library",
