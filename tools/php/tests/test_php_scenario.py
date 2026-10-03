@@ -559,6 +559,51 @@ def test_pin_that_differs_from_the_requirement_is_reported(
     ]
 
 
+def as_development_dependency(scenario: Path) -> None:
+    """Move the path package from ``require`` to ``require-dev``."""
+
+    def move(manifest: dict[str, Any]) -> None:
+        constraint = manifest["require"].pop("acme/client")
+        manifest["require-dev"] = {"acme/client": constraint}
+
+    def move_lock(lock: dict[str, Any]) -> None:
+        lock["packages-dev"] = [lock["packages"].pop(1)]
+
+    edit_json(scenario / "composer.json", move)
+    edit_json(scenario / "composer.lock", move_lock)
+
+
+def test_pin_that_differs_from_the_dev_requirement_is_reported(
+    scenario: Path,
+) -> None:
+    as_development_dependency(scenario)
+    edit_json(
+        scenario / "composer.json",
+        lambda manifest: manifest["repositories"][0]["options"].update(
+            {"versions": {"acme/client": "dev-feature"}}
+        ),
+    )
+
+    assert lock_problems(scenario) == [
+        "acme/client: composer.json requires dev-main but its path "
+        "repository pins dev-feature"
+    ]
+
+
+def test_pin_is_suggested_from_the_dev_requirement(scenario: Path) -> None:
+    as_development_dependency(scenario)
+
+    def unpinned(manifest: dict[str, Any]) -> None:
+        manifest["require-dev"]["acme/client"] = "dev-feature"
+        manifest["repositories"][0]["options"].pop("versions")
+
+    edit_json(scenario / "composer.json", unpinned)
+
+    [problem] = lock_problems(scenario)
+
+    assert '"versions": {"acme/client": "dev-feature"}' in problem
+
+
 def test_pin_is_found_in_any_path_repository(scenario: Path) -> None:
     def moved(manifest: dict[str, Any]) -> None:
         pin = manifest["repositories"][0]["options"].pop("versions")
