@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Mapping
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -27,6 +27,10 @@ from typing import Any, Literal, cast
 import pytest
 
 from opentelemetry.conformance import (
+    AttributeMatcher,
+    InstrumentationScopeExpectation,
+    SpanExpectation,
+    SpanMatch,
     SpecError,
     WeaverSpec,
     _session,
@@ -504,6 +508,62 @@ def test_process_group_cleanup_does_not_require_a_live_leader(
     assert not process.killed
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_second_signal_before_cleanup_guard_does_not_abort_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Process:
+        def wait(self, timeout: float) -> int:
+            os.kill(os.getpid(), signal_module.SIGTERM)
+            raise AssertionError("termination must interrupt the wait")
+
+    process = Process()
+    stopped: list[Process] = []
+    original_guard = _session._defer_termination
+
+    @contextmanager
+    def signal_before_guard(termination: Any) -> Any:
+        if termination is not None and termination.terminating:
+            os.kill(os.getpid(), signal_module.SIGHUP)
+        with original_guard(termination):
+            yield
+
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(_session, "_defer_termination", signal_before_guard)
+    monkeypatch.setattr(_session, "_stop_process", stopped.append)
+
+    with pytest.raises(SystemExit) as error:
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert error.value.code == 128 + signal_module.SIGTERM
+    assert stopped == [process]
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="POSIX process groups only"
+)
+@pytest.mark.parametrize(
+    "error", [PermissionError("denied"), OSError("unexpected")]
+)
+def test_process_group_cleanup_reports_unexpected_errors(
+    monkeypatch: pytest.MonkeyPatch, error: OSError
+) -> None:
+    class Process:
+        pid = 123
+
+        def kill(self) -> None:
+            pytest.fail(
+                "unexpected group error must not use direct-child cleanup"
+            )
+
+    def fail_to_signal(_pid: int, _signal: int) -> None:
+        raise error
+
+    monkeypatch.setattr(os, "killpg", fail_to_signal)
+    with pytest.raises(type(error), match=str(error)):
+        _session._kill_process_group(cast("subprocess.Popen[str]", Process()))
+
+
 def test_timeout_cleanup_wait_is_bounded(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -720,6 +780,64 @@ def test_the_scenario_gets_exactly_the_environment_it_was_given(
 
     assert completed.returncode == 0
     assert completed.stdout.strip() == "value"
+
+
+def test_scope_expectation_is_rendered_beside_declared_policies(
+    directory: Path, tmp_path: Path
+) -> None:
+    policies = directory / "policies"
+    policies.mkdir()
+    (policies / "declared.rego").write_text("package live_check_advice\n")
+    opened = session(directory, tmp_path / "data.json")
+    scenario = replace(
+        opened.spec.scenarios["inference"],
+        spans=(
+            SpanExpectation(
+                match=SpanMatch(
+                    attributes={"operation": "chat"},
+                    kind="SPAN_KIND_CLIENT",
+                ),
+                instrumentation_scope=InstrumentationScopeExpectation(
+                    schema_url=AttributeMatcher(present=True)
+                ),
+            ),
+        ),
+    )
+
+    with opened._scenario_policies(
+        scenario, WeaverSpec(policies="policies")
+    ) as rendered:
+        assert rendered is not None
+        rendered_path = Path(rendered)
+        assert (rendered_path / "declared.rego").is_file()
+        scope_policy = (
+            rendered_path / "instrumentation_scope_validation.rego"
+        ).read_text()
+        assert (
+            '"global": {"name": {"present": true}, '
+            '"schema_url": {"present": true}}' in scope_policy
+        )
+        assert '"schema_url": {"present": true}' in scope_policy
+        assert '"operation": "chat"' in scope_policy
+        assert '"kind": "client"' in scope_policy
+
+
+def test_generated_scope_policy_does_not_replace_a_declared_policy(
+    directory: Path, tmp_path: Path
+) -> None:
+    policies = directory / "policies"
+    policies.mkdir()
+    (policies / "instrumentation_scope_validation.rego").write_text(
+        "package live_check_advice\n"
+    )
+    opened = session(directory, tmp_path / "data.json")
+    scenario = opened.spec.scenarios["inference"]
+
+    with pytest.raises(SpecError, match="conflicts with generated policy"):
+        with opened._scenario_policies(
+            scenario, WeaverSpec(policies="policies")
+        ):
+            pass
 
 
 @pytest.fixture

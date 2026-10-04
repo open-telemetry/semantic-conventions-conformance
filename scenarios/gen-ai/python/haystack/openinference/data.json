@@ -16,6 +16,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.haystack' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.haystack",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
       "signal_type": "span",

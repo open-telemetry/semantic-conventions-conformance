@@ -2,6 +2,7 @@
   "spans": {
     "http.server": [
       "client.address",
+      "error.type",
       "http.request.method",
       "http.response.status_code",
       "http.route",
@@ -36,6 +37,18 @@
   },
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "http_span_name_format",
       "message": "Span '/health' should use HTTP method name 'GET', either alone or followed by a non-empty target.",
       "signal_type": "span",
@@ -53,15 +66,6 @@
       "context": {
         "expected_method": "POST",
         "kind": "server"
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span '/status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "signal_type": "span",
-      "signal_name": "/status/{code}",
-      "context": {
-        "status_code": "error"
       }
     },
     {

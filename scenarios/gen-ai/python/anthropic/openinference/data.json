@@ -9,6 +9,8 @@
       "gen_ai.request.model",
       "gen_ai.request.stop_sequences",
       "gen_ai.request.stream",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_p",
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
@@ -23,6 +25,18 @@
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.anthropic' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.anthropic",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
@@ -429,6 +443,17 @@
         "expected_form": "chat claude-sonnet-4-20250514",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "gen_ai.request.top_k",
+        "attribute_type": "double",
+        "expected": "int"
       }
     },
     {
@@ -873,6 +898,17 @@
         "expected_form": "chat claude-sonnet-4-20250514",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
+      }
+    },
+    {
+      "id": "type_mismatch",
+      "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+      "signal_type": "span",
+      "signal_name": "messages.stream",
+      "context": {
+        "attribute_key": "gen_ai.request.top_k",
+        "attribute_type": "double",
+        "expected": "int"
       }
     },
     {

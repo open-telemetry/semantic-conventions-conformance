@@ -68,6 +68,18 @@
   },
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "error_type_missing_on_error",
       "message": "Span 'GET /status/:code' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
       "signal_type": "span",

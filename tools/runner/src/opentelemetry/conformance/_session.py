@@ -17,6 +17,7 @@ import logging
 import mmap
 import os
 import shlex
+import shutil
 import signal
 import subprocess
 import tempfile
@@ -30,6 +31,7 @@ from contextlib import (
 from dataclasses import dataclass, field
 from pathlib import Path
 from string import Template
+from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -49,7 +51,8 @@ from ._env import (
     timeout_seconds,
 )
 from ._otlp_http import OtlpHttpBridge
-from ._registry import check_weaver
+from ._registry import check_weaver, local_registry, parse_git_registry
+from ._scope_policy import render as render_scope_policy
 from ._server import Server
 from ._spec import (
     PackageSpec,
@@ -100,6 +103,7 @@ _OTLP_SIGNAL_ENV = tuple(
 # the data file is meant to be committed and diffed.
 DEFAULT_REPORT_DIR = Path("output") / "weaver-reports"
 DEFAULT_DATA_FILE = Path("data.json")
+_SCOPE_POLICY_NAME = "instrumentation_scope_validation.rego"
 
 # Fallback only: a config declared by the caller or the package replaces it.
 RUNNER_WEAVER_DEFAULTS = WeaverSpec(
@@ -248,21 +252,26 @@ class ConformanceSession:
                 self._resolve_path(weaver_spec.advice_data),
             ]
 
-        def start_weaver() -> WeaverLiveCheck:
+        def start_weaver(policies: str | None) -> WeaverLiveCheck:
             return WeaverLiveCheck(
                 inactivity_timeout=int(
                     timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
                 ),
-                registry=self._resolve_path(self._registry),
-                policies_dir=self._resolve_path(weaver_spec.policies)
-                if weaver_spec.policies
-                else None,
+                registry=str(
+                    registry_path(
+                        self._registry,
+                        directory=self._spec.directory,
+                        variables=self._variables,
+                    )
+                ),
+                policies_dir=policies,
                 extra_args=extra_args,
             )
 
         with (
+            self._scenario_policies(scenario, weaver_spec) as policies,
             _quiet_connection_retries(),
-            _start_weaver(start_weaver) as weaver,
+            _start_weaver(lambda: start_weaver(policies)) as weaver,
         ):
             if self._spec.otlp_protocol == "http/protobuf":
                 with OtlpHttpBridge(weaver.otlp_endpoint) as bridge:
@@ -295,6 +304,35 @@ class ConformanceSession:
             stdout=completed.stdout,
             stderr=completed.stderr,
         )
+
+    @contextmanager
+    def _scenario_policies(
+        self, scenario: ScenarioSpec, weaver: WeaverSpec
+    ) -> Generator[str | None, None, None]:
+        """Add instrumentation-scope validation to its advice policies."""
+        declared = (
+            self._resolve_path(weaver.policies) if weaver.policies else None
+        )
+        with TemporaryDirectory(prefix="otel-conformance-policies-") as root:
+            policies = Path(root)
+            if declared:
+                source = Path(declared)
+                if source.is_dir():
+                    for policy in source.glob("*.rego"):
+                        shutil.copy(policy, policies / policy.name)
+                else:
+                    shutil.copy(source, policies / source.name)
+            generated = policies / _SCOPE_POLICY_NAME
+            if generated.exists():
+                raise SpecError(
+                    f"declared advice policy conflicts with generated policy: "
+                    f"{_SCOPE_POLICY_NAME}"
+                )
+            generated.write_text(
+                render_scope_policy(scenario.spans),
+                encoding="utf-8",
+            )
+            yield str(policies)
 
     def _resolve(self, value: str) -> str:
         return Template(value).safe_substitute(self._variables)
@@ -425,14 +463,14 @@ def _run_command(
     with (
         tempfile.TemporaryFile() as stdout_capture,
         tempfile.TemporaryFile() as stderr_capture,
-        _termination_signals(),
+        _termination_signals() as termination,
         _command_job() as job,
     ):
         process: subprocess.Popen[str] | None = None
         try:
             # Defer termination until the new process can be cleaned up. A
             # signal between Popen and registration must not orphan it.
-            with _defer_termination():
+            with _defer_termination(termination):
                 process = subprocess.Popen(  # noqa: S603
                     command,
                     cwd=cwd,
@@ -455,12 +493,12 @@ def _run_command(
         except OSError as error:
             if process is None:
                 return _failed(command, str(error))
-            with _defer_termination():
+            with _defer_termination(termination):
                 _stop_process(process)
             raise
         except subprocess.TimeoutExpired:
             assert process is not None
-            with _defer_termination():
+            with _defer_termination(termination):
                 _stop_process(process)
             stdout = _captured_text(stdout_capture, encoding)
             stderr = _captured_text(stderr_capture, encoding)
@@ -474,7 +512,7 @@ def _run_command(
             if process is not None:
                 # A new session does not receive the runner's terminal signal.
                 # Re-raise inside the guard so a second signal cannot replace it.
-                with _defer_termination():
+                with _defer_termination(termination):
                     _stop_process(process)
                     raise
             raise
@@ -483,7 +521,7 @@ def _run_command(
         # A launcher that exits without waiting for its workload has left that
         # workload behind. Stop anything still in its group before the runner
         # advances to the next scenario and collector lifecycle.
-        with _defer_termination():
+        with _defer_termination(termination):
             _kill_process_group(process)
         stdout = _captured_text(stdout_capture, encoding)
         stderr = _captured_text(stderr_capture, encoding)
@@ -496,66 +534,70 @@ def _run_command(
         )
 
 
+@dataclass
+class _Termination:
+    deferred: int = 0
+    pending: list[int] = field(default_factory=lambda: list[int]())
+    terminating: bool = False
+
+    def raise_pending(self, signum: int) -> None:
+        # Queue subsequent signals before raising, including signals arriving
+        # before the exception handler has entered its cleanup guard.
+        self.terminating = True
+        if signum == signal.SIGINT:
+            raise KeyboardInterrupt
+        raise SystemExit(128 + signum)
+
+
 @contextmanager
-def _defer_termination() -> Generator[None, None, None]:
-    """Delay termination without passing a blocked signal mask to children."""
-    if (
-        os.name != "posix"
-        or threading.current_thread() is not threading.main_thread()
-    ):
+def _defer_termination(
+    termination: _Termination | None,
+) -> Generator[None, None, None]:
+    """Queue termination through launch and cleanup without changing handlers."""
+    if termination is None:
         yield
         return
-    previous: dict[int, Any] = {}
-    pending: list[int] = []
-    termination_in_progress = False
-
-    def defer(signum: int, _frame: object) -> None:
-        pending.append(signum)
-
+    termination.deferred += 1
     try:
-        for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
-            if signal.getsignal(signum) is signal.SIG_IGN:
-                continue
-            previous[signum] = signal.signal(signum, defer)
-        try:
-            yield
-        except BaseException as error:
-            termination_in_progress = isinstance(
-                error, (SystemExit, KeyboardInterrupt)
-            )
-            raise
+        yield
+    except (SystemExit, KeyboardInterrupt):
+        termination.terminating = True
+        raise
     finally:
-        for signum, handler in previous.items():
-            signal.signal(signum, handler)
-        # A failed launch must not swallow a signal. Preserve an existing
-        # interruption when another signal arrives during its cleanup.
-        if pending and not termination_in_progress:
-            if pending[0] == signal.SIGINT:
-                raise KeyboardInterrupt
-            raise SystemExit(128 + pending[0])
+        termination.deferred -= 1
+        if (
+            termination.pending
+            and not termination.deferred
+            and not termination.terminating
+        ):
+            termination.raise_pending(termination.pending[0])
 
 
 @contextmanager
-def _termination_signals() -> Generator[None, None, None]:
+def _termination_signals() -> Generator[_Termination | None, None, None]:
     """Make termination enter the normal exception cleanup path on POSIX."""
     if (
         os.name != "posix"
         or threading.current_thread() is not threading.main_thread()
     ):
-        yield
+        yield None
         return
 
+    termination = _Termination()
     previous: dict[int, Any] = {}
 
     def terminate(signum: int, _frame: object) -> None:
-        raise SystemExit(128 + signum)
+        if termination.deferred or termination.terminating:
+            termination.pending.append(signum)
+        else:
+            termination.raise_pending(signum)
 
     try:
-        for signum in (signal.SIGTERM, signal.SIGHUP):
+        for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
             if signal.getsignal(signum) is signal.SIG_IGN:
                 continue
             previous[signum] = signal.signal(signum, terminate)
-        yield
+        yield termination
     finally:
         for signum, handler in previous.items():
             signal.signal(signum, handler)
@@ -587,10 +629,10 @@ def _kill_process_group(process: subprocess.Popen[str]) -> None:
         # the leader may exit after the timeout while descendants keep the
         # group (and inherited output pipes) alive.
         getattr(os, "killpg")(process.pid, getattr(signal, "SIGKILL"))
-    except (AttributeError, OSError):
+    except (AttributeError, ProcessLookupError):
         try:
             process.kill()
-        except OSError:
+        except ProcessLookupError:
             pass
 
 
@@ -639,6 +681,21 @@ def _default_report_dir(directory: Path) -> Path:
     lands in the same place however it was invoked.
     """
     return directory / DEFAULT_REPORT_DIR
+
+
+def registry_path(
+    value: str, *, directory: Path, variables: Mapping[str, str]
+) -> Path:
+    """A declared registry as a directory, fetched when it is a git URL.
+
+    A relative path is relative to the package that declared it, the way every
+    other path in a ``conformance.yaml`` is.
+    """
+    resolved = Template(value).safe_substitute(variables)
+    if parse_git_registry(resolved) is not None:
+        return local_registry(resolved)
+    path = Path(resolved)
+    return path if path.is_absolute() else directory / path
 
 
 @contextmanager

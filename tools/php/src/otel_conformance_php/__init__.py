@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import BinaryIO, Sequence
 
 BUILD_MARKER = "composer.json"
+LOCKFILE = "composer.lock"
+RELOCK = "relock"
 PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
 _READ_BUFFER_SIZE = 8192
 _POLL_INTERVAL_SECONDS = 0.05
@@ -56,6 +58,64 @@ def php_command(port: str, router: Path) -> list[str]:
         f"127.0.0.1:{port}",
         str(router),
     ]
+
+
+def relock_command() -> list[str]:
+    """Rewrite the lock only, moving nothing the manifests do not require."""
+    return [
+        shutil.which("composer") or "composer",
+        "update",
+        "--no-install",
+        "--no-scripts",
+        "--minimal-changes",
+        "--no-interaction",
+        "--no-progress",
+    ]
+
+
+def repository_root(start: Path | None = None) -> Path:
+    """The top of the git repository ``start`` is in."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],  # noqa: S607
+        cwd=start or Path.cwd(),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return Path(result.stdout.strip())
+
+
+def lock_projects(root: Path) -> list[Path]:
+    """Every directory under scenarios/ or tools/ with a tracked lock."""
+    result = subprocess.run(
+        [  # noqa: S607
+            "git",
+            "ls-files",
+            "-z",
+            "--",
+            f":(glob)scenarios/**/{LOCKFILE}",
+            f":(glob)tools/**/{LOCKFILE}",
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    listed = (path for path in result.stdout.split("\0") if path)
+    return sorted({(root / path).parent for path in listed})
+
+
+def relock(root: Path | None = None) -> int:
+    """Relock every package, stopping at the first that fails."""
+    root = root or repository_root()
+    for project in lock_projects(root):
+        name = project.relative_to(root).as_posix()
+        print(f"relocking {name}", flush=True)
+        status = subprocess.call(relock_command(), cwd=project)  # noqa: S603
+        if status != 0:
+            print(f"relocking {name} failed", file=sys.stderr)
+            return status
+    return 0
 
 
 def serve(
@@ -126,8 +186,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="serve a PHP router until standard input closes",
     )
     serve_parser.add_argument("router", type=Path)
+    subcommands.add_parser(
+        RELOCK, help="regenerate every committed composer.lock in place"
+    )
 
     arguments = parser.parse_args(argv)
+    if arguments.command == RELOCK:
+        try:
+            return relock()
+        except subprocess.CalledProcessError:
+            print(
+                "`relock` runs inside the conformance git repository",
+                file=sys.stderr,
+            )
+            return 1
+        except FileNotFoundError as error:
+            print(f"could not start {error.filename}", file=sys.stderr)
+            return 1
     try:
         if arguments.command == "serve":
             return serve(arguments.router)

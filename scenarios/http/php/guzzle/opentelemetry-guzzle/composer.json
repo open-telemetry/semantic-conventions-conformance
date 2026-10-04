@@ -17,14 +17,20 @@
       "type": "path",
       "url": "../../../../../tools/http/test-client/php",
       "options": {
-        "symlink": false
+        "symlink": false,
+        "versions": {
+          "open-telemetry-conformance/http-test-client": "dev-main"
+        }
       }
     },
     {
       "type": "path",
       "url": "../../../../../tools/php/scenario",
       "options": {
-        "symlink": false
+        "symlink": false,
+        "versions": {
+          "open-telemetry-conformance/scenario": "dev-main"
+        }
       }
     }
   ]

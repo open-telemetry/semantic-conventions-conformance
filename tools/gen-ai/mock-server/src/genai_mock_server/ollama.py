@@ -12,7 +12,11 @@ import json
 
 from flask import Blueprint, Response, request
 
-from ._common import mock_json_schema_value, mock_tool_arguments
+from ._common import (
+    mock_json_schema_value,
+    mock_tool_arguments,
+    should_call_tool,
+)
 
 bp = Blueprint("ollama", __name__)
 
@@ -32,14 +36,6 @@ CHAT_RESPONSE = {
     "eval_count": 12,
     "eval_duration": 700000000,
 }
-
-
-def _wants_tool_call(body):
-    if not body.get("tools"):
-        return False
-    return not any(
-        message.get("role") == "tool" for message in body.get("messages", [])
-    )
 
 
 def _tool_call_response(body):
@@ -63,7 +59,7 @@ def _tool_call_response(body):
 
 
 def _chat_response(body):
-    if _wants_tool_call(body):
+    if should_call_tool(body):
         return _tool_call_response(body)
 
     resp = copy.deepcopy(CHAT_RESPONSE)

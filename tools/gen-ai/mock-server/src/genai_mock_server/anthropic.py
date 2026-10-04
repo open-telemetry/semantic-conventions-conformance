@@ -82,6 +82,64 @@ MESSAGE_COMPACTION_RESPONSE = {
 }
 
 
+def _current_turn(messages):
+    """Messages since the last user message that is not a tool result.
+
+    Anthropic carries tool results as user messages, so a plain split on the
+    last user message would put every turn's result in its own turn.
+    """
+    last_user = -1
+    for index, message in enumerate(messages):
+        if message.get("role") != "user":
+            continue
+        content = message.get("content")
+        if isinstance(content, list) and any(
+            isinstance(block, dict) and block.get("type") == "tool_result"
+            for block in content
+        ):
+            continue
+        last_user = index
+    return messages[last_user + 1 :]
+
+
+def _called_tool_info(messages):
+    """Tool names called, and every tool id seen, in Anthropic block shape."""
+    called_names = set()
+    call_ids = []
+    for message in messages:
+        content = message.get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "tool_use":
+                if block.get("id"):
+                    call_ids.append(block["id"])
+                if block.get("name"):
+                    called_names.add(block["name"])
+            elif block.get("type") == "tool_result":
+                if block.get("tool_use_id"):
+                    call_ids.append(block["tool_use_id"])
+    return called_names, call_ids
+
+
+def _should_call_tool(messages, tool_name):
+    """Whether this turn still needs a call to ``tool_name``.
+
+    Scoped to the turn so a completed call does not exhaust the tool for the
+    rest of the conversation.
+    """
+    if not tool_name:
+        return False
+    turn = _current_turn(messages)
+    if not _has_tool_result({"messages": turn}):
+        return True
+    called_names, _ = _called_tool_info(turn)
+    # A result with no call to attribute it to: answer rather than loop.
+    return bool(called_names) and tool_name not in called_names
+
+
 def _has_tool_result(body):
     for message in body.get("messages", []):
         content = message.get("content")
@@ -175,13 +233,15 @@ def messages():
         resp["model"] = body.get("model", resp["model"])
         return resp
 
-    if body.get("tools") and not _has_tool_result(body):
+    messages = body.get("messages", [])
+    tool = (body.get("tools") or [{}])[0]
+    tool_name = tool.get("name")
+    if body.get("tools") and _should_call_tool(messages, tool_name):
+        _, call_ids = _called_tool_info(messages)
         resp = copy.deepcopy(MESSAGE_TOOL_USE_RESPONSE)
         resp["model"] = body.get("model", resp["model"])
-        tool = body.get("tools", [{}])[0]
-        tool_name = tool.get("name")
-        if tool_name:
-            resp["content"][0]["name"] = tool_name
+        resp["content"][0]["id"] = f"toolu_mock_{len(set(call_ids)) + 1:03d}"
+        resp["content"][0]["name"] = tool_name
         resp["content"][0]["input"] = mock_tool_arguments(tool)
         return resp
 

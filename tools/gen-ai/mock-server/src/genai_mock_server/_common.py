@@ -135,6 +135,76 @@ def mock_json_schema_value(schema, name="value", root=None, depth=0):
     return mock_tool_argument_value(name, {"type": schema_type or "string"})
 
 
+def current_turn(messages):
+    """Messages since the last user message.
+
+    A tool called in an earlier turn must not stop the model from calling it
+    again when the user asks a new question.
+    """
+    last_user = -1
+    for index, message in enumerate(messages):
+        if message.get("role") == "user":
+            last_user = index
+    return messages[last_user + 1 :]
+
+
+def called_tool_info(messages):
+    """Tool names called, and every tool call id seen, in OpenAI chat shape."""
+    called_names = set()
+    call_ids = []
+    for message in messages:
+        for call in message.get("tool_calls") or []:
+            call_id = call.get("id")
+            if call_id:
+                call_ids.append(call_id)
+            name = (call.get("function") or {}).get("name")
+            if name:
+                called_names.add(name)
+        if message.get("role") == "tool":
+            call_id = message.get("tool_call_id")
+            if call_id:
+                call_ids.append(call_id)
+    return called_names, call_ids
+
+
+def offered_tool(body):
+    """The first tool a request offers, and its name."""
+    tools = body.get("tools") or []
+    if not tools:
+        return None, None
+    tool = tools[0]
+    function = tool.get("function", tool)
+    return tool, function.get("name") or tool.get("name")
+
+
+def should_call_tool(body):
+    """Whether to answer this request with a call to its first offered tool.
+
+    True while the current turn holds no result for that tool. Scoping to the
+    turn rather than the whole history is what lets a conversation call the
+    same tool again after the user asks a second question.
+    """
+    tool, tool_name = offered_tool(body)
+    if not tool or not tool_name:
+        return False
+    turn = current_turn(body.get("messages", []))
+    if not any(message.get("role") == "tool" for message in turn):
+        return True
+    called_names, _ = called_tool_info(turn)
+    # A result with no call to attribute it to: answer rather than loop.
+    return bool(called_names) and tool_name not in called_names
+
+
+def next_tool_call_index(messages):
+    """1-based number of the next tool call, past the ids already in play.
+
+    Agent handoffs replay earlier turns, so a fixed id would repeat across
+    calls the framework expects to tell apart.
+    """
+    _, call_ids = called_tool_info(messages)
+    return len(set(call_ids)) + 1
+
+
 def mock_tool_arguments(tool):
     function = (tool or {}).get("function", {})
     parameters = function.get("parameters") or (tool or {}).get("parameters") or (tool or {}).get("input_schema", {})

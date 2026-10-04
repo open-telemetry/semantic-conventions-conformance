@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "11dcd0665dce1f5785599e12fd1ddf24",
+    "content-hash": "86567dfeb9f3400d329f69e45cab1fc3",
     "packages": [
         {
             "name": "brick/math",
@@ -633,7 +633,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/http/test-client/php",
-                "reference": "5ffc19139af15d223fce7e4cd200626a9f805e5f"
+                "reference": "9e856017556e5d42650543c69118e0bc9c810d4d"
             },
             "require": {
                 "php": ">=8.2",
@@ -665,7 +665,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/php/scenario",
-                "reference": "b2f4210961a7dfcc11124d74a3a636eb54692ee2"
+                "reference": "52f6e23e90c815d2b2eacb536e26153db800e979"
             },
             "require": {
                 "php": ">=8.2"
@@ -948,37 +948,37 @@
         },
         {
             "name": "open-telemetry/opentelemetry-auto-guzzle",
-            "version": "1.4.0",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/contrib-auto-guzzle.git",
-                "reference": "1553d9ab2e0a94c8af5d8c83946cb8dfa71835ec"
+                "reference": "b207e98276b136a6a401907a52ec82c2ca03ee19"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-guzzle/zipball/1553d9ab2e0a94c8af5d8c83946cb8dfa71835ec",
-                "reference": "1553d9ab2e0a94c8af5d8c83946cb8dfa71835ec",
+                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-guzzle/zipball/b207e98276b136a6a401907a52ec82c2ca03ee19",
+                "reference": "b207e98276b136a6a401907a52ec82c2ca03ee19",
                 "shasum": ""
             },
             "require": {
                 "ext-opentelemetry": "*",
-                "guzzlehttp/guzzle": "^7",
+                "guzzlehttp/guzzle": "^7 || ^8",
                 "open-telemetry/api": "^1.0",
-                "open-telemetry/sem-conv": "^1.32",
+                "open-telemetry/sem-conv": "^1.38",
                 "php": "^8.1"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3",
-                "guzzlehttp/promises": "^2",
+                "guzzlehttp/promises": "^2 || ^3",
                 "nyholm/psr7": "*",
                 "open-telemetry/sdk": "^1.0",
-                "phan/phan": "^5.0",
+                "phan/phan": "^6.0",
                 "phpstan/phpstan": "^1.1",
                 "phpstan/phpstan-mockery": "^1.1.0",
                 "phpstan/phpstan-phpunit": "^1.0",
                 "phpunit/phpunit": "^9.5",
                 "psalm/plugin-phpunit": "^0.19.2",
-                "vimeo/psalm": "6.4.0"
+                "vimeo/psalm": "^6.10.0"
             },
             "type": "library",
             "autoload": {
@@ -1004,9 +1004,9 @@
                 "tracing"
             ],
             "support": {
-                "source": "https://github.com/opentelemetry-php/contrib-auto-guzzle/tree/1.4.0"
+                "source": "https://github.com/opentelemetry-php/contrib-auto-guzzle/tree/1.5.0"
             },
-            "time": "2026-07-09T20:17:32+00:00"
+            "time": "2026-09-02T12:13:51+00:00"
         },
         {
             "name": "open-telemetry/sdk",

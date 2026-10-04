@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable
 
@@ -107,3 +108,41 @@ def test_the_cli_names_the_command_that_was_run(
 
     assert exit_info.value.code == 0
     assert capsys.readouterr().out.startswith("usage: test-conformance ")
+
+
+def test_a_package_registry_drives_the_coverage_model(
+    domain, tmp_path, monkeypatch
+) -> None:
+    """What the run is checked against is what its coverage is read against."""
+    directory = tmp_path / "package"
+    directory.mkdir()
+    (directory / "conformance.yaml").write_text(
+        "instrumented_library: demo\n"
+        "instrumentation_library: demo-instrumentation\n"
+        "weaver:\n"
+        "  registry: ./model\n"
+        "scenarios:\n"
+        "  inference:\n"
+        "    run: python inference.py\n"
+    )
+    resolved: list[Path] = []
+
+    monkeypatch.setattr(_domain, "check_weaver", lambda: None)
+    monkeypatch.setattr(
+        _domain,
+        "resolve_coverage_model",
+        lambda registry, output: resolved.append(registry),
+    )
+    monkeypatch.setattr(_domain, "load_coverage_model", lambda path: {})
+
+    @contextmanager
+    def opened(directory: Path, **kwargs: object):
+        del directory
+        yield kwargs
+
+    monkeypatch.setattr(_domain, "conformance_session", opened)
+
+    with domain().session(directory):
+        pass
+
+    assert resolved == [directory / "model"]

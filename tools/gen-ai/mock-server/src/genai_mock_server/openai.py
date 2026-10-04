@@ -6,7 +6,14 @@ import re
 
 from flask import Blueprint, Response, request
 
-from ._common import mock_json_schema_value, mock_tool_arguments, sse
+from ._common import (
+    mock_json_schema_value,
+    mock_tool_arguments,
+    next_tool_call_index,
+    offered_tool,
+    should_call_tool,
+    sse,
+)
 
 bp = Blueprint("openai", __name__)
 
@@ -228,7 +235,32 @@ def _chat_audio_response(body):
     return response
 
 
-def _responses_tool_call_response(body):
+def _responses_current_turn(request_input):
+    """Input items since the last user message."""
+    last_user = -1
+    for index, item in enumerate(request_input):
+        if item.get("role") == "user":
+            last_user = index
+    return request_input[last_user + 1 :]
+
+
+def _responses_called_tool_info(items):
+    """Tool names called, and every call id seen, in Responses input shape."""
+    called_names = set()
+    call_ids = []
+    for item in items:
+        if item.get("type") == "function_call":
+            name = item.get("name")
+            if name:
+                called_names.add(name)
+        if item.get("type") in ("function_call", "function_call_output"):
+            call_id = item.get("call_id")
+            if call_id:
+                call_ids.append(call_id)
+    return called_names, call_ids
+
+
+def _responses_tool_call_response(body, call_index=1):
     response = copy.deepcopy(RESPONSES_RESPONSE)
     response["id"] = "resp-mock-tool-001"
     response["model"] = body.get("model", response["model"])
@@ -238,8 +270,8 @@ def _responses_tool_call_response(body):
     response["output"] = [
         {
             "type": "function_call",
-            "id": "fc_mock_001",
-            "call_id": "call_mock_001",
+            "id": f"fc_mock_{call_index:03d}",
+            "call_id": f"call_mock_{call_index:03d}",
             "name": tool_name or "get_weather",
             "arguments": json.dumps(mock_tool_arguments(tool)),
             "status": "completed",
@@ -372,20 +404,6 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
-def _wants_tool_call(body):
-    """Whether this request should be answered with a call to its first tool.
-
-    Offered tools and no tool result yet, which is the same rule the
-    non-streaming path follows so a framework sees the same exchange either
-    way.
-    """
-    if not body.get("tools"):
-        return False
-    return not any(
-        message.get("role") == "tool" for message in body.get("messages", [])
-    )
-
-
 def _stream_tool_call(body, model, chunk_id):
     """Yield the SSE chunks of a streamed tool call.
 
@@ -398,8 +416,10 @@ def _stream_tool_call(body, model, chunk_id):
     name = function.get("name") or "get_weather"
     arguments = json.dumps(mock_tool_arguments(tool))
 
+    call_id = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
+
     for delta in (
-        {"id": "call_mock_001", "type": "function", "function": {"name": name, "arguments": ""}},
+        {"id": call_id, "type": "function", "function": {"name": name, "arguments": ""}},
         {"function": {"arguments": arguments}},
     ):
         yield sse(
@@ -452,7 +472,7 @@ def _stream_chat(body):
         }
     )
 
-    if _wants_tool_call(body):
+    if should_call_tool(body):
         yield from _stream_tool_call(body, model, chunk_id)
         return
 
@@ -510,22 +530,17 @@ def chat_completions(deployment=None):
         message.get("content", "") for message in body.get("messages", []) if isinstance(message.get("content"), str)
     )
 
-    # Offered tools but no tool result yet: call the tool, else answer.
-    if body.get("tools"):
-        messages = body.get("messages", [])
-        has_tool_result = any(m.get("role") == "tool" for m in messages)
-        if not has_tool_result:
-            resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
-            resp["model"] = body.get("model", resp["model"])
-            tool = body.get("tools", [{}])[0]
-            tool_name = tool.get("function", {}).get("name")
-            if tool_name:
-                resp["choices"][0]["message"]["tool_calls"][0]["function"]["name"] = tool_name
-            resp["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"] = json.dumps(
-                mock_tool_arguments(tool)
-            )
-            resp["service_tier"] = _served_service_tier(body)
-            return resp
+    # Offered tools with no result for them in this turn: call the tool.
+    if should_call_tool(body):
+        tool, tool_name = offered_tool(body)
+        resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
+        resp["model"] = body.get("model", resp["model"])
+        call = resp["choices"][0]["message"]["tool_calls"][0]
+        call["id"] = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
+        call["function"]["name"] = tool_name
+        call["function"]["arguments"] = json.dumps(mock_tool_arguments(tool))
+        resp["service_tier"] = _served_service_tier(body)
+        return resp
 
     # CrewAI planner natural-retry path: a refusal, then a schema-invalid
     # answer, drives CrewAI through three LLM round-trips under one plan span.
@@ -621,21 +636,20 @@ def responses():
         request_input = [item for item in raw_request_input if isinstance(item, dict)]
     else:
         request_input = []
-    # Call the first offered tool unless it has already been called in this
-    # input. Keying on the offered tool rather than on the presence of any
+    # Call the first offered tool unless the current turn already called it.
+    # Keying on the offered tool rather than on the presence of any
     # function_call_output lets a multi-agent run still exercise the tool of
     # the agent it handed off to, whose own handoff already produced one.
     offered = {
         tool.get("name") or (tool.get("function") or {}).get("name")
         for tool in body.get("tools") or []
     }
-    called = {
-        item.get("name")
-        for item in request_input
-        if item.get("type") == "function_call"
-    }
+    # Scoped to the current turn: a completed call must not stop the same tool
+    # from being called again after the user asks a second question.
+    called, _ = _responses_called_tool_info(_responses_current_turn(request_input))
+    _, call_ids = _responses_called_tool_info(request_input)
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
-        return _responses_tool_call_response(body)
+        return _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
 
     resp = copy.deepcopy(RESPONSES_RESPONSE)
     resp["model"] = body.get("model", resp["model"])

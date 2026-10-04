@@ -65,6 +65,30 @@
   },
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'System.Net.Http' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "System.Net.Http",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'System.Net.NameResolution' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "System.Net.NameResolution",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_metric",
       "message": "Metric does not exist in the registry.",
       "signal_type": "metric",

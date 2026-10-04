@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 from typing import Callable
 
-from ._registry import WeaverNotInstalledError
+from ._registry import WeaverNotInstalledError, parse_git_registry
 from ._runners import resolve as resolve_runner
 from ._session import (
     DEFAULT_DATA_FILE,
@@ -114,6 +114,13 @@ def _absolute(value: str | None) -> str | None:
     return None if value is None else str(Path(value).absolute())
 
 
+def _registry_argument(value: str | None) -> str | None:
+    """``--registry`` is a path unless it is one of weaver's git URLs."""
+    if value is not None and parse_git_registry(value) is not None:
+        return value
+    return _absolute(value)
+
+
 def _parser(prog: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=prog,
@@ -167,9 +174,10 @@ def _parser(prog: str) -> argparse.ArgumentParser:
     )
     weaver.add_argument(
         "--registry",
-        metavar="PATH",
+        metavar="PATH|URL",
         help="the semantic-convention registry to validate against, and to "
-        "reduce the run's coverage against",
+        "reduce the run's coverage against; a local directory, or a git URL "
+        "as https://host/org/repo.git@REF[SUB/FOLDER]",
     )
     weaver.add_argument(
         "--policies",
@@ -324,7 +332,7 @@ def _run(
         report_dir=args.report_dir,
         data_file=args.data_file,
         weaver=WeaverSpec(
-            registry=_absolute(args.registry),
+            registry=_registry_argument(args.registry),
             policies=_absolute(args.policies),
             advice_data=_absolute(args.advice_data),
             config=_absolute(args.weaver_config),

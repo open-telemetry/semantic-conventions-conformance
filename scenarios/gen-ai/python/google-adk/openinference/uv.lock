@@ -392,7 +392,7 @@ wheels = [
 
 [[package]]
 name = "google-adk"
-version = "2.9.2"
+version = "2.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiosqlite" },
@@ -419,9 +419,9 @@ dependencies = [
     { name = "watchdog" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/db/08/7ac5e31305b9c0e1714af8ea8c1a5df16e980090eed5e5e456dc8fe5b583/google_adk-2.9.2.tar.gz", hash = "sha256:9d4b91a3cc3a52a471ca5831127e4c46ac174da0db519b4d157a09011737da10", size = 4002237, upload-time = "2026-09-18T18:10:46.112Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/2e/3f5a2ed6b50da6c4420ddc4fbc9f2be0fc2ba2e25b83345b622fcdf8a033/google_adk-2.10.0.tar.gz", hash = "sha256:9e8d64f18e91780e70bf32726250595a9ca38fc8d51d90750f7a71b44922432f", size = 4127907, upload-time = "2026-09-25T19:02:06.67Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/a6/e375f8a124e28f31c0cd0f9ff8607d7bdc652f8ce4bc67c39863353b4c6d/google_adk-2.9.2-py3-none-any.whl", hash = "sha256:ad887aadff34ebfe06586ded2b04848413c8bed6d6c7dd14dc7485ec7e54b2d2", size = 4631024, upload-time = "2026-09-18T18:10:43.492Z" },
+    { url = "https://files.pythonhosted.org/packages/29/8b/ae4a9750874ec35e4d88c2a8fd416884cb0695141691689e5affcaad17a7/google_adk-2.10.0-py3-none-any.whl", hash = "sha256:7550fecbb428a8a6de15ab88ba3c1d4704c752fe0b5594dc6d67ff440f370886", size = 4792014, upload-time = "2026-09-25T19:02:04.233Z" },
 ]
 
 [[package]]
@@ -439,7 +439,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "google-adk", specifier = "==2.9.2" },
+    { name = "google-adk", specifier = "==2.10.0" },
     { name = "openinference-instrumentation-google-adk", specifier = "==0.1.28" },
     { name = "opentelemetry-api", specifier = "==1.42.0" },
     { name = "opentelemetry-distro", specifier = "==0.63b0" },

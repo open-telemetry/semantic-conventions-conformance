@@ -18,6 +18,23 @@ exclude_samples = [
   "telemetry.auto.version",
 ]
 
+# The SDK's tracing and OTLP exporter scopes are runner infrastructure rather
+# than the instrumentation under test. Ignore every finding attached to them.
+[[live-check.finding_filters]]
+signal_type = "instrumentation_scope"
+exclude_samples = [
+  "io.opentelemetry.exporters.otlp-grpc",
+  "io.opentelemetry.sdk.logs",
+  "io.opentelemetry.sdk.trace",
+]
+
+# Netty can log a timer shutdown race under this logger scope. Its presence
+# varies between runs, and the logger has no semantic convention schema.
+[[live-check.finding_filters]]
+signal_type = "instrumentation_scope"
+exclude = ["instrumentation_scope_schema_url_missing"]
+sample_names = ["io.netty.util.HashedWheelTimer"]
+
 # The Java SDK reports its own export health through the application
 # MeterProvider, and autoconfigure 1.64 cannot be told not to: it reads only
 # `legacy` and `latest` from `otel.experimental.sdk.telemetry.version` and
