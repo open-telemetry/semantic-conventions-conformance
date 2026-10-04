@@ -24,9 +24,10 @@ as its own locked package and also resolves `composer.bat` on Windows.
 A scenario lock copies each path package's requirements, and `composer install`
 does not notice when they have changed since. `install` therefore first runs
 `otel-conformance-php check-lock` and fails if the lock disagrees with a path
-package: its requirements or autoload differ from the package's
-`composer.json`, or a dependency it names is locked at a different version than
-in the package's own `composer.lock`. The check is offline and changes nothing;
+package: its `require`, `require-dev`, `conflict`, `replace`, `provide`,
+`autoload`, `bin` or `type` differ from the package's `composer.json` (a
+missing `type` counts as `library`), or a dependency it names is locked at a
+different version than in the package's own `composer.lock`. The check is offline and changes nothing;
 regenerate a stale lock with `composer update <package> --with-dependencies`.
 
 The check also fails when the scenario's `composer.json` does not pin a path
