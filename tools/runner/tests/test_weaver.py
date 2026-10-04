@@ -7,6 +7,8 @@ from unittest.mock import Mock
 
 import pytest
 
+pytest.importorskip("opentelemetry.test.weaver_live_check")
+
 from opentelemetry.conformance import _weaver
 
 
