@@ -444,6 +444,45 @@ def test_changed_type_is_reported(scenario: Path) -> None:
     assert "the lock has type" in problem
 
 
+def test_single_bin_means_a_list(scenario: Path) -> None:
+    # Composer locks a single bin as a one-item list.
+    edit_json(
+        scenario / "composer.lock",
+        lambda lock: lock["packages"][1].update({"bin": ["bin/tool"]}),
+    )
+    edit_json(
+        scenario.parent / "client" / "composer.json",
+        lambda manifest: manifest.update({"bin": "bin/tool"}),
+    )
+
+    assert lock_problems(scenario) == []
+
+
+def test_changed_single_bin_is_reported(scenario: Path) -> None:
+    edit_json(
+        scenario / "composer.lock",
+        lambda lock: lock["packages"][1].update({"bin": ["bin/tool"]}),
+    )
+    edit_json(
+        scenario.parent / "client" / "composer.json",
+        lambda manifest: manifest.update({"bin": "bin/other"}),
+    )
+
+    [problem] = lock_problems(scenario)
+
+    assert "the lock has bin" in problem
+
+
+def test_type_is_compared_in_lowercase(scenario: Path) -> None:
+    # Composer locks the type in lowercase.
+    edit_json(
+        scenario.parent / "client" / "composer.json",
+        lambda manifest: manifest.update({"type": "Library"}),
+    )
+
+    assert lock_problems(scenario) == []
+
+
 def test_version_that_differs_from_the_package_lock_is_reported(
     scenario: Path,
 ) -> None:

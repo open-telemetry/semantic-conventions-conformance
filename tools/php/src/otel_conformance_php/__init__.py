@@ -273,12 +273,17 @@ def _snapshot_problems(
     """Where the lock's copy of a package differs from its source."""
     problems: list[str] = []
     for key in _SNAPSHOT_KEYS:
-        if (entry.get(key) or None) != (declared.get(key) or None):
+        locked = entry.get(key) or None
+        source = declared.get(key) or None
+        if key == "bin" and isinstance(source, str):
+            source = [source]  # Composer locks a single bin as a list
+        if locked != source:
             problems.append(
                 f"{name}: the lock has {key} {_show(entry.get(key))} but "
                 f"{url}/composer.json has {_show(declared.get(key))}"
             )
-    if entry.get("type", "library") != declared.get("type", "library"):
+    # Composer locks the type in lowercase.
+    if entry.get("type", "library") != declared.get("type", "library").lower():
         problems.append(
             f"{name}: the lock has type {_show(entry.get('type'))} but "
             f"{url}/composer.json has {_show(declared.get('type'))}"
