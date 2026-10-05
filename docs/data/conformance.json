@@ -235,6 +235,12 @@
             "gen_ai.agent.name": "recommended"
           }
         },
+        "gen_ai.invoke_workflow.duration": {
+          "attributes": {
+            "error.type": "conditionally_required_conditional",
+            "gen_ai.workflow.name": "conditionally_required_conditional"
+          }
+        },
         "gen_ai.server.time_per_output_token": {
           "attributes": {
             "gen_ai.operation.name": "required",
@@ -1283,6 +1289,18 @@
       "findings": [
         {
           "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'agent_framework' does not have schema_url.",
+          "signal_name": "agent_framework",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
             "attribute_key": "gen_ai.system"
           },
           "id": "missing_attribute",
@@ -1699,7 +1717,7 @@
         }
       ],
       "summary": {
-        "findings": 17,
+        "findings": 18,
         "recommended": {
           "declared": 29,
           "emitted": 13
@@ -1715,6 +1733,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.agno' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.agno",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -2475,7 +2505,7 @@
         }
       ],
       "summary": {
-        "findings": 60,
+        "findings": 61,
         "recommended": {
           "declared": 25,
           "emitted": 5
@@ -2491,6 +2521,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.agno' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.agno",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.system"
@@ -2799,7 +2841,7 @@
         }
       ],
       "summary": {
-        "findings": 17,
+        "findings": 18,
         "recommended": {
           "declared": 14,
           "emitted": 2
@@ -2922,7 +2964,7 @@
             },
             "recommended_conditional": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 1,
@@ -2935,6 +2977,7 @@
             "gen_ai.input.messages",
             "gen_ai.operation.name",
             "gen_ai.output.messages",
+            "gen_ai.request.model",
             "gen_ai.tool.definitions"
           ],
           "identity": {
@@ -2944,6 +2987,7 @@
               "gen_ai.input.messages",
               "gen_ai.operation.name",
               "gen_ai.output.messages",
+              "gen_ai.request.model",
               "gen_ai.tool.definitions"
             ],
             "span_kind": "internal"
@@ -2956,7 +3000,6 @@
             "gen_ai.request.choice.count",
             "gen_ai.request.frequency_penalty",
             "gen_ai.request.max_tokens",
-            "gen_ai.request.model",
             "gen_ai.request.presence_penalty",
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
@@ -2975,12 +3018,12 @@
         {
           "coverage": {
             "conditionally_required_conditional": {
-              "declared": 4,
-              "emitted": 0
-            },
-            "recommended": {
               "declared": 2,
               "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
             },
             "required": {
               "declared": 1,
@@ -2988,24 +3031,42 @@
             }
           },
           "emitted": [
-            "gen_ai.operation.name"
+            "gen_ai.tool.name",
+            "gen_ai.tool.type"
           ],
           "missing": [
             "error.type",
-            "gen_ai.provider.name",
-            "gen_ai.request.model",
-            "gen_ai.response.model",
-            "server.address",
-            "server.port"
+            "gen_ai.agent.name"
           ],
-          "name": "gen_ai.client.operation.duration",
+          "name": "gen_ai.execute_tool.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_agent.duration",
           "type": "metric"
         }
       ],
       "summary": {
         "findings": 3,
         "recommended": {
-          "declared": 13,
+          "declared": 11,
           "emitted": 0
         },
         "required": {
@@ -3019,6 +3080,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.anthropic' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.anthropic",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -3425,6 +3498,17 @@
           "id": "genai_span_name_format",
           "message": "chat span name should be 'chat claude-sonnet-4-20250514', got 'beta.messages.parse'",
           "signal_name": "beta.messages.parse",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.request.top_k",
+            "attribute_type": "double",
+            "expected": "int"
+          },
+          "id": "type_mismatch",
+          "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+          "signal_name": "messages.create",
           "signal_type": "span"
         },
         {
@@ -3873,6 +3957,17 @@
         },
         {
           "context": {
+            "attribute_key": "gen_ai.request.top_k",
+            "attribute_type": "double",
+            "expected": "int"
+          },
+          "id": "type_mismatch",
+          "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+          "signal_name": "messages.stream",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "input.mime_type"
           },
           "id": "missing_attribute",
@@ -4128,7 +4223,7 @@
             },
             "recommended": {
               "declared": 14,
-              "emitted": 9
+              "emitted": 11
             },
             "recommended_conditional": {
               "declared": 5,
@@ -4148,6 +4243,8 @@
             "gen_ai.request.model",
             "gen_ai.request.stop_sequences",
             "gen_ai.request.stream",
+            "gen_ai.request.temperature",
+            "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
@@ -4167,6 +4264,8 @@
               "gen_ai.request.model",
               "gen_ai.request.stop_sequences",
               "gen_ai.request.stream",
+              "gen_ai.request.temperature",
+              "gen_ai.request.top_p",
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
@@ -4192,9 +4291,7 @@
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
             "gen_ai.request.seed",
-            "gen_ai.request.temperature",
             "gen_ai.request.top_k",
-            "gen_ai.request.top_p",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
             "gen_ai.usage.reasoning.output_tokens",
@@ -4206,10 +4303,10 @@
         }
       ],
       "summary": {
-        "findings": 119,
+        "findings": 122,
         "recommended": {
           "declared": 14,
-          "emitted": 9
+          "emitted": 11
         },
         "required": {
           "declared": 2,
@@ -4222,6 +4319,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.anthropic' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.anthropic",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.response.finish_reason"
@@ -4478,7 +4587,7 @@
         }
       ],
       "summary": {
-        "findings": 10,
+        "findings": 11,
         "recommended": {
           "declared": 18,
           "emitted": 10
@@ -4493,7 +4602,26 @@
       "backend": null,
       "domain": "gen-ai",
       "entities": {},
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.cache_write.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.cache_write.input_tokens' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.cache_write.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.cache_write.input_tokens' does not exist in the registry.",
+          "signal_name": "chat claude-sonnet-4-20250514",
+          "signal_type": "span"
+        }
+      ],
       "id": "gen-ai/python/anthropic/opentelemetry-anthropic",
       "instrumentation_library": "opentelemetry-instrumentation-genai-anthropic",
       "instrumented_library": "anthropic",
@@ -4514,15 +4642,15 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 3
+              "emitted": 4
             },
             "recommended": {
               "declared": 14,
-              "emitted": 10
+              "emitted": 11
             },
             "recommended_conditional": {
               "declared": 5,
@@ -4542,12 +4670,15 @@
             "gen_ai.request.model",
             "gen_ai.request.stop_sequences",
             "gen_ai.request.stream",
+            "gen_ai.request.temperature",
+            "gen_ai.request.top_k",
+            "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
-            "gen_ai.usage.cache_creation.input_tokens",
+            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens",
@@ -4564,12 +4695,15 @@
               "gen_ai.request.model",
               "gen_ai.request.stop_sequences",
               "gen_ai.request.stream",
+              "gen_ai.request.temperature",
+              "gen_ai.request.top_k",
+              "gen_ai.request.top_p",
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
               "gen_ai.response.time_to_first_chunk",
               "gen_ai.system_instructions",
-              "gen_ai.usage.cache_creation.input_tokens",
+              "gen_ai.tool.definitions",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens",
@@ -4592,10 +4726,7 @@
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
             "gen_ai.request.seed",
-            "gen_ai.request.temperature",
-            "gen_ai.request.top_k",
-            "gen_ai.request.top_p",
-            "gen_ai.tool.definitions",
+            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.reasoning.output_tokens"
           ],
           "name": "gen_ai.inference.client",
@@ -4605,15 +4736,15 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 3
+              "emitted": 4
             },
             "recommended": {
               "declared": 14,
-              "emitted": 10
+              "emitted": 11
             },
             "recommended_conditional": {
               "declared": 5,
@@ -4633,12 +4764,15 @@
             "gen_ai.request.model",
             "gen_ai.request.stop_sequences",
             "gen_ai.request.stream",
+            "gen_ai.request.temperature",
+            "gen_ai.request.top_k",
+            "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
-            "gen_ai.usage.cache_creation.input_tokens",
+            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens",
@@ -4659,10 +4793,7 @@
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
             "gen_ai.request.seed",
-            "gen_ai.request.temperature",
-            "gen_ai.request.top_k",
-            "gen_ai.request.top_p",
-            "gen_ai.tool.definitions",
+            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.reasoning.output_tokens"
           ],
           "name": "gen_ai.client.inference.operation.details",
@@ -4783,10 +4914,10 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 2,
         "recommended": {
           "declared": 36,
-          "emitted": 26
+          "emitted": 28
         },
         "required": {
           "declared": 12,
@@ -4801,21 +4932,29 @@
       "findings": [
         {
           "context": {
-            "missing_attribute": "gen_ai.response.id",
-            "operation": "chat"
+            "attribute_key": "gen_ai.usage.cache_write.input_tokens"
           },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'chat claude-sonnet-4-20250514' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.cache_write.input_tokens' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.cache_write.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.cache_write.input_tokens' does not exist in the registry.",
           "signal_name": "chat claude-sonnet-4-20250514",
           "signal_type": "span"
         },
         {
           "context": {
-            "missing_attribute": "gen_ai.response.model",
+            "missing_attribute": "gen_ai.response.id",
             "operation": "chat"
           },
           "id": "genai_expected_attribute_missing",
-          "message": "Span 'chat claude-sonnet-4-20250514' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+          "message": "Span 'chat claude-sonnet-4-20250514' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
           "signal_name": "chat claude-sonnet-4-20250514",
           "signal_type": "span"
         },
@@ -4849,7 +4988,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 1
+              "emitted": 3
             },
             "opt_in": {
               "declared": 5,
@@ -4857,11 +4996,11 @@
             },
             "recommended": {
               "declared": 14,
-              "emitted": 11
+              "emitted": 10
             },
             "recommended_conditional": {
               "declared": 5,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 2,
@@ -4876,13 +5015,15 @@
             "gen_ai.request.max_tokens",
             "gen_ai.request.model",
             "gen_ai.request.stop_sequences",
+            "gen_ai.request.stream",
             "gen_ai.request.temperature",
+            "gen_ai.request.top_k",
             "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.response.time_to_first_chunk",
             "gen_ai.tool.definitions",
-            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
@@ -4896,13 +5037,15 @@
               "gen_ai.request.max_tokens",
               "gen_ai.request.model",
               "gen_ai.request.stop_sequences",
+              "gen_ai.request.stream",
               "gen_ai.request.temperature",
+              "gen_ai.request.top_k",
               "gen_ai.request.top_p",
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
+              "gen_ai.response.time_to_first_chunk",
               "gen_ai.tool.definitions",
-              "gen_ai.usage.cache_creation.input_tokens",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens"
@@ -4923,10 +5066,8 @@
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
             "gen_ai.request.seed",
-            "gen_ai.request.stream",
-            "gen_ai.request.top_k",
-            "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
+            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.reasoning.output_tokens",
             "server.address",
             "server.port"
@@ -4938,7 +5079,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 1
+              "emitted": 3
             },
             "opt_in": {
               "declared": 5,
@@ -4946,11 +5087,11 @@
             },
             "recommended": {
               "declared": 14,
-              "emitted": 11
+              "emitted": 10
             },
             "recommended_conditional": {
               "declared": 5,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 2,
@@ -4965,13 +5106,15 @@
             "gen_ai.request.max_tokens",
             "gen_ai.request.model",
             "gen_ai.request.stop_sequences",
+            "gen_ai.request.stream",
             "gen_ai.request.temperature",
+            "gen_ai.request.top_k",
             "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.response.time_to_first_chunk",
             "gen_ai.tool.definitions",
-            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
@@ -4990,10 +5133,8 @@
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
             "gen_ai.request.seed",
-            "gen_ai.request.stream",
-            "gen_ai.request.top_k",
-            "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
+            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.reasoning.output_tokens",
             "server.address",
             "server.port"
@@ -5038,6 +5179,62 @@
             },
             "recommended": {
               "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.provider.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "gen_ai.response.model",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.client.operation.time_per_output_chunk",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.provider.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "gen_ai.response.model",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.client.operation.time_to_first_chunk",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 2,
               "emitted": 1
             },
             "required": {
@@ -5061,14 +5258,14 @@
         }
       ],
       "summary": {
-        "findings": 3,
+        "findings": 4,
         "recommended": {
-          "declared": 32,
-          "emitted": 24
+          "declared": 36,
+          "emitted": 22
         },
         "required": {
-          "declared": 8,
-          "emitted": 8
+          "declared": 12,
+          "emitted": 12
         }
       }
     },
@@ -5077,6 +5274,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'autogen-core' does not have schema_url.",
+          "signal_name": "autogen-core",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.system"
@@ -5348,7 +5557,7 @@
         }
       ],
       "summary": {
-        "findings": 10,
+        "findings": 11,
         "recommended": {
           "declared": 13,
           "emitted": 0
@@ -5364,6 +5573,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.autogen_agentchat' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.autogen_agentchat",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "llm.input_messages.0.message.content"
@@ -6011,7 +6232,7 @@
         }
       ],
       "summary": {
-        "findings": 48,
+        "findings": 49,
         "recommended": {
           "declared": 25,
           "emitted": 3
@@ -6027,6 +6248,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.bedrock' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.bedrock",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute": "gen_ai.tool.definitions",
@@ -6713,7 +6946,7 @@
         }
       ],
       "summary": {
-        "findings": 64,
+        "findings": 65,
         "recommended": {
           "declared": 14,
           "emitted": 4
@@ -6729,6 +6962,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.bedrock' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.bedrock",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "id": "missing_metric",
           "message": "Metric does not exist in the registry.",
@@ -6972,7 +7217,7 @@
         }
       ],
       "summary": {
-        "findings": 9,
+        "findings": 10,
         "recommended": {
           "declared": 18,
           "emitted": 8
@@ -7339,6 +7584,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.cohere' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.cohere",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -8140,7 +8397,7 @@
         }
       ],
       "summary": {
-        "findings": 71,
+        "findings": 72,
         "recommended": {
           "declared": 19,
           "emitted": 10
@@ -8156,6 +8413,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.crewai' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.crewai",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "crew_agents"
@@ -8737,7 +9006,7 @@
         }
       ],
       "summary": {
-        "findings": 50,
+        "findings": 51,
         "recommended": {
           "declared": 11,
           "emitted": 0
@@ -8753,6 +9022,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.crewai.instrumentation' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.crewai.instrumentation",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.operation.name"
@@ -9909,7 +10190,7 @@
         }
       ],
       "summary": {
-        "findings": 114,
+        "findings": 115,
         "recommended": {
           "declared": 13,
           "emitted": 1
@@ -9925,6 +10206,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'gcp.vertex.agent' does not have schema_url.",
+          "signal_name": "gcp.vertex.agent",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gcp.vertex.agent.event_id"
@@ -10629,7 +10922,7 @@
         }
       ],
       "summary": {
-        "findings": 34,
+        "findings": 35,
         "recommended": {
           "declared": 45,
           "emitted": 12
@@ -10645,6 +10938,30 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'gcp.vertex.agent' does not have schema_url.",
+          "signal_name": "gcp.vertex.agent",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.google_adk' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.google_adk",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.system"
@@ -10870,362 +11187,6 @@
         },
         {
           "context": {
-            "attribute_key": "input.mime_type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'input.mime_type' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "input.value"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'input.value' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.0.message.content"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.0.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.1.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.content"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.tool_call_id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.invocation_parameters"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.model_name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.model_name' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.provider"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.provider' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.completion"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.completion_details.reasoning"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.completion_details.reasoning' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.prompt"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.total"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.tools.0.tool.json_schema"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "openinference.span.kind"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "output.mime_type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'output.mime_type' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "output.value"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'output.value' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "session.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'session.id' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "user.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'user.id' does not exist in the registry.",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "gen_ai.response.id",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "gen_ai.response.model",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "server.address",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'server.address'",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "status_code": "ok"
-          },
-          "id": "span_status_ok_set_by_instrumentation",
-          "message": "Span 'call_llm' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "expected_form": "generate_content gemini-2.0-flash",
-            "keyed_attr": "gen_ai.request.model",
-            "operation": "generate_content"
-          },
-          "id": "genai_span_name_format",
-          "message": "generate_content span name should be 'generate_content gemini-2.0-flash', got 'call_llm'",
-          "signal_name": "call_llm",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "gcp.vertex.agent.event_id"
           },
           "id": "missing_attribute",
@@ -11271,110 +11232,69 @@
         },
         {
           "context": {
-            "attribute_key": "input.mime_type"
+            "attribute_key": "gcp.vertex.agent.event_id"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'input.mime_type' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
+          "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "input.value"
+            "attribute_key": "gcp.vertex.agent.invocation_id"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'input.value' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
+          "message": "Attribute 'gcp.vertex.agent.invocation_id' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "openinference.span.kind"
+            "attribute_key": "gen_ai.system"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
+          "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "output.mime_type"
+            "missing_attribute": "gen_ai.provider.name",
+            "operation": "generate_content"
           },
-          "id": "missing_attribute",
-          "message": "Attribute 'output.mime_type' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.provider.name'",
+          "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "output.value"
+            "missing_attribute": "gen_ai.response.id",
+            "operation": "generate_content"
           },
-          "id": "missing_attribute",
-          "message": "Attribute 'output.value' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
+          "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "session.id"
+            "missing_attribute": "gen_ai.response.model",
+            "operation": "generate_content"
           },
-          "id": "missing_attribute",
-          "message": "Attribute 'session.id' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
+          "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "tool.description"
+            "missing_attribute": "server.address",
+            "operation": "generate_content"
           },
-          "id": "missing_attribute",
-          "message": "Attribute 'tool.description' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "tool.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'tool.id' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "tool.name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'tool.name' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "tool.parameters"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'tool.parameters' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "user.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'user.id' does not exist in the registry.",
-          "signal_name": "execute_tool get_current_weather",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "status_code": "ok"
-          },
-          "id": "span_status_ok_set_by_instrumentation",
-          "message": "Span 'execute_tool get_current_weather' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
-          "signal_name": "execute_tool get_current_weather",
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'server.address'",
+          "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         },
         {
@@ -11448,6 +11368,36 @@
           "message": "Span 'invocation [conformance]' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
           "signal_name": "invocation [conformance]",
           "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.finish_reasons",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.input_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.output_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/google-adk/openinference",
@@ -11471,7 +11421,7 @@
             },
             "opt_in": {
               "declared": 2,
-              "emitted": 2
+              "emitted": 0
             },
             "recommended_conditional": {
               "declared": 3,
@@ -11485,9 +11435,7 @@
           "emitted": [
             "gen_ai.agent.name",
             "gen_ai.operation.name",
-            "gen_ai.tool.call.arguments",
             "gen_ai.tool.call.id",
-            "gen_ai.tool.call.result",
             "gen_ai.tool.description",
             "gen_ai.tool.name",
             "gen_ai.tool.type"
@@ -11496,9 +11444,7 @@
             "attributes": [
               "gen_ai.agent.name",
               "gen_ai.operation.name",
-              "gen_ai.tool.call.arguments",
               "gen_ai.tool.call.id",
-              "gen_ai.tool.call.result",
               "gen_ai.tool.description",
               "gen_ai.tool.name",
               "gen_ai.tool.type"
@@ -11506,7 +11452,9 @@
             "span_kind": "internal"
           },
           "missing": [
-            "error.type"
+            "error.type",
+            "gen_ai.tool.call.arguments",
+            "gen_ai.tool.call.result"
           ],
           "name": "gen_ai.execute_tool.internal",
           "type": "span"
@@ -11519,11 +11467,11 @@
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 3
+              "emitted": 0
             },
             "recommended": {
               "declared": 14,
-              "emitted": 6
+              "emitted": 4
             },
             "recommended_conditional": {
               "declared": 5,
@@ -11531,20 +11479,14 @@
             },
             "required": {
               "declared": 2,
-              "emitted": 2
+              "emitted": 1
             }
           },
           "emitted": [
             "gen_ai.conversation.id",
-            "gen_ai.input.messages",
             "gen_ai.operation.name",
-            "gen_ai.output.messages",
-            "gen_ai.provider.name",
-            "gen_ai.request.max_tokens",
             "gen_ai.request.model",
-            "gen_ai.request.temperature",
             "gen_ai.response.finish_reasons",
-            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens",
@@ -11553,15 +11495,9 @@
           "identity": {
             "attributes": [
               "gen_ai.conversation.id",
-              "gen_ai.input.messages",
               "gen_ai.operation.name",
-              "gen_ai.output.messages",
-              "gen_ai.provider.name",
-              "gen_ai.request.max_tokens",
               "gen_ai.request.model",
-              "gen_ai.request.temperature",
               "gen_ai.response.finish_reasons",
-              "gen_ai.tool.definitions",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens",
@@ -11572,24 +11508,30 @@
           "missing": [
             "error.type",
             "gen_ai.conversation.compacted",
+            "gen_ai.input.messages",
+            "gen_ai.output.messages",
             "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
             "gen_ai.prompt.version",
+            "gen_ai.provider.name",
             "gen_ai.request.choice.count",
             "gen_ai.request.frequency_penalty",
+            "gen_ai.request.max_tokens",
             "gen_ai.request.presence_penalty",
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
             "gen_ai.request.stream",
+            "gen_ai.request.temperature",
             "gen_ai.request.top_k",
             "gen_ai.request.top_p",
             "gen_ai.response.id",
             "gen_ai.response.model",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
+            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_creation.input_tokens",
             "server.address",
             "server.port"
@@ -11796,14 +11738,14 @@
         }
       ],
       "summary": {
-        "findings": 89,
+        "findings": 50,
         "recommended": {
           "declared": 31,
-          "emitted": 10
+          "emitted": 8
         },
         "required": {
           "declared": 10,
-          "emitted": 10
+          "emitted": 9
         }
       }
     },
@@ -11812,6 +11754,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.google_genai' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.google_genai",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "embedding.embeddings.0.embedding.text"
@@ -12708,7 +12662,7 @@
         }
       ],
       "summary": {
-        "findings": 81,
+        "findings": 82,
         "recommended": {
           "declared": 19,
           "emitted": 11
@@ -12724,6 +12678,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.google_generativeai' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.google_generativeai",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "expected": "{token}",
@@ -12984,7 +12950,7 @@
         }
       ],
       "summary": {
-        "findings": 10,
+        "findings": 11,
         "recommended": {
           "declared": 18,
           "emitted": 8
@@ -13008,6 +12974,60 @@
           },
           "id": "type_mismatch",
           "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.image.cache_read.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.image.cache_read.input_tokens' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.image.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.image.input_tokens' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.image.output_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.image.output_tokens' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.cache_read.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.cache_read.input_tokens' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.input_tokens' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.output_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.output_tokens' does not exist in the registry.",
           "signal_name": "gen_ai.client.inference.operation.details",
           "signal_type": "log"
         },
@@ -13044,6 +13064,51 @@
         },
         {
           "context": {
+            "attribute_key": "gen_ai.usage.image.cache_read.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.image.cache_read.input_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.image.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.image.input_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.cache_read.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.cache_read.input_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.input_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.output_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.output_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "missing_attribute": "gen_ai.response.id",
             "operation": "generate_content"
           },
@@ -13060,6 +13125,42 @@
           "id": "genai_expected_attribute_missing",
           "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
           "signal_name": "generate_content gemini-2.0-flash",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.image.output_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.image.output_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash-preview-image-generation",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.cache_read.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.cache_read.input_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash-preview-image-generation",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.input_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.input_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash-preview-image-generation",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.usage.text.output_tokens"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.usage.text.output_tokens' does not exist in the registry.",
+          "signal_name": "generate_content gemini-2.0-flash-preview-image-generation",
           "signal_type": "span"
         }
       ],
@@ -13173,7 +13274,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 5,
@@ -13204,6 +13305,7 @@
             "gen_ai.request.presence_penalty",
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
+            "gen_ai.request.stream",
             "gen_ai.request.temperature",
             "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
@@ -13231,6 +13333,7 @@
               "gen_ai.request.presence_penalty",
               "gen_ai.request.seed",
               "gen_ai.request.stop_sequences",
+              "gen_ai.request.stream",
               "gen_ai.request.temperature",
               "gen_ai.request.top_p",
               "gen_ai.response.finish_reasons",
@@ -13257,7 +13360,6 @@
             "gen_ai.request.choice.count",
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
-            "gen_ai.request.stream",
             "gen_ai.request.top_k",
             "gen_ai.usage.cache_creation.input_tokens",
             "server.port"
@@ -13269,7 +13371,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 5,
@@ -13300,6 +13402,7 @@
             "gen_ai.request.presence_penalty",
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
+            "gen_ai.request.stream",
             "gen_ai.request.temperature",
             "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
@@ -13324,7 +13427,6 @@
             "gen_ai.request.choice.count",
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
-            "gen_ai.request.stream",
             "gen_ai.request.top_k",
             "gen_ai.usage.cache_creation.input_tokens",
             "server.port"
@@ -13445,17 +13547,43 @@
           ],
           "name": "gen_ai.client.token.usage",
           "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.tool.name"
+          ],
+          "missing": [
+            "error.type",
+            "gen_ai.agent.name",
+            "gen_ai.tool.type"
+          ],
+          "name": "gen_ai.execute_tool.duration",
+          "type": "metric"
         }
       ],
       "summary": {
-        "findings": 6,
+        "findings": 21,
         "recommended": {
           "declared": 41,
           "emitted": 35
         },
         "required": {
-          "declared": 16,
-          "emitted": 16
+          "declared": 17,
+          "emitted": 17
         }
       }
     },
@@ -13464,6 +13592,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.groq' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.groq",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -13939,7 +14079,7 @@
         }
       ],
       "summary": {
-        "findings": 39,
+        "findings": 40,
         "recommended": {
           "declared": 14,
           "emitted": 11
@@ -13955,6 +14095,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.groq' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.groq",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.operation.name"
@@ -14301,7 +14453,7 @@
         }
       ],
       "summary": {
-        "findings": 19,
+        "findings": 20,
         "recommended": {
           "declared": 18,
           "emitted": 12
@@ -14317,6 +14469,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'haystack' does not have schema_url.",
+          "signal_name": "haystack",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "haystack.agent.exit_conditions"
@@ -14585,7 +14749,7 @@
       "side": null,
       "signals": [],
       "summary": {
-        "findings": 28,
+        "findings": 29,
         "recommended": {
           "declared": 0,
           "emitted": 0
@@ -14601,6 +14765,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.haystack' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.haystack",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -15063,7 +15239,7 @@
         }
       ],
       "summary": {
-        "findings": 40,
+        "findings": 41,
         "recommended": {
           "declared": 14,
           "emitted": 3
@@ -15079,6 +15255,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.langchain' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.langchain",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -15970,7 +16158,7 @@
         }
       ],
       "summary": {
-        "findings": 82,
+        "findings": 83,
         "recommended": {
           "declared": 14,
           "emitted": 5
@@ -15986,6 +16174,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.langchain' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.langchain",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.operation.name"
@@ -17445,7 +17645,7 @@
         }
       ],
       "summary": {
-        "findings": 125,
+        "findings": 126,
         "recommended": {
           "declared": 30,
           "emitted": 9
@@ -17470,6 +17670,36 @@
           "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'server.address'",
           "signal_name": "chat gpt-4o-mini",
           "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.finish_reasons",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.input_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.output_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/langchain/opentelemetry-langchain",
@@ -17490,7 +17720,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 2,
-              "emitted": 0
+              "emitted": 1
             },
             "opt_in": {
               "declared": 2,
@@ -17506,6 +17736,7 @@
             }
           },
           "emitted": [
+            "gen_ai.agent.name",
             "gen_ai.operation.name",
             "gen_ai.tool.call.arguments",
             "gen_ai.tool.call.id",
@@ -17516,6 +17747,7 @@
           ],
           "identity": {
             "attributes": [
+              "gen_ai.agent.name",
               "gen_ai.operation.name",
               "gen_ai.tool.call.arguments",
               "gen_ai.tool.call.id",
@@ -17527,8 +17759,7 @@
             "span_kind": "internal"
           },
           "missing": [
-            "error.type",
-            "gen_ai.agent.name"
+            "error.type"
           ],
           "name": "gen_ai.execute_tool.internal",
           "type": "span"
@@ -17621,12 +17852,76 @@
         {
           "coverage": {
             "conditionally_required_conditional": {
+              "declared": 8,
+              "emitted": 1
+            },
+            "opt_in": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 11,
+              "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name",
+            "gen_ai.input.messages",
+            "gen_ai.operation.name",
+            "gen_ai.output.messages"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.agent.name",
+              "gen_ai.input.messages",
+              "gen_ai.operation.name",
+              "gen_ai.output.messages"
+            ],
+            "span_kind": "internal"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.agent.description",
+            "gen_ai.conversation.id",
+            "gen_ai.data_source.id",
+            "gen_ai.output.type",
+            "gen_ai.request.choice.count",
+            "gen_ai.request.frequency_penalty",
+            "gen_ai.request.max_tokens",
+            "gen_ai.request.model",
+            "gen_ai.request.presence_penalty",
+            "gen_ai.request.seed",
+            "gen_ai.request.stop_sequences",
+            "gen_ai.request.temperature",
+            "gen_ai.request.top_p",
+            "gen_ai.response.finish_reasons",
+            "gen_ai.system_instructions",
+            "gen_ai.tool.definitions",
+            "gen_ai.usage.cache_creation.input_tokens",
+            "gen_ai.usage.cache_read.input_tokens",
+            "gen_ai.usage.input_tokens",
+            "gen_ai.usage.output_tokens"
+          ],
+          "name": "gen_ai.invoke_agent.internal",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
               "declared": 2,
               "emitted": 1
             },
             "opt_in": {
               "declared": 2,
-              "emitted": 2
+              "emitted": 1
             },
             "required": {
               "declared": 1,
@@ -17636,20 +17931,19 @@
           "emitted": [
             "gen_ai.input.messages",
             "gen_ai.operation.name",
-            "gen_ai.output.messages",
             "gen_ai.workflow.name"
           ],
           "identity": {
             "attributes": [
               "gen_ai.input.messages",
               "gen_ai.operation.name",
-              "gen_ai.output.messages",
               "gen_ai.workflow.name"
             ],
             "span_kind": "internal"
           },
           "missing": [
-            "error.type"
+            "error.type",
+            "gen_ai.output.messages"
           ],
           "name": "gen_ai.invoke_workflow.internal",
           "type": "span"
@@ -17778,17 +18072,80 @@
           ],
           "name": "gen_ai.client.token.usage",
           "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name",
+            "gen_ai.tool.name",
+            "gen_ai.tool.type"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.execute_tool.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 0
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name"
+          ],
+          "missing": [
+            "error.type",
+            "gen_ai.request.model"
+          ],
+          "name": "gen_ai.invoke_agent.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.workflow.name"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_workflow.duration",
+          "type": "metric"
         }
       ],
       "summary": {
-        "findings": 1,
+        "findings": 4,
         "recommended": {
-          "declared": 32,
+          "declared": 43,
           "emitted": 16
         },
         "required": {
-          "declared": 11,
-          "emitted": 11
+          "declared": 13,
+          "emitted": 13
         }
       }
     },
@@ -17797,6 +18154,30 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'litellm' does not have schema_url.",
+          "signal_name": "litellm",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'litellm.integrations.opentelemetry' does not have schema_url.",
+          "signal_name": "litellm.integrations.opentelemetry",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "event_name"
@@ -19837,7 +20218,7 @@
         }
       ],
       "summary": {
-        "findings": 197,
+        "findings": 199,
         "recommended": {
           "declared": 27,
           "emitted": 12
@@ -19853,6 +20234,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.litellm' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.litellm",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "embedding.embeddings.0.embedding.text"
@@ -20521,7 +20914,7 @@
         }
       ],
       "summary": {
-        "findings": 56,
+        "findings": 57,
         "recommended": {
           "declared": 19,
           "emitted": 15
@@ -20537,6 +20930,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.litellm' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.litellm",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "id": "missing_metric",
           "message": "Metric does not exist in the registry.",
@@ -20923,7 +21328,7 @@
         }
       ],
       "summary": {
-        "findings": 19,
+        "findings": 20,
         "recommended": {
           "declared": 23,
           "emitted": 11
@@ -20939,6 +21344,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'llamaindex.opentelemetry.tracer' does not have schema_url.",
+          "signal_name": "llamaindex.opentelemetry.tracer",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "class_name"
@@ -22458,7 +22875,7 @@
       "side": null,
       "signals": [],
       "summary": {
-        "findings": 167,
+        "findings": 168,
         "recommended": {
           "declared": 0,
           "emitted": 0
@@ -22474,6 +22891,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.llama_index' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.llama_index",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -23898,7 +24327,7 @@
         }
       ],
       "summary": {
-        "findings": 140,
+        "findings": 141,
         "recommended": {
           "declared": 14,
           "emitted": 3
@@ -23914,6 +24343,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'mistralai_sdk_tracer' does not have schema_url.",
+          "signal_name": "mistralai_sdk_tracer",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "agent.trace.public"
@@ -24178,7 +24619,7 @@
         }
       ],
       "summary": {
-        "findings": 12,
+        "findings": 13,
         "recommended": {
           "declared": 19,
           "emitted": 15
@@ -24194,6 +24635,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.mistralai' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.mistralai",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -24592,7 +25045,7 @@
         }
       ],
       "summary": {
-        "findings": 31,
+        "findings": 32,
         "recommended": {
           "declared": 14,
           "emitted": 11
@@ -24608,6 +25061,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.ollama' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.ollama",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -25005,7 +25470,7 @@
         }
       ],
       "summary": {
-        "findings": 32,
+        "findings": 33,
         "recommended": {
           "declared": 14,
           "emitted": 4
@@ -25021,6 +25486,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.ollama' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.ollama",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.system"
@@ -25470,7 +25947,7 @@
         }
       ],
       "summary": {
-        "findings": 30,
+        "findings": 31,
         "recommended": {
           "declared": 20,
           "emitted": 5
@@ -25486,6 +25963,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.openai' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.openai",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "input.mime_type"
@@ -26162,7 +26651,7 @@
         }
       ],
       "summary": {
-        "findings": 57,
+        "findings": 58,
         "recommended": {
           "declared": 19,
           "emitted": 15
@@ -26178,6 +26667,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.openai.v1' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.openai.v1",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.response.finish_reason"
@@ -26660,7 +27161,7 @@
         }
       ],
       "summary": {
-        "findings": 27,
+        "findings": 28,
         "recommended": {
           "declared": 25,
           "emitted": 19
@@ -26683,16 +27184,6 @@
           },
           "id": "genai_expected_attribute_missing",
           "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
-          "signal_name": "chat gpt-4o-mini",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "gen_ai.response.model",
-            "operation": "chat"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
           "signal_name": "chat gpt-4o-mini",
           "signal_type": "span"
         },
@@ -26728,7 +27219,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 2
+              "emitted": 3
             },
             "opt_in": {
               "declared": 5,
@@ -26740,7 +27231,7 @@
             },
             "recommended_conditional": {
               "declared": 5,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 2,
@@ -26758,11 +27249,13 @@
             "gen_ai.request.presence_penalty",
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
+            "gen_ai.request.stream",
             "gen_ai.request.temperature",
             "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.response.time_to_first_chunk",
             "gen_ai.tool.definitions",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
@@ -26779,11 +27272,13 @@
               "gen_ai.request.presence_penalty",
               "gen_ai.request.seed",
               "gen_ai.request.stop_sequences",
+              "gen_ai.request.stream",
               "gen_ai.request.temperature",
               "gen_ai.request.top_p",
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
+              "gen_ai.response.time_to_first_chunk",
               "gen_ai.tool.definitions",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens"
@@ -26801,9 +27296,7 @@
             "gen_ai.request.choice.count",
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
-            "gen_ai.request.stream",
             "gen_ai.request.top_k",
-            "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
             "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.cache_read.input_tokens",
@@ -26852,7 +27345,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 2
+              "emitted": 3
             },
             "opt_in": {
               "declared": 5,
@@ -26864,7 +27357,7 @@
             },
             "recommended_conditional": {
               "declared": 5,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 2,
@@ -26882,11 +27375,13 @@
             "gen_ai.request.presence_penalty",
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
+            "gen_ai.request.stream",
             "gen_ai.request.temperature",
             "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.response.time_to_first_chunk",
             "gen_ai.tool.definitions",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
@@ -26902,9 +27397,7 @@
             "gen_ai.request.choice.count",
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
-            "gen_ai.request.stream",
             "gen_ai.request.top_k",
-            "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
             "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.cache_read.input_tokens",
@@ -26952,6 +27445,62 @@
             },
             "recommended": {
               "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.provider.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "gen_ai.response.model",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.client.operation.time_per_output_chunk",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.provider.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "gen_ai.response.model",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.client.operation.time_to_first_chunk",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 2,
               "emitted": 1
             },
             "required": {
@@ -26972,17 +27521,33 @@
           ],
           "name": "gen_ai.client.token.usage",
           "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.workflow.name"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_workflow.duration",
+          "type": "metric"
         }
       ],
       "summary": {
-        "findings": 3,
+        "findings": 2,
         "recommended": {
-          "declared": 32,
+          "declared": 36,
           "emitted": 24
         },
         "required": {
-          "declared": 9,
-          "emitted": 9
+          "declared": 13,
+          "emitted": 13
         }
       }
     },
@@ -27345,6 +27910,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.openai_agents' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.openai_agents",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "openinference.span.kind"
@@ -27741,6 +28318,15 @@
         },
         {
           "context": {
+            "attribute_key": "llm.token_count.prompt_details.cache_write"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.prompt_details.cache_write' does not exist in the registry.",
+          "signal_name": "response",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "llm.token_count.total"
           },
           "id": "missing_attribute",
@@ -27972,7 +28558,7 @@
             },
             "recommended": {
               "declared": 14,
-              "emitted": 6
+              "emitted": 7
             },
             "recommended_conditional": {
               "declared": 5,
@@ -27992,6 +28578,7 @@
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
@@ -28006,6 +28593,7 @@
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
+              "gen_ai.usage.cache_creation.input_tokens",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens"
@@ -28035,7 +28623,6 @@
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
             "gen_ai.tool.definitions",
-            "gen_ai.usage.cache_creation.input_tokens",
             "gen_ai.usage.reasoning.output_tokens",
             "server.address",
             "server.port"
@@ -28107,10 +28694,10 @@
         }
       ],
       "summary": {
-        "findings": 60,
+        "findings": 62,
         "recommended": {
           "declared": 25,
-          "emitted": 6
+          "emitted": 7
         },
         "required": {
           "declared": 5,
@@ -28123,6 +28710,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'opentelemetry.instrumentation.openai_agents' does not have schema_url.",
+          "signal_name": "opentelemetry.instrumentation.openai_agents",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "traceloop.span.kind"
@@ -28491,7 +29090,7 @@
         }
       ],
       "summary": {
-        "findings": 17,
+        "findings": 18,
         "recommended": {
           "declared": 25,
           "emitted": 6
@@ -28559,7 +29158,7 @@
             },
             "opt_in": {
               "declared": 2,
-              "emitted": 1
+              "emitted": 2
             },
             "recommended_conditional": {
               "declared": 3,
@@ -28572,6 +29171,7 @@
           },
           "emitted": [
             "gen_ai.operation.name",
+            "gen_ai.tool.call.arguments",
             "gen_ai.tool.call.result",
             "gen_ai.tool.name",
             "gen_ai.tool.type"
@@ -28579,6 +29179,7 @@
           "identity": {
             "attributes": [
               "gen_ai.operation.name",
+              "gen_ai.tool.call.arguments",
               "gen_ai.tool.call.result",
               "gen_ai.tool.name",
               "gen_ai.tool.type"
@@ -28588,7 +29189,6 @@
           "missing": [
             "error.type",
             "gen_ai.agent.name",
-            "gen_ai.tool.call.arguments",
             "gen_ai.tool.call.id",
             "gen_ai.tool.description"
           ],
@@ -28694,12 +29294,12 @@
         {
           "coverage": {
             "conditionally_required_conditional": {
-              "declared": 4,
-              "emitted": 1
-            },
-            "recommended": {
               "declared": 2,
               "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
             },
             "required": {
               "declared": 1,
@@ -28707,24 +29307,58 @@
             }
           },
           "emitted": [
-            "gen_ai.operation.name",
-            "gen_ai.provider.name"
+            "gen_ai.tool.name",
+            "gen_ai.tool.type"
           ],
           "missing": [
             "error.type",
-            "gen_ai.request.model",
-            "gen_ai.response.model",
-            "server.address",
-            "server.port"
+            "gen_ai.agent.name"
           ],
-          "name": "gen_ai.client.operation.duration",
+          "name": "gen_ai.execute_tool.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 0
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name"
+          ],
+          "missing": [
+            "error.type",
+            "gen_ai.request.model"
+          ],
+          "name": "gen_ai.invoke_agent.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.workflow.name"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_workflow.duration",
           "type": "metric"
         }
       ],
       "summary": {
         "findings": 3,
         "recommended": {
-          "declared": 13,
+          "declared": 11,
           "emitted": 0
         },
         "required": {
@@ -28738,6 +29372,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'pydantic-ai' does not have schema_url.",
+          "signal_name": "pydantic-ai",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.system"
@@ -29187,7 +29833,7 @@
         }
       ],
       "summary": {
-        "findings": 23,
+        "findings": 24,
         "recommended": {
           "declared": 27,
           "emitted": 9
@@ -29393,12 +30039,12 @@
         {
           "coverage": {
             "conditionally_required_conditional": {
-              "declared": 4,
-              "emitted": 1
-            },
-            "recommended": {
               "declared": 2,
               "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
             },
             "required": {
               "declared": 1,
@@ -29406,24 +30052,42 @@
             }
           },
           "emitted": [
-            "gen_ai.operation.name",
-            "gen_ai.request.model"
+            "gen_ai.tool.name",
+            "gen_ai.tool.type"
           ],
           "missing": [
             "error.type",
-            "gen_ai.provider.name",
-            "gen_ai.response.model",
-            "server.address",
-            "server.port"
+            "gen_ai.agent.name"
           ],
-          "name": "gen_ai.client.operation.duration",
+          "name": "gen_ai.execute_tool.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_agent.duration",
           "type": "metric"
         }
       ],
       "summary": {
         "findings": 6,
         "recommended": {
-          "declared": 13,
+          "declared": 11,
           "emitted": 0
         },
         "required": {
@@ -29437,6 +30101,30 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'strands.telemetry.metrics' does not have schema_url.",
+          "signal_name": "strands.telemetry.metrics",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'strands.telemetry.tracer' does not have schema_url.",
+          "signal_name": "strands.telemetry.tracer",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "event_loop_cycle_id"
@@ -30107,7 +30795,7 @@
         }
       ],
       "summary": {
-        "findings": 54,
+        "findings": 56,
         "recommended": {
           "declared": 25,
           "emitted": 6
@@ -30123,6 +30811,18 @@
       "domain": "gen-ai",
       "entities": {},
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'openinference.instrumentation.together' does not have schema_url.",
+          "signal_name": "openinference.instrumentation.together",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "gen_ai.request.top_k",
@@ -30579,7 +31279,7 @@
         }
       ],
       "summary": {
-        "findings": 37,
+        "findings": 38,
         "recommended": {
           "declared": 14,
           "emitted": 11
@@ -30611,6 +31311,30 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'Microsoft.AspNetCore' does not have schema_url.",
+          "signal_name": "Microsoft.AspNetCore",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'Microsoft.AspNetCore.Hosting' does not have schema_url.",
+          "signal_name": "Microsoft.AspNetCore.Hosting",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "attribute_key": "client.address",
@@ -30805,7 +31529,7 @@
         }
       ],
       "summary": {
-        "findings": 5,
+        "findings": 7,
         "recommended": {
           "declared": 6,
           "emitted": 4
@@ -30837,6 +31561,30 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'System.Net.Http' does not have schema_url.",
+          "signal_name": "System.Net.Http",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'System.Net.NameResolution' does not have schema_url.",
+          "signal_name": "System.Net.NameResolution",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "id": "missing_metric",
           "message": "Metric does not exist in the registry.",
@@ -31066,7 +31814,7 @@
         }
       ],
       "summary": {
-        "findings": 1,
+        "findings": 3,
         "recommended": {
           "declared": 6,
           "emitted": 5
@@ -31098,6 +31846,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -31305,7 +32065,7 @@
         }
       ],
       "summary": {
-        "findings": 1,
+        "findings": 2,
         "recommended": {
           "declared": 8,
           "emitted": 8
@@ -31337,6 +32097,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -31544,7 +32316,7 @@
         }
       ],
       "summary": {
-        "findings": 1,
+        "findings": 2,
         "recommended": {
           "declared": 8,
           "emitted": 8
@@ -31578,6 +32350,18 @@
       "findings": [
         {
           "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
             "expected_method": "GET",
             "kind": "server"
           },
@@ -31594,15 +32378,6 @@
           "id": "http_span_name_format",
           "message": "Span '/items' should use HTTP method name 'POST', either alone or followed by a non-empty target.",
           "signal_name": "/items",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "status_code": "error"
-          },
-          "id": "error_type_missing_on_error",
-          "message": "Span '/status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-          "signal_name": "/status/{code}",
           "signal_type": "span"
         },
         {
@@ -31642,7 +32417,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 11,
@@ -31663,6 +32438,7 @@
           },
           "emitted": [
             "client.address",
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
@@ -31678,6 +32454,7 @@
           "identity": {
             "attributes": [
               "client.address",
+              "error.type",
               "http.request.method",
               "http.response.status_code",
               "http.route",
@@ -31694,7 +32471,6 @@
           },
           "missing": [
             "client.port",
-            "error.type",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
@@ -31746,6 +32522,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -31954,7 +32742,7 @@
         }
       ],
       "summary": {
-        "findings": 1,
+        "findings": 2,
         "recommended": {
           "declared": 8,
           "emitted": 8
@@ -31986,6 +32774,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "expected_method": "GET",
@@ -32160,7 +32960,7 @@
         }
       ],
       "summary": {
-        "findings": 2,
+        "findings": 3,
         "recommended": {
           "declared": 4,
           "emitted": 3
@@ -32192,6 +32992,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "kind": "server",
@@ -32439,7 +33251,7 @@
         }
       ],
       "summary": {
-        "findings": 5,
+        "findings": 6,
         "recommended": {
           "declared": 8,
           "emitted": 8
@@ -32493,48 +33305,7 @@
           ]
         }
       },
-      "findings": [
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /health",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /status/*' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /status/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /users/*' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /users/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
-          "signal_name": "POST /items",
-          "signal_type": "span"
-        }
-      ],
+      "findings": [],
       "id": "http/java/akka-http/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "akka-http",
@@ -32559,11 +33330,11 @@
             },
             "recommended": {
               "declared": 5,
-              "emitted": 3
+              "emitted": 5
             },
             "recommended_conditional": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 3,
@@ -32571,10 +33342,13 @@
             }
           },
           "emitted": [
+            "client.address",
             "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
+            "network.peer.address",
+            "network.peer.port",
             "network.protocol.version",
             "server.address",
             "server.port",
@@ -32585,10 +33359,13 @@
           ],
           "identity": {
             "attributes": [
+              "client.address",
               "error.type",
               "http.request.method",
               "http.response.status_code",
               "http.route",
+              "network.peer.address",
+              "network.peer.port",
               "network.protocol.version",
               "server.address",
               "server.port",
@@ -32600,7 +33377,6 @@
             "span_kind": "server"
           },
           "missing": [
-            "client.address",
             "client.port",
             "http.request.body.size",
             "http.request.header",
@@ -32611,8 +33387,6 @@
             "http.response.size",
             "network.local.address",
             "network.local.port",
-            "network.peer.address",
-            "network.peer.port",
             "network.protocol.name",
             "network.transport",
             "user_agent.synthetic.type"
@@ -32658,10 +33432,10 @@
         }
       ],
       "summary": {
-        "findings": 4,
+        "findings": 0,
         "recommended": {
           "declared": 6,
-          "emitted": 4
+          "emitted": 6
         },
         "required": {
           "declared": 5,
@@ -34049,7 +34823,32 @@
           ]
         }
       },
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.glassfish.grizzly.http.server.HttpServer' does not have schema_url.",
+          "signal_name": "org.glassfish.grizzly.http.server.HttpServer",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.glassfish.grizzly.http.server.NetworkListener' does not have schema_url.",
+          "signal_name": "org.glassfish.grizzly.http.server.NetworkListener",
+          "signal_type": "instrumentation_scope"
+        }
+      ],
       "id": "http/java/grizzly/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "grizzly",
@@ -34175,7 +34974,7 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 2,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -34229,7 +35028,56 @@
           ]
         }
       },
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'io.helidon.Main' does not have schema_url.",
+          "signal_name": "io.helidon.Main",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'io.helidon.common.features.HelidonFeatures' does not have schema_url.",
+          "signal_name": "io.helidon.common.features.HelidonFeatures",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'io.helidon.webserver.LoomServer' does not have schema_url.",
+          "signal_name": "io.helidon.webserver.LoomServer",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'io.helidon.webserver.ServerListener' does not have schema_url.",
+          "signal_name": "io.helidon.webserver.ServerListener",
+          "signal_type": "instrumentation_scope"
+        }
+      ],
       "id": "http/java/helidon/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "helidon",
@@ -34356,7 +35204,7 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 4,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -37197,48 +38045,7 @@
           ]
         }
       },
-      "findings": [
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /health",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /status/*' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /status/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /users/*' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /users/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
-          "signal_name": "POST /items",
-          "signal_type": "span"
-        }
-      ],
+      "findings": [],
       "id": "http/java/pekko-http/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "pekko-http",
@@ -37263,11 +38070,11 @@
             },
             "recommended": {
               "declared": 5,
-              "emitted": 3
+              "emitted": 5
             },
             "recommended_conditional": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 3,
@@ -37275,10 +38082,13 @@
             }
           },
           "emitted": [
+            "client.address",
             "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
+            "network.peer.address",
+            "network.peer.port",
             "network.protocol.version",
             "server.address",
             "server.port",
@@ -37289,10 +38099,13 @@
           ],
           "identity": {
             "attributes": [
+              "client.address",
               "error.type",
               "http.request.method",
               "http.response.status_code",
               "http.route",
+              "network.peer.address",
+              "network.peer.port",
               "network.protocol.version",
               "server.address",
               "server.port",
@@ -37304,7 +38117,6 @@
             "span_kind": "server"
           },
           "missing": [
-            "client.address",
             "client.port",
             "http.request.body.size",
             "http.request.header",
@@ -37315,8 +38127,6 @@
             "http.response.size",
             "network.local.address",
             "network.local.port",
-            "network.peer.address",
-            "network.peer.port",
             "network.protocol.name",
             "network.transport",
             "user_agent.synthetic.type"
@@ -37362,10 +38172,10 @@
         }
       ],
       "summary": {
-        "findings": 4,
+        "findings": 0,
         "recommended": {
           "declared": 6,
-          "emitted": 4
+          "emitted": 6
         },
         "required": {
           "declared": 5,
@@ -37416,28 +38226,7 @@
           ]
         }
       },
-      "findings": [
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "POST",
-          "signal_type": "span"
-        }
-      ],
+      "findings": [],
       "id": "http/java/ratpack/opentelemetry-javaagent/client",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "ratpack",
@@ -37466,7 +38255,7 @@
             },
             "recommended": {
               "declared": 2,
-              "emitted": 0
+              "emitted": 1
             },
             "recommended_conditional": {
               "declared": 2,
@@ -37481,6 +38270,7 @@
             "error.type",
             "http.request.method",
             "http.response.status_code",
+            "network.protocol.version",
             "server.address",
             "server.port",
             "url.full"
@@ -37490,6 +38280,7 @@
               "error.type",
               "http.request.method",
               "http.response.status_code",
+              "network.protocol.version",
               "server.address",
               "server.port",
               "url.full"
@@ -37508,7 +38299,6 @@
             "network.peer.address",
             "network.peer.port",
             "network.protocol.name",
-            "network.protocol.version",
             "network.transport",
             "url.scheme",
             "url.template",
@@ -37530,7 +38320,7 @@
             },
             "recommended": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 3,
@@ -37541,12 +38331,12 @@
             "error.type",
             "http.request.method",
             "http.response.status_code",
+            "network.protocol.version",
             "server.address",
             "server.port"
           ],
           "missing": [
             "network.protocol.name",
-            "network.protocol.version",
             "url.scheme",
             "url.template"
           ],
@@ -37555,10 +38345,10 @@
         }
       ],
       "summary": {
-        "findings": 2,
+        "findings": 0,
         "recommended": {
           "declared": 3,
-          "emitted": 0
+          "emitted": 2
         },
         "required": {
           "declared": 7,
@@ -38331,7 +39121,32 @@
           ]
         }
       },
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.restlet.Component.InternalRouter.Server' does not have schema_url.",
+          "signal_name": "org.restlet.Component.InternalRouter.Server",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.restlet.Component.LogService' does not have schema_url.",
+          "signal_name": "org.restlet.Component.LogService",
+          "signal_type": "instrumentation_scope"
+        }
+      ],
       "id": "http/java/restlet/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "restlet",
@@ -38458,7 +39273,7 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 2,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -38670,7 +39485,56 @@
           ]
         }
       },
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.catalina.core.StandardEngine' does not have schema_url.",
+          "signal_name": "org.apache.catalina.core.StandardEngine",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.catalina.core.StandardService' does not have schema_url.",
+          "signal_name": "org.apache.catalina.core.StandardService",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.catalina.loader.WebappClassLoaderBase' does not have schema_url.",
+          "signal_name": "org.apache.catalina.loader.WebappClassLoaderBase",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.coyote.http11.Http11NioProtocol' does not have schema_url.",
+          "signal_name": "org.apache.coyote.http11.Http11NioProtocol",
+          "signal_type": "instrumentation_scope"
+        }
+      ],
       "id": "http/java/servlet/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "servlet",
@@ -38797,7 +39661,7 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 4,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -39178,28 +40042,7 @@
           ]
         }
       },
-      "findings": [
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "POST",
-          "signal_type": "span"
-        }
-      ],
+      "findings": [],
       "id": "http/java/spring-webflux/opentelemetry-javaagent/client",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "spring-webflux",
@@ -39228,7 +40071,7 @@
             },
             "recommended": {
               "declared": 2,
-              "emitted": 0
+              "emitted": 1
             },
             "recommended_conditional": {
               "declared": 2,
@@ -39243,6 +40086,7 @@
             "error.type",
             "http.request.method",
             "http.response.status_code",
+            "network.protocol.version",
             "server.address",
             "server.port",
             "url.full"
@@ -39252,6 +40096,7 @@
               "error.type",
               "http.request.method",
               "http.response.status_code",
+              "network.protocol.version",
               "server.address",
               "server.port",
               "url.full"
@@ -39270,7 +40115,6 @@
             "network.peer.address",
             "network.peer.port",
             "network.protocol.name",
-            "network.protocol.version",
             "network.transport",
             "url.scheme",
             "url.template",
@@ -39292,7 +40136,7 @@
             },
             "recommended": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 3,
@@ -39303,12 +40147,12 @@
             "error.type",
             "http.request.method",
             "http.response.status_code",
+            "network.protocol.version",
             "server.address",
             "server.port"
           ],
           "missing": [
             "network.protocol.name",
-            "network.protocol.version",
             "url.scheme",
             "url.template"
           ],
@@ -39317,10 +40161,10 @@
         }
       ],
       "summary": {
-        "findings": 2,
+        "findings": 0,
         "recommended": {
           "declared": 3,
-          "emitted": 0
+          "emitted": 2
         },
         "required": {
           "declared": 7,
@@ -39371,7 +40215,44 @@
           ]
         }
       },
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'SpringWebfluxJavaagentServerScenario' does not have schema_url.",
+          "signal_name": "SpringWebfluxJavaagentServerScenario",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.springframework.boot.reactor.netty.GracefulShutdown' does not have schema_url.",
+          "signal_name": "org.springframework.boot.reactor.netty.GracefulShutdown",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.springframework.boot.reactor.netty.NettyWebServer' does not have schema_url.",
+          "signal_name": "org.springframework.boot.reactor.netty.NettyWebServer",
+          "signal_type": "instrumentation_scope"
+        }
+      ],
       "id": "http/java/spring-webflux/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "spring-webflux",
@@ -39498,7 +40379,7 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 3,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -40078,7 +40959,56 @@
           ]
         }
       },
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.catalina.core.StandardEngine' does not have schema_url.",
+          "signal_name": "org.apache.catalina.core.StandardEngine",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.catalina.core.StandardService' does not have schema_url.",
+          "signal_name": "org.apache.catalina.core.StandardService",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.catalina.loader.WebappClassLoaderBase' does not have schema_url.",
+          "signal_name": "org.apache.catalina.loader.WebappClassLoaderBase",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.apache.coyote.http11.Http11NioProtocol' does not have schema_url.",
+          "signal_name": "org.apache.coyote.http11.Http11NioProtocol",
+          "signal_type": "instrumentation_scope"
+        }
+      ],
       "id": "http/java/tomcat/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "tomcat",
@@ -40205,7 +41135,7 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 4,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -40259,7 +41189,44 @@
           ]
         }
       },
-      "findings": [],
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'io.undertow' does not have schema_url.",
+          "signal_name": "io.undertow",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.xnio' does not have schema_url.",
+          "signal_name": "org.xnio",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'org.xnio.nio' does not have schema_url.",
+          "signal_name": "org.xnio.nio",
+          "signal_type": "instrumentation_scope"
+        }
+      ],
       "id": "http/java/undertow/opentelemetry-javaagent/server",
       "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
       "instrumented_library": "undertow",
@@ -40385,7 +41352,7 @@
         }
       ],
       "summary": {
-        "findings": 0,
+        "findings": 3,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -40601,6 +41568,30 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/instrumentation-express' does not have schema_url.",
+          "signal_name": "@opentelemetry/instrumentation-express",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/instrumentation-http' does not have schema_url.",
+          "signal_name": "@opentelemetry/instrumentation-http",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -40826,7 +41817,7 @@
         }
       ],
       "summary": {
-        "findings": 11,
+        "findings": 13,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -40867,6 +41858,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/instrumentation-http' does not have schema_url.",
+          "signal_name": "@opentelemetry/instrumentation-http",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -40997,7 +42000,7 @@
         }
       ],
       "summary": {
-        "findings": 1,
+        "findings": 2,
         "recommended": {
           "declared": 3,
           "emitted": 3
@@ -41038,6 +42041,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/instrumentation-http' does not have schema_url.",
+          "signal_name": "@opentelemetry/instrumentation-http",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -41172,7 +42187,7 @@
         }
       ],
       "summary": {
-        "findings": 1,
+        "findings": 2,
         "recommended": {
           "declared": 6,
           "emitted": 6
@@ -41213,6 +42228,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/instrumentation-undici' does not have schema_url.",
+          "signal_name": "@opentelemetry/instrumentation-undici",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -41364,7 +42391,7 @@
         }
       ],
       "summary": {
-        "findings": 3,
+        "findings": 4,
         "recommended": {
           "declared": 3,
           "emitted": 1
@@ -45684,6 +46711,18 @@
       "findings": [
         {
           "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'OpenTelemetry::Instrumentation::Net::HTTP' does not have schema_url.",
+          "signal_name": "OpenTelemetry::Instrumentation::Net::HTTP",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
             "status_code": "error"
           },
           "id": "error_type_missing_on_error",
@@ -45809,7 +46848,7 @@
         }
       ],
       "summary": {
-        "findings": 5,
+        "findings": 6,
         "recommended": {
           "declared": 2,
           "emitted": 0
@@ -45850,6 +46889,18 @@
         }
       },
       "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'OpenTelemetry::Instrumentation::Rack' does not have schema_url.",
+          "signal_name": "OpenTelemetry::Instrumentation::Rack",
+          "signal_type": "instrumentation_scope"
+        },
         {
           "context": {
             "status_code": "error"
@@ -45983,7 +47034,7 @@
         }
       ],
       "summary": {
-        "findings": 5,
+        "findings": 6,
         "recommended": {
           "declared": 5,
           "emitted": 2
