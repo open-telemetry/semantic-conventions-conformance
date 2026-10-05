@@ -7,8 +7,8 @@ opentelemetry = "1.66.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
-opentelemetry-instrumentation = "2.31.1"
-opentelemetry-instrumentation-alpha = "2.31.1-alpha"
+opentelemetry-instrumentation = "2.32.0"
+opentelemetry-instrumentation-alpha = "2.32.0-alpha"
 postgresql = "42.7.13"
 
 [libraries]
