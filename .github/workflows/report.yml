@@ -98,11 +98,11 @@ jobs:
       # https://github.com/open-telemetry/admin/blob/main/scripts/create_otelbot_app.py
       - name: Mint an otelbot token
         id: otelbot
-        if: steps.diffcheck.outputs.has_diff == 'true' && vars.OTELBOT_SEMANTIC_CONVENTIONS_CONFORMANCE_CLIENT_ID != ''
+        if: steps.diffcheck.outputs.has_diff == 'true' && vars.OTELBOT_SEMCONV_CONFORMANCE_CLIENT_ID != ''
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          client-id: ${{ vars.OTELBOT_SEMANTIC_CONVENTIONS_CONFORMANCE_CLIENT_ID }}
-          private-key: ${{ secrets.OTELBOT_SEMANTIC_CONVENTIONS_CONFORMANCE_PRIVATE_KEY }}
+          client-id: ${{ vars.OTELBOT_SEMCONV_CONFORMANCE_CLIENT_ID }}
+          private-key: ${{ secrets.OTELBOT_SEMCONV_CONFORMANCE_PRIVATE_KEY }}
           # Limit the token to the permissions needed to update the PR.
           permission-contents: write
           permission-pull-requests: write
@@ -114,8 +114,8 @@ jobs:
           USE_OTELBOT: ${{ steps.otelbot.outputs.token != '' }}
         run: |
           if [ "$USE_OTELBOT" = "true" ]; then
-            git config user.name "otelbot"
-            git config user.email "197425009+otelbot@users.noreply.github.com"
+            git config user.name "otelbot-semconv-conformance[bot]"
+            git config user.email "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
