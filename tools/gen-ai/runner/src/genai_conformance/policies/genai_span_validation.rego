@@ -54,6 +54,15 @@ import rego.v1
 
 _inference_ops := {"chat", "generate_content", "text_completion"}
 
+# Newer registries name span types `gen_ai.{kind}.{operation}`, e.g.
+# `gen_ai.client.inference` for `gen_ai.inference.client`. Accept both so
+# older and newer registries validate the same way.
+_inference_span_types := {"gen_ai.client.inference", "gen_ai.inference.client"}
+
+_embeddings_span_types := {"gen_ai.client.embeddings", "gen_ai.embeddings.client"}
+
+_invoke_agent_client_span_types := {"gen_ai.client.invoke_agent", "gen_ai.invoke_agent.client"}
+
 _embeddings_ops := {"embeddings"}
 
 _tool_ops := {"execute_tool"}
@@ -107,8 +116,9 @@ deny contains _span_finding(
 
 # ─── Per-operation expected attributes (violation) ──────────────────────────
 
-_matching_span_type(op, _, "gen_ai.inference.client") if {
+_matching_span_type(op, _, span_type) if {
 	op in {"chat", "generate_content", "text_completion"}
+	span_type in _inference_span_types
 }
 
 _matching_span_type(op, kind, span_type) if {
@@ -116,6 +126,17 @@ _matching_span_type(op, kind, span_type) if {
 	data["coverage-model"].spans[span_type]
 	startswith(span_type, sprintf("gen_ai.%v", [op]))
 	endswith(span_type, sprintf(".%v", [kind]))
+}
+
+_matching_span_type(op, _, span_type) if {
+	op in _embeddings_ops
+	span_type in _embeddings_span_types
+}
+
+_matching_span_type(op, kind, span_type) if {
+	op in _invoke_agent_ops
+	kind == "client"
+	span_type in _invoke_agent_client_span_types
 }
 
 # attributes marked as recommended without a note,
@@ -187,8 +208,20 @@ _op_allowed_kind(op, span_type, span_def) := kind if {
 }
 
 _op_allowed_kind(op, span_type, span_def) := kind if {
+	op in _embeddings_ops
+	span_type in _embeddings_span_types
+	kind := span_def.kind
+}
+
+_op_allowed_kind(op, span_type, span_def) := kind if {
+	op in _invoke_agent_ops
+	span_type in _invoke_agent_client_span_types
+	kind := span_def.kind
+}
+
+_op_allowed_kind(op, span_type, span_def) := kind if {
 	op in {"chat", "generate_content", "text_completion"}
-	span_type == "gen_ai.inference.client"
+	span_type in _inference_span_types
 	kind := span_def.kind
 }
 

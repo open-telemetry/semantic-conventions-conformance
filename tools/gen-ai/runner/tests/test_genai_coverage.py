@@ -163,3 +163,36 @@ def test_every_declared_entity_is_recordable(model, reduce_for) -> None:
     for name in declared:
         assert "identity" in recorded[name]
         assert "description" in recorded[name]
+
+
+@pytest.mark.parametrize(
+    ("span_type", "kind", "attributes"),
+    [
+        ("gen_ai.inference.client", "client", {"gen_ai.operation.name": "chat"}),
+        ("gen_ai.client.inference", "client", {"gen_ai.operation.name": "chat"}),
+        ("gen_ai.embeddings.client", "client", {"gen_ai.operation.name": "embeddings"}),
+        ("gen_ai.client.embeddings", "client", {"gen_ai.operation.name": "embeddings"}),
+        ("gen_ai.invoke_agent.client", "client", {"gen_ai.operation.name": "invoke_agent"}),
+        ("gen_ai.client.invoke_agent", "client", {"gen_ai.operation.name": "invoke_agent"}),
+    ],
+)
+def test_spans_classify_into_the_type_name_the_registry_declares(
+    span_type, kind, attributes
+) -> None:
+    model = {"spans": {span_type: {"kind": kind, "attributes": {}}}}
+
+    assert DOMAIN.classifier(model)("", kind, attributes) == {span_type}
+
+
+def test_renamed_client_agent_type_still_separates_from_internal() -> None:
+    model = {
+        "spans": {
+            "gen_ai.client.invoke_agent": {"kind": "client", "attributes": {}},
+            "gen_ai.invoke_agent.internal": {"kind": "internal", "attributes": {}},
+        }
+    }
+    classify = DOMAIN.classifier(model)
+    attributes = {"gen_ai.operation.name": "invoke_agent"}
+
+    assert classify("", "client", attributes) == {"gen_ai.client.invoke_agent"}
+    assert classify("", "internal", attributes) == {"gen_ai.invoke_agent.internal"}
