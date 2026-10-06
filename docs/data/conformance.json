@@ -9073,33 +9073,6 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.task.context"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.context' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.create_directory"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.create_directory' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.delegations"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.delegations' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.task.description"
           },
           "id": "missing_attribute",
@@ -9113,15 +9086,6 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.task.expected_output' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.guardrail_max_retries"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.guardrail_max_retries' does not exist in the registry.",
           "signal_name": "Say this is a test.task",
           "signal_type": "span"
         },
@@ -9145,73 +9109,10 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.task.input_files"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.input_files' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.markdown"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.markdown' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.processed_by_agents"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.processed_by_agents' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.retry_count"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.retry_count' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.security_config"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.security_config' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.task.tools"
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.task.tools' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.tools_errors"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.tools_errors' does not exist in the registry.",
-          "signal_name": "Say this is a test.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.used_tools"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.used_tools' does not exist in the registry.",
           "signal_name": "Say this is a test.task",
           "signal_type": "span"
         },
@@ -9303,33 +9204,6 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.task.context"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.context' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.create_directory"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.create_directory' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.delegations"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.delegations' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.task.description"
           },
           "id": "missing_attribute",
@@ -9343,15 +9217,6 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.task.expected_output' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.guardrail_max_retries"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.guardrail_max_retries' does not exist in the registry.",
           "signal_name": "What's the weather in Seattle today?.task",
           "signal_type": "span"
         },
@@ -9375,73 +9240,10 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.task.input_files"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.input_files' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.markdown"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.markdown' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.processed_by_agents"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.processed_by_agents' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.retry_count"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.retry_count' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.security_config"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.security_config' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.task.tools"
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.task.tools' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.tools_errors"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.tools_errors' does not exist in the registry.",
-          "signal_name": "What's the weather in Seattle today?.task",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.task.used_tools"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.task.used_tools' does not exist in the registry.",
           "signal_name": "What's the weather in Seattle today?.task",
           "signal_type": "span"
         },
@@ -9515,15 +9317,6 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.crew.after_kickoff_callbacks"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.crew.after_kickoff_callbacks' does not exist in the registry.",
-          "signal_name": "crewai.workflow",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.crew.agents"
           },
           "id": "missing_attribute",
@@ -9533,37 +9326,10 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.crew.before_kickoff_callbacks"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.crew.before_kickoff_callbacks' does not exist in the registry.",
-          "signal_name": "crewai.workflow",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.crew.cache"
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.crew.cache' does not exist in the registry.",
-          "signal_name": "crewai.workflow",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.crew.entity_type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.crew.entity_type' does not exist in the registry.",
-          "signal_name": "crewai.workflow",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.crew.execution_logs"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.crew.execution_logs' does not exist in the registry.",
           "signal_name": "crewai.workflow",
           "signal_type": "span"
         },
@@ -9623,28 +9389,10 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.crew.security_config"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.crew.security_config' does not exist in the registry.",
-          "signal_name": "crewai.workflow",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.crew.share_crew"
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.crew.share_crew' does not exist in the registry.",
-          "signal_name": "crewai.workflow",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.crew.stream"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.crew.stream' does not exist in the registry.",
           "signal_name": "crewai.workflow",
           "signal_type": "span"
         },
@@ -9745,33 +9493,6 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.agent.adapted_agent"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.adapted_agent' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.agent_executor"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.agent_executor' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.allow_code_execution"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.allow_code_execution' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.agent.allow_delegation"
           },
           "id": "missing_attribute",
@@ -9799,60 +9520,6 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.agent.callbacks"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.callbacks' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.code_execution_mode"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.code_execution_mode' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.crew"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.crew' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.date_format"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.date_format' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.entity_type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.entity_type' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.executor_class"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.executor_class' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.agent.goal"
           },
           "id": "missing_attribute",
@@ -9862,37 +9529,10 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.agent.guardrail_max_retries"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.guardrail_max_retries' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.i18n"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.i18n' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.agent.id"
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.agent.id' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.inject_date"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.inject_date' does not exist in the registry.",
           "signal_name": "weather_assistant.agent",
           "signal_type": "span"
         },
@@ -9916,51 +9556,6 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.agent.max_retry_limit"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.max_retry_limit' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.multimodal"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.multimodal' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.planning"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.planning' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.reasoning"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.reasoning' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.respect_context_window"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.respect_context_window' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.agent.role"
           },
           "id": "missing_attribute",
@@ -9970,46 +9565,10 @@
         },
         {
           "context": {
-            "attribute_key": "crewai.agent.security_config"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.security_config' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "crewai.agent.tools"
           },
           "id": "missing_attribute",
           "message": "Attribute 'crewai.agent.tools' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.tools_handler"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.tools_handler' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.tools_results"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.tools_results' does not exist in the registry.",
-          "signal_name": "weather_assistant.agent",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "crewai.agent.use_system_prompt"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'crewai.agent.use_system_prompt' does not exist in the registry.",
           "signal_name": "weather_assistant.agent",
           "signal_type": "span"
         },
@@ -10190,7 +9749,7 @@
         }
       ],
       "summary": {
-        "findings": 115,
+        "findings": 66,
         "recommended": {
           "declared": 13,
           "emitted": 1
@@ -13660,6 +13219,42 @@
         },
         {
           "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.type' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "llm.input_messages.1.message.role"
           },
           "id": "missing_attribute",
@@ -14079,7 +13674,7 @@
         }
       ],
       "summary": {
-        "findings": 40,
+        "findings": 44,
         "recommended": {
           "declared": 14,
           "emitted": 11
@@ -18443,105 +18038,6 @@
         },
         {
           "context": {
-            "attribute_key": "gen_ai.cost.discount_amount"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.discount_amount' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.discount_percent"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.discount_percent' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.input_cost"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.input_cost' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.margin_fixed_amount"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.margin_fixed_amount' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.margin_percent"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.margin_percent' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.margin_total_amount"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.margin_total_amount' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.original_cost"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.original_cost' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.output_cost"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.output_cost' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.service_tier"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.service_tier' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.tool_usage_cost"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.tool_usage_cost' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gen_ai.cost.total_cost"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.cost.total_cost' does not exist in the registry.",
-          "signal_name": "chat gpt-4o-audio-preview",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "gen_ai.openai.response.service_tier"
           },
           "id": "missing_attribute",
@@ -20218,7 +19714,7 @@
         }
       ],
       "summary": {
-        "findings": 199,
+        "findings": 188,
         "recommended": {
           "declared": 27,
           "emitted": 12
@@ -30890,6 +30386,60 @@
         },
         {
           "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.audio.audio.url"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.audio.audio.url' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.type' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.video.video.url"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.video.video.url' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "llm.input_messages.1.message.role"
           },
           "id": "missing_attribute",
@@ -31279,7 +30829,7 @@
         }
       ],
       "summary": {
-        "findings": 38,
+        "findings": 44,
         "recommended": {
           "declared": 14,
           "emitted": 11
