@@ -12,8 +12,12 @@ plugins {
 rootProject.name = "database-java-conformance"
 
 include("shared:jdbc:scenarios")
-include("shared:jdbc:opentelemetry-javaagent")
-include("shared:jdbc:opentelemetry-library")
+include("shared:jdbc:javaagent-launcher")
+include("shared:jdbc:library-launcher")
+include("mariadb:jdbc:opentelemetry-javaagent")
+include("mariadb:jdbc:opentelemetry-library")
+include("postgresql:jdbc:opentelemetry-javaagent")
+include("postgresql:jdbc:opentelemetry-library")
 
 fun shared(name: String, directory: String) {
     include(name)

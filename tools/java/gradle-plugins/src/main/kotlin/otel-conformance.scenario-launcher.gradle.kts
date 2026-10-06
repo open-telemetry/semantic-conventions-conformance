@@ -19,8 +19,27 @@ val javaAgent by configurations.creating {
 val runtimeName = project.path.removePrefix(":").replace(':', '-')
 val runtimeDirectory = rootDir.resolve("build/scenario-runtime/$runtimeName")
 
+val conformanceArtifacts =
+    extensions.create<ConformanceArtifactsExtension>("conformanceArtifacts")
+
+val writeConformanceArtifacts =
+    tasks.register<WriteConformanceArtifacts>("writeConformanceArtifacts") {
+        artifacts.set(
+            providers.provider {
+                resolveConformanceArtifacts(
+                    project.path,
+                    conformanceArtifacts.selectors.get(),
+                    configurations,
+                ).map(ResolvedConformanceArtifact::encoded)
+            },
+        )
+        outputFile.set(
+            layout.buildDirectory.file("generated/conformance/artifacts.json"),
+        )
+    }
+
 tasks.register<Sync>("prepareRuntime") {
-    dependsOn(tasks.jar)
+    dependsOn(tasks.jar, writeConformanceArtifacts)
     into(runtimeDirectory)
 
     from(tasks.jar) {
@@ -37,4 +56,5 @@ tasks.register<Sync>("prepareRuntime") {
         into("agent")
         rename { "otel-conformance-agent-control.jar" }
     }
+    from(writeConformanceArtifacts)
 }

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "generated_by": "otel-conformance-java prepare",
+  "artifacts": [
+    {
+      "role": "database_driver",
+      "ecosystem": "maven",
+      "coordinate": "org.mariadb.jdbc:mariadb-java-client",
+      "version": "3.5.10"
+    },
+    {
+      "role": "instrumentation_library",
+      "ecosystem": "maven",
+      "coordinate": "io.opentelemetry.javaagent:opentelemetry-javaagent",
+      "version": "2.31.1"
+    }
+  ]
+}

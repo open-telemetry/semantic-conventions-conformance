@@ -18,17 +18,17 @@ env:
 weaver:
   config: ../../../../../../tools/java/weaver.toml
 
-setup: otel-conformance-java prepare shared:jdbc:opentelemetry-javaagent
+setup: otel-conformance-java prepare mariadb:jdbc:opentelemetry-javaagent
 
 scenarios:
   statement:
-    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario statement
+    run: otel-conformance-java run --agent mariadb:jdbc:opentelemetry-javaagent JdbcJavaagentScenario statement
 
   prepared_statement:
-    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario prepared_statement
+    run: otel-conformance-java run --agent mariadb:jdbc:opentelemetry-javaagent JdbcJavaagentScenario prepared_statement
 
   batch:
-    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario batch
+    run: otel-conformance-java run --agent mariadb:jdbc:opentelemetry-javaagent JdbcJavaagentScenario batch
 
   stored_procedure:
-    run: otel-conformance-java run --agent shared:jdbc:opentelemetry-javaagent JdbcJavaagentScenario stored_procedure
+    run: otel-conformance-java run --agent mariadb:jdbc:opentelemetry-javaagent JdbcJavaagentScenario stored_procedure

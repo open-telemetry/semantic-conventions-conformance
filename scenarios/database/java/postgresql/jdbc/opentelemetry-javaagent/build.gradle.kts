@@ -3,12 +3,13 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":armeria:scenarios"))
+    implementation(project(":shared:jdbc:javaagent-launcher"))
+    runtimeOnly(libs.postgresql)
     add("javaAgent", libs.opentelemetry.javaagent)
 }
 
 conformanceArtifacts {
-    instrumentedLibrary("com.linecorp.armeria", "armeria")
+    databaseDriver("org.postgresql", "postgresql")
     instrumentationLibrary(
         "io.opentelemetry.javaagent",
         "opentelemetry-javaagent",

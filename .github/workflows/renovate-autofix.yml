@@ -116,7 +116,7 @@ jobs:
           }
 
           lock_allow='^(scenarios|tools)/(.+/)?(package-lock\.json|go\.mod|go\.sum|uv\.lock|Gemfile\.lock|composer\.lock)$'
-          data_allow='^scenarios/(.+/)?data\.json$'
+          data_allow='^scenarios/(.+/)?(data|artifacts)\.json$'
 
           lock_patches=("$LOCK_PATCHES_DIR"/**/*.patch)
           data_patches=("$DATA_PATCHES_DIR"/**/*.patch)
@@ -148,6 +148,7 @@ jobs:
           if (( ${#data_patches[@]} > 0 )); then
             git apply --cached \
               --include='scenarios/**/data.json' \
+              --include='scenarios/**/artifacts.json' \
               --exclude='*' \
               "${data_patches[@]}"
           fi
