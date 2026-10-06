@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -18,7 +18,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "1.8.0"
+version = "1.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -29,9 +29,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/65/b8/f4de0e90bbd641e86a1d6b20e017442033a2c1d2f5381799f82057115bd7/anthropic-1.8.0.tar.gz", hash = "sha256:9c1783ed90f409617749a61c5ab98e20624a572626f2e0a15cea03ed8e1401e5", size = 1221762, upload-time = "2026-09-22T16:25:38.167Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/12/9a6ffa397b172adb040008d934a1dfd85d0e4cefc77489416db294ffc880/anthropic-1.11.0.tar.gz", hash = "sha256:3906fabac7ad7b5b46c6186040398fc7826885c77ce34e4dd7849de16fc8d0f8", size = 1390390, upload-time = "2026-09-30T22:58:21.098Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/18/5d25a703b66ba34e9277f875f692a3bea3b0ff4d47ee5d188521a01cdd2a/anthropic-1.8.0-py3-none-any.whl", hash = "sha256:79a4516a21e64fd7b15be1a49ebf544bd6376c96a971a77365358823a2717bc6", size = 1348276, upload-time = "2026-09-22T16:25:36.515Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/6f/20edcd2956cac68042b1bcdd13ab3311447519f86b26929ff268dc74c650/anthropic-1.11.0-py3-none-any.whl", hash = "sha256:52f97b2c485cca7ac66058374f5073a3febb7e6849b16989c145d602a3efee21", size = 1681654, upload-time = "2026-09-30T22:58:22.925Z" },
 ]
 
 [[package]]
@@ -49,8 +49,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", specifier = "==1.8.0" },
-    { name = "openinference-instrumentation-anthropic", specifier = "==2.1.6" },
+    { name = "anthropic", specifier = "==1.11.0" },
+    { name = "openinference-instrumentation-anthropic", specifier = "==2.1.7" },
     { name = "opentelemetry-api", specifier = "==1.45.0" },
     { name = "opentelemetry-distro", specifier = "==0.66b0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.0" },
@@ -274,7 +274,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-anthropic"
-version = "2.1.6"
+version = "2.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -285,9 +285,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/43/3d0050ee78e40bee62dd507d2faeb1dfa1aab690966262c126598b84721d/openinference_instrumentation_anthropic-2.1.6.tar.gz", hash = "sha256:fc52388d57b5390a55dffcfc5d8e11cf1b4e9e5dbb6bda920d42681661728b8a", size = 18792, upload-time = "2026-09-24T03:52:43.301Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/99/97a7267d6816df66129db600168233fd41caf0a087f06647defb8aa2af80/openinference_instrumentation_anthropic-2.1.7.tar.gz", hash = "sha256:4e9fbfc50b04beb829cfdd068fee603bc7688ef8aa7634034981bf60c74f7651", size = 19214, upload-time = "2026-09-29T18:16:58.693Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/ef/5f9c75ebbd554c09de83429f1d75c2bc4d12c6c1ed616fdd7c5e02ea8c34/openinference_instrumentation_anthropic-2.1.6-py3-none-any.whl", hash = "sha256:6c25fa3e939b0853a673f42697122e5d600364e8bf8ed9bccd3e81dfce9b0322", size = 22286, upload-time = "2026-09-24T03:52:41.518Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/10/1d4b3603dbab9b93f37407270a246c5767e58d7da087a669107c0a1f6b96/openinference_instrumentation_anthropic-2.1.7-py3-none-any.whl", hash = "sha256:814aa0fe4cf49c3d6ded59d0989ebd1530ae92bae6ad50b77df3d7a8e6ad70df", size = 22927, upload-time = "2026-09-29T18:16:57.553Z" },
 ]
 
 [[package]]

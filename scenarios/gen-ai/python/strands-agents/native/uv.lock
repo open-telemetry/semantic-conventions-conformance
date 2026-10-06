@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -1071,7 +1071,7 @@ wheels = [
 
 [[package]]
 name = "strands-agents"
-version = "1.57.1"
+version = "1.58.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
@@ -1088,9 +1088,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "watchdog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/2c/061ba1354b8586e8bd6edb42b2f8de3c6a4db83488b6b28d82cbc88a9185/strands_agents-1.57.1.tar.gz", hash = "sha256:109ea0a0f7da82a3b32e4c02cef12f53d46637d3e1e0fb8a285c5fa7116eb1d8", size = 1709312, upload-time = "2026-09-25T20:12:35.457Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/62/b1afbca98dc2ccee37835930185b7b0cc5556dfe513686128c32123beba2/strands_agents-1.58.0.tar.gz", hash = "sha256:7af7da19aaa5b8860722251370fc99ee46ec3ee719def1ce185d92cc4015e347", size = 1739299, upload-time = "2026-10-06T00:00:03.979Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/1b/2b7e12fafee0e6ab6ce9fa16a0ad850bb570d8e2bd6326f5cca7c2cd75a7/strands_agents-1.57.1-py3-none-any.whl", hash = "sha256:797ea3de2ba4a66aaf7e804cba8308e3d582e2412c59978433d3216973d02a9d", size = 858212, upload-time = "2026-09-25T20:12:33.361Z" },
+    { url = "https://files.pythonhosted.org/packages/44/43/63e472060e4c595e4ac8aa992eed01190f028295b2e14832698e496712ea/strands_agents-1.58.0-py3-none-any.whl", hash = "sha256:7dbb38c22e00f207a2635d02c7d54205dba38d152851863746d494cb8b25ca3e", size = 872068, upload-time = "2026-10-06T00:00:01.461Z" },
 ]
 
 [package.optional-dependencies]
@@ -1117,7 +1117,7 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.0" },
     { name = "opentelemetry-sdk", specifier = "==1.45.0" },
     { name = "otel-conformance-python", editable = "../../../../../tools/python" },
-    { name = "strands-agents", extras = ["openai"], specifier = "==1.57.1" },
+    { name = "strands-agents", extras = ["openai"], specifier = "==1.58.0" },
 ]
 
 [[package]]

@@ -3,7 +3,7 @@ name = "falcon-opentelemetry-conformance-server"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "falcon==4.3.1",
+    "falcon==4.4.0",
     "opentelemetry-api==1.45.0",
     "opentelemetry-sdk==1.45.0",
     "opentelemetry-exporter-otlp-proto-grpc==1.45.0",

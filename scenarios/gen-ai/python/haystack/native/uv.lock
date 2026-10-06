@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -287,9 +287,10 @@ wheels = [
 
 [[package]]
 name = "haystack-ai"
-version = "3.2.0"
+version = "3.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "anyio" },
     { name = "docstring-parser" },
     { name = "filetype" },
     { name = "httpx" },
@@ -309,9 +310,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/98/8170941cc940a8419ad4aa60545659ae04862150591e6943b8f710b9389d/haystack_ai-3.2.0.tar.gz", hash = "sha256:e4e9297616c5d398b3180c5e63baa0181c9a60924afc9752fbe4d8f667ce02be", size = 530295, upload-time = "2026-09-24T10:49:25.35Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/b8/89a9afbafad781e85ada3a3c7ce99e2df5eec9447290ac8eee1ce44b96c3/haystack_ai-3.3.0.tar.gz", hash = "sha256:c4376ea13a95fe1e1df3efe383ad7b6af60ae0c971072eb1be53e3b0ccc9d96f", size = 533129, upload-time = "2026-10-01T10:39:37.579Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/5e/b6e8bec88ecc1cbdd1b818c69fcd5b00fcee56179833ba31da8023b37bef/haystack_ai-3.2.0-py3-none-any.whl", hash = "sha256:072c7e5e06b20d2287db43525335804f457840b5277b301b7e7d4c7469266b2b", size = 734273, upload-time = "2026-09-24T10:49:23.742Z" },
+    { url = "https://files.pythonhosted.org/packages/51/98/d798624a3a24439c8a2fd9d4c98432095112421d0d16f29855bb1c5f850a/haystack_ai-3.3.0-py3-none-any.whl", hash = "sha256:dc9d6e953babcfd67547159b2758eac42789dc6b0778a8bf3c3e91b576152bc7", size = 737985, upload-time = "2026-10-01T10:39:35.92Z" },
 ]
 
 [[package]]
@@ -329,7 +330,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "haystack-ai", specifier = "==3.2.0" },
+    { name = "haystack-ai", specifier = "==3.3.0" },
     { name = "opentelemetry-api", specifier = "==1.45.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.0" },
     { name = "opentelemetry-haystack", specifier = "==1.0.0" },
