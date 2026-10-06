@@ -106,6 +106,60 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.audio.audio.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.audio.audio.url"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.video.video.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.video.video.url"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "Completions",
