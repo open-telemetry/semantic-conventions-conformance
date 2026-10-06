@@ -128,8 +128,9 @@ _matching_span_type(op, kind, span_type) if {
 	endswith(span_type, sprintf(".%v", [kind]))
 }
 
-_matching_span_type(op, _, span_type) if {
+_matching_span_type(op, kind, span_type) if {
 	op in _embeddings_ops
+	kind == "client"
 	span_type in _embeddings_span_types
 }
 
