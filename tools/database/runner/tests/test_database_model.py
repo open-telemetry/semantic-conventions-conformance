@@ -28,6 +28,7 @@ def _model():
     [
         ("mariadb", "db.mariadb.client"),
         ("postgresql", "db.postgresql.client"),
+        ("redis", "db.redis.client"),
     ],
 )
 def test_the_registry_declares_the_span_types_we_classify(
