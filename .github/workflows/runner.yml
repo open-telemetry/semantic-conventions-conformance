@@ -430,7 +430,7 @@ jobs:
         if: matrix.ecosystem == 'python'
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          version: "0.12.20"
+          version: "0.12.23"
 
       # No bundler-cache: it runs a frozen `bundle install`, which fails on
       # exactly the stale lock this job is here to fix.
@@ -557,7 +557,7 @@ jobs:
         with:
           # `uv lock` can rewrite the lock format with a new uv, so relocking
           # needs the same uv every time.
-          version: "0.12.20"
+          version: "0.12.23"
           enable-cache: true
           # Scope lockfiles to this matrix job so each Python matrix job caches
           # its own package set instead of sharing one.
