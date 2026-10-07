@@ -16,7 +16,7 @@ reached through `replace` directives rather than published versions, because
 they belong to this repository: a scenario should measure the helper in the
 checkout it was built from, not a release of it.
 
-All Go modules in this repository require Go 1.26. Their current OpenTelemetry
+This module and `tools/go` require Go 1.26. Their current OpenTelemetry
 dependencies require the same version, and CI selects the toolchain from this
 directory's `go.mod`.
 
