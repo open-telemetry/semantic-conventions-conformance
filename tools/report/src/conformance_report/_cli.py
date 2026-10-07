@@ -13,7 +13,6 @@ from typing import Sequence
 
 from ._aggregate import build, render
 from ._markdown import render as render_summary
-from ._markdown import render_diff
 
 # Where the committed report lives, and where the site fetches it from.
 DEFAULT_REPORT = Path("docs/data/conformance.json")
@@ -90,12 +89,8 @@ def cli(argv: Sequence[str] | None = None) -> int:
             return 1
         return 0
 
-    document = build(root)
-    summary = render_summary(document)
+    before = None
     if arguments.against is not None:
         before = json.loads(arguments.against.read_text(encoding="utf-8"))
-        changes = render_diff(before, document)
-        if changes:
-            summary = f"{summary}\n{changes}"
-    print(summary, end="")
+    print(render_summary(build(root), before), end="")
     return 0
