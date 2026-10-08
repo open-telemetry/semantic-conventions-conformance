@@ -45,7 +45,10 @@ public final class JdbcScenario {
 
   private static void statement(Connection connection) throws SQLException {
     try (Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery("SELECT count(*) >= 0 FROM conformance.items")) {
+        ResultSet result =
+            statement.executeQuery(
+                ScenarioEnvironment.getOrDefault(
+                    "JDBC_STATEMENT_QUERY", "SELECT count(*) >= 0 FROM conformance.items"))) {
       requireSingleBoolean(result, true);
     }
   }
@@ -76,7 +79,10 @@ public final class JdbcScenario {
   }
 
   private static void storedProcedure(Connection connection) throws SQLException {
-    try (CallableStatement statement = connection.prepareCall("CALL conformance.noop()")) {
+    try (CallableStatement statement =
+        connection.prepareCall(
+            ScenarioEnvironment.getOrDefault(
+                "JDBC_STORED_PROCEDURE_CALL", "CALL conformance.noop()"))) {
       if (statement.execute()) {
         throw new IllegalStateException("stored procedure returned an unexpected result");
       }

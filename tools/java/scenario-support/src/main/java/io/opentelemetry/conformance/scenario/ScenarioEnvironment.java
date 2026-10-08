@@ -16,4 +16,10 @@ public final class ScenarioEnvironment {
     }
     return value;
   }
+
+  /** The value of {@code name}, or {@code defaultValue} when it is missing or blank. */
+  public static String getOrDefault(String name, String defaultValue) {
+    String value = System.getenv(name);
+    return value == null || value.isBlank() ? defaultValue : value;
+  }
 }
