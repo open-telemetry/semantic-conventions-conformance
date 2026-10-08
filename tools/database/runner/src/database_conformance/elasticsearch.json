@@ -1,0 +1,16 @@
+{
+  "aliases": {},
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "name": {
+        "type": "keyword"
+      }
+    }
+  },
+  "settings": {
+    "index.number_of_replicas": 0,
+    "index.number_of_shards": 1,
+    "index.refresh_interval": "-1"
+  }
+}
