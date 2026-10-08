@@ -9,7 +9,7 @@ opentelemetry = "1.66.0"
 # different instrumentation from the agent scenarios.
 opentelemetry-instrumentation = "2.32.0"
 opentelemetry-instrumentation-alpha = "2.32.0-alpha"
-postgresql = "42.7.13"
+postgresql = "42.7.14"
 
 [libraries]
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
