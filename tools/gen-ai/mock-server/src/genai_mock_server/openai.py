@@ -76,6 +76,40 @@ CHAT_RESPONSE = {
     },
 }
 
+# A completion the provider ends without output: usage reports an explicit 0,
+# which instrumentation has to record rather than treat as missing.
+CHAT_EMPTY_COMPLETION_RESPONSE = {
+    "id": "chatcmpl-mock-empty-001",
+    "object": "chat.completion",
+    "service_tier": "default",
+    "created": 1700000000,
+    "model": "gpt-4o-mini",
+    "choices": [
+        {
+            "index": 0,
+            "message": {"role": "assistant", "content": ""},
+            "finish_reason": "stop",
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 25,
+        "completion_tokens": 0,
+        "total_tokens": 25,
+    },
+}
+
+# A rejected request: no completion and no usage, so the operation fails
+# without any token count from the provider.
+CHAT_BAD_REQUEST_ERROR = {
+    "error": {
+        "message": "The mock server rejected this request.",
+        "type": "invalid_request_error",
+        "param": None,
+        "code": "mock_rejected",
+    }
+}
+
+
 CHAT_TOOL_CALL_RESPONSE = {
     "id": "chatcmpl-mock-002",
     "object": "chat.completion",
@@ -242,6 +276,15 @@ def _responses_current_turn(request_input):
         if item.get("role") == "user":
             last_user = index
     return request_input[last_user + 1 :]
+
+
+def _last_user_text(body):
+    """String content of the last user message, where the chat sentinels are read."""
+    for message in reversed(body.get("messages", [])):
+        if message.get("role") == "user":
+            content = message.get("content")
+            return content if isinstance(content, str) else ""
+    return ""
 
 
 def _responses_called_tool_info(items):
@@ -472,18 +515,22 @@ def _stream_chat(body):
         }
     )
 
-    if should_call_tool(body):
-        yield from _stream_tool_call(body, model, chunk_id)
-        return
-
     message_text = "\n".join(
         message.get("content", "")
         for message in body.get("messages", [])
         if isinstance(message.get("content"), str)
     )
-    content = _text_protocol_tool_call(body, message_text)
+    empty = "[MOCK_EMPTY_COMPLETION]" in _last_user_text(body)
+
+    if should_call_tool(body) and not empty:
+        yield from _stream_tool_call(body, model, chunk_id)
+        return
+
+    content = None if empty else _text_protocol_tool_call(body, message_text)
     words = (
-        [content]
+        []
+        if empty
+        else [content]
         if content
         else ["This ", "is ", "a ", "mock ", "streamed ", "response."]
     )
@@ -507,8 +554,8 @@ def _stream_chat(body):
             "choices": [{"index": 0, "delta": {"content": ""}, "finish_reason": "stop"}],
             "usage": {
                 "prompt_tokens": 25,
-                "completion_tokens": 6,
-                "total_tokens": 31,
+                "completion_tokens": 0 if empty else 6,
+                "total_tokens": 25 if empty else 31,
             },
         }
     )
@@ -522,13 +569,23 @@ def _stream_chat(body):
 @bp.route("/chat/completions", methods=["POST"])
 def chat_completions(deployment=None):
     body = request.get_json(silent=True) or {}
-
-    if body.get("stream"):
-        return Response(_stream_chat(body), mimetype="text/event-stream")
-
     message_text = "\n".join(
         message.get("content", "") for message in body.get("messages", []) if isinstance(message.get("content"), str)
     )
+
+    # [MOCK_BAD_REQUEST] and [MOCK_EMPTY_COMPLETION] let a scenario exercise the
+    # failed-call and zero-output paths of token usage recording, streamed or not.
+    user_text = _last_user_text(body)
+    if "[MOCK_BAD_REQUEST]" in user_text:
+        return CHAT_BAD_REQUEST_ERROR, 400
+    if "[MOCK_EMPTY_COMPLETION]" in user_text and not body.get("stream"):
+        resp = copy.deepcopy(CHAT_EMPTY_COMPLETION_RESPONSE)
+        resp["model"] = body.get("model", resp["model"])
+        resp["service_tier"] = _served_service_tier(body)
+        return resp
+
+    if body.get("stream"):
+        return Response(_stream_chat(body), mimetype="text/event-stream")
 
     # Offered tools with no result for them in this turn: call the tool.
     if should_call_tool(body):
