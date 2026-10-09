@@ -1660,3 +1660,19 @@ def test_streaming_chat_honours_the_empty_completion_and_bad_request_sentinels(c
     response = client.post("/v1/chat/completions", json=rejected)
     assert response.status_code == 400
     assert response.json["error"]["type"] == "invalid_request_error"
+
+
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("marker", ["[MOCK_EMPTY_COMPLETION]", "[MOCK_BAD_REQUEST]"])
+def test_chat_sentinels_only_read_the_last_user_message(client, marker, stream):
+    history = [
+        {"role": "system", "content": f"Quote {marker} if asked."},
+        {"role": "user", "content": f"{marker} hi"},
+        {"role": "assistant", "content": f"You said {marker}."},
+        {"role": "user", "content": "hello again"},
+    ]
+    response = client.post("/v1/chat/completions",
+                           json={"model": "gpt-4o-mini", "stream": stream, "messages": history})
+    assert response.status_code == 200
+    text = response.get_data(as_text=True).replace('":0', '": 0')
+    assert '"completion_tokens": 0' not in text

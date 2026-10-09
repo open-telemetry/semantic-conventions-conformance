@@ -278,6 +278,15 @@ def _responses_current_turn(request_input):
     return request_input[last_user + 1 :]
 
 
+def _last_user_text(body):
+    """String content of the last user message, where the chat sentinels are read."""
+    for message in reversed(body.get("messages", [])):
+        if message.get("role") == "user":
+            content = message.get("content")
+            return content if isinstance(content, str) else ""
+    return ""
+
+
 def _responses_called_tool_info(items):
     """Tool names called, and every call id seen, in Responses input shape."""
     called_names = set()
@@ -511,7 +520,7 @@ def _stream_chat(body):
         for message in body.get("messages", [])
         if isinstance(message.get("content"), str)
     )
-    empty = "[MOCK_EMPTY_COMPLETION]" in message_text
+    empty = "[MOCK_EMPTY_COMPLETION]" in _last_user_text(body)
 
     if should_call_tool(body) and not empty:
         yield from _stream_tool_call(body, model, chunk_id)
@@ -566,9 +575,10 @@ def chat_completions(deployment=None):
 
     # [MOCK_BAD_REQUEST] and [MOCK_EMPTY_COMPLETION] let a scenario exercise the
     # failed-call and zero-output paths of token usage recording, streamed or not.
-    if "[MOCK_BAD_REQUEST]" in message_text:
+    user_text = _last_user_text(body)
+    if "[MOCK_BAD_REQUEST]" in user_text:
         return CHAT_BAD_REQUEST_ERROR, 400
-    if "[MOCK_EMPTY_COMPLETION]" in message_text and not body.get("stream"):
+    if "[MOCK_EMPTY_COMPLETION]" in user_text and not body.get("stream"):
         resp = copy.deepcopy(CHAT_EMPTY_COMPLETION_RESPONSE)
         resp["model"] = body.get("model", resp["model"])
         resp["service_tier"] = _served_service_tier(body)
