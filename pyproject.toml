@@ -46,6 +46,7 @@ known-third-party = ["pytest"]
 
 [tool.pyright]
 typeCheckingMode = "strict"
+exclude = ["tools/runner/src/opentelemetry/conformance/_windows_process.py"]
 reportUnnecessaryTypeIgnoreComment = true
 reportMissingTypeStubs = false
 pythonVersion = "3.10"
