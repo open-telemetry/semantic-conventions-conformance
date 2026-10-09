@@ -8,15 +8,15 @@ and the data layer is one `fetch` of `data/conformance.json`.
 nightly by the [`Report`](../.github/workflows/report.yml) workflow, which opens a
 pull request when it changed.
 
-|                         |                                                           |
-|-------------------------|-----------------------------------------------------------|
-| `index.html`            | the shell: masthead, and the one `<script type="module">` |
-| `assets/app.js`         | the hash router, and the provenance line in the footer    |
-| `assets/data.js`        | fetch, and the index every view reads from                |
-| `assets/style.css`      | the palette, and the heatmap layout                       |
-| `assets/ui.js`          | the element helpers                                       |
-| `assets/views/`         | one module per route                                      |
-| `data/conformance.json` | generated, do not edit by hand                            |
+|                         |                                                                |
+|-------------------------|----------------------------------------------------------------|
+| `index.html`            | the shell: masthead, nav, and the one `<script type="module">` |
+| `assets/app.js`         | the hash router, and the provenance line in the footer         |
+| `assets/data.js`        | fetch, and the index every view reads from                     |
+| `assets/style.css`      | the palette, and the heatmap layout                            |
+| `assets/ui.js`          | the element helpers                                            |
+| `assets/views/`         | `signals.js` and `target.js`, one module per route             |
+| `data/conformance.json` | generated, do not edit by hand                                 |
 
 Serve locally with `python -m http.server -d docs`, then open
 <http://localhost:8000>.

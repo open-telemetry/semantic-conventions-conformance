@@ -29,3 +29,5 @@ artifacts/
 vendor/
 
 .DS_Store
+
+.idea/

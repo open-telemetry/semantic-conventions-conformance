@@ -13,7 +13,7 @@ import {
   levelColor,
 } from "../data.js";
 import { el, filterBar, levelLegend, palette, trackBand } from "../ui.js";
-import { go, setParams } from "../route.js";
+import { go, setParams, targetHref } from "../route.js";
 
 /** The three requirement-level views, the first being the default. */
 const LEVEL_CHOICES = [
@@ -360,8 +360,9 @@ function columnHeader(target, label) {
     },
     [
       el(
-        "span",
+        "a",
         {
+          href: targetHref(target.id),
           title: full,
           "aria-label": full,
         },

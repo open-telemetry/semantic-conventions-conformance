@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-import { LEVELS, LEVEL_LABEL, levelColor } from "./data.js";
+import { LEVELS, LEVEL_LABEL, levelColor, ratio } from "./data.js";
 
 /**
  * Build an element, treating string content as text.
@@ -90,13 +90,13 @@ const APPLE = () => {
  */
 
 /**
- * A searchable list of signals behind one button: the button shows the current
+ * A searchable list of choices behind one button: the button shows the current
  * choice, a click or `⌘K` opens the panel, typing narrows it, and arrows and
  * Enter pick. Picking calls `onPick`, which is how the view routes to the
- * signal that was chosen.
+ * item that was chosen.
  *
  * A native select would be the shorter way to do this, but it cannot be
- * searched, and there are more signals in the report than fit on screen.
+ * searched, and there are more choices than fit on screen.
  *
  * @param {object} options
  * @param {string} options.label what is being chosen, e.g. `Signal`; it names
@@ -209,7 +209,9 @@ export function palette({ label, items, value, onPick }) {
     const text = query.value.trim().toLowerCase();
     const before = shown;
     shown = text
-      ? items.filter((item) => haystack(item).includes(text))
+      ? items.filter((item) =>
+          text.split(/\s+/).every((word) => haystack(item).includes(word)),
+        )
       : items;
     // A new set of results starts at the current choice, or at the top if that
     // is not among them. Keeping the old offset leaves the highlight — and the
@@ -638,4 +640,62 @@ export function filterBar({
   ]);
   apply();
   return { node };
+}
+
+/** A proportional bar for one scored level. */
+export function coverageBar(tally, level) {
+  const value = ratio(tally);
+  if (value === null) {
+    return el("div", { class: "bar na" }, [
+      el("span", { class: "bar-value", text: "n/a" }),
+    ]);
+  }
+  return el(
+    "div",
+    { class: "bar", title: `${tally.emitted} of ${tally.declared} ${level}` },
+    [
+      el("div", { class: "bar-track" }, [
+        el("div", {
+          class: `bar-fill ${level}`,
+          style: `width:${value * 100}%`,
+        }),
+      ]),
+      el("span", {
+        class: "bar-value",
+        text: `${tally.emitted}/${tally.declared}`,
+      }),
+    ],
+  );
+}
+
+/**
+ * Every requirement level in one bar, emitted portion solid.
+ *
+ * Shown alongside the scored levels rather than instead of them: the whole
+ * shape of what a registry declares is worth seeing, and it is also why a
+ * single blended number would mislead — most of the width is usually opt-in.
+ */
+export function levelBar(coverage) {
+  const total = Object.values(coverage).reduce((sum, t) => sum + t.declared, 0);
+  if (!total) return el("div", { class: "levels" });
+  return el(
+    "div",
+    { class: "levels" },
+    LEVELS.filter((level) => coverage[level]).flatMap((level) => {
+      const tally = coverage[level];
+      const missed = tally.declared - tally.emitted;
+      return [
+        tally.emitted > 0 &&
+          el("span", {
+            style: `width:${(tally.emitted / total) * 100}%;background:${levelColor(level)}`,
+            title: `${tally.emitted} ${LEVEL_LABEL[level] ?? level} emitted`,
+          }),
+        missed > 0 &&
+          el("span", {
+            style: `width:${(missed / total) * 100}%;background:color-mix(in srgb, ${levelColor(level)} 22%, transparent)`,
+            title: `${missed} ${LEVEL_LABEL[level] ?? level} not emitted`,
+          }),
+      ];
+    }),
+  );
 }

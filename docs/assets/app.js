@@ -8,10 +8,12 @@ import { current } from "./route.js";
 import { el } from "./ui.js";
 
 import * as signals from "./views/signals.js";
+import * as target from "./views/target.js";
 
 const ROUTES = [
   { name: "signals", match: /^\/?$/, view: signals },
   { name: "signals", match: /^\/signals(?:\/(.+))?$/, view: signals },
+  { name: "target", match: /^\/target(?:\/(.+))?$/, view: target },
 ];
 
 const main = document.querySelector("main");
@@ -46,6 +48,11 @@ function render(data) {
     );
   }
   document.title = title;
+  for (const link of document.querySelectorAll(".masthead nav a")) {
+    if (link.getAttribute("href") === `#/${route.name}`)
+      link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
 }
 
 function provenance(data) {
