@@ -88,13 +88,16 @@ jobs:
         with:
           node-version: "24.21.0"
 
-      # Installs, formats and unit-tests every Node package the HTTP scenarios
-      # use, including the ones shared with other domains.
+      # Installs, formats and unit-tests every Node package the HTTP and
+      # browser scenarios use, including the ones shared with other domains.
       - name: Build JavaScript
         run: |
           npm --prefix scenarios/http/js ci
           npm --prefix scenarios/http/js run format:check
           npm --prefix scenarios/http/js test
+          npm --prefix scenarios/browser/js ci
+          npm --prefix scenarios/browser/js run format:check
+          npm --prefix scenarios/browser/js test
 
       - name: Check the site
         run: |

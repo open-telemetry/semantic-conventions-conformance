@@ -1,0 +1,24 @@
+{
+  "name": "@otel-conformance/browser-launcher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runs a browser conformance scenario in headless Chrome and relays what it exports.",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "page.js"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/exporter-logs-otlp-proto": "0.222.0",
+    "@opentelemetry/instrumentation": "0.222.0",
+    "@opentelemetry/sdk-logs": "0.222.0",
+    "@otel-conformance/scenario-support": "file:../scenario-support",
+    "esbuild": "0.28.2",
+    "playwright-core": "1.63.0"
+  }
+}
