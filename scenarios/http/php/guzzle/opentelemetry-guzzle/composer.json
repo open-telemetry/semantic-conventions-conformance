@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "require": {
     "php": ">=8.2",
-    "guzzlehttp/guzzle": "^7.9",
+    "guzzlehttp/guzzle": "^8.0",
     "open-telemetry/exporter-otlp": "^1.4",
     "open-telemetry/opentelemetry-auto-guzzle": "^1.4",
     "open-telemetry/sdk": "^1.15",
