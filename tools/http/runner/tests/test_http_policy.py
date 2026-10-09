@@ -11,20 +11,55 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 
 from http_conformance import DOMAIN
 from opentelemetry.conformance import WeaverNotInstalledError, check_weaver
 
 _POLICIES = Path(__file__).parents[1] / "src/http_conformance/policies"
-_HTTP_POLICY_IDS = {"http_route_not_present", "http_span_name_format"}
+_CONTRACT = Path(__file__).parents[2] / "test-client/contract.yaml"
+_HTTP_POLICY_IDS = {
+    "http_route_not_present",
+    "http_span_name_format",
+    "http_url_path_format",
+    "required_attribute_not_present",
+}
+
+
+def _contract_query_request() -> tuple[str, str]:
+    """The contract's one query request, split into its path and its query.
+
+    Read from the contract rather than repeated here: the policy recognises
+    that request by its path, so a path the two sides spell differently would
+    leave the `url.query` check firing on nothing and reporting nothing.
+    """
+    scenarios = yaml.safe_load(_CONTRACT.read_text(encoding="utf-8"))[
+        "scenarios"
+    ]
+    targets = [
+        request["path"]
+        for scenario in scenarios
+        if (request := scenario["action"]["request"])
+        if request["method"] == "GET" and "?" in request["path"]
+    ]
+    assert len(targets) == 1, f"expected one query request, got {targets}"
+    path, _, query = targets[0].partition("?")
+    return path, query
+
+
+_QUERY_PATH, _QUERY_STRING = _contract_query_request()
 
 
 def _server_span(
-    name: str, route: str | None = None, method: str = "GET"
+    name: str,
+    route: str | None = None,
+    method: str = "GET",
+    path: str = "/health",
+    query: str | None = None,
 ) -> dict[str, Any]:
     attributes: dict[str, object] = {
         "http.request.method": method,
-        "url.path": "/health",
+        "url.path": path,
         "url.scheme": "http",
         "client.address": "127.0.0.1",
         "network.protocol.version": "1.1",
@@ -32,6 +67,8 @@ def _server_span(
     }
     if route is not None:
         attributes["http.route"] = route
+    if query is not None:
+        attributes["url.query"] = query
     return _span(name, "server", attributes)
 
 
@@ -99,6 +136,48 @@ def policy_advice(
                 _client_span(
                     "GET /users/123",
                     template="/users/{id}",
+                ),
+                _server_span(
+                    "GET /users/{query}",
+                    route="/users/{query}",
+                    path=_QUERY_PATH,
+                ),
+                _server_span(
+                    "GET /users/{with_query}",
+                    route="/users/{with_query}",
+                    path=_QUERY_PATH,
+                    query=_QUERY_STRING,
+                ),
+                _server_span(
+                    "GET /users/{leaked_query}",
+                    route="/users/{leaked_query}",
+                    path=f"{_QUERY_PATH}?{_QUERY_STRING}",
+                ),
+                _server_span(
+                    "GET /users/{leaked_with_query}",
+                    route="/users/{leaked_with_query}",
+                    path=f"{_QUERY_PATH}?{_QUERY_STRING}",
+                    query=_QUERY_STRING,
+                ),
+                _server_span(
+                    "GET /users/{query_free}",
+                    route="/users/{query_free}",
+                    path="/users/123",
+                ),
+                _server_span(
+                    "GET /users/{prefix_match}",
+                    route="/users/{prefix_match}",
+                    path=f"{_QUERY_PATH}7",
+                ),
+                _server_span(
+                    "GET /users/{encoded_question_mark}",
+                    route="/users/{encoded_question_mark}",
+                    path=f"{_QUERY_PATH}%3Fname",
+                ),
+                _server_span(
+                    "GET /users/{other_query}",
+                    route="/users/{other_query}",
+                    path=f"/users/123?{_QUERY_STRING}",
                 ),
             ]
         ),
@@ -212,3 +291,65 @@ def test_client_target_mismatch_reports_span_name(
     assert set(policy_advice[("client", "GET /users/123")]) == {
         "http_span_name_format"
     }
+
+
+def test_contract_query_request_requires_url_query(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+) -> None:
+    advice = policy_advice[("server", "GET /users/{query}")]
+
+    assert set(advice) == {"required_attribute_not_present"}
+    assert advice["required_attribute_not_present"]["context"] == {
+        "attribute_key": "url.query",
+        "kind": "server",
+    }
+    assert (
+        f"'{_QUERY_PATH}?{_QUERY_STRING}'"
+        in advice["required_attribute_not_present"]["message"]
+    )
+
+
+def test_contract_query_request_with_url_query_has_no_finding(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+) -> None:
+    assert policy_advice[("server", "GET /users/{with_query}")] == {}
+
+
+@pytest.mark.parametrize(
+    ("target", "expected"),
+    [
+        (
+            "leaked_query",
+            {"required_attribute_not_present", "http_url_path_format"},
+        ),
+        ("leaked_with_query", {"http_url_path_format"}),
+        ("other_query", {"http_url_path_format"}),
+    ],
+)
+def test_query_string_in_url_path_reports_a_leak(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+    target: str,
+    expected: set[str],
+) -> None:
+    advice = policy_advice[("server", f"GET /users/{{{target}}}")]
+
+    assert set(advice) == expected
+    assert advice["http_url_path_format"]["context"] == {
+        "attribute_key": "url.path",
+        "kind": "server",
+    }
+    if "required_attribute_not_present" in expected:
+        assert advice["required_attribute_not_present"]["context"] == {
+            "attribute_key": "url.query",
+            "kind": "server",
+        }
+
+
+@pytest.mark.parametrize(
+    "target", ["query_free", "prefix_match", "encoded_question_mark"]
+)
+def test_other_paths_do_not_require_url_query(
+    policy_advice: dict[tuple[str, str], dict[str, dict[str, Any]]],
+    target: str,
+) -> None:
+    assert policy_advice[("server", f"GET /users/{{{target}}}")] == {}

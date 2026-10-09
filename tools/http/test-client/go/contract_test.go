@@ -44,7 +44,7 @@ func driveAgainstTheContract(t *testing.T, output io.Writer) []string {
 func TestBothSidesOfTheContractAgree(t *testing.T) {
 	want := []string{
 		"GET /users/123",
-		"GET /users/123?fields=name&verbose=true",
+		"GET /users/456?fields=name&verbose=true",
 		"POST /items",
 		"GET /status/404",
 		"GET /status/500",
@@ -192,7 +192,7 @@ func TestAContractAnswerThatIsNotJSONNamesTheRequest(t *testing.T) {
 }
 
 func TestLookupPrefersAnExactQueryString(t *testing.T) {
-	path := "/users/123?fields=name&verbose=true"
+	path := "/users/456?fields=name&verbose=true"
 	exchange, found, err := Lookup("GET", path)
 	if err != nil {
 		t.Fatal(err)

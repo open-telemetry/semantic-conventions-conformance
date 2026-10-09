@@ -43,7 +43,7 @@ describe("driving the contract", () => {
   it("sends every contract request", async () => {
     assert.deepEqual(await driveAgainstTheContract(), [
       "GET /users/123",
-      "GET /users/123?fields=name&verbose=true",
+      "GET /users/456?fields=name&verbose=true",
       "POST /items",
       "GET /status/404",
       "GET /status/500",
