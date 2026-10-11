@@ -192,3 +192,23 @@ def cohere_embed():
 @bp.route("/v1/embed", methods=["POST"])
 def cohere_embed_v1():
     return _embed_response(request.get_json(silent=True) or {}, "1")
+
+
+@bp.route("/v2/rerank", methods=["POST"])
+def cohere_rerank():
+    body = request.get_json(silent=True) or {}
+    documents = body.get("documents") or []
+    top_n = body.get("top_n")
+    if top_n is None:
+        top_n = len(documents)
+    return {
+        "id": "cohere-rerank-mock-001",
+        "results": [
+            {"index": index, "relevance_score": round(0.99 / (index + 1), 4)}
+            for index in range(min(top_n, len(documents)))
+        ],
+        "meta": {
+            "api_version": {"version": "2"},
+            "billed_units": {"search_units": 1},
+        },
+    }
