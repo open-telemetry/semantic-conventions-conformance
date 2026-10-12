@@ -88,47 +88,60 @@ def test_markdown_says_what_the_run_covered(
     assert _cli.cli(["--root", str(tmp_path), "markdown"]) == 0
     printed = capsys.readouterr().out
     assert "Semantic-convention conformance" in printed
-    assert "1 target across 1 python" in printed
-    assert "open-telemetry/demo @ `v1.0.0`" in printed
+    assert "1 target, 0 findings." in printed
+    assert "gzipped" in printed
+    assert "open-telemetry/demo @ `v1.0.0` (`demo-conformance`)" in printed
+    assert "Conformance changes" not in printed
 
 
-def test_the_diff_names_the_attribute_that_moved() -> None:
-    def report(
-        attributes: list[str], findings: list[dict[str, str]]
-    ) -> dict[str, Any]:
-        return {
-            "targets": [
-                {
-                    "id": TARGET,
-                    "signals": [
-                        {
-                            "type": "span",
-                            "name": "demo.client",
-                            "emitted": attributes,
-                        }
-                    ],
-                    "findings": findings,
-                }
-            ]
-        }
+def test_markdown_against_a_previous_report_says_what_moved(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    write_target(tmp_path, TARGET)
+    report = build_into(tmp_path)
+    against = ["markdown", "--against", str(report)]
+    assert _cli.cli(["--root", str(tmp_path), *against]) == 0
+    printed = capsys.readouterr().out
+    assert "1 target, 0 findings (+0)." in printed
+    assert "gzipped (+0 B)" in printed
+    assert printed.endswith("No conformance changes.\n")
 
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        (
+            "signals",
+            [{"type": "span", "name": "demo.client", "emitted": ["a"]}],
+        ),
+        ("findings", [{"id": "unit_mismatch"}]),
+    ],
+)
+def test_target_changes_are_summarised_without_details(
+    field: str, value: list[dict[str, Any]]
+) -> None:
+    target = {"id": TARGET, "signals": [], "findings": []}
     changes = _markdown.render_diff(
-        report(["demo.required"], [{"id": "unit_mismatch"}]),
-        report(["demo.required", "demo.recommended"], []),
+        {"targets": [target]},
+        {"targets": [{**target, field: value}]},
     )
-    assert "**+** `demo.recommended`" in changes
-    assert "finding `unit_mismatch` −1" in changes
+    assert changes == "### Conformance changes\n\n- 1 target changed\n"
 
 
-def test_the_diff_names_a_denominator_that_moved_on_its_own() -> None:
-    """A pin move changes coverage with no reduction having changed.
+def test_target_additions_and_removals_are_counted() -> None:
+    changes = _markdown.render_diff(
+        {"targets": [{"id": "old"}]},
+        {"targets": [{"id": "new1"}, {"id": "new2"}]},
+    )
+    assert changes == (
+        "### Conformance changes\n\n- 2 targets added\n- 1 target removed\n"
+    )
 
-    The nightly rebuild opens its pull request off this diff, so a
-    denominator-only move that rendered as nothing would land unexplained.
-    """
 
-    def report(declared: int, ref: str) -> dict[str, Any]:
+def test_registry_changes_are_still_reported() -> None:
+    def report(ref: str) -> dict[str, Any]:
         return {
+            "targets": [],
             "domains": {
                 "demo-conformance": {
                     "registry_repo": "open-telemetry/demo",
@@ -136,102 +149,11 @@ def test_the_diff_names_a_denominator_that_moved_on_its_own() -> None:
                     "registry_dir": "model",
                 }
             },
-            "targets": [
-                {
-                    "id": TARGET,
-                    "signals": [
-                        {
-                            "type": "span",
-                            "name": "demo.client",
-                            "emitted": ["demo.required"],
-                            "coverage": {
-                                "required": {
-                                    "emitted": 1,
-                                    "declared": declared,
-                                }
-                            },
-                        }
-                    ],
-                    "findings": [],
-                }
-            ],
         }
 
-    changes = _markdown.render_diff(report(1, "v1.0.0"), report(2, "v1.1.0"))
-    # The pin first, because the cap drops from the end.
-    assert changes.splitlines()[2] == (
-        "- registry `demo-conformance` ref `v1.0.0` → `v1.1.0`"
-    )
-    assert "`required` coverage 1/1 → 1/2" in changes
-
-
-def test_the_diff_reports_requirement_changes_with_equal_denominators() -> (
-    None
-):
-    data = {"spans": {"demo.client": ["a"]}}
-
-    def report(required: str, recommended: str) -> dict[str, Any]:
-        signals = _aggregate.signal_coverage(
-            data,
-            {
-                "spans": {
-                    "demo.client": {
-                        "attributes": {
-                            required: "required",
-                            recommended: "recommended",
-                        },
-                    }
-                }
-            },
-        )
-        return {"targets": [{"id": TARGET, "signals": signals}]}
-
-    changes = _markdown.render_diff(report("a", "b"), report("b", "a"))
-    assert "`required` coverage 1/1 → 0/1" in changes
-    assert "`recommended` coverage 0/1 → 1/1" in changes
-
-
-def test_the_diff_names_a_signal_that_appeared() -> None:
-    """One line, not one per attribute: a rename moves every target at once."""
-    signal = {
-        "type": "metric",
-        "name": "demo.duration",
-        "emitted": ["demo.required"],
-        "coverage": {"required": {"emitted": 1, "declared": 1}},
-    }
-    target = {"id": TARGET, "signals": [], "findings": []}
-    changes = _markdown.render_diff(
-        {"targets": [target]},
-        {"targets": [{**target, "signals": [signal]}]},
-    )
-    lines = [line for line in changes.splitlines() if line.startswith("- ")]
-    assert lines == [f"- `{TARGET}` `metric demo.duration` **added**"]
-
-    gone = _markdown.render_diff(
-        {"targets": [{**target, "signals": [signal]}]},
-        {"targets": [target]},
-    )
-    assert "`metric demo.duration` **no longer emitted**" in gone
-
-
-def test_the_diff_says_when_the_registry_stopped_declaring_a_signal() -> None:
-    """Null coverage is "unknown", and worth a line of its own."""
-    emitted = {"type": "span", "name": "demo.client", "emitted": []}
-    scored = {
-        **emitted,
-        "coverage": {"required": {"emitted": 0, "declared": 1}},
-    }
-    unscored = {**emitted, "declared": None}
-
-    def report(signal: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "targets": [{"id": TARGET, "signals": [signal], "findings": []}]
-        }
-
-    changes = _markdown.render_diff(report(scored), report(unscored))
-    assert "no longer declared by the registry" in changes
-    assert "now declared by the registry" in _markdown.render_diff(
-        report(unscored), report(scored)
+    assert _markdown.render_diff(report("v1.0.0"), report("v1.1.0")) == (
+        "### Conformance changes\n\n"
+        "- registry `demo-conformance` ref `v1.0.0` → `v1.1.0`\n"
     )
 
 
@@ -242,28 +164,26 @@ def test_an_unchanged_report_has_no_diff_to_show() -> None:
     assert _markdown.render_diff(same, same) == ""
 
 
-def test_the_diff_reports_an_added_target() -> None:
-    changes = _markdown.render_diff(
-        {"targets": []},
-        {"targets": [{"id": TARGET, "signals": [], "findings": []}]},
-    )
-    assert f"added `{TARGET}`" in changes
+def test_a_finding_that_moved_everywhere_is_listed_once() -> None:
+    """A new check adds the same finding to every target in one run."""
+    many = _markdown._WIDESPREAD
 
-
-def test_a_diff_too_large_for_a_job_summary_is_truncated() -> None:
-    """GitHub refuses a summary over 1 MiB, which would fail the rebuild."""
-    wide = 4 * _markdown._CHANGES
-    changes = _markdown.render_diff(
-        {"targets": [{"id": TARGET, "signals": [], "findings": []}]},
-        {
+    def report(findings: list[dict[str, str]]) -> dict[str, Any]:
+        return {
             "targets": [
-                {"id": f"{TARGET}/{n}", "signals": [], "findings": []}
-                for n in range(wide)
+                {"id": f"{TARGET}/{n}", "signals": [], "findings": findings}
+                for n in range(many)
             ]
-        },
+        }
+
+    changes = _markdown.render_diff(
+        report([{"id": "unit_mismatch"}]),
+        report([{"id": "new_check"}, {"id": "new_check"}]),
     )
-    lines = [line for line in changes.splitlines() if line.startswith("- ")]
-    assert len(lines) == _markdown._CHANGES + 1
-    assert lines[-1].endswith(
-        f"and {wide + 1 - _markdown._CHANGES} further changes._"
+    assert (
+        f"- finding `new_check` +{2 * many} across {many} targets" in changes
     )
+    assert (
+        f"- finding `unit_mismatch` −{many} across {many} targets" in changes
+    )
+    assert "<details>" not in changes

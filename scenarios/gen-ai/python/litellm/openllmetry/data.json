@@ -39,6 +39,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'opentelemetry.instrumentation.litellm' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "opentelemetry.instrumentation.litellm",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_metric",
       "message": "Metric does not exist in the registry.",
       "signal_type": "metric",

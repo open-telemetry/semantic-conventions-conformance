@@ -262,6 +262,30 @@ def _has_function_response(body):
 
 
 def _tool_response(body):
+    if any(
+        "codeExecution" in tool or "code_execution" in tool
+        for tool in body.get("tools") or []
+    ):
+        resp = copy.deepcopy(RESPONSE)
+        resp["responseId"] = "response-code-1"
+        resp["candidates"][0]["content"]["parts"] = [
+            {
+                "executableCode": {
+                    "id": "code-1",
+                    "code": "print(1)",
+                    "language": "PYTHON",
+                }
+            },
+            {
+                "codeExecutionResult": {
+                    "id": "code-1",
+                    "outcome": "OUTCOME_OK",
+                    "output": "1",
+                }
+            },
+            {"text": "The result is 1."},
+        ]
+        return resp
     resp = copy.deepcopy(FUNCTION_CALL_RESPONSE)
     tools = body.get("tools") or []
     function_declarations = []
@@ -386,11 +410,44 @@ def google_genai_agents():
 def google_genai_interactions():
     """Handle Google GenAI Interactions API requests."""
     body = request.get_json(silent=True) or {}
-    resp = {
-        "id": "interaction-mock-123",
-        "model": body.get("model", "gemini-2.0-flash"),
+    resp = _interaction_response(
+        "interaction-mock-123",
+        body.get("model", "gemini-2.0-flash"),
+        body.get("previous_interaction_id"),
+    )
+    if any(tool.get("type") == "google_search" for tool in body.get("tools") or []):
+        resp["steps"] = [
+            {
+                "type": "google_search_call",
+                "id": "search-1",
+                "arguments": {"queries": ["OpenTelemetry"]},
+                "search_type": "web_search",
+            },
+            {
+                "type": "google_search_result",
+                "call_id": "search-1",
+                "result": [],
+                "is_error": False,
+            },
+            *resp["steps"],
+        ]
+    return resp
+
+
+@bp.route("/v1beta/interactions/<interaction_id>", methods=["GET"])
+def google_genai_get_interaction(interaction_id: str) -> dict[str, object]:
+    """Return a completed interaction without requiring a preceding create."""
+    return _interaction_response(interaction_id, "gemini-2.0-flash")
+
+
+def _interaction_response(
+    interaction_id: str, model: str, previous_interaction_id: str | None = None
+) -> dict[str, object]:
+    return {
+        "id": interaction_id,
+        "model": model,
         "status": "completed",
-        "previous_interaction_id": body.get("previous_interaction_id"),
+        "previous_interaction_id": previous_interaction_id,
         "steps": [
             {
                 "type": "model_output",
@@ -410,7 +467,6 @@ def google_genai_interactions():
             "total_thought_tokens": 0,
         },
     }
-    return resp
 
 
 @bp.route("/v1/projects/<path:rest>", methods=["POST"])
