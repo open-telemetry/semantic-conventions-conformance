@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from opentelemetry.conformance._coverage import coverage
 from opentelemetry.conformance._otlp_capture import (
     CapturedExport,
@@ -209,6 +211,52 @@ def test_capture_report_preserves_otlp_diagnostic_fields(
     assert record["time_unix_nano"] == "301"
 
 
+@pytest.mark.parametrize(
+    ("kind", "expected_kind"),
+    [
+        (trace_pb2.Span.SPAN_KIND_CLIENT, "client"),
+        (trace_pb2.Span.SPAN_KIND_INTERNAL, "internal"),
+    ],
+)
+def test_classifier_receives_normalized_otlp_span_kind(
+    tmp_path: Path, kind: int, expected_kind: str
+) -> None:
+    request = trace_service_pb2.ExportTraceServiceRequest(
+        resource_spans=[
+            trace_pb2.ResourceSpans(
+                scope_spans=[
+                    trace_pb2.ScopeSpans(
+                        spans=[
+                            trace_pb2.Span(
+                                name="invoke_agent",
+                                kind=kind,
+                                attributes=[
+                                    _attribute(
+                                        "gen_ai.operation.name", "invoke_agent"
+                                    )
+                                ],
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+    write_capture(
+        tmp_path, _window("checkout", CapturedExport("traces", request))
+    )
+
+    def classify(_name, span_kind, _attributes):
+        assert span_kind == expected_kind
+        return {f"gen_ai.invoke_agent.{span_kind}"}
+
+    observed = read(tmp_path, classify)
+
+    assert observed.spans == {
+        f"gen_ai.invoke_agent.{expected_kind}": {"gen_ai.operation.name"}
+    }
+
+
 def test_multiple_delta_exports_union_metric_point_attributes(
     tmp_path: Path,
 ) -> None:
@@ -340,9 +388,7 @@ def test_sdk_self_reporting_stays_out_of_the_committed_coverage(
             "checkout",
             _metric_export("http.server.request.duration"),
             _metric_export("otel.sdk.exporter.span.exported"),
-            _metric_export(
-                "queue.size", scope="io.opentelemetry.sdk.trace"
-            ),
+            _metric_export("queue.size", scope="io.opentelemetry.sdk.trace"),
             _metric_export(
                 "sent.count", scope="io.opentelemetry.exporters.otlp-grpc"
             ),

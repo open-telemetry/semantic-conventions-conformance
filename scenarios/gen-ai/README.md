@@ -136,7 +136,9 @@ classes than the row, the row says so.
 The conventions also cover retrieval, memory and planning. No instrumentation
 here emits them, so there is no class for them yet.
 
-Each class is one file, and each file gets its own weaver report.
+Each class is one file and gets its own OTLP capture. Weaver checks all classes
+once per implementation directory, producing one aggregate report for its
+`data.json`.
 
 ## Third-party and native instrumentations
 
