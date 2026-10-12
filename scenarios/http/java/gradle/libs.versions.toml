@@ -11,7 +11,7 @@ async-http-client = "3.0.14"
 grizzly = "5.0.3"
 helidon = "4.5.5"
 httpasyncclient = "4.1.5"
-httpclient5 = "5.6.4"
+httpclient5 = "5.6.5"
 jackson = "2.22.3"
 jetty = "12.1.14"
 jodd-http = "6.3.0"
@@ -19,7 +19,7 @@ kotlin = "2.4.21"
 ktor = "3.6.0"
 netty = "4.2.19.Final"
 okhttp = "5.5.0"
-opentelemetry = "1.66.0"
+opentelemetry = "1.67.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
