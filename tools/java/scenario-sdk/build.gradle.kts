@@ -7,11 +7,15 @@ dependencies {
     api(platform(libs.opentelemetry.bom))
     api(libs.opentelemetry.api)
 
+    constraints {
+        implementation("io.opentelemetry:opentelemetry-api-incubator:${libs.versions.opentelemetry.asProvider().get()}-alpha")
+    }
+
     implementation(project(":scenario-support"))
     implementation(libs.opentelemetry.exporter.otlp) {
         exclude(group = "io.opentelemetry", module = "opentelemetry-exporter-sender-okhttp")
     }
     runtimeOnly("io.opentelemetry:opentelemetry-exporter-sender-grpc-managed-channel")
-    runtimeOnly("io.grpc:grpc-netty-shaded:1.84.0")
+    runtimeOnly("io.grpc:grpc-netty-shaded:1.84.2")
     implementation(libs.opentelemetry.sdk.extension.autoconfigure)
 }
