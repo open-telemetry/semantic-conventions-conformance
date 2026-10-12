@@ -6,6 +6,7 @@ package io.opentelemetry.conformance.database.mongodb.async;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoClient;
 import com.mongodb.async.client.MongoClients;
@@ -19,9 +20,11 @@ import com.mongodb.event.CommandListener;
 import io.opentelemetry.conformance.database.mongodb.MongoContract;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.bson.Document;
 
 /** Exercises individual command paths against MongoDB through the legacy asynchronous driver. */
@@ -34,12 +37,15 @@ public final class MongoAsyncScenario {
     run(operation, null);
   }
 
-  public static void run(String operation, CommandListener commandListener) throws Exception {
+  public static void run(
+      String operation, Function<List<ServerAddress>, CommandListener> commandListenerFactory)
+      throws Exception {
     MongoClientSettings.Builder settings =
         MongoClientSettings.builder()
             .applyConnectionString(new ConnectionString(MongoContract.connectionString()));
-    if (commandListener != null) {
-      settings.addCommandListener(commandListener);
+    if (commandListenerFactory != null) {
+      settings.addCommandListener(
+          commandListenerFactory.apply(settings.build().getClusterSettings().getHosts()));
     }
     MongoClient client = MongoClients.create(settings.build());
     try {
