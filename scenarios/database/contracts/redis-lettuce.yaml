@@ -92,7 +92,7 @@ scenarios:
           count: 1
           attributes:
             db.query.text: "LPUSH conformance:lettuce:error ?"
-            error.type: io.lettuce.core.RedisCommandExecutionException
+            error.type: WRONGTYPE
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics: *metrics

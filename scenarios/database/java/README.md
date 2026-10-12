@@ -19,7 +19,8 @@ Redis client workloads live under `shared:redis`. They cover reads and writes,
 batching or transactions where the client exposes them, and a `WRONGTYPE`
 server error. Expectations intentionally record client differences: Rediscala
 does not emit query text, while Jedis does not currently mark the rejected
-command as an error.
+command as an error. Lettuce records the Redis server's `WRONGTYPE` code in
+`error.type` rather than the Java exception class.
 
 Run the package from the repository root:
 
