@@ -9,7 +9,7 @@ resolution-markers = [
 
 [[package]]
 name = "agno"
-version = "3.1.1"
+version = "3.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "agnoctl" },
@@ -23,9 +23,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/40/e91962a2a94d34b7f168528f7479283a75bad899bba518d1b7129f2509d4/agno-3.1.1.tar.gz", hash = "sha256:ffa87212c9e3a0045ddfa6414a2e2c02a4970a8e9060a6f7ba0281071dee18c2", size = 3696946, upload-time = "2026-10-02T12:39:13.609Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/4a/1a76527a0dd9de97e18aca48cb043249e4077f3382230a5d2df37dedd333/agno-3.1.2.tar.gz", hash = "sha256:cd215d0267a236820bfe4a3897e5cb3d92e1b88e325662cdb77426f5f58d453f", size = 3766253, upload-time = "2026-10-08T19:53:33.476Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/f1/42379b2cd5369d0fe79417fab564395e056026ba5b695fbe1ed6baeadfa4/agno-3.1.1-py3-none-any.whl", hash = "sha256:d158ccd5b4d91b2317e5c1ee748cc29f2c09ce876277db2fdcdc6f5430619e14", size = 4197174, upload-time = "2026-10-02T12:39:10.421Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/6f/dc48f29d790d426e9fcb8a63b870bdb2020d70e4a6c34fca8b6d6c199d0d/agno-3.1.2-py3-none-any.whl", hash = "sha256:7e49aa04c7ddbfd27382e5a6ba71dc49d8e431fdc83bfa3cf5d9e2da992f56b8", size = 4273104, upload-time = "2026-10-08T19:53:30.29Z" },
 ]
 
 [[package]]
@@ -44,9 +44,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agno", specifier = "==3.1.1" },
-    { name = "openai", specifier = "==3.26.0" },
-    { name = "openinference-instrumentation-agno", specifier = "==1.0.13" },
+    { name = "agno", specifier = "==3.1.2" },
+    { name = "openai", specifier = "==3.29.0" },
+    { name = "openinference-instrumentation-agno", specifier = "==1.0.15" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
@@ -391,7 +391,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "3.26.0"
+version = "3.29.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -401,14 +401,14 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/07/cd478a4595282ac72e31090531bb37f8a1b6fd9cb45c1da6d6215078a4d9/openai-3.26.0.tar.gz", hash = "sha256:73b470c09cf2171dce930e36af01c6632241adda0120ad84302ad229f9130a5a", size = 1820994, upload-time = "2026-10-06T21:31:19.019Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/99/5f6206494a87edbaa67b35c5212a2cb5e6f414bee5efb0f0672c4704315a/openai-3.29.0.tar.gz", hash = "sha256:bc70a46d97b70ba64daedfcb3227f610a395f297ec68d39f735676190a92be94", size = 1828914, upload-time = "2026-10-11T17:39:41.895Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/37/08c6d71d542b079364221fcbaee863ead900b53cd89db17f4bd0ec83f41a/openai-3.26.0-py3-none-any.whl", hash = "sha256:050597ff71ff4025177405a41fa4019d4f9feae5826645b63b8e35b6e9a3c88b", size = 2164504, upload-time = "2026-10-06T21:31:16.415Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/9a/91285d01a9293d0b3d86167f9c7bd13f08c960d3fa365782751ce9bcbfb1/openai-3.29.0-py3-none-any.whl", hash = "sha256:860d3bad424c5d38cd9ba0a0a2050d558b58ce027596a39f9ccbc0f51a2090b7", size = 2173181, upload-time = "2026-10-11T17:39:39.493Z" },
 ]
 
 [[package]]
 name = "openinference-instrumentation"
-version = "0.1.70"
+version = "0.1.71"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-semantic-conventions" },
@@ -416,14 +416,14 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/d0/250f80a1ee358d2872cbd30b59d1de62cca0eaf853e45e67e6d557fec94e/openinference_instrumentation-0.1.70.tar.gz", hash = "sha256:7ae8f12910faad31633dafebb1ddd367b01306421a1a2ad68f67230c989db61f", size = 46350, upload-time = "2026-10-01T22:23:56.383Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/ec/ef1ca7e409ee6bddb7278b9760e0941f65911748f5dc84d17c115f6648f1/openinference_instrumentation-0.1.71.tar.gz", hash = "sha256:4d267b6ce8e067572a740d6a0dbf6b4d4c6e386c5a52a7e7f61e3a714a49849d", size = 46600, upload-time = "2026-10-07T20:26:41.084Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/55/ca49c75272a171926e6df463a527c909fd9f884682c223d98557abfc81a0/openinference_instrumentation-0.1.70-py3-none-any.whl", hash = "sha256:50faba441fd1a1be39159c700630a573ff6d5e3d934c2d7e4446e3e3113537c2", size = 54249, upload-time = "2026-10-01T22:23:54.597Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/8c/330101bedf614dc937d8690462ed0ad4efd7f6c3248a76a5484ba6f885e3/openinference_instrumentation-0.1.71-py3-none-any.whl", hash = "sha256:07833fcf5d493a2ed15da16a0af70d6127d39f18ffa68f4d6827107e49fc6753", size = 54511, upload-time = "2026-10-07T20:26:39.634Z" },
 ]
 
 [[package]]
 name = "openinference-instrumentation-agno"
-version = "1.0.13"
+version = "1.0.15"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -434,9 +434,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/de/d2846a0e9a19802efade963b027e78e9ad94099810e69ec54c2159e7bbdb/openinference_instrumentation_agno-1.0.13.tar.gz", hash = "sha256:e8cb2c86b4e1339eeefc112a89623bdc95335bde8011ea2a70635896954edb5b", size = 25983, upload-time = "2026-10-01T22:23:53.138Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/9d/e3893335f2f8c67bf9e5c993a01b47b6d2190b14e6724ef3677598954db7/openinference_instrumentation_agno-1.0.15.tar.gz", hash = "sha256:7ed08609db909fc32cec2b0adb2ddc29bad242e7bf4d8c899af6eb48e3bf6508", size = 26064, upload-time = "2026-10-09T18:29:04.933Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/23/48d65299c2f45192e6cd96e56eb474becd11ba5aa87aa7ee802fdb8f5c0f/openinference_instrumentation_agno-1.0.13-py3-none-any.whl", hash = "sha256:aca4f3c19c0bbf791673ed3f10089eb5513df4de972f0b4e68fad84dc36af812", size = 31453, upload-time = "2026-10-01T22:23:51.749Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/b2/009b5f9ac896172ac648be0e54e18fdc376388db2ccedb1fda6fa0a72980/openinference_instrumentation_agno-1.0.15-py3-none-any.whl", hash = "sha256:2c31a0f18f54bf72a82fcc65a46b4ad5dfed30d8160e5b5eefa5a5ba0688acbb", size = 31542, upload-time = "2026-10-09T18:29:03.32Z" },
 ]
 
 [[package]]

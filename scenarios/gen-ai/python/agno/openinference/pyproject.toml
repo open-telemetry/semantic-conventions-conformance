@@ -3,9 +3,9 @@ name = "agno-openinference-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "agno==3.1.1",
-    "openai==3.26.0",
-    "openinference-instrumentation-agno==1.0.13",
+    "agno==3.1.2",
+    "openai==3.29.0",
+    "openinference-instrumentation-agno==1.0.15",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",
     "opentelemetry-exporter-otlp-proto-grpc==1.45.1",

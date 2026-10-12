@@ -213,7 +213,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "cohere", specifier = "==7.2.0" },
-    { name = "openinference-instrumentation-cohere", specifier = "==0.1.13" },
+    { name = "openinference-instrumentation-cohere", specifier = "==0.1.15" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
@@ -431,7 +431,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation"
-version = "0.1.70"
+version = "0.1.71"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-semantic-conventions" },
@@ -439,14 +439,14 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/d0/250f80a1ee358d2872cbd30b59d1de62cca0eaf853e45e67e6d557fec94e/openinference_instrumentation-0.1.70.tar.gz", hash = "sha256:7ae8f12910faad31633dafebb1ddd367b01306421a1a2ad68f67230c989db61f", size = 46350, upload-time = "2026-10-01T22:23:56.383Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/ec/ef1ca7e409ee6bddb7278b9760e0941f65911748f5dc84d17c115f6648f1/openinference_instrumentation-0.1.71.tar.gz", hash = "sha256:4d267b6ce8e067572a740d6a0dbf6b4d4c6e386c5a52a7e7f61e3a714a49849d", size = 46600, upload-time = "2026-10-07T20:26:41.084Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/55/ca49c75272a171926e6df463a527c909fd9f884682c223d98557abfc81a0/openinference_instrumentation-0.1.70-py3-none-any.whl", hash = "sha256:50faba441fd1a1be39159c700630a573ff6d5e3d934c2d7e4446e3e3113537c2", size = 54249, upload-time = "2026-10-01T22:23:54.597Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/8c/330101bedf614dc937d8690462ed0ad4efd7f6c3248a76a5484ba6f885e3/openinference_instrumentation-0.1.71-py3-none-any.whl", hash = "sha256:07833fcf5d493a2ed15da16a0af70d6127d39f18ffa68f4d6827107e49fc6753", size = 54511, upload-time = "2026-10-07T20:26:39.634Z" },
 ]
 
 [[package]]
 name = "openinference-instrumentation-cohere"
-version = "0.1.13"
+version = "0.1.15"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -456,9 +456,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a3/14/8cbc576be208ac482550c8856c85fb869bcb1abe70a1ccaf2b48be749c70/openinference_instrumentation_cohere-0.1.13.tar.gz", hash = "sha256:ff233f9457885205682dcb3aa82f265c82baa7b95a6ba8861755a17e86eb676f", size = 16304, upload-time = "2026-10-01T22:23:45.795Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/ac/7e3fee8e1df642f731ca9827a0a7b99b4758b1b45e8498d7e896afb3aa28/openinference_instrumentation_cohere-0.1.15.tar.gz", hash = "sha256:6979957f14f265bd8322c0a1a53d1e648131a4b806da66629f9a0ed0d8ee9dfd", size = 16486, upload-time = "2026-10-09T18:29:03.686Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/ab/7473b04f4a15865b77e2cf4b9301f8f29c2a6c9d5cfa20241e750f9ec75b/openinference_instrumentation_cohere-0.1.13-py3-none-any.whl", hash = "sha256:a869688fd5d7f2f8d5202085a718cd423c911fb5313453dda14ee00b94a1bef2", size = 21173, upload-time = "2026-10-01T22:23:44.452Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/41/050b66fa16b9fbeb31c401b1a043eab375f9b2cad3a3c74da6762277f53b/openinference_instrumentation_cohere-0.1.15-py3-none-any.whl", hash = "sha256:6a83f4912ebe045516303c63b84ba79eeee40fdc18f1fc2d76e5c596f11fe56a", size = 21373, upload-time = "2026-10-09T18:29:02.242Z" },
 ]
 
 [[package]]
