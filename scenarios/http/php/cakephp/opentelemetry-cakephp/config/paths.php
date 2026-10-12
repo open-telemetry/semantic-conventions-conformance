@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 define('DS', DIRECTORY_SEPARATOR);
 define('ROOT', dirname(__DIR__));
-define('APP_DIR', 'scenarios' . DS . 'src');
+define('APP_DIR', '..' . DS . 'scenarios' . DS . 'src');
 define('APP', ROOT . DS . APP_DIR . DS);
 define('CONFIG', ROOT . DS . 'config' . DS);
 define('WWW_ROOT', ROOT . DS . 'webroot' . DS);
