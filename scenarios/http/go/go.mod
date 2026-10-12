@@ -10,7 +10,7 @@ replace github.com/open-telemetry/semantic-conventions-conformance/tools/go => .
 replace github.com/open-telemetry/semantic-conventions-conformance/tools/http/test-client/go => ../../../tools/http/test-client/go
 
 require (
-	github.com/emicklei/go-restful/v3 v3.13.0
+	github.com/emicklei/go-restful/v3 v3.14.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/gorilla/mux v1.8.1
 	github.com/labstack/echo/v4 v4.16.0
