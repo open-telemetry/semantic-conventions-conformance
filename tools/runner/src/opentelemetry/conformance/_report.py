@@ -365,7 +365,7 @@ def read(
             if types is None:
                 types = classify(
                     str(span.get("name", "")),
-                    str(span.get("kind", "")),
+                    span_kind(str(span.get("kind", ""))).lower(),
                     attributes,
                 )
             for span_type in types:
