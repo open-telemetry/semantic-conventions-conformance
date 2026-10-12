@@ -46,6 +46,7 @@ from ._session import (
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
+    InstrumentationScopeExpectation,
     PackageSpec,
     ScenarioRunSpec,
     ScenarioSpec,
@@ -69,6 +70,7 @@ __all__ = [
     "check_weaver",
     "coverage",
     "ExpectedViolation",
+    "InstrumentationScopeExpectation",
     "PackageSpec",
     "PackageReport",
     "ScenarioReport",

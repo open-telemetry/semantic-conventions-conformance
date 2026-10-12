@@ -13,11 +13,13 @@ from __future__ import annotations
 import json
 import logging
 import shlex
+import shutil
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from string import Template
+from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -56,7 +58,7 @@ from ._persistent import (
     ActionState,
     PersistentController,
 )
-from ._registry import check_weaver
+from ._registry import check_weaver, local_registry, parse_git_registry
 from ._report import (
     READINESS_REPORT,
     SCENARIO_REPORT_DIR,
@@ -67,6 +69,7 @@ from ._report import (
     write_unwindowed,
     write_weaver,
 )
+from ._scope_policy import render as render_scope_policy
 from ._server import Server
 from ._spec import (
     PackageSpec,
@@ -103,6 +106,7 @@ _OTLP_SIGNAL_ENV = tuple(
 # the data file is meant to be committed and diffed.
 DEFAULT_REPORT_DIR = Path("output") / "reports"
 DEFAULT_DATA_FILE = Path("data.json")
+_SCOPE_POLICY_NAME = "instrumentation_scope_validation.rego"
 
 # Fallback only: a config declared by the caller or the package replaces it.
 RUNNER_WEAVER_DEFAULTS = WeaverSpec(
@@ -240,6 +244,7 @@ class ConformanceSession:
         self._ran: set[str] = set()
         self._scenario_reports: list[ScenarioReport] = []
         self._resources: ExitStack | None = None
+        self._policies: str | None = None
         self._live_check: _WeaverProcess | None = None
         self._capture: OtlpCaptureProxy | None = None
         self._otlp_endpoint: str | None = None
@@ -415,6 +420,7 @@ class ConformanceSession:
 
         resources = ExitStack()
         try:
+            self._policies = resources.enter_context(self._package_policies())
             with _quiet_connection_retries():
                 live_check = resources.enter_context(
                     _start_weaver(self._new_live_check)
@@ -452,10 +458,14 @@ class ConformanceSession:
             ]
         return WeaverLiveCheck(
             inactivity_timeout=0,
-            registry=self._resolve_path(self._registry),
-            policies_dir=self._resolve_path(weaver_spec.policies)
-            if weaver_spec.policies
-            else None,
+            registry=str(
+                registry_path(
+                    self._registry,
+                    directory=self._spec.directory,
+                    variables=self._variables,
+                )
+            ),
+            policies_dir=self._policies,
             extra_args=extra_args,
         )
 
@@ -525,6 +535,40 @@ class ConformanceSession:
     def _shutdown(self) -> None:
         if self._resources is not None:
             self._resources.close()
+
+    @contextmanager
+    def _package_policies(self) -> Generator[str, None, None]:
+        """Add instrumentation-scope validation to the package policies."""
+        weaver = self._weaver
+        declared = (
+            self._resolve_path(weaver.policies) if weaver.policies else None
+        )
+        with TemporaryDirectory(prefix="otel-conformance-policies-") as root:
+            policies = Path(root)
+            if declared:
+                source = Path(declared)
+                if source.is_dir():
+                    for policy in source.glob("*.rego"):
+                        shutil.copy(policy, policies / policy.name)
+                else:
+                    shutil.copy(source, policies / source.name)
+            generated = policies / _SCOPE_POLICY_NAME
+            if generated.exists():
+                raise SpecError(
+                    f"declared advice policy conflicts with generated policy: "
+                    f"{_SCOPE_POLICY_NAME}"
+                )
+            generated.write_text(
+                render_scope_policy(
+                    tuple(
+                        expectation
+                        for scenario in self._spec.scenarios.values()
+                        for expectation in scenario.spans or ()
+                    )
+                ),
+                encoding="utf-8",
+            )
+            yield str(policies)
 
     def _resolve(self, value: str) -> str:
         return Template(value).safe_substitute(self._variables)
@@ -745,6 +789,21 @@ def _default_report_dir(directory: Path) -> Path:
     lands in the same place however it was invoked.
     """
     return directory / DEFAULT_REPORT_DIR
+
+
+def registry_path(
+    value: str, *, directory: Path, variables: Mapping[str, str]
+) -> Path:
+    """A declared registry as a directory, fetched when it is a git URL.
+
+    A relative path is relative to the package that declared it, the way every
+    other path in a ``conformance.yaml`` is.
+    """
+    resolved = Template(value).safe_substitute(variables)
+    if parse_git_registry(resolved) is not None:
+        return local_registry(resolved)
+    path = Path(resolved)
+    return path if path.is_absolute() else directory / path
 
 
 @contextmanager
