@@ -13,22 +13,27 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import java.net.InetSocketAddress;
-import java.util.function.UnaryOperator;
+import java.util.List;
+import java.util.function.BiFunction;
 
 /** Exercises Cassandra driver 4 execution paths without choosing instrumentation. */
 public final class Cassandra4Scenario {
   private Cassandra4Scenario() {}
 
-  public static void run(String operation, UnaryOperator<CqlSession> instrumentSession) {
+  public static void run(
+      String operation,
+      BiFunction<CqlSession, List<InetSocketAddress>, CqlSession> instrumentSession) {
+    List<InetSocketAddress> contactPoints =
+        List.of(
+            new InetSocketAddress(
+                ScenarioEnvironment.require("CASSANDRA_HOST"),
+                Integer.parseInt(ScenarioEnvironment.require("CASSANDRA_PORT"))));
     CqlSession session =
         CqlSession.builder()
-            .addContactPoint(
-                new InetSocketAddress(
-                    ScenarioEnvironment.require("CASSANDRA_HOST"),
-                    Integer.parseInt(ScenarioEnvironment.require("CASSANDRA_PORT"))))
+            .addContactPoints(contactPoints)
             .withLocalDatacenter(ScenarioEnvironment.require("CASSANDRA_LOCAL_DATACENTER"))
             .build();
-    try (CqlSession instrumented = instrumentSession.apply(session)) {
+    try (CqlSession instrumented = instrumentSession.apply(session, contactPoints)) {
       switch (operation) {
         case "query":
           requireEmpty(instrumented.execute("SELECT name FROM conformance.items WHERE id = 0"));

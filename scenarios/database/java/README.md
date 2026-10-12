@@ -19,6 +19,8 @@ The Cassandra packages pin one current driver in each instrumentation range:
 3.11.5 for driver 3, 4.3.1 for the early driver 4 API, and Apache driver 4.19.3
 for driver 4.4 and later. Each of the four packages runs query, prepared,
 batch, and server-error operations against its own disposable Cassandra node.
+The library launcher passes the session's original contact points to
+`CassandraTelemetry.wrap` so it can emit stable server address and port attributes.
 
 Run the package from the repository root:
 
