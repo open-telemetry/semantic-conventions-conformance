@@ -39,6 +39,10 @@ JDBC prerequisites are documented in its
 
 The HBase scenarios use the latest client in each API range covered by the
 agent's dedicated instrumentation: 1.7.x and 2.4.x.
+Run database scenarios with Java 21, matching CI, and point `JAVA_HOME` at
+that JDK. The HBase clients' Hadoop dependencies call `Subject.getSubject`,
+which is no longer supported on Java 24 and later. Compiling the scenarios
+on a newer JDK does not make those dependencies compatible at runtime.
 
 Run one package from the repository root:
 

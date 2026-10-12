@@ -581,12 +581,14 @@ jobs:
           cache-dependency-glob: ${{ matrix.cache_dependency_glob }}
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
+      # HBase's Hadoop dependencies call Subject.getSubject, which is no
+      # longer supported on Java 24+. Keep database scenario runs on Java 21.
       - name: Set up Java
         if: matrix.language == 'java'
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "25"
+          java-version: ${{ matrix.domain == 'database' && '21' || '25' }}
 
       - name: Set up Gradle
         if: matrix.language == 'java'
