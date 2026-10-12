@@ -5,8 +5,7 @@
       "db.namespace",
       "db.operation.batch.size",
       "db.operation.name",
-      "server.address",
-      "server.port"
+      "server.address"
     ]
   },
   "events": {},
@@ -16,8 +15,7 @@
       "db.namespace",
       "db.operation.name",
       "db.system.name",
-      "server.address",
-      "server.port"
+      "server.address"
     ]
   },
   "entities": {

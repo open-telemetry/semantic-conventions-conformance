@@ -22,6 +22,11 @@ that JDK. The HBase clients' Hadoop dependencies call `Subject.getSubject`,
 which is no longer supported on Java 24 and later. Compiling the scenarios
 on a newer JDK does not make those dependencies compatible at runtime.
 
+For both HBase client lines, the Java agent reports the ZooKeeper cluster key
+(`127.0.0.1:2181:/hbase`) as `server.address`, with no separate `server.port`.
+The shared contract checks that cluster address rather than the region-server
+RPC endpoint. The committed coverage records the attributes CI observed.
+
 Run the package from the repository root:
 
 ```sh
