@@ -13,7 +13,7 @@ return [
         'defaultLocale' => 'en_US',
         'defaultTimezone' => 'UTC',
         'base' => false,
-        'dir' => 'scenarios/src',
+        'dir' => APP_DIR,
         'webroot' => 'webroot',
         'wwwRoot' => WWW_ROOT,
         'baseUrl' => false,
