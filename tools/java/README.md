@@ -80,7 +80,10 @@ that is meant to be measuring the agent.
 Both SDK paths use the same pre-shutdown order: start trace and log flushes,
 await both, flush metrics, then let normal SDK and process shutdown continue.
 The 15-second budget is shared across the flush phases. A timeout or failed
-flush fails the scenario.
+flush fails the scenario. Persistent scenarios export metrics periodically;
+if the reader skips the final flush because an export is already in progress,
+the launcher retries within that same budget. A skipped flush is never counted
+as a successful one.
 
 For `--agent`, `prepare` packages a Java-agent extension that captures the
 agent's processors and metric readers through
