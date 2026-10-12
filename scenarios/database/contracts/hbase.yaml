@@ -1,6 +1,9 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+# The Java agent reports the ZooKeeper cluster key, not the region-server
+# endpoint, as server.address, without a separate server.port.
+
 scenarios:
   get:
     spans:
@@ -13,8 +16,8 @@ scenarios:
           count: 1
           attributes:
             db.namespace: conformance
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
       - match:
           attributes:
             db.system.name: hbase
@@ -24,8 +27,8 @@ scenarios:
           count: 1
           attributes:
             db.namespace: hbase
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
     metrics:
       - db.client.operation.duration
       - queueSize
@@ -42,8 +45,8 @@ scenarios:
           count: 1
           attributes:
             db.namespace: conformance
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
       - match:
           attributes:
             db.system.name: hbase
@@ -53,8 +56,8 @@ scenarios:
           count: 1
           attributes:
             db.namespace: hbase
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
     metrics:
       - db.client.operation.duration
       - queueSize
@@ -71,8 +74,8 @@ scenarios:
           count: 1
           attributes:
             db.namespace: conformance
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
       - match:
           attributes:
             db.system.name: hbase
@@ -82,8 +85,8 @@ scenarios:
           count: 1
           attributes:
             db.namespace: hbase
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
     metrics:
       - db.client.operation.duration
       - queueSize
@@ -101,8 +104,8 @@ scenarios:
           attributes:
             db.namespace: conformance
             db.operation.batch.size: 2
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
       - match:
           attributes:
             db.system.name: hbase
@@ -112,8 +115,8 @@ scenarios:
           count: 1
           attributes:
             db.namespace: hbase
-            server.address: localhost
-            server.port: 16020
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
     metrics:
       - db.client.operation.duration
       - queueSize

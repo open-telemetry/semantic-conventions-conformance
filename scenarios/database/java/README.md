@@ -37,12 +37,9 @@ connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
 
-The HBase scenarios use the latest client in each API range covered by the
-agent's dedicated instrumentation: 1.7.x and 2.4.x.
-Run database scenarios with Java 21, matching CI, and point `JAVA_HOME` at
-that JDK. The HBase clients' Hadoop dependencies call `Subject.getSubject`,
-which is no longer supported on Java 24 and later. Compiling the scenarios
-on a newer JDK does not make those dependencies compatible at runtime.
+HBase's shared workload exercises both client API lines through the Java agent.
+Its [scenario notes](hbase/README.md) cover Java toolchains, contracts, and
+fixture requirements.
 
 Run one package from the repository root:
 
