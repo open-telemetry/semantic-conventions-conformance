@@ -6,6 +6,7 @@ package io.opentelemetry.conformance.database.mongodb.reactive;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
@@ -18,8 +19,10 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.opentelemetry.conformance.database.mongodb.MongoContract;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.bson.Document;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -35,12 +38,15 @@ public final class MongoReactiveScenario {
     run(operation, null);
   }
 
-  public static void run(String operation, CommandListener commandListener) throws Exception {
+  public static void run(
+      String operation, Function<List<ServerAddress>, CommandListener> commandListenerFactory)
+      throws Exception {
     MongoClientSettings.Builder settings =
         MongoClientSettings.builder()
             .applyConnectionString(new ConnectionString(MongoContract.connectionString()));
-    if (commandListener != null) {
-      settings.addCommandListener(commandListener);
+    if (commandListenerFactory != null) {
+      settings.addCommandListener(
+          commandListenerFactory.apply(settings.build().getClusterSettings().getHosts()));
     }
     try (MongoClient client = MongoClients.create(settings.build())) {
       MongoCollection<Document> collection =

@@ -6,6 +6,7 @@ package io.opentelemetry.conformance.database.mongodb.sync;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -17,6 +18,8 @@ import com.mongodb.client.result.UpdateResult;
 import com.mongodb.event.CommandListener;
 import io.opentelemetry.conformance.database.mongodb.MongoContract;
 import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 import org.bson.Document;
 
 /** Exercises individual command paths against MongoDB through the synchronous driver. */
@@ -27,12 +30,14 @@ public final class MongoSyncScenario {
     run(operation, null);
   }
 
-  public static void run(String operation, CommandListener commandListener) {
+  public static void run(
+      String operation, Function<List<ServerAddress>, CommandListener> commandListenerFactory) {
     MongoClientSettings.Builder settings =
         MongoClientSettings.builder()
             .applyConnectionString(new ConnectionString(MongoContract.connectionString()));
-    if (commandListener != null) {
-      settings.addCommandListener(commandListener);
+    if (commandListenerFactory != null) {
+      settings.addCommandListener(
+          commandListenerFactory.apply(settings.build().getClusterSettings().getHosts()));
     }
     try (MongoClient client = MongoClients.create(settings.build())) {
       MongoCollection<Document> collection =

@@ -44,7 +44,9 @@ MongoDB packages use the same operation set across all three driver APIs:
 | `aggregate` | one-stage `$match` aggregation |
 
 Each expectation also accounts for the driver's `endSessions` command when the
-client closes.
+client closes. The standalone library launchers pass the driver's configured
+seed addresses to `MongoTelemetry.createCommandListener` so stable
+`server.address` and `server.port` describe the same target as the agent runs.
 
 ## Running it
 

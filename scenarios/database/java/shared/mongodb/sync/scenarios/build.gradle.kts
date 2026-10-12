@@ -5,7 +5,14 @@ plugins {
 
 dependencies {
     implementation(project(":shared:mongodb:support"))
-    // api: exposes com.mongodb.event.CommandListener, which MongoSyncScenario's public
-    // run(operation, commandListener) overload takes so a library launcher can register one.
+    // api: exposes ServerAddress and CommandListener for the library launcher's listener factory.
     api(libs.mongodb.driver.sync)
+}
+
+tasks.test {
+    environment("DATABASE_HOST", "127.0.0.1")
+    environment("DATABASE_PORT", "43210")
+    environment("DATABASE_NAME", "conformance")
+    environment("DATABASE_USER", "conformance")
+    environment("DATABASE_PASSWORD", "conformance")
 }
