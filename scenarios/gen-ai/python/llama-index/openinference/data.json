@@ -795,6 +795,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.achat",
+      "context": {
+        "attribute_key": "llm.finish_reason"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "OpenAI.achat",
@@ -994,6 +1003,15 @@
       "signal_name": "OpenAI.astream_chat",
       "context": {
         "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAI.astream_chat",
+      "context": {
+        "attribute_key": "llm.finish_reason"
       }
     },
     {

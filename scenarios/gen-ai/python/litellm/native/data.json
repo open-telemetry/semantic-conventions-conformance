@@ -511,6 +511,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'metadata.used_client_oauth_token' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.used_client_oauth_token"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'metadata.user_agent' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-audio-preview",
@@ -818,15 +827,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.service_tier' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-mini",
-      "context": {
-        "attribute_key": "gen_ai.cost.service_tier"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.cost.tool_usage_cost' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-mini",
@@ -1050,6 +1050,15 @@
       "signal_name": "chat gpt-4o-mini",
       "context": {
         "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.used_client_oauth_token' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.used_client_oauth_token"
       }
     },
     {
@@ -1510,6 +1519,15 @@
       "signal_name": "embeddings text-embedding-3-small",
       "context": {
         "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.used_client_oauth_token' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.used_client_oauth_token"
       }
     },
     {
