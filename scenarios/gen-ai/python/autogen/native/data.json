@@ -22,6 +22,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'autogen-core' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "autogen-core",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.system' does not exist in the registry.",
       "signal_type": "span",
