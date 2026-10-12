@@ -7,6 +7,10 @@ dependencies {
     api(platform(libs.opentelemetry.bom))
     api(libs.opentelemetry.api)
 
+    constraints {
+        implementation("io.opentelemetry:opentelemetry-api-incubator:${libs.versions.opentelemetry.asProvider().get()}-alpha")
+    }
+
     implementation(project(":scenario-support"))
     implementation(libs.opentelemetry.exporter.otlp) {
         exclude(group = "io.opentelemetry", module = "opentelemetry-exporter-sender-okhttp")

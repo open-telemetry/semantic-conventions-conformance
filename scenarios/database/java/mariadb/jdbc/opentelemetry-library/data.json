@@ -1,7 +1,47 @@
 {
-  "spans": {},
+  "spans": {
+    "db.mariadb.client": [
+      "db.namespace",
+      "db.operation.batch.size",
+      "db.query.summary",
+      "db.query.text",
+      "db.stored_procedure.name",
+      "server.address",
+      "server.port"
+    ]
+  },
   "events": {},
-  "metrics": {},
-  "entities": {},
+  "metrics": {
+    "db.client.operation.duration": [
+      "db.namespace",
+      "db.query.summary",
+      "db.system.name",
+      "server.address",
+      "server.port"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
   "findings": []
 }
