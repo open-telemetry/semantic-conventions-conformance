@@ -54,10 +54,9 @@ java {
 }
 ```
 
-Both builds use the Foojay toolchain resolver, so Gradle can download a missing
-JDK. CI installs Java 27 before Java 25, leaving `JAVA_HOME` on the build JDK,
-and passes both installation paths to Gradle through
-`org.gradle.java.installations.paths`.
+Both builds use the Foojay toolchain resolver, so Gradle downloads a missing
+JDK automatically. CI installs only Java 25 for the build JVM and lets Gradle
+provision Java 27 for Helidon. `JAVA_HOME` stays on Java 25.
 
 Versions are pinned in a build root's `gradle/libs.versions.toml`. The Java
 agent and the instrumentation BOM are one release published under two

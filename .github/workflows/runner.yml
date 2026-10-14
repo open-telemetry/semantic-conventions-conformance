@@ -68,21 +68,11 @@ jobs:
         with:
           args: check .
 
-      - name: Set up Helidon Java
-        id: helidon-java
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          distribution: zulu
-          java-version: "27"
-
       - name: Set up build Java
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "25"
-
-      - name: Configure Java toolchain discovery
-        run: echo "ORG_GRADLE_PROJECT_org.gradle.java.installations.paths=${{ steps.helidon-java.outputs.path }},$JAVA_HOME" >> "$GITHUB_ENV"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
@@ -574,24 +564,12 @@ jobs:
           cache-dependency-glob: "scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/uv.lock"
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
-      - name: Set up Helidon Java
-        id: helidon-java
-        if: matrix.language == 'java'
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          distribution: zulu
-          java-version: "27"
-
       - name: Set up build Java
         if: matrix.language == 'java'
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "25"
-
-      - name: Configure Java toolchain discovery
-        if: matrix.language == 'java'
-        run: echo "ORG_GRADLE_PROJECT_org.gradle.java.installations.paths=${{ steps.helidon-java.outputs.path }},$JAVA_HOME" >> "$GITHUB_ENV"
 
       - name: Set up Gradle
         if: matrix.language == 'java'
