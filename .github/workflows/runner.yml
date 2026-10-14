@@ -296,9 +296,10 @@ jobs:
           python -c 'from genai_conformance import DOMAIN; DOMAIN.coverage_model'
           python -c 'from http_conformance import DOMAIN; DOMAIN.coverage_model'
 
-      - name: Test the coverage models
+      - name: Test the coverage models and Weaver lifecycle
         run: |
           python -m pytest \
+            tools/runner/tests/test_weaver.py \
             tools/database/runner/tests \
             tools/gen-ai/runner/tests \
             tools/http/runner/tests
