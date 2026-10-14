@@ -23,12 +23,10 @@ jobs:
         include:
           # Test the runner on each supported operating system.
           - os: ubuntu-latest
-            # renovate: datasource=github-releases depName=python packageName=actions/python-versions versioning=npm
-            python-version: "3.15"
+            python-version: "3.14"
           # A native PowerShell run for the supported Windows path.
           - os: windows-latest
-            # renovate: datasource=github-releases depName=python packageName=actions/python-versions versioning=npm
-            python-version: "3.15"
+            python-version: "3.14"
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -210,7 +208,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.15"
+          python-version: "3.14"
 
       # Real dependencies here, unlike the test job: pyright needs every import
       # to resolve. `semconv_genai` is the exception — it ships with the
@@ -257,7 +255,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.15"
+          python-version: "3.14"
 
       - name: Install weaver
         run: |
@@ -409,7 +407,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.15"
+          python-version: "3.14"
 
       # Toolchains pinned exactly as in the scenarios job, since the tool
       # version can change what a lock file says. Every setup step below
@@ -551,7 +549,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.15"
+          python-version: "3.14"
 
       - name: Set up uv
         if: matrix.language == 'python'

@@ -29,16 +29,6 @@
       ]
     },
     {
-      // Keep the annotated workflow matrix Python versions in the same PR as
-      // the literal setup-python inputs the github-actions manager bumps.
-      "groupName": "github actions",
-      "matchManagers": ["custom.regex"],
-      "matchFileNames": [".github/workflows/**"],
-      "schedule": [
-        "before 8am on Tuesday"
-      ]
-    },
-    {
       // group all non-major Java dependency updates into a single PR
       "matchManagers": ["gradle"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -149,17 +139,6 @@
     }
   ],
   "customManagers": [
-    {
-      // Workflow matrix values the github-actions manager cannot see, because
-      // they reach actions/setup-python as `${{ matrix.* }}` expressions; each
-      // carries a `# renovate:` comment naming the same dependency that the
-      // github-actions manager extracts from literal setup-python inputs.
-      "customType": "regex",
-      "managerFilePatterns": ["/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?)(?: packageName=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+[a-z-]+: \"(?<currentValue>[^\"]+)\""
-      ]
-    },
     {
       // Pins in versions.env files; each carries its own `# renovate:` comment
       // naming its datasource.
