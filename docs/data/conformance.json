@@ -11336,6 +11336,36 @@
           "message": "Span 'invocation [conformance]' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
           "signal_name": "invocation [conformance]",
           "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.finish_reasons",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.input_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.output_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/google-adk/openinference",
@@ -11684,7 +11714,7 @@
         }
       ],
       "summary": {
-        "findings": 91,
+        "findings": 94,
         "recommended": {
           "declared": 31,
           "emitted": 10
