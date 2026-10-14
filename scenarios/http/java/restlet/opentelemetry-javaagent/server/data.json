@@ -68,5 +68,30 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.restlet.Component.InternalRouter.Server' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.restlet.Component.InternalRouter.Server",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.restlet.Component.LogService' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.restlet.Component.LogService",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    }
+  ]
 }

@@ -37,6 +37,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'mistralai_sdk_tracer' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "mistralai_sdk_tracer",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'agent.trace.public' does not exist in the registry.",
       "signal_type": "span",
