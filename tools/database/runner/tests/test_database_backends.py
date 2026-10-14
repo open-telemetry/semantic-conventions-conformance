@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from importlib import resources
 from typing import Any
@@ -206,17 +207,12 @@ def test_cannot_start_postgres_twice(
     postgres.close()
 
 
-def test_the_image_is_pinned_by_digest() -> None:
-    name, separator, digest = POSTGRES_IMAGE.partition("@")
-
-    assert name == "postgres:18.6-bookworm"
-    assert separator == "@"
-    assert digest.startswith("sha256:")
-
-    name, separator, digest = MARIADB_IMAGE.partition("@")
-    assert name == "mariadb:11.8.9-noble"
-    assert separator == "@"
-    assert digest.startswith("sha256:")
+@pytest.mark.parametrize(
+    ("image", "repository"),
+    [(POSTGRES_IMAGE, "postgres"), (MARIADB_IMAGE, "mariadb")],
+)
+def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
+    assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
 
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
