@@ -62,7 +62,9 @@ def calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[list[str], Path]]:
     recorded: list[tuple[list[str], Path]] = []
 
     def call(command: list[str], cwd: Path, creationflags: int) -> int:
-        assert creationflags == CREATION_FLAGS
+        assert creationflags == (
+            subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+        )
         recorded.append((command, Path(cwd)))
         return 0
 
@@ -207,12 +209,6 @@ def test_npm_reloads_local_manifests_and_relocks_without_churn(
     assert relock(tmp_path) == 0
     assert lockfile.read_text(encoding="utf-8") == regenerated
     assert not (project / "node_modules").exists()
-
-
-def test_windows_subprocesses_do_not_open_console_windows() -> None:
-    assert CREATION_FLAGS == (
-        subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-    )
 
 
 def test_the_first_failure_stops_the_run(
