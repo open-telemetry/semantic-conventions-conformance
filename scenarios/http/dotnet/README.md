@@ -23,16 +23,12 @@ project a .NET HTTP scenario depends on, including both tooling test projects.
 
 ## Building and testing
 
-Run from this directory so `dotnet` reads the SDK and
-Microsoft.Testing.Platform runner settings in [`global.json`](global.json):
+Run these commands from this directory:
 
 ```sh
 dotnet build http-dotnet-conformance.slnx
 dotnet test --solution http-dotnet-conformance.slnx --no-build
 ```
-
-The test command runs both shared tooling test projects. Build the full solution
-first so the scenario projects are compiled too.
 
 ## What the launchers add
 
