@@ -7,6 +7,10 @@ What HTTP instrumentations emit, checked against the
 <language>/<library>/<instrumentation>/<side>/
     conformance.yaml    how to run it
     data.json           the coverage it produced, committed
+rust/<library>/<instrumentation>/<side>/
+    Cargo.toml          the measured binary package
+    conformance.yaml    how to run it
+    data.json           the coverage it produced, committed
 ```
 
 A language that needs a build of its own has a build root directly under this
@@ -82,6 +86,13 @@ and starts its entry point with `bundle exec ruby`. Repository helpers resolve
 through path dependencies, and neither package writes to the user-wide gem
 installation.
 
+In Rust the split is between crates. Its plain workload crates hold Actix
+Web's native routes and the awc request sequence without importing
+OpenTelemetry. The instrumentation-specific binary crates install
+`opentelemetry-instrumentation-actix-web` around those workloads. One Cargo
+workspace at `rust/` includes the shared crates under `tools/` and commits one
+lockfile for all of them.
+
 ## The scenario contract
 
 [`contract.yaml`](../../tools/http/test-client/contract.yaml) combines each
@@ -135,7 +146,7 @@ both sides could hide an unexpected client span in a server run or the reverse.
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js \
-  -e tools/ruby -e tools/dotnet -e tools/php -e tools/go
+  -e tools/ruby -e tools/dotnet -e tools/php -e tools/go -e tools/rust
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/client
 otel-conformance scenarios/http/java/armeria/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/armeria/opentelemetry-library/client
@@ -171,6 +182,8 @@ otel-conformance scenarios/http/ruby/net_http/opentelemetry-instrumentation-net_
 otel-conformance scenarios/http/ruby/rack/opentelemetry-instrumentation-rack/server
 otel-conformance scenarios/http/php/slim/opentelemetry-slim/server
 otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
+otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
+otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
 ```
 
 Every Java package is built and started the same way, so
@@ -213,6 +226,12 @@ lifecycle and flushes telemetry at each request shutdown. See
 Go's build root is [`go/`](go), and [`otel-conformance-go`](../../tools/go)
 holds how a Go package is built and started: `setup:` compiles the scenario and
 `run:` is the resulting binary, so the toolchain is not the measured process.
+
+Rust separates the build from the measured run. `otel-conformance-rust build`
+compiles the current package in release mode, then `otel-conformance-rust run`
+starts the workspace's absolute release binary path. Cargo is not the measured
+process's parent, and the same package declaration works on Windows because
+the launcher adds `.exe` there.
 
 A finding weaver or a policy raises is a result, not a build break: CI runs
 with `--report-only`. What must not change silently is `data.json`, which every
