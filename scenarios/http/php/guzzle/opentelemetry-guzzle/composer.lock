@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "86567dfeb9f3400d329f69e45cab1fc3",
+    "content-hash": "4478c32921c4756a72b22885953c6873",
     "packages": [
         {
             "name": "brick/math",
@@ -633,10 +633,10 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/http/test-client/php",
-                "reference": "bd8e364aecfe7c189c4e8af8a802252ea840057a"
+                "reference": "105077d095611b87ab20b29da2b89f728202d7a2"
             },
             "require": {
-                "php": ">=8.2",
+                "php": ">=8.4.1",
                 "symfony/yaml": "^8.0"
             },
             "type": "library",
@@ -665,10 +665,10 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/php/scenario",
-                "reference": "52f6e23e90c815d2b2eacb536e26153db800e979"
+                "reference": "7b61fc09e35da12efbd35600ce8389574d7dddc3"
             },
             "require": {
-                "php": ">=8.2"
+                "php": ">=8.4.1"
             },
             "type": "library",
             "autoload": {
@@ -2256,7 +2256,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.2"
+        "php": ">=8.4.1"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"
