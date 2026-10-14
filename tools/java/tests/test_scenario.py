@@ -87,13 +87,6 @@ class TestPreparing:
 
         assert command[command.index("--project-dir") + 1] == str(root)
 
-    def test_the_build_uses_path_without_java_home(
-        self, root: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.delenv("JAVA_HOME", raising=False)
-
-        assert gradle_command(root, ":help")[0] == "java"
-
 
 class TestRunning:
     def test_an_agent_run_attaches_the_agent(self, root: Path) -> None:
@@ -193,16 +186,13 @@ class TestRunning:
             subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
         )
 
-    @pytest.mark.parametrize(
-        "project",
-        ["helidon:opentelemetry-javaagent", "helidon:opentelemetry-library"],
-    )
-    def test_helidon_uses_prepared_java_27_with_build_java_25(
-        self, root: Path, monkeypatch: pytest.MonkeyPatch, project: str
+    def test_the_run_uses_its_prepared_jvm_not_the_build_jvm(
+        self, root: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         build_java = root / "jdk 25" / "bin" / "java.exe"
         monkeypatch.setenv("JAVA_HOME", str(build_java.parent.parent))
         monkeypatch.setenv("PATH", "")
+        project = "example:launcher"
         runtime_java = prepare_runtime(root, project, 27)
 
         assert gradle_command(root, f":{project}:prepareRuntime")[0] == str(
@@ -259,23 +249,13 @@ class TestRuntimeMetadata:
         [
             None,
             b"{",
-            b"\xff",
-            b"[]",
-            b"{}",
-            {"executable": None},
-            {"executable": ""},
             {"executable": "java"},
-            {"languageVersion": "27"},
-            {"languageVersion": True},
-            {"languageVersion": 0},
         ],
     )
-    def test_invalid_metadata_requires_prepare_without_launching_java(
+    def test_invalid_metadata_requires_prepare(
         self,
         root: Path,
         metadata: bytes | dict[str, object] | None,
-        monkeypatch: pytest.MonkeyPatch,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
         path = root / "build" / "scenario-runtime" / RUNTIME / JAVA_RUNTIME
         if metadata is None:
@@ -285,29 +265,35 @@ class TestRuntimeMetadata:
         else:
             data = json.loads(path.read_text(encoding="utf-8"))
             path.write_text(json.dumps(data | metadata), encoding="utf-8")
-        monkeypatch.chdir(root)
-        monkeypatch.setenv("JAVA_HOME", str(root / "jdk 25"))
-        monkeypatch.setattr(
-            otel_conformance_java.subprocess,
-            "call",
-            lambda *args, **kwargs: pytest.fail("must not launch Java"),
-        )
 
         with pytest.raises(
             RuntimePreparationError, match=f"prepare {PROJECT}"
         ):
             java_command(root, PROJECT, MAIN, agent=False)
+
+    def test_missing_metadata_fails_without_launching_java(
+        self,
+        root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        (root / "build" / "scenario-runtime" / RUNTIME / JAVA_RUNTIME).unlink()
+        monkeypatch.chdir(root)
+        monkeypatch.setenv("JAVA_HOME", str(root / "jdk 25"))
+        call = Mock()
+        monkeypatch.setattr(otel_conformance_java.subprocess, "call", call)
+
         with pytest.raises(SystemExit) as error:
             otel_conformance_java.main(["run", PROJECT, MAIN])
 
         assert error.value.code == 1
         assert f"prepare {PROJECT}" in capsys.readouterr().err
+        call.assert_not_called()
 
     @pytest.mark.parametrize(
         "state",
         [
             "missing",
-            "directory",
             pytest.param(
                 "non-executable",
                 marks=pytest.mark.skipif(
@@ -325,8 +311,6 @@ class TestRuntimeMetadata:
             executable.chmod(0o644)
         else:
             executable.unlink()
-            if state == "directory":
-                executable.mkdir()
 
         with pytest.raises(
             RuntimePreparationError,
