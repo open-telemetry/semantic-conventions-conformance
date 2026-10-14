@@ -19,7 +19,20 @@ httpclient/opentelemetry-http/           the launcher, and client/
 [`http-dotnet-conformance.slnx`](http-dotnet-conformance.slnx) is the build
 root. It lists the shared projects under [`tools/`](../../../tools) alongside
 these four rather than restating them, so `dotnet build` here compiles every
-project a .NET HTTP scenario depends on, including the test project.
+project a .NET HTTP scenario depends on, including both tooling test projects.
+
+## Building and testing
+
+Run from this directory so `dotnet` reads the SDK and
+Microsoft.Testing.Platform runner settings in [`global.json`](global.json):
+
+```sh
+dotnet build http-dotnet-conformance.slnx
+dotnet test --solution http-dotnet-conformance.slnx --no-build
+```
+
+The test command runs both shared tooling test projects. Build the full solution
+first so the scenario projects are compiled too.
 
 ## What the launchers add
 
