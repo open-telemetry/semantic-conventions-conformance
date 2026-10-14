@@ -35,6 +35,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'opentelemetry.instrumentation.google_generativeai' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "opentelemetry.instrumentation.google_generativeai",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "unit_mismatch",
       "message": "Unit should be '{token}', but found 'token'.",
       "signal_type": "metric",

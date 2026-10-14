@@ -66,5 +66,42 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'io.undertow' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "io.undertow",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.xnio' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.xnio",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.xnio.nio' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.xnio.nio",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    }
+  ]
 }

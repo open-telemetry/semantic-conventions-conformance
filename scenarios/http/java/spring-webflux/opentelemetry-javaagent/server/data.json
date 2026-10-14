@@ -68,5 +68,42 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'SpringWebfluxJavaagentServerScenario' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "SpringWebfluxJavaagentServerScenario",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.springframework.boot.reactor.netty.GracefulShutdown' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.springframework.boot.reactor.netty.GracefulShutdown",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.springframework.boot.reactor.netty.NettyWebServer' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.springframework.boot.reactor.netty.NettyWebServer",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    }
+  ]
 }

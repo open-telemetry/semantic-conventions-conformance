@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "11dcd0665dce1f5785599e12fd1ddf24",
+    "content-hash": "86567dfeb9f3400d329f69e45cab1fc3",
     "packages": [
         {
             "name": "brick/math",
@@ -633,11 +633,11 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/http/test-client/php",
-                "reference": "8bd46008ae02e94eaea04cb4ac309373f9e10f0b"
+                "reference": "bd8e364aecfe7c189c4e8af8a802252ea840057a"
             },
             "require": {
                 "php": ">=8.2",
-                "symfony/yaml": "^7.2"
+                "symfony/yaml": "^8.0"
             },
             "type": "library",
             "autoload": {
@@ -665,7 +665,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/php/scenario",
-                "reference": "2aa89a375dbb6b780eb92746c6ef604e59d0177f"
+                "reference": "52f6e23e90c815d2b2eacb536e26153db800e979"
             },
             "require": {
                 "php": ">=8.2"
@@ -948,37 +948,37 @@
         },
         {
             "name": "open-telemetry/opentelemetry-auto-guzzle",
-            "version": "1.4.0",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/contrib-auto-guzzle.git",
-                "reference": "1553d9ab2e0a94c8af5d8c83946cb8dfa71835ec"
+                "reference": "b207e98276b136a6a401907a52ec82c2ca03ee19"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-guzzle/zipball/1553d9ab2e0a94c8af5d8c83946cb8dfa71835ec",
-                "reference": "1553d9ab2e0a94c8af5d8c83946cb8dfa71835ec",
+                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-guzzle/zipball/b207e98276b136a6a401907a52ec82c2ca03ee19",
+                "reference": "b207e98276b136a6a401907a52ec82c2ca03ee19",
                 "shasum": ""
             },
             "require": {
                 "ext-opentelemetry": "*",
-                "guzzlehttp/guzzle": "^7",
+                "guzzlehttp/guzzle": "^7 || ^8",
                 "open-telemetry/api": "^1.0",
-                "open-telemetry/sem-conv": "^1.32",
+                "open-telemetry/sem-conv": "^1.38",
                 "php": "^8.1"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3",
-                "guzzlehttp/promises": "^2",
+                "guzzlehttp/promises": "^2 || ^3",
                 "nyholm/psr7": "*",
                 "open-telemetry/sdk": "^1.0",
-                "phan/phan": "^5.0",
+                "phan/phan": "^6.0",
                 "phpstan/phpstan": "^1.1",
                 "phpstan/phpstan-mockery": "^1.1.0",
                 "phpstan/phpstan-phpunit": "^1.0",
                 "phpunit/phpunit": "^9.5",
                 "psalm/plugin-phpunit": "^0.19.2",
-                "vimeo/psalm": "6.4.0"
+                "vimeo/psalm": "^6.10.0"
             },
             "type": "library",
             "autoload": {
@@ -1004,9 +1004,9 @@
                 "tracing"
             ],
             "support": {
-                "source": "https://github.com/opentelemetry-php/contrib-auto-guzzle/tree/1.4.0"
+                "source": "https://github.com/opentelemetry-php/contrib-auto-guzzle/tree/1.5.0"
             },
-            "time": "2026-07-09T20:17:32+00:00"
+            "time": "2026-09-02T12:13:51+00:00"
         },
         {
             "name": "open-telemetry/sdk",
@@ -2119,28 +2119,28 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v7.4.18",
+            "version": "v8.1.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "4cef939e55b8a21c5780418de0d98ab00d0736e1"
+                "reference": "030e96eed0303223bfca3af9109e9e64830b6ec3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/4cef939e55b8a21c5780418de0d98ab00d0736e1",
-                "reference": "4cef939e55b8a21c5780418de0d98ab00d0736e1",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/030e96eed0303223bfca3af9109e9e64830b6ec3",
+                "reference": "030e96eed0303223bfca3af9109e9e64830b6ec3",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.2",
-                "symfony/deprecation-contracts": "^2.5|^3",
+                "php": ">=8.4.1",
                 "symfony/polyfill-ctype": "^1.8"
             },
             "conflict": {
-                "symfony/console": "<6.4"
+                "symfony/console": "<7.4"
             },
             "require-dev": {
-                "symfony/console": "^6.4|^7.0|^8.0"
+                "symfony/console": "^7.4|^8.0",
+                "yaml/yaml-test-suite": "*"
             },
             "bin": [
                 "Resources/bin/yaml-lint"
@@ -2171,7 +2171,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.4.18"
+                "source": "https://github.com/symfony/yaml/tree/v8.1.8"
             },
             "funding": [
                 {
@@ -2191,7 +2191,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-30T00:47:26+00:00"
+            "time": "2026-09-26T06:33:49+00:00"
         },
         {
             "name": "tbachert/spi",

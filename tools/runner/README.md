@@ -258,6 +258,47 @@ scenarios:
               distinct: 2
 ```
 
+### Instrumentation scope
+
+Every instrumentation scope observed in a scenario must have a non-empty
+`name` and `schema_url`. Known gaps can be declared through
+`expected_violations`:
+
+```yaml
+expected_violations:
+  - id: instrumentation_scope_schema_url_missing
+    reason: Link to the instrumentation issue tracking the missing schema URL.
+```
+
+Top-level expected violations apply across the package. Put the declaration
+under one scenario when that scenario must produce the finding.
+
+The default checks apply to every emitted scope, including scopes from SDK and
+dependency instrumentations.
+
+Exact checks belong to a matched signal because one package can emit telemetry
+from several scopes:
+
+```yaml
+spans:
+  - match:
+      attributes:
+        gen_ai.operation.name: chat
+    expect:
+      count: 1
+      instrumentation_scope:
+        name: opentelemetry.instrumentation.genai.openai
+        version: {present: true}
+        schema_url: https://opentelemetry.io/schemas/1.37.0
+```
+
+A string value is matched exactly. `{present: true}` or `{present: false}`
+checks whether `name`, `version`, or `schema_url` is set without fixing its
+value. Fields omitted from a matched signal still receive the default `name`
+and `schema_url` checks. `version` is unchecked unless declared.
+Explicit field expectations override defaults only for matching spans. Other
+spans retain the defaults, even when they share the same scope.
+
 Each entry has two halves, declared separately so an attribute used to *find*
 a span never reads like one being *checked* on it. `match` selects — by
 attribute value or span `kind`. `expect` then asserts over what it selected:
@@ -496,6 +537,18 @@ A directory overrides any of it by declaring `weaver:` or `server:` itself,
 field by field — `server: {health: /ready}` keeps your server and only changes
 where it is probed. Paths declared inside a `conformance.yaml` are relative to
 that file, paths on the command line to your shell.
+
+`registry` also takes a git URL in weaver's own syntax, with an optional ref
+and sub folder:
+
+```yaml
+weaver:
+  registry: https://github.com/open-telemetry/semantic-conventions-genai.git@67dff024[model]
+```
+
+It is downloaded into `$SEMCONV_CACHE` under its ref and reused, so a ref that
+moves is fetched once until the cache is cleared. Only `github.com` URLs, since
+what is fetched is a GitHub archive.
 
 ## Limitations
 
