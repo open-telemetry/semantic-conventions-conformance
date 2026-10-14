@@ -453,10 +453,6 @@ jobs:
           # look like a change.
           tools: composer:2.9.8
 
-      - name: Refresh public JavaScript lock metadata
-        if: matrix.ecosystem == 'js'
-        run: python .github/refresh-public-js-lock.py
-
       - name: Regenerate the lock files
         run: |
           set -euo pipefail
