@@ -230,6 +230,58 @@ def test_the_first_failure_stops_the_run(
     assert len(seen) == 1
 
 
+@pytest.mark.parametrize("failure", [7, FileNotFoundError("npm")])
+def test_unsuccessful_regeneration_restores_original_lock_bytes(
+    repository: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure: int | FileNotFoundError,
+) -> None:
+    project = repository / "scenarios" / "http" / "js"
+    lockfile = project / "package-lock.json"
+    original = (
+        b'{\r\n  "packages": {\r\n'
+        b'    "node_modules/local": {"resolved": "file:../local"}\r\n'
+        b"  }\r\n}\r\n"
+    )
+    lockfile.write_bytes(original)
+    seen: list[Path] = []
+
+    def call(command: list[str], cwd: Path, creationflags: int) -> int:
+        seen.append(cwd)
+        assert lockfile.read_bytes() != original
+        lockfile.write_bytes(b"partial npm output")
+        if isinstance(failure, FileNotFoundError):
+            raise failure
+        return failure
+
+    monkeypatch.setattr(otel_conformance_js.subprocess, "call", call)
+
+    if isinstance(failure, FileNotFoundError):
+        with pytest.raises(FileNotFoundError, match="npm"):
+            relock(repository)
+    else:
+        assert relock(repository) == failure
+    assert lockfile.read_bytes() == original
+    assert seen == [project]
+
+
+def test_successful_regeneration_keeps_npm_output(
+    repository: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = repository / "scenarios" / "http" / "js"
+    lockfile = project / "package-lock.json"
+
+    def call(command: list[str], cwd: Path, creationflags: int) -> int:
+        if cwd == project:
+            lockfile.write_bytes(b'{"packages": {}}\n')
+        return 0
+
+    monkeypatch.setattr(otel_conformance_js.subprocess, "call", call)
+
+    assert relock(repository) == 0
+    assert lockfile.read_bytes() == b'{"packages": {}}\n'
+
+
 def test_the_subcommand_relocks_the_current_repository(
     repository: Path,
     calls: list[tuple[list[str], Path]],

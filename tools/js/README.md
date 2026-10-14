@@ -96,7 +96,8 @@ with `npm install --package-lock-only --ignore-scripts`, which installs nothing,
 runs no scripts, and changes only what the manifests require. Before invoking
 npm, it removes the cached snapshots of copied `file:` packages from the
 lockfile so npm reads their current manifests and resolves their dependencies.
-Registry package pins remain in place. CI runs `relock` on Renovate
+Registry package pins remain in place. If regeneration fails, the project's
+original lockfile is restored byte for byte. CI runs `relock` on Renovate
 PRs and commits the result. Run it by hand when `npm ci` reports that the
 lockfile is out of sync:
 

@@ -138,10 +138,18 @@ def relock(root: Path | None = None) -> int:
     for project in lock_projects(root):
         name = project.relative_to(root).as_posix()
         print(f"relocking {name}", flush=True)
-        refresh_local_packages(project)
-        status = subprocess.call(  # noqa: S603
-            relock_command(), cwd=project, creationflags=CREATION_FLAGS
-        )
+        lockfile = project / BUILD_MARKER
+        original = lockfile.read_bytes()
+        succeeded = False
+        try:
+            refresh_local_packages(project)
+            status = subprocess.call(  # noqa: S603
+                relock_command(), cwd=project, creationflags=CREATION_FLAGS
+            )
+            succeeded = status == 0
+        finally:
+            if not succeeded:
+                lockfile.write_bytes(original)
         if status != 0:
             print(f"relocking {name} failed", file=sys.stderr)
             return status
