@@ -43,8 +43,8 @@ projects sit in one project list.
 
 Java 25 is the Gradle build, compiler, application bytecode, test and default
 scenario-runtime baseline. Set `JAVA_HOME` to a JDK 25 installation for
-`prepare`. The Helidon scenarios and both of their launcher projects use Java
-27 for compilation, bytecode, tests and scenario execution:
+`prepare`. To use a different Java version for a scenario, configure its
+framework and launcher projects:
 
 ```kotlin
 java {
@@ -56,7 +56,8 @@ java {
 
 Both builds use the Foojay toolchain resolver, so Gradle downloads a missing
 JDK automatically. CI installs only Java 25 for the build JVM and lets Gradle
-provision Java 27 for Helidon. `JAVA_HOME` stays on Java 25.
+provision additional JDKs required by scenario toolchains. `JAVA_HOME` stays
+on Java 25.
 
 Versions are pinned in a build root's `gradle/libs.versions.toml`. The Java
 agent and the instrumentation BOM are one release published under two
