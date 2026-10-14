@@ -107,9 +107,9 @@
     },
     {
       "id": "instrumentation_scope_schema_url_missing",
-      "message": "Instrumentation scope 'io.helidon.webserver.ServerListener' does not have schema_url.",
+      "message": "Instrumentation scope 'io.helidon.webserver.SocketTransportBinding' does not have schema_url.",
       "signal_type": "instrumentation_scope",
-      "signal_name": "io.helidon.webserver.ServerListener",
+      "signal_name": "io.helidon.webserver.SocketTransportBinding",
       "context": {
         "actual": "",
         "expected": {
