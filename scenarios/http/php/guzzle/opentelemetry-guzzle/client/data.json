@@ -1,7 +1,9 @@
 {
   "spans": {
     "http.client": [
+      "http.request.body.size",
       "http.request.method",
+      "http.response.body.size",
       "http.response.status_code",
       "network.protocol.version",
       "server.address",

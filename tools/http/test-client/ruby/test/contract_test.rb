@@ -31,6 +31,19 @@ class ContractTest < Minitest::Test
     assert_equal HTTP_CONTRACT.exchanges.length - 1, HTTP_CONTRACT.requests.length
   end
 
+  def test_invalid_table_does_not_poison_the_cache
+    HTTP_CONTRACT.exchanges
+    invalid = JSON.parse(JSON.generate(HTTP_ACTIONS))
+    invalid.fetch(1).fetch("request")["method"] = nil
+    raw = JSON.generate(invalid)
+
+    2.times do
+      assert_raises(HTTP_CONTRACT::ConfigurationError) do
+        HTTP_CONTRACT.exchanges(raw)
+      end
+    end
+  end
+
   def test_lookup_ignores_query_but_checks_method
     plain = HTTP_CONTRACT.exchange_for("GET", "/users/123")
     queried = HTTP_CONTRACT.exchange_for("GET", "/users/123?fields=name")

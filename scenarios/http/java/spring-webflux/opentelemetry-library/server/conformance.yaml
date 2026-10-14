@@ -10,6 +10,5 @@ weaver:
 
 setup: otel-conformance-java prepare spring-webflux:opentelemetry-library
 
-scenarios:
-  server:
-    run: otel-http-drive --serve otel-conformance-java run spring-webflux:opentelemetry-library SpringWebfluxLibraryServerScenario
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve otel-conformance-java run spring-webflux:opentelemetry-library SpringWebfluxLibraryServerScenario

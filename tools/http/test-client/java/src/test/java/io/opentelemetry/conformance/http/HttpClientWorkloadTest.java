@@ -19,15 +19,15 @@ class HttpClientWorkloadTest {
   /** A sender backed by the other side of the same contract, which is what a run measures. */
   private static List<String> driveAgainstTheContract() throws Exception {
     List<String> sent = new ArrayList<>();
-    for (int index = 0; index < HttpContract.requests().size(); index++) {
+    for (HttpContract.Exchange exchange : TestActions.REQUESTS) {
       HttpClientWorkload.drive(
           BASE_URL,
           (method, url, body) -> {
             String path = url.substring(BASE_URL.length());
             sent.add(method + " " + path);
-            return HttpServerWorkload.respond(method, path, body);
+            return HttpServerWorkload.respond(method, path, body, TestActions.EXCHANGES);
           },
-          HttpContract.request(index));
+          exchange);
     }
     return sent;
   }
@@ -47,13 +47,15 @@ class HttpClientWorkloadTest {
   @Test
   void aResponseOutsideTheContractDoesNotFailTheScenario() throws Exception {
     HttpClientWorkload.drive(
-        BASE_URL, (method, url, body) -> new Response(599, "not JSON"), HttpContract.request(0));
+        BASE_URL,
+        (method, url, body) -> new Response(599, "not JSON"),
+        TestActions.REQUESTS.get(0));
   }
 
   @Test
   void aNullResponseBodyDoesNotFailTheScenario() throws Exception {
     HttpClientWorkload.drive(
-        BASE_URL, (method, url, body) -> new Response(200, null), HttpContract.request(0));
+        BASE_URL, (method, url, body) -> new Response(200, null), TestActions.REQUESTS.get(0));
   }
 
   @Test
@@ -62,6 +64,6 @@ class HttpClientWorkloadTest {
         IllegalArgumentException.class,
         () ->
             HttpClientWorkload.drive(
-                "  ", (method, url, body) -> new Response(200, "{}"), HttpContract.request(0)));
+                "  ", (method, url, body) -> new Response(200, "{}"), TestActions.REQUESTS.get(0)));
   }
 }

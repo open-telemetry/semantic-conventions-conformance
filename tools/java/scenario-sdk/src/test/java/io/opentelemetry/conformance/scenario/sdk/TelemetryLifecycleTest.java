@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class TelemetryLifecycleTest {
@@ -75,6 +76,58 @@ class TelemetryLifecycleTest {
                 CompletableResultCode::ofSuccess,
                 CompletableResultCode::ofSuccess,
                 0));
+  }
+
+  @Test
+  void retriesSkippedMetricFlush() {
+    AtomicInteger attempts = new AtomicInteger();
+
+    TelemetryLifecycle.flushBeforeShutdown(
+        CompletableResultCode::ofSuccess,
+        CompletableResultCode::ofSuccess,
+        () ->
+            attempts.incrementAndGet() == 1
+                ? skippedMetricFlush()
+                : CompletableResultCode.ofSuccess(),
+        1_000);
+
+    assertEquals(2, attempts.get());
+  }
+
+  @Test
+  void skippedMetricFlushStillFailsWhenTheBudgetExpires() {
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            TelemetryLifecycle.flushBeforeShutdown(
+                CompletableResultCode::ofSuccess,
+                CompletableResultCode::ofSuccess,
+                TelemetryLifecycleTest::skippedMetricFlush,
+                20));
+  }
+
+  @Test
+  void otherMetricFlushFailureIsNotRetried() {
+    AtomicInteger attempts = new AtomicInteger();
+
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            TelemetryLifecycle.flushBeforeShutdown(
+                CompletableResultCode::ofSuccess,
+                CompletableResultCode::ofSuccess,
+                () -> {
+                  attempts.incrementAndGet();
+                  return CompletableResultCode.ofExceptionalFailure(
+                      new IllegalStateException("export failed"));
+                },
+                1_000));
+    assertEquals(1, attempts.get());
+  }
+
+  private static CompletableResultCode skippedMetricFlush() {
+    return CompletableResultCode.ofExceptionalFailure(
+        new IllegalStateException("Export is already in progress, skipping flush"));
   }
 
   private static CompletableResultCode pending(
