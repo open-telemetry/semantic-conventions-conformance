@@ -2,12 +2,13 @@
   "spans": {
     "http.server": [
       "client.address",
+      "error.type",
       "http.request.method",
-      "http.response.body.size",
       "http.response.status_code",
       "http.route",
       "network.peer.address",
       "network.peer.port",
+      "network.protocol.name",
       "network.protocol.version",
       "server.address",
       "server.port",
@@ -19,33 +20,30 @@
   "events": {},
   "metrics": {
     "http.server.request.body.size": [
+      "error.type",
       "http.request.method",
       "http.response.status_code",
       "http.route",
       "network.protocol.name",
       "network.protocol.version",
-      "server.address",
-      "server.port",
       "url.scheme"
     ],
     "http.server.request.duration": [
+      "error.type",
       "http.request.method",
       "http.response.status_code",
       "http.route",
       "network.protocol.name",
       "network.protocol.version",
-      "server.address",
-      "server.port",
       "url.scheme"
     ],
     "http.server.response.body.size": [
+      "error.type",
       "http.request.method",
       "http.response.status_code",
       "http.route",
       "network.protocol.name",
       "network.protocol.version",
-      "server.address",
-      "server.port",
       "url.scheme"
     ]
   },
@@ -69,23 +67,14 @@
   "findings": [
     {
       "id": "instrumentation_scope_schema_url_missing",
-      "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho' does not have schema_url.",
+      "message": "Instrumentation scope 'github.com/labstack/echo-otel/v5' does not have schema_url.",
       "signal_type": "instrumentation_scope",
-      "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho",
+      "signal_name": "github.com/labstack/echo-otel/v5",
       "context": {
         "actual": "",
         "expected": {
           "present": true
         }
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET /status/:code' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "signal_type": "span",
-      "signal_name": "GET /status/:code",
-      "context": {
-        "status_code": "error"
       }
     }
   ]
