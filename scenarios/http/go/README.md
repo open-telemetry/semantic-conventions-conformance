@@ -69,7 +69,3 @@ Every Go package is built and started the same way, so
 just names it. `setup:` compiles, and the measured `run:` is the resulting
 binary rather than `go run`, which would compile on the clock and leave the
 toolchain as the scenario's parent process.
-
-The Echo workload uses `github.com/labstack/echo/v5`, with the matching
-`github.com/labstack/echo-otel/v5` middleware. The scenario uses the middleware's
-default telemetry configuration, including the request host as the server name.
