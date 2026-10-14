@@ -23,9 +23,11 @@ jobs:
         include:
           # Test the runner on each supported operating system.
           - os: ubuntu-latest
+            # renovate: datasource=github-releases depName=python packageName=actions/python-versions versioning=npm
             python-version: "3.15"
           # A native PowerShell run for the supported Windows path.
           - os: windows-latest
+            # renovate: datasource=github-releases depName=python packageName=actions/python-versions versioning=npm
             python-version: "3.15"
     steps:
       - name: Checkout repository
