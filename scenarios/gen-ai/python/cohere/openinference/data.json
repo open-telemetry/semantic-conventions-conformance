@@ -35,7 +35,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.cohere",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

@@ -9,6 +9,11 @@ Not on PyPI yet — install it from a checkout: `pip install -e tools/runner`.
 A Python scenario also wants [`tools/python`](../python), the launcher its
 `run` command names.
 
+Install the Weaver release pinned in `src/opentelemetry/conformance/versions.env`.
+Other versions produce a warning because findings can differ. The runner
+handles both the legacy report returned by `/stop` and the separate
+`/report` and `/shutdown` endpoints introduced in Weaver 0.27.
+
 A *wrapper* supplies those for one set of conventions;
 [`gen-ai/runner`](../gen-ai/runner) is one. A directory names the wrapper it
 wants and everything else follows from that.

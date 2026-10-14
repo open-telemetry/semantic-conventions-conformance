@@ -209,7 +209,7 @@ class ConformanceSession:
                 f"{name!r} is not declared in {self._spec.directory}; "
                 f"declared: {sorted(self._spec.scenarios)}"
             )
-        from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
+        from ._weaver import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
 
