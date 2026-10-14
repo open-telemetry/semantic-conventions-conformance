@@ -14,6 +14,7 @@ import re
 import struct
 
 import pytest
+from flask.testing import FlaskClient
 
 from genai_mock_server import app
 
@@ -99,6 +100,18 @@ ENDPOINTS = [
             "model": "claude-sonnet-4-20250514",
             "messages": [{"role": "user", "content": "hi"}],
         },
+    ),
+    (
+        "google-genai-interaction-get",
+        "get",
+        "/v1beta/interactions/interaction-fetch-1",
+        None,
+    ),
+    (
+        "google-genai-interaction-create",
+        "post",
+        "/v1beta/interactions",
+        {"model": "gemini-2.5-flash", "input": "hi"},
     ),
     (
         "google-genai",
@@ -1620,3 +1633,44 @@ def test_cohere_embeddings_answer_one_vector_per_input(client):
     vectors = response.json["embeddings"]["float"]
     assert len(vectors) == 2
     assert len(vectors[0]) == 64
+
+
+@pytest.mark.parametrize("interaction_id", ["interaction-fetch-1", "interaction-fetch-2"])
+def test_google_fetches_a_completed_interaction(
+    client: FlaskClient, interaction_id: str
+) -> None:
+    response = client.get(f"/v1beta/interactions/{interaction_id}")
+    assert response.status_code == 200
+    interaction = response.json
+    assert interaction["id"] == interaction_id
+    assert interaction["status"] == "completed"
+    assert interaction["model"] == "gemini-2.0-flash"
+    assert interaction["steps"] == [
+        {
+            "type": "model_output",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "This is a response from the mock interactions server.",
+                }
+            ],
+        }
+    ]
+    assert interaction["usage"]["total_input_tokens"] == 12
+    assert interaction["usage"]["total_output_tokens"] == 8
+
+
+def test_google_interaction_create_preserves_request_fields(
+    client: FlaskClient,
+) -> None:
+    response = client.post(
+        "/v1beta/interactions",
+        json={
+            "model": "gemini-2.5-flash",
+            "input": "hi",
+            "previous_interaction_id": "interaction-previous",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json["model"] == "gemini-2.5-flash"
+    assert response.json["previous_interaction_id"] == "interaction-previous"

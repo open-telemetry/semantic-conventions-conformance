@@ -10,7 +10,7 @@ import os
 
 import pytest
 
-from opentelemetry.conformance._env import build_env
+from opentelemetry.conformance._env import build_env, timeout_seconds
 
 
 @pytest.fixture(autouse=True)
@@ -91,3 +91,17 @@ def test_nothing_overridden_is_quiet(
         build_env({"A": "1"}, injected={})
 
     assert caplog.text == ""
+
+
+@pytest.mark.parametrize("raw", ["nan", "inf"])
+def test_nonfinite_timeout_uses_default(
+    raw: str,
+    process_env: dict[str, str],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    variable = "OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT"
+    process_env[variable] = raw
+
+    assert timeout_seconds(variable, 120.0) == 120.0
+    assert variable in caplog.text
+    assert "using 120.0" in caplog.text
