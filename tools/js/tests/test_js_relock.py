@@ -185,7 +185,9 @@ def test_npm_reloads_local_manifests_and_relocks_without_churn(
             {
                 "name": "shared",
                 "version": "1.0.0",
-                "dependencies": {"dependency": "file:../dependency"},
+                "dependencies": {
+                    "dependency": f"file:{dependency.as_posix()}"
+                },
             }
         ),
         encoding="utf-8",
@@ -199,7 +201,7 @@ def test_npm_reloads_local_manifests_and_relocks_without_churn(
     regenerated = lockfile.read_text(encoding="utf-8")
     packages = json.loads(regenerated)["packages"]
     assert packages["node_modules/shared"]["dependencies"] == {
-        "dependency": "file:../dependency"
+        "dependency": f"file:{dependency.as_posix()}"
     }
     assert packages["node_modules/dependency"]["version"] == "2.0.0"
     assert relock(tmp_path) == 0
