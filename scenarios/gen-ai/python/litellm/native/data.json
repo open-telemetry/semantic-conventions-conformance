@@ -338,105 +338,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.discount_amount' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.discount_amount"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.discount_percent' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.discount_percent"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.input_cost' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.input_cost"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.margin_fixed_amount' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.margin_fixed_amount"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.margin_percent' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.margin_percent"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.margin_total_amount' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.margin_total_amount"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.original_cost' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.original_cost"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.output_cost' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.output_cost"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.service_tier' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.service_tier"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.tool_usage_cost' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.tool_usage_cost"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.total_cost' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-audio-preview",
-      "context": {
-        "attribute_key": "gen_ai.cost.total_cost"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.openai.response.service_tier' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-audio-preview",
@@ -606,6 +507,15 @@
       "signal_name": "chat gpt-4o-audio-preview",
       "context": {
         "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.used_client_oauth_token' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "metadata.used_client_oauth_token"
       }
     },
     {
@@ -917,15 +827,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.cost.service_tier' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "chat gpt-4o-mini",
-      "context": {
-        "attribute_key": "gen_ai.cost.service_tier"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.cost.tool_usage_cost' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-mini",
@@ -1149,6 +1050,15 @@
       "signal_name": "chat gpt-4o-mini",
       "context": {
         "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.used_client_oauth_token' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "metadata.used_client_oauth_token"
       }
     },
     {
@@ -1609,6 +1519,15 @@
       "signal_name": "embeddings text-embedding-3-small",
       "context": {
         "attribute_key": "metadata.usage_object"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata.used_client_oauth_token' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "attribute_key": "metadata.used_client_oauth_token"
       }
     },
     {

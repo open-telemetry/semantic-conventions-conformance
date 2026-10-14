@@ -631,6 +631,32 @@ def embeddings(deployment=None):
 @bp.route("/openai/v1/responses", methods=["POST"])
 def responses():
     body = request.get_json(silent=True) or {}
+    if any(
+        tool.get("type") in {"web_search", "web_search_preview", "web_search_preview_2025_03_11"}
+        for tool in body.get("tools") or []
+    ):
+        if body.get("stream"):
+            return {
+                "error": {
+                    "type": "invalid_request_error",
+                    "message": "Mock web search streaming is not supported.",
+                }
+            }, 400
+        resp = copy.deepcopy(RESPONSES_RESPONSE)
+        resp["id"] = "resp-mock-web-search-001"
+        resp["model"] = body.get("model", resp["model"])
+        resp["output"].insert(
+            0,
+            {
+                "id": "ws_1",
+                "type": "web_search_call",
+                "status": "completed",
+                "action": {"type": "search", "query": "OpenTelemetry"},
+            },
+        )
+        if body.get("store"):
+            _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+        return resp
     raw_request_input = body.get("input")
     if isinstance(raw_request_input, list):
         request_input = [item for item in raw_request_input if isinstance(item, dict)]

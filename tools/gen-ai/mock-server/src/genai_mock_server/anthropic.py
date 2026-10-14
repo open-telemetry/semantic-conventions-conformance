@@ -223,6 +223,43 @@ def _stream_message(body):
 def messages():
     body = request.get_json(silent=True) or {}
 
+    if any(
+        tool.get("type", "").startswith("web_search_") and tool.get("name") == "web_search"
+        for tool in body.get("tools") or []
+    ):
+        if body.get("stream"):
+            return {
+                "type": "error",
+                "error": {
+                    "type": "invalid_request_error",
+                    "message": "Mock web search streaming is not supported.",
+                },
+            }, 400
+        resp = copy.deepcopy(MESSAGE_RESPONSE)
+        resp["model"] = body.get("model", resp["model"])
+        resp["content"] = [
+            {
+                "type": "server_tool_use",
+                "id": "srvtoolu_01",
+                "name": "web_search",
+                "input": {"query": "OpenTelemetry"},
+            },
+            {
+                "type": "web_search_tool_result",
+                "tool_use_id": "srvtoolu_01",
+                "content": [
+                    {
+                        "type": "web_search_result",
+                        "title": "OpenTelemetry",
+                        "url": "https://opentelemetry.io/",
+                        "encrypted_content": "mock-encrypted-content",
+                    }
+                ],
+            },
+            *resp["content"],
+        ]
+        resp["usage"]["server_tool_use"] = {"web_fetch_requests": 0, "web_search_requests": 1}
+        return resp
     if body.get("stream"):
         return Response(_stream_message(body), mimetype="text/event-stream")
 

@@ -60,18 +60,5 @@
       ]
     }
   },
-  "findings": [
-    {
-      "id": "instrumentation_scope_schema_url_missing",
-      "message": "Instrumentation scope 'io.opentelemetry.jdbc' does not have schema_url.",
-      "signal_type": "instrumentation_scope",
-      "signal_name": "io.opentelemetry.jdbc",
-      "context": {
-        "actual": "",
-        "expected": {
-          "present": true
-        }
-      }
-    }
-  ]
+  "findings": []
 }

@@ -309,6 +309,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GenerateContent",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "GenerateContent",

@@ -27,6 +27,12 @@
       ],
       "description": []
     },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
     "telemetry.sdk": {
       "identity": [
         "telemetry.sdk.language",
@@ -37,18 +43,5 @@
       ]
     }
   },
-  "findings": [
-    {
-      "id": "instrumentation_scope_schema_url_missing",
-      "message": "Instrumentation scope 'io.opentelemetry.jdbc' does not have schema_url.",
-      "signal_type": "instrumentation_scope",
-      "signal_name": "io.opentelemetry.jdbc",
-      "context": {
-        "actual": "",
-        "expected": {
-          "present": true
-        }
-      }
-    }
-  ]
+  "findings": []
 }
