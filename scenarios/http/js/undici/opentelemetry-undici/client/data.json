@@ -56,7 +56,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "@opentelemetry/instrumentation-undici",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

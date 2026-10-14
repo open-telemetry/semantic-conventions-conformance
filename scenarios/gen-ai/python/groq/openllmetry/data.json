@@ -41,7 +41,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "opentelemetry.instrumentation.groq",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

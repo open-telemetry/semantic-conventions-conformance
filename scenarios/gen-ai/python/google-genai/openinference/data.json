@@ -36,7 +36,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.google_genai",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

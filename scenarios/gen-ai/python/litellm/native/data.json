@@ -55,7 +55,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "litellm",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -67,7 +67,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "litellm.integrations.opentelemetry",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

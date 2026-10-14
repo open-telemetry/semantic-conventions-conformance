@@ -45,7 +45,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "OpenTelemetry::Instrumentation::Rack",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

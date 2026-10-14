@@ -73,7 +73,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
