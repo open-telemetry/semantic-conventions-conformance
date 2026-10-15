@@ -12,3 +12,6 @@ docs/data/conformance.json linguist-generated=true
 # Gradle generates gradlew.bat with CRLF. Leave batch files exactly as they are
 # so Git rewrites neither the stored file nor the checkout.
 *.bat -text
+
+# Composer hashes path-package manifests into lockfile references.
+composer.json text eol=lf

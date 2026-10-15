@@ -7,7 +7,7 @@ package scenarios
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/open-telemetry/semantic-conventions-conformance/scenarios/http/go/internal/httpserver"
 )
@@ -24,7 +24,7 @@ func newHandler(middleware echo.MiddlewareFunc) http.Handler {
 		server.Use(middleware)
 	}
 
-	answer := func(context echo.Context) error {
+	answer := func(context *echo.Context) error {
 		httpserver.Answer(context.Response(), context.Request())
 		return nil
 	}
