@@ -144,6 +144,10 @@ const signalKey = (type, name) => `${type}:${name}`;
  * @property {string} label
  * @property {string|null} side
  * @property {string|null} [backend]
+ * @property {{required: Tally, recommended: Tally, findings: number}} summary
+ * @property {{id: string, message: string, signal_type?: string, signal_name?: string}[]} findings
+ * @property {Object<string,{identity: string[], description: string[]}>} entities
+ * @property {string[]} scenario_classes
  * @property {ReportSignal[]} signals
  * @typedef {{attributes: Object<string,string>, kind?: string}} Declaration
  * @typedef {{registry_repo: string, registry_ref: string,
@@ -159,6 +163,7 @@ const signalKey = (type, name) => `${type}:${name}`;
  * @typedef {object} Data
  * @property {Report} report the report as committed
  * @property {Target[]} targets `report.targets`, unwrapped
+ * @property {Map<string,Target>} byId targets keyed by id
  * @property {Map<string,Signal>} signals keyed by `${type}:${name}`
  */
 
@@ -206,7 +211,12 @@ function index(report) {
     }
   }
 
-  return { report, targets, signals };
+  return {
+    report,
+    targets,
+    signals,
+    byId: new Map(targets.map((target) => [target.id, target])),
+  };
 }
 
 function sameAttributes(left, right) {
@@ -272,3 +282,7 @@ export function fullLabel(target) {
     .filter(Boolean)
     .join(" · ");
 }
+
+/** @param {Tally} tally @returns {number|null} */
+export const ratio = (tally) =>
+  tally?.declared ? tally.emitted / tally.declared : null;

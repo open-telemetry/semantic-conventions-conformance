@@ -24,6 +24,9 @@
 
   --good: #1a7f5a;
   --miss: #e7e9ee;
+  /* The "expected, not emitted" finding kind: between a broken rule and a
+     name the registry lacks, so neither the level red nor the plain ink. */
+  --warn: #b5730f;
 
   /* Languages. A separate scale from the requirement levels on purpose: it
      only ever appears on labels — a band, a pill, a group heading — and never
@@ -60,6 +63,7 @@
 
     --good: #4fc294;
     --miss: #262b33;
+    --warn: #e0a95a;
 
     --lang-1: #52c3d1;
     --lang-2: #e0a95a;
@@ -126,29 +130,67 @@ code,
   background: var(--surface);
 }
 .masthead-row {
-  padding: 1.1rem 1.5rem 0.55rem;
-}
-.masthead h1 {
-  margin: 0;
-  font-size: 1.06rem;
-  font-weight: 620;
-  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 2.5rem;
+  min-height: 88px;
+  padding: 1rem 1.5rem;
 }
-.mark {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  flex: none;
-  background: linear-gradient(135deg, var(--required), var(--recommended));
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  color: var(--ink);
+  text-decoration: none;
 }
-.tagline {
-  margin: 0.3rem 0 0 1.75rem;
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  padding: 4px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 11px;
+}
+.brand-mark circle {
+  fill: var(--accent);
+  stroke: var(--accent-soft);
+  stroke-width: 2px;
+}
+.brand-copy {
+  display: grid;
+  gap: 0.2rem;
+  line-height: 1.2;
+}
+.brand-project {
   color: var(--ink-2);
-  font-size: 0.855rem;
-  max-width: 62ch;
+  font-size: 0.7rem;
+  font-weight: 550;
+  letter-spacing: 0.035em;
+}
+.brand-title {
+  font-size: 1.1rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  padding: 0.65rem 0;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+.source-link:hover {
+  color: var(--accent);
+}
+.masthead a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
 }
 
 main {
@@ -621,7 +663,7 @@ td.num {
 /* Rotated, and two blocks rather than one string: in vertical writing the block
    axis runs across the screen, so the lines sit side by side and the height is
    the longer one rather than their sum. `overflow` is a backstop. */
-.heatmap thead th.col > span {
+.heatmap thead th.col > a {
   display: block;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -745,13 +787,20 @@ td.num {
 
 @media (max-width: 720px) {
   .masthead-row {
-    padding: 0.9rem 1rem 0.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .masthead nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .masthead nav a {
+    flex: 1;
+    text-align: center;
   }
   main {
     padding: 1.2rem 1rem 3rem;
-  }
-  .tagline {
-    margin-left: 0;
   }
   .controls {
     margin: -1.2rem -1rem 1rem;
@@ -771,5 +820,480 @@ td.num {
   /* And with the band scrolled away, the pane can have the whole screen. */
   .scroller {
     max-height: max(22rem, calc(100vh - 4rem));
+  }
+}
+
+.masthead nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.masthead nav a {
+  padding: 0.55rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 0.825rem;
+  font-weight: 550;
+  text-decoration: none;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.masthead nav a:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+.masthead nav a[aria-current="page"] {
+  color: var(--accent);
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 8.5rem;
+}
+.bar-track {
+  flex: 1;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--miss);
+  overflow: hidden;
+  min-width: 3.5rem;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+.bar-fill.required {
+  background: var(--required);
+}
+.bar-fill.recommended {
+  background: var(--recommended);
+}
+.bar-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  min-width: 3.6rem;
+}
+.bar.na .bar-value {
+  color: var(--ink-3);
+}
+
+.levels {
+  display: flex;
+  height: 9px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--miss);
+}
+.levels > span {
+  display: block;
+}
+
+details > summary {
+  cursor: pointer;
+  font-size: 0.87rem;
+  padding: 0.2rem 0;
+}
+details[open] > summary {
+  margin-bottom: 0.4rem;
+}
+.heatmap thead th.col > a {
+  color: inherit;
+  text-decoration: none;
+}
+.heatmap thead th.col > a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* --- target detail ------------------------------------------------------- */
+
+.target-detail {
+  overflow-wrap: anywhere;
+}
+.target-detail > section {
+  margin: 0 0 1.8rem;
+}
+.target-detail h3 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.98rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+.target-detail h3 .n {
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.target-detail .note {
+  margin-bottom: 0.8rem;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+  margin: 0 0 0.35rem;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.1rem;
+  margin: 0.3rem 0 1.4rem;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.meta > * {
+  min-width: 0;
+}
+.meta b {
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-right: 0.3rem;
+}
+
+/* The verdict is the sentence a reader came for, so it leads; the tiles are
+   the numbers it was made from. */
+.verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  margin: 0 0 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.verdict p {
+  margin: 0;
+}
+.verdict-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--bg);
+  background: var(--required);
+}
+.verdict-mark.good {
+  background: var(--good);
+}
+.verdict-lead {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.verdict .verdict-sub {
+  margin-top: 0.2rem;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.7rem;
+}
+.tile {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.tile-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-2);
+}
+.tile-big {
+  font-size: 1.55rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.tile-big small {
+  font-size: 0.9rem;
+  font-weight: 450;
+  color: var(--ink-3);
+}
+.tile-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+.fix-group {
+  margin: 0 0 1.3rem;
+}
+.section-note {
+  max-width: 80ch;
+  margin: -0.2rem 0 0.6rem;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.fixes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.fixes > li {
+  display: grid;
+  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.3rem 1.2rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+.fixes > li:last-child {
+  border-bottom: 0;
+}
+.fixes .what {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+.fixes .what a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.fixes .what a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.fixes .what small {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}
+.fixes .why {
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.reported {
+  color: var(--ink-3);
+}
+.where {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+}
+.where :is(code, button) {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+/* Only a chip that names a signal in the table below is a control. */
+.where button {
+  cursor: pointer;
+  color: var(--accent);
+  border-color: var(--line-strong);
+}
+.where button:hover {
+  border-color: var(--accent);
+}
+.where-fold > summary {
+  font-size: 0.78rem;
+  padding: 0;
+  margin-top: 0.3rem;
+}
+.more-rows {
+  margin-top: 0.4rem;
+  padding: 0.2rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+}
+.more-rows:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+/* The tables scroll inside their own frame, so a phone keeps the page still
+   and only the table moves. */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.signal-table td.kind {
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.signal-table .levels {
+  min-width: 6rem;
+}
+.signal-table tr[data-signal] {
+  scroll-margin-top: calc(var(--controls-h, 5rem) + 1rem);
+}
+.row-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  font-size: 0.8rem;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+.row-toggle::before {
+  content: "▸";
+  font-family: var(--sans);
+  color: var(--ink-3);
+  transition: transform 0.15s;
+}
+.row-toggle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+.count-badge {
+  display: inline-block;
+  min-width: 1.6rem;
+  padding: 0.02rem 0.4rem;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.76rem;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.count-badge.hot {
+  background: color-mix(in srgb, var(--required) 14%, var(--surface));
+  color: var(--required);
+  font-weight: 600;
+}
+tbody tr.signal-detail,
+tbody tr.signal-detail:hover {
+  background: var(--surface-2);
+}
+tr.signal-detail > td {
+  padding: 0.8rem 1rem 1rem;
+}
+.attr-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem 1.6rem;
+}
+.attr-column h4,
+.signal-findings h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+.attr-column .ver {
+  margin: 0;
+}
+.attr-list {
+  display: grid;
+  gap: 0.12rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+}
+.attr-list li {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.attr-list a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.attr-list a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.attr-list.missing :is(a, code) {
+  color: var(--ink-2);
+}
+.dot {
+  flex: none;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.35rem;
+  border-radius: 2px;
+}
+.signal-findings {
+  margin-top: 1rem;
+}
+.compare {
+  display: inline-block;
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+}
+
+.attrs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.attrs code {
+  padding: 0.1rem 0.38rem;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-size: 0.78rem;
+}
+.entity-table td {
+  vertical-align: top;
+}
+
+@media (max-width: 720px) {
+  .fixes > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .verdict {
+    padding: 0.85rem 0.9rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-toggle::before {
+    transition: none;
   }
 }

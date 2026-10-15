@@ -8,6 +8,7 @@
       name="description"
       content="What OpenTelemetry instrumentations actually emit, checked against the semantic conventions."
     />
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
     <link rel="stylesheet" href="assets/style.css" />
   </head>
   <body>
@@ -15,11 +16,42 @@
 
     <header class="masthead">
       <div class="masthead-row">
-        <h1><span class="mark"></span>Semantic-convention conformance</h1>
-        <p class="tagline">
-          What instrumentations actually emit, measured through Weaver
-          live-check against the pinned registries.
-        </p>
+        <a
+          class="brand"
+          href="#/signals"
+          aria-label="OpenTelemetry conformance home"
+        >
+          <svg
+            class="brand-mark"
+            viewBox="0 0 32 32"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M7 9h18M7 16h18M7 23h18"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <circle cx="12" cy="9" r="3" />
+            <circle cx="21" cy="16" r="3" />
+            <circle cx="15" cy="23" r="3" />
+          </svg>
+          <span class="brand-copy"
+            ><span class="brand-project">OpenTelemetry</span
+            ><span class="brand-title">Conformance</span></span
+          >
+        </a>
+        <nav aria-label="Main">
+          <a href="#/signals">Signal parity</a
+          ><a href="#/target">Instrumentations</a>
+        </nav>
+        <a
+          class="source-link"
+          href="https://github.com/open-telemetry/semantic-conventions-conformance"
+          rel="noreferrer"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
       </div>
     </header>
 
