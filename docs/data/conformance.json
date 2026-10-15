@@ -1301,7 +1301,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -1747,7 +1747,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -2535,7 +2535,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -3094,7 +3094,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -4333,7 +4333,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -5288,7 +5288,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -5587,7 +5587,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -6262,7 +6262,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -6976,7 +6976,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -7598,7 +7598,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -8427,7 +8427,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -9036,7 +9036,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -9779,7 +9779,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -10511,7 +10511,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -10523,7 +10523,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -11732,7 +11732,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -12665,7 +12665,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -13579,7 +13579,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -14118,7 +14118,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -14492,7 +14492,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -14788,7 +14788,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -15278,7 +15278,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -16197,7 +16197,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -18177,7 +18177,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -18189,7 +18189,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -20176,7 +20176,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -20872,7 +20872,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -21286,7 +21286,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -22833,7 +22833,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -24303,7 +24303,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -24595,7 +24595,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -25021,7 +25021,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -25446,7 +25446,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -25923,7 +25923,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -26627,7 +26627,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -27870,7 +27870,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -28670,7 +28670,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -29332,7 +29332,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -30061,7 +30061,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -30073,7 +30073,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -30771,7 +30771,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31325,7 +31325,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31337,7 +31337,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31575,7 +31575,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31587,7 +31587,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31860,32 +31860,23 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
           },
           "id": "instrumentation_scope_schema_url_missing",
-          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho' does not have schema_url.",
-          "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho",
+          "message": "Instrumentation scope 'github.com/labstack/echo-otel/v5' does not have schema_url.",
+          "signal_name": "github.com/labstack/echo-otel/v5",
           "signal_type": "instrumentation_scope"
-        },
-        {
-          "context": {
-            "status_code": "error"
-          },
-          "id": "error_type_missing_on_error",
-          "message": "Span 'GET /status/:code' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-          "signal_name": "GET /status/:code",
-          "signal_type": "span"
         }
       ],
-      "id": "http/go/echo/otelecho/server",
-      "instrumentation_library": "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho",
-      "instrumented_library": "github.com/labstack/echo/v4",
-      "label": "otelecho",
+      "id": "http/go/echo/echo-otel/server",
+      "instrumentation_library": "github.com/labstack/echo-otel/v5",
+      "instrumented_library": "github.com/labstack/echo/v5",
+      "label": "echo-otel",
       "language": "go",
-      "path": "scenarios/http/go/echo/otelecho/server",
+      "path": "scenarios/http/go/echo/echo-otel/server",
       "runner": "http-conformance",
       "scenario_classes": [
         "server"
@@ -31896,11 +31887,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 3
+              "emitted": 5
             },
             "opt_in": {
               "declared": 11,
-              "emitted": 1
+              "emitted": 0
             },
             "recommended": {
               "declared": 5,
@@ -31917,12 +31908,13 @@
           },
           "emitted": [
             "client.address",
+            "error.type",
             "http.request.method",
-            "http.response.body.size",
             "http.response.status_code",
             "http.route",
             "network.peer.address",
             "network.peer.port",
+            "network.protocol.name",
             "network.protocol.version",
             "server.address",
             "server.port",
@@ -31933,12 +31925,13 @@
           "identity": {
             "attributes": [
               "client.address",
+              "error.type",
               "http.request.method",
-              "http.response.body.size",
               "http.response.status_code",
               "http.route",
               "network.peer.address",
               "network.peer.port",
+              "network.protocol.name",
               "network.protocol.version",
               "server.address",
               "server.port",
@@ -31950,16 +31943,15 @@
           },
           "missing": [
             "client.port",
-            "error.type",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.size",
             "http.response.header",
             "http.response.size",
             "network.local.address",
             "network.local.port",
-            "network.protocol.name",
             "network.transport",
             "url.query",
             "user_agent.synthetic.type"
@@ -31971,11 +31963,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 3,
-              "emitted": 2
+              "emitted": 0
             },
             "recommended": {
               "declared": 1,
@@ -31987,17 +31979,17 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
             "network.protocol.name",
             "network.protocol.version",
-            "server.address",
-            "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
+            "server.address",
+            "server.port",
             "user_agent.synthetic.type"
           ],
           "name": "http.server.request.body.size",
@@ -32007,11 +31999,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 3,
-              "emitted": 2
+              "emitted": 0
             },
             "recommended": {
               "declared": 1,
@@ -32023,17 +32015,17 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
             "network.protocol.name",
             "network.protocol.version",
-            "server.address",
-            "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
+            "server.address",
+            "server.port",
             "user_agent.synthetic.type"
           ],
           "name": "http.server.request.duration",
@@ -32043,11 +32035,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 3,
-              "emitted": 2
+              "emitted": 0
             },
             "recommended": {
               "declared": 1,
@@ -32059,17 +32051,17 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
             "network.protocol.name",
             "network.protocol.version",
-            "server.address",
-            "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
+            "server.address",
+            "server.port",
             "user_agent.synthetic.type"
           ],
           "name": "http.server.response.body.size",
@@ -32077,7 +32069,7 @@
         }
       ],
       "summary": {
-        "findings": 2,
+        "findings": 1,
         "recommended": {
           "declared": 8,
           "emitted": 8
@@ -32111,7 +32103,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -32362,7 +32354,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -32536,7 +32528,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -32788,7 +32780,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -33006,7 +32998,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34856,7 +34848,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34868,7 +34860,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -35061,7 +35053,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -35073,7 +35065,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -35085,7 +35077,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -35097,7 +35089,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39220,7 +39212,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39232,7 +39224,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39590,7 +39582,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39602,7 +39594,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39614,7 +39606,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39626,7 +39618,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40332,7 +40324,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40344,7 +40336,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40356,7 +40348,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41094,7 +41086,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41106,7 +41098,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41118,7 +41110,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41130,7 +41122,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41324,7 +41316,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41336,7 +41328,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41348,7 +41340,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41702,7 +41694,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41714,7 +41706,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41992,7 +41984,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -42175,7 +42167,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -42362,7 +42354,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -42371,35 +42363,6 @@
           "message": "Instrumentation scope '@opentelemetry/instrumentation-undici' does not have schema_url.",
           "signal_name": "@opentelemetry/instrumentation-undici",
           "signal_type": "instrumentation_scope"
-        },
-        {
-          "context": {
-            "status_code": "error"
-          },
-          "id": "error_type_missing_on_error",
-          "message": "Span 'GET' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-          "signal_name": "GET",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "POST",
-          "signal_type": "span"
         }
       ],
       "id": "http/js/undici/opentelemetry-undici/client",
@@ -42422,7 +42385,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 2
+              "emitted": 3
             },
             "opt_in": {
               "declared": 11,
@@ -42430,7 +42393,7 @@
             },
             "recommended": {
               "declared": 2,
-              "emitted": 1
+              "emitted": 2
             },
             "recommended_conditional": {
               "declared": 2,
@@ -42442,11 +42405,13 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.request.method_original",
             "http.response.status_code",
             "network.peer.address",
             "network.peer.port",
+            "network.protocol.version",
             "server.address",
             "server.port",
             "url.full",
@@ -42455,11 +42420,13 @@
           ],
           "identity": {
             "attributes": [
+              "error.type",
               "http.request.method",
               "http.request.method_original",
               "http.response.status_code",
               "network.peer.address",
               "network.peer.port",
+              "network.protocol.version",
               "server.address",
               "server.port",
               "url.full",
@@ -42469,7 +42436,6 @@
             "span_kind": "client"
           },
           "missing": [
-            "error.type",
             "http.request.body.size",
             "http.request.header",
             "http.request.resend_count",
@@ -42478,7 +42444,6 @@
             "http.response.header",
             "http.response.size",
             "network.protocol.name",
-            "network.protocol.version",
             "network.transport",
             "url.template",
             "user_agent.synthetic.type"
@@ -42490,7 +42455,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 3,
-              "emitted": 1
+              "emitted": 2
             },
             "opt_in": {
               "declared": 2,
@@ -42498,7 +42463,7 @@
             },
             "recommended": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 3,
@@ -42506,16 +42471,16 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
+            "network.protocol.version",
             "server.address",
             "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
             "network.protocol.name",
-            "network.protocol.version",
             "url.template"
           ],
           "name": "http.client.request.duration",
@@ -42523,10 +42488,10 @@
         }
       ],
       "summary": {
-        "findings": 4,
+        "findings": 1,
         "recommended": {
           "declared": 3,
-          "emitted": 1
+          "emitted": 3
         },
         "required": {
           "declared": 7,
@@ -46843,7 +46808,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -47023,7 +46988,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
