@@ -12,11 +12,22 @@ the caller decides what it means. A broken harness still raises.
 from __future__ import annotations
 
 import json
+import locale
 import logging
+import mmap
+import os
 import shlex
 import shutil
+import signal
 import subprocess
-from contextlib import AbstractContextManager, ExitStack, contextmanager
+import tempfile
+import threading
+from contextlib import (
+    AbstractContextManager,
+    ExitStack,
+    contextmanager,
+    nullcontext,
+)
 from dataclasses import dataclass, field
 from pathlib import Path
 from string import Template
@@ -24,6 +35,7 @@ from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     Generator,
     Mapping,
@@ -54,7 +66,23 @@ from ._spec import (
 if TYPE_CHECKING:
     from opentelemetry.test.weaver_live_check import LiveCheckReport
 
+if os.name == "nt":
+    from ._windows_process import WindowsJob, read_snapshot
+
 logger = logging.getLogger(__name__)
+
+
+class _Capture(Protocol):
+    def fileno(self) -> int: ...
+
+
+class _Job(Protocol):
+    def assign(self, process: subprocess.Popen[str]) -> None: ...
+
+    def resume(self, process: subprocess.Popen[str]) -> None: ...
+
+    def terminate(self) -> None: ...
+
 
 # Generous: a cold scenario subprocess can spend a while importing a large
 # framework before it emits anything. Overridable through the environment.
@@ -64,6 +92,7 @@ _WEAVER_INACTIVITY_TIMEOUT = (
 )
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
+_COMMAND_CLEANUP_TIMEOUT_SECONDS = 10.0
 _OTLP_SIGNAL_ENV = tuple(
     f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
     for signal in ("TRACES", "METRICS", "LOGS")
@@ -427,25 +456,208 @@ def _run_command(
     wrong — so it comes back as a result rather than an exception.
     """
     limit = timeout_seconds(*_SCENARIO_TIMEOUT)
+    encoding = locale.getpreferredencoding(False)
+    # Regular files avoid relying on pipe EOF. In particular, on Windows a
+    # descendant can inherit a pipe and leave communicate()'s reader thread
+    # blocked after the launcher has been killed.
+    with (
+        tempfile.TemporaryFile() as stdout_capture,
+        tempfile.TemporaryFile() as stderr_capture,
+        _termination_signals() as termination,
+        _command_job() as job,
+    ):
+        process: subprocess.Popen[str] | None = None
+        try:
+            # Defer termination until the new process can be cleaned up. A
+            # signal between Popen and registration must not orphan it.
+            with _defer_termination(termination):
+                process = subprocess.Popen(  # noqa: S603
+                    command,
+                    cwd=cwd,
+                    env=dict(env),
+                    stdout=stdout_capture,
+                    stderr=stderr_capture,
+                    text=True,
+                    encoding=encoding,
+                    # POSIX starts a new group; Windows uses the Job Object.
+                    start_new_session=True,
+                    # The child cannot start another process before job assignment.
+                    creationflags=0x00000004 if job is not None else 0,
+                )
+                if job is not None:
+                    job.assign(process)
+                    setattr(process, "_conformance_job", job)
+                    job.resume(process)
+
+            process.wait(timeout=limit)
+        except OSError as error:
+            if process is None:
+                return _failed(command, str(error))
+            with _defer_termination(termination):
+                _stop_process(process)
+            raise
+        except subprocess.TimeoutExpired:
+            assert process is not None
+            with _defer_termination(termination):
+                _stop_process(process)
+            stdout = _captured_text(stdout_capture, encoding)
+            stderr = _captured_text(stderr_capture, encoding)
+            return _failed(
+                command,
+                f"did not finish within {limit}s",
+                stdout=stdout,
+                stderr=stderr,
+            )
+        except BaseException:
+            if process is not None:
+                # A new session does not receive the runner's terminal signal.
+                # Re-raise inside the guard so a second signal cannot replace it.
+                with _defer_termination(termination):
+                    _stop_process(process)
+                    raise
+            raise
+
+        assert process is not None
+        # A launcher that exits without waiting for its workload has left that
+        # workload behind. Stop anything still in its group before the runner
+        # advances to the next scenario and collector lifecycle.
+        with _defer_termination(termination):
+            _kill_process_group(process)
+        stdout = _captured_text(stdout_capture, encoding)
+        stderr = _captured_text(stderr_capture, encoding)
+        assert process.returncode is not None
+        return subprocess.CompletedProcess(
+            args=list(command),
+            returncode=process.returncode,
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+
+@dataclass
+class _Termination:
+    deferred: int = 0
+    pending: list[int] = field(default_factory=lambda: list[int]())
+    terminating: bool = False
+
+    def raise_pending(self, signum: int) -> None:
+        # Queue subsequent signals before raising, including signals arriving
+        # before the exception handler has entered its cleanup guard.
+        self.terminating = True
+        if signum == signal.SIGINT:
+            raise KeyboardInterrupt
+        raise SystemExit(128 + signum)
+
+
+@contextmanager
+def _defer_termination(
+    termination: _Termination | None,
+) -> Generator[None, None, None]:
+    """Queue termination through launch and cleanup without changing handlers."""
+    if termination is None:
+        yield
+        return
+    termination.deferred += 1
     try:
-        return subprocess.run(  # noqa: S603
-            command,
-            cwd=cwd,
-            env=dict(env),
-            capture_output=True,
-            text=True,
-            timeout=limit,
-            check=False,
+        yield
+    except (SystemExit, KeyboardInterrupt):
+        termination.terminating = True
+        raise
+    finally:
+        termination.deferred -= 1
+        if (
+            termination.pending
+            and not termination.deferred
+            and not termination.terminating
+        ):
+            termination.raise_pending(termination.pending[0])
+
+
+@contextmanager
+def _termination_signals() -> Generator[_Termination | None, None, None]:
+    """Make termination enter the normal exception cleanup path on POSIX."""
+    if (
+        os.name != "posix"
+        or threading.current_thread() is not threading.main_thread()
+    ):
+        yield None
+        return
+
+    termination = _Termination()
+    previous: dict[int, Any] = {}
+
+    def terminate(signum: int, _frame: object) -> None:
+        if termination.deferred or termination.terminating:
+            termination.pending.append(signum)
+        else:
+            termination.raise_pending(signum)
+
+    try:
+        for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+            if signal.getsignal(signum) is signal.SIG_IGN:
+                continue
+            previous[signum] = signal.signal(signum, terminate)
+        yield termination
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+
+
+def _command_job() -> AbstractContextManager[_Job | None]:
+    if os.name == "nt":
+        return WindowsJob()
+    return nullcontext(None)
+
+
+def _kill_process_group(process: subprocess.Popen[str]) -> None:
+    """Kill a command and the process group it started.
+
+    Scenario commands are commonly launchers such as ``uv run``, Gradle or
+    ``dotnet run``. Killing only that launcher leaves the instrumented process
+    exporting into a collector that has already moved on to another scenario.
+
+    Windows uses the process's Job Object. The direct child fallback covers
+    a POSIX group that has already gone away and mock processes in tests.
+    """
+    job = getattr(process, "_conformance_job", None)
+    if job is not None:
+        job.terminate()
+        return
+    try:
+        # start_new_session=True makes the child both session and process-group
+        # leader, so its pid is also the pgid. Do not look the pgid up here:
+        # the leader may exit after the timeout while descendants keep the
+        # group (and inherited output pipes) alive.
+        getattr(os, "killpg")(process.pid, getattr(signal, "SIGKILL"))
+    except (AttributeError, ProcessLookupError):
+        try:
+            process.kill()
+        except ProcessLookupError:
+            pass
+
+
+def _stop_process(process: subprocess.Popen[str]) -> None:
+    """Stop a command without waiting indefinitely for its launcher."""
+    _kill_process_group(process)
+    try:
+        process.wait(timeout=_COMMAND_CLEANUP_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        pass
+
+
+def _captured_text(capture: _Capture, encoding: str) -> str:
+    """Read a bounded snapshot without moving an inherited writer offset."""
+    size = os.fstat(capture.fileno()).st_size
+    if size == 0:
+        return ""
+    if os.name == "nt":
+        return read_snapshot(capture, size).decode(
+            encoding=encoding, errors="replace"
         )
-    except subprocess.TimeoutExpired as expired:
-        return _failed(
-            command,
-            f"did not finish within {limit}s",
-            stdout=_text(expired.stdout),
-            stderr=_text(expired.stderr),
-        )
-    except OSError as error:
-        return _failed(command, str(error))
+    with mmap.mmap(
+        capture.fileno(), length=size, access=mmap.ACCESS_READ
+    ) as snapshot:
+        return snapshot[:].decode(encoding=encoding, errors="replace")
 
 
 def _failed(
@@ -461,14 +673,6 @@ def _failed(
         stdout=stdout,
         stderr=f"{shlex.join(command)}: {reason}\n{stderr}",
     )
-
-
-def _text(output: str | bytes | None) -> str:
-    if output is None:
-        return ""
-    if isinstance(output, bytes):
-        return output.decode(errors="replace")
-    return output
 
 
 def _default_report_dir(directory: Path) -> Path:
