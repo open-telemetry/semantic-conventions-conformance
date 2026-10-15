@@ -34,7 +34,7 @@ scenarios:
           count: 1
           attributes:
             db.namespace: "0"
-            db.query.text: "SET conformance:redisson:value ?"
+            db.query.text: "SET conformance:value ?"
             server.address: 127.0.0.1
             server.port: {present: true}
       - match:
@@ -45,7 +45,7 @@ scenarios:
           count: 1
           attributes:
             db.namespace: "0"
-            db.query.text: GET conformance:redisson:value
+            db.query.text: GET conformance:value
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics: &metrics
@@ -53,7 +53,7 @@ scenarios:
       - queueSize
     events: []
 
-  batch:
+  pipeline:
     spans:
       - match: *ping
         expect: *two-startup
@@ -68,7 +68,29 @@ scenarios:
           attributes:
             db.namespace: "0"
             db.operation.batch.size: 2
-            db.query.text: "SET conformance:redisson:batch:1 ?; SET conformance:redisson:batch:2 ?"
+            db.query.text: "SET conformance:pipeline:1 ?; SET conformance:pipeline:2 ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET conformance:pipeline:1
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET conformance:pipeline:2
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics: *metrics
@@ -83,34 +105,23 @@ scenarios:
       - match:
           type: db.redis.client
           attributes:
-            db.operation.name: DEL
+            db.operation.name: SET
         expect:
           count: 1
           attributes:
             db.namespace: "0"
-            db.query.text: DEL conformance:redisson:error
+            db.query.text: "SET conformance:error ?"
             server.address: 127.0.0.1
             server.port: {present: true}
       - match:
           type: db.redis.client
           attributes:
-            db.operation.name: RPUSH
+            db.operation.name: LPUSH
         expect:
           count: 1
           attributes:
             db.namespace: "0"
-            db.query.text: "RPUSH conformance:redisson:error ?"
-            server.address: 127.0.0.1
-            server.port: {present: true}
-      - match:
-          type: db.redis.client
-          attributes:
-            db.operation.name: GET
-        expect:
-          count: 1
-          attributes:
-            db.namespace: "0"
-            db.query.text: GET conformance:redisson:error
+            db.query.text: "LPUSH conformance:error ?"
             error.type: org.redisson.client.RedisException
             server.address: 127.0.0.1
             server.port: {present: true}

@@ -15,9 +15,12 @@ The Java code only connects and performs measured operations. Database
 lifecycle and schema creation stay in the Python runner, where later languages
 can reuse them.
 
-Redis client workloads live under `shared:redis`. They cover reads and writes,
-batching or transactions where the client exposes them, and a `WRONGTYPE`
-server error. Expectations intentionally record client differences: Rediscala
+Redis client workloads live under `shared:redis`. Every client runs the same
+`set_get`, `pipeline`, and `error` operations described in the
+[Redis workload](../README.md), with identical keys, values, and plain-string
+encoding. Rediscala additionally exercises a transaction.
+
+Expectations intentionally record client differences: Rediscala
 does not emit query text, while Jedis does not currently mark the rejected
 command as an error. Lettuce records the Redis server's `WRONGTYPE` code in
 `error.type` rather than the Java exception class.

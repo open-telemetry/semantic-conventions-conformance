@@ -27,6 +27,29 @@ scenarios:
       - queueSize
     events: []
 
+  pipeline:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 2
+          attributes:
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+        expect:
+          count: 2
+          attributes:
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics: *metrics
+    events: []
+
   transaction:
     spans:
       - match:

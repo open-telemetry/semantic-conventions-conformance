@@ -20,7 +20,7 @@ setup: otel-conformance-java prepare shared:redis:redisson:opentelemetry-javaage
 scenarios:
   set_get:
     run: otel-conformance-java run --agent shared:redis:redisson:opentelemetry-javaagent RedissonJavaagentScenario set_get
-  batch:
-    run: otel-conformance-java run --agent shared:redis:redisson:opentelemetry-javaagent RedissonJavaagentScenario batch
+  pipeline:
+    run: otel-conformance-java run --agent shared:redis:redisson:opentelemetry-javaagent RedissonJavaagentScenario pipeline
   error:
     run: otel-conformance-java run --agent shared:redis:redisson:opentelemetry-javaagent RedissonJavaagentScenario error

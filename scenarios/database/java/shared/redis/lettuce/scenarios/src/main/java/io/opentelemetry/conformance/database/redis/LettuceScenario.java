@@ -19,8 +19,8 @@ public final class LettuceScenario {
     try (StatefulRedisConnection<String, String> connection = client.connect()) {
       switch (operation) {
         case "set_get":
-          requireValue(connection.sync().set("conformance:lettuce:value", "value"), "OK");
-          requireValue(connection.sync().get("conformance:lettuce:value"), "value");
+          requireValue(connection.sync().set("conformance:value", "value"), "OK");
+          requireValue(connection.sync().get("conformance:value"), "value");
           break;
         case "pipeline":
           pipeline(connection);
@@ -38,16 +38,18 @@ public final class LettuceScenario {
       throws Exception {
     connection.setAutoFlushCommands(false);
     RedisAsyncCommands<String, String> commands = connection.async();
-    RedisFuture<String> first = commands.set("conformance:lettuce:pipeline:1", "first");
-    RedisFuture<String> second = commands.set("conformance:lettuce:pipeline:2", "second");
+    RedisFuture<String> first = commands.set("conformance:pipeline:1", "first");
+    RedisFuture<String> second = commands.set("conformance:pipeline:2", "second");
     connection.flushCommands();
     requireValue(first.get(5, TimeUnit.SECONDS), "OK");
     requireValue(second.get(5, TimeUnit.SECONDS), "OK");
     connection.setAutoFlushCommands(true);
+    requireValue(connection.sync().get("conformance:pipeline:1"), "first");
+    requireValue(connection.sync().get("conformance:pipeline:2"), "second");
   }
 
   private static void error(StatefulRedisConnection<String, String> connection) {
-    String key = "conformance:lettuce:error";
+    String key = "conformance:error";
     requireValue(connection.sync().set(key, "not-a-list"), "OK");
     try {
       connection.sync().lpush(key, "value");

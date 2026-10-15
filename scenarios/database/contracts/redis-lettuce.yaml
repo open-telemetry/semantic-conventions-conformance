@@ -31,7 +31,7 @@ scenarios:
         expect:
           count: 1
           attributes:
-            db.query.text: "SET conformance:lettuce:value ?"
+            db.query.text: "SET conformance:value ?"
             server.address: 127.0.0.1
             server.port: {present: true}
       - match:
@@ -41,7 +41,7 @@ scenarios:
         expect:
           count: 1
           attributes:
-            db.query.text: GET conformance:lettuce:value
+            db.query.text: GET conformance:value
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics: &metrics
@@ -59,10 +59,40 @@ scenarios:
           type: db.redis.client
           attributes:
             db.operation.name: SET
+            db.query.text: "SET conformance:pipeline:1 ?"
         expect:
-          count: 2
+          count: 1
           attributes:
-            db.query.text: {distinct: 2}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+            db.query.text: "SET conformance:pipeline:2 ?"
+        expect:
+          count: 1
+          attributes:
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET conformance:pipeline:1
+        expect:
+          count: 1
+          attributes:
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET conformance:pipeline:2
+        expect:
+          count: 1
+          attributes:
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics: *metrics
@@ -81,7 +111,7 @@ scenarios:
         expect:
           count: 1
           attributes:
-            db.query.text: "SET conformance:lettuce:error ?"
+            db.query.text: "SET conformance:error ?"
             server.address: 127.0.0.1
             server.port: {present: true}
       - match:
@@ -91,7 +121,7 @@ scenarios:
         expect:
           count: 1
           attributes:
-            db.query.text: "LPUSH conformance:lettuce:error ?"
+            db.query.text: "LPUSH conformance:error ?"
             error.type: WRONGTYPE
             server.address: 127.0.0.1
             server.port: {present: true}

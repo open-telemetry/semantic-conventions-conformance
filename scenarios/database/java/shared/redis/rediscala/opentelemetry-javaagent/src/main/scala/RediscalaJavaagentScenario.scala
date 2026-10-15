@@ -23,10 +23,23 @@ object RediscalaJavaagentScenario {
     try {
       args(0) match {
         case "set_get" =>
-          require(Await.result(redis.set("conformance:rediscala:value", "value"), 5.seconds))
+          require(Await.result(redis.set("conformance:value", "value"), 5.seconds))
           require(
-            Await.result(redis.get[String]("conformance:rediscala:value"), 5.seconds)
+            Await.result(redis.get[String]("conformance:value"), 5.seconds)
               .contains("value"),
+          )
+        case "pipeline" =>
+          val first = redis.set("conformance:pipeline:1", "first")
+          val second = redis.set("conformance:pipeline:2", "second")
+          require(Await.result(first, 5.seconds))
+          require(Await.result(second, 5.seconds))
+          require(
+            Await.result(redis.get[String]("conformance:pipeline:1"), 5.seconds)
+              .contains("first"),
+          )
+          require(
+            Await.result(redis.get[String]("conformance:pipeline:2"), 5.seconds)
+              .contains("second"),
           )
         case "transaction" =>
           val transaction = redis.transaction()
@@ -36,7 +49,7 @@ object RediscalaJavaagentScenario {
           require(Await.result(first, 5.seconds))
           require(Await.result(second, 5.seconds).contains("value"))
         case "error" =>
-          val key = "conformance:rediscala:error"
+          val key = "conformance:error"
           require(Await.result(redis.set(key, "not-a-list"), 5.seconds))
           try {
             Await.result(redis.lpush(key, "value"), 5.seconds)

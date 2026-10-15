@@ -21,8 +21,8 @@ public final class JedisJavaagentScenario {
             Integer.parseInt(ScenarioEnvironment.require("DATABASE_PORT")))) {
       switch (args[0]) {
         case "set_get":
-          requireOk(jedis.set("conformance:jedis:value", "value"));
-          requireValue(jedis.get("conformance:jedis:value"), "value");
+          requireOk(jedis.set("conformance:value", "value"));
+          requireValue(jedis.get("conformance:value"), "value");
           break;
         case "pipeline":
           pipeline(jedis);
@@ -38,16 +38,18 @@ public final class JedisJavaagentScenario {
 
   private static void pipeline(Jedis jedis) {
     try (Pipeline pipeline = jedis.pipelined()) {
-      Response<String> first = pipeline.set("conformance:jedis:pipeline:1", "first");
-      Response<String> second = pipeline.set("conformance:jedis:pipeline:2", "second");
+      Response<String> first = pipeline.set("conformance:pipeline:1", "first");
+      Response<String> second = pipeline.set("conformance:pipeline:2", "second");
       pipeline.sync();
       requireOk(first.get());
       requireOk(second.get());
     }
+    requireValue(jedis.get("conformance:pipeline:1"), "first");
+    requireValue(jedis.get("conformance:pipeline:2"), "second");
   }
 
   private static void error(Jedis jedis) {
-    String key = "conformance:jedis:error";
+    String key = "conformance:error";
     requireOk(jedis.set(key, "not-a-list"));
     try {
       jedis.lpush(key, "value");

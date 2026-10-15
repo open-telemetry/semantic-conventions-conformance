@@ -35,10 +35,20 @@ the JDBC path that produced it:
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
-Redis scenarios cover ordinary writes and reads, client-specific pipelining or
-transactions, and commands rejected with `WRONGTYPE`. Lettuce's explicit
-pipelining emits one span per queued command; Jedis and Redisson expose a
-pipeline batch span, while Rediscala exposes its transaction as a `MULTI` batch.
+Every Redis client runs the same workload with the same keys, values, and
+plain-string encoding in logical database zero:
+
+| Scenario | Redis workload |
+| --- | --- |
+| `set_get` | `SET conformance:value value`, then `GET` and verify the value |
+| `pipeline` | Submit `SET conformance:pipeline:1 first` and `SET conformance:pipeline:2 second` before waiting, then `GET` both keys and verify their values |
+| `error` | `SET conformance:error not-a-list`, then `LPUSH conformance:error value` and verify `WRONGTYPE` |
+
+Contracts record client-specific telemetry for these common operations,
+including connection-startup commands. Lettuce's explicit pipelining and
+Rediscala's implicit pipelining emit one span per queued command; Jedis and
+Redisson expose a pipeline batch span. Rediscala also has a separate
+`transaction` scenario that records a `MULTI` batch.
 
 ## Running it
 

@@ -6,10 +6,11 @@ import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import org.redisson.Redisson;
 import org.redisson.api.RBatch;
 import org.redisson.api.RBucket;
+import org.redisson.api.RDeque;
 import org.redisson.api.RFuture;
-import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.RedisException;
+import org.redisson.client.codec.StringCodec;
 import org.redisson.config.Config;
 
 public final class RedissonJavaagentScenario {
@@ -20,6 +21,7 @@ public final class RedissonJavaagentScenario {
       throw new IllegalArgumentException("expected one Redisson operation argument");
     }
     Config config = new Config();
+    config.setCodec(StringCodec.INSTANCE);
     config
         .useSingleServer()
         .setAddress(
@@ -38,8 +40,8 @@ public final class RedissonJavaagentScenario {
         case "set_get":
           setGet(client);
           break;
-        case "batch":
-          batch(client);
+        case "pipeline":
+          pipeline(client);
           break;
         case "error":
           error(client);
@@ -53,28 +55,29 @@ public final class RedissonJavaagentScenario {
   }
 
   private static void setGet(RedissonClient client) {
-    RBucket<String> bucket = client.getBucket("conformance:redisson:value");
+    RBucket<String> bucket = client.getBucket("conformance:value");
     bucket.set("value");
     requireValue(bucket.get(), "value");
   }
 
-  private static void batch(RedissonClient client) {
+  private static void pipeline(RedissonClient client) {
     RBatch batch = client.createBatch();
-    RFuture<Void> first = batch.getBucket("conformance:redisson:batch:1").setAsync("first");
-    RFuture<Void> second = batch.getBucket("conformance:redisson:batch:2").setAsync("second");
+    RFuture<Void> first = batch.getBucket("conformance:pipeline:1").setAsync("first");
+    RFuture<Void> second = batch.getBucket("conformance:pipeline:2").setAsync("second");
     batch.execute();
     first.toCompletableFuture().join();
     second.toCompletableFuture().join();
+    requireValue(client.<String>getBucket("conformance:pipeline:1").get(), "first");
+    requireValue(client.<String>getBucket("conformance:pipeline:2").get(), "second");
   }
 
   private static void error(RedissonClient client) {
-    String key = "conformance:redisson:error";
-    RList<String> list = client.getList(key);
-    list.clear();
-    list.add("value");
+    String key = "conformance:error";
+    client.getBucket(key).set("not-a-list");
+    RDeque<String> deque = client.getDeque(key);
     try {
-      client.getBucket(key).get();
-      throw new IllegalStateException("GET unexpectedly accepted a list key");
+      deque.addFirst("value");
+      throw new IllegalStateException("LPUSH unexpectedly accepted a string key");
     } catch (RedisException expected) {
       if (!expected.getMessage().contains("WRONGTYPE")) {
         throw expected;

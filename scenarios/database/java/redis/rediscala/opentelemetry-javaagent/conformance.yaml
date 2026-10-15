@@ -20,6 +20,8 @@ setup: otel-conformance-java prepare shared:redis:rediscala:opentelemetry-javaag
 scenarios:
   set_get:
     run: otel-conformance-java run --agent shared:redis:rediscala:opentelemetry-javaagent RediscalaJavaagentScenario set_get
+  pipeline:
+    run: otel-conformance-java run --agent shared:redis:rediscala:opentelemetry-javaagent RediscalaJavaagentScenario pipeline
   transaction:
     run: otel-conformance-java run --agent shared:redis:rediscala:opentelemetry-javaagent RediscalaJavaagentScenario transaction
   error:
