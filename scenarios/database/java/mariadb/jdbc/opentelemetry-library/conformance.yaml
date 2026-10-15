@@ -18,17 +18,17 @@ env:
 weaver:
   config: ../../../../../../tools/java/weaver.toml
 
-setup: otel-conformance-java prepare shared:jdbc:opentelemetry-library
+setup: otel-conformance-java prepare mariadb:jdbc:opentelemetry-library
 
 scenarios:
   statement:
-    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario statement
+    run: otel-conformance-java run mariadb:jdbc:opentelemetry-library JdbcLibraryScenario statement
 
   prepared_statement:
-    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario prepared_statement
+    run: otel-conformance-java run mariadb:jdbc:opentelemetry-library JdbcLibraryScenario prepared_statement
 
   batch:
-    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario batch
+    run: otel-conformance-java run mariadb:jdbc:opentelemetry-library JdbcLibraryScenario batch
 
   stored_procedure:
-    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario stored_procedure
+    run: otel-conformance-java run mariadb:jdbc:opentelemetry-library JdbcLibraryScenario stored_procedure

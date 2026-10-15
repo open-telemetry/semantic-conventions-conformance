@@ -10,10 +10,11 @@ container and applies its shared schema before any measured process starts.
 
 ```text
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
-java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
-java/shared/jdbc/opentelemetry-library/     the shared library launcher
+java/shared/jdbc/javaagent-launcher/        the shared Java agent scenario entry point
+java/shared/jdbc/library-launcher/          the shared library scenario entry point
 contracts/                                 shared telemetry expectations by vendor
-java/{postgresql,mariadb}/jdbc/             vendor conformance packages
+java/{postgresql,mariadb}/jdbc/             vendor conformance packages and the
+                                           launch projects adding each driver
 ```
 
 Contracts contain only telemetry expectations. A language or driver reuses
