@@ -1,0 +1,12 @@
+{
+  "name": "@otel-conformance/chromium-opentelemetry-browser-instrumentation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A page's own events measured through @opentelemetry/browser-instrumentation.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@opentelemetry/browser-instrumentation": "0.8.1",
+    "@otel-conformance/browser-launcher": "file:../../../../../tools/js/browser-launcher",
+    "@otel-conformance/chromium-scenarios": "*"
+  }
+}
