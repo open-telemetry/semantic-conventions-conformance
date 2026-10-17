@@ -43,16 +43,12 @@ class BackendSpec:
     environment: tuple[tuple[str, str], ...]
     ready_command: tuple[str, ...]
     schema_copy: tuple[str, str] | None
-    initialize_command: tuple[str, ...]
+    initialize_command: tuple[str, ...] | None
     initialize_environment: tuple[tuple[str, str], ...] = ()
 
 
 class DatabaseContainer:
-    """Own one disposable database initialized by a backend command.
-
-    A backend that ships a packaged schema has it copied in first; one that
-    does not is set up by the command alone.
-    """
+    """Own one disposable database and run its optional initialization."""
 
     def __init__(
         self,
@@ -125,6 +121,9 @@ class DatabaseContainer:
         return self
 
     def _initialize_backend(self, container: DockerContainer) -> None:
+        if self._spec.initialize_command is None:
+            return
+
         result = container.exec(
             ExecConfig(
                 command=list(self._spec.initialize_command),

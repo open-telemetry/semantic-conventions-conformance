@@ -23,11 +23,10 @@ runner_config:
 ```
 
 `runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
-`redis`. Each session starts one pinned container, initializes it, and removes
-it when the session closes. PostgreSQL and MariaDB apply packaged SQL schemas
-that create the same logical objects but no rows. Redis runs `redis-cli` to
-create the `conformance:bootstrap` key. Scenarios own any other data their
-operations need.
+`redis`. Each session starts one pinned container and removes it when the
+session closes. PostgreSQL and MariaDB apply packaged SQL schemas that create
+the same logical objects but no rows. Redis needs no initialization beyond its
+readiness check. Scenarios own any data their operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:

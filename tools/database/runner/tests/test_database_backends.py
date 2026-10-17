@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib import resources
 from typing import Any
 
@@ -15,6 +15,7 @@ from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
 from database_conformance import _mariadb, _postgres, _redis
+from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 from database_conformance._redis import REDIS_IMAGE, Redis
@@ -149,26 +150,15 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
     if backend_type is Redis:
         assert container.transfers == []
-        assert container.exec_config is not None
-        assert container.exec_config.command == [
-            "redis-cli",
-            "-e",
-            "-h",
-            "127.0.0.1",
-            "-p",
-            "6379",
-            "SET",
-            "conformance:bootstrap",
-            "ready",
-        ]
+        assert container.exec_config is None
     else:
         assert container.transfers
         schema, path = container.transfers[0]
         assert path.startswith("/tmp/otel-conformance-")
         assert b"CREATE" in schema
         assert b"INSERT INTO" not in schema
+        assert container.exec_config is not None
     assert container.wait_strategy is not None
-    assert container.exec_config is not None
 
 
 def test_redis_readiness_checks_for_server_errors() -> None:
@@ -228,17 +218,15 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
-def test_command_only_initialization_failure_uses_general_diagnostic(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
         port=6379,
     )
-    install_stub(monkeypatch, _redis, container)
+    spec = replace(_redis.REDIS, initialize_command=("initialize",))
 
     with pytest.raises(RuntimeError) as error:
-        Redis().start()
+        DatabaseContainer(spec, container_factory=lambda _: container).start()
 
     message = str(error.value)
     assert message.startswith(

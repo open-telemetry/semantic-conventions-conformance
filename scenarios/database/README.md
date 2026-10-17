@@ -8,7 +8,7 @@ and Redis through Jedis, Lettuce, Rediscala, and Redisson. JDBC runs against the
 OpenTelemetry Java agent and JDBC library instrumentation. Redis runs against
 the Java agent, with an additional Lettuce run against its standalone library
 instrumentation. The database runner starts the selected Docker container and
-initializes it before any measured process starts.
+applies any required initialization before measured processes start.
 
 ```text
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
@@ -73,9 +73,9 @@ and
 schemas. Both contain the empty table and stored procedure used by the shared
 workload. Neither seeds data.
 
-The Redis backend selects logical database zero and writes one bootstrap key.
-Each scenario uses namespaced keys and verifies its command results. The pinned
-container is shared for one package run and removed afterward.
+The Redis backend uses logical database zero and requires only a readiness
+check. Each scenario uses namespaced keys and verifies its command results.
+The pinned container is shared for one package run and removed afterward.
 
 The runs opt into stable database semantic conventions. Java instrumentation
 otherwise emits legacy database attributes during the migration period, which
