@@ -70,8 +70,7 @@ scenarios:
             attributes:
               db.namespace: conformance
               db.operation.batch.size: 2
-              db.query.text:
-                present: true
+              db.query.text: INSERT INTO conformance.items (id, name) VALUES (?, ?)
               server.address: 127.0.0.1
               server.port:
                 present: true
