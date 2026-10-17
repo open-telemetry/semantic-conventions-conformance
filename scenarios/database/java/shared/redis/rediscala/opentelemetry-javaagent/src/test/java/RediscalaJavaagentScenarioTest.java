@@ -40,6 +40,28 @@ class RediscalaJavaagentScenarioTest {
   }
 
   @Test
+  void exitsWhenDatabaseIsInvalid() throws Exception {
+    assertFailsPromptly(
+        Map.of(
+            "DATABASE_HOST",
+            "127.0.0.1",
+            "DATABASE_PORT",
+            "6379",
+            "DATABASE_NAME",
+            "not-a-database"),
+        "set_get",
+        "NumberFormatException");
+  }
+
+  @Test
+  void exitsWhenDatabaseIsNegative() throws Exception {
+    assertFailsPromptly(
+        Map.of("DATABASE_HOST", "127.0.0.1", "DATABASE_PORT", "6379", "DATABASE_NAME", "-1"),
+        "set_get",
+        "DATABASE_NAME must be a non-negative Redis database index");
+  }
+
+  @Test
   void exitsWhenOperationIsUnknown() throws Exception {
     assertFailsPromptly(
         Map.of("DATABASE_HOST", "127.0.0.1", "DATABASE_PORT", "6379"),
@@ -61,6 +83,9 @@ class RediscalaJavaagentScenarioTest {
             .redirectOutput(output.toFile());
     builder.environment().remove("DATABASE_HOST");
     builder.environment().remove("DATABASE_PORT");
+    builder.environment().put("DATABASE_NAME", "0");
+    builder.environment().put("DATABASE_USER", "default");
+    builder.environment().put("DATABASE_PASSWORD", "");
     builder.environment().putAll(environment);
 
     Process process = builder.start();

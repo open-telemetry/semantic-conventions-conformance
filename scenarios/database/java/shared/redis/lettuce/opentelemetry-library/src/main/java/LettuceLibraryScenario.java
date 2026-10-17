@@ -17,18 +17,22 @@ public final class LettuceLibraryScenario {
     if (args.length != 1) {
       throw new IllegalArgumentException("expected one Lettuce operation argument");
     }
-    RedisURI uri =
+    RedisURI.Builder uri =
         RedisURI.Builder.redis(
                 ScenarioEnvironment.require("DATABASE_HOST"),
                 Integer.parseInt(ScenarioEnvironment.require("DATABASE_PORT")))
-            .withDatabase(0)
-            .build();
+            .withDatabase(Integer.parseInt(ScenarioEnvironment.require("DATABASE_NAME")));
+    String user = ScenarioEnvironment.require("DATABASE_USER");
+    String password = ScenarioEnvironment.requirePresent("DATABASE_PASSWORD");
+    if (!password.isEmpty()) {
+      uri.withAuthentication(user, password);
+    }
     try (ScenarioSdk sdk = ScenarioSdk.initialize()) {
       ClientResources resources =
           ClientResources.builder()
               .tracing(LettuceTelemetry.create(sdk.openTelemetry()).createTracing())
               .build();
-      try (RedisClient client = RedisClient.create(resources, uri)) {
+      try (RedisClient client = RedisClient.create(resources, uri.build())) {
         LettuceScenario.run(client, args[0]);
       } finally {
         resources.shutdown().get();

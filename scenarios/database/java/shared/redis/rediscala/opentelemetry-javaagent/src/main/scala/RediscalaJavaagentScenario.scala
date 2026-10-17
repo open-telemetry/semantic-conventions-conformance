@@ -19,9 +19,22 @@ object RediscalaJavaagentScenario {
     }
     val host = ScenarioEnvironment.require("DATABASE_HOST")
     val port = ScenarioEnvironment.require("DATABASE_PORT").toInt
+    val database = ScenarioEnvironment.require("DATABASE_NAME").toInt
+    require(
+      database >= 0,
+      "DATABASE_NAME must be a non-negative Redis database index"
+    )
+    val user = ScenarioEnvironment.require("DATABASE_USER")
+    val password = ScenarioEnvironment.requirePresent("DATABASE_PASSWORD")
     implicit val system: ActorSystem = ActorSystem("redis-conformance")
     try {
-      val redis = RedisClient(host, port)
+      val redis = RedisClient(
+        host,
+        port,
+        username = Option.when(password.nonEmpty)(user),
+        password = Option.when(password.nonEmpty)(password),
+        db = Option.when(database != 0)(database)
+      )
       try {
         args(0) match {
           case "set_get" =>

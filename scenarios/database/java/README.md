@@ -20,6 +20,10 @@ Redis client workloads live under `shared:redis`. Every client runs the same
 [Redis workload](../README.md), with identical keys, values, and plain-string
 encoding. Rediscala additionally exercises a transaction.
 
+All Redis launchers use the runner's host, port, database index, user, and
+password. An empty password disables authentication. The shared backend
+provides database zero without authentication.
+
 Expectations intentionally record client differences: Rediscala
 does not emit query text, while Jedis does not currently mark the rejected
 command as an error. Lettuce records the Redis server's `WRONGTYPE` code in
@@ -33,3 +37,12 @@ otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 ```
 
 Docker must be installed and running.
+
+Redis connection tests use Docker and prepared scenario runtimes to check
+database selection and authentication:
+
+```sh
+python -m pytest tools/database/runner/tests/test_redis_clients.py
+```
+
+Clients whose runtimes have not been prepared are skipped.

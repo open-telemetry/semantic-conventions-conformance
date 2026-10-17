@@ -12,6 +12,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.client.RedisException;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.config.Config;
+import org.redisson.config.SingleServerConfig;
 
 public final class RedissonJavaagentScenario {
   private RedissonJavaagentScenario() {}
@@ -22,18 +23,24 @@ public final class RedissonJavaagentScenario {
     }
     Config config = new Config();
     config.setCodec(StringCodec.INSTANCE);
-    config
-        .useSingleServer()
-        .setAddress(
-            "redis://"
-                + ScenarioEnvironment.require("DATABASE_HOST")
-                + ":"
-                + ScenarioEnvironment.require("DATABASE_PORT"))
-        .setDatabase(0)
-        .setConnectionMinimumIdleSize(1)
-        .setConnectionPoolSize(2)
-        .setSubscriptionConnectionMinimumIdleSize(0)
-        .setSubscriptionConnectionPoolSize(1);
+    SingleServerConfig server =
+        config
+            .useSingleServer()
+            .setAddress(
+                "redis://"
+                    + ScenarioEnvironment.require("DATABASE_HOST")
+                    + ":"
+                    + ScenarioEnvironment.require("DATABASE_PORT"))
+            .setDatabase(Integer.parseInt(ScenarioEnvironment.require("DATABASE_NAME")))
+            .setConnectionMinimumIdleSize(1)
+            .setConnectionPoolSize(2)
+            .setSubscriptionConnectionMinimumIdleSize(0)
+            .setSubscriptionConnectionPoolSize(1);
+    String user = ScenarioEnvironment.require("DATABASE_USER");
+    String password = ScenarioEnvironment.requirePresent("DATABASE_PASSWORD");
+    if (!password.isEmpty()) {
+      server.setUsername(user).setPassword(password);
+    }
     RedissonClient client = Redisson.create(config);
     try {
       switch (args[0]) {

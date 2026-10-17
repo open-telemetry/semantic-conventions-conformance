@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import redis.clients.jedis.ClientSetInfoConfig;
+import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -15,10 +17,26 @@ public final class JedisJavaagentScenario {
     if (args.length != 1) {
       throw new IllegalArgumentException("expected one Jedis operation argument");
     }
+    int database = Integer.parseInt(ScenarioEnvironment.require("DATABASE_NAME"));
+    if (database < 0) {
+      throw new IllegalArgumentException(
+          "DATABASE_NAME must be a non-negative Redis database index");
+    }
+    String user = ScenarioEnvironment.require("DATABASE_USER");
+    String password = ScenarioEnvironment.requirePresent("DATABASE_PASSWORD");
+    DefaultJedisClientConfig.Builder config =
+        DefaultJedisClientConfig.builder()
+            .database(database)
+            .autoNegotiateProtocol(false)
+            .clientSetInfoConfig(ClientSetInfoConfig.DISABLED);
+    if (!password.isEmpty()) {
+      config.user(user).password(password);
+    }
     try (Jedis jedis =
         new Jedis(
             ScenarioEnvironment.require("DATABASE_HOST"),
-            Integer.parseInt(ScenarioEnvironment.require("DATABASE_PORT")))) {
+            Integer.parseInt(ScenarioEnvironment.require("DATABASE_PORT")),
+            config.build())) {
       switch (args[0]) {
         case "set_get":
           requireOk(jedis.set("conformance:value", "value"));
