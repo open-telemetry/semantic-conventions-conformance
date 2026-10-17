@@ -85,8 +85,7 @@ public final class JdbcScenario {
 
   private static void storedProcedure(Connection connection, StoredProcedure operation)
       throws SQLException {
-    try (CallableStatement statement =
-        connection.prepareCall("CALL " + operation.procedure() + "()")) {
+    try (CallableStatement statement = connection.prepareCall(operation.sql())) {
       boolean hasResultSet = statement.execute();
       while (true) {
         if (hasResultSet) {

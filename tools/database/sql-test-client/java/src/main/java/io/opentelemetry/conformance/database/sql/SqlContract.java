@@ -150,10 +150,10 @@ public final class SqlContract {
     }
   }
 
-  /** A stored procedure call. */
-  public record StoredProcedure(String procedure) implements Operation {
+  /** A stored procedure call expressed as backend-specific SQL. */
+  public record StoredProcedure(String sql) implements Operation {
     public StoredProcedure {
-      procedure = requireText(procedure, "stored procedure name");
+      sql = requireText(sql, "stored procedure SQL");
     }
   }
 
@@ -203,8 +203,8 @@ public final class SqlContract {
   }
 
   private static StoredProcedure storedProcedure(JsonNode action) {
-    requireOnlyFields(action, "stored procedure", "kind", "procedure");
-    return new StoredProcedure(readText(action.get("procedure"), "stored procedure name"));
+    requireOnlyFields(action, "stored procedure", "kind", "sql");
+    return new StoredProcedure(readText(action.get("sql"), "stored procedure SQL"));
   }
 
   private static void requireOnlyFields(JsonNode object, String label, String... fields) {

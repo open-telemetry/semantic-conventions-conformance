@@ -63,8 +63,8 @@ class SqlContractTest {
         assertInstanceOf(
             StoredProcedure.class,
             SqlContract.parseAction(
-                "{\"kind\":\"stored_procedure\",\"procedure\":\"conformance.noop\"}"));
-    assertEquals("conformance.noop", procedure.procedure());
+                "{\"kind\":\"stored_procedure\",\"sql\":\"CALL conformance.noop()\"}"));
+    assertEquals("CALL conformance.noop()", procedure.sql());
   }
 
   @Test
@@ -134,10 +134,28 @@ class SqlContractTest {
                 () -> SqlContract.parseAction("{\"kind\":\"batch\",\"statements\":\"SELECT 1\"}"))
             .getMessage());
     assertEquals(
-        "stored procedure name must be a string",
+        "stored procedure SQL must be a string",
         assertThrows(
                 IllegalArgumentException.class,
                 () -> SqlContract.parseAction("{\"kind\":\"stored_procedure\"}"))
+            .getMessage());
+  }
+
+  @Test
+  void rejectsProcedureNameFields() {
+    assertEquals(
+        "stored procedure has unknown field(s): [procedure]",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        """
+                        {
+                          "kind": "stored_procedure",
+                          "sql": "CALL conformance.noop()",
+                          "procedure": "conformance.noop"
+                        }
+                        """))
             .getMessage());
   }
 
@@ -233,7 +251,7 @@ class SqlContractTest {
                 IllegalArgumentException.class,
                 () ->
                     SqlContract.parseAction(
-                        "{\"kind\":\"stored_procedure\",\"procedure\":\"" + value + "\"}"))
+                        "{\"kind\":\"stored_procedure\",\"sql\":\"" + value + "\"}"))
             .getMessage());
   }
 
@@ -263,6 +281,14 @@ class SqlContractTest {
                             + "\"parameters\":[{\"type\":"
                             + value
                             + ",\"value\":1}]}"))
+            .getMessage());
+    assertEquals(
+        "stored procedure SQL must be a string",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"stored_procedure\",\"sql\":" + value + "}"))
             .getMessage());
   }
 

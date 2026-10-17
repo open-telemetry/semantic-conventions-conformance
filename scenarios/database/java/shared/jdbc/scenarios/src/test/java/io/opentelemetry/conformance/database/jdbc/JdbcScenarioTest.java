@@ -103,8 +103,9 @@ class JdbcScenarioTest {
         events);
   }
 
-  @Test
-  void consumesAllProcedureResultsAndUpdateCounts() throws SQLException {
+  @ParameterizedTest
+  @ValueSource(strings = {"CALL conformance.noop()", "CALL other_schema.record_value(7)"})
+  void executesContractCallSqlAndConsumesAllProcedureResults(String sql) throws SQLException {
     List<String> events = new ArrayList<>();
     ResultSet first = rows("first", 2, events);
     ResultSet second = rows("second", 1, events);
@@ -136,9 +137,7 @@ class JdbcScenarioTest {
                   default -> throw new AssertionError(method);
                 });
 
-    JdbcScenario.run(
-        connection("prepareCall", "CALL conformance.noop()", statement),
-        new StoredProcedure("conformance.noop"));
+    JdbcScenario.run(connection("prepareCall", sql, statement), new StoredProcedure(sql));
 
     assertEquals(
         List.of(
@@ -182,7 +181,7 @@ class JdbcScenarioTest {
 
     JdbcScenario.run(
         connection("prepareCall", "CALL conformance.noop()", statement),
-        new StoredProcedure("conformance.noop"));
+        new StoredProcedure("CALL conformance.noop()"));
 
     assertEquals(
         updateCount == -1 ? List.of("statement.close") : List.of("moreResults", "statement.close"),
@@ -253,7 +252,7 @@ class JdbcScenarioTest {
             () ->
                 JdbcScenario.run(
                     connection("prepareCall", "CALL conformance.noop()", statement),
-                    new StoredProcedure("conformance.noop"))));
+                    new StoredProcedure("CALL conformance.noop()"))));
     assertEquals(List.of("statement"), closed);
   }
 

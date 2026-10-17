@@ -42,7 +42,19 @@ Each scenario has a human-readable description and one SQL action kind:
 | `query` | Run a direct query |
 | `prepared_query` | Bind the listed parameters and run a prepared query |
 | `batch` | Run the listed statements as one batch |
-| `stored_procedure` | Call the named procedure |
+| `stored_procedure` | Execute the supplied call SQL through the stored procedure API |
+
+Stored-procedure actions supply the complete backend-specific call SQL:
+
+```yaml
+action:
+  kind: stored_procedure
+  sql: CALL conformance.noop()
+```
+
+Adapters pass this SQL unchanged to their stored procedure API, such as JDBC's
+`Connection.prepareCall`. The contract owns both the call SQL and its telemetry
+expectations.
 
 The SQL can vary independently by backend. Operation kinds remain shared so
 each language adapter knows whether to use a direct query, prepared query,

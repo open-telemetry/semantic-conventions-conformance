@@ -83,7 +83,7 @@ scenarios:
   - description: Calls the no-op stored procedure.
     action:
       kind: stored_procedure
-      procedure: conformance.noop
+      sql: CALL conformance.noop()
     expect:
       spans:
         - match:
