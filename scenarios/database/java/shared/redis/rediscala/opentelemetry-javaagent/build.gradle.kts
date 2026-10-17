@@ -9,3 +9,12 @@ dependencies {
     implementation(project(":scenario-support"))
     add("javaAgent", libs.opentelemetry.javaagent)
 }
+
+tasks.test {
+    systemProperty(
+        "scenario.classpath",
+        sourceSets.main
+            .get()
+            .runtimeClasspath.asPath,
+    )
+}
