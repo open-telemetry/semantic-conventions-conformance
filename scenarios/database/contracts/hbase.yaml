@@ -1,0 +1,123 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# The Java agent reports the ZooKeeper cluster key, not the region-server
+# endpoint, as server.address, without a separate server.port.
+
+scenarios:
+  get:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Get
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  put:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Mutate
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  scan:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
+
+  batch:
+    spans:
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: BATCH Mutate
+            db.collection.name: items
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.operation.batch.size: 2
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+      - match:
+          attributes:
+            db.system.name: hbase
+            db.operation.name: Scan
+            db.collection.name: meta
+        expect:
+          count: 1
+          attributes:
+            db.namespace: hbase
+            server.address: 127.0.0.1:2181:/hbase
+            server.port: {present: false}
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []
