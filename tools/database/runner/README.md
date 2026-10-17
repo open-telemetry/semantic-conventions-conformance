@@ -44,6 +44,10 @@ Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
+Redis scenarios read only `DATABASE_HOST` and `DATABASE_PORT`. They use logical
+database zero without authentication and do not read `DATABASE_NAME`,
+`DATABASE_USER`, or `DATABASE_PASSWORD`.
+
 The package classifies only client spans for the backends it can run.
 PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
 `db.mariadb.client`, and Redis spans use `db.redis.client`. Adding a backend
