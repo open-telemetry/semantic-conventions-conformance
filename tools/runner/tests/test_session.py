@@ -390,10 +390,33 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
-def test_contract_index_is_injected_into_the_scenario_process(
+@pytest.mark.parametrize(
+    ("action", "expected_action"),
+    [
+        (
+            {"request": {"method": "POST", "path": "/items"}},
+            '{"request":{"method":"POST","path":"/items"}}',
+        ),
+        (
+            {
+                "kind": "prepared_query",
+                "sql": "SELECT ${1}, ${2}",
+                "parameters": [
+                    {"type": "integer", "value": 7},
+                    {"type": "integer", "value": -2},
+                ],
+            },
+            '{"kind":"prepared_query","parameters":[{"type":"integer","value":7},'
+            '{"type":"integer","value":-2}],"sql":"SELECT ${1}, ${2}"}',
+        ),
+    ],
+)
+def test_contract_selection_is_injected_into_the_scenario_process(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    action: dict[str, object],
+    expected_action: str,
 ) -> None:
     captured: dict[str, str] = {}
 
@@ -409,11 +432,13 @@ def test_contract_index_is_injected_into_the_scenario_process(
     scenario = replace(
         opened.spec.scenarios["inference"],
         index=3,
+        action=action,
     )
 
     opened._execute(scenario, "http://collector")
 
     assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
+    assert captured["OTEL_CONFORMANCE_SCENARIO_ACTION"] == expected_action
 
 
 def test_a_missing_registry_is_a_spec_error(
