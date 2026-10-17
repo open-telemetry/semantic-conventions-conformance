@@ -60,7 +60,7 @@ public final class SqlContract {
       throw new IllegalArgumentException(SCENARIO_ACTION_VARIABLE + " must contain a JSON object");
     }
 
-    String kind = requiredText(action, "kind", "SQL action");
+    String kind = readText(action.get("kind"), "SQL action kind");
     return switch (kind) {
       case "query" -> query(action);
       case "prepared_query" -> preparedQuery(action);
@@ -152,7 +152,7 @@ public final class SqlContract {
 
   private static Query query(JsonNode action) {
     requireOnlyFields(action, "query", "kind", "sql");
-    return new Query(requiredText(action, "sql", "query"));
+    return new Query(readText(action.get("sql"), "query SQL"));
   }
 
   private static PreparedQuery preparedQuery(JsonNode action) {
@@ -169,19 +169,17 @@ public final class SqlContract {
         throw new IllegalArgumentException(label + " must be a JSON object");
       }
       requireOnlyFields(entry, label, "name", "type", "value");
-      String name = requiredText(entry, "name", label);
-      String type = requiredText(entry, "type", label);
+      String type = readText(entry.get("type"), label + " type");
       if (!"integer".equals(type)) {
-        throw new IllegalArgumentException(
-            label + " " + name + " has unsupported parameter type: " + type);
+        throw new IllegalArgumentException(label + " has unsupported parameter type: " + type);
       }
       JsonNode value = entry.get("value");
       if (value == null || !value.isInt()) {
-        throw new IllegalArgumentException(label + " " + name + " must have an integer value");
+        throw new IllegalArgumentException(label + " must have an integer value");
       }
-      parameters.add(new Parameter(name, value.intValue()));
+      parameters.add(new Parameter(readText(entry.get("name"), label + " name"), value.intValue()));
     }
-    return new PreparedQuery(requiredText(action, "sql", "prepared query"), parameters);
+    return new PreparedQuery(readText(action.get("sql"), "prepared query SQL"), parameters);
   }
 
   private static Batch batch(JsonNode action) {
@@ -192,14 +190,14 @@ public final class SqlContract {
     }
     List<String> statements = new ArrayList<>();
     for (int index = 0; index < entries.size(); index++) {
-      statements.add(requiredText(entries.get(index), "batch statement[" + index + "]"));
+      statements.add(readText(entries.get(index), "batch statement[" + index + "]"));
     }
     return new Batch(statements);
   }
 
   private static StoredProcedure storedProcedure(JsonNode action) {
     requireOnlyFields(action, "stored procedure", "kind", "procedure");
-    return new StoredProcedure(requiredText(action, "procedure", "stored procedure"));
+    return new StoredProcedure(readText(action.get("procedure"), "stored procedure name"));
   }
 
   private static void requireOnlyFields(JsonNode object, String label, String... fields) {
@@ -219,13 +217,9 @@ public final class SqlContract {
     }
   }
 
-  private static String requiredText(JsonNode object, String field, String label) {
-    return requiredText(object.get(field), label + " " + field);
-  }
-
-  private static String requiredText(JsonNode value, String label) {
-    if (value == null || !value.isTextual() || value.textValue().isBlank()) {
-      throw new IllegalArgumentException(label + " must be a non-blank string");
+  private static String readText(JsonNode value, String label) {
+    if (value == null || !value.isTextual()) {
+      throw new IllegalArgumentException(label + " must be a string");
     }
     return value.textValue();
   }

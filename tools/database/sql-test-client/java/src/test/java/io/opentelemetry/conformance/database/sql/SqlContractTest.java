@@ -16,6 +16,8 @@ import io.opentelemetry.conformance.database.sql.SqlContract.Query;
 import io.opentelemetry.conformance.database.sql.SqlContract.StoredProcedure;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class SqlContractTest {
 
@@ -117,7 +119,7 @@ class SqlContractTest {
   @Test
   void rejectsMissingAndWronglyTypedOperationFields() {
     assertEquals(
-        "query sql must be a non-blank string",
+        "query SQL must be a string",
         assertThrows(
                 IllegalArgumentException.class,
                 () -> SqlContract.parseAction("{\"kind\":\"query\"}"))
@@ -129,7 +131,7 @@ class SqlContractTest {
                 () -> SqlContract.parseAction("{\"kind\":\"batch\",\"statements\":\"SELECT 1\"}"))
             .getMessage());
     assertEquals(
-        "stored procedure procedure must be a non-blank string",
+        "stored procedure name must be a string",
         assertThrows(
                 IllegalArgumentException.class,
                 () -> SqlContract.parseAction("{\"kind\":\"stored_procedure\"}"))
@@ -139,7 +141,7 @@ class SqlContractTest {
   @Test
   void rejectsInvalidParameters() {
     assertEquals(
-        "prepared query parameter[0] id has unsupported parameter type: string",
+        "prepared query parameter[0] has unsupported parameter type: string",
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
@@ -155,7 +157,7 @@ class SqlContractTest {
                         """))
             .getMessage());
     assertEquals(
-        "prepared query parameter[0] id must have an integer value",
+        "prepared query parameter[0] must have an integer value",
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
@@ -169,6 +171,75 @@ class SqlContractTest {
                           ]
                         }
                         """))
+            .getMessage());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " "})
+  void rejectsBlankTextConsistentlyInJsonAndRecords(String value) {
+    assertEquals(
+        assertThrows(IllegalArgumentException.class, () -> new Query(value)).getMessage(),
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SqlContract.parseAction("{\"kind\":\"query\",\"sql\":\"" + value + "\"}"))
+            .getMessage());
+    assertEquals(
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new PreparedQuery(value, List.of(new Parameter("id", 1))))
+            .getMessage(),
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"prepared_query\",\"sql\":\""
+                            + value
+                            + "\",\"parameters\":[{\"name\":\"id\",\"type\":\"integer\",\"value\":1}]}"))
+            .getMessage());
+    assertEquals(
+        assertThrows(IllegalArgumentException.class, () -> new Parameter(value, 1)).getMessage(),
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"prepared_query\",\"sql\":\"SELECT ${id}\","
+                            + "\"parameters\":[{\"name\":\""
+                            + value
+                            + "\",\"type\":\"integer\",\"value\":1}]}"))
+            .getMessage());
+    assertEquals(
+        assertThrows(IllegalArgumentException.class, () -> new Batch(List.of(value))).getMessage(),
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"batch\",\"statements\":[\"" + value + "\"]}"))
+            .getMessage());
+    assertEquals(
+        assertThrows(IllegalArgumentException.class, () -> new StoredProcedure(value)).getMessage(),
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"stored_procedure\",\"procedure\":\"" + value + "\"}"))
+            .getMessage());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"null", "42", "true", "[]", "{}"})
+  void rejectsNonStringJsonValues(String value) {
+    assertEquals(
+        "query SQL must be a string",
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> SqlContract.parseAction("{\"kind\":\"query\",\"sql\":" + value + "}"))
+            .getMessage());
+    assertEquals(
+        "batch statement[0] must be a string",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction("{\"kind\":\"batch\",\"statements\":[" + value + "]}"))
             .getMessage());
   }
 
