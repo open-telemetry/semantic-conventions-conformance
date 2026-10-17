@@ -32,21 +32,23 @@ public final class JdbcScenario {
             ScenarioEnvironment.require("JDBC_URL"),
             ScenarioEnvironment.require("JDBC_USER"),
             ScenarioEnvironment.require("JDBC_PASSWORD"))) {
-      switch (operation) {
-        case Query query -> statement(connection, query);
-        case PreparedQuery query -> preparedStatement(connection, query);
-        case Batch batch -> batch(connection, batch);
-        case StoredProcedure procedure -> storedProcedure(connection, procedure);
-      }
+      run(connection, operation);
+    }
+  }
+
+  static void run(Connection connection, Operation operation) throws SQLException {
+    switch (operation) {
+      case Query query -> statement(connection, query);
+      case PreparedQuery query -> preparedStatement(connection, query);
+      case Batch batch -> batch(connection, batch);
+      case StoredProcedure procedure -> storedProcedure(connection, procedure);
     }
   }
 
   private static void statement(Connection connection, Query operation) throws SQLException {
     try (Statement statement = connection.createStatement();
         ResultSet result = statement.executeQuery(operation.sql())) {
-      if (!result.next() || !result.getBoolean(1) || result.next()) {
-        throw new IllegalStateException("direct query returned an unexpected result");
-      }
+      consume(result);
     }
   }
 
@@ -59,9 +61,7 @@ public final class JdbcScenario {
         statement.setInt(index++, parameter.integer());
       }
       try (ResultSet result = statement.executeQuery()) {
-        if (result.next()) {
-          throw new IllegalStateException("prepared query unexpectedly returned a row");
-        }
+        consume(result);
       }
     }
   }
@@ -87,9 +87,23 @@ public final class JdbcScenario {
       throws SQLException {
     try (CallableStatement statement =
         connection.prepareCall("CALL " + operation.procedure() + "()")) {
-      if (statement.execute()) {
-        throw new IllegalStateException("stored procedure unexpectedly returned a result set");
+      boolean hasResultSet = statement.execute();
+      while (true) {
+        if (hasResultSet) {
+          try (ResultSet result = statement.getResultSet()) {
+            consume(result);
+          }
+        } else if (statement.getUpdateCount() == -1) {
+          break;
+        }
+        hasResultSet = statement.getMoreResults();
       }
+    }
+  }
+
+  private static void consume(ResultSet result) throws SQLException {
+    while (result.next()) {
+      // Fetch every row so deferred driver errors surface.
     }
   }
 }
