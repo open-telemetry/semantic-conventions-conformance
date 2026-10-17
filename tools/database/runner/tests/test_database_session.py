@@ -14,6 +14,7 @@ from typing import Any
 import pytest
 
 import database_conformance
+from database_conformance._elasticsearch import Elasticsearch
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
 
 
@@ -143,6 +144,10 @@ def test_database_session_closes_mariadb_after_an_error(
             raise RuntimeError("scenario failed")
 
     assert closed
+
+
+def test_elasticsearch_backend_is_available_for_dispatch() -> None:
+    assert database_conformance._BACKENDS["elasticsearch"] is Elasticsearch
 
 
 @pytest.mark.parametrize(
