@@ -141,7 +141,7 @@ class SqlContractTest {
   @Test
   void rejectsInvalidParameters() {
     assertEquals(
-        "prepared query parameter[0] has unsupported parameter type: string",
+        "prepared query parameter[0] id has unsupported parameter type: string",
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
@@ -157,7 +157,7 @@ class SqlContractTest {
                         """))
             .getMessage());
     assertEquals(
-        "prepared query parameter[0] must have an integer value",
+        "prepared query parameter[0] id must have an integer value",
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
@@ -171,6 +171,28 @@ class SqlContractTest {
                           ]
                         }
                         """))
+            .getMessage());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"string", "integer"})
+  void rejectsBlankParameterNamesBeforeTypesAndValues(String type) {
+    assertEquals(
+        "parameter name must not be blank",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        """
+                        {
+                          "kind": "prepared_query",
+                          "sql": "SELECT ${id}",
+                          "parameters": [
+                            {"name": " ", "type": "%s", "value": 1.0}
+                          ]
+                        }
+                        """
+                            .formatted(type)))
             .getMessage());
   }
 
@@ -240,6 +262,17 @@ class SqlContractTest {
                 IllegalArgumentException.class,
                 () ->
                     SqlContract.parseAction("{\"kind\":\"batch\",\"statements\":[" + value + "]}"))
+            .getMessage());
+    assertEquals(
+        "prepared query parameter[0] name must be a string",
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                    SqlContract.parseAction(
+                        "{\"kind\":\"prepared_query\",\"sql\":\"SELECT ${id}\","
+                            + "\"parameters\":[{\"name\":"
+                            + value
+                            + ",\"type\":\"string\",\"value\":1.0}]}"))
             .getMessage());
   }
 

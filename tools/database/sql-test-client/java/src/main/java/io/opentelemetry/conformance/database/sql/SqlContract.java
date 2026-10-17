@@ -169,15 +169,17 @@ public final class SqlContract {
         throw new IllegalArgumentException(label + " must be a JSON object");
       }
       requireOnlyFields(entry, label, "name", "type", "value");
+      String name = requireText(readText(entry.get("name"), label + " name"), "parameter name");
       String type = readText(entry.get("type"), label + " type");
       if (!"integer".equals(type)) {
-        throw new IllegalArgumentException(label + " has unsupported parameter type: " + type);
+        throw new IllegalArgumentException(
+            label + " " + name + " has unsupported parameter type: " + type);
       }
       JsonNode value = entry.get("value");
       if (value == null || !value.isInt()) {
-        throw new IllegalArgumentException(label + " must have an integer value");
+        throw new IllegalArgumentException(label + " " + name + " must have an integer value");
       }
-      parameters.add(new Parameter(readText(entry.get("name"), label + " name"), value.intValue()));
+      parameters.add(new Parameter(name, value.intValue()));
     }
     return new PreparedQuery(readText(action.get("sql"), "prepared query SQL"), parameters);
   }
