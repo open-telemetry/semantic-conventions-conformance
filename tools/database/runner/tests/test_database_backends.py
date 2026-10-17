@@ -171,6 +171,18 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.exec_config is not None
 
 
+def test_redis_readiness_checks_for_server_errors() -> None:
+    assert _redis.REDIS.ready_command == (
+        "redis-cli",
+        "-e",
+        "-h",
+        "127.0.0.1",
+        "-p",
+        "6379",
+        "PING",
+    )
+
+
 def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
