@@ -31,10 +31,9 @@ scenarios:
   - description: Binds an integer to a prepared query.
     action:
       kind: prepared_query
-      sql: SELECT name FROM conformance.items WHERE id = ${id}
+      sql: SELECT name FROM conformance.items WHERE id = ${1}
       parameters:
-        - name: id
-          type: integer
+        - type: integer
           value: -1
     expect:
       spans:

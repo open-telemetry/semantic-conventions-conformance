@@ -7,9 +7,26 @@ Each file under [`contracts/`](contracts) owns one backend's ordered scenarios.
 Every list entry keeps its description, SQL `action`, and telemetry `expect`
 object together.
 
-Parameters use named `${parameter}` markers instead of a client library's bind
-syntax. Each language helper renders those markers for its driver and binds the
-listed values in order.
+Prepared queries use numbered `${1}`, `${2}` placeholders instead of a client
+library's bind syntax. Parameter values are listed in the same order:
+
+```yaml
+action:
+  kind: prepared_query
+  sql: SELECT name FROM conformance.items WHERE id = ${1}
+  parameters:
+    - type: integer
+      value: -1
+```
+
+Placeholders start at `${1}` and appear exactly once in ascending order, without
+gaps. Their count must equal the number of parameters. The `${...}` syntax is
+reserved for placeholders throughout prepared-query SQL; malformed or
+unterminated placeholders are rejected. Parameters have no names.
+
+Each language helper renders the placeholders for its driver, such as `?`, `$1`,
+or `%s`, and binds the listed values in order. Question marks outside placeholders
+are left unchanged, including those in SQL strings, comments, and operators.
 
 The database runner supplies connection details for the container it started.
 Each conformance package selects its backend's contract using `scenario_contract`.
@@ -49,5 +66,5 @@ Descriptions are labels and may repeat.
 
 Each language gets a small SQL helper that parses the selected action:
 
-- [`java/`](java) provides `SqlContract`, and JDBC scenarios translate named
-  parameters and stored procedures into JDBC calls.
+- [`java/`](java) provides `SqlContract`, and JDBC scenarios translate numbered
+  placeholders and stored procedures into JDBC calls.

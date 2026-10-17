@@ -33,7 +33,8 @@ public final class SqlContract {
   /** The environment variable carrying the selected scenario's action as JSON. */
   public static final String SCENARIO_ACTION_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_ACTION";
 
-  private static final Pattern PARAMETER_MARKER = Pattern.compile("\\$\\{([A-Za-z][A-Za-z0-9_]*)}");
+  // Include malformed and unterminated placeholders so validation cannot skip them.
+  private static final Pattern PARAMETER_MARKER = Pattern.compile("\\$\\{[^}]*(?:}|\\z)");
   private static final ObjectMapper MAPPER =
       new ObjectMapper()
           .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
@@ -80,7 +81,10 @@ public final class SqlContract {
     }
   }
 
-  /** A prepared query with ordered named parameters. */
+  /**
+   * A prepared query with ordered parameters and placeholders {@code ${1}}, {@code ${2}}, and so
+   * on. Each placeholder must appear exactly once in ascending order.
+   */
   public record PreparedQuery(String sql, List<Parameter> parameters) implements Operation {
     public PreparedQuery {
       sql = requireText(sql, "prepared query SQL");
@@ -88,23 +92,30 @@ public final class SqlContract {
       if (parameters.isEmpty()) {
         throw new IllegalArgumentException("prepared query must declare at least one parameter");
       }
-      List<String> markers = new ArrayList<>();
       Matcher matcher = PARAMETER_MARKER.matcher(sql);
+      int markerCount = 0;
       while (matcher.find()) {
-        markers.add(matcher.group(1));
+        String expected = "${" + ++markerCount + "}";
+        if (!matcher.group().equals(expected)) {
+          throw new IllegalArgumentException(
+              "prepared query SQL placeholders must appear once in ascending order: expected "
+                  + expected
+                  + ", got "
+                  + matcher.group());
+        }
       }
-      List<String> parameterNames = parameters.stream().map(Parameter::name).toList();
-      if (!markers.equals(parameterNames)) {
+      if (markerCount != parameters.size()) {
         throw new IllegalArgumentException(
-            "prepared query SQL markers must match its parameters in order: expected "
-                + parameterNames
-                + ", got "
-                + markers);
+            "prepared query declares "
+                + parameters.size()
+                + " parameter(s), but SQL contains "
+                + markerCount
+                + " placeholder(s)");
       }
     }
 
     /**
-     * Renders named contract markers as a client's positional bind markers.
+     * Renders numbered contract placeholders as a client's positional bind markers.
      *
      * <p>The marker function receives one-based parameter indexes.
      */
@@ -124,11 +135,7 @@ public final class SqlContract {
   }
 
   /** One integer bind value from a prepared query. */
-  public record Parameter(String name, int integer) {
-    public Parameter {
-      name = requireText(name, "parameter name");
-    }
-  }
+  public record Parameter(int integer) {}
 
   /** A list of statements executed as one batch. */
   public record Batch(List<String> statements) implements Operation {
@@ -168,18 +175,16 @@ public final class SqlContract {
       if (!entry.isObject()) {
         throw new IllegalArgumentException(label + " must be a JSON object");
       }
-      requireOnlyFields(entry, label, "name", "type", "value");
-      String name = requireText(readText(entry.get("name"), label + " name"), "parameter name");
+      requireOnlyFields(entry, label, "type", "value");
       String type = readText(entry.get("type"), label + " type");
       if (!"integer".equals(type)) {
-        throw new IllegalArgumentException(
-            label + " " + name + " has unsupported parameter type: " + type);
+        throw new IllegalArgumentException(label + " has unsupported parameter type: " + type);
       }
       JsonNode value = entry.get("value");
       if (value == null || !value.isInt()) {
-        throw new IllegalArgumentException(label + " " + name + " must have an integer value");
+        throw new IllegalArgumentException(label + " must have an integer value");
       }
-      parameters.add(new Parameter(name, value.intValue()));
+      parameters.add(new Parameter(value.intValue()));
     }
     return new PreparedQuery(readText(action.get("sql"), "prepared query SQL"), parameters);
   }

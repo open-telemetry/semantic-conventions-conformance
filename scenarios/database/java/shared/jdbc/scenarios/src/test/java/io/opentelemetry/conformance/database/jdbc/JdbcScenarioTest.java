@@ -87,9 +87,7 @@ class JdbcScenarioTest {
 
     JdbcScenario.run(
         connection("prepareStatement", "SELECT ?, ?", statement),
-        new PreparedQuery(
-            "SELECT ${first}, ${second}",
-            List.of(new Parameter("first", 7), new Parameter("second", -2))));
+        new PreparedQuery("SELECT ${1}, ${2}", List.of(new Parameter(7), new Parameter(-2))));
 
     assertEquals(List.of(List.of(1, 7), List.of(2, -2)), bindings);
     assertEquals(
