@@ -82,11 +82,7 @@ def test_database_session_injects_backend_variables(
     spec = _write_spec(tmp_path, "  backend: postgresql")
     with database_conformance.database_session(
         tmp_path,
-        variables={
-            "DATABASE_BACKEND": "wrong",
-            "DATABASE_HOST": "wrong",
-            "CUSTOM": "value",
-        },
+        variables={"DATABASE_HOST": "wrong", "CUSTOM": "value"},
         spec=spec,
     ) as running:
         assert running is session
@@ -97,7 +93,6 @@ def test_database_session_injects_backend_variables(
     assert "build_data" not in captured
     assert captured["variables"] == {
         "CUSTOM": "value",
-        "DATABASE_BACKEND": "postgresql",
         "DATABASE_HOST": "127.0.0.1",
         "DATABASE_PORT": "54321",
         "DATABASE_NAME": "conformance",

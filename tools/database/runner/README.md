@@ -33,7 +33,6 @@ environment declarations:
 
 | Variable | Value |
 | --- | --- |
-| `DATABASE_BACKEND` | Backend key selected by `runner_config` |
 | `DATABASE_HOST` | Loopback address published by Docker |
 | `DATABASE_PORT` | Docker-assigned host port |
 | `DATABASE_NAME` | Test database name |
@@ -42,11 +41,10 @@ environment declarations:
 
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
-configuration from the same backend. The backend key selects that database's
-contract. SQL scenarios use the shared
-[`contracts/`](../sql-test-client/contracts) directory. The generic conformance
-runner injects only the selected contract entry's `action` into the scenario
-process.
+configuration from the same backend. SQL packages select their backend's contract
+from the shared [`contracts/`](../sql-test-client/contracts) directory using
+`scenario_contract`. The generic conformance runner injects only the selected
+contract entry's `action` into the scenario process.
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
 use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a

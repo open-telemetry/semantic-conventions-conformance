@@ -11,10 +11,10 @@ Parameters use named `${parameter}` markers instead of a client library's bind
 syntax. Each language helper renders those markers for its driver and binds the
 listed values in order.
 
-The database runner supplies connection details and `DATABASE_BACKEND` at
-runtime. These values depend on the container it started. The generic
-conformance runner supplies the selected scenario's `action` as compact JSON in
-`OTEL_CONFORMANCE_SCENARIO_ACTION`.
+The database runner supplies connection details for the container it started.
+Each conformance package selects its backend's contract using `scenario_contract`.
+The generic conformance runner supplies the selected scenario's `action` as
+compact JSON in `OTEL_CONFORMANCE_SCENARIO_ACTION`.
 
 ## Operation kinds
 
