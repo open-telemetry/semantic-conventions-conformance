@@ -45,7 +45,7 @@ public final class JdbcScenario {
 
   private static void statement(Connection connection) throws SQLException {
     try (Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery("SELECT count(*) >= 0 FROM conformance.items")) {
+        ResultSet result = statement.executeQuery(statementQuery(connection))) {
       requireSingleBoolean(result, true);
     }
   }
@@ -76,11 +76,29 @@ public final class JdbcScenario {
   }
 
   private static void storedProcedure(Connection connection) throws SQLException {
-    try (CallableStatement statement = connection.prepareCall("CALL conformance.noop()")) {
+    try (CallableStatement statement = connection.prepareCall(procedureCall(connection))) {
       if (statement.execute()) {
         throw new IllegalStateException("stored procedure returned an unexpected result");
       }
     }
+  }
+
+  private static String statementQuery(Connection connection) throws SQLException {
+    if (isOracle(connection)) {
+      return "SELECT CASE WHEN count(*) >= 0 THEN 1 ELSE 0 END FROM conformance.items";
+    }
+    return "SELECT count(*) >= 0 FROM conformance.items";
+  }
+
+  private static String procedureCall(Connection connection) throws SQLException {
+    if (isOracle(connection)) {
+      return "{call conformance.noop()}";
+    }
+    return "CALL conformance.noop()";
+  }
+
+  private static boolean isOracle(Connection connection) throws SQLException {
+    return "Oracle".equals(connection.getMetaData().getDatabaseProductName());
   }
 
   private static void requireSingleBoolean(ResultSet result, boolean expected) throws SQLException {

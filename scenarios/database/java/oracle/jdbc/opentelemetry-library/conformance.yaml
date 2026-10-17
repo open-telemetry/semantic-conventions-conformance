@@ -1,0 +1,34 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: oracle
+instrumented_library: jdbc
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-jdbc
+scenario_contract: ../../../../contracts/oracle.yaml
+
+env:
+  JDBC_URL: jdbc:otel:oracle:thin:@//${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+  JDBC_USER: ${DATABASE_USER}
+  JDBC_PASSWORD: ${DATABASE_PASSWORD}
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:jdbc:opentelemetry-library
+
+scenarios:
+  statement:
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario statement
+
+  prepared_statement:
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario prepared_statement
+
+  batch:
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario batch
+
+  stored_procedure:
+    run: otel-conformance-java run shared:jdbc:opentelemetry-library JdbcLibraryScenario stored_procedure

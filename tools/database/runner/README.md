@@ -22,11 +22,11 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql` or `mariadb`.
-Each session starts one pinned container, applies that backend's packaged SQL
-schema, and removes the container when the session closes. The schemas create
-the same logical objects but no rows; scenarios own any data their operations
-need.
+`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
+`oracle`. Each session starts one pinned container, applies that backend's
+packaged SQL schema, and removes the container when the session closes. The
+schemas create the same logical objects but no rows; scenarios own any data
+their operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -39,12 +39,17 @@ environment declarations:
 | `DATABASE_USER` | Test user |
 | `DATABASE_PASSWORD` | Test-only password |
 
+Oracle Database can take longer to initialize than the other backends. Its
+three-minute startup timeout can be overridden with
+`OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT`.
+
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
 configuration from the same backend.
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
-backend also requires adding its span classification and conformance scenarios.
+use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and Oracle
+spans use `db.oracledb.client`. Adding a backend also requires adding its span
+classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
