@@ -32,8 +32,9 @@ each language adapter knows whether to use a direct query, prepared query,
 batch, or stored procedure API. The language helper reads `action`; the
 conformance runner reads `expect` using its generic `spans`, `metrics`, and
 `events` matcher syntax. The scenario process fails if the driver cannot execute
-the action. Tests also require every matching conformance package to reference
-the same YAML contract and declare one `scenario_run` command.
+the action. Each JDBC conformance package references its backend's YAML contract
+and declares one `scenario_run` command. Other clients can reuse a SQL contract
+without a matching JDBC package.
 
 The conformance runner creates a separate live-check for every list entry. The
 same selected entry provides both the injected action and the telemetry
