@@ -27,6 +27,7 @@ def _model():
     ("system", "span_type"),
     [
         ("mariadb", "db.mariadb.client"),
+        ("mongodb", "db.mongodb.client"),
         ("postgresql", "db.postgresql.client"),
     ],
 )

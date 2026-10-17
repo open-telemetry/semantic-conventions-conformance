@@ -1,0 +1,61 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: mongodb
+instrumented_library: mongodb-reactive
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-mongo-3.1
+scenario_contract: ../../../../contracts/mongodb.yaml
+
+env:
+  OTEL_LOGS_EXPORTER: none
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:mongodb:reactive:opentelemetry-library
+
+scenarios:
+  find:
+    run: otel-conformance-java run shared:mongodb:reactive:opentelemetry-library MongoReactiveLibraryScenario find
+
+  update:
+    run: otel-conformance-java run shared:mongodb:reactive:opentelemetry-library MongoReactiveLibraryScenario update
+
+  delete:
+    run: otel-conformance-java run shared:mongodb:reactive:opentelemetry-library MongoReactiveLibraryScenario delete
+
+  aggregate:
+    run: otel-conformance-java run shared:mongodb:reactive:opentelemetry-library MongoReactiveLibraryScenario aggregate
+    spans:
+      - match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: aggregate
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+            db.operation.name: aggregate
+            db.query.text: '{"aggregate": "items", "pipeline": [{"$match": {"_id": "?"}}], "cursor": {"batchSize": "?"}, "$db": "?", "lsid": {"id": "?"}}'
+            db.query.summary: {present: false}
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: endSessions
+        expect:
+          count: 1
+          attributes:
+            db.namespace: admin
+            db.collection.name: {present: false}
+            db.operation.name: endSessions
+            db.query.text: '{"endSessions": [{"id": "?"}], "$db": "?", "$readPreference": {"mode": "?"}}'
+            db.query.summary: {present: false}
+            server.address: 127.0.0.1
+            server.port: {present: true}
