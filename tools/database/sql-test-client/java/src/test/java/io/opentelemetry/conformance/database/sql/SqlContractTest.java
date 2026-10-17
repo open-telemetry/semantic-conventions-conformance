@@ -63,14 +63,7 @@ class SqlContractTest {
   }
 
   @Test
-  void rejectsMissingOrMalformedActionJson() {
-    assertEquals(
-        "OTEL_CONFORMANCE_SCENARIO_ACTION is not set",
-        assertThrows(IllegalStateException.class, () -> SqlContract.parseAction(null))
-            .getMessage());
-    assertEquals(
-        "OTEL_CONFORMANCE_SCENARIO_ACTION must not be blank",
-        assertThrows(IllegalStateException.class, () -> SqlContract.parseAction(" ")).getMessage());
+  void rejectsMalformedActionJson() {
     assertTrue(
         assertThrows(IllegalArgumentException.class, () -> SqlContract.parseAction("{"))
             .getMessage()
@@ -84,6 +77,10 @@ class SqlContractTest {
     assertEquals(
         "OTEL_CONFORMANCE_SCENARIO_ACTION must contain a JSON object",
         assertThrows(IllegalArgumentException.class, () -> SqlContract.parseAction("[]"))
+            .getMessage());
+    assertEquals(
+        "OTEL_CONFORMANCE_SCENARIO_ACTION must contain a JSON object",
+        assertThrows(IllegalArgumentException.class, () -> SqlContract.parseAction(" "))
             .getMessage());
   }
 

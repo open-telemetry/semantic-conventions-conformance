@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -42,18 +43,11 @@ public final class SqlContract {
 
   /** The operation selected by the conformance runner. */
   public static Operation selectedScenario() {
-    return parseAction(System.getenv(SCENARIO_ACTION_VARIABLE));
+    return parseAction(ScenarioEnvironment.require(SCENARIO_ACTION_VARIABLE));
   }
 
   // Takes the raw value so tests can drive parsing without modifying the process environment.
   static Operation parseAction(String rawAction) {
-    if (rawAction == null) {
-      throw new IllegalStateException(SCENARIO_ACTION_VARIABLE + " is not set");
-    }
-    if (rawAction.isBlank()) {
-      throw new IllegalStateException(SCENARIO_ACTION_VARIABLE + " must not be blank");
-    }
-
     JsonNode action;
     try {
       action = MAPPER.readTree(rawAction);
