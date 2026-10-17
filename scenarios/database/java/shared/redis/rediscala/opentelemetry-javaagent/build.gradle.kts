@@ -10,6 +10,22 @@ dependencies {
     add("javaAgent", libs.opentelemetry.javaagent)
 }
 
+spotless {
+    scala {
+        scalafmt()
+        licenseHeader(
+            """
+            /*
+             * Copyright The OpenTelemetry Authors
+             * SPDX-License-Identifier: Apache-2.0
+             */
+            """.trimIndent(),
+            "(package|import|class|object|trait)",
+        )
+        target("src/**/*.scala")
+    }
+}
+
 tasks.test {
     systemProperty(
         "scenario.classpath",

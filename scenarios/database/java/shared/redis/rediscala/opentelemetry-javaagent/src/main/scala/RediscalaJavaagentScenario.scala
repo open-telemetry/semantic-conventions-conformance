@@ -13,7 +13,9 @@ import scala.concurrent.duration._
 object RediscalaJavaagentScenario {
   def main(args: Array[String]): Unit = {
     if (args.length != 1) {
-      throw new IllegalArgumentException("expected one Rediscala operation argument")
+      throw new IllegalArgumentException(
+        "expected one Rediscala operation argument"
+      )
     }
     val host = ScenarioEnvironment.require("DATABASE_HOST")
     val port = ScenarioEnvironment.require("DATABASE_PORT").toInt
@@ -23,10 +25,13 @@ object RediscalaJavaagentScenario {
       try {
         args(0) match {
           case "set_get" =>
-            require(Await.result(redis.set("conformance:value", "value"), 5.seconds))
             require(
-              Await.result(redis.get[String]("conformance:value"), 5.seconds)
-                .contains("value"),
+              Await.result(redis.set("conformance:value", "value"), 5.seconds)
+            )
+            require(
+              Await
+                .result(redis.get[String]("conformance:value"), 5.seconds)
+                .contains("value")
             )
           case "pipeline" =>
             val first = redis.set("conformance:pipeline:1", "first")
@@ -34,17 +39,21 @@ object RediscalaJavaagentScenario {
             require(Await.result(first, 5.seconds))
             require(Await.result(second, 5.seconds))
             require(
-              Await.result(redis.get[String]("conformance:pipeline:1"), 5.seconds)
-                .contains("first"),
+              Await
+                .result(redis.get[String]("conformance:pipeline:1"), 5.seconds)
+                .contains("first")
             )
             require(
-              Await.result(redis.get[String]("conformance:pipeline:2"), 5.seconds)
-                .contains("second"),
+              Await
+                .result(redis.get[String]("conformance:pipeline:2"), 5.seconds)
+                .contains("second")
             )
           case "transaction" =>
             val transaction = redis.transaction()
-            val first = transaction.set("conformance:rediscala:transaction", "value")
-            val second = transaction.get[String]("conformance:rediscala:transaction")
+            val first =
+              transaction.set("conformance:rediscala:transaction", "value")
+            val second =
+              transaction.get[String]("conformance:rediscala:transaction")
             Await.result(transaction.exec(), 5.seconds)
             require(Await.result(first, 5.seconds))
             require(Await.result(second, 5.seconds).contains("value"))
@@ -53,12 +62,16 @@ object RediscalaJavaagentScenario {
             require(Await.result(redis.set(key, "not-a-list"), 5.seconds))
             try {
               Await.result(redis.lpush(key, "value"), 5.seconds)
-              throw new IllegalStateException("LPUSH unexpectedly accepted a string key")
+              throw new IllegalStateException(
+                "LPUSH unexpectedly accepted a string key"
+              )
             } catch {
               case error: Throwable if causedByWrongType(error) =>
             }
           case operation =>
-            throw new IllegalArgumentException(s"unknown Rediscala operation: $operation")
+            throw new IllegalArgumentException(
+              s"unknown Rediscala operation: $operation"
+            )
         }
       } finally {
         redis.stop()
