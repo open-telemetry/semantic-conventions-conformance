@@ -150,7 +150,13 @@ def test_starts_initializes_publishes_and_removes_database(
     if backend_type is Redis:
         assert container.transfers == []
         assert container.exec_config is not None
-        assert container.exec_config.command[-3:] == [
+        assert container.exec_config.command == [
+            "redis-cli",
+            "-e",
+            "-h",
+            "127.0.0.1",
+            "-p",
+            "6379",
             "SET",
             "conformance:bootstrap",
             "ready",

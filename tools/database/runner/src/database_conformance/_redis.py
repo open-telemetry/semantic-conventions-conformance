@@ -35,6 +35,7 @@ REDIS = BackendSpec(
     schema_copy=None,
     initialize_command=(
         "redis-cli",
+        "-e",
         "-h",
         "127.0.0.1",
         "-p",
