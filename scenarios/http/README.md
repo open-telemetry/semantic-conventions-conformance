@@ -24,8 +24,8 @@ Composer package per side. `scenarios/` holds telemetry-free workload code:
 java/armeria/scenarios/                  what the client and server do, no OTel
 java/armeria/opentelemetry-javaagent/    build.gradle.kts, src/, client/, server/
 java/armeria/opentelemetry-library/      build.gradle.kts, src/, client/, server/
-php/slim/scenarios/                      Slim routes and responses, no OTel
-php/slim/opentelemetry-slim/             composer.json, lock, server/
+php/<library>/scenarios/                  PHP library workload, no OTel
+php/<library>/<instrumentation>/          composer.json, lock, client/ or server/
 ```
 
 The `main` classes are per instrumentation because attaching library
@@ -205,10 +205,9 @@ Weaver over gRPC. Packages that use the default `grpc` protocol continue to
 export directly to Weaver.
 
 PHP packages use `otel-conformance-php install` to install their own committed
-lockfile. A Slim server runs through `otel-conformance-php serve`, which owns
+lockfile. Servers run through `otel-conformance-php serve`, which owns
 the driver's shutdown protocol while `php -S` keeps PHP's request-scoped
-lifecycle and flushes telemetry at each request shutdown. See
-[`php/`](php/README.md).
+lifecycle and flushes telemetry at each request shutdown. See [`php/`](php/README.md).
 
 Go's build root is [`go/`](go), and [`otel-conformance-go`](../../tools/go)
 holds how a Go package is built and started: `setup:` compiles the scenario and
