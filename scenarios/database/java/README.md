@@ -49,4 +49,6 @@ database selection and authentication:
 python -m pytest tools/database/runner/tests/test_redis_clients.py
 ```
 
-Clients whose runtimes have not been prepared are skipped.
+Clients whose runtimes have not been prepared are skipped. Linux CI prepares all
+five runtimes and requires all 15 database-selection and authentication cases to
+run without skips.
