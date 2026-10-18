@@ -28,6 +28,9 @@ All Redis launchers use the runner's host, port, database index, user, and
 password. An empty password disables authentication. The shared backend
 provides database zero without authentication.
 
+Jedis uses its default protocol negotiation and `CLIENT SETINFO` handshake.
+Its contracts include the two client-metadata spans emitted at startup.
+
 Expectations intentionally record client differences: Rediscala
 does not emit query text, while Jedis does not currently mark the rejected
 command as an error. Lettuce records the Redis server's `WRONGTYPE` code in

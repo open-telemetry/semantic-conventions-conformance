@@ -4,6 +4,16 @@
 scenarios:
   set_get:
     spans:
+      - match: &client
+          type: db.redis.client
+          attributes:
+            db.operation.name: CLIENT
+        expect: &startup-client
+          count: 2
+          attributes:
+            db.query.text: {distinct: 2}
+            network.peer.address: 127.0.0.1
+            network.peer.port: {present: true}
       - match:
           type: db.redis.client
           attributes:
@@ -33,6 +43,8 @@ scenarios:
 
   pipeline:
     spans:
+      - match: *client
+        expect: *startup-client
       - match:
           type: db.redis.client
           attributes:
@@ -74,6 +86,8 @@ scenarios:
 
   error:
     spans:
+      - match: *client
+        expect: *startup-client
       - match:
           type: db.redis.client
           attributes:
