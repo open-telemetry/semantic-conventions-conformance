@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -17,6 +16,7 @@ from testcontainers.core.container import ExecConfig
 
 from database_conformance._redis import Redis
 from opentelemetry.conformance._env import build_env
+from otel_conformance_java import java_command
 
 _JAVA_ROOT = Path(__file__).parents[4] / "scenarios" / "database" / "java"
 
@@ -32,7 +32,7 @@ _JAVA_ROOT = Path(__file__).parents[4] / "scenarios" / "database" / "java"
     ],
     ids=["jedis", "lettuce-agent", "lettuce-library", "rediscala", "redisson"],
 )
-def launcher(request: pytest.FixtureRequest) -> tuple[str, Path, str]:
+def launcher(request: pytest.FixtureRequest) -> tuple[str, str]:
     client, instrumentation, main_class = request.param
     runtime = (
         _JAVA_ROOT
@@ -42,9 +42,6 @@ def launcher(request: pytest.FixtureRequest) -> tuple[str, Path, str]:
     )
     if not (runtime / "lib").is_dir():
         pytest.skip(f"prepare shared:redis:{client}:{instrumentation} first")
-    java = shutil.which("java")
-    if java is None:
-        pytest.skip("Java is not installed")
     try:
         with_client = docker.from_env()
         try:
@@ -53,7 +50,7 @@ def launcher(request: pytest.FixtureRequest) -> tuple[str, Path, str]:
             with_client.close()
     except DockerException as error:
         pytest.skip(f"Docker is not available: {error}")
-    return java, runtime, main_class
+    return f"shared:redis:{client}:{instrumentation}", main_class
 
 
 @pytest.mark.parametrize(
@@ -66,12 +63,12 @@ def launcher(request: pytest.FixtureRequest) -> tuple[str, Path, str]:
     ids=["defaults", "database", "database-and-auth"],
 )
 def test_redis_clients_use_runner_connection_fields(
-    launcher: tuple[str, Path, str],
+    launcher: tuple[str, str],
     database: str,
     user: str,
     password: str,
 ) -> None:
-    java, runtime, main_class = launcher
+    project, main_class = launcher
     with Redis() as backend:
         container = backend._container
         assert container is not None
@@ -110,16 +107,14 @@ def test_redis_clients_use_runner_connection_fields(
                 "OTEL_LOGS_EXPORTER": "none",
             }
         )
-        env["JAVA_HOME"] = str(Path(java).parent.parent)
         result = subprocess.run(
-            [
-                java,
-                "-cp",
-                str(runtime / "lib" / "*"),
-                "io.opentelemetry.conformance.scenario.ScenarioLauncher",
+            java_command(
+                _JAVA_ROOT,
+                project,
                 main_class,
-                "set_get",
-            ],
+                agent=False,
+                arguments=["set_get"],
+            ),
             env=env,
             capture_output=True,
             text=True,
