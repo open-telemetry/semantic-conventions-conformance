@@ -51,7 +51,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "Microsoft.AspNetCore",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -63,7 +63,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "Microsoft.AspNetCore.Hosting",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

@@ -14,24 +14,29 @@ applies any required initialization before measured processes start.
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
 java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
-contracts/                                 shared telemetry expectations by backend/client
+contracts/                                 Redis telemetry expectations by client
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
 java/shared/redis/                          Redis client workloads and launchers
 java/redis/{jedis,lettuce,rediscala,redisson}/
                                             Redis conformance packages
+../../tools/database/sql-test-client/       combined SQL actions and expectations
 ```
 
-Contracts contain only telemetry expectations. A language or driver reuses
-them by declaring the same scenario names with its own environment and run
-commands.
+Each backend's combined SQL contract lives under
+[`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
+Each ordered scenario keeps its backend-specific `action` and generic telemetry
+`expect` object together. The runner executes each list position under its own
+live-check and passes only its selected `action` to the language helper as JSON,
+which translates it into its client API. Contracts can diverge as dialect-specific
+sanitization and summarization coverage grows.
 
 Each operation is a separate scenario so a missing or malformed span identifies
-the JDBC path that produced it:
+the client path that produced it:
 
-| Scenario | JDBC path |
+| Action kind | JDBC path |
 | --- | --- |
-| `statement` | `Statement.executeQuery` |
-| `prepared_statement` | `PreparedStatement.executeQuery` |
+| `query` | `Statement.executeQuery` |
+| `prepared_query` | `PreparedStatement.executeQuery` |
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
@@ -44,9 +49,11 @@ plain-string encoding in logical database zero:
 | `pipeline` | Submit `SET conformance:pipeline:1 first` and `SET conformance:pipeline:2 second` before waiting, then `GET` both keys and verify their values |
 | `error` | `SET conformance:error not-a-list`, then `LPUSH conformance:error value` and verify `WRONGTYPE` |
 
-Contracts record client-specific telemetry for these common operations,
-including connection-startup commands. Lettuce's explicit pipelining and
-Rediscala's implicit pipelining emit one span per queued command; Jedis and
+Redis contracts live under [`contracts`](contracts) and keep named scenarios
+because the Redis launchers select workloads by name rather than consume SQL
+`action` objects. Each client's contract records its telemetry for these common
+operations, including connection-startup commands. Lettuce's explicit pipelining
+and Rediscala's implicit pipelining emit one span per queued command; Jedis and
 Redisson expose a pipeline batch span. Rediscala also has a separate
 `transaction` scenario that records a `MULTI` batch.
 

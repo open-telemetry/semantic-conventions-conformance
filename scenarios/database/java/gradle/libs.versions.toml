@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [versions]
+jackson = "2.22.2"
 mariadb = "3.5.10"
 jedis = "8.0.1"
 lettuce = "7.7.0.RELEASE"
@@ -17,6 +18,7 @@ redisson = "4.7.0"
 scala = "2.13.17"
 
 [libraries]
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
 jedis = { module = "redis.clients:jedis", version.ref = "jedis" }
 lettuce = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }

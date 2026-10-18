@@ -143,8 +143,10 @@ def test_signal_scope_expectation_uses_owning_scope(tmp_path: Path) -> None:
     import opentelemetry.exporter.otlp.proto.grpc.trace_exporter as trace_exporter  # noqa: PLC0415
     import opentelemetry.sdk.trace as sdk_trace  # noqa: PLC0415
     import opentelemetry.sdk.trace.export as sdk_trace_export  # noqa: PLC0415
-    import opentelemetry.test.weaver_live_check as weaver_live_check  # noqa: PLC0415
     import opentelemetry.trace as trace  # noqa: PLC0415
+    from opentelemetry.conformance._weaver import (  # noqa: PLC0415
+        WeaverLiveCheck,
+    )
 
     policies = tmp_path / "policies"
     policies.mkdir()
@@ -164,7 +166,7 @@ def test_signal_scope_expectation_uses_owning_scope(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-    weaver = weaver_live_check.WeaverLiveCheck(
+    weaver = WeaverLiveCheck(
         registry=str(registry), policies_dir=str(policies)
     ).start()
     try:
@@ -226,6 +228,9 @@ def test_absent_scope_field_overrides_default_for_matching_span(
 
     import grpc  # noqa: PLC0415
 
+    from opentelemetry.conformance._weaver import (  # noqa: PLC0415
+        WeaverLiveCheck,
+    )
     from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (  # noqa: PLC0415
         ExportTraceServiceRequest,
     )
@@ -240,10 +245,6 @@ def test_absent_scope_field_overrides_default_for_matching_span(
         ScopeSpans,
         Span,
     )
-    from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
-        WeaverLiveCheck,
-    )
-
     policies = tmp_path / "policies"
     policies.mkdir()
     expectation = InstrumentationScopeExpectation(

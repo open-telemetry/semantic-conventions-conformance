@@ -41,7 +41,10 @@ environment declarations:
 
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
-configuration from the same backend.
+configuration from the same backend. SQL packages select their backend's contract
+from the shared [`contracts/`](../sql-test-client/contracts) directory using
+`scenario_contract`. The generic conformance runner injects only the selected
+contract entry's `action` into the scenario process.
 
 Redis scenarios use `DATABASE_NAME` as the logical database index and
 authenticate with `DATABASE_USER` and `DATABASE_PASSWORD` only when the password

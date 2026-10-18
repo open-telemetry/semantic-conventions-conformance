@@ -71,7 +71,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "github.com/labstack/echo-otel/v5",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
