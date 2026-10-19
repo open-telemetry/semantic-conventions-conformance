@@ -31,6 +31,18 @@
   "entities": {},
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.google_genai' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.google_genai",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'embedding.embeddings.0.embedding.text' does not exist in the registry.",
       "signal_type": "span",
@@ -293,6 +305,15 @@
       "signal_name": "GenerateContent",
       "context": {
         "attribute_key": "llm.input_messages.3.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GenerateContent",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.name"
       }
     },
     {

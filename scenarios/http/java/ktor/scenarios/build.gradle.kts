@@ -4,10 +4,6 @@ plugins {
     `java-library`
 }
 
-kotlin {
-    jvmToolchain(21)
-}
-
 dependencies {
     api(libs.ktor.client.core)
     api(libs.ktor.server.core)

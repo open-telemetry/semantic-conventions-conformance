@@ -44,6 +44,15 @@ class AttributeMatcher:
 
 
 @dataclass(frozen=True)
+class InstrumentationScopeExpectation:
+    """Expectations for a signal's instrumentation scope."""
+
+    name: AttributeMatcher | None = None
+    version: AttributeMatcher | None = None
+    schema_url: AttributeMatcher | None = None
+
+
+@dataclass(frozen=True)
 class SpanMatch:
     """What selects a span — every declared facet has to hold.
 
@@ -108,6 +117,7 @@ class SpanExpectation:
     attributes: Mapping[str, AttributeMatcher] = field(
         default_factory=dict[str, AttributeMatcher]
     )
+    instrumentation_scope: InstrumentationScopeExpectation | None = None
 
     def describe(self) -> str:
         return self.match.describe()
@@ -148,6 +158,9 @@ class ScenarioSpec:
     expectations at all only has to run and stay free of semconv violations.
     Declaring one makes its check exact.
 
+    ``action`` is the protocol-neutral mapping from an indexed contract. The
+    runner passes only the selected mapping to the scenario process as JSON.
+
     ``expected_violations`` are this scenario's own and are checked both ways:
     reported, they pass; no longer reported, the run says to remove them.
     ``inherited_violations`` come from the package and only ever suppress —
@@ -166,6 +179,7 @@ class ScenarioSpec:
     inherited_violations: tuple[ExpectedViolation, ...] = ()
     description: str = ""
     index: int | None = None
+    action: Mapping[str, object] | None = None
 
     @property
     def display_name(self) -> str:
@@ -278,6 +292,29 @@ def _require_list(value: object, where: str) -> list[object]:
     return cast("list[object]", value)
 
 
+def _parse_action(value: object, where: str) -> Mapping[str, object]:
+    action = _require_mapping(value, where)
+    if not action:
+        raise SpecError(f"{where}: expected a non-empty mapping")
+    try:
+        encoded = json.dumps(
+            action,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    except (TypeError, ValueError) as error:
+        raise SpecError(
+            f"{where}: expected values that can be represented as JSON: {error}"
+        ) from error
+    decoded = json.loads(encoded)
+    if decoded != action:
+        raise SpecError(
+            f"{where}: expected an object with string keys and JSON values"
+        )
+    return cast("Mapping[str, object]", decoded)
+
+
 def _check_keys(
     mapping: Mapping[str, object], allowed: Sequence[str], where: str
 ) -> None:
@@ -340,6 +377,44 @@ def _parse_matcher(value: object, where: str) -> AttributeMatcher:
     return AttributeMatcher(distinct=distinct)
 
 
+def _parse_scope_field(value: object, where: str) -> AttributeMatcher:
+    if isinstance(value, str) and value:
+        return AttributeMatcher(equals=value)
+    if not isinstance(value, Mapping):
+        raise SpecError(
+            f"{where}: expected a non-empty string or a presence matcher"
+        )
+
+    matcher = cast("Mapping[str, object]", value)
+    _check_keys(matcher, ("present",), where)
+    if set(matcher) != {"present"} or not isinstance(matcher["present"], bool):
+        raise SpecError(f"{where}: present must be a boolean")
+    return AttributeMatcher(present=matcher["present"])
+
+
+def _parse_instrumentation_scope(
+    value: object, where: str
+) -> InstrumentationScopeExpectation:
+    scope = _require_mapping(value, where)
+    _check_keys(scope, ("name", "version", "schema_url"), where)
+    if not scope:
+        raise SpecError(f"{where}: declare at least one field to check")
+    expectation = InstrumentationScopeExpectation(
+        name=_parse_scope_field(scope["name"], f"{where}.name")
+        if "name" in scope
+        else None,
+        version=_parse_scope_field(scope["version"], f"{where}.version")
+        if "version" in scope
+        else None,
+        schema_url=_parse_scope_field(
+            scope["schema_url"], f"{where}.schema_url"
+        )
+        if "schema_url" in scope
+        else None,
+    )
+    return expectation
+
+
 def _parse_match(value: object, where: str) -> SpanMatch:
     match = _require_mapping(value or {}, where)
     _check_keys(match, ("attributes", "kind", "type"), where)
@@ -366,7 +441,11 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
         return SpanExpectation(match=match)
 
     expect = _require_mapping(span["expect"], f"{where}.expect")
-    _check_keys(expect, ("count", "attributes"), f"{where}.expect")
+    _check_keys(
+        expect,
+        ("count", "attributes", "instrumentation_scope"),
+        f"{where}.expect",
+    )
     count = expect.get("count")
     if not isinstance(count, int) or isinstance(count, bool):
         raise SpecError(
@@ -382,6 +461,12 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
             name: _parse_matcher(matcher, f"{where}.expect.attributes.{name}")
             for name, matcher in attributes.items()
         },
+        instrumentation_scope=_parse_instrumentation_scope(
+            expect["instrumentation_scope"],
+            f"{where}.expect.instrumentation_scope",
+        )
+        if "instrumentation_scope" in expect
+        else None,
     )
 
 
@@ -468,6 +553,7 @@ def _parse_scenario(
     inherited: tuple[ExpectedViolation, ...] = (),
     description: str | None = None,
     index: int | None = None,
+    action: Mapping[str, object] | None = None,
 ) -> ScenarioSpec:
     scenario = _require_mapping(value or {}, where)
     _check_keys(
@@ -520,6 +606,7 @@ def _parse_scenario(
         inherited_violations=inherited,
         description=description or name,
         index=index,
+        action=action,
     )
 
 
@@ -577,9 +664,7 @@ def _list_contract_scenarios(
         entry = _require_mapping(value, where)
         _check_keys(entry, ("description", "action", "expect"), where)
         description = _required_string(entry, "description", where)
-        action = _require_mapping(entry.get("action"), f"{where}.action")
-        if not action:
-            raise SpecError(f"{where}.action: expected a non-empty mapping")
+        action = _parse_action(entry.get("action"), f"{where}.action")
         if "expect" not in entry:
             raise SpecError(f"{where}.expect is required")
         expect = _require_mapping(entry["expect"], f"{where}.expect")
@@ -593,6 +678,7 @@ def _list_contract_scenarios(
             inherited=inherited,
             description=description,
             index=index,
+            action=action,
         )
     return parsed
 
