@@ -1,3 +1,4 @@
+import groovy.json.JsonOutput
 import org.gradle.api.tasks.Sync
 import org.gradle.jvm.tasks.Jar
 
@@ -19,10 +20,35 @@ val javaAgent by configurations.creating {
 val runtimeName = project.path.removePrefix(":").replace(':', '-')
 val runtimeDirectory = rootDir.resolve("build/scenario-runtime/$runtimeName")
 
+val javaLauncher = javaToolchains.launcherFor(java.toolchain)
+val runtimeMetadata =
+    tasks.register("writeJavaRuntimeMetadata") {
+        val executable = javaLauncher.map { it.executablePath.asFile.absolutePath }
+        val languageVersion = javaLauncher.map { it.metadata.languageVersion.asInt() }
+        val output = layout.buildDirectory.file("generated/scenario-runtime/java-runtime.json")
+        inputs.property("executable", executable)
+        inputs.property("languageVersion", languageVersion)
+        outputs.file(output)
+
+        doLast {
+            val file = output.get().asFile
+            file.parentFile.mkdirs()
+            file.writeText(
+                JsonOutput.toJson(
+                    mapOf(
+                        "executable" to executable.get(),
+                        "languageVersion" to languageVersion.get(),
+                    ),
+                ) + "\n",
+            )
+        }
+    }
+
 tasks.register<Sync>("prepareRuntime") {
     dependsOn(tasks.jar)
     into(runtimeDirectory)
 
+    from(runtimeMetadata)
     from(tasks.jar) {
         into("lib")
     }
