@@ -22,7 +22,8 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql` or `mariadb`.
+`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
+`mysql`.
 Each session starts one pinned container, applies that backend's packaged SQL
 schema, and removes the container when the session closes. The schemas create
 the same logical objects but no rows; scenarios own any data their operations
@@ -47,7 +48,8 @@ from the shared [`contracts/`](../sql-test-client/contracts) directory using
 contract entry's `action` into the scenario process.
 
 The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, and MariaDB spans use `db.mariadb.client`. Adding a
-backend also requires adding its span classification and conformance scenarios.
+use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and MySQL
+spans use `db.mysql.client`. Adding a backend also requires adding its span
+classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

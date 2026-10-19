@@ -9,6 +9,7 @@ from typing import Any, Callable, Mapping
 
 _SUPPORTED_SYSTEM_SPAN_TYPES = {
     "mariadb": "db.mariadb.client",
+    "mysql": "db.mysql.client",
     "postgresql": "db.postgresql.client",
 }
 
