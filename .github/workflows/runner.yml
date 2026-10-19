@@ -670,13 +670,27 @@ jobs:
             find "$SCENARIO_ROOT" -name .venv -prune -o \
               -name conformance.yaml -exec dirname {} \; | sort
           )
-          status=0
+          failed=()
           for directory in "${directories[@]}"; do
             echo "::group::$directory"
-            otel-conformance "$directory" --report-only || status=1
+            rc=0
+            otel-conformance "$directory" --report-only || rc=$?
             echo "::endgroup::"
+            # Outside the group, so the annotation is never collapsed away.
+            if (( rc != 0 )); then
+              failed+=("$directory")
+              echo "::error title=Scenario failed::$directory (exit $rc)"
+            fi
           done
-          exit "$status"
+          if (( ${#failed[@]} )); then
+            echo "Failed scenarios:"
+            printf '  %s\n' "${failed[@]}"
+            {
+              echo "### Failed scenarios"
+              printf -- '- `%s`\n' "${failed[@]}"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
       - name: Create the generated data patch
         id: data-patch
