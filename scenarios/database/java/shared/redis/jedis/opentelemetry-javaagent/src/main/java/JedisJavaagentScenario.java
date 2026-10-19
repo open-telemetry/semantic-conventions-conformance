@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import redis.clients.jedis.ClientSetInfoConfig;
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
@@ -23,7 +24,12 @@ public final class JedisJavaagentScenario {
     }
     String user = ScenarioEnvironment.require("DATABASE_USER");
     String password = ScenarioEnvironment.requirePresent("DATABASE_PASSWORD");
-    DefaultJedisClientConfig.Builder config = DefaultJedisClientConfig.builder().database(database);
+    // Skip HELLO and CLIENT SETINFO to keep startup spans out of the contract.
+    DefaultJedisClientConfig.Builder config =
+        DefaultJedisClientConfig.builder()
+            .database(database)
+            .autoNegotiateProtocol(false)
+            .clientSetInfoConfig(ClientSetInfoConfig.DISABLED);
     if (!password.isEmpty()) {
       config.user(user).password(password);
     }
