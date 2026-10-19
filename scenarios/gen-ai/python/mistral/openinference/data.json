@@ -31,7 +31,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.mistralai",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

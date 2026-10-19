@@ -45,7 +45,10 @@ Cassandra runs without authentication, so `DATABASE_USER` and
 
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
-configuration from the same backend.
+configuration from the same backend. SQL packages select their backend's contract
+from the shared [`contracts/`](../sql-test-client/contracts) directory using
+`scenario_contract`. The generic conformance runner injects only the selected
+contract entry's `action` into the scenario process.
 
 The package classifies only spans for the backends it can run. Cassandra,
 MariaDB, and PostgreSQL spans use their respective `db.cassandra.client`,

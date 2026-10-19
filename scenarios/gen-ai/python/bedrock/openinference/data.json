@@ -23,7 +23,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.bedrock",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

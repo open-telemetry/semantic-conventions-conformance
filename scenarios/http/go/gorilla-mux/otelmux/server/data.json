@@ -74,7 +74,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
