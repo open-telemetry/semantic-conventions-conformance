@@ -4,22 +4,22 @@
 scenarios:
   set_get:
     spans:
-      - match: &ping
+      - match:
           type: db.redis.client
           attributes:
             db.operation.name: PING
-        expect: &two-startup
+        expect:
           count: 2
           attributes:
             db.namespace: "0"
             db.query.text: PING
             server.address: 127.0.0.1
             server.port: {present: true}
-      - match: &eval
+      - match:
           type: db.redis.client
           attributes:
             db.operation.name: EVAL
-        expect: &startup-eval
+        expect:
           count: 1
           attributes:
             db.namespace: "0"
@@ -48,17 +48,35 @@ scenarios:
             db.query.text: GET conformance:value
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: &metrics
+    metrics:
       - db.client.operation.duration
       - queueSize
     events: []
 
   pipeline:
     spans:
-      - match: *ping
-        expect: *two-startup
-      - match: *eval
-        expect: *startup-eval
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PING
+        expect:
+          count: 2
+          attributes:
+            db.namespace: "0"
+            db.query.text: PING
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: EVAL
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "EVAL redis.call('get', KEYS[1]) redis.call('get', KEYS[2]) 2 test1 test2"
+            server.address: 127.0.0.1
+            server.port: {present: true}
       - match:
           type: db.redis.client
           attributes:
@@ -93,15 +111,35 @@ scenarios:
             db.namespace: "0"
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: *metrics
+    metrics:
+      - db.client.operation.duration
+      - queueSize
     events: []
 
   error:
     spans:
-      - match: *ping
-        expect: *two-startup
-      - match: *eval
-        expect: *startup-eval
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PING
+        expect:
+          count: 2
+          attributes:
+            db.namespace: "0"
+            db.query.text: PING
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: EVAL
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "EVAL redis.call('get', KEYS[1]) redis.call('get', KEYS[2]) 2 test1 test2"
+            server.address: 127.0.0.1
+            server.port: {present: true}
       - match:
           type: db.redis.client
           attributes:
@@ -125,5 +163,7 @@ scenarios:
             error.type: org.redisson.client.RedisException
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: *metrics
+    metrics:
+      - db.client.operation.duration
+      - queueSize
     events: []

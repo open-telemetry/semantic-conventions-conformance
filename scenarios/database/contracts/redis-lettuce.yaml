@@ -4,21 +4,21 @@
 scenarios:
   set_get:
     spans:
-      - match: &hello
+      - match:
           type: db.redis.client
           attributes:
             db.operation.name: HELLO
-        expect: &startup-one
+        expect:
           count: 1
           attributes:
             db.query.text: HELLO 3
             server.address: 127.0.0.1
             server.port: {present: true}
-      - match: &client
+      - match:
           type: db.redis.client
           attributes:
             db.operation.name: CLIENT
-        expect: &startup-client
+        expect:
           count: 3
           attributes:
             db.query.text: {distinct: 3}
@@ -44,17 +44,33 @@ scenarios:
             db.query.text: GET conformance:value
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: &metrics
+    metrics:
       - db.client.operation.duration
       - queueSize
     events: []
 
   pipeline:
     spans:
-      - match: *hello
-        expect: *startup-one
-      - match: *client
-        expect: *startup-client
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: HELLO
+        expect:
+          count: 1
+          attributes:
+            db.query.text: HELLO 3
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: CLIENT
+        expect:
+          count: 3
+          attributes:
+            db.query.text: {distinct: 3}
+            server.address: 127.0.0.1
+            server.port: {present: true}
       - match:
           type: db.redis.client
           attributes:
@@ -95,15 +111,33 @@ scenarios:
           attributes:
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: *metrics
+    metrics:
+      - db.client.operation.duration
+      - queueSize
     events: []
 
   error:
     spans:
-      - match: *hello
-        expect: *startup-one
-      - match: *client
-        expect: *startup-client
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: HELLO
+        expect:
+          count: 1
+          attributes:
+            db.query.text: HELLO 3
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: CLIENT
+        expect:
+          count: 3
+          attributes:
+            db.query.text: {distinct: 3}
+            server.address: 127.0.0.1
+            server.port: {present: true}
       - match:
           type: db.redis.client
           attributes:
@@ -125,5 +159,7 @@ scenarios:
             error.type: WRONGTYPE
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: *metrics
+    metrics:
+      - db.client.operation.duration
+      - queueSize
     events: []

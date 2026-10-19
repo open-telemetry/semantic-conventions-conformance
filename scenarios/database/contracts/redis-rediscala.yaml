@@ -22,7 +22,7 @@ scenarios:
           attributes:
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: &metrics
+    metrics:
       - db.client.operation.duration
       - queueSize
     events: []
@@ -47,7 +47,9 @@ scenarios:
           attributes:
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: *metrics
+    metrics:
+      - db.client.operation.duration
+      - queueSize
     events: []
 
   transaction:
@@ -62,7 +64,9 @@ scenarios:
             db.operation.batch.size: 2
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: *metrics
+    metrics:
+      - db.client.operation.duration
+      - queueSize
     events: []
 
   error:
@@ -86,5 +90,7 @@ scenarios:
             error.type: redis.actors.ReplyErrorException
             server.address: 127.0.0.1
             server.port: {present: true}
-    metrics: *metrics
+    metrics:
+      - db.client.operation.duration
+      - queueSize
     events: []
