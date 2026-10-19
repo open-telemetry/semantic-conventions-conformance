@@ -84,3 +84,21 @@ def test_every_jdbc_package_uses_its_backend_contract() -> None:
         assert [
             scenario.action for scenario in loaded_scenarios
         ] == [scenario["action"] for scenario in scenarios], path
+
+
+def test_sql_server_contract_keeps_its_dialect_specific_actions() -> None:
+    document = yaml.safe_load(
+        (_CONTRACTS / "sql_server.yaml").read_text(encoding="utf-8")
+    )
+    actions = [scenario["action"] for scenario in document["scenarios"]]
+    assert [action["kind"] for action in actions] == [
+        "query",
+        "prepared_query",
+        "batch",
+        "stored_procedure",
+    ]
+    assert actions[0]["sql"] == (
+        "SELECT CASE WHEN count(*) >= 0 THEN CAST(1 AS bit) "
+        "ELSE CAST(0 AS bit) END FROM conformance.items"
+    )
+    assert actions[3]["sql"] == "{call conformance.noop}"
