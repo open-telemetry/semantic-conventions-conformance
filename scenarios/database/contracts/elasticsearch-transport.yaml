@@ -1,0 +1,17 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  search:
+    spans:
+      - match:
+          attributes:
+            db.system.name: elasticsearch
+        expect:
+          count: 1
+          attributes:
+            db.operation.name: SearchAction
+    metrics:
+      - db.client.operation.duration
+      - queueSize
+    events: []

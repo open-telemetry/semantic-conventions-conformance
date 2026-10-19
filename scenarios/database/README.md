@@ -3,10 +3,11 @@
 What database instrumentations emit, checked against the
 [database semantic conventions][database] and recorded as committed coverage.
 
-Initial support is Java-only and exercises PostgreSQL and MariaDB through JDBC.
-Each vendor runs against the OpenTelemetry Java agent and the OpenTelemetry JDBC
-library instrumentation. The database runner starts the selected Docker
-container and applies its shared schema before any measured process starts.
+Initial support is Java-only. PostgreSQL and MariaDB exercise JDBC through the
+OpenTelemetry Java agent and the OpenTelemetry JDBC library instrumentation.
+Elasticsearch exercises the REST, Java API, and Transport clients through the
+Java agent. The database runner starts the selected Docker container and
+applies that backend's packaged schema before any measured process starts.
 
 ```text
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
@@ -14,9 +15,12 @@ java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
 ../../tools/database/sql-test-client/       combined SQL actions and expectations
+contracts/                                 Elasticsearch telemetry expectations by client API
+java/shared/elasticsearch/                  one Java agent launcher per client API
+java/elasticsearch/                         Elasticsearch conformance packages
 ```
 
-Each backend's combined SQL contract lives under
+Each SQL backend's combined contract lives under
 [`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
 Each ordered scenario keeps its backend-specific `action` and generic telemetry
 `expect` object together. The runner executes each list position under its own
@@ -24,7 +28,7 @@ live-check and passes only its selected `action` to the language helper as JSON,
 which translates it into its client API. Contracts can diverge as dialect-specific
 sanitization and summarization coverage grows.
 
-Each operation is a separate scenario so a missing or malformed span identifies
+Each JDBC operation is a separate scenario so a missing or malformed span identifies
 the client path that produced it:
 
 | Action kind | JDBC path |
@@ -34,6 +38,22 @@ the client path that produced it:
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
+The Elasticsearch contracts under [`contracts/`](contracts) contain only telemetry
+expectations. Each package declares its named scenario and client-specific run
+command. The scenarios cover one version from each distinct instrumented client
+API:
+
+| Scenario package | Client | Version | Operation |
+| --- | --- | --- | --- |
+| `elasticsearch/rest` | Low Level REST Client | 7.17.29 | `_count` |
+| `elasticsearch/api-client` | Elasticsearch Java API Client | 7.17.19 | `search` |
+| `elasticsearch/transport` | Transport Client | 7.17.29 | `prepareSearch` |
+
+The Low Level REST Client stays on the 7.17 line because it shares its version
+with the Transport Client artifacts, which end there. The Java API Client stays
+at 7.17.19 because 7.17.20 and later have native OpenTelemetry instrumentation.
+This suite measures the Java agent instrumentation line instead.
+
 ## Running it
 
 ```sh
@@ -42,6 +62,9 @@ otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-library
 otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-javaagent
 otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-library
+otel-conformance scenarios/database/java/elasticsearch/rest/opentelemetry-javaagent
+otel-conformance scenarios/database/java/elasticsearch/api-client/opentelemetry-javaagent
+otel-conformance scenarios/database/java/elasticsearch/transport/opentelemetry-javaagent
 ```
 
 Docker must be installed and running. One database container serves the whole
@@ -50,7 +73,8 @@ package run, then is removed. The runner owns the
 and
 [MariaDB](../../tools/database/runner/src/database_conformance/mariadb.sql)
 schemas. Both contain the empty table and stored procedure used by the shared
-workload. Neither seeds data.
+workload. Neither seeds data. The runner creates Elasticsearch's `conformance`
+index from a fixed mapping with one shard, no replicas, and refreshes disabled.
 
 The runs opt into stable database semantic conventions. Java instrumentation
 otherwise emits legacy database attributes during the migration period, which
