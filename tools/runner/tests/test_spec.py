@@ -50,6 +50,7 @@ def test_minimal_spec_leaves_signal_expectations_unchecked(
     assert scenario.run == ("python", "inference.py")
     assert scenario.spans is None
     assert scenario.metrics is None
+    assert scenario.allowed_metrics == ()
     assert scenario.events is None
     assert scenario.expected_violations == ()
 
@@ -178,6 +179,39 @@ def test_declared_but_empty_is_checked_exactly(tmp_path: Path) -> None:
     assert scenario.events == ()
 
 
+def test_allowed_metrics_are_parsed(tmp_path: Path) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            MINIMAL
+            + """
+    metrics:
+      - db.client.operation.duration
+    allowed_metrics:
+      - queueSize
+""",
+        )
+    )
+
+    scenario = spec.scenarios["inference"]
+    assert scenario.metrics == ("db.client.operation.duration",)
+    assert scenario.allowed_metrics == ("queueSize",)
+
+
+def test_allowed_metrics_require_metric_expectations(tmp_path: Path) -> None:
+    with pytest.raises(SpecError, match="metrics must be declared"):
+        load_spec(
+            write(
+                tmp_path,
+                MINIMAL
+                + """
+    allowed_metrics:
+      - queueSize
+""",
+            )
+        )
+
+
 def test_scenarios_keeps_declaration_order(tmp_path: Path) -> None:
     directory = write(
         tmp_path,
@@ -208,6 +242,10 @@ scenarios:
             http.request.method: GET
         expect:
           count: 4
+    metrics:
+      - http.client.request.duration
+    allowed_metrics:
+      - otlp.exporter.seen
     events: []
 """
     )
@@ -229,6 +267,8 @@ scenarios:
     assert scenario.run == ("python", "client.py")
     assert scenario.spans is not None
     assert scenario.spans[0].count == 4
+    assert scenario.metrics == ("http.client.request.duration",)
+    assert scenario.allowed_metrics == ("otlp.exporter.seen",)
     assert scenario.events == ()
 
 
@@ -247,6 +287,8 @@ scenarios:
         - match:
             attributes: {url.full: "${SERVER}/one"}
           expect: {count: 1}
+      metrics: [http.client.request.duration]
+      allowed_metrics: [otlp.exporter.seen]
   - description: The same description may repeat.
     action: {request: {method: GET, path: /two}}
     expect: {events: []}
@@ -274,6 +316,9 @@ scenario_run: python client.py
     assert first.run == second.run == ("python", "client.py")
     assert first.spans is not None
     assert first.spans[0].match.attributes == {"url.full": "${SERVER}/one"}
+    assert first.metrics == ("http.client.request.duration",)
+    assert first.allowed_metrics == ("otlp.exporter.seen",)
+    assert second.allowed_metrics == ()
     assert second.events == ()
 
 
