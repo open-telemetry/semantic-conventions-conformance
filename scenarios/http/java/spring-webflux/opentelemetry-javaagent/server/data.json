@@ -75,7 +75,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "SpringWebfluxJavaagentServerScenario",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -87,7 +87,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.springframework.boot.reactor.netty.GracefulShutdown",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -99,7 +99,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.springframework.boot.reactor.netty.NettyWebServer",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
