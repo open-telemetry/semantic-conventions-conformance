@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [versions]
+jackson = "2.22.2"
 mariadb = "3.5.10"
 # MongoDB's legacy async driver (com.mongodb.async.client), superseded by the
 # reactive streams driver and pinned separately because it stopped at 3.x.
@@ -19,6 +20,7 @@ postgresql = "42.7.14"
 reactivestreams = "1.0.4"
 
 [libraries]
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
 mongodb-driver-async = { module = "org.mongodb:mongodb-driver-async", version.ref = "mongodb-driver-async" }
 mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb-driver" }

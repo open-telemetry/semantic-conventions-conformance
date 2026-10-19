@@ -73,7 +73,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.glassfish.grizzly.http.server.HttpServer",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -85,7 +85,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.glassfish.grizzly.http.server.NetworkListener",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

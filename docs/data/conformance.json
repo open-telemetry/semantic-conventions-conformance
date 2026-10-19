@@ -1301,7 +1301,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -1747,7 +1747,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -2535,7 +2535,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -3094,7 +3094,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -4333,7 +4333,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -5288,7 +5288,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -5587,7 +5587,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -6262,7 +6262,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -6976,7 +6976,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -7598,7 +7598,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -8427,7 +8427,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -9036,7 +9036,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -9779,7 +9779,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -10511,7 +10511,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -10523,7 +10523,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -10758,6 +10758,362 @@
         },
         {
           "context": {
+            "attribute_key": "input.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.mime_type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.0.message.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.0.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.tool_call_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.invocation_parameters"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.model_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.model_name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.provider"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.provider' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.completion"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.completion_details.reasoning"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.completion_details.reasoning' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.prompt"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.total"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.tools.0.tool.json_schema"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "session.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'session.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "user.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'user.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.id",
+            "operation": "generate_content"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.model",
+            "operation": "generate_content"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "server.address",
+            "operation": "generate_content"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'server.address'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'call_llm' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "generate_content gemini-2.0-flash",
+            "keyed_attr": "gen_ai.request.model",
+            "operation": "generate_content"
+          },
+          "id": "genai_span_name_format",
+          "message": "generate_content span name should be 'generate_content gemini-2.0-flash', got 'call_llm'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "gcp.vertex.agent.event_id"
           },
           "id": "missing_attribute",
@@ -10803,69 +11159,110 @@
         },
         {
           "context": {
-            "attribute_key": "gcp.vertex.agent.event_id"
+            "attribute_key": "input.mime_type"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
-          "signal_name": "generate_content gemini-2.0-flash",
+          "message": "Attribute 'input.mime_type' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "gcp.vertex.agent.invocation_id"
+            "attribute_key": "input.value"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'gcp.vertex.agent.invocation_id' does not exist in the registry.",
-          "signal_name": "generate_content gemini-2.0-flash",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "gen_ai.system"
+            "attribute_key": "openinference.span.kind"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'gen_ai.system' does not exist in the registry.",
-          "signal_name": "generate_content gemini-2.0-flash",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
         {
           "context": {
-            "missing_attribute": "gen_ai.provider.name",
-            "operation": "generate_content"
+            "attribute_key": "output.mime_type"
           },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.provider.name'",
-          "signal_name": "generate_content gemini-2.0-flash",
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
         {
           "context": {
-            "missing_attribute": "gen_ai.response.id",
-            "operation": "generate_content"
+            "attribute_key": "output.value"
           },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
-          "signal_name": "generate_content gemini-2.0-flash",
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
         {
           "context": {
-            "missing_attribute": "gen_ai.response.model",
-            "operation": "generate_content"
+            "attribute_key": "session.id"
           },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
-          "signal_name": "generate_content gemini-2.0-flash",
+          "id": "missing_attribute",
+          "message": "Attribute 'session.id' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
         {
           "context": {
-            "missing_attribute": "server.address",
-            "operation": "generate_content"
+            "attribute_key": "tool.description"
           },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'server.address'",
-          "signal_name": "generate_content gemini-2.0-flash",
+          "id": "missing_attribute",
+          "message": "Attribute 'tool.description' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "tool.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'tool.id' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "tool.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'tool.name' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "tool.parameters"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'tool.parameters' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "user.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'user.id' does not exist in the registry.",
+          "signal_name": "execute_tool get_current_weather",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'execute_tool get_current_weather' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
         {
@@ -10992,7 +11389,7 @@
             },
             "opt_in": {
               "declared": 2,
-              "emitted": 0
+              "emitted": 2
             },
             "recommended_conditional": {
               "declared": 3,
@@ -11006,7 +11403,9 @@
           "emitted": [
             "gen_ai.agent.name",
             "gen_ai.operation.name",
+            "gen_ai.tool.call.arguments",
             "gen_ai.tool.call.id",
+            "gen_ai.tool.call.result",
             "gen_ai.tool.description",
             "gen_ai.tool.name",
             "gen_ai.tool.type"
@@ -11015,7 +11414,9 @@
             "attributes": [
               "gen_ai.agent.name",
               "gen_ai.operation.name",
+              "gen_ai.tool.call.arguments",
               "gen_ai.tool.call.id",
+              "gen_ai.tool.call.result",
               "gen_ai.tool.description",
               "gen_ai.tool.name",
               "gen_ai.tool.type"
@@ -11023,9 +11424,7 @@
             "span_kind": "internal"
           },
           "missing": [
-            "error.type",
-            "gen_ai.tool.call.arguments",
-            "gen_ai.tool.call.result"
+            "error.type"
           ],
           "name": "gen_ai.execute_tool.internal",
           "type": "span"
@@ -11038,11 +11437,11 @@
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 0
+              "emitted": 3
             },
             "recommended": {
               "declared": 14,
-              "emitted": 4
+              "emitted": 6
             },
             "recommended_conditional": {
               "declared": 5,
@@ -11050,14 +11449,20 @@
             },
             "required": {
               "declared": 2,
-              "emitted": 1
+              "emitted": 2
             }
           },
           "emitted": [
             "gen_ai.conversation.id",
+            "gen_ai.input.messages",
             "gen_ai.operation.name",
+            "gen_ai.output.messages",
+            "gen_ai.provider.name",
+            "gen_ai.request.max_tokens",
             "gen_ai.request.model",
+            "gen_ai.request.temperature",
             "gen_ai.response.finish_reasons",
+            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens",
@@ -11066,9 +11471,15 @@
           "identity": {
             "attributes": [
               "gen_ai.conversation.id",
+              "gen_ai.input.messages",
               "gen_ai.operation.name",
+              "gen_ai.output.messages",
+              "gen_ai.provider.name",
+              "gen_ai.request.max_tokens",
               "gen_ai.request.model",
+              "gen_ai.request.temperature",
               "gen_ai.response.finish_reasons",
+              "gen_ai.tool.definitions",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens",
@@ -11079,30 +11490,24 @@
           "missing": [
             "error.type",
             "gen_ai.conversation.compacted",
-            "gen_ai.input.messages",
-            "gen_ai.output.messages",
             "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
             "gen_ai.prompt.version",
-            "gen_ai.provider.name",
             "gen_ai.request.choice.count",
             "gen_ai.request.frequency_penalty",
-            "gen_ai.request.max_tokens",
             "gen_ai.request.presence_penalty",
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
             "gen_ai.request.stream",
-            "gen_ai.request.temperature",
             "gen_ai.request.top_k",
             "gen_ai.request.top_p",
             "gen_ai.response.id",
             "gen_ai.response.model",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
-            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_creation.input_tokens",
             "server.address",
             "server.port"
@@ -11309,14 +11714,14 @@
         }
       ],
       "summary": {
-        "findings": 50,
+        "findings": 94,
         "recommended": {
           "declared": 31,
-          "emitted": 8
+          "emitted": 10
         },
         "required": {
           "declared": 10,
-          "emitted": 9
+          "emitted": 10
         }
       }
     },
@@ -11327,7 +11732,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -12260,7 +12665,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -13174,7 +13579,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -13713,7 +14118,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -14087,7 +14492,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -14383,7 +14788,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -14873,7 +15278,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -15792,7 +16197,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -17772,7 +18177,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -17784,7 +18189,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -19771,7 +20176,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -20467,7 +20872,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -20881,7 +21286,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -22428,7 +22833,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -23898,7 +24303,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -24190,7 +24595,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -24616,7 +25021,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -25041,7 +25446,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -25518,7 +25923,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -26222,7 +26627,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -27465,7 +27870,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -28265,7 +28670,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -28927,7 +29332,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -29656,7 +30061,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -29668,7 +30073,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -30366,7 +30771,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -30920,7 +31325,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -30932,7 +31337,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31170,7 +31575,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31182,7 +31587,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31455,32 +31860,23 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
           },
           "id": "instrumentation_scope_schema_url_missing",
-          "message": "Instrumentation scope 'go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho' does not have schema_url.",
-          "signal_name": "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho",
+          "message": "Instrumentation scope 'github.com/labstack/echo-otel/v5' does not have schema_url.",
+          "signal_name": "github.com/labstack/echo-otel/v5",
           "signal_type": "instrumentation_scope"
-        },
-        {
-          "context": {
-            "status_code": "error"
-          },
-          "id": "error_type_missing_on_error",
-          "message": "Span 'GET /status/:code' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-          "signal_name": "GET /status/:code",
-          "signal_type": "span"
         }
       ],
-      "id": "http/go/echo/otelecho/server",
-      "instrumentation_library": "go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho",
-      "instrumented_library": "github.com/labstack/echo/v4",
-      "label": "otelecho",
+      "id": "http/go/echo/echo-otel/server",
+      "instrumentation_library": "github.com/labstack/echo-otel/v5",
+      "instrumented_library": "github.com/labstack/echo/v5",
+      "label": "echo-otel",
       "language": "go",
-      "path": "scenarios/http/go/echo/otelecho/server",
+      "path": "scenarios/http/go/echo/echo-otel/server",
       "runner": "http-conformance",
       "scenario_classes": [
         "server"
@@ -31491,11 +31887,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 3
+              "emitted": 5
             },
             "opt_in": {
               "declared": 11,
-              "emitted": 1
+              "emitted": 0
             },
             "recommended": {
               "declared": 5,
@@ -31512,12 +31908,13 @@
           },
           "emitted": [
             "client.address",
+            "error.type",
             "http.request.method",
-            "http.response.body.size",
             "http.response.status_code",
             "http.route",
             "network.peer.address",
             "network.peer.port",
+            "network.protocol.name",
             "network.protocol.version",
             "server.address",
             "server.port",
@@ -31528,12 +31925,13 @@
           "identity": {
             "attributes": [
               "client.address",
+              "error.type",
               "http.request.method",
-              "http.response.body.size",
               "http.response.status_code",
               "http.route",
               "network.peer.address",
               "network.peer.port",
+              "network.protocol.name",
               "network.protocol.version",
               "server.address",
               "server.port",
@@ -31545,16 +31943,15 @@
           },
           "missing": [
             "client.port",
-            "error.type",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.size",
             "http.response.header",
             "http.response.size",
             "network.local.address",
             "network.local.port",
-            "network.protocol.name",
             "network.transport",
             "url.query",
             "user_agent.synthetic.type"
@@ -31566,11 +31963,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 3,
-              "emitted": 2
+              "emitted": 0
             },
             "recommended": {
               "declared": 1,
@@ -31582,17 +31979,17 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
             "network.protocol.name",
             "network.protocol.version",
-            "server.address",
-            "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
+            "server.address",
+            "server.port",
             "user_agent.synthetic.type"
           ],
           "name": "http.server.request.body.size",
@@ -31602,11 +31999,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 3,
-              "emitted": 2
+              "emitted": 0
             },
             "recommended": {
               "declared": 1,
@@ -31618,17 +32015,17 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
             "network.protocol.name",
             "network.protocol.version",
-            "server.address",
-            "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
+            "server.address",
+            "server.port",
             "user_agent.synthetic.type"
           ],
           "name": "http.server.request.duration",
@@ -31638,11 +32035,11 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 3,
-              "emitted": 2
+              "emitted": 0
             },
             "recommended": {
               "declared": 1,
@@ -31654,17 +32051,17 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
             "network.protocol.name",
             "network.protocol.version",
-            "server.address",
-            "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
+            "server.address",
+            "server.port",
             "user_agent.synthetic.type"
           ],
           "name": "http.server.response.body.size",
@@ -31672,7 +32069,7 @@
         }
       ],
       "summary": {
-        "findings": 2,
+        "findings": 1,
         "recommended": {
           "declared": 8,
           "emitted": 8
@@ -31706,7 +32103,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -31957,7 +32354,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -32131,7 +32528,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -32383,7 +32780,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -32601,7 +32998,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34451,7 +34848,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34463,7 +34860,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34656,7 +35053,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34668,7 +35065,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34680,7 +35077,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -34692,14 +35089,14 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
           },
           "id": "instrumentation_scope_schema_url_missing",
-          "message": "Instrumentation scope 'io.helidon.webserver.ServerListener' does not have schema_url.",
-          "signal_name": "io.helidon.webserver.ServerListener",
+          "message": "Instrumentation scope 'io.helidon.webserver.SocketTransportBinding' does not have schema_url.",
+          "signal_name": "io.helidon.webserver.SocketTransportBinding",
           "signal_type": "instrumentation_scope"
         }
       ],
@@ -38815,7 +39212,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -38827,7 +39224,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39185,7 +39582,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39197,7 +39594,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39209,7 +39606,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39221,7 +39618,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39927,7 +40324,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39939,7 +40336,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -39951,7 +40348,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40689,7 +41086,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40701,7 +41098,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40713,7 +41110,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40725,7 +41122,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40919,7 +41316,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40931,7 +41328,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -40943,7 +41340,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41297,7 +41694,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41309,7 +41706,7 @@
         },
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41587,7 +41984,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41770,7 +42167,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41957,7 +42354,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -41966,35 +42363,6 @@
           "message": "Instrumentation scope '@opentelemetry/instrumentation-undici' does not have schema_url.",
           "signal_name": "@opentelemetry/instrumentation-undici",
           "signal_type": "instrumentation_scope"
-        },
-        {
-          "context": {
-            "status_code": "error"
-          },
-          "id": "error_type_missing_on_error",
-          "message": "Span 'GET' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-          "signal_name": "GET",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "POST",
-          "signal_type": "span"
         }
       ],
       "id": "http/js/undici/opentelemetry-undici/client",
@@ -42017,7 +42385,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 2
+              "emitted": 3
             },
             "opt_in": {
               "declared": 11,
@@ -42025,7 +42393,7 @@
             },
             "recommended": {
               "declared": 2,
-              "emitted": 1
+              "emitted": 2
             },
             "recommended_conditional": {
               "declared": 2,
@@ -42037,11 +42405,13 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.request.method_original",
             "http.response.status_code",
             "network.peer.address",
             "network.peer.port",
+            "network.protocol.version",
             "server.address",
             "server.port",
             "url.full",
@@ -42050,11 +42420,13 @@
           ],
           "identity": {
             "attributes": [
+              "error.type",
               "http.request.method",
               "http.request.method_original",
               "http.response.status_code",
               "network.peer.address",
               "network.peer.port",
+              "network.protocol.version",
               "server.address",
               "server.port",
               "url.full",
@@ -42064,7 +42436,6 @@
             "span_kind": "client"
           },
           "missing": [
-            "error.type",
             "http.request.body.size",
             "http.request.header",
             "http.request.resend_count",
@@ -42073,7 +42444,6 @@
             "http.response.header",
             "http.response.size",
             "network.protocol.name",
-            "network.protocol.version",
             "network.transport",
             "url.template",
             "user_agent.synthetic.type"
@@ -42085,7 +42455,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 3,
-              "emitted": 1
+              "emitted": 2
             },
             "opt_in": {
               "declared": 2,
@@ -42093,7 +42463,7 @@
             },
             "recommended": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 3,
@@ -42101,16 +42471,16 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
+            "network.protocol.version",
             "server.address",
             "server.port",
             "url.scheme"
           ],
           "missing": [
-            "error.type",
             "network.protocol.name",
-            "network.protocol.version",
             "url.template"
           ],
           "name": "http.client.request.duration",
@@ -42118,10 +42488,10 @@
         }
       ],
       "summary": {
-        "findings": 4,
+        "findings": 1,
         "recommended": {
           "declared": 3,
-          "emitted": 1
+          "emitted": 3
         },
         "required": {
           "declared": 7,
@@ -46438,7 +46808,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }
@@ -46618,7 +46988,7 @@
       "findings": [
         {
           "context": {
-            "actual": "",
+            "actual": null,
             "expected": {
               "present": true
             }

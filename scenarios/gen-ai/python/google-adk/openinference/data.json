@@ -71,7 +71,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "gcp.vertex.agent",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -83,7 +83,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.google_adk",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -891,6 +891,36 @@
       "signal_name": "invocation [conformance]",
       "context": {
         "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
       }
     }
   ]

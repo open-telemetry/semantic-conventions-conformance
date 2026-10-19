@@ -29,6 +29,20 @@
       ]
     },
     {
+      // Bump the setup-python `python-version` inputs in their own PR, out of
+      // the github actions group. The Python scenarios run on the interpreter
+      // setup-python puts on PATH, so a new Python is only mergeable once their
+      // locked dependencies (grpcio, pydantic-core, ...) publish wheels for it;
+      // until then every scenario builds them from source and the jobs time
+      // out, which must not hold back the other action updates.
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "groupName": "python",
+      "schedule": [
+        "before 8am on Tuesday"
+      ]
+    },
+    {
       // group all non-major Java dependency updates into a single PR
       "matchManagers": ["gradle"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],

@@ -14,27 +14,34 @@ starts.
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
 java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
-contracts/                                 shared telemetry expectations by vendor
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
+../../tools/database/sql-test-client/       combined SQL actions and expectations
 java/shared/mongodb/{sync,async,reactive}/  MongoDB workloads and launchers
 java/mongodb/{sync,async,reactive}/         MongoDB conformance packages
+contracts/mongodb.yaml                     shared MongoDB telemetry expectations
 ```
 
-Contracts contain only telemetry expectations. A language or driver reuses
-them by declaring the same scenario names with its own environment and run
-commands.
+The PostgreSQL and MariaDB combined SQL contracts live under
+[`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
+Each ordered scenario keeps its backend-specific `action` and generic telemetry
+`expect` object together. The runner executes each list position under its own
+live-check and passes only its selected `action` to the language helper as JSON,
+which translates it into its client API. Contracts can diverge as dialect-specific
+sanitization and summarization coverage grows.
 
 Each operation is a separate scenario so a missing or malformed span identifies
-the JDBC path that produced it:
+the client path that produced it:
 
-| Scenario | JDBC path |
+| Action kind | JDBC path |
 | --- | --- |
-| `statement` | `Statement.executeQuery` |
-| `prepared_statement` | `PreparedStatement.executeQuery` |
+| `query` | `Statement.executeQuery` |
+| `prepared_query` | `PreparedStatement.executeQuery` |
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
 
-MongoDB packages use the same operation set across all three driver APIs:
+MongoDB packages share named telemetry expectations in
+[`contracts/mongodb.yaml`](contracts/mongodb.yaml), with driver-specific run
+commands. They use the same operation set across all three driver APIs:
 
 | Scenario | MongoDB command |
 | --- | --- |
