@@ -10,7 +10,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "haystack",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

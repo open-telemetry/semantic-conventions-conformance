@@ -33,7 +33,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.together",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

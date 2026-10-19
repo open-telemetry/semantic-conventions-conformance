@@ -43,7 +43,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "OpenTelemetry::Instrumentation::Net::HTTP",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
