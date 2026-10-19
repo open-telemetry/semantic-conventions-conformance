@@ -1,7 +1,8 @@
 # Database conformance scenarios in Java
 
-Java JDBC conformance for PostgreSQL and MariaDB, tested through the OpenTelemetry
-Java agent and the OpenTelemetry JDBC library instrumentation.
+Java JDBC conformance for PostgreSQL, MariaDB, and Oracle Database, tested
+through the OpenTelemetry Java agent and the OpenTelemetry JDBC library
+instrumentation.
 
 The language-neutral SQL actions and telemetry expectations live together in
 backend-specific files under

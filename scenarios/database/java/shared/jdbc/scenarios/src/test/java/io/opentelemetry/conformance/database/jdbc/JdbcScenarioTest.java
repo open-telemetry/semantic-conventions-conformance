@@ -104,7 +104,12 @@ class JdbcScenarioTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"CALL conformance.noop()", "CALL other_schema.record_value(7)"})
+  @ValueSource(
+      strings = {
+        "CALL conformance.noop()",
+        "CALL other_schema.record_value(7)",
+        "{call conformance.noop()}"
+      })
   void executesContractCallSqlAndConsumesAllProcedureResults(String sql) throws SQLException {
     List<String> events = new ArrayList<>();
     ResultSet first = rows("first", 2, events);
