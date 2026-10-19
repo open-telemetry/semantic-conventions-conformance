@@ -46,6 +46,8 @@ class BackendSpec:
     schema_path: str
     schema_command: tuple[str, ...]
     schema_environment: tuple[tuple[str, str], ...] = ()
+    hostname: str | None = None
+    fixed_ports: tuple[int, ...] = ()
 
 
 class DatabaseContainer:
@@ -97,11 +99,17 @@ class DatabaseContainer:
         container = self._container_factory(self._spec.image)
         for key, value in self._spec.environment:
             container.with_env(key, value)
+        if self._spec.hostname is not None:
+            container.with_kwargs(hostname=self._spec.hostname)
         container.with_copy_into_container(schema, self._spec.schema_path)
         container.waiting_for(ready)
 
         port_bindings = cast(dict[str, _PortBinding], container.ports)
-        port_bindings[f"{self._spec.port}/tcp"] = (DATABASE_HOST, 0)
+        if self._spec.fixed_ports:
+            for port in self._spec.fixed_ports:
+                port_bindings[f"{port}/tcp"] = (DATABASE_HOST, port)
+        else:
+            port_bindings[f"{self._spec.port}/tcp"] = (DATABASE_HOST, 0)
 
         self._container = container
         try:
@@ -109,15 +117,46 @@ class DatabaseContainer:
             self._published_port = container.get_exposed_port(self._spec.port)
             self._apply_schema(container)
         except BaseException as error:
+            failure = (
+                self._failure_message(container, error)
+                if isinstance(error, Exception)
+                else str(error)
+            )
             try:
                 self.close()
             except DockerException as cleanup_error:
                 raise DatabaseBackendError(
-                    f"{error}\n{self._spec.name} cleanup also failed: "
+                    f"{failure}\n{self._spec.name} cleanup also failed: "
                     f"{cleanup_error}"
                 ) from error
-            raise
+            if not isinstance(error, Exception) or isinstance(
+                error, DatabaseBackendError
+            ):
+                raise
+            raise DatabaseBackendError(failure) from error
         return self
+
+    def _failure_message(
+        self, container: DockerContainer, error: BaseException
+    ) -> str:
+        if isinstance(error, DatabaseBackendError):
+            return str(error)
+        logs = self._container_logs(container)
+        return (
+            f"Could not start {self._spec.name}: {error}\n"
+            f"--- {self._spec.name} logs ---\n{logs}"
+        )
+
+    def _container_logs(self, container: DockerContainer) -> str:
+        try:
+            stdout, stderr = container.get_logs()
+            return (
+                (stdout + stderr)
+                .decode(encoding="utf-8", errors="replace")
+                .strip()
+            )
+        except Exception as log_error:
+            return f"Could not read {self._spec.name} logs: {log_error}"
 
     def _apply_schema(self, container: DockerContainer) -> None:
         result = container.exec(
@@ -132,15 +171,7 @@ class DatabaseContainer:
         output = result.output.decode(
             encoding="utf-8", errors="replace"
         ).strip()
-        try:
-            stdout, stderr = container.get_logs()
-            logs = (
-                (stdout + stderr)
-                .decode(encoding="utf-8", errors="replace")
-                .strip()
-            )
-        except DockerException as error:
-            logs = f"Could not read {self._spec.name} logs: {error}"
+        logs = self._container_logs(container)
         raise DatabaseBackendError(
             f"Could not apply the {self._spec.name} schema; the client exited "
             f"with {result.exit_code}\n{output}\n"
