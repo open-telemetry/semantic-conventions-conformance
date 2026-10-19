@@ -3,8 +3,8 @@ name = "langchain-openinference-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "langchain==1.4.4",
-    "langchain-openai==1.7.0",
+    "langchain==1.4.5",
+    "langchain-openai==1.7.1",
     "openinference-instrumentation-langchain==0.1.79",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",

@@ -50,7 +50,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "pydantic-ai",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
