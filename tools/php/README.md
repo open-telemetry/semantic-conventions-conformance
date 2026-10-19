@@ -31,7 +31,8 @@ standard-input protocol and stops the server when the driver closes it.
 `composer update --no-install --no-scripts --minimal-changes` for every
 committed `composer.lock` under `scenarios/` and `tools/`. That rewrites the
 lock only, and changes nothing the manifests don't require. A lock records a
-path package's `dist.reference`, a hash of that package's `composer.json`, so
+path package's `dist.reference`, a hash of that package's `composer.json` and
+path-repository options, so
 editing `scenario/` or the HTTP test client's `composer.json` leaves the locks
 that depend on it stale. `composer install` does not notice this. CI runs
 `relock` on Renovate PRs and commits the result. CI pins the Composer version,
@@ -41,6 +42,9 @@ Composer version when running it by hand:
 ```sh
 otel-conformance-php relock
 ```
+
+`options.versions` labels local packages as `dev-main` so Composer accepts
+them on any branch or detached checkout.
 
 Run the launcher tests with:
 

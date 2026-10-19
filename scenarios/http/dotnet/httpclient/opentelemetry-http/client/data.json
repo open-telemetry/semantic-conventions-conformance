@@ -70,7 +70,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "System.Net.Http",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -82,7 +82,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "System.Net.NameResolution",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

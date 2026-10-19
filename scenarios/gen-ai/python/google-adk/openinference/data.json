@@ -71,7 +71,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "gcp.vertex.agent",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -83,7 +83,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.google_adk",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

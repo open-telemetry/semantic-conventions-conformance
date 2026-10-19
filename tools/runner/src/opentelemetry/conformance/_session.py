@@ -209,7 +209,7 @@ class ConformanceSession:
                 f"{name!r} is not declared in {self._spec.directory}; "
                 f"declared: {sorted(self._spec.scenarios)}"
             )
-        from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
+        from ._weaver import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
 
@@ -331,6 +331,12 @@ class ConformanceSession:
         }
         if scenario.index is not None:
             injected["OTEL_CONFORMANCE_SCENARIO_INDEX"] = str(scenario.index)
+        if scenario.action is not None:
+            injected["OTEL_CONFORMANCE_SCENARIO_ACTION"] = json.dumps(
+                scenario.action,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
         env = self._env(scenario.env, injected)
         for variable in _OTLP_SIGNAL_ENV:
             env.pop(variable, None)
