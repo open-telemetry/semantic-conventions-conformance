@@ -31359,15 +31359,6 @@
         },
         {
           "context": {
-            "status_code": "error"
-          },
-          "id": "error_type_missing_on_error",
-          "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-          "signal_name": "GET /status/{code}",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "client.address",
             "kind": "server"
           },
@@ -31413,7 +31404,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 4
+              "emitted": 5
             },
             "opt_in": {
               "declared": 11,
@@ -31433,6 +31424,7 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
@@ -31446,6 +31438,7 @@
           ],
           "identity": {
             "attributes": [
+              "error.type",
               "http.request.method",
               "http.response.status_code",
               "http.route",
@@ -31462,7 +31455,6 @@
           "missing": [
             "client.address",
             "client.port",
-            "error.type",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
@@ -31541,7 +31533,7 @@
         }
       ],
       "summary": {
-        "findings": 7,
+        "findings": 6,
         "recommended": {
           "declared": 6,
           "emitted": 4
