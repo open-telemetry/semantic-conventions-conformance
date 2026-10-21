@@ -319,6 +319,7 @@ jobs:
           python -m pip install \
             -e tools/runner \
             -e tools/database/runner \
+            -e tools/java \
             -e tools/gen-ai/mock-server \
             -e tools/gen-ai/runner \
             -e tools/http/test-client/python \
@@ -336,6 +337,7 @@ jobs:
       - name: Test the coverage models and Weaver lifecycle
         run: |
           python -m pytest \
+            tools/runner/tests/test_session.py \
             tools/runner/tests/test_weaver.py \
             tools/database/runner/tests \
             tools/gen-ai/runner/tests \
