@@ -287,7 +287,7 @@ wheels = [
 
 [[package]]
 name = "haystack-ai"
-version = "3.3.0"
+version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -308,11 +308,10 @@ dependencies = [
     { name = "pyyaml" },
     { name = "tenacity" },
     { name = "tqdm" },
-    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/b8/89a9afbafad781e85ada3a3c7ce99e2df5eec9447290ac8eee1ce44b96c3/haystack_ai-3.3.0.tar.gz", hash = "sha256:c4376ea13a95fe1e1df3efe383ad7b6af60ae0c971072eb1be53e3b0ccc9d96f", size = 533129, upload-time = "2026-10-01T10:39:37.579Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/2e/da50d8acc597b01e03a866812dc47fb264dda24fc12b7d0f261a98919e29/haystack_ai-3.4.0.tar.gz", hash = "sha256:d09b30cc8f2f947946825342a859a82554f41b27f41c2c2020ff96adfae87028", size = 543776, upload-time = "2026-10-15T09:26:29.62Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/98/d798624a3a24439c8a2fd9d4c98432095112421d0d16f29855bb1c5f850a/haystack_ai-3.3.0-py3-none-any.whl", hash = "sha256:dc9d6e953babcfd67547159b2758eac42789dc6b0778a8bf3c3e91b576152bc7", size = 737985, upload-time = "2026-10-01T10:39:35.92Z" },
+    { url = "https://files.pythonhosted.org/packages/37/6a/0eb5b5e8bbc124d62293dee7a9ba37a54d576cc3d6768e4c5d93753cece9/haystack_ai-3.4.0-py3-none-any.whl", hash = "sha256:4378474733cfb2553c6579002eeee1905814b701e368a92f755fb9c57765b42d", size = 751544, upload-time = "2026-10-15T09:26:27.817Z" },
 ]
 
 [[package]]
@@ -330,7 +329,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "haystack-ai", specifier = "==3.3.0" },
+    { name = "haystack-ai", specifier = "==3.4.0" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
     { name = "opentelemetry-haystack", specifier = "==1.0.0" },
