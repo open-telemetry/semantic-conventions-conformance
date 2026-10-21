@@ -150,14 +150,6 @@
         "opentelemetry-distro"
       ],
       "enabled": false
-    },
-    {
-      // litellm 1.106.0 imports `mcp` on the normal SDK path without
-      // declaring it as a dependency, so the scenarios crash. Drop this once
-      // upstream fixes the import.
-      "matchFileNames": ["scenarios/gen-ai/python/litellm/**"],
-      "matchPackageNames": ["litellm"],
-      "allowedVersions": "<1.106.0"
     }
   ],
   "customManagers": [
