@@ -11,6 +11,7 @@ server:
 env:
   ANTHROPIC_BASE_URL: ${MOCK_SERVER_URL}
   ANTHROPIC_API_KEY: test_anthropic_api_key
+  ANTHROPIC_OPEN_TELEMETRY: "false"
   # OpenInference records its own `llm.*` attributes by default;
   # this is the switch that adds the GenAI conventions beside them.
   OPENINFERENCE_ENABLE_GENAI_SEMCONV: "true"
