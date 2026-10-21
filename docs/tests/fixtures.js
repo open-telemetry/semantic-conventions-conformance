@@ -19,6 +19,14 @@ export function target(overrides = {}) {
     side: null,
     backend: "mariadb",
     signals: [{ type: "metric", name: "db.duration", emitted: ["db.system"] }],
+    summary: {
+      required: { emitted: 1, declared: 1 },
+      recommended: { emitted: 0, declared: 1 },
+      findings: 0,
+    },
+    findings: [],
+    entities: {},
+    scenario_classes: [],
     ...overrides,
   };
 }

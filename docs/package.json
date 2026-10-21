@@ -9,7 +9,7 @@
     "format:check": "prettier --check assets tests index.html package.json"
   },
   "devDependencies": {
-    "jsdom": "30.1.2",
+    "jsdom": "30.1.3",
     "prettier": "3.9.10"
   }
 }

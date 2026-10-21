@@ -11,6 +11,7 @@ server:
 env:
   ANTHROPIC_BASE_URL: ${MOCK_SERVER_URL}
   ANTHROPIC_API_KEY: test_anthropic_api_key
+  ANTHROPIC_OPEN_TELEMETRY: "false"
   # OpenLLMetry's own switches. It has no opt-in for the current
   # GenAI conventions: what it emits is its own take on them.
   TRACELOOP_TRACE_CONTENT: "true"

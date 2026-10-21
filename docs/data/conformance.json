@@ -26,8 +26,8 @@
             "process.runtime.description": "recommended"
           },
           "identity": {
-            "process.runtime.name": "recommended",
-            "process.runtime.version": "recommended"
+            "process.runtime.name": null,
+            "process.runtime.version": null
           }
         },
         "service": {
@@ -36,13 +36,13 @@
             "service.version": "recommended"
           },
           "identity": {
-            "service.name": "required"
+            "service.name": null
           }
         },
         "service.instance": {
           "description": {},
           "identity": {
-            "service.instance.id": "required"
+            "service.instance.id": null
           }
         },
         "telemetry.distro": {
@@ -50,7 +50,7 @@
             "telemetry.distro.version": "recommended"
           },
           "identity": {
-            "telemetry.distro.name": "recommended"
+            "telemetry.distro.name": null
           }
         },
         "telemetry.sdk": {
@@ -58,8 +58,8 @@
             "telemetry.sdk.version": "required"
           },
           "identity": {
-            "telemetry.sdk.language": "required",
-            "telemetry.sdk.name": "required"
+            "telemetry.sdk.language": null,
+            "telemetry.sdk.name": null
           }
         }
       },
@@ -435,8 +435,8 @@
             "process.runtime.description": "recommended"
           },
           "identity": {
-            "process.runtime.name": "recommended",
-            "process.runtime.version": "recommended"
+            "process.runtime.name": null,
+            "process.runtime.version": null
           }
         },
         "service": {
@@ -445,13 +445,13 @@
             "service.version": "recommended"
           },
           "identity": {
-            "service.name": "required"
+            "service.name": null
           }
         },
         "service.instance": {
           "description": {},
           "identity": {
-            "service.instance.id": "required"
+            "service.instance.id": null
           }
         },
         "telemetry.distro": {
@@ -459,7 +459,7 @@
             "telemetry.distro.version": "recommended"
           },
           "identity": {
-            "telemetry.distro.name": "recommended"
+            "telemetry.distro.name": null
           }
         },
         "telemetry.sdk": {
@@ -467,8 +467,8 @@
             "telemetry.sdk.version": "required"
           },
           "identity": {
-            "telemetry.sdk.language": "required",
-            "telemetry.sdk.name": "required"
+            "telemetry.sdk.language": null,
+            "telemetry.sdk.name": null
           }
         }
       },
@@ -716,10 +716,10 @@
       "path": "scenarios/database/java/mariadb/jdbc/opentelemetry-javaagent",
       "runner": "database-conformance",
       "scenario_classes": [
-        "batch",
-        "prepared_statement",
-        "statement",
-        "stored_procedure"
+        "0000",
+        "0001",
+        "0002",
+        "0003"
       ],
       "side": null,
       "signals": [
@@ -865,10 +865,10 @@
       "path": "scenarios/database/java/mariadb/jdbc/opentelemetry-library",
       "runner": "database-conformance",
       "scenario_classes": [
-        "batch",
-        "prepared_statement",
-        "statement",
-        "stored_procedure"
+        "0000",
+        "0001",
+        "0002",
+        "0003"
       ],
       "side": null,
       "signals": [
@@ -1031,10 +1031,10 @@
       "path": "scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent",
       "runner": "database-conformance",
       "scenario_classes": [
-        "batch",
-        "prepared_statement",
-        "statement",
-        "stored_procedure"
+        "0000",
+        "0001",
+        "0002",
+        "0003"
       ],
       "side": null,
       "signals": [
@@ -1180,10 +1180,10 @@
       "path": "scenarios/database/java/postgresql/jdbc/opentelemetry-library",
       "runner": "database-conformance",
       "scenario_classes": [
-        "batch",
-        "prepared_statement",
-        "statement",
-        "stored_procedure"
+        "0000",
+        "0001",
+        "0002",
+        "0003"
       ],
       "side": null,
       "signals": [
@@ -31359,15 +31359,6 @@
         },
         {
           "context": {
-            "status_code": "error"
-          },
-          "id": "error_type_missing_on_error",
-          "message": "Span 'GET /status/{code}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-          "signal_name": "GET /status/{code}",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "attribute_key": "client.address",
             "kind": "server"
           },
@@ -31413,7 +31404,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 4
+              "emitted": 5
             },
             "opt_in": {
               "declared": 11,
@@ -31433,6 +31424,7 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
@@ -31446,6 +31438,7 @@
           ],
           "identity": {
             "attributes": [
+              "error.type",
               "http.request.method",
               "http.response.status_code",
               "http.route",
@@ -31462,7 +31455,6 @@
           "missing": [
             "client.address",
             "client.port",
-            "error.type",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
@@ -31541,7 +31533,7 @@
         }
       ],
       "summary": {
-        "findings": 7,
+        "findings": 6,
         "recommended": {
           "declared": 6,
           "emitted": 4

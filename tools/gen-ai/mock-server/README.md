@@ -42,6 +42,13 @@ return fixed code and execution results. Interaction creation requests with
 `google_search` return a search call, its result, and model output. The server
 does not execute code or search the web.
 
+For OpenAI chat completions, streamed or not, a request whose last user message contains
+`[MOCK_EMPTY_COMPLETION]` gets an empty completion whose usage reports `completion_tokens: 0`, and one
+whose last user message contains `[MOCK_BAD_REQUEST]` gets a 400 `invalid_request_error` with no usage.
+Markers in earlier turns or in system, assistant, or tool messages are ignored.
+They exist so a scenario can exercise the zero-output and failed-call paths of
+token usage recording.
+
 ## Adding a response
 
 Add missing fields or endpoints to the provider module and cover them in
