@@ -15,6 +15,7 @@ import json
 import logging
 import shlex
 import shutil
+import socket
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass, field
@@ -224,20 +225,29 @@ class ConformanceSession:
             ]
 
         def start_weaver(policies: str | None) -> WeaverLiveCheck:
-            return WeaverLiveCheck(
-                inactivity_timeout=int(
-                    timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
-                ),
-                registry=str(
-                    registry_path(
-                        self._registry,
-                        directory=self._spec.directory,
-                        variables=self._variables,
-                    )
-                ),
-                policies_dir=policies,
-                extra_args=extra_args,
-            )
+            with (
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM) as otlp,
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM) as admin,
+            ):
+                # Hold both sockets so the OS cannot assign the same port twice.
+                otlp.bind(("127.0.0.1", 0))
+                admin.bind(("127.0.0.1", 0))
+                return WeaverLiveCheck(
+                    inactivity_timeout=int(
+                        timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
+                    ),
+                    registry=str(
+                        registry_path(
+                            self._registry,
+                            directory=self._spec.directory,
+                            variables=self._variables,
+                        )
+                    ),
+                    policies_dir=policies,
+                    extra_args=extra_args,
+                    otlp_port=otlp.getsockname()[1],
+                    admin_port=admin.getsockname()[1],
+                )
 
         with (
             self._scenario_policies(scenario, weaver_spec) as policies,

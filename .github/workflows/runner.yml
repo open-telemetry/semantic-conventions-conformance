@@ -46,10 +46,47 @@ jobs:
           python -m pip install pytest pyyaml flask grpcio opentelemetry-proto testcontainers opentelemetry-sdk
           python -m pip install --no-deps -e tools/runner -e tools/database/runner -e tools/gen-ai/mock-server -e tools/gen-ai/runner -e tools/http/runner -e tools/http/mock-server -e tools/http/test-client/python -e tools/python -e tools/java -e tools/js -e tools/ruby -e tools/dotnet -e tools/php -e tools/go -e tools/report
 
+      - name: Set up Java for Redis connection tests
+        if: runner.os == 'Linux'
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle for Redis connection tests
+        if: runner.os == 'Linux'
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Prepare Redis connection tests
+        if: runner.os == 'Linux'
+        run: |
+          docker info > /dev/null
+          scenarios/database/java/gradlew --project-dir scenarios/database/java \
+            :shared:redis:jedis:opentelemetry-javaagent:prepareRuntime \
+            :shared:redis:lettuce:opentelemetry-javaagent:prepareRuntime \
+            :shared:redis:lettuce:opentelemetry-library:prepareRuntime \
+            :shared:redis:rediscala:opentelemetry-javaagent:prepareRuntime \
+            :shared:redis:redisson:opentelemetry-javaagent:prepareRuntime
+
       # The report tests run here, not with the nightly rebuild: they never
       # resolve a coverage model, so they do not need weaver.
       - name: Test
-        run: python -m pytest tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests tools/php/tests tools/go/tests tools/python/tests tools/report/tests
+        run: python -m pytest --junitxml=runner-tests.xml tools/runner/tests tools/database/runner/tests tools/gen-ai/mock-server/tests tools/http/runner/tests tools/http/test-client/python/tests tools/java/tests tools/js/tests tools/ruby/tests tools/dotnet/tests tools/php/tests tools/go/tests tools/python/tests tools/report/tests
+
+      - name: Require Redis connection coverage
+        if: runner.os == 'Linux'
+        shell: python
+        run: |
+          from xml.etree import ElementTree
+
+          report = ElementTree.parse("runner-tests.xml")
+          cases = [
+              case for case in report.findall(".//testcase")
+              if case.get("classname", "").endswith("test_redis_clients")
+          ]
+          assert len(cases) == 15, f"expected 15 Redis connection cases, found {len(cases)}"
+          skipped = [case.get("name") for case in cases if case.find("skipped") is not None]
+          assert not skipped, f"Redis connection cases skipped: {skipped}"
 
   lint:
     name: Lint
@@ -282,6 +319,7 @@ jobs:
           python -m pip install \
             -e tools/runner \
             -e tools/database/runner \
+            -e tools/java \
             -e tools/gen-ai/mock-server \
             -e tools/gen-ai/runner \
             -e tools/http/test-client/python \
@@ -299,6 +337,7 @@ jobs:
       - name: Test the coverage models and Weaver lifecycle
         run: |
           python -m pytest \
+            tools/runner/tests/test_session.py \
             tools/runner/tests/test_weaver.py \
             tools/database/runner/tests \
             tools/gen-ai/runner/tests \
