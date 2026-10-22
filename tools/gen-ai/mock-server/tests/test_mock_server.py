@@ -198,6 +198,13 @@ ENDPOINTS = [
         "/api/embed",
         {"model": "nomic-embed-text", "input": ["hi", "there"]},
     ),
+    ("bedrock-agentcore-get-evaluator", "get", "/evaluators/eval-mock-001", None),
+    (
+        "bedrock-agentcore-evaluate",
+        "post",
+        "/evaluations/evaluate/eval-mock-001",
+        {"evaluationInput": {"sessionSpans": []}},
+    ),
 ]
 
 # Resource-creating endpoints mint a fresh id per call, so only the shape is
