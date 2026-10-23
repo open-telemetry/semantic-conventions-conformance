@@ -261,6 +261,47 @@ def _has_function_response(body):
     return False
 
 
+def _google_search_response(body):
+    resp = copy.deepcopy(RESPONSE)
+    resp["responseId"] = "response-search-1"
+    candidate = resp["candidates"][0]
+    parts = [{"text": "OpenTelemetry is an observability framework."}]
+    tool_config = body.get("toolConfig") or body.get("tool_config") or {}
+    # Gemini returns the server-side call and result as parts only on opt-in.
+    if tool_config.get("includeServerSideToolInvocations") or tool_config.get(
+        "include_server_side_tool_invocations"
+    ):
+        parts = [
+            {
+                "toolCall": {
+                    "id": "search-1",
+                    "toolType": "GOOGLE_SEARCH_WEB",
+                    "args": {"queries": ["OpenTelemetry"]},
+                }
+            },
+            {
+                "toolResponse": {
+                    "id": "search-1",
+                    "toolType": "GOOGLE_SEARCH_WEB",
+                    "response": {
+                        "results": [
+                            {"title": "OpenTelemetry", "url": "https://opentelemetry.io/"}
+                        ]
+                    },
+                }
+            },
+            *parts,
+        ]
+    candidate["content"]["parts"] = parts
+    candidate["groundingMetadata"] = {
+        "webSearchQueries": ["OpenTelemetry"],
+        "groundingChunks": [
+            {"web": {"uri": "https://opentelemetry.io/", "title": "OpenTelemetry"}}
+        ],
+    }
+    return resp
+
+
 def _tool_response(body):
     if any(
         "codeExecution" in tool or "code_execution" in tool
@@ -286,6 +327,11 @@ def _tool_response(body):
             {"text": "The result is 1."},
         ]
         return resp
+    if any(
+        "googleSearch" in tool or "google_search" in tool
+        for tool in body.get("tools") or []
+    ):
+        return _google_search_response(body)
     resp = copy.deepcopy(FUNCTION_CALL_RESPONSE)
     tools = body.get("tools") or []
     function_declarations = []

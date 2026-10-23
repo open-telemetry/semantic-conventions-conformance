@@ -68,6 +68,16 @@
     },
     {
       "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-2.0-flash",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "genai_content_schema",
       "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"name\":\"get_current_weather\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
       "signal_type": "span",
       "signal_name": "generate_content gemini-2.0-flash",

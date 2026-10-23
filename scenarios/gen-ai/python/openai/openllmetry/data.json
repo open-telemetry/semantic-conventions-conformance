@@ -307,6 +307,54 @@
         "keyed_attr": "gen_ai.request.model",
         "operation": "embeddings"
       }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.is_streaming' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "attribute_key": "gen_ai.is_streaming"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.reasoning_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "attribute_key": "gen_ai.usage.reasoning_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'openai.response' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'openai.response'",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "expected_form": "chat gpt-4o-mini",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
     }
   ]
 }

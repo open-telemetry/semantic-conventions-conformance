@@ -27,6 +27,9 @@ scenarios:
   tool_calling:
     run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/tool_calling.py
 
+  server_tool_calling:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/server_tool_calling.py
+
   automatic_tool_calling:
     run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/automatic_tool_calling.py
 

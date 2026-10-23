@@ -719,6 +719,24 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.2.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.2.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.2.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.2.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "messages.create",
