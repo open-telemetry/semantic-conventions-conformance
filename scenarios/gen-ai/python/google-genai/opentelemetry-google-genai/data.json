@@ -302,6 +302,33 @@
       "context": {
         "attribute_key": "gen_ai.usage.text.output_tokens"
       }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.text.cache_read.input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "attribute_key": "gen_ai.usage.text.cache_read.input_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.text.input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "attribute_key": "gen_ai.usage.text.input_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.text.output_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "attribute_key": "gen_ai.usage.text.output_tokens"
+      }
     }
   ]
 }

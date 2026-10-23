@@ -261,11 +261,45 @@ def _has_function_response(body):
     return False
 
 
+def _function_call_part(body):
+    declaration = next(
+        (
+            declaration
+            for tool in body.get("tools") or []
+            for declaration in (tool or {}).get("functionDeclarations")
+            or (tool or {}).get("function_declarations")
+            or []
+        ),
+        None,
+    )
+    if declaration is None:
+        return None
+    part = copy.deepcopy(FUNCTION_CALL_RESPONSE["candidates"][0]["content"]["parts"][0])
+    if declaration.get("name"):
+        part["functionCall"]["name"] = declaration["name"]
+    # Newer google-genai/ADK send the schema as JSON Schema under
+    # `parameters_json_schema` (a.k.a. `parametersJsonSchema`) instead of `parameters`.
+    parameters = (
+        declaration.get("parameters")
+        or declaration.get("parameters_json_schema")
+        or declaration.get("parametersJsonSchema")
+        or {}
+    )
+    part["functionCall"]["args"] = mock_tool_arguments(
+        {"function": {"parameters": parameters}}
+    )
+    return part
+
+
 def _google_search_response(body):
     resp = copy.deepcopy(RESPONSE)
     resp["responseId"] = "response-search-1"
     candidate = resp["candidates"][0]
-    parts = [{"text": "OpenTelemetry is an observability framework."}]
+    # With tool combination the model searches, then asks for the function.
+    parts = [
+        _function_call_part(body)
+        or {"text": "OpenTelemetry is an observability framework."}
+    ]
     tool_config = body.get("toolConfig") or body.get("tool_config") or {}
     # Gemini returns the server-side call and result as parts only on opt-in.
     if tool_config.get("includeServerSideToolInvocations") or tool_config.get(
@@ -333,26 +367,9 @@ def _tool_response(body):
     ):
         return _google_search_response(body)
     resp = copy.deepcopy(FUNCTION_CALL_RESPONSE)
-    tools = body.get("tools") or []
-    function_declarations = []
-    if tools:
-        tool = tools[0] or {}
-        function_declarations = tool.get("functionDeclarations") or tool.get("function_declarations") or []
-    if function_declarations:
-        declaration = function_declarations[0]
-        if declaration.get("name"):
-            resp["candidates"][0]["content"]["parts"][0]["functionCall"]["name"] = declaration["name"]
-        # Newer google-genai/ADK send the schema as JSON Schema under
-        # `parameters_json_schema` (a.k.a. `parametersJsonSchema`) instead of `parameters`.
-        parameters = (
-            declaration.get("parameters")
-            or declaration.get("parameters_json_schema")
-            or declaration.get("parametersJsonSchema")
-            or {}
-        )
-        resp["candidates"][0]["content"]["parts"][0]["functionCall"]["args"] = mock_tool_arguments(
-            {"function": {"parameters": parameters}}
-        )
+    part = _function_call_part(body)
+    if part:
+        resp["candidates"][0]["content"]["parts"][0] = part
     return resp
 
 

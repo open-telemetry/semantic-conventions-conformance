@@ -68,16 +68,6 @@
     },
     {
       "id": "genai_content_schema",
-      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword",
-      "signal_type": "span",
-      "signal_name": "generate_content gemini-2.0-flash",
-      "context": {
-        "attribute": "gen_ai.tool.definitions",
-        "errors": "{\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword"
-      }
-    },
-    {
-      "id": "genai_content_schema",
       "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"name\":\"get_current_weather\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
       "signal_type": "span",
       "signal_name": "generate_content gemini-2.0-flash",
@@ -148,6 +138,44 @@
       "message": "Span 'generate_content gemini-2.0-flash-preview-image-generation' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
       "signal_type": "span",
       "signal_name": "generate_content gemini-2.0-flash-preview-image-generation",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'generate_content gemini-3.8-flash' (operation 'generate_content') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "generate_content"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'generate_content gemini-3.8-flash' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
       "context": {
         "status_code": "ok"
       }

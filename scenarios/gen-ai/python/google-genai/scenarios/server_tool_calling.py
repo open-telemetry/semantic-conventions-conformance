@@ -13,7 +13,7 @@ from google.genai import types
 
 client = genai.Client()
 client.models.generate_content(
-    model="gemini-2.0-flash",
+    model="gemini-3.8-flash",
     contents="What is OpenTelemetry?",
     config=types.GenerateContentConfig(
         system_instruction="You are a helpful assistant.",

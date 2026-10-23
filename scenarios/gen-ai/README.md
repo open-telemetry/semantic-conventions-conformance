@@ -84,7 +84,7 @@ exchange, and the sampling attributes are already covered.
 | `multimodal` | llm client | one call per non-text content kind the API takes | the *shape* of recorded content, per-modality token counts |
 | `embeddings` | llm client | one batched call with an explicit encoding format and dimension count | the embeddings span type |
 | `tool_calling` | llm client | two round trips: tool definitions and the requested call, then the tool result travelling back as input | tool definitions and calls on both sides of the exchange |
-| `server_tool_calling` | llm client | one call enabling the provider's hosted web search; the provider runs it and returns the call and its result | server tool call and result message parts, with no `execute_tool` span |
+| `server_tool_calling` | llm client | one call enabling the provider's hosted web search; the provider runs it and returns the call and, where the API exposes one, its result | server tool call and result message parts, with no `execute_tool` span |
 | `automatic_tool_calling` | llm client; agentic | the same exchange, with the SDK or framework running the tool and sending the result back | tool execution as a span, not a message |
 | `invoke_agent` | agentic | one agent run, no tools | the agent span on its own |
 | `workflow` | agentic | one chain, no agent | the workflow span on its own |
