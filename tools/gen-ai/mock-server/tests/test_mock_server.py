@@ -1775,3 +1775,23 @@ def test_smolagents_gets_final_answer_after_an_observation(client):
     assert call["function"]["name"] == "final_answer"
     assert json.loads(call["function"]["arguments"]) == {"answer": "mock-answer"}
     assert call["id"] == "call_mock_002"
+
+
+def test_smolagents_gets_final_answer_after_an_observation_streamed(client):
+    body = _smolagents_request(
+        {"role": "assistant", "content": [{"type": "text", "text": "Calling tools:\n[{'id': 'call_mock_001'}]"}]},
+        {"role": "user", "content": [{"type": "text", "text": "Observation:\n70 degrees"}]},
+    )
+
+    response = client.post("/v1/chat/completions", json={**body, "stream": True})
+
+    deltas = [
+        call
+        for line in response.get_data(as_text=True).splitlines()
+        if line.startswith("data: ") and line != "data: [DONE]"
+        for call in json.loads(line[len("data: ") :])["choices"][0]["delta"].get("tool_calls", [])
+    ]
+    assert deltas[0]["id"] == "call_mock_002"
+    assert deltas[0]["function"]["name"] == "final_answer"
+    arguments = "".join(delta["function"]["arguments"] for delta in deltas)
+    assert json.loads(arguments) == {"answer": "mock-answer"}
