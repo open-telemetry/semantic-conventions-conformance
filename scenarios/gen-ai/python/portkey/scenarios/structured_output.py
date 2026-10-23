@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Conformance scenario: an portkey chat completion with a JSON schema answer.
+"""Conformance scenario: a portkey chat completion with a JSON schema answer.
 
 Asking for a schema is what ``gen_ai.output.type`` describes, so the request
 names one rather than only asking for "some JSON".
