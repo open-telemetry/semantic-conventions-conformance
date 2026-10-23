@@ -11,6 +11,7 @@
       "gen_ai.tool.type"
     ],
     "gen_ai.inference.client": [
+      "gen_ai.conversation.id",
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -27,6 +28,7 @@
     ],
     "gen_ai.invoke_agent.internal": [
       "gen_ai.agent.name",
+      "gen_ai.conversation.id",
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages"
@@ -35,10 +37,17 @@
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.workflow.name"
+    ],
+    "gen_ai.retrieval.client": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.retrieval.documents",
+      "gen_ai.retrieval.query.text"
     ]
   },
   "events": {
     "gen_ai.client.inference.operation.details": [
+      "gen_ai.conversation.id",
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -120,6 +129,26 @@
       "context": {
         "missing_attribute": "gen_ai.usage.output_tokens",
         "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'retrieval' (operation 'retrieval') is missing expected attribute 'gen_ai.retrieval.top_k'",
+      "signal_type": "span",
+      "signal_name": "retrieval",
+      "context": {
+        "missing_attribute": "gen_ai.retrieval.top_k",
+        "operation": "retrieval"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'retrieval' (operation 'retrieval') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "retrieval",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "retrieval"
       }
     }
   ]

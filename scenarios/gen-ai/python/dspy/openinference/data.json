@@ -1,0 +1,720 @@
+{
+  "spans": {
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.result"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.temperature",
+      "gen_ai.response.finish_reasons"
+    ],
+    "gen_ai.retrieval.client": [
+      "gen_ai.operation.name",
+      "gen_ai.retrieval.documents"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.dspy' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.dspy",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChainOfThought.forward",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChainOfThought.forward",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChainOfThought.forward",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChainOfThought.forward",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChainOfThought.forward",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'ChainOfThought.forward' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "ChainOfThought.forward",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatAdapter.__call__",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatAdapter.__call__",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatAdapter.__call__",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatAdapter.__call__",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatAdapter.__call__",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'ChatAdapter.__call__' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "ChatAdapter.__call__",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.invocation_parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'LM.__call__' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "missing_attribute": "gen_ai.response.id",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'LM.__call__' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'LM.__call__' (operation 'chat') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'LM.__call__' (operation 'chat') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'LM.__call__' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'LM.__call__' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'LM.__call__'",
+      "signal_type": "span",
+      "signal_name": "LM.__call__",
+      "context": {
+        "expected_form": "chat gpt-4o-mini",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict(StringSignature).forward",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict(StringSignature).forward",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict(StringSignature).forward",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict(StringSignature).forward",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict(StringSignature).forward",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Predict(StringSignature).forward' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Predict(StringSignature).forward",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict.forward",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict.forward",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict.forward",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict.forward",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Predict.forward",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Predict.forward' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Predict.forward",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ReAct.forward",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ReAct.forward",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ReAct.forward",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ReAct.forward",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ReAct.forward",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'ReAct.forward' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "ReAct.forward",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Retrieve.forward",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Retrieve.forward",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Retrieve.forward",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.0.document.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Retrieve.forward",
+      "context": {
+        "attribute_key": "retrieval.documents.0.document.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.1.document.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Retrieve.forward",
+      "context": {
+        "attribute_key": "retrieval.documents.1.document.content"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'Retrieve.forward' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "Retrieve.forward",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "retrieval span name should be 'retrieval', got 'Retrieve.forward'",
+      "signal_type": "span",
+      "signal_name": "Retrieve.forward",
+      "context": {
+        "expected_form": "retrieval",
+        "keyed_attr": "gen_ai.data_source.id",
+        "operation": "retrieval"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'finish.__call__' (operation 'execute_tool') is missing expected attribute 'gen_ai.tool.name'",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "missing_attribute": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'finish.__call__' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "execute_tool span name should be 'execute_tool', got 'finish.__call__'",
+      "signal_type": "span",
+      "signal_name": "finish.__call__",
+      "context": {
+        "expected_form": "execute_tool",
+        "keyed_attr": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'get_weather.__call__' (operation 'execute_tool') is missing expected attribute 'gen_ai.tool.name'",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "missing_attribute": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'get_weather.__call__' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "execute_tool span name should be 'execute_tool', got 'get_weather.__call__'",
+      "signal_type": "span",
+      "signal_name": "get_weather.__call__",
+      "context": {
+        "expected_form": "execute_tool",
+        "keyed_attr": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 """OpenAI-compatible chat / embeddings / responses endpoints."""
 
+import ast
 import copy
 import json
 import re
@@ -447,6 +448,75 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
+_DSPY_CHAT_ADAPTER_MARKER = "ending with the marker for `[[ ## completed ## ]]`"
+
+
+def _dspy_chat_adapter_reply(body):
+    """Answer for dspy's ChatAdapter, which reads fields between markers.
+
+    dspy lists the output fields in the system prompt and expects each back
+    as ``[[ ## <field> ## ]]`` followed by its value. A ReAct step picks a
+    ``Literal`` tool name: the first tool until the trajectory holds an
+    observation, then ``finish``, so the loop runs one tool and ends.
+    """
+    user_text = _last_user_text(body)
+    if _DSPY_CHAT_ADAPTER_MARKER not in user_text:
+        return None
+    system_text = "\n".join(
+        message.get("content") or ""
+        for message in body.get("messages", [])
+        if message.get("role") == "system" and isinstance(message.get("content"), str)
+    )
+    section = system_text.partition("Your output fields are:")[2].partition(
+        "All interactions will be structured"
+    )[0]
+    fields = re.findall(r"^\d+\. `(\w+)` \((.*?)\):", section, re.MULTILINE)
+    if not fields:
+        return None
+
+    observed = "[[ ## observation_" in user_text
+    chosen_tool = None
+    values = {}
+    for name, annotation in fields:
+        if annotation.startswith("Literal["):
+            try:
+                options = list(ast.literal_eval(annotation[len("Literal"):]))
+            except (ValueError, SyntaxError):
+                options = []
+            tools = [option for option in options if option != "finish"]
+            if "finish" in options and (observed or not tools):
+                chosen_tool = "finish"
+            else:
+                chosen_tool = (tools or options or [""])[0]
+            values[name] = chosen_tool
+
+    for name, annotation in fields:
+        if name in values:
+            continue
+        if annotation.startswith("dict"):
+            properties = {}
+            match = chosen_tool and re.search(
+                r"\(\d+\) " + re.escape(chosen_tool) + r", whose description is .*? It takes arguments (\{.*?\})\.$",
+                system_text,
+                re.MULTILINE,
+            )
+            if match:
+                try:
+                    properties = ast.literal_eval(match.group(1))
+                except (ValueError, SyntaxError):
+                    properties = {}
+            arguments = (
+                mock_tool_arguments({"parameters": {"properties": properties, "required": list(properties)}})
+                if properties
+                else {}
+            )
+            values[name] = json.dumps(arguments)
+        else:
+            values[name] = "This is a response from the mock server."
+
+    return "".join(f"[[ ## {name} ## ]]\n{values[name]}\n\n" for name, _ in fields) + "[[ ## completed ## ]]"
+
+
 def _stream_tool_call(body, model, chunk_id):
     """Yield the SSE chunks of a streamed tool call.
 
@@ -640,9 +710,11 @@ def chat_completions(deployment=None):
     resp = copy.deepcopy(CHAT_RESPONSE)
     resp["model"] = body.get("model", resp["model"])
     resp["service_tier"] = _served_service_tier(body)
-    resp["choices"][0]["message"]["content"] = _text_protocol_tool_call(
-        body, message_text
-    ) or _mock_chat_content(body, message_text)
+    resp["choices"][0]["message"]["content"] = (
+        _text_protocol_tool_call(body, message_text)
+        or _dspy_chat_adapter_reply(body)
+        or _mock_chat_content(body, message_text)
+    )
     return resp
 
 

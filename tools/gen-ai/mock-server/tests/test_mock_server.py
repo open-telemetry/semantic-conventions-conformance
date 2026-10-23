@@ -1730,3 +1730,76 @@ def test_chat_sentinels_only_read_the_last_user_message(client, marker, stream):
     assert response.status_code == 200
     text = response.get_data(as_text=True).replace('":0', '": 0')
     assert '"completion_tokens": 0' not in text
+
+
+# dspy's ChatAdapter lists output fields in the system prompt and reads each
+# back from between [[ ## <field> ## ]] markers.
+DSPY_REACT_SYSTEM = """Your input fields are:
+1. `question` (str):
+2. `trajectory` (str):
+Your output fields are:
+1. `next_thought` (str):
+2. `next_tool_name` (Literal['get_weather', 'finish']):
+3. `next_tool_args` (dict[str, Any]):
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+In adhering to this structure, your objective is:
+        (1) get_weather, whose description is <desc>Get the current weather in a given location.</desc>. It takes arguments {'location': {'type': 'string'}}.
+        (2) finish, whose description is <desc>Marks the task as complete.</desc>. It takes arguments {}.
+"""
+
+DSPY_EXTRACT_SYSTEM = """Your input fields are:
+1. `question` (str):
+2. `trajectory` (str):
+Your output fields are:
+1. `reasoning` (str):
+2. `answer` (str):
+All interactions will be structured in the following way, with the appropriate values filled in.
+"""
+
+DSPY_USER_SUFFIX = "\n\nRespond with the corresponding output fields, and then ending with the marker for `[[ ## completed ## ]]`."
+
+
+def _dspy_request(system, trajectory=""):
+    user = f"[[ ## question ## ]]\nweather in Seattle?\n\n[[ ## trajectory ## ]]\n{trajectory}{DSPY_USER_SUFFIX}"
+    return {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+    }
+
+
+def _dspy_fields(response):
+    content = response.json["choices"][0]["message"]["content"]
+    assert content.endswith("[[ ## completed ## ]]")
+    return dict(re.findall(r"\[\[ ## (\w+) ## \]\]\n(.*?)\n\n", content, re.DOTALL))
+
+
+def test_dspy_react_calls_the_first_tool_with_its_arguments(client):
+    fields = _dspy_fields(client.post("/v1/chat/completions", json=_dspy_request(DSPY_REACT_SYSTEM)))
+
+    assert fields["next_tool_name"] == "get_weather"
+    assert json.loads(fields["next_tool_args"]) == {"location": "Seattle"}
+    assert fields["next_thought"]
+
+
+def test_dspy_react_finishes_once_the_tool_has_answered(client):
+    trajectory = "[[ ## tool_name_0 ## ]]\nget_weather\n\n[[ ## observation_0 ## ]]\n70 degrees"
+    fields = _dspy_fields(
+        client.post("/v1/chat/completions", json=_dspy_request(DSPY_REACT_SYSTEM, trajectory))
+    )
+
+    assert fields["next_tool_name"] == "finish"
+    assert json.loads(fields["next_tool_args"]) == {}
+
+
+def test_dspy_react_finishes_when_no_tool_is_offered(client):
+    system = DSPY_REACT_SYSTEM.replace("Literal['get_weather', 'finish']", "Literal['finish']")
+    fields = _dspy_fields(client.post("/v1/chat/completions", json=_dspy_request(system)))
+
+    assert fields["next_tool_name"] == "finish"
+
+
+def test_dspy_extract_answers_every_output_field(client):
+    fields = _dspy_fields(client.post("/v1/chat/completions", json=_dspy_request(DSPY_EXTRACT_SYSTEM)))
+
+    assert set(fields) == {"reasoning", "answer"}

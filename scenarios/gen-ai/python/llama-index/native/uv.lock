@@ -875,6 +875,19 @@ wheels = [
 ]
 
 [[package]]
+name = "llama-index-embeddings-openai"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "llama-index-core" },
+    { name = "openai" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e1/b3/7a972c0d0eef29a0cd89f4fd2f25c73665439951adc3f28a397cfa3cf3d5/llama_index_embeddings_openai-0.7.0.tar.gz", hash = "sha256:5842ef9503501a713363ea8b28462f4ee4f5e778a5c852399f771ff417906507", size = 7625, upload-time = "2026-08-31T15:53:11.079Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/da/b99192e54967dcccf57c172a7689a3b6074d226f2c5ed22af3dbbdb6ca4a/llama_index_embeddings_openai-0.7.0-py3-none-any.whl", hash = "sha256:882320e3ad4d58431a9ebf96866510209e550a5551b7b68a236398a39eef1618", size = 7666, upload-time = "2026-08-31T15:53:10.359Z" },
+]
+
+[[package]]
 name = "llama-index-instrumentation"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -906,6 +919,7 @@ version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "llama-index-core" },
+    { name = "llama-index-embeddings-openai" },
     { name = "llama-index-llms-openai" },
     { name = "llama-index-observability-otel" },
     { name = "opentelemetry-api" },
@@ -916,6 +930,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "llama-index-core", specifier = "==0.14.25" },
+    { name = "llama-index-embeddings-openai", specifier = "==0.7.0" },
     { name = "llama-index-llms-openai", specifier = "==0.8.3" },
     { name = "llama-index-observability-otel", specifier = "==0.7.0" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },

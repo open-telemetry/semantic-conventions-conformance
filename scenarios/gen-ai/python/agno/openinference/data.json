@@ -347,6 +347,186 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'graph.node.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "attribute_key": "graph.node.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "attribute_key": "graph.node.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.parent_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "attribute_key": "graph.node.parent_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'answer.execute' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "answer.execute",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.run.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "agno.run.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.workflow.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "agno.workflow.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.workflow.step_types' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "agno.workflow.step_types"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.workflow.steps' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "agno.workflow.steps"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'agno.workflow.steps_count' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "agno.workflow.steps_count"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "graph.node.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'graph.node.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "graph.node.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'conformance_workflow.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "conformance_workflow.run",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "get_current_weather",

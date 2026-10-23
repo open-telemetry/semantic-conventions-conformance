@@ -5,6 +5,9 @@ requires-python = ">=3.12"
 dependencies = [
     "langchain==1.4.7",
     "langchain-openai==1.7.2",
+    "langgraph-checkpoint==4.3.0",
+    # InMemoryVectorStore scores with numpy but does not depend on it.
+    "numpy==2.5.4",
     "openinference-instrumentation-langchain==0.1.79",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",

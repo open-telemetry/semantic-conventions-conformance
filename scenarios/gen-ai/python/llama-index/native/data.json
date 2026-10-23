@@ -1518,6 +1518,267 @@
       "context": {
         "status_code": "ok"
       }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIEmbedding._get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding._get_query_embedding",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'chunks' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "chunks"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embeddings' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "embeddings"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "model_dict.class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.embed_batch_size' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "model_dict.embed_batch_size"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "model_dict.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIEmbedding.get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'chunks' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "chunks"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embeddings' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embeddings"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "model_dict.class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.embed_batch_size' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "model_dict.embed_batch_size"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'model_dict.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "model_dict.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIEmbedding.get_text_embedding_batch' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'VectorIndexRetriever._retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'class_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "class_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'id_' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "id_"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'nodes' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "nodes"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'span_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "span_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'str_or_query_bundle' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "str_or_query_bundle"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'timestamp' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "timestamp"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'VectorIndexRetriever.retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "status_code": "ok"
+      }
     }
   ]
 }
