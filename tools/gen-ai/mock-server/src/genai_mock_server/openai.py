@@ -447,6 +447,30 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
+def _is_observation(message):
+    content = message.get("content")
+    if message.get("role") != "user" or not isinstance(content, list) or not content:
+        return False
+    first = content[0]
+    return isinstance(first, dict) and str(first.get("text", "")).startswith("Observation:")
+
+
+def _final_answer_after_observation(body):
+    """The ``final_answer`` tool, when a smolagents observation just came back.
+
+    smolagents replays a tool result as a user message whose text starts with
+    ``Observation:`` rather than as a ``tool`` message, so ``should_call_tool``
+    never sees the result and would call the same tool on every step.
+    """
+    messages = body.get("messages", [])
+    if not messages or not _is_observation(messages[-1]):
+        return None
+    for tool in body.get("tools") or []:
+        if tool.get("function", tool).get("name") == "final_answer":
+            return tool
+    return None
+
+
 def _stream_tool_call(body, model, chunk_id):
     """Yield the SSE chunks of a streamed tool call.
 
@@ -586,6 +610,18 @@ def chat_completions(deployment=None):
 
     if body.get("stream"):
         return Response(_stream_chat(body), mimetype="text/event-stream")
+
+    final_answer_tool = _final_answer_after_observation(body)
+    if final_answer_tool:
+        resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
+        resp["model"] = body.get("model", resp["model"])
+        call = resp["choices"][0]["message"]["tool_calls"][0]
+        observations = sum(1 for message in body.get("messages", []) if _is_observation(message))
+        call["id"] = f"call_mock_{observations + 1:03d}"
+        call["function"]["name"] = "final_answer"
+        call["function"]["arguments"] = json.dumps(mock_tool_arguments(final_answer_tool))
+        resp["service_tier"] = _served_service_tier(body)
+        return resp
 
     # Offered tools with no result for them in this turn: call the tool.
     if should_call_tool(body):

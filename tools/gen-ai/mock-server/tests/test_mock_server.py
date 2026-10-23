@@ -1730,3 +1730,48 @@ def test_chat_sentinels_only_read_the_last_user_message(client, marker, stream):
     assert response.status_code == 200
     text = response.get_data(as_text=True).replace('":0', '": 0')
     assert '"completion_tokens": 0' not in text
+
+
+def _smolagents_request(*extra_messages):
+    def tool(name, properties):
+        return {
+            "type": "function",
+            "function": {
+                "name": name,
+                "parameters": {"type": "object", "properties": properties, "required": list(properties)},
+            },
+        }
+
+    return {
+        "model": "gpt-4o-mini",
+        "tool_choice": "required",
+        "tools": [tool("get_weather", {"location": {"type": "string"}}), tool("final_answer", {"answer": {"type": "string"}})],
+        "messages": [
+            {"role": "system", "content": [{"type": "text", "text": "You are an expert assistant."}]},
+            {"role": "user", "content": [{"type": "text", "text": "New task:\nweather in Seattle?"}]},
+            *extra_messages,
+        ],
+    }
+
+
+def test_smolagents_gets_the_first_tool_before_any_observation(client):
+    response = client.post("/v1/chat/completions", json=_smolagents_request())
+
+    call = response.json["choices"][0]["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_weather"
+
+
+def test_smolagents_gets_final_answer_after_an_observation(client):
+    body = _smolagents_request(
+        {"role": "assistant", "content": [{"type": "text", "text": "Calling tools:\n[{'id': 'call_mock_001'}]"}]},
+        {"role": "user", "content": [{"type": "text", "text": "Observation:\n70 degrees"}]},
+    )
+
+    first = client.post("/v1/chat/completions", json=body)
+    second = client.post("/v1/chat/completions", json=body)
+
+    assert first.get_data() == second.get_data()
+    call = first.json["choices"][0]["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "final_answer"
+    assert json.loads(call["function"]["arguments"]) == {"answer": "mock-answer"}
+    assert call["id"] == "call_mock_002"
