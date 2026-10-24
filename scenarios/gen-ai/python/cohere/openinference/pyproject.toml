@@ -3,7 +3,7 @@ name = "cohere-openinference-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "cohere==7.2.0",
+    "cohere==7.3.0",
     "openinference-instrumentation-cohere==0.1.15",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",

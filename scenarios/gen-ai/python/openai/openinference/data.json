@@ -1,14 +1,6 @@
 {
   "spans": {
-    "gen_ai.embeddings.client": [
-      "gen_ai.embeddings.dimension.count",
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.encoding_formats",
-      "gen_ai.request.model",
-      "gen_ai.usage.input_tokens"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -27,10 +19,17 @@
       "gen_ai.response.id",
       "gen_ai.response.model",
       "gen_ai.tool.definitions",
-      "gen_ai.usage.cache_creation.input_tokens",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.embeddings.client": [
+      "gen_ai.embeddings.dimension.count",
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.encoding_formats",
+      "gen_ai.request.model",
+      "gen_ai.usage.input_tokens"
     ]
   },
   "events": {},
@@ -577,6 +576,15 @@
       "context": {
         "attribute": "gen_ai.tool.definitions",
         "errors": "{\"type\":\"web_search\"} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_creation.input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Response",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_creation.input_tokens"
       }
     },
     {
