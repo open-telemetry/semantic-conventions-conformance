@@ -55,3 +55,14 @@ def test_the_registry_still_requires_what_the_policy_flags(model) -> None:
     assert levels["http.request.method"] == "required"
     assert levels["url.path"] == "required"
     assert levels["url.scheme"] == "required"
+
+
+def test_entity_identity_attributes_have_required_levels(model) -> None:
+    """Weaver omits identity levels; the model must not expose nulls."""
+    entity = model["entities"]["process.runtime"]
+
+    assert entity["identity"] == {
+        "process.runtime.name": "required",
+        "process.runtime.version": "required",
+    }
+    assert entity["description"] == {"process.runtime.description": "recommended"}
