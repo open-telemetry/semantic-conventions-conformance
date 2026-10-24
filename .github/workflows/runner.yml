@@ -326,39 +326,9 @@ jobs:
         id: matrix
         shell: bash
         run: |
-          scenario_paths="$(git ls-files 'scenarios/**/conformance.yaml')"
-          if [[ -z "$scenario_paths" ]]; then
-            echo "::error::no conformance scenarios found"
-            exit 1
-          fi
           matrix="$(
-            printf '%s\n' "$scenario_paths" |
-              jq -Rsc '
-                split("\n") |
-                map(
-                  select(length > 0) |
-                  split("/") as $parts |
-                  if ($parts | length) < 4 then
-                    error("unexpected conformance scenario path: " + ($parts | join("/")))
-                  elif $parts[2] == "ruby" then
-                    {
-                      domain: $parts[1],
-                      language: $parts[2],
-                      matrix_id: ($parts[1:-1] | join("-")),
-                      scenario_root: ($parts[0:-1] | join("/"))
-                    }
-                  else
-                    {
-                      domain: $parts[1],
-                      language: $parts[2],
-                      matrix_id: ($parts[1:3] | join("-")),
-                      scenario_root: ($parts[0:3] | join("/"))
-                    }
-                  end
-                ) |
-                unique_by(.scenario_root) |
-                {include: .}
-              '
+            git ls-files 'scenarios/**/conformance.yaml' |
+              python3 tools/runner/src/opentelemetry/conformance/_scenario_matrix.py
           )"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
@@ -509,7 +479,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      SCENARIO_ROOT: ${{ matrix.scenario_root }}
+      SCENARIO_ROOTS: ${{ matrix.scenario_roots }}
     concurrency:
       group: ${{ github.workflow }}-scenarios-${{ matrix.matrix_id }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -560,9 +530,10 @@ jobs:
           # needs the same uv every time.
           version: "0.13.1"
           enable-cache: true
+          cache-suffix: ${{ matrix.matrix_id }}
           # Scope lockfiles to this matrix job so each Python matrix job caches
           # its own package set instead of sharing one.
-          cache-dependency-glob: "scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/uv.lock"
+          cache-dependency-glob: ${{ matrix.cache_dependency_glob }}
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
       - name: Set up Java
@@ -600,7 +571,7 @@ jobs:
         with:
           ruby-version: "4.0.7"
           bundler-cache: true
-          working-directory: ${{ matrix.scenario_root }}
+          working-directory: ${{ matrix.scenario_roots }}
 
       - name: Set up PHP
         if: matrix.language == 'php'
@@ -665,11 +636,13 @@ jobs:
         env:
           FORCE_COLOR: "1" # the log renders ANSI; the step's stdout is no tty
         run: |
-          set -uo pipefail
-          mapfile -t directories < <(
-            find "$SCENARIO_ROOT" -name .venv -prune -o \
-              -name conformance.yaml -exec dirname {} \; | sort
-          )
+          set -euo pipefail
+          mapfile -t roots <<< "$SCENARIO_ROOTS"
+          # Write before reading: a failed find must not silently skip a shard.
+          find "${roots[@]}" -name .venv -prune -o \
+            -name conformance.yaml -exec dirname {} \; \
+            | sort > "$RUNNER_TEMP/scenario-directories"
+          mapfile -t directories < "$RUNNER_TEMP/scenario-directories"
           failed=()
           for directory in "${directories[@]}"; do
             echo "::group::$directory"
@@ -698,9 +671,13 @@ jobs:
         env:
           DATA_PATCH: ${{ runner.temp }}/data.patch
         run: |
-          data_pathspec=":(glob)$SCENARIO_ROOT/**/data.json"
-          git add --intent-to-add -- "$SCENARIO_ROOT"
-          git diff --binary -- "$data_pathspec" > "$DATA_PATCH"
+          mapfile -t roots <<< "$SCENARIO_ROOTS"
+          data_pathspecs=()
+          for root in "${roots[@]}"; do
+            data_pathspecs+=(":(glob)$root/**/data.json")
+          done
+          git add --intent-to-add -- "${roots[@]}"
+          git diff --binary -- "${data_pathspecs[@]}" > "$DATA_PATCH"
           if [[ -s "$DATA_PATCH" ]]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
@@ -717,8 +694,9 @@ jobs:
       - name: Check the committed coverage is up to date
         if: ${{ !cancelled() }}
         run: |
-          git add --intent-to-add -- "$SCENARIO_ROOT"
-          if ! git diff --exit-code -- "$SCENARIO_ROOT"; then
+          mapfile -t roots <<< "$SCENARIO_ROOTS"
+          git add --intent-to-add -- "${roots[@]}"
+          if ! git diff --exit-code -- "${roots[@]}"; then
             echo "::error::the committed data.json files are out of date — run the scenarios and commit the result"
             exit 1
           fi
@@ -737,7 +715,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: weaver-reports-${{ matrix.matrix_id }}
-          path: ${{ matrix.scenario_root }}/**/output/weaver-reports/*.json
+          path: ${{ matrix.report_paths }}
           if-no-files-found: warn
 
   required-status-check:

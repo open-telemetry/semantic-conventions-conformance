@@ -41,6 +41,18 @@ See the [runner's README](tools/runner/README.md) for what a scenario and its
 What every scenario currently emits is published at
 [open-telemetry.github.io/semantic-conventions-conformance](https://open-telemetry.github.io/semantic-conventions-conformance/).
 
+## CI scenario shards
+
+The Runner workflow automatically discovers tracked `conformance.yaml` files.
+GenAI Python and HTTP Java each use four library-level shards on separate
+runners. To resize either group, change its number in `SHARD_COUNTS` in
+[`_scenario_matrix.py`](tools/runner/src/opentelemetry/conformance/_scenario_matrix.py).
+Library names are sorted and assigned round-robin, keeping all instrumentations
+and client/server variants together. New libraries are included automatically;
+no empty shards are launched when there are fewer libraries than shards.
+Each shard runs complete conformance directories serially. Other groups retain
+one job per domain/language, except Ruby's existing per-directory jobs.
+
 ## Maintainers
 
 - [Christophe Kamphaus](https://github.com/kamphaus), Independent
