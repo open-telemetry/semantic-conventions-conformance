@@ -447,19 +447,63 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
-def _stream_tool_call(body, model, chunk_id):
+def _is_observation(message):
+    content = message.get("content")
+    if message.get("role") != "user" or not isinstance(content, list) or not content:
+        return False
+    first = content[0]
+    return isinstance(first, dict) and str(first.get("text", "")).startswith("Observation:")
+
+
+def _final_answer_after_observation(body):
+    """The ``final_answer`` tool, when a smolagents observation just came back.
+
+    smolagents replays a tool result as a user message whose text starts with
+    ``Observation:`` rather than as a ``tool`` message, so ``should_call_tool``
+    never sees the result and would call the same tool on every step.
+    """
+    messages = body.get("messages", [])
+    if not messages or not _is_observation(messages[-1]):
+        return None
+    for tool in body.get("tools") or []:
+        if tool.get("function", tool).get("name") == "final_answer":
+            return tool
+    return None
+
+
+def _next_tool_call(body):
+    """``(tool, name, call_id)`` to answer this request with, or ``None``."""
+    messages = body.get("messages", [])
+    final_answer_tool = _final_answer_after_observation(body)
+    if final_answer_tool:
+        # smolagents sends no assistant ``tool_calls``, so ids come from observations.
+        observations = sum(1 for message in messages if _is_observation(message))
+        return final_answer_tool, "final_answer", f"call_mock_{observations + 1:03d}"
+    if should_call_tool(body):
+        tool, tool_name = offered_tool(body)
+        return tool, tool_name, f"call_mock_{next_tool_call_index(messages):03d}"
+    return None
+
+
+def _tool_call_response(body, tool, tool_name, call_id):
+    resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
+    resp["model"] = body.get("model", resp["model"])
+    call = resp["choices"][0]["message"]["tool_calls"][0]
+    call["id"] = call_id
+    call["function"]["name"] = tool_name
+    call["function"]["arguments"] = json.dumps(mock_tool_arguments(tool))
+    resp["service_tier"] = _served_service_tier(body)
+    return resp
+
+
+def _stream_tool_call(model, chunk_id, tool, name, call_id):
     """Yield the SSE chunks of a streamed tool call.
 
     The call arrives split across deltas, name first and arguments after, the
     way OpenAI sends one: a client that only reassembles the first delta is
     wrong in a way a single-chunk mock would hide.
     """
-    tool = body.get("tools", [{}])[0]
-    function = tool.get("function", tool)
-    name = function.get("name") or "get_weather"
     arguments = json.dumps(mock_tool_arguments(tool))
-
-    call_id = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
 
     for delta in (
         {"id": call_id, "type": "function", "function": {"name": name, "arguments": ""}},
@@ -522,8 +566,9 @@ def _stream_chat(body):
     )
     empty = "[MOCK_EMPTY_COMPLETION]" in _last_user_text(body)
 
-    if should_call_tool(body) and not empty:
-        yield from _stream_tool_call(body, model, chunk_id)
+    tool_call = None if empty else _next_tool_call(body)
+    if tool_call:
+        yield from _stream_tool_call(model, chunk_id, *tool_call)
         return
 
     content = None if empty else _text_protocol_tool_call(body, message_text)
@@ -588,16 +633,9 @@ def chat_completions(deployment=None):
         return Response(_stream_chat(body), mimetype="text/event-stream")
 
     # Offered tools with no result for them in this turn: call the tool.
-    if should_call_tool(body):
-        tool, tool_name = offered_tool(body)
-        resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
-        resp["model"] = body.get("model", resp["model"])
-        call = resp["choices"][0]["message"]["tool_calls"][0]
-        call["id"] = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
-        call["function"]["name"] = tool_name
-        call["function"]["arguments"] = json.dumps(mock_tool_arguments(tool))
-        resp["service_tier"] = _served_service_tier(body)
-        return resp
+    tool_call = _next_tool_call(body)
+    if tool_call:
+        return _tool_call_response(body, *tool_call)
 
     # CrewAI planner natural-retry path: a refusal, then a schema-invalid
     # answer, drives CrewAI through three LLM round-trips under one plan span.

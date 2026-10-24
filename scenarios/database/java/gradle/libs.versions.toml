@@ -3,7 +3,7 @@
 
 [versions]
 jackson = "2.22.4"
-mariadb = "3.5.10"
+mariadb = "3.5.11"
 jedis = "8.0.1"
 lettuce = "7.7.0.RELEASE"
 opentelemetry = "1.67.0"

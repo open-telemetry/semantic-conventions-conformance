@@ -38,9 +38,12 @@ ID, model output, and token usage. No create request is needed, so a fetch
 scenario emits only retrieval telemetry.
 
 Non-streaming Gemini and Vertex `generateContent` requests with `codeExecution`
-return fixed code and execution results. Interaction creation requests with
-`google_search` return a search call, its result, and model output. The server
-does not execute code or search the web.
+return fixed code and execution results. With `googleSearch` they return
+grounding metadata and a text answer, plus `toolCall`/`toolResponse` parts when
+`toolConfig.includeServerSideToolInvocations` is set. Sent next to
+`functionDeclarations`, the answer is a function call instead of text.
+Interaction creation requests with `google_search` return a search call, its
+result, and model output. The server does not execute code or search the web.
 
 For OpenAI chat completions, streamed or not, a request whose last user message contains
 `[MOCK_EMPTY_COMPLETION]` gets an empty completion whose usage reports `completion_tokens: 0`, and one
