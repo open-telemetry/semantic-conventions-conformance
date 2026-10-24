@@ -1,0 +1,325 @@
+{
+  "spans": {
+    "gen_ai.embeddings.client": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "gen_ai.usage.input_tokens"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.id",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.inference.client": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.frequency_penalty",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.presence_penalty",
+      "gen_ai.request.stop_sequences",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_p",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.response.id",
+      "gen_ai.response.model",
+      "gen_ai.system_instructions",
+      "gen_ai.tool.definitions",
+      "gen_ai.usage.cache_read.input_tokens",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.request.frequency_penalty",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.presence_penalty",
+      "gen_ai.request.seed",
+      "gen_ai.request.stop_sequences",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_p",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.system_instructions",
+      "gen_ai.usage.cache_read.input_tokens",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'gen_ai' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "gen_ai",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'host.arch' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "host.arch"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'host.id' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "host.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'host.name' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "host.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.command' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.command"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.command_args' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.command_args"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.executable.name' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.executable.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.executable.path' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.executable.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.owner' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.owner"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.pid' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.pid"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.runtime.description' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.runtime.description"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.runtime.name' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.runtime.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'process.runtime.version' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "process.runtime.version"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.client.operation.duration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "attribute_key": "gen_ai.client.operation.duration"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat gpt-4o-audio-preview' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-audio-preview",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.client.operation.duration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.client.operation.duration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.client.operation.time_per_output_chunk' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.client.operation.time_per_output_chunk"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.client.operation.time_to_first_chunk' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.client.operation.time_to_first_chunk"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'gen_ai.embeddings.dimension.count'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "gen_ai.embeddings.dimension.count",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'gen_ai.request.encoding_formats'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "gen_ai.request.encoding_formats",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'embeddings text-embedding-3-small' (operation 'embeddings') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "embeddings text-embedding-3-small",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.execute_tool.duration' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_tool get_current_weather",
+      "context": {
+        "attribute_key": "gen_ai.execute_tool.duration"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent', got 'invoke_agent gpt-4o-audio-preview'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent gpt-4o-audio-preview",
+      "context": {
+        "expected_form": "invoke_agent",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent', got 'invoke_agent gpt-4o-mini'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent gpt-4o-mini",
+      "context": {
+        "expected_form": "invoke_agent",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_operation_name_unknown",
+      "message": "Span 'step 1' has gen_ai.operation.name='agent_step' which is not a documented enum value",
+      "signal_type": "span",
+      "signal_name": "step 1",
+      "context": {
+        "operation": "agent_step"
+      }
+    },
+    {
+      "id": "genai_operation_name_unknown",
+      "message": "Span 'step 2' has gen_ai.operation.name='agent_step' which is not a documented enum value",
+      "signal_type": "span",
+      "signal_name": "step 2",
+      "context": {
+        "operation": "agent_step"
+      }
+    }
+  ]
+}

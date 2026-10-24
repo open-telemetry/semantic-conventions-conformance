@@ -142,6 +142,28 @@ them, so there is no class for them yet.
 
 Each class is one file, and each file gets its own weaver report.
 
+The table above covers Python. JavaScript uses the same exchanges and class
+files, with these implementations:
+
+| Library | Classes | Implementations |
+| --- | --- | --- |
+| `openai` | inference, streaming, tool_calling, automatic_tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai` |
+| `vercel-ai` | inference, streaming, tool_calling, automatic_tool_calling, structured_output, multimodal, embeddings | `native` (`@ai-sdk/otel`, the AI SDK's first-party telemetry integration) |
+
+The JavaScript domain is one npm workspace with a committed lockfile, using
+the [Node launcher and SDK bootstrap](../../tools/js/README.md). Workloads
+stay in `<library>/scenarios/`; each implementation registers its telemetry
+before loading a workload and flushes it before exiting. OpenAI uses SDK 6
+because `@opentelemetry/instrumentation-openai` currently supports versions
+below 7. Vercel uses AI SDK 7 and its first-party OpenTelemetry integration,
+which records inputs and outputs by default when registered.
+
+```sh
+pip install -e tools/js
+otel-conformance scenarios/gen-ai/js/openai/opentelemetry-openai --report-only
+otel-conformance scenarios/gen-ai/js/vercel-ai/native --report-only
+```
+
 ## Third-party and native instrumentations
 
 An implementation directory is named after whatever produced the telemetry:

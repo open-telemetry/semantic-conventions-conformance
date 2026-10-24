@@ -1,0 +1,12 @@
+{
+  "name": "@otel-conformance/vercel-ai-native",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@otel-conformance/vercel-ai-scenarios": "*",
+    "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
+    "@ai-sdk/otel": "1.0.143",
+    "ai": "7.0.143"
+  }
+}

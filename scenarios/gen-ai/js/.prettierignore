@@ -1,0 +1,7 @@
+# npm writes it, so its shape is npm's business rather than a formatter's.
+package-lock.json
+
+# The runner writes these, and CI fails when they stop matching what a run
+# produced — so reformatting one would be reporting a change nothing made.
+data.json
+output/
