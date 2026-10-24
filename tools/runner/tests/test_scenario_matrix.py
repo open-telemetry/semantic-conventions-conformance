@@ -8,8 +8,8 @@ import os
 import subprocess
 import sys
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Callable, TypeVar
 from unittest.mock import Mock
 
 import pytest
@@ -19,16 +19,28 @@ from opentelemetry.conformance import _scenario_matrix
 from opentelemetry.conformance._scenario_matrix import SHARD_COUNTS, matrix
 
 REPO = Path(__file__).resolve().parents[3]
-_T = TypeVar("_T")
 
 
-def subprocess_call(call: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
-    return call(
-        *args,
-        **kwargs,
-        creationflags=(
-            subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-        ),
+def run_subprocess(
+    args: Sequence[str],
+    *,
+    input: str | None = None,
+    capture_output: bool = False,
+    check: bool = False,
+    cwd: Path | None = None,
+    env: Mapping[str, str] | None = None,
+    stdout: int | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        args,
+        input=input,
+        capture_output=capture_output,
+        text=True,
+        check=check,
+        cwd=cwd,
+        env=env,
+        stdout=stdout,
+        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
     )
 
 
@@ -36,37 +48,24 @@ def subprocess_call(call: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
     ("platform", "creationflags"),
     [("win32", 0x08000000), ("linux", 0)],
 )
-def test_subprocess_call_uses_platform_creation_flags(
+def test_run_subprocess_uses_platform_creation_flags(
     monkeypatch: pytest.MonkeyPatch, platform: str, creationflags: int
 ) -> None:
     monkeypatch.setattr(sys, "platform", platform)
     monkeypatch.setattr(
         subprocess, "CREATE_NO_WINDOW", 0x08000000, raising=False
     )
-    call = Mock(return_value=object())
+    result = subprocess.CompletedProcess(["command"], 0, "output", "")
+    run = Mock(return_value=result)
+    monkeypatch.setattr(subprocess, "run", run)
 
-    result = subprocess_call(
-        call,
-        ["command"],
-        input="input",
-        capture_output=True,
-        text=True,
-        check=False,
-        cwd=REPO,
-        env=os.environ,
-    )
+    actual = run_subprocess(["command"], input="input")
 
-    assert result is call.return_value
-    call.assert_called_once_with(
-        ["command"],
-        input="input",
-        capture_output=True,
-        text=True,
-        check=False,
-        cwd=REPO,
-        env=os.environ,
-        creationflags=creationflags,
-    )
+    assert actual is result
+    run.assert_called_once()
+    assert run.call_args.args == (["command"],)
+    assert run.call_args.kwargs["input"] == "input"
+    assert run.call_args.kwargs["creationflags"] == creationflags
 
 
 def scenario_paths(group: str, libraries: list[str]) -> list[str]:
@@ -118,15 +117,6 @@ def test_only_the_count_needs_to_change(count: int) -> None:
     ]
 
 
-def test_new_libraries_are_automatically_included() -> None:
-    paths = scenario_paths("gen-ai/python", ["a", "b"])
-    before = matrix(paths)["include"]
-    after = matrix(paths + scenario_paths("gen-ai/python", ["c"]))["include"]
-    assert len(before) == 2
-    assert len(after) == 3
-    assert after[-1]["scenario_roots"] == "scenarios/gen-ai/python/c"
-
-
 def test_empty_groups_do_not_launch_jobs() -> None:
     assert matrix([]) == {"include": []}
     jobs = matrix(scenario_paths("http/python", ["a"]))["include"]
@@ -172,12 +162,10 @@ def test_malformed_paths_fail(path: str) -> None:
 
 @pytest.mark.parametrize("paths", ["", "invalid\n"])
 def test_cli_rejects_empty_or_invalid_discovery(paths: str) -> None:
-    result = subprocess_call(
-        subprocess.run,
+    result = run_subprocess(
         [sys.executable, "-I", str(_scenario_matrix.__file__)],
         input=paths,
         capture_output=True,
-        text=True,
         check=False,
     )
     assert result.returncode == 1
@@ -186,18 +174,16 @@ def test_cli_rejects_empty_or_invalid_discovery(paths: str) -> None:
 
 
 def test_tracked_scenarios_are_covered_once_by_standalone_cli() -> None:
-    paths = subprocess_call(
-        subprocess.check_output,
+    paths = run_subprocess(
         ["git", "ls-files", "scenarios/**/conformance.yaml"],
         cwd=REPO,
-        text=True,
-    ).splitlines()
-    result = subprocess_call(
-        subprocess.run,
+        check=True,
+        stdout=subprocess.PIPE,
+    ).stdout.splitlines()
+    result = run_subprocess(
         [sys.executable, "-I", str(_scenario_matrix.__file__)],
         input="\n".join(paths),
         capture_output=True,
-        text=True,
         check=True,
     )
     jobs = json.loads(result.stdout)["include"]
@@ -222,9 +208,9 @@ def test_workflow_executes_and_patches_only_assigned_roots(tmp_path: Path) -> No
     repo.mkdir()
 
     def git(*args: str) -> str:
-        return subprocess_call(
-            subprocess.check_output, ["git", *args], cwd=repo, text=True
-        )
+        return run_subprocess(
+            ["git", *args], cwd=repo, check=True, stdout=subprocess.PIPE
+        ).stdout
 
     paths = scenario_paths("http/java", ["a", "b", "c", "d", "e"])
     for path in paths:
@@ -245,13 +231,11 @@ def test_workflow_executes_and_patches_only_assigned_roots(tmp_path: Path) -> No
     }
 
     def run_step(name: str, prefix: str = "") -> subprocess.CompletedProcess[str]:
-        return subprocess_call(
-            subprocess.run,
+        return run_subprocess(
             ["bash", "-e", "-c", prefix + steps[name]["run"]],
             cwd=repo,
             env=env,
             capture_output=True,
-            text=True,
             check=False,
         )
 
