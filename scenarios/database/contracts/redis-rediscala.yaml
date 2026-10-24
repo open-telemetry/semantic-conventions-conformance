@@ -24,7 +24,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
 
   pipeline:
@@ -49,7 +48,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
 
   transaction:
@@ -66,7 +64,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
 
   error:
@@ -92,5 +89,4 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
