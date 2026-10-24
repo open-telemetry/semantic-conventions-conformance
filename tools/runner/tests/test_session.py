@@ -12,13 +12,17 @@ directly.
 from __future__ import annotations
 
 import json
+import os
+import signal as signal_module
 import subprocess
 import sys
+import time
 from collections.abc import Mapping
+from contextlib import contextmanager, nullcontext
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Literal
+from typing import Any, Literal, cast
 
 import pytest
 
@@ -68,19 +72,655 @@ def test_a_command_that_does_not_exist(tmp_path: Path) -> None:
     assert "definitely-not-a-command --flag" in completed.stderr
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_signal_during_failed_launch_is_not_dropped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def failed_launch(*args: Any, **kwargs: Any) -> None:
+        os.kill(os.getpid(), signal_module.SIGTERM)
+        raise FileNotFoundError("scenario")
+
+    monkeypatch.setattr(subprocess, "Popen", failed_launch)
+
+    with pytest.raises(SystemExit) as error:
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert error.value.code == 128 + signal_module.SIGTERM
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_sigint_during_launch_stops_the_new_process_group(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_popen = subprocess.Popen
+    launched: list[subprocess.Popen[str]] = []
+
+    def interrupt_after_launch(
+        *args: Any, **kwargs: Any
+    ) -> subprocess.Popen[str]:
+        process = original_popen(*args, **kwargs)
+        launched.append(process)
+        os.kill(os.getpid(), signal_module.SIGINT)
+        return process
+
+    monkeypatch.setattr(subprocess, "Popen", interrupt_after_launch)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            _run_command(
+                (sys.executable, "-c", "import time; time.sleep(30)"),
+                cwd=tmp_path,
+                env={},
+            )
+
+        assert len(launched) == 1
+        assert launched[0].poll() is not None
+    finally:
+        for process in launched:
+            if process.poll() is None:
+                os.killpg(process.pid, signal_module.SIGKILL)
+                process.wait(timeout=5)
+
+
 def test_a_command_that_overruns(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", "0.5")
 
     completed = _run_command(
-        (sys.executable, "-c", "import time; time.sleep(30)"),
+        (
+            sys.executable,
+            "-c",
+            "import sys, time; print('started', flush=True); "
+            "print('still running', file=sys.stderr, flush=True); "
+            "time.sleep(30)",
+        ),
         cwd=tmp_path,
         env={},
     )
 
     assert completed.returncode == 1
+    assert completed.stdout.strip() == "started"
+    assert "still running" in completed.stderr
     assert "did not finish within" in completed.stderr
+
+
+def test_keyboard_interrupt_stops_command_before_reraising(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Process:
+        def wait(self, timeout: float) -> int:
+            raise KeyboardInterrupt
+
+    process = Process()
+    stopped: list[Process] = []
+    monkeypatch.setattr(
+        subprocess,
+        "Popen",
+        lambda *args, **kwargs: process,
+    )
+    monkeypatch.setattr(_session, "_stop_process", stopped.append)
+    monkeypatch.setattr(_session, "_command_job", lambda: nullcontext(None))
+
+    with pytest.raises(KeyboardInterrupt):
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert stopped == [process]
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows has no killable process group",
+)
+def test_a_command_that_overruns_stops_its_process_group(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A timed-out launcher must not leave its workload running."""
+    monkeypatch.setenv("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", "1")
+    launched = tmp_path / "descendant-launched"
+    ready = tmp_path / "descendant-ready"
+    survived = tmp_path / "descendant-survived"
+    child = (
+        "import os, pathlib, sys, time\n"
+        "parent_pid = int(sys.argv[1])\n"
+        "pathlib.Path(sys.argv[2]).write_text('ready')\n"
+        "while os.getppid() == parent_pid:\n"
+        "    time.sleep(0.01)\n"
+        "time.sleep(0.2)\n"
+        "pathlib.Path(sys.argv[3]).write_text('alive')\n"
+    )
+    parent = (
+        "import os, pathlib, subprocess, sys, time\n"
+        "ready = pathlib.Path(sys.argv[3])\n"
+        "child_args = [sys.executable, '-c', sys.argv[1], str(os.getpid())]\n"
+        "child_args.extend([sys.argv[3], sys.argv[2]])\n"
+        "subprocess.Popen(child_args)\n"
+        "while not ready.exists():\n"
+        "    time.sleep(0.01)\n"
+        "pathlib.Path(sys.argv[4]).write_text('launched')\n"
+        "time.sleep(30)\n"
+    )
+
+    real_popen = subprocess.Popen
+
+    def popen_after_child_is_ready(
+        *args: Any, **kwargs: Any
+    ) -> subprocess.Popen[str]:
+        process = real_popen(*args, **kwargs)
+        if not _appears_within(launched, 10):
+            process.kill()
+            pytest.fail("descendant did not start")
+        return cast("subprocess.Popen[str]", process)
+
+    monkeypatch.setattr(subprocess, "Popen", popen_after_child_is_ready)
+    completed = _run_command(
+        (
+            sys.executable,
+            "-c",
+            parent,
+            child,
+            str(survived),
+            str(ready),
+            str(launched),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+
+    assert completed.returncode == 1
+    assert launched.exists()
+    assert not _appears_within(survived, 1)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_termination_signal_stops_a_scenario_group(tmp_path: Path) -> None:
+    ready = tmp_path / "ready"
+    survived = tmp_path / "survived"
+    child = (
+        "import pathlib, sys, time\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(0.4)\n"
+        "pathlib.Path(sys.argv[2]).write_text('alive')\n"
+    )
+    launcher = (
+        "import subprocess, sys, time\n"
+        "subprocess.Popen([sys.executable, '-c', sys.argv[1], *sys.argv[2:]])\n"
+        "time.sleep(30)\n"
+    )
+    runner = (
+        "import pathlib, os, sys\n"
+        "from opentelemetry.conformance._session import _run_command\n"
+        "_run_command((sys.executable, '-c', sys.argv[1], "
+        "sys.argv[2], sys.argv[3], sys.argv[4]), cwd=pathlib.Path.cwd(), env=os.environ)\n"
+    )
+    process = subprocess.Popen(
+        (
+            sys.executable,
+            "-c",
+            runner,
+            launcher,
+            child,
+            str(ready),
+            str(survived),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+        start_new_session=True,
+    )
+    try:
+        assert _appears_within(ready, 10)
+        os.killpg(process.pid, signal_module.SIGTERM)
+        assert process.wait(timeout=10) == 128 + signal_module.SIGTERM
+        assert not _appears_within(survived, 1)
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid, signal_module.SIGKILL)
+            process.wait(timeout=10)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_ignored_hangup_remains_ignored(tmp_path: Path) -> None:
+    ready = tmp_path / "ready"
+    runner = (
+        "import os, pathlib, signal, sys\n"
+        "from opentelemetry.conformance._session import _run_command\n"
+        "signal.signal(signal.SIGHUP, signal.SIG_IGN)\n"
+        "child = 'import pathlib, sys, time; ' "
+        "+ 'pathlib.Path(sys.argv[1]).write_text(\"ready\"); time.sleep(0.5)'\n"
+        "result = _run_command((sys.executable, '-c', child, sys.argv[1]), "
+        "cwd=pathlib.Path.cwd(), env=os.environ)\n"
+        "sys.exit(result.returncode)\n"
+    )
+    process = subprocess.Popen(
+        (sys.executable, "-c", runner, str(ready)),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+    try:
+        assert _appears_within(ready, 10)
+        os.kill(process.pid, signal_module.SIGHUP)
+        assert process.wait(timeout=10) == 0
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=10)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_second_signal_during_cleanup_still_stops_scenario(
+    tmp_path: Path,
+) -> None:
+    ready = tmp_path / "ready"
+    survived = tmp_path / "survived"
+    child = (
+        "import pathlib, sys, time\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(0.4)\n"
+        "pathlib.Path(sys.argv[2]).write_text('alive')\n"
+    )
+    runner = (
+        "import os, pathlib, signal, sys\n"
+        "from opentelemetry.conformance import _session\n"
+        "original = _session._stop_process\n"
+        "def stop(process):\n"
+        "    os.kill(os.getpid(), signal.SIGHUP)\n"
+        "    original(process)\n"
+        "_session._stop_process = stop\n"
+        "_session._run_command((sys.executable, '-c', sys.argv[1], "
+        "sys.argv[2], sys.argv[3]), cwd=pathlib.Path.cwd(), env=os.environ)\n"
+    )
+    process = subprocess.Popen(
+        (sys.executable, "-c", runner, child, str(ready), str(survived)),
+        cwd=tmp_path,
+        env=os.environ,
+        start_new_session=True,
+    )
+    try:
+        assert _appears_within(ready, 10)
+        os.kill(process.pid, signal_module.SIGTERM)
+        assert process.wait(timeout=10) == 128 + signal_module.SIGTERM
+        assert not _appears_within(survived, 1)
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid, signal_module.SIGKILL)
+            process.wait(timeout=10)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_scenario_children_receive_termination_signals(tmp_path: Path) -> None:
+    """The launch handoff must not leave SIGTERM blocked in descendants."""
+    script = (
+        "import signal, subprocess, sys\n"
+        "child = subprocess.Popen([sys.executable, '-c', "
+        "'import time; time.sleep(10)'])\n"
+        "try:\n"
+        "    child.terminate()\n"
+        "    assert child.wait(timeout=1) == -signal.SIGTERM\n"
+        "finally:\n"
+        "    if child.poll() is None:\n"
+        "        child.kill()\n"
+        "        child.wait()\n"
+    )
+    completed = _run_command(
+        (sys.executable, "-c", script), cwd=tmp_path, env=os.environ
+    )
+
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows has no killable process group",
+)
+def test_a_successful_launcher_does_not_leave_its_workload_running(
+    tmp_path: Path,
+) -> None:
+    """A launcher exit must not leak its background workload."""
+    ready = tmp_path / "descendant-ready"
+    survived = tmp_path / "descendant-survived"
+    child = (
+        "import os, pathlib, sys, time\n"
+        "parent_pid = int(sys.argv[1])\n"
+        "pathlib.Path(sys.argv[2]).write_text('ready')\n"
+        "while os.getppid() == parent_pid:\n"
+        "    time.sleep(0.01)\n"
+        "time.sleep(0.2)\n"
+        "pathlib.Path(sys.argv[3]).write_text('alive')\n"
+    )
+    parent = (
+        "import os, pathlib, subprocess, sys, time\n"
+        "ready = pathlib.Path(sys.argv[2])\n"
+        "subprocess.Popen([sys.executable, '-c', sys.argv[1], "
+        "str(os.getpid()), sys.argv[2], sys.argv[3]])\n"
+        "while not ready.exists():\n"
+        "    time.sleep(0.01)\n"
+        "print('launcher done')\n"
+    )
+
+    completed = _run_command(
+        (
+            sys.executable,
+            "-c",
+            parent,
+            child,
+            str(ready),
+            str(survived),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+
+    assert completed.returncode == 0
+    assert completed.stdout.strip() == "launcher done"
+    assert not _appears_within(survived, 1)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows Job Object only")
+def test_windows_launcher_does_not_leave_its_workload_running(
+    tmp_path: Path,
+) -> None:
+    ready = tmp_path / "ready"
+    survived = tmp_path / "survived"
+    child = (
+        "import pathlib, sys, time\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(0.4)\n"
+        "pathlib.Path(sys.argv[2]).write_text('alive')\n"
+    )
+    launcher = (
+        "import pathlib, subprocess, sys, time\n"
+        "subprocess.Popen([sys.executable, '-c', sys.argv[1], *sys.argv[2:]])\n"
+        "while not pathlib.Path(sys.argv[2]).exists():\n"
+        "    time.sleep(0.01)\n"
+    )
+    completed = _run_command(
+        (sys.executable, "-c", launcher, child, str(ready), str(survived)),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+
+    assert completed.returncode == 0
+    assert not _appears_within(survived, 1)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows Job Object only")
+def test_windows_launcher_waits_for_job_assignment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = tmp_path / "started"
+    job_type = _session.WindowsJob
+    assign = job_type.assign
+
+    def delayed_assignment(job: Any, process: subprocess.Popen[str]) -> None:
+        # Even a cold interpreter has time to start before this assignment.
+        assert not _appears_within(started, 3), (
+            "launcher ran before job assignment"
+        )
+        assign(job, process)
+
+    monkeypatch.setattr(job_type, "assign", delayed_assignment)
+    result = _run_command(
+        (
+            sys.executable,
+            "-c",
+            "import pathlib, sys; pathlib.Path(sys.argv[1]).write_text('started')",
+            str(started),
+        ),
+        cwd=tmp_path,
+        env=os.environ,
+    )
+
+    assert result.returncode == 0
+    assert started.exists()
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows has no killable process group",
+)
+def test_process_group_cleanup_does_not_require_a_live_leader(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The group can outlive the launcher used to create it."""
+
+    class Process:
+        pid = 123
+        killed = False
+
+        def kill(self) -> None:
+            self.killed = True
+
+    def missing_leader(_pid: int) -> int:
+        raise ProcessLookupError
+
+    groups: list[tuple[int, signal_module.Signals]] = []
+    # Guard against reintroducing a pgid lookup after the leader has exited.
+    monkeypatch.setattr(os, "getpgid", missing_leader)
+    monkeypatch.setattr(
+        os,
+        "killpg",
+        lambda pgid, sig: groups.append((pgid, sig)),
+    )
+    process = Process()
+
+    _session._kill_process_group(cast("subprocess.Popen[str]", process))
+
+    assert groups == [(process.pid, signal_module.SIGKILL)]
+    assert not process.killed
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_second_signal_before_cleanup_guard_does_not_abort_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Process:
+        def wait(self, timeout: float) -> int:
+            os.kill(os.getpid(), signal_module.SIGTERM)
+            raise AssertionError("termination must interrupt the wait")
+
+    process = Process()
+    stopped: list[Process] = []
+    original_guard = _session._defer_termination
+
+    @contextmanager
+    def signal_before_guard(termination: Any) -> Any:
+        if termination is not None and termination.terminating:
+            os.kill(os.getpid(), signal_module.SIGHUP)
+        with original_guard(termination):
+            yield
+
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(_session, "_defer_termination", signal_before_guard)
+    monkeypatch.setattr(_session, "_stop_process", stopped.append)
+
+    with pytest.raises(SystemExit) as error:
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert error.value.code == 128 + signal_module.SIGTERM
+    assert stopped == [process]
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="POSIX process groups only"
+)
+@pytest.mark.parametrize(
+    "error", [PermissionError("denied"), OSError("unexpected")]
+)
+def test_process_group_cleanup_reports_unexpected_errors(
+    monkeypatch: pytest.MonkeyPatch, error: OSError
+) -> None:
+    class Process:
+        pid = 123
+
+        def kill(self) -> None:
+            pytest.fail(
+                "unexpected group error must not use direct-child cleanup"
+            )
+
+    def fail_to_signal(_pid: int, _signal: int) -> None:
+        raise error
+
+    monkeypatch.setattr(os, "killpg", fail_to_signal)
+    with pytest.raises(type(error), match=str(error)):
+        _session._kill_process_group(cast("subprocess.Popen[str]", Process()))
+
+
+def test_timeout_cleanup_wait_is_bounded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Process:
+        def __init__(self) -> None:
+            self.pid = 123
+            self.waits: list[float] = []
+
+        def wait(self, timeout: float) -> int:
+            self.waits.append(timeout)
+            raise subprocess.TimeoutExpired("scenario", timeout)
+
+    process = Process()
+    stopped: list[Process] = []
+    monkeypatch.setattr(_session, "_kill_process_group", stopped.append)
+    monkeypatch.setattr(_session, "_COMMAND_CLEANUP_TIMEOUT_SECONDS", 0.1)
+
+    _session._stop_process(cast("subprocess.Popen[str]", process))
+
+    assert stopped == [process]
+    assert process.waits == [0.1]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX signals only")
+def test_signal_during_timeout_cleanup_is_not_dropped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Process:
+        waits = 0
+
+        def wait(self, timeout: float) -> int:
+            self.waits += 1
+            if self.waits == 1:
+                raise subprocess.TimeoutExpired("scenario", timeout)
+            return 0
+
+    process = Process()
+    stopped: list[Process] = []
+    monkeypatch.setattr(subprocess, "Popen", lambda *args, **kwargs: process)
+
+    def stop_and_signal(child: Process) -> None:
+        stopped.append(child)
+        os.kill(os.getpid(), signal_module.SIGTERM)
+
+    monkeypatch.setattr(_session, "_kill_process_group", stop_and_signal)
+
+    with pytest.raises(SystemExit) as error:
+        _run_command(("scenario",), cwd=tmp_path, env={})
+
+    assert error.value.code == 128 + signal_module.SIGTERM
+    assert stopped == [process]
+    assert process.waits == 2
+
+
+def test_captured_output_does_not_move_the_writer_offset(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "capture"
+    with path.open("w+b") as capture:
+        capture.write(b"captured output")
+        capture.flush()
+        capture.seek(3)
+
+        output = _session._captured_text(capture, "utf-8")
+
+        assert output == "captured output"
+        assert capture.tell() == 3
+
+
+def test_captured_output_replaces_invalid_bytes(tmp_path: Path) -> None:
+    path = tmp_path / "capture"
+    with path.open("w+b") as capture:
+        capture.write(b"before \xff after")
+        capture.flush()
+
+        output = _session._captured_text(capture, "utf-8")
+
+    assert output == "before \N{REPLACEMENT CHARACTER} after"
+
+
+def test_timeout_does_not_wait_for_inherited_output_handles(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A surviving descendant must not hold timeout cleanup open."""
+    monkeypatch.setenv("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", "0.1")
+    ready = tmp_path / "descendant-ready"
+    child_pid = tmp_path / "descendant-pid"
+    child = (
+        "import pathlib, sys, time\n"
+        "print('child ready', flush=True)\n"
+        "pathlib.Path(sys.argv[1]).write_text('ready')\n"
+        "time.sleep(10)\n"
+    )
+    parent = (
+        "import pathlib, subprocess, sys, time\n"
+        "child = subprocess.Popen([sys.executable, '-c', sys.argv[1], "
+        "sys.argv[2]])\n"
+        "pathlib.Path(sys.argv[3]).write_text(str(child.pid))\n"
+        "time.sleep(30)\n"
+    )
+    real_popen = subprocess.Popen
+    ready_at: list[float] = []
+
+    def popen_after_descendant_is_ready(
+        *args: Any, **kwargs: Any
+    ) -> subprocess.Popen[str]:
+        process = real_popen(*args, **kwargs)
+        deadline = time.monotonic() + 10
+        while not ready.exists():
+            if time.monotonic() >= deadline:
+                process.kill()
+                pytest.fail("descendant did not start")
+            time.sleep(0.01)
+        ready_at.append(time.monotonic())
+        return cast("subprocess.Popen[str]", process)
+
+    # Exercise launcher-only cleanup even on Windows: a Job Object would
+    # suspend the launcher until assignment and terminate this descendant.
+    monkeypatch.setattr(_session, "_command_job", lambda: nullcontext(None))
+    monkeypatch.setattr(subprocess, "Popen", popen_after_descendant_is_ready)
+    monkeypatch.setattr(
+        _session, "_kill_process_group", lambda process: process.kill()
+    )
+    monkeypatch.setattr(_session, "_COMMAND_CLEANUP_TIMEOUT_SECONDS", 0.5)
+    try:
+        completed = _run_command(
+            (
+                sys.executable,
+                "-c",
+                parent,
+                child,
+                str(ready),
+                str(child_pid),
+            ),
+            cwd=tmp_path,
+            env=os.environ,
+        )
+    finally:
+        if child_pid.exists():
+            try:
+                os.kill(int(child_pid.read_text()), signal_module.SIGTERM)
+            except OSError:
+                pass
+
+    assert time.monotonic() - ready_at[0] < 2
+    assert completed.returncode == 1
+    assert "child ready" in completed.stdout
+    assert "did not finish within" in completed.stderr
+
+
+def _appears_within(path: Path, seconds: float) -> bool:
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if path.exists():
+            return True
+        time.sleep(0.01)
+    return path.exists()
 
 
 def test_weaver_startup_retries_after_a_timeout() -> None:
