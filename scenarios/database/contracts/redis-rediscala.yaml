@@ -85,6 +85,7 @@ scenarios:
           count: 1
           attributes:
             error.type: redis.actors.ReplyErrorException
+            db.response.status_code: WRONGTYPE
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics:

@@ -92,6 +92,7 @@ scenarios:
           attributes:
             db.namespace: "0"
             db.query.text: "LPUSH conformance:error ?"
+            db.response.status_code: WRONGTYPE
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics:

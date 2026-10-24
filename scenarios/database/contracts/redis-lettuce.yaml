@@ -155,6 +155,7 @@ scenarios:
           attributes:
             db.query.text: "LPUSH conformance:error ?"
             error.type: WRONGTYPE
+            db.response.status_code: WRONGTYPE
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics:
