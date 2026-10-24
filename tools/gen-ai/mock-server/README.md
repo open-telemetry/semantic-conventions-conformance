@@ -20,7 +20,7 @@ and supplies its URL as `${MOCK_SERVER_URL}`.
 | `anthropic_agents`, `mistral_agents` | hosted-agent creation |
 | `assistants` | OpenAI Assistants, threads and runs |
 | `bedrock` | `converse`, `converse-stream`, `invoke` |
-| `bedrock_agent`, `bedrock_agentcore` | agent invocation, knowledge-base retrieval/generation (including streaming), and the memory APIs |
+| `bedrock_agent`, `bedrock_agentcore` | agent invocation, knowledge-base retrieval/generation (including streaming), the memory APIs, and evaluator lookup and evaluation |
 | `cohere` | `/v1` and `/v2` chat and embed |
 | `google_genai` | Gemini and Vertex content generation, code execution, and interaction creation/retrieval with Google Search |
 | `mistral` | chat completions, FIM and embeddings, under `/mistral/v1/…` |
