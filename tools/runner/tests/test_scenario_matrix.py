@@ -24,7 +24,7 @@ REPO = Path(__file__).resolve().parents[3]
 def run_subprocess(
     args: Sequence[str],
     *,
-    input: str | None = None,
+    input_text: str | None = None,
     capture_output: bool = False,
     check: bool = False,
     cwd: Path | None = None,
@@ -33,7 +33,7 @@ def run_subprocess(
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         args,
-        input=input,
+        input=input_text,
         capture_output=capture_output,
         text=True,
         check=check,
@@ -59,7 +59,7 @@ def test_run_subprocess_uses_platform_creation_flags(
     run = Mock(return_value=result)
     monkeypatch.setattr(subprocess, "run", run)
 
-    actual = run_subprocess(["command"], input="input")
+    actual = run_subprocess(["command"], input_text="input")
 
     assert actual is result
     run.assert_called_once()
@@ -164,7 +164,7 @@ def test_malformed_paths_fail(path: str) -> None:
 def test_cli_rejects_empty_or_invalid_discovery(paths: str) -> None:
     result = run_subprocess(
         [sys.executable, "-I", str(_scenario_matrix.__file__)],
-        input=paths,
+        input_text=paths,
         capture_output=True,
         check=False,
     )
@@ -182,7 +182,7 @@ def test_tracked_scenarios_are_covered_once_by_standalone_cli() -> None:
     ).stdout.splitlines()
     result = run_subprocess(
         [sys.executable, "-I", str(_scenario_matrix.__file__)],
-        input="\n".join(paths),
+        input_text="\n".join(paths),
         capture_output=True,
         check=True,
     )
