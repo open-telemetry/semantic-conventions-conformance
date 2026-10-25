@@ -11,6 +11,7 @@ _SUPPORTED_SYSTEM_SPAN_TYPES = {
     "hbase": "db.hbase.client",
     "mariadb": "db.mariadb.client",
     "postgresql": "db.postgresql.client",
+    "redis": "db.redis.client",
 }
 
 

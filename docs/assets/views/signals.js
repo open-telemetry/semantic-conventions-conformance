@@ -13,7 +13,7 @@ import {
   levelColor,
 } from "../data.js";
 import { el, filterBar, levelLegend, palette, trackBand } from "../ui.js";
-import { go, setParams } from "../route.js";
+import { go, setParams, signalPath, targetHref } from "../route.js";
 
 /** The three requirement-level views, the first being the default. */
 const LEVEL_CHOICES = [
@@ -129,7 +129,7 @@ export default function signals(data, key, params) {
     label: "Signal",
     items: entries(available),
     value: chosen.key,
-    onPick: (value) => go(`/signals/${encodeURIComponent(value)}`),
+    onPick: (value) => go(signalPath(value)),
   });
 
   const bar = filterBar({
@@ -226,6 +226,10 @@ export default function signals(data, key, params) {
 
   return el("div", {}, [
     controls,
+    el("p", {
+      class: "tagline",
+      text: "What instrumentations actually emit, measured through Weaver live-check against the pinned registries.",
+    }),
     unknown &&
       el("p", { class: "note" }, [
         el("strong", { text: "No such signal in this report: " }),
@@ -360,8 +364,9 @@ function columnHeader(target, label) {
     },
     [
       el(
-        "span",
+        "a",
         {
+          href: targetHref(target.id),
           title: full,
           "aria-label": full,
         },

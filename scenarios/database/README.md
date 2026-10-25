@@ -4,19 +4,24 @@ What database instrumentations emit, checked against the
 [database semantic conventions][database] and recorded as committed coverage.
 
 Initial support is Java-only. PostgreSQL and MariaDB run through JDBC, each
-against the OpenTelemetry Java agent and the OpenTelemetry JDBC library
-instrumentation. HBase runs through the 1.x and 2.x client APIs, against the
-Java agent. The database runner starts the selected Docker container and
-applies its shared schema before any measured process starts.
+against the OpenTelemetry Java agent and JDBC library instrumentation. HBase
+runs through the 1.x and 2.x client APIs against the Java agent. Redis runs
+through Jedis, Lettuce, Rediscala, and Redisson against the Java agent, with an
+additional Lettuce run against its standalone library instrumentation. The
+database runner starts the selected Docker container and applies any required
+initialization before measured processes start.
 
 ```text
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
 java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
 java/shared/hbase/scenarios/                the HBase workload, with no OpenTelemetry
-contracts/hbase.yaml                       shared HBase telemetry expectations
+contracts/                                 HBase and Redis telemetry expectations
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
-java/hbase/{hbase-1,hbase-2}/               vendor conformance packages
+java/hbase/{hbase-1,hbase-2}/               HBase conformance packages
+java/shared/redis/                          Redis client workloads and launchers
+java/redis/{jedis,lettuce,rediscala,redisson}/
+                                            Redis conformance packages
 ../../tools/database/sql-test-client/       combined SQL actions and expectations
 ```
 
@@ -48,6 +53,23 @@ and split their client operations into named scenarios:
 | `scan` | `Table.getScanner` |
 | `batch` | `Table.batch` |
 
+Every Redis client runs the same workload with the same keys, values, and
+plain-string encoding in logical database zero:
+
+| Scenario | Redis workload |
+| --- | --- |
+| `set_get` | `SET conformance:value value`, then `GET` and verify the value |
+| `pipeline` | Submit `SET conformance:pipeline:1 first` and `SET conformance:pipeline:2 second` before waiting, then `GET` both keys and verify their values |
+| `error` | `SET conformance:error not-a-list`, then `LPUSH conformance:error value` and verify `WRONGTYPE` |
+
+Redis contracts live under [`contracts`](contracts) and keep named scenarios
+because the Redis launchers select workloads by name rather than consume SQL
+`action` objects. Each client's contract records its telemetry for these common
+operations, including connection-startup commands. Lettuce's explicit pipelining
+and Rediscala's implicit pipelining emit one span per queued command; Jedis and
+Redisson expose a pipeline batch span. Rediscala also has a separate
+`transaction` scenario that records a `MULTI` batch.
+
 ## Running it
 
 ```sh
@@ -58,6 +80,11 @@ otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-javaagent
 otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-library
 otel-conformance scenarios/database/java/hbase/hbase-1/opentelemetry-javaagent
 otel-conformance scenarios/database/java/hbase/hbase-2/opentelemetry-javaagent
+otel-conformance scenarios/database/java/redis/jedis/opentelemetry-javaagent
+otel-conformance scenarios/database/java/redis/lettuce/opentelemetry-javaagent
+otel-conformance scenarios/database/java/redis/lettuce/opentelemetry-library
+otel-conformance scenarios/database/java/redis/rediscala/opentelemetry-javaagent
+otel-conformance scenarios/database/java/redis/redisson/opentelemetry-javaagent
 ```
 
 Docker must be installed and running. One database container serves the whole
@@ -73,6 +100,10 @@ read scenarios expect.
 
 The HBase fixtures publish fixed loopback ports, so only one HBase package can
 run at a time on a host.
+
+The Redis backend uses logical database zero and requires only a readiness
+check. Each scenario uses namespaced keys and verifies its command results.
+The pinned container is shared for one package run and removed afterward.
 
 The runs opt into stable database semantic conventions. Java instrumentation
 otherwise emits legacy database attributes during the migration period, which

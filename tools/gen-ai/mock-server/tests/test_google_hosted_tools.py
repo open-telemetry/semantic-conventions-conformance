@@ -54,6 +54,91 @@ def test_code_execution_returns_a_call_and_result(
     assert response.json["usageMetadata"]["promptTokenCount"] > 0
 
 
+@pytest.mark.parametrize("tool_key", ["googleSearch", "google_search"])
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "/v1beta/models/gemini-2.5-flash:generateContent",
+        "/v1/projects/test/locations/us-central1/publishers/google/models/gemini-2.5-flash:generateContent",
+    ],
+)
+def test_google_search_returns_a_linked_call_and_result(
+    client: FlaskClient, tool_key: str, endpoint: str
+) -> None:
+    body = {
+        "contents": [
+            {"role": "user", "parts": [{"text": "Search for OpenTelemetry."}]}
+        ],
+        "tools": [{tool_key: {}}],
+        "toolConfig": {"includeServerSideToolInvocations": True},
+    }
+    response = client.post(endpoint, json=body)
+    assert response.status_code == 200
+    assert response.data == client.post(endpoint, json=body).data
+    candidate = response.json["candidates"][0]
+    call, result, text = candidate["content"]["parts"]
+    assert call == {
+        "toolCall": {
+            "id": "search-1",
+            "toolType": "GOOGLE_SEARCH_WEB",
+            "args": {"queries": ["OpenTelemetry"]},
+        }
+    }
+    assert result["toolResponse"]["id"] == call["toolCall"]["id"]
+    assert result["toolResponse"]["toolType"] == "GOOGLE_SEARCH_WEB"
+    assert result["toolResponse"]["response"]["results"]
+    assert "text" in text
+    assert candidate["groundingMetadata"]["webSearchQueries"] == ["OpenTelemetry"]
+
+
+def test_google_search_without_opt_in_returns_only_grounded_text(
+    client: FlaskClient,
+) -> None:
+    response = client.post(
+        "/v1beta/models/gemini-2.5-flash:generateContent",
+        json={"contents": [], "tools": [{"googleSearch": {}}]},
+    )
+    candidate = response.json["candidates"][0]
+    assert [list(part) for part in candidate["content"]["parts"]] == [["text"]]
+    assert candidate["groundingMetadata"]["groundingChunks"]
+
+
+def test_google_search_with_function_declarations_returns_search_then_function_call(
+    client: FlaskClient,
+) -> None:
+    response = client.post(
+        "/v1beta/models/gemini-3.8-flash:generateContent",
+        json={
+            "contents": [
+                {"role": "user", "parts": [{"text": "Weather where OTel is from?"}]}
+            ],
+            "tools": [
+                {"googleSearch": {}},
+                {
+                    "functionDeclarations": [
+                        {
+                            "name": "get_current_weather",
+                            "parameters": {
+                                "type": "OBJECT",
+                                "properties": {"location": {"type": "STRING"}},
+                                "required": ["location"],
+                            },
+                        }
+                    ]
+                },
+            ],
+            "toolConfig": {"includeServerSideToolInvocations": True},
+        },
+    )
+    candidate = response.json["candidates"][0]
+    call, result, function_call = candidate["content"]["parts"]
+    assert call["toolCall"]["toolType"] == "GOOGLE_SEARCH_WEB"
+    assert result["toolResponse"]["id"] == call["toolCall"]["id"]
+    assert function_call["functionCall"]["name"] == "get_current_weather"
+    assert "location" in function_call["functionCall"]["args"]
+    assert candidate["groundingMetadata"]["webSearchQueries"] == ["OpenTelemetry"]
+
+
 def test_interactions_search_returns_a_linked_call_and_result(
     client: FlaskClient,
 ) -> None:

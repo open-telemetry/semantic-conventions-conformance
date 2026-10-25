@@ -72,9 +72,8 @@ class HBase(DatabaseContainer):
                     "-c",
                     "echo \"status 'simple'\" | hbase shell -n",
                 ),
-                schema_resource="hbase.rb",
-                schema_path="/tmp/otel-conformance-hbase.rb",
-                schema_command=(
+                schema_copy=("hbase.rb", "/tmp/otel-conformance-hbase.rb"),
+                initialize_command=(
                     "hbase",
                     "shell",
                     "-n",

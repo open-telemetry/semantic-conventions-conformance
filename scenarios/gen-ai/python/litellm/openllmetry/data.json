@@ -1,13 +1,6 @@
 {
   "spans": {
-    "gen_ai.embeddings.client": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model",
-      "gen_ai.response.model",
-      "gen_ai.usage.input_tokens"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -23,15 +16,18 @@
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.embeddings.client": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "gen_ai.response.model",
+      "gen_ai.usage.input_tokens"
     ]
   },
   "events": {},
   "metrics": {
     "gen_ai.client.operation.duration": [
-      "gen_ai.provider.name",
-      "gen_ai.request.model"
-    ],
-    "gen_ai.client.token.usage": [
       "gen_ai.provider.name",
       "gen_ai.request.model"
     ]
@@ -75,32 +71,10 @@
       }
     },
     {
-      "id": "required_attribute_not_present",
-      "message": "Required attribute 'gen_ai.operation.name' is not present.",
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
       "signal_type": "metric",
-      "signal_name": "gen_ai.client.token.usage",
-      "context": {
-        "attribute_key": "gen_ai.operation.name"
-      }
-    },
-    {
-      "id": "required_attribute_not_present",
-      "message": "Required attribute 'gen_ai.token.type' is not present.",
-      "signal_type": "metric",
-      "signal_name": "gen_ai.client.token.usage",
-      "context": {
-        "attribute_key": "gen_ai.token.type"
-      }
-    },
-    {
-      "id": "unit_mismatch",
-      "message": "Unit should be '{token}', but found 'token'.",
-      "signal_type": "metric",
-      "signal_name": "gen_ai.client.token.usage",
-      "context": {
-        "expected": "{token}",
-        "unit": "token"
-      }
+      "signal_name": "gen_ai.client.token.usage"
     },
     {
       "id": "missing_attribute",

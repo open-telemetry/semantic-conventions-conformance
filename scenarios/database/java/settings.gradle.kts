@@ -17,6 +17,12 @@ include("shared:jdbc:opentelemetry-library")
 include("shared:hbase:scenarios")
 include("hbase:hbase-1:opentelemetry-javaagent")
 include("hbase:hbase-2:opentelemetry-javaagent")
+include("shared:redis:jedis:opentelemetry-javaagent")
+include("shared:redis:lettuce:scenarios")
+include("shared:redis:lettuce:opentelemetry-javaagent")
+include("shared:redis:lettuce:opentelemetry-library")
+include("shared:redis:rediscala:opentelemetry-javaagent")
+include("shared:redis:redisson:opentelemetry-javaagent")
 
 fun shared(name: String, directory: String) {
     include(name)

@@ -42,16 +42,15 @@ class BackendSpec:
     password: str
     environment: tuple[tuple[str, str], ...]
     ready_command: tuple[str, ...]
-    schema_resource: str
-    schema_path: str
-    schema_command: tuple[str, ...]
-    schema_environment: tuple[tuple[str, str], ...] = ()
+    schema_copy: tuple[str, str] | None
+    initialize_command: tuple[str, ...] | None
+    initialize_environment: tuple[tuple[str, str], ...] = ()
     hostname: str | None = None
     fixed_ports: tuple[int, ...] = ()
 
 
 class DatabaseContainer:
-    """Own one disposable database initialized from a packaged schema."""
+    """Own one disposable database and run its optional initialization."""
 
     def __init__(
         self,
@@ -84,11 +83,6 @@ class DatabaseContainer:
                 f"{self._spec.name} has already been started"
             )
 
-        schema = (
-            resources.files("database_conformance")
-            .joinpath(self._spec.schema_resource)
-            .read_bytes()
-        )
         ready = (
             ExecWaitStrategy(list(self._spec.ready_command))
             .with_startup_timeout(
@@ -101,7 +95,14 @@ class DatabaseContainer:
             container.with_env(key, value)
         if self._spec.hostname is not None:
             container.with_kwargs(hostname=self._spec.hostname)
-        container.with_copy_into_container(schema, self._spec.schema_path)
+        if self._spec.schema_copy is not None:
+            resource, path = self._spec.schema_copy
+            schema = (
+                resources.files("database_conformance")
+                .joinpath(resource)
+                .read_bytes()
+            )
+            container.with_copy_into_container(schema, path)
         container.waiting_for(ready)
 
         port_bindings = cast(dict[str, _PortBinding], container.ports)
@@ -115,7 +116,7 @@ class DatabaseContainer:
         try:
             container.start()
             self._published_port = container.get_exposed_port(self._spec.port)
-            self._apply_schema(container)
+            self._initialize_backend(container)
         except BaseException as error:
             failure = (
                 self._failure_message(container, error)
@@ -158,11 +159,14 @@ class DatabaseContainer:
         except Exception as log_error:
             return f"Could not read {self._spec.name} logs: {log_error}"
 
-    def _apply_schema(self, container: DockerContainer) -> None:
+    def _initialize_backend(self, container: DockerContainer) -> None:
+        if self._spec.initialize_command is None:
+            return
+
         result = container.exec(
             ExecConfig(
-                command=list(self._spec.schema_command),
-                environment=dict(self._spec.schema_environment),
+                command=list(self._spec.initialize_command),
+                environment=dict(self._spec.initialize_environment),
             )
         )
         if result.exit_code == 0:
@@ -173,8 +177,8 @@ class DatabaseContainer:
         ).strip()
         logs = self._container_logs(container)
         raise DatabaseBackendError(
-            f"Could not apply the {self._spec.name} schema; the client exited "
-            f"with {result.exit_code}\n{output}\n"
+            f"Could not initialize {self._spec.name}; the client exited with "
+            f"{result.exit_code}\n{output}\n"
             f"--- {self._spec.name} logs ---\n{logs}"
         )
 

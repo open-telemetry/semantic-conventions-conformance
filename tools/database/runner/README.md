@@ -23,10 +23,12 @@ runner_config:
 ```
 
 `runner_config` must contain only `backend`, set to `hbase-1`, `hbase-2`,
-`mariadb`, or `postgresql`. Each session starts one pinned container fixture,
-applies that backend's packaged schema, and removes the container when the
-session closes. PostgreSQL and MariaDB create the same empty logical objects.
-HBase creates its table and one deterministic row for read scenarios.
+`mariadb`, `postgresql`, or `redis`. Each session starts one pinned container
+fixture and removes it when the session closes. PostgreSQL and MariaDB apply
+packaged SQL schemas that create the same empty logical objects. HBase applies
+its packaged schema to create its table and one deterministic row for read
+scenarios. Redis needs no initialization beyond its readiness check; its
+scenarios own any data their operations need.
 
 The HBase fixtures build local images from checksum-verified Apache HBase
 1.7.2 and 2.4.18 binary distributions and a digest-pinned Eclipse Temurin
@@ -42,7 +44,7 @@ environment declarations:
 | Variable | Value |
 | --- | --- |
 | `DATABASE_HOST` | Loopback address published by Docker |
-| `DATABASE_PORT` | Published host port; Docker-assigned for PostgreSQL and MariaDB, 2181 for HBase |
+| `DATABASE_PORT` | Published host port; Docker-assigned for PostgreSQL, MariaDB, and Redis; 2181 for HBase |
 | `DATABASE_NAME` | Test database name |
 | `DATABASE_USER` | Test user |
 | `DATABASE_PASSWORD` | Test-only password |
@@ -54,9 +56,15 @@ from the shared [`contracts/`](../sql-test-client/contracts) directory using
 `scenario_contract`. The generic conformance runner injects only the selected
 contract entry's `action` into the scenario process.
 
-The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and HBase
-spans use `db.hbase.client`. Adding a backend also requires adding its span
+Redis scenarios use `DATABASE_NAME` as the logical database index and
+authenticate with `DATABASE_USER` and `DATABASE_PASSWORD` only when the password
+is non-empty. The Redis backend supplies database zero, user `default`, and an
+empty password, so its scenarios run without authentication.
+
+The package classifies only client spans for the backends it can run.
+PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
+`db.mariadb.client`, HBase spans use `db.hbase.client`, and Redis spans use
+`db.redis.client`. Adding a backend also requires adding its span
 classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
