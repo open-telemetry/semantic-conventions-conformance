@@ -36,6 +36,11 @@ does not emit query text, while Jedis does not currently mark the rejected
 command as an error. Lettuce records the Redis server's `WRONGTYPE` code in
 `error.type` rather than the Java exception class.
 
+All five Redis packages omit `db.response.status_code` on rejected `LPUSH`
+spans. The contracts do not assert it while
+[#384](https://github.com/open-telemetry/semantic-conventions-conformance/issues/384)
+tracks recording conditional semantic-convention violations as findings.
+
 Run the package from the repository root:
 
 ```sh
