@@ -22,10 +22,11 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
-`sql_server`. Each session starts one pinned container, applies that backend's
-packaged SQL schema, and removes the container when the session closes. The
-schemas create the same logical objects but no rows; scenarios own any data
+`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`,
+`sql_server`, or `redis`. Each session starts one pinned container and removes
+it when the session closes. PostgreSQL, MariaDB, and Microsoft SQL Server apply
+packaged SQL schemas that create the same logical objects but no rows. Redis
+needs no initialization beyond its readiness check. Scenarios own any data
 their operations need. The SQL Server backend accepts Microsoft's EULA through
 the container's required `ACCEPT_EULA=Y` setting and runs the Developer edition.
 
@@ -47,9 +48,15 @@ from the shared [`contracts/`](../sql-test-client/contracts) directory using
 `scenario_contract`. The generic conformance runner injects only the selected
 contract entry's `action` into the scenario process.
 
-The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and Microsoft
-SQL Server spans use `db.sql_server.client`. Adding a backend also requires
-adding its span classification and conformance scenarios.
+Redis scenarios use `DATABASE_NAME` as the logical database index and
+authenticate with `DATABASE_USER` and `DATABASE_PASSWORD` only when the password
+is non-empty. The Redis backend supplies database zero, user `default`, and an
+empty password, so its scenarios run without authentication.
+
+The package classifies only client spans for the backends it can run.
+PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
+`db.mariadb.client`, Microsoft SQL Server spans use `db.sql_server.client`, and
+Redis spans use `db.redis.client`. Adding a backend also requires adding its
+span classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

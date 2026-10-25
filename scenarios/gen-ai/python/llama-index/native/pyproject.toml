@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "llama-index-core==0.14.25",
     "llama-index-llms-openai==0.8.3",
+    "llama-index-embeddings-openai==0.7.0",
     "llama-index-observability-otel==0.7.0",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",

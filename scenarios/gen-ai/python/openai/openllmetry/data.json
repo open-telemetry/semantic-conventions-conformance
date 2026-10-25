@@ -1,13 +1,6 @@
 {
   "spans": {
-    "gen_ai.embeddings.client": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model",
-      "gen_ai.response.model",
-      "gen_ai.usage.input_tokens"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -25,6 +18,13 @@
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.embeddings.client": [
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model",
+      "gen_ai.response.model",
+      "gen_ai.usage.input_tokens"
     ]
   },
   "events": {},
@@ -33,13 +33,6 @@
       "gen_ai.operation.name",
       "gen_ai.provider.name",
       "gen_ai.response.model",
-      "server.address"
-    ],
-    "gen_ai.client.token.usage": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.response.model",
-      "gen_ai.token.type",
       "server.address"
     ],
     "gen_ai.server.time_to_first_token": [
@@ -98,6 +91,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.token.type' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.token.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'stream' does not exist in the registry.",
       "signal_type": "metric",
       "signal_name": "gen_ai.client.token.usage",
@@ -106,14 +108,10 @@
       }
     },
     {
-      "id": "unit_mismatch",
-      "message": "Unit should be '{token}', but found 'token'.",
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
       "signal_type": "metric",
-      "signal_name": "gen_ai.client.token.usage",
-      "context": {
-        "expected": "{token}",
-        "unit": "token"
-      }
+      "signal_name": "gen_ai.client.token.usage"
     },
     {
       "id": "missing_attribute",
@@ -306,6 +304,54 @@
         "expected_form": "embeddings text-embedding-3-small",
         "keyed_attr": "gen_ai.request.model",
         "operation": "embeddings"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.is_streaming' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "attribute_key": "gen_ai.is_streaming"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.reasoning_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "attribute_key": "gen_ai.usage.reasoning_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'openai.response' (operation 'chat') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'openai.response'",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "expected_form": "chat gpt-4o-mini",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
       }
     }
   ]

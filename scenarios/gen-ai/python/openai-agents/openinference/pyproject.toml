@@ -3,7 +3,7 @@ name = "openai-agents-openinference-conformance"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "openai-agents==0.23.1",
+    "openai-agents==0.24.0",
     "openinference-instrumentation-openai-agents==2.5.3",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",

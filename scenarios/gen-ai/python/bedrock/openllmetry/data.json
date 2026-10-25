@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -21,11 +21,6 @@
     "gen_ai.client.operation.duration": [
       "gen_ai.provider.name",
       "gen_ai.response.model"
-    ],
-    "gen_ai.client.token.usage": [
-      "gen_ai.provider.name",
-      "gen_ai.response.model",
-      "gen_ai.token.type"
     ]
   },
   "entities": {},
@@ -58,23 +53,19 @@
       }
     },
     {
-      "id": "required_attribute_not_present",
-      "message": "Required attribute 'gen_ai.operation.name' is not present.",
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.token.type' does not exist in the registry.",
       "signal_type": "metric",
       "signal_name": "gen_ai.client.token.usage",
       "context": {
-        "attribute_key": "gen_ai.operation.name"
+        "attribute_key": "gen_ai.token.type"
       }
     },
     {
-      "id": "unit_mismatch",
-      "message": "Unit should be '{token}', but found 'token'.",
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
       "signal_type": "metric",
-      "signal_name": "gen_ai.client.token.usage",
-      "context": {
-        "expected": "{token}",
-        "unit": "token"
-      }
+      "signal_name": "gen_ai.client.token.usage"
     },
     {
       "id": "genai_content_schema",

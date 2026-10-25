@@ -38,9 +38,8 @@ SQL_SERVER = BackendSpec(
         f'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" exec {_SQLCMD} '
         '-S 127.0.0.1 -U sa -C -Q "SELECT 1"',
     ),
-    schema_resource="sql_server.sql",
-    schema_path="/tmp/otel-conformance-sql-server.sql",
-    schema_command=(
+    schema_copy=("sql_server.sql", "/tmp/otel-conformance-sql-server.sql"),
+    initialize_command=(
         _SQLCMD,
         "-S",
         "127.0.0.1",
@@ -51,7 +50,7 @@ SQL_SERVER = BackendSpec(
         "-i",
         "/tmp/otel-conformance-sql-server.sql",
     ),
-    schema_environment=(("SQLCMDPASSWORD", SQL_SERVER_PASSWORD),),
+    initialize_environment=(("SQLCMDPASSWORD", SQL_SERVER_PASSWORD),),
 )
 
 
