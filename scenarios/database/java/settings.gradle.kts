@@ -20,6 +20,12 @@ include("shared:cassandra4:scenarios")
 include("shared:cassandra4:opentelemetry-javaagent")
 include("shared:cassandra44:opentelemetry-javaagent")
 include("shared:cassandra44:opentelemetry-library")
+include("shared:redis:jedis:opentelemetry-javaagent")
+include("shared:redis:lettuce:scenarios")
+include("shared:redis:lettuce:opentelemetry-javaagent")
+include("shared:redis:lettuce:opentelemetry-library")
+include("shared:redis:rediscala:opentelemetry-javaagent")
+include("shared:redis:redisson:opentelemetry-javaagent")
 
 fun shared(name: String, directory: String) {
     include(name)

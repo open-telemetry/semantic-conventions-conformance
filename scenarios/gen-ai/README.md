@@ -84,9 +84,11 @@ exchange, and the sampling attributes are already covered.
 | `multimodal` | llm client | one call per non-text content kind the API takes | the *shape* of recorded content, per-modality token counts |
 | `embeddings` | llm client | one batched call with an explicit encoding format and dimension count | the embeddings span type |
 | `tool_calling` | llm client | two round trips: tool definitions and the requested call, then the tool result travelling back as input | tool definitions and calls on both sides of the exchange |
+| `server_tool_calling` | llm client | one call enabling the provider's hosted web search; the provider runs it and returns the call and, where the API exposes one, its result | server tool call and result message parts, with no `execute_tool` span |
 | `automatic_tool_calling` | llm client; agentic | the same exchange, with the SDK or framework running the tool and sending the result back | tool execution as a span, not a message |
 | `invoke_agent` | agentic | one agent run, no tools | the agent span on its own |
 | `workflow` | agentic | one chain, no agent | the workflow span on its own |
+| `retrieval` | agentic | one retriever query over a small fixed in-memory document set, `top_k` set explicitly, no chat call | the retrieval span on its own: query, documents, `top_k`, data source |
 
 *llm client* means an LLM client SDK such as `openai` or `anthropic`.
 *agentic* means a framework that drives a run, such as `langchain` or
@@ -111,30 +113,32 @@ classes than the row, the row says so.
 | Library | Classes | Implementations |
 | --- | --- | --- |
 | `agent-framework` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
-| `agno` | invoke_agent, automatic_tool_calling | `opentelemetry-agno`, `openinference`, `openllmetry` |
-| `anthropic` | inference, streaming, tool_calling, automatic_tool_calling, multimodal | `opentelemetry-anthropic`, `opentelemetry-langchain-anthropic`, `openinference`, `openllmetry`<br>no automatic_tool_calling in `opentelemetry-langchain-anthropic`: langchain binds tools but does not run them outside an agent |
+| `agno` | workflow, invoke_agent, automatic_tool_calling, retrieval | `opentelemetry-agno`, `openinference`, `openllmetry` |
+| `anthropic` | inference, streaming, tool_calling, server_tool_calling, automatic_tool_calling, multimodal | `opentelemetry-anthropic`, `opentelemetry-langchain-anthropic`, `openinference`, `openllmetry`<br>no automatic_tool_calling in `opentelemetry-langchain-anthropic`: langchain binds tools but does not run them outside an agent |
 | `autogen` | invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry` for this library |
-| `bedrock` | Bedrock Converse: inference, streaming, tool_calling | `opentelemetry-botocore`, `openinference`, `openllmetry` |
+| `bedrock` | Bedrock Converse: inference, streaming, tool_calling | `opentelemetry-botocore`, `opentelemetry-bedrock`, `openinference`, `openllmetry` |
 | `cohere` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`<br>no `openllmetry`: does not support cohere v7 |
 | `crewai` | workflow, invoke_agent, automatic_tool_calling | `openinference`, `openllmetry` |
 | `google-adk` | invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry` for this library |
 | `google-genai` | every client class, plus automatic_tool_calling | `opentelemetry-google-genai`, `openinference`, `openllmetry` |
 | `groq` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`, `openllmetry` |
 | `haystack` | workflow, invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry`: does not support Haystack 3 |
-| `langchain` | workflow, invoke_agent, automatic_tool_calling | `opentelemetry-langchain`, `openinference`, `openllmetry` |
+| `langchain` | workflow, invoke_agent, automatic_tool_calling, retrieval | `opentelemetry-langchain`, `openinference`, `openllmetry` |
 | `litellm` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `native`, `openinference`, `openllmetry` |
-| `llama-index` | workflow, invoke_agent, automatic_tool_calling | `native`, `openinference`<br>no `openllmetry`:  does not record anything for modern versions |
+| `llama-index` | workflow, invoke_agent, automatic_tool_calling, retrieval | `opentelemetry-llama-index`, `native`, `openinference`<br>no `openllmetry`:  does not record anything for modern versions |
 | `mistral` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `native`, `openinference`<br>no `openllmetry`: does not support mistralai 3's client namespace |
 | `ollama` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`, `openllmetry` |
-| `openai` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
+| `openai` | inference, streaming, tool_calling, server_tool_calling, structured_output, multimodal, embeddings. server_tool_calling uses the Responses API, the only one with hosted tools | `opentelemetry-openai`, `opentelemetry-langchain-openai`, `openinference`, `openllmetry` |
 | `openai-agents` | invoke_agent, automatic_tool_calling. The Agents SDK wraps every run in a trace, so the workflow span comes with each of those rather than from a scenario of its own | `opentelemetry-openai-agents`, `openinference`, `openllmetry` |
+| `portkey` | inference, streaming, tool_calling, server_tool_calling, structured_output, multimodal, embeddings | `opentelemetry-portkey`, `openinference`<br>no `openllmetry` for this library |
 | `pydantic-ai` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent`<br>no `openinference` or `openllmetry` for this library |
+| `smolagents` | invoke_agent, automatic_tool_calling | `opentelemetry-smolagents`, `openinference`<br>no `openllmetry` for this library |
 | `strands-agents` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `together` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`<br>no `openllmetry`: not compatible with together 2 |
 
-The conventions also cover retrieval, memory and planning. No instrumentation
-here emits them, so there is no class for them yet.
+The conventions also cover memory and planning. No instrumentation here emits
+them, so there is no class for them yet.
 
 Each class is one file, and each file gets its own weaver report.
 

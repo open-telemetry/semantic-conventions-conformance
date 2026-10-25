@@ -25,6 +25,7 @@ from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
 from ._mariadb import MariaDB
 from ._postgres import Postgres
+from ._redis import Redis
 
 _HERE = Path(__file__).parent
 
@@ -39,6 +40,7 @@ _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
     "cassandra": Cassandra,
     "mariadb": MariaDB,
     "postgresql": Postgres,
+    "redis": Redis,
 }
 
 

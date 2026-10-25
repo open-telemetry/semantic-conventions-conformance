@@ -22,11 +22,12 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `cassandra`, `mariadb`, or
-`postgresql`. Each session starts one pinned container, applies that backend's
-packaged schema, and removes the container when the session closes. The schemas
-create the objects used by the scenarios but no rows; scenarios own any data
-their operations need.
+`runner_config` must contain only `backend`, set to `cassandra`, `mariadb`,
+`postgresql`, or `redis`. Each session starts one pinned container and removes
+it when the session closes. Cassandra, PostgreSQL, and MariaDB apply packaged
+schemas that create the objects used by the scenarios but no rows. Redis needs
+no initialization beyond its readiness check. Scenarios own any data their
+operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -38,7 +39,7 @@ environment declarations:
 | `DATABASE_NAME` | Test database name |
 | `DATABASE_USER` | Test user |
 | `DATABASE_PASSWORD` | Test-only password |
-| `DATABASE_LOCAL_DATACENTER` | Cassandra local datacenter; absent for SQL backends |
+| `DATABASE_LOCAL_DATACENTER` | Cassandra local datacenter; absent for other backends |
 
 Cassandra runs without authentication, so `DATABASE_USER` and
 `DATABASE_PASSWORD` are empty for that backend.
@@ -50,9 +51,15 @@ from the shared [`contracts/`](../sql-test-client/contracts) directory using
 `scenario_contract`. The generic conformance runner injects only the selected
 contract entry's `action` into the scenario process.
 
-The package classifies only spans for the backends it can run. Cassandra,
-MariaDB, and PostgreSQL spans use their respective `db.cassandra.client`,
-`db.mariadb.client`, and `db.postgresql.client` refinements. Adding a backend
+Redis scenarios use `DATABASE_NAME` as the logical database index and
+authenticate with `DATABASE_USER` and `DATABASE_PASSWORD` only when the password
+is non-empty. The Redis backend supplies database zero, user `default`, and an
+empty password, so its scenarios run without authentication.
+
+The package classifies only client spans for the backends it can run.
+Cassandra, MariaDB, PostgreSQL, and Redis spans use their respective
+`db.cassandra.client`, `db.mariadb.client`, `db.postgresql.client`, and
+`db.redis.client` refinements. Adding a backend
 also requires adding its span classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

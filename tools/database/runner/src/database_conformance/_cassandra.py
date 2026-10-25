@@ -36,9 +36,8 @@ CASSANDRA = BackendSpec(
         "--execute",
         "SELECT release_version FROM system.local",
     ),
-    schema_resource="cassandra.cql",
-    schema_path="/tmp/otel-conformance-cassandra.cql",
-    schema_command=(
+    schema_copy=("cassandra.cql", "/tmp/otel-conformance-cassandra.cql"),
+    initialize_command=(
         "cqlsh",
         "127.0.0.1",
         str(CASSANDRA_PORT),
