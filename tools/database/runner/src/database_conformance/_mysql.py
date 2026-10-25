@@ -37,9 +37,8 @@ MYSQL = BackendSpec(
         f"--password={MYSQL_PASSWORD}",
         "--silent",
     ),
-    schema_resource="mysql.sql",
-    schema_path="/tmp/otel-conformance-mysql.sql",
-    schema_command=(
+    schema_copy=("mysql.sql", "/tmp/otel-conformance-mysql.sql"),
+    initialize_command=(
         "sh",
         "-c",
         "exec mysql "
@@ -47,7 +46,7 @@ MYSQL = BackendSpec(
         f"--database={MYSQL_DATABASE} "
         "--binary-mode < /tmp/otel-conformance-mysql.sql",
     ),
-    schema_environment=(("MYSQL_PWD", MYSQL_PASSWORD),),
+    initialize_environment=(("MYSQL_PWD", MYSQL_PASSWORD),),
     startup_timeout_seconds=120.0,
 )
 

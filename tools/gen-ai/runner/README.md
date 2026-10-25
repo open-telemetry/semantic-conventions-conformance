@@ -44,7 +44,7 @@ replaces it: every span is classified into a registry span type, and the file
 records which of that type's attributes were present.
 
 ```json
-{"spans": {"gen_ai.inference.client": ["gen_ai.input.messages", "gen_ai.operation.name", "…"]}}
+{"spans": {"gen_ai.client.inference": ["gen_ai.input.messages", "gen_ai.operation.name", "…"]}}
 ```
 
 Two implementations of one library diff directly.

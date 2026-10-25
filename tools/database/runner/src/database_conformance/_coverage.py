@@ -11,6 +11,7 @@ _SUPPORTED_SYSTEM_SPAN_TYPES = {
     "mariadb": "db.mariadb.client",
     "mysql": "db.mysql.client",
     "postgresql": "db.postgresql.client",
+    "redis": "db.redis.client",
 }
 
 
