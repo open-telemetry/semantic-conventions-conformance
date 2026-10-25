@@ -17,4 +17,8 @@ exclude_samples = [
   "rpc.method",
   "http.request.method",
   "http.response.status_code",
+  "http.route",
+  "url.full",
+  "url.path",
+  "url.scheme",
 ]

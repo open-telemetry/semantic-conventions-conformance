@@ -45,9 +45,8 @@ MONGODB = BackendSpec(
         "--eval",
         "quit(db.adminCommand('ping').ok ? 0 : 1)",
     ),
-    schema_resource="mongodb.js",
-    schema_path="/tmp/otel-conformance-mongodb.js",
-    schema_command=(
+    schema_copy=("mongodb.js", "/tmp/otel-conformance-mongodb.js"),
+    initialize_command=(
         "mongosh",
         "--quiet",
         "--host",

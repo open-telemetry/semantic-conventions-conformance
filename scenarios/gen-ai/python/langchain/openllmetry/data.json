@@ -1,20 +1,6 @@
 {
   "spans": {
-    "gen_ai.create_agent.client": [
-      "gen_ai.agent.name",
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.system_instructions"
-    ],
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.arguments",
-      "gen_ai.tool.call.result",
-      "gen_ai.tool.description",
-      "gen_ai.tool.name",
-      "gen_ai.tool.type"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -30,8 +16,23 @@
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
     ],
+    "gen_ai.create_agent.client": [
+      "gen_ai.agent.name",
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.system_instructions"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
     "gen_ai.invoke_agent.internal": [
       "gen_ai.agent.name",
+      "gen_ai.conversation.id",
       "gen_ai.operation.name"
     ]
   },
@@ -40,11 +41,6 @@
     "gen_ai.client.operation.duration": [
       "gen_ai.provider.name",
       "gen_ai.response.model"
-    ],
-    "gen_ai.client.token.usage": [
-      "gen_ai.provider.name",
-      "gen_ai.response.model",
-      "gen_ai.token.type"
     ]
   },
   "entities": {},
@@ -71,23 +67,19 @@
       }
     },
     {
-      "id": "required_attribute_not_present",
-      "message": "Required attribute 'gen_ai.operation.name' is not present.",
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.token.type' does not exist in the registry.",
       "signal_type": "metric",
       "signal_name": "gen_ai.client.token.usage",
       "context": {
-        "attribute_key": "gen_ai.operation.name"
+        "attribute_key": "gen_ai.token.type"
       }
     },
     {
-      "id": "unit_mismatch",
-      "message": "Unit should be '{token}', but found 'token'.",
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
       "signal_type": "metric",
-      "signal_name": "gen_ai.client.token.usage",
-      "context": {
-        "expected": "{token}",
-        "unit": "token"
-      }
+      "signal_name": "gen_ai.client.token.usage"
     },
     {
       "id": "genai_content_schema",
@@ -232,6 +224,15 @@
       "signal_name": "ChatOpenAI.chat",
       "context": {
         "attribute_key": "traceloop.association.properties.ls_temperature"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.thread_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI.chat",
+      "context": {
+        "attribute_key": "traceloop.association.properties.thread_id"
       }
     },
     {
@@ -637,6 +638,15 @@
       "signal_name": "execute_task model",
       "context": {
         "attribute_key": "traceloop.association.properties.ls_integration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.thread_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "execute_task model",
+      "context": {
+        "attribute_key": "traceloop.association.properties.thread_id"
       }
     },
     {
@@ -1069,6 +1079,123 @@
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
       "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "gen_ai.task.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "gen_ai.task.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "gen_ai.task.status"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_embedding_provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_embedding_provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_retriever_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_retriever_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.ls_vector_store_provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.association.properties.ls_vector_store_provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.entity.input"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.entity.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.entity.output"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.entity.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "attribute_key": "traceloop.workflow.name"
+      }
+    },
+    {
+      "id": "genai_operation_name_unknown",
+      "message": "Span 'vector_db_retrieve VectorStoreRetriever' has gen_ai.operation.name='vector_db_retrieve' which is not a documented enum value",
+      "signal_type": "span",
+      "signal_name": "vector_db_retrieve VectorStoreRetriever",
+      "context": {
+        "operation": "vector_db_retrieve"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
+      "signal_type": "span",
       "signal_name": "weather_assistant.workflow",
       "context": {
         "attribute_key": "gen_ai.task.input"
@@ -1108,6 +1235,15 @@
       "signal_name": "weather_assistant.workflow",
       "context": {
         "attribute_key": "traceloop.association.properties.ls_integration"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'traceloop.association.properties.thread_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant.workflow",
+      "context": {
+        "attribute_key": "traceloop.association.properties.thread_id"
       }
     },
     {

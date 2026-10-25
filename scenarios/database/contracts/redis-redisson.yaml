@@ -1,0 +1,166 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  set_get:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PING
+        expect:
+          count: 2
+          attributes:
+            db.namespace: "0"
+            db.query.text: PING
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: EVAL
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "EVAL redis.call('get', KEYS[1]) redis.call('get', KEYS[2]) 2 test1 test2"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "SET conformance:value ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: GET conformance:value
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    events: []
+
+  pipeline:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PING
+        expect:
+          count: 2
+          attributes:
+            db.namespace: "0"
+            db.query.text: PING
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: EVAL
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "EVAL redis.call('get', KEYS[1]) redis.call('get', KEYS[2]) 2 test1 test2"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PIPELINE SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.operation.batch.size: 2
+            db.query.text: "SET conformance:pipeline:1 ?; SET conformance:pipeline:2 ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET conformance:pipeline:1
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: GET
+            db.query.text: GET conformance:pipeline:2
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    events: []
+
+  error:
+    spans:
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: PING
+        expect:
+          count: 2
+          attributes:
+            db.namespace: "0"
+            db.query.text: PING
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: EVAL
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "EVAL redis.call('get', KEYS[1]) redis.call('get', KEYS[2]) 2 test1 test2"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: SET
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "SET conformance:error ?"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - match:
+          type: db.redis.client
+          attributes:
+            db.operation.name: LPUSH
+        expect:
+          count: 1
+          attributes:
+            db.namespace: "0"
+            db.query.text: "LPUSH conformance:error ?"
+            error.type: org.redisson.client.RedisException
+            server.address: 127.0.0.1
+            server.port: {present: true}
+    metrics:
+      - db.client.operation.duration
+    events: []

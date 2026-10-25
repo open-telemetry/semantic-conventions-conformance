@@ -107,9 +107,11 @@ def test_database_session_injects_backend_variables(
     ]
 
 
-def test_database_session_closes_mongodb_after_an_error(
+@pytest.mark.parametrize("backend", ["mongodb", "redis"])
+def test_database_session_closes_backend_after_an_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    backend: str,
 ) -> None:
     closed = False
 
@@ -130,14 +132,14 @@ def test_database_session_closes_mongodb_after_an_error(
         del directory, kwargs
         yield object()
 
-    monkeypatch.setitem(database_conformance._BACKENDS, "mongodb", StubBackend)
+    monkeypatch.setitem(database_conformance._BACKENDS, backend, StubBackend)
     monkeypatch.setattr(
         database_conformance,
         "DOMAIN",
         SimpleNamespace(session=stub_session),
     )
 
-    spec = _write_spec(tmp_path, "  backend: mongodb")
+    spec = _write_spec(tmp_path, f"  backend: {backend}")
     with pytest.raises(RuntimeError, match="scenario failed"):
         with database_conformance.database_session(tmp_path, spec=spec):
             raise RuntimeError("scenario failed")

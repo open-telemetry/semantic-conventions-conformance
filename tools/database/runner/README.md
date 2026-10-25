@@ -23,12 +23,13 @@ runner_config:
 ```
 
 `runner_config` must contain only `backend`, whose supported values are
-`postgresql`, `mariadb`, and `mongodb`. Each session starts one pinned
-container, applies that backend's packaged bootstrap, and removes the container
-when the session closes. The relational schemas create the same logical objects
-but no rows. The MongoDB bootstrap recreates the `items` collection with
+`postgresql`, `mariadb`, `mongodb`, and `redis`. Each session starts one pinned
+container and removes it when the session closes. PostgreSQL and MariaDB apply
+packaged SQL schemas that create the same logical objects but no rows. The
+MongoDB bootstrap recreates the `items` collection with
 deterministic documents for isolated read, update, delete, and aggregation
-operations.
+operations. Redis needs no initialization beyond its readiness check; its
+scenarios own any data their operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -48,9 +49,15 @@ from the shared [`contracts/`](../sql-test-client/contracts) directory using
 `scenario_contract`. The generic conformance runner injects only the selected
 contract entry's `action` into the scenario process.
 
-The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and MongoDB
-spans use `db.mongodb.client`. Adding a backend also requires adding its span
-classification and conformance scenarios.
+Redis scenarios use `DATABASE_NAME` as the logical database index and
+authenticate with `DATABASE_USER` and `DATABASE_PASSWORD` only when the password
+is non-empty. The Redis backend supplies database zero, user `default`, and an
+empty password, so its scenarios run without authentication.
+
+The package classifies only client spans for the backends it can run.
+PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
+`db.mariadb.client`, MongoDB spans use `db.mongodb.client`, and Redis spans use
+`db.redis.client`. Adding a backend also requires adding its span classification
+and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
