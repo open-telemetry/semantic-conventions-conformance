@@ -1,14 +1,6 @@
 {
   "spans": {
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.agent.name",
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.arguments",
-      "gen_ai.tool.call.id",
-      "gen_ai.tool.call.result",
-      "gen_ai.tool.name"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.conversation.id",
       "gen_ai.input.messages",
       "gen_ai.operation.name",
@@ -26,6 +18,15 @@
       "server.address",
       "server.port"
     ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.agent.name",
+      "gen_ai.conversation.id",
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.id",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.name"
+    ],
     "gen_ai.invoke_agent.internal": [
       "gen_ai.agent.name",
       "gen_ai.conversation.id",
@@ -33,15 +34,7 @@
     ]
   },
   "events": {},
-  "metrics": {
-    "gen_ai.client.token.usage": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model",
-      "gen_ai.response.model",
-      "gen_ai.token.type"
-    ]
-  },
+  "metrics": {},
   "entities": {},
   "findings": [
     {
@@ -64,6 +57,21 @@
       "context": {
         "attribute_key": "gen_ai.system"
       }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.token.type' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.token.type"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage"
     },
     {
       "id": "missing_attribute",
