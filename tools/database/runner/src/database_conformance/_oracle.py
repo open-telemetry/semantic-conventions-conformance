@@ -29,9 +29,8 @@ ORACLE = BackendSpec(
         ("APP_USER_PASSWORD", ORACLE_PASSWORD),
     ),
     ready_command=("healthcheck.sh",),
-    schema_resource="oracle.sql",
-    schema_path="/tmp/otel-conformance-oracle.sql",
-    schema_command=(
+    schema_copy=("oracle.sql", "/tmp/otel-conformance-oracle.sql"),
+    initialize_command=(
         "sqlplus",
         "-L",
         "-S",

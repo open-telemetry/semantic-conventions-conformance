@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -23,13 +23,6 @@
       "gen_ai.provider.name",
       "gen_ai.request.model",
       "gen_ai.response.model"
-    ],
-    "gen_ai.client.token.usage": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model",
-      "gen_ai.response.model",
-      "gen_ai.token.type"
     ]
   },
   "entities": {},
@@ -47,14 +40,19 @@
       }
     },
     {
-      "id": "unit_mismatch",
-      "message": "Unit should be '{token}', but found 'token'.",
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.token.type' does not exist in the registry.",
       "signal_type": "metric",
       "signal_name": "gen_ai.client.token.usage",
       "context": {
-        "expected": "{token}",
-        "unit": "token"
+        "attribute_key": "gen_ai.token.type"
       }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage"
     },
     {
       "id": "genai_content_schema",
@@ -138,6 +136,44 @@
       "message": "Span 'generate_content gemini-2.0-flash-preview-image-generation' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
       "signal_type": "span",
       "signal_name": "generate_content gemini-2.0-flash-preview-image-generation",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.total_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "attribute_key": "gen_ai.usage.total_tokens"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'generate_content gemini-3.8-flash' (operation 'generate_content') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "generate_content"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'generate_content gemini-3.8-flash' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "generate_content gemini-3.8-flash",
       "context": {
         "status_code": "ok"
       }

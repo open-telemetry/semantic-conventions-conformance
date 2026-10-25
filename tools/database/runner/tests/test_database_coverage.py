@@ -29,10 +29,16 @@ def test_oracle_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.oracledb.client"}
 
 
-@pytest.mark.parametrize("system", ["sqlite", "redis"])
-def test_an_unsupported_database_system_is_not_classified(system: str) -> None:
+def test_redis_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span("GET", "CLIENT", {"db.system.name": "redis"}) == {
+        "db.redis.client"
+    }
+
+
+def test_an_unsupported_database_system_is_not_classified() -> None:
     assert (
-        classify_span("SELECT", "CLIENT", {"db.system.name": system}) == set()
+        classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"})
+        == set()
     )
 
 

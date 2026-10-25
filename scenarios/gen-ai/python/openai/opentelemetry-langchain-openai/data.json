@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -19,8 +19,11 @@
       "gen_ai.response.model",
       "gen_ai.response.time_to_first_chunk",
       "gen_ai.tool.definitions",
+      "gen_ai.usage.cache_read.input_tokens",
+      "gen_ai.usage.cache_write.input_tokens",
       "gen_ai.usage.input_tokens",
-      "gen_ai.usage.output_tokens"
+      "gen_ai.usage.output_tokens",
+      "gen_ai.usage.reasoning.output_tokens"
     ],
     "gen_ai.invoke_workflow.internal": [
       "gen_ai.operation.name",
@@ -47,8 +50,11 @@
       "gen_ai.response.model",
       "gen_ai.response.time_to_first_chunk",
       "gen_ai.tool.definitions",
+      "gen_ai.usage.cache_read.input_tokens",
+      "gen_ai.usage.cache_write.input_tokens",
       "gen_ai.usage.input_tokens",
-      "gen_ai.usage.output_tokens"
+      "gen_ai.usage.output_tokens",
+      "gen_ai.usage.reasoning.output_tokens"
     ]
   },
   "metrics": {
@@ -58,29 +64,39 @@
       "gen_ai.request.model",
       "gen_ai.response.model"
     ],
-    "gen_ai.client.operation.time_per_output_chunk": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model"
-    ],
-    "gen_ai.client.operation.time_to_first_chunk": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model"
-    ],
-    "gen_ai.client.token.usage": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model",
-      "gen_ai.response.model",
-      "gen_ai.token.type"
-    ],
     "gen_ai.invoke_workflow.duration": [
       "gen_ai.workflow.name"
     ]
   },
   "entities": {},
   "findings": [
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.time_per_output_chunk"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.time_to_first_chunk"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.token.type' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.token.type"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage"
+    },
     {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
