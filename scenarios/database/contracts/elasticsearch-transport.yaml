@@ -10,7 +10,7 @@ scenarios:
         expect:
           count: 1
           attributes:
-            db.operation.name: SearchAction
+            db.operation.name: indices:data/read/search
     metrics:
       - db.client.operation.duration
     events: []

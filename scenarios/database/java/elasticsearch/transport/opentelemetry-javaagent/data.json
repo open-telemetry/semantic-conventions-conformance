@@ -1,7 +1,9 @@
 {
   "spans": {
     "db.elasticsearch.client": [
-      "db.operation.name"
+      "db.operation.name",
+      "server.address",
+      "server.port"
     ]
   },
   "events": {},
@@ -10,7 +12,9 @@
       "db.operation.name",
       "db.system.name",
       "network.peer.address",
-      "network.peer.port"
+      "network.peer.port",
+      "server.address",
+      "server.port"
     ]
   },
   "entities": {
