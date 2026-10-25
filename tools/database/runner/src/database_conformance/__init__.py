@@ -25,6 +25,7 @@ from ._coverage import classifier, classify_span
 from ._elasticsearch import Elasticsearch
 from ._mariadb import MariaDB
 from ._postgres import Postgres
+from ._redis import Redis
 
 _HERE = Path(__file__).parent
 
@@ -39,6 +40,7 @@ _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
     "elasticsearch": Elasticsearch,
     "mariadb": MariaDB,
     "postgresql": Postgres,
+    "redis": Redis,
 }
 
 

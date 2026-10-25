@@ -23,11 +23,12 @@ runner_config:
 ```
 
 `runner_config` must contain only `backend`, set to `elasticsearch`, `mariadb`,
-or `postgresql`. Each
-session starts one digest-pinned container, applies that backend's packaged
-schema file, and removes the container when the session closes. PostgreSQL
-and MariaDB get the same empty table and stored procedure. Elasticsearch gets a
-fixed `conformance` index with one shard, no replicas, and refreshes disabled.
+`postgresql`, or `redis`. Each session starts one digest-pinned container and
+removes it when the session closes. PostgreSQL and MariaDB apply packaged SQL schemas that create
+the same logical objects but no rows. Elasticsearch gets a fixed `conformance`
+index with one shard, no replicas, and refreshes disabled. Redis needs no
+initialization beyond its readiness check. Scenarios own any data their
+operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -50,9 +51,15 @@ from the shared [`contracts/`](../sql-test-client/contracts) directory using
 `scenario_contract`. The generic conformance runner injects only the selected
 contract entry's `action` into the scenario process.
 
-The package classifies only spans for the backends it can run. PostgreSQL spans
-use `db.postgresql.client`, MariaDB spans use `db.mariadb.client`, and
-Elasticsearch spans use `db.elasticsearch.client`. Adding a backend also
-requires adding its span classification and conformance scenarios.
+Redis scenarios use `DATABASE_NAME` as the logical database index and
+authenticate with `DATABASE_USER` and `DATABASE_PASSWORD` only when the password
+is non-empty. The Redis backend supplies database zero, user `default`, and an
+empty password, so its scenarios run without authentication.
+
+The package classifies only client spans for the backends it can run.
+PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
+`db.mariadb.client`, Elasticsearch spans use `db.elasticsearch.client`, and Redis
+spans use `db.redis.client`. Adding a backend also requires adding its span
+classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

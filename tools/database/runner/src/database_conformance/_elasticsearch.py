@@ -35,9 +35,11 @@ ELASTICSEARCH = BackendSpec(
         "?wait_for_status=yellow&timeout=1s' "
         "| grep --quiet '\"timed_out\":false'",
     ),
-    schema_resource="elasticsearch.json",
-    schema_path="/tmp/otel-conformance-elasticsearch.json",
-    schema_command=(
+    schema_copy=(
+        "elasticsearch.json",
+        "/tmp/otel-conformance-elasticsearch.json",
+    ),
+    initialize_command=(
         "curl",
         "--fail",
         "--silent",

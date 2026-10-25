@@ -13,5 +13,4 @@ scenarios:
             db.operation.name: SearchAction
     metrics:
       - db.client.operation.duration
-      - queueSize
     events: []
