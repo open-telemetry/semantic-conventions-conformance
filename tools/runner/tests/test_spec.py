@@ -898,7 +898,7 @@ scenario_run: run
         (
             "variants:\n  client: {driver: instrumentation}",
             r"contract\.yaml: unknown key\(s\) \['variants'\]; allowed: "
-            r"\['description', 'driver', 'readiness', 'scenarios'\]",
+            r"\['backend', 'description', 'driver', 'readiness', 'scenarios'\]",
         ),
     ],
 )

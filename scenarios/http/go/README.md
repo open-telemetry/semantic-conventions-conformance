@@ -26,7 +26,7 @@ OpenTelemetry. What every workload shares is in
 the answer each route writes. Their tests share
 [`internal/httpservertest`](internal/httpservertest), which asserts that a
 handler answers every exchange in the contract. The per-instrumentation `main`
-packages attach `otelhttp`, `otelecho`, `otelgin`, `otelmux`, or `otelrestful`
+packages attach `otelhttp`, `echo-otel`, `otelgin`, `otelmux`, or `otelrestful`
 and start the SDK. The difference between instrumentations should be visible as
 the code that differs, and nothing else.
 
@@ -58,7 +58,7 @@ pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/go
 otel-conformance scenarios/http/go/net-http/otelhttp/client
 otel-conformance scenarios/http/go/net-http/otelhttp/server
-otel-conformance scenarios/http/go/echo/otelecho/server
+otel-conformance scenarios/http/go/echo/echo-otel/server
 otel-conformance scenarios/http/go/gin/otelgin/server
 otel-conformance scenarios/http/go/gorilla-mux/otelmux/server
 otel-conformance scenarios/http/go/go-restful/otelrestful/server

@@ -29,6 +29,20 @@
       ]
     },
     {
+      // Bump the setup-python `python-version` inputs in their own PR, out of
+      // the github actions group. The Python scenarios run on the interpreter
+      // setup-python puts on PATH, so a new Python is only mergeable once their
+      // locked dependencies (grpcio, pydantic-core, ...) publish wheels for it;
+      // until then every scenario builds them from source and the jobs time
+      // out, which must not hold back the other action updates.
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "groupName": "python",
+      "schedule": [
+        "before 8am on Tuesday"
+      ]
+    },
+    {
       // group all non-major Java dependency updates into a single PR
       "matchManagers": ["gradle"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -153,7 +167,7 @@
       // The database runner invokes these images directly rather than through
       // Dockerfiles or Compose files, so Renovate needs their Python assignments.
       "customType": "regex",
-      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb)\\.py$/"],
+      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb|redis)\\.py$/"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?) versioning=(?<versioning>[^\\s]+?)\\s+[A-Z_]+_IMAGE = \"[^:\"]+:(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
       ]

@@ -12,6 +12,7 @@ directly.
 from __future__ import annotations
 
 import json
+import socket
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
@@ -378,6 +379,39 @@ def session(
             "reports": reports.name,
         },
     )
+
+
+def test_weaver_reserves_distinct_ports(
+    directory: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ports: list[int] = []
+
+    def construct(
+        *, otlp_port: int, admin_port: int, **kwargs: object
+    ) -> None:
+        ports.extend([otlp_port, admin_port])
+        assert 0 < otlp_port <= 65535
+        assert 0 < admin_port <= 65535
+        assert otlp_port != admin_port
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+                with pytest.raises(OSError):
+                    other.bind(("127.0.0.1", port))
+        raise RuntimeError("weaver configured")
+
+    live_check = ModuleType("opentelemetry.conformance._weaver")
+    live_check.__dict__["WeaverLiveCheck"] = construct
+    monkeypatch.setitem(
+        sys.modules, "opentelemetry.conformance._weaver", live_check
+    )
+
+    with pytest.raises(RuntimeError, match="weaver configured"):
+        _new_live_check(session(directory, tmp_path / "data.json"))
+
+    assert len(ports) == 2
+    for port in ports:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+            other.bind(("127.0.0.1", port))
 
 
 @pytest.mark.parametrize("index", [None, 3])
@@ -806,10 +840,10 @@ def test_weaver_inactivity_timeout_is_disabled_for_the_package(
 
     # The test job installs the runner without its lazy test-utils
     # dependency, so the module `_new_live_check` imports has to be a stub.
-    live_check = ModuleType("opentelemetry.test.weaver_live_check")
+    live_check = ModuleType("opentelemetry.conformance._weaver")
     live_check.__dict__["WeaverLiveCheck"] = weaver
     monkeypatch.setitem(
-        sys.modules, "opentelemetry.test.weaver_live_check", live_check
+        sys.modules, "opentelemetry.conformance._weaver", live_check
     )
 
     _new_live_check(session(directory, tmp_path / "data.json"))
@@ -835,10 +869,10 @@ def test_generated_policies_live_until_the_package_weaver_stops(
         options.update(kwargs)
         return Weaver()
 
-    live_check = ModuleType("opentelemetry.test.weaver_live_check")
+    live_check = ModuleType("opentelemetry.conformance._weaver")
     live_check.__dict__["WeaverLiveCheck"] = weaver
     monkeypatch.setitem(
-        sys.modules, "opentelemetry.test.weaver_live_check", live_check
+        sys.modules, "opentelemetry.conformance._weaver", live_check
     )
     monkeypatch.setattr(ConformanceSession, "_new_live_check", _new_live_check)
     opened = session(directory, tmp_path / "data.json")
@@ -879,10 +913,10 @@ def test_package_weaver_uses_the_resolved_registry(
         fetched.append(value)
         return directory / "model"
 
-    live_check = ModuleType("opentelemetry.test.weaver_live_check")
+    live_check = ModuleType("opentelemetry.conformance._weaver")
     live_check.__dict__["WeaverLiveCheck"] = weaver
     monkeypatch.setitem(
-        sys.modules, "opentelemetry.test.weaver_live_check", live_check
+        sys.modules, "opentelemetry.conformance._weaver", live_check
     )
     monkeypatch.setattr(_session, "local_registry", local_registry)
     opened = session(directory, tmp_path / "data.json")
@@ -1033,10 +1067,37 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
+@pytest.mark.parametrize(
+    ("action", "expected_action"),
+    [
+        (
+            {"z": [2, 1], "a": {"method": "GET"}},
+            '{"a":{"method":"GET"},"z":[2,1]}',
+        ),
+        (
+            {"request": {"method": "POST", "path": "/items"}},
+            '{"request":{"method":"POST","path":"/items"}}',
+        ),
+        (
+            {
+                "kind": "prepared_query",
+                "sql": "SELECT ${1}, ${2}",
+                "parameters": [
+                    {"type": "integer", "value": 7},
+                    {"type": "integer", "value": -2},
+                ],
+            },
+            '{"kind":"prepared_query","parameters":[{"type":"integer","value":7},'
+            '{"type":"integer","value":-2}],"sql":"SELECT ${1}, ${2}"}',
+        ),
+    ],
+)
 def test_contract_selection_is_injected_into_the_one_shot_process(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    action: dict[str, object],
+    expected_action: str,
 ) -> None:
     captured: dict[str, str] = {}
 
@@ -1052,15 +1113,13 @@ def test_contract_selection_is_injected_into_the_one_shot_process(
     scenario = replace(
         opened.spec.scenarios["inference"],
         index=3,
-        action={"z": [2, 1], "a": {"method": "GET"}},
+        action=action,
     )
 
     opened._execute(scenario, "http://collector")
 
     assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
-    assert captured["OTEL_CONFORMANCE_SCENARIO_ACTION"] == (
-        '{"a":{"method":"GET"},"z":[2,1]}'
-    )
+    assert captured["OTEL_CONFORMANCE_SCENARIO_ACTION"] == expected_action
 
 
 def test_persistent_scenario_protocol_does_not_use_one_shot_execution(

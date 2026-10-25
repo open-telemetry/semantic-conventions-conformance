@@ -189,6 +189,9 @@ class ScenarioSpec:
     check exact. ``optional_metrics`` names what an implementation records
     only for some of its actions: emitting one is never undeclared, and
     never emitting it is never missing.
+
+    ``action`` is the protocol-neutral mapping from an indexed contract. The
+    runner passes only the selected mapping to the scenario process as JSON.
     """
 
     name: str
@@ -915,7 +918,7 @@ def load_spec(directory: Path) -> PackageSpec:
         )
         _check_keys(
             contract,
-            ("description", "driver", "readiness", "scenarios"),
+            ("backend", "description", "driver", "readiness", "scenarios"),
             str(contract_path),
         )
         role = _parse_contract_driver(contract, contract_path)

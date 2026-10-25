@@ -14,6 +14,12 @@ rootProject.name = "database-java-conformance"
 include("shared:jdbc:scenarios")
 include("shared:jdbc:opentelemetry-javaagent")
 include("shared:jdbc:opentelemetry-library")
+include("shared:redis:jedis:opentelemetry-javaagent")
+include("shared:redis:lettuce:scenarios")
+include("shared:redis:lettuce:opentelemetry-javaagent")
+include("shared:redis:lettuce:opentelemetry-library")
+include("shared:redis:rediscala:opentelemetry-javaagent")
+include("shared:redis:redisson:opentelemetry-javaagent")
 
 fun shared(name: String, directory: String) {
     include(name)
@@ -23,3 +29,4 @@ fun shared(name: String, directory: String) {
 shared("scenario-support", "../../../tools/java/scenario-support")
 shared("scenario-sdk", "../../../tools/java/scenario-sdk")
 shared("agent-control", "../../../tools/java/agent-control")
+shared("sql-test-client", "../../../tools/database/sql-test-client/java")

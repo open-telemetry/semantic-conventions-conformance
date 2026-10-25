@@ -14,6 +14,7 @@ import json
 import logging
 import shlex
 import shutil
+import socket
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass
@@ -443,7 +444,7 @@ class ConformanceSession:
         self._otlp_endpoint = otlp_endpoint
 
     def _new_live_check(self) -> _WeaverProcess:
-        from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
+        from ._weaver import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
 
@@ -456,18 +457,27 @@ class ConformanceSession:
                 "--advice-data",
                 self._resolve_path(weaver_spec.advice_data),
             ]
-        return WeaverLiveCheck(
-            inactivity_timeout=0,
-            registry=str(
-                registry_path(
-                    self._registry,
-                    directory=self._spec.directory,
-                    variables=self._variables,
-                )
-            ),
-            policies_dir=self._policies,
-            extra_args=extra_args,
-        )
+        with (
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM) as otlp,
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM) as admin,
+        ):
+            # Hold both sockets so the OS cannot assign the same port twice.
+            otlp.bind(("127.0.0.1", 0))
+            admin.bind(("127.0.0.1", 0))
+            return WeaverLiveCheck(
+                inactivity_timeout=0,
+                registry=str(
+                    registry_path(
+                        self._registry,
+                        directory=self._spec.directory,
+                        variables=self._variables,
+                    )
+                ),
+                policies_dir=self._policies,
+                extra_args=extra_args,
+                otlp_port=otlp.getsockname()[1],
+                admin_port=admin.getsockname()[1],
+            )
 
     def finalize(self) -> PackageReport:
         """Stop package telemetry once and return its aggregate result.

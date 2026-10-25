@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -34,7 +34,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.together",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
