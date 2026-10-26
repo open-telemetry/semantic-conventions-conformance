@@ -29,6 +29,7 @@ MONGODB = BackendSpec(
         ("MONGO_INITDB_ROOT_USERNAME", MONGODB_ROOT_USER),
         ("MONGO_INITDB_ROOT_PASSWORD", MONGODB_ROOT_PASSWORD),
     ),
+    # The image's temporary initialization daemon runs without authorization.
     ready_command=(
         "mongosh",
         "--quiet",
@@ -43,7 +44,7 @@ MONGODB = BackendSpec(
         "--authenticationDatabase",
         "admin",
         "--eval",
-        "quit(db.adminCommand('ping').ok ? 0 : 1)",
+        "quit(db.adminCommand({getCmdLineOpts: 1}).parsed.security?.authorization === 'enabled' ? 0 : 1)",
     ),
     schema_copy=("mongodb.js", "/tmp/otel-conformance-mongodb.js"),
     initialize_command=(

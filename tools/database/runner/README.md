@@ -28,7 +28,9 @@ container and removes it when the session closes. PostgreSQL and MariaDB apply
 packaged SQL schemas that create the same logical objects but no rows. The
 MongoDB bootstrap recreates the `items` collection with
 deterministic documents for isolated read, update, delete, and aggregation
-operations. Redis needs no initialization beyond its readiness check; its
+operations. MongoDB readiness requires authorization to be enabled, so bootstrap
+waits for the final daemon rather than the image's temporary initialization
+server. Redis needs no initialization beyond its readiness check; its
 scenarios own any data their operations need.
 
 Conformance packages can use these runner variables in setup and scenario
