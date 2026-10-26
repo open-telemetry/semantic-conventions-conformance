@@ -1,70 +1,7 @@
 {
-  "spans": {
-    "http.client": [
-      "error.type",
-      "http.request.method",
-      "http.request.method_original",
-      "http.response.status_code",
-      "network.peer.address",
-      "network.peer.port",
-      "network.protocol.version",
-      "server.address",
-      "server.port",
-      "url.full",
-      "url.scheme",
-      "user_agent.original"
-    ]
-  },
+  "spans": {},
   "events": {},
-  "metrics": {
-    "http.client.request.duration": [
-      "error.type",
-      "http.request.method",
-      "http.response.status_code",
-      "network.protocol.version",
-      "server.address",
-      "server.port",
-      "url.scheme"
-    ]
-  },
-  "entities": {
-    "process.runtime": {
-      "identity": [
-        "process.runtime.name",
-        "process.runtime.version"
-      ],
-      "description": [
-        "process.runtime.description"
-      ]
-    },
-    "service": {
-      "identity": [
-        "service.name"
-      ],
-      "description": []
-    },
-    "telemetry.sdk": {
-      "identity": [
-        "telemetry.sdk.language",
-        "telemetry.sdk.name"
-      ],
-      "description": [
-        "telemetry.sdk.version"
-      ]
-    }
-  },
-  "findings": [
-    {
-      "id": "instrumentation_scope_schema_url_missing",
-      "message": "Instrumentation scope '@opentelemetry/instrumentation-undici' does not have schema_url.",
-      "signal_type": "instrumentation_scope",
-      "signal_name": "@opentelemetry/instrumentation-undici",
-      "context": {
-        "actual": null,
-        "expected": {
-          "present": true
-        }
-      }
-    }
-  ]
+  "metrics": {},
+  "entities": {},
+  "findings": []
 }
