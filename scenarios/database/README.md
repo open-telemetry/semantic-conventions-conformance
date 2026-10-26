@@ -4,11 +4,12 @@ What database instrumentations emit, checked against the
 [database semantic conventions][database] and recorded as committed coverage.
 
 Initial support is Java-only. It exercises PostgreSQL and MariaDB through JDBC,
-and Redis through Jedis, Lettuce, Rediscala, and Redisson. JDBC runs against the
-OpenTelemetry Java agent and JDBC library instrumentation. Redis runs against
-the Java agent, with an additional Lettuce run against its standalone library
-instrumentation. The database runner starts the selected Docker container and
-applies any required initialization before measured processes start.
+PostgreSQL through R2DBC, and Redis through Jedis, Lettuce, Rediscala, and
+Redisson. JDBC and R2DBC run against the OpenTelemetry Java agent and their
+matching library instrumentation. Redis runs against the Java agent, with an
+additional Lettuce run against its standalone library instrumentation. The
+database runner starts the selected Docker container and applies any required
+initialization before measured processes start.
 
 ```text
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
@@ -16,19 +17,31 @@ java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
 contracts/                                 Redis telemetry expectations by client
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
+java/shared/r2dbc/scenarios/                the reactive R2DBC workload
+java/shared/r2dbc/opentelemetry-javaagent/  the R2DBC Java agent launcher
+java/shared/r2dbc/opentelemetry-library/    the R2DBC library launcher
+java/postgresql/r2dbc/                      the PostgreSQL R2DBC packages
 java/shared/redis/                          Redis client workloads and launchers
 java/redis/{jedis,lettuce,rediscala,redisson}/
                                             Redis conformance packages
 ../../tools/database/sql-test-client/       combined SQL actions and expectations
+contracts/postgresql-r2dbc.yaml             R2DBC telemetry expectations
 ```
 
-Each backend's combined SQL contract lives under
+The JDBC packages use each backend's combined SQL contract under
 [`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
 Each ordered scenario keeps its backend-specific `action` and generic telemetry
 `expect` object together. The runner executes each list position under its own
 live-check and passes only its selected `action` to the language helper as JSON,
 which translates it into its client API. Contracts can diverge as dialect-specific
 sanitization and summarization coverage grows.
+
+The R2DBC packages use the named scenarios in
+[`contracts/postgresql-r2dbc.yaml`](contracts/postgresql-r2dbc.yaml). This contract
+contains only telemetry expectations; the reactive workload owns the SQL. It
+stays separate because R2DBC emits different namespace and bind-marker attributes
+and also covers a handled SQL error. Both instrumentation modes share this
+contract and workload.
 
 Each operation is a separate scenario so a missing or malformed span identifies
 the client path that produced it:
@@ -39,6 +52,11 @@ the client path that produced it:
 | `prepared_query` | `PreparedStatement.executeQuery` |
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
+
+The R2DBC packages exercise a plain `Statement`, a bound `Statement`, a
+two-command `Batch`, a stored procedure through `Statement`, and an invalid
+query that produces PostgreSQL SQLSTATE `42P01`. Every publisher is consumed
+before the connection closes.
 
 Every Redis client runs the same workload with the same keys, values, and
 plain-string encoding in logical database zero:
@@ -65,6 +83,8 @@ otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-library
 otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-javaagent
 otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-library
+otel-conformance scenarios/database/java/postgresql/r2dbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/postgresql/r2dbc/opentelemetry-library
 otel-conformance scenarios/database/java/redis/jedis/opentelemetry-javaagent
 otel-conformance scenarios/database/java/redis/lettuce/opentelemetry-javaagent
 otel-conformance scenarios/database/java/redis/lettuce/opentelemetry-library

@@ -13,6 +13,9 @@ opentelemetry = "1.67.0"
 opentelemetry-instrumentation = "2.32.0"
 opentelemetry-instrumentation-alpha = "2.32.0-alpha"
 postgresql = "42.7.14"
+r2dbc-postgresql = "1.1.2.RELEASE"
+r2dbc-spi = "1.0.0.RELEASE"
+reactor = "3.8.7"
 rediscala = "1.17.0"
 redisson = "4.7.0"
 scala = "2.13.17"
@@ -28,9 +31,13 @@ opentelemetry-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporte
 opentelemetry-instrumentation-bom-alpha = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
 opentelemetry-instrumentation-jdbc = { module = "io.opentelemetry.instrumentation:opentelemetry-jdbc" }
 opentelemetry-instrumentation-lettuce = { module = "io.opentelemetry.instrumentation:opentelemetry-lettuce-5.1" }
+opentelemetry-instrumentation-r2dbc = { module = "io.opentelemetry.instrumentation:opentelemetry-r2dbc-1.0" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "r2dbc-postgresql" }
+r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc-spi" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
 rediscala = { module = "io.github.rediscala:rediscala_2.13", version.ref = "rediscala" }
 redisson = { module = "org.redisson:redisson", version.ref = "redisson" }
 scala-library = { module = "org.scala-lang:scala-library", version.ref = "scala" }
