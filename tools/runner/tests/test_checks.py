@@ -269,11 +269,13 @@ def test_declared_signal_lists_are_exact(signal: str) -> None:
     assert "undeclared" in extra
 
 
-def test_allowed_metrics_may_be_present_or_absent() -> None:
+@pytest.mark.parametrize("optional_count", [0, 1])
+def test_allowed_metrics_may_be_present_or_absent(optional_count: int) -> None:
     report = Report(
         statistics={
             "seen_registry_metrics": {
                 "db.client.operation.duration": 1,
+                "db.client.connection.count": optional_count,
             },
             "seen_non_registry_metrics": {
                 "queueSize": 1,
@@ -286,7 +288,11 @@ def test_allowed_metrics_may_be_present_or_absent() -> None:
         check(
             scenario(
                 metrics=("db.client.operation.duration",),
-                allowed_metrics=("queueSize", "processedSpans"),
+                allowed_metrics=(
+                    "db.client.connection.count",
+                    "queueSize",
+                    "processedSpans",
+                ),
             ),
             report,
         )
