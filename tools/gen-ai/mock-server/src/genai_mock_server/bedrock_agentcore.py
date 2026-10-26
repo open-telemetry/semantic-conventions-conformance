@@ -179,6 +179,18 @@ def get_evaluator(evaluator_id):
     )
 
 
+def _evaluated_span_context():
+    """Identify the evaluated session (and trace) from the first span in the request."""
+    body = request.get_json(silent=True) or {}
+    spans = (body.get("evaluationInput") or {}).get("sessionSpans") or []
+    span = spans[0] if spans else {}
+    attributes = span.get("attributes") or {}
+    context = {"sessionId": attributes.get("session.id", "session-mock-001")}
+    if span.get("traceId"):
+        context["traceId"] = span["traceId"]
+    return context
+
+
 @bp.route("/evaluations/evaluate/<evaluator_id>", methods=["POST"])
 def evaluate(evaluator_id):
     return _json(
@@ -188,6 +200,7 @@ def evaluate(evaluator_id):
                     "evaluatorArn": f"arn:aws:bedrock-agentcore:us-east-1:123456789012:evaluator/{evaluator_id}",
                     "evaluatorId": evaluator_id,
                     "evaluatorName": "response_quality",
+                    "context": {"spanContext": _evaluated_span_context()},
                     "explanation": "The response fully addresses the request.",
                     "value": 5.0,
                     "label": "Good",

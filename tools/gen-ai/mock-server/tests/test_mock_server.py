@@ -1829,3 +1829,23 @@ def test_smolagents_gets_final_answer_after_an_observation_streamed(client):
     assert deltas[0]["function"]["name"] == "final_answer"
     arguments = "".join(delta["function"]["arguments"] for delta in deltas)
     assert json.loads(arguments) == {"answer": "mock-answer"}
+
+
+def test_agentcore_evaluate_result_matches_the_evaluator_rating_scale(client):
+    evaluator = client.get("/evaluators/eval-mock-001").json
+    scale = evaluator["evaluatorConfig"]["llmAsAJudge"]["ratingScale"]["numerical"]
+
+    span = {"traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "attributes": {"session.id": "session-001"}}
+    response = client.post(
+        "/evaluations/evaluate/eval-mock-001",
+        json={"evaluationInput": {"sessionSpans": [span]}},
+    )
+    (result,) = response.json["evaluationResults"]
+
+    assert result["evaluatorId"] == evaluator["evaluatorId"]
+    assert result["evaluatorName"] == evaluator["evaluatorName"]
+    assert (result["value"], result["label"]) in {(entry["value"], entry["label"]) for entry in scale}
+    assert result["explanation"]
+    assert result["context"] == {
+        "spanContext": {"sessionId": "session-001", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}
+    }
