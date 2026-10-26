@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3c62b2e0132e76b212ae6e66dd388c47",
+    "content-hash": "20a3f68aea66adb857ac8755adf5caad",
     "packages": [
         {
             "name": "brick/math",
@@ -524,11 +524,11 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/http/test-client/php",
-                "reference": "8bd46008ae02e94eaea04cb4ac309373f9e10f0b"
+                "reference": "bd8e364aecfe7c189c4e8af8a802252ea840057a"
             },
             "require": {
                 "php": ">=8.2",
-                "symfony/yaml": "^7.2"
+                "symfony/yaml": "^8.0"
             },
             "type": "library",
             "autoload": {
@@ -556,7 +556,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../../../../tools/php/scenario",
-                "reference": "cefbe66832d1b4495bd7c39454bcd76f175ce583"
+                "reference": "52f6e23e90c815d2b2eacb536e26153db800e979"
             },
             "require": {
                 "php": ">=8.2"
@@ -575,7 +575,7 @@
             "license": [
                 "Apache-2.0"
             ],
-            "description": "Environment and lifecycle support shared by PHP conformance scenarios.",
+            "description": "Environment support shared by PHP conformance scenarios.",
             "transport-options": {
                 "symlink": false,
                 "relative": true
@@ -2627,28 +2627,28 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v7.4.18",
+            "version": "v8.1.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "4cef939e55b8a21c5780418de0d98ab00d0736e1"
+                "reference": "6107ee26a25215c3df3af0a3315e56bb4fd0b7db"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/4cef939e55b8a21c5780418de0d98ab00d0736e1",
-                "reference": "4cef939e55b8a21c5780418de0d98ab00d0736e1",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/6107ee26a25215c3df3af0a3315e56bb4fd0b7db",
+                "reference": "6107ee26a25215c3df3af0a3315e56bb4fd0b7db",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.2",
-                "symfony/deprecation-contracts": "^2.5|^3",
+                "php": ">=8.4.1",
                 "symfony/polyfill-ctype": "^1.8"
             },
             "conflict": {
-                "symfony/console": "<6.4"
+                "symfony/console": "<7.4"
             },
             "require-dev": {
-                "symfony/console": "^6.4|^7.0|^8.0"
+                "symfony/console": "^7.4|^8.0",
+                "yaml/yaml-test-suite": "*"
             },
             "bin": [
                 "Resources/bin/yaml-lint"
@@ -2679,7 +2679,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.4.18"
+                "source": "https://github.com/symfony/yaml/tree/v8.1.9"
             },
             "funding": [
                 {
@@ -2699,7 +2699,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-30T00:47:26+00:00"
+            "time": "2026-10-12T12:37:13+00:00"
         },
         {
             "name": "tbachert/spi",
@@ -2764,8 +2764,11 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.2"
+        "php": ">=8.4.1"
     },
     "platform-dev": {},
+    "platform-overrides": {
+        "php": "8.4.1"
+    },
     "plugin-api-version": "2.9.0"
 }
