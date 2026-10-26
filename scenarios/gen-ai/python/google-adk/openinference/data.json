@@ -2,13 +2,10 @@
   "spans": {
     "gen_ai.client.inference": [
       "gen_ai.conversation.id",
-      "gen_ai.input.messages",
       "gen_ai.operation.name",
-      "gen_ai.output.messages",
       "gen_ai.provider.name",
       "gen_ai.request.max_tokens",
       "gen_ai.request.model",
-      "gen_ai.request.temperature",
       "gen_ai.response.finish_reasons",
       "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
@@ -28,13 +25,28 @@
       "gen_ai.tool.type"
     ],
     "gen_ai.invoke_agent.internal": [
-      "gen_ai.agent.description",
       "gen_ai.agent.name",
       "gen_ai.conversation.id",
       "gen_ai.operation.name"
+    ],
+    "gen_ai.invoke_workflow.internal": [
+      "gen_ai.conversation.id",
+      "gen_ai.operation.name",
+      "gen_ai.workflow.name"
     ]
   },
-  "events": {},
+  "events": {
+    "gen_ai.client.inference.operation.details": [
+      "gen_ai.conversation.id",
+      "gen_ai.provider.name",
+      "gen_ai.response.finish_reasons",
+      "gen_ai.tool.definitions",
+      "gen_ai.usage.cache_read.input_tokens",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens",
+      "gen_ai.usage.reasoning.output_tokens"
+    ]
+  },
   "metrics": {
     "gen_ai.client.operation.duration": [
       "gen_ai.operation.name",
@@ -55,6 +67,9 @@
     ],
     "gen_ai.invoke_agent.tool_calls": [
       "gen_ai.agent.name"
+    ],
+    "gen_ai.invoke_workflow.duration": [
+      "gen_ai.workflow.name"
     ]
   },
   "entities": {},
@@ -85,48 +100,30 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
       "signal_type": "log",
-      "signal_name": "gen_ai.choice",
+      "signal_name": "gen_ai.client.inference.operation.details",
       "context": {
-        "attribute_key": "gen_ai.system"
+        "attribute_key": "gcp.vertex.agent.event_id"
       }
-    },
-    {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.choice' does not exist in the registry.",
-      "signal_type": "log",
-      "signal_name": "gen_ai.choice"
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "message": "Attribute 'gcp.vertex.agent.invocation_id' does not exist in the registry.",
       "signal_type": "log",
-      "signal_name": "gen_ai.system.message",
+      "signal_name": "gen_ai.client.inference.operation.details",
       "context": {
-        "attribute_key": "gen_ai.system"
+        "attribute_key": "gcp.vertex.agent.invocation_id"
       }
     },
     {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.system.message' does not exist in the registry.",
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.operation.name' is not present.",
       "signal_type": "log",
-      "signal_name": "gen_ai.system.message"
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
-      "signal_type": "log",
-      "signal_name": "gen_ai.user.message",
+      "signal_name": "gen_ai.client.inference.operation.details",
       "context": {
-        "attribute_key": "gen_ai.system"
+        "attribute_key": "gen_ai.operation.name"
       }
-    },
-    {
-      "id": "missing_event",
-      "message": "Event 'gen_ai.user.message' does not exist in the registry.",
-      "signal_type": "log",
-      "signal_name": "gen_ai.user.message"
     },
     {
       "id": "missing_attribute",
@@ -271,455 +268,9 @@
       "id": "missing_attribute",
       "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
       "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.event_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.invocation_id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.invocation_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.llm_request' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.llm_request"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.llm_response' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.llm_response"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.session_id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.session_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "gen_ai.system"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'input.mime_type' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "input.mime_type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'input.value' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "input.value"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.0.message.content"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.0.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.1.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.content"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.tool_call_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.invocation_parameters"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.model_name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.model_name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.provider' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.provider"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.token_count.completion"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.token_count.completion_details.reasoning' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.token_count.completion_details.reasoning"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.token_count.prompt"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.token_count.total"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "llm.tools.0.tool.json_schema"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "openinference.span.kind"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.mime_type' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "output.mime_type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.value' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "output.value"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'session.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "session.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'user.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "attribute_key": "user.id"
-      }
-    },
-    {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "missing_attribute": "gen_ai.response.id",
-        "operation": "generate_content"
-      }
-    },
-    {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "missing_attribute": "gen_ai.response.model",
-        "operation": "generate_content"
-      }
-    },
-    {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'server.address'",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "missing_attribute": "server.address",
-        "operation": "generate_content"
-      }
-    },
-    {
-      "id": "span_status_ok_set_by_instrumentation",
-      "message": "Span 'call_llm' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "status_code": "ok"
-      }
-    },
-    {
-      "id": "genai_span_name_format",
-      "message": "generate_content span name should be 'generate_content gemini-2.0-flash', got 'call_llm'",
-      "signal_type": "span",
-      "signal_name": "call_llm",
-      "context": {
-        "expected_form": "generate_content gemini-2.0-flash",
-        "keyed_attr": "gen_ai.request.model",
-        "operation": "generate_content"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
-      "signal_type": "span",
       "signal_name": "execute_tool get_current_weather",
       "context": {
         "attribute_key": "gcp.vertex.agent.event_id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.llm_request' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "execute_tool get_current_weather",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.llm_request"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.llm_response' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "execute_tool get_current_weather",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.llm_response"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.tool_call_args' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "execute_tool get_current_weather",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.tool_call_args"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'gcp.vertex.agent.tool_response' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "execute_tool get_current_weather",
-      "context": {
-        "attribute_key": "gcp.vertex.agent.tool_response"
       }
     },
     {
@@ -903,33 +454,386 @@
       }
     },
     {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "id": "missing_attribute",
+      "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "invoke_agent weather_assistant",
       "context": {
-        "missing_attribute": "gen_ai.response.finish_reasons",
-        "operation": "invoke_agent"
+        "attribute_key": "gcp.vertex.agent.event_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gcp.vertex.agent.invocation_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "gcp.vertex.agent.invocation_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.input_messages.3.message.tool_call_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.invocation_parameters"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.role"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.provider' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.provider"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.token_count.completion"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.completion_details.reasoning' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.token_count.completion_details.reasoning"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.token_count.prompt"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.token_count.total"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "llm.tools.0.tool.json_schema"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute_key": "output.value"
       }
     },
     {
       "id": "genai_expected_attribute_missing",
-      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
       "signal_type": "span",
       "signal_name": "invoke_agent weather_assistant",
       "context": {
-        "missing_attribute": "gen_ai.usage.input_tokens",
-        "operation": "invoke_agent"
+        "missing_attribute": "gen_ai.response.id",
+        "operation": "generate_content"
       }
     },
     {
       "id": "genai_expected_attribute_missing",
-      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
       "signal_type": "span",
       "signal_name": "invoke_agent weather_assistant",
       "context": {
-        "missing_attribute": "gen_ai.usage.output_tokens",
-        "operation": "invoke_agent"
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "generate_content"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'generate_content') is missing expected attribute 'server.address'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "server.address",
+        "operation": "generate_content"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'invoke_agent weather_assistant' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "generate_content span name should be 'generate_content gemini-2.0-flash', got 'invoke_agent weather_assistant'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "expected_form": "generate_content gemini-2.0-flash",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "generate_content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_workflow weather_assistant",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'session.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_workflow weather_assistant",
+      "context": {
+        "attribute_key": "session.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'user.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_workflow weather_assistant",
+      "context": {
+        "attribute_key": "user.id"
       }
     }
   ]
