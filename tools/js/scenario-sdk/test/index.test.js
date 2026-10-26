@@ -89,4 +89,117 @@ describe("running a scenario", () => {
     assert.equal(result.exitCode, 1);
     assert.deepEqual(result.errors, [failure]);
   });
+
+  it("flushes traces and logs before metrics, then shuts down", async () => {
+    const events = [];
+    let finishTrace;
+    let finishLog;
+    const traceDone = new Promise((resolve) => (finishTrace = resolve));
+    const logDone = new Promise((resolve) => (finishLog = resolve));
+    const runScenario = loadRunScenario(
+      class {
+        _tracerProvider = {
+          forceFlush: () => {
+            events.push("trace started");
+            return traceDone.then(() => events.push("trace finished"));
+          },
+        };
+        _loggerProvider = {
+          forceFlush: () => {
+            events.push("log started");
+            return logDone.then(() => events.push("log finished"));
+          },
+        };
+        _meterProvider = {
+          forceFlush: () => events.push("metric"),
+        };
+
+        start() {}
+
+        async shutdown() {
+          events.push("shutdown");
+        }
+      },
+    );
+
+    const running = runScenario({}, () => events.push("scenario"));
+    await new Promise(setImmediate);
+    assert.deepEqual(events, ["scenario", "trace started", "log started"]);
+
+    finishTrace();
+    await new Promise(setImmediate);
+    assert.equal(events.includes("metric"), false);
+    finishLog();
+    await running;
+
+    assert.deepEqual(events, [
+      "scenario",
+      "trace started",
+      "log started",
+      "trace finished",
+      "log finished",
+      "metric",
+      "shutdown",
+    ]);
+  });
+
+  it("turns a flush failure into a failed run and still shuts down", async () => {
+    const failure = new Error("flush failed");
+    let finishLog;
+    const logDone = new Promise((resolve) => (finishLog = resolve));
+    let shutdown = false;
+    const runScenario = loadRunScenario(
+      class {
+        _tracerProvider = { forceFlush: () => Promise.reject(failure) };
+        _loggerProvider = { forceFlush: () => logDone };
+
+        start() {}
+
+        async shutdown() {
+          shutdown = true;
+        }
+      },
+    );
+
+    const running = captureFailure(() => runScenario({}, () => {}));
+    await new Promise(setImmediate);
+    assert.equal(shutdown, false);
+
+    finishLog();
+    const result = await running;
+
+    assert.equal(shutdown, true);
+    assert.equal(result.exitCode, 1);
+    assert.deepEqual(result.errors, [failure]);
+  });
+
+  it("turns a flush timeout into a failed run and still shuts down", async () => {
+    const originalSetTimeout = global.setTimeout;
+    global.setTimeout = (callback) => {
+      queueMicrotask(callback);
+      return {};
+    };
+    let shutdown = false;
+    const runScenario = loadRunScenario(
+      class {
+        _tracerProvider = { forceFlush: () => new Promise(() => {}) };
+
+        start() {}
+
+        async shutdown() {
+          shutdown = true;
+        }
+      },
+    );
+
+    try {
+      const result = await captureFailure(() => runScenario({}, () => {}));
+
+      assert.equal(shutdown, true);
+      assert.equal(result.exitCode, 1);
+      assert.match(result.errors[0].message, /flush timed out/);
+    } finally {
+      global.setTimeout = originalSetTimeout;
+    }
+  });
 });

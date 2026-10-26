@@ -1,14 +1,6 @@
 {
   "spans": {
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.arguments",
-      "gen_ai.tool.call.result",
-      "gen_ai.tool.description",
-      "gen_ai.tool.name",
-      "gen_ai.tool.type"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -21,6 +13,14 @@
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
     ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
     "gen_ai.invoke_agent.internal": [
       "gen_ai.agent.name",
       "gen_ai.operation.name"
@@ -30,6 +30,18 @@
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.openai_agents' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.openai_agents",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
@@ -174,6 +186,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_creation.input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "response",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_creation.input_tokens"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "response",
@@ -188,6 +209,15 @@
       "signal_name": "response",
       "context": {
         "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "response",
+      "context": {
+        "attribute_key": "llm.finish_reason"
       }
     },
     {
@@ -413,6 +443,15 @@
       "signal_name": "response",
       "context": {
         "attribute_key": "llm.token_count.prompt_details.cache_read"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.token_count.prompt_details.cache_write' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "response",
+      "context": {
+        "attribute_key": "llm.token_count.prompt_details.cache_write"
       }
     },
     {

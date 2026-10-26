@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: helidon
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-helidon-4.3
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare helidon:opentelemetry-library
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-java run helidon:opentelemetry-library HelidonLibraryServerScenario

@@ -8,6 +8,6 @@
   "dependencies": {
     "@otel-conformance/http-test-client": "file:../../../../../tools/http/test-client/js",
     "@otel-conformance/scenario-support": "file:../../../../../tools/js/scenario-support",
-    "express": "5.2.1"
+    "express": "5.3.0"
   }
 }

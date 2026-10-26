@@ -48,6 +48,10 @@ instrumentation. It takes the instrumentations to register and the workload to
 run, and reads everything else — the endpoint, its protocol, the export
 interval — from the environment the runner injected.
 
+After the workload returns, it starts trace and log flushes and awaits both,
+then flushes metrics, then performs normal SDK shutdown. The flush phases
+share a 15-second budget, and a timeout or failed flush fails the scenario.
+
 The workload arrives as a function rather than as a promise, because a Node
 instrumentation patches a module as it is required and one required earlier is
 never patched at all. Passing a function is what keeps the library under test
@@ -86,3 +90,18 @@ a shell, so a bare `npm ci` in `setup:` fails there.
 `install` runs `npm ci` at the build root, so a scenario gets the versions the
 committed lockfile pins rather than whatever resolves today, and every package
 in the build is installed once however deep its own directory sits.
+
+`relock` works the other way round: from anywhere in the repository, it
+regenerates every committed `package-lock.json` under `scenarios/` and `tools/`
+with `npm install --package-lock-only --ignore-scripts`, which installs nothing,
+runs no scripts, and changes only what the manifests require. Before invoking
+npm, it removes the cached snapshots of copied `file:` packages from the
+lockfile so npm reads their current manifests and resolves their dependencies.
+Registry package pins remain in place. If regeneration fails, the project's
+original lockfile is restored byte for byte. CI runs `relock` on Renovate
+PRs and commits the result. Run it by hand when `npm ci` reports that the
+lockfile is out of sync:
+
+```sh
+otel-conformance-js relock
+```

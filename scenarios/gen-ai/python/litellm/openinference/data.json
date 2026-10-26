@@ -1,13 +1,6 @@
 {
   "spans": {
-    "gen_ai.embeddings.client": [
-      "gen_ai.embeddings.dimension.count",
-      "gen_ai.operation.name",
-      "gen_ai.request.encoding_formats",
-      "gen_ai.request.model",
-      "gen_ai.usage.input_tokens"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -29,12 +22,31 @@
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.embeddings.client": [
+      "gen_ai.embeddings.dimension.count",
+      "gen_ai.operation.name",
+      "gen_ai.request.encoding_formats",
+      "gen_ai.request.model",
+      "gen_ai.usage.input_tokens"
     ]
   },
   "events": {},
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.litellm' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.litellm",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'embedding.embeddings.0.embedding.text' does not exist in the registry.",

@@ -1,14 +1,6 @@
 {
   "spans": {
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.arguments",
-      "gen_ai.tool.call.result",
-      "gen_ai.tool.description",
-      "gen_ai.tool.name",
-      "gen_ai.tool.type"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -16,6 +8,14 @@
       "gen_ai.response.finish_reasons",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
     ],
     "gen_ai.invoke_agent.internal": [
       "gen_ai.operation.name"
@@ -25,6 +25,18 @@
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.autogen_agentchat' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.autogen_agentchat",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",

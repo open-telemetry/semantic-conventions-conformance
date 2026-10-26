@@ -7,6 +7,7 @@ package io.opentelemetry.conformance.http.okhttp;
 import io.opentelemetry.conformance.http.HttpClientWorkload;
 import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -22,8 +23,10 @@ public final class OkHttpClientScenario {
   private OkHttpClientScenario() {}
 
   public static void run() throws Exception {
-    OkHttpClient client = new OkHttpClient.Builder().build();
+    run(new OkHttpClient.Builder().build());
+  }
 
+  public static void run(Call.Factory callFactory) throws Exception {
     HttpClientWorkload.drive(
         ScenarioEnvironment.require("MOCK_SERVER_URL"),
         (method, url, body) -> {
@@ -36,7 +39,7 @@ public final class OkHttpClientScenario {
                 .header("content-type", HttpContract.CONTENT_TYPE)
                 .method(method, RequestBody.create(body, JSON));
           }
-          try (Response response = client.newCall(request.build()).execute()) {
+          try (Response response = callFactory.newCall(request.build()).execute()) {
             ResponseBody responseBody = response.body();
             return new HttpContract.Response(
                 response.code(), responseBody == null ? "" : responseBody.string());

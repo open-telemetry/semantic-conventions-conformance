@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -18,6 +18,18 @@
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.ollama' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.ollama",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",

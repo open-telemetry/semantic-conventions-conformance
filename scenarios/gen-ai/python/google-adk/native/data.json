@@ -1,14 +1,6 @@
 {
   "spans": {
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.agent.name",
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.id",
-      "gen_ai.tool.description",
-      "gen_ai.tool.name",
-      "gen_ai.tool.type"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.conversation.id",
       "gen_ai.input.messages",
       "gen_ai.operation.name",
@@ -21,6 +13,14 @@
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens",
       "gen_ai.usage.reasoning.output_tokens"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.agent.name",
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.id",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
     ],
     "gen_ai.invoke_agent.internal": [
       "gen_ai.agent.description",
@@ -50,13 +50,6 @@
       "gen_ai.request.model",
       "gen_ai.response.model"
     ],
-    "gen_ai.client.token.usage": [
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model",
-      "gen_ai.response.model",
-      "gen_ai.token.type"
-    ],
     "gen_ai.execute_tool.duration": [
       "gen_ai.agent.name",
       "gen_ai.tool.name",
@@ -74,6 +67,18 @@
   },
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'gcp.vertex.agent' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "gcp.vertex.agent",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
@@ -118,6 +123,63 @@
       "context": {
         "attribute_key": "gen_ai.provider.name"
       }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.cache_read.input_tokens"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.input_tokens"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.output_tokens"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.reasoning.output_tokens"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.skill.loads"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.tool.input_tokens"
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "adk.experimental.invoke_agent.total_tokens"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.token.type' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage",
+      "context": {
+        "attribute_key": "gen_ai.token.type"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.token.usage"
     },
     {
       "id": "unit_mismatch",

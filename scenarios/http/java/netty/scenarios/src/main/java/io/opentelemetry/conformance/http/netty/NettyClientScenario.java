@@ -10,6 +10,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -30,6 +31,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /** Runs the shared request contract through a raw Netty client pipeline. */
 public final class NettyClientScenario {
@@ -40,6 +42,12 @@ public final class NettyClientScenario {
   private NettyClientScenario() {}
 
   public static void run() throws Exception {
+    run(pipeline -> {}, channel -> {});
+  }
+
+  public static void run(
+      Consumer<ChannelPipeline> pipelineCustomizer, Consumer<Channel> requestCustomizer)
+      throws Exception {
     EventLoopGroup group = new NioEventLoopGroup(1);
     try {
       HttpClientWorkload.drive(
@@ -56,9 +64,10 @@ public final class NettyClientScenario {
                         new ChannelInitializer<SocketChannel>() {
                           @Override
                           protected void initChannel(SocketChannel socketChannel) {
-                            socketChannel
-                                .pipeline()
-                                .addLast(new HttpClientCodec())
+                            ChannelPipeline pipeline = socketChannel.pipeline();
+                            pipeline.addLast(new HttpClientCodec());
+                            pipelineCustomizer.accept(pipeline);
+                            pipeline
                                 .addLast(new HttpObjectAggregator(MAX_AGGREGATED_CONTENT_LENGTH))
                                 .addLast(new ResponseHandler(answer));
                           }
@@ -67,6 +76,7 @@ public final class NettyClientScenario {
                     .sync()
                     .channel();
 
+            requestCustomizer.accept(channel);
             channel.writeAndFlush(request(HttpMethod.valueOf(method), uri, body)).sync();
             try {
               return answer.get(

@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -17,6 +17,18 @@
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.bedrock' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.bedrock",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "genai_content_schema",
       "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"toolSpec\":{\"description\":\"Get the current weather in a given location\",\"inputSchema\":{\"json\":{\"properties\":{\"location\":{\"description\":\"The city and state, e.g. Boston, MA\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}},\"name\":\"get_current_weather\"}} is not valid under any of the schemas listed in the 'anyOf' keyword",
@@ -43,6 +55,15 @@
       "signal_name": "bedrock.converse",
       "context": {
         "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "bedrock.converse",
+      "context": {
+        "attribute_key": "llm.finish_reason"
       }
     },
     {
@@ -372,6 +393,15 @@
       "signal_name": "bedrock.converse_stream",
       "context": {
         "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "bedrock.converse_stream",
+      "context": {
+        "attribute_key": "llm.finish_reason"
       }
     },
     {

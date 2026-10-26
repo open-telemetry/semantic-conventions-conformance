@@ -5,7 +5,7 @@
 
 The model is what weaver resolved out of the pinned registry: every span type,
 metric and event it declares. A provider refinement keeps its own id, so what
-``openai.inference.client`` adds is not coverage of ``gen_ai.inference.client``.
+``openai.gen_ai.client.inference`` adds is not coverage of ``gen_ai.client.inference``.
 How a run is *reduced* against that model belongs to the runner; see
 ``tools/runner/tests/test_semconv.py``.
 
@@ -68,7 +68,7 @@ def _reduce_for(model):
 def test_the_operation_name_names_the_span_type(classify_span) -> None:
     assert classify_span(
         "chat gpt-4", "client", {"gen_ai.operation.name": "chat"}
-    ) == {"gen_ai.inference.client"}
+    ) == {"gen_ai.client.inference"}
 
 
 def test_a_span_without_an_operation_name_is_identified_by_its_attributes(
@@ -89,7 +89,7 @@ def test_the_operation_name_wins_over_identifying_attributes(
         {"gen_ai.operation.name": "chat", "gen_ai.agent.id": "a1"},
     )
 
-    assert classified == {"gen_ai.inference.client"}
+    assert classified == {"gen_ai.client.inference"}
 
 
 def test_span_kind_tells_the_two_invoke_agent_types_apart(
@@ -117,17 +117,17 @@ def test_a_span_of_no_known_type_is_classified_as_nothing(
 def test_provider_attributes_are_not_coverage_of_the_type_they_refine(
     model,
 ) -> None:
-    """openai.inference.client is a refinement, not part of the general type."""
-    inference = model["spans"]["gen_ai.inference.client"]["attributes"]
+    """openai.gen_ai.client.inference is a refinement, not part of the general type."""
+    inference = model["spans"]["gen_ai.client.inference"]["attributes"]
 
     assert not [name for name in inference if name.startswith("openai.")]
 
 
 def test_the_base_conventions_come_through(reduce_for) -> None:
-    data = reduce_for(span_types=["gen_ai.inference.client"])
+    data = reduce_for(span_types=["gen_ai.client.inference"])
 
     assert {"gen_ai.operation.name", "gen_ai.request.model"} <= set(
-        data["spans"]["gen_ai.inference.client"]
+        data["spans"]["gen_ai.client.inference"]
     )
 
 
@@ -140,7 +140,7 @@ def test_every_declared_metric_is_recordable(model, reduce_for) -> None:
     recorded = reduce_for(metrics=declared)["metrics"]
 
     assert set(recorded) == set(declared)
-    assert "gen_ai.operation.name" in recorded["gen_ai.client.token.usage"]
+    assert "gen_ai.operation.name" in recorded["gen_ai.client.inference.duration"]
 
 
 def test_every_declared_event_is_recordable(model, reduce_for) -> None:
@@ -163,3 +163,36 @@ def test_every_declared_entity_is_recordable(model, reduce_for) -> None:
     for name in declared:
         assert "identity" in recorded[name]
         assert "description" in recorded[name]
+
+
+@pytest.mark.parametrize(
+    ("span_type", "kind", "attributes"),
+    [
+        ("gen_ai.inference.client", "client", {"gen_ai.operation.name": "chat"}),
+        ("gen_ai.client.inference", "client", {"gen_ai.operation.name": "chat"}),
+        ("gen_ai.embeddings.client", "client", {"gen_ai.operation.name": "embeddings"}),
+        ("gen_ai.client.embeddings", "client", {"gen_ai.operation.name": "embeddings"}),
+        ("gen_ai.invoke_agent.client", "client", {"gen_ai.operation.name": "invoke_agent"}),
+        ("gen_ai.client.invoke_agent", "client", {"gen_ai.operation.name": "invoke_agent"}),
+    ],
+)
+def test_spans_classify_into_the_type_name_the_registry_declares(
+    span_type, kind, attributes
+) -> None:
+    model = {"spans": {span_type: {"kind": kind, "attributes": {}}}}
+
+    assert DOMAIN.classifier(model)("", kind, attributes) == {span_type}
+
+
+def test_renamed_client_agent_type_still_separates_from_internal() -> None:
+    model = {
+        "spans": {
+            "gen_ai.client.invoke_agent": {"kind": "client", "attributes": {}},
+            "gen_ai.invoke_agent.internal": {"kind": "internal", "attributes": {}},
+        }
+    }
+    classify = DOMAIN.classifier(model)
+    attributes = {"gen_ai.operation.name": "invoke_agent"}
+
+    assert classify("", "client", attributes) == {"gen_ai.client.invoke_agent"}
+    assert classify("", "internal", attributes) == {"gen_ai.invoke_agent.internal"}

@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 otel-conformance-python = "otel_conformance_python:cli"
+otel-conformance-python-relock = "otel_conformance_python.relock:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/otel_conformance_python"]

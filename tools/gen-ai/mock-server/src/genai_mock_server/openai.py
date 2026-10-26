@@ -6,7 +6,14 @@ import re
 
 from flask import Blueprint, Response, request
 
-from ._common import mock_json_schema_value, mock_tool_arguments, sse
+from ._common import (
+    mock_json_schema_value,
+    mock_tool_arguments,
+    next_tool_call_index,
+    offered_tool,
+    should_call_tool,
+    sse,
+)
 
 bp = Blueprint("openai", __name__)
 
@@ -68,6 +75,40 @@ CHAT_RESPONSE = {
         "total_tokens": 37,
     },
 }
+
+# A completion the provider ends without output: usage reports an explicit 0,
+# which instrumentation has to record rather than treat as missing.
+CHAT_EMPTY_COMPLETION_RESPONSE = {
+    "id": "chatcmpl-mock-empty-001",
+    "object": "chat.completion",
+    "service_tier": "default",
+    "created": 1700000000,
+    "model": "gpt-4o-mini",
+    "choices": [
+        {
+            "index": 0,
+            "message": {"role": "assistant", "content": ""},
+            "finish_reason": "stop",
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 25,
+        "completion_tokens": 0,
+        "total_tokens": 25,
+    },
+}
+
+# A rejected request: no completion and no usage, so the operation fails
+# without any token count from the provider.
+CHAT_BAD_REQUEST_ERROR = {
+    "error": {
+        "message": "The mock server rejected this request.",
+        "type": "invalid_request_error",
+        "param": None,
+        "code": "mock_rejected",
+    }
+}
+
 
 CHAT_TOOL_CALL_RESPONSE = {
     "id": "chatcmpl-mock-002",
@@ -228,7 +269,41 @@ def _chat_audio_response(body):
     return response
 
 
-def _responses_tool_call_response(body):
+def _responses_current_turn(request_input):
+    """Input items since the last user message."""
+    last_user = -1
+    for index, item in enumerate(request_input):
+        if item.get("role") == "user":
+            last_user = index
+    return request_input[last_user + 1 :]
+
+
+def _last_user_text(body):
+    """String content of the last user message, where the chat sentinels are read."""
+    for message in reversed(body.get("messages", [])):
+        if message.get("role") == "user":
+            content = message.get("content")
+            return content if isinstance(content, str) else ""
+    return ""
+
+
+def _responses_called_tool_info(items):
+    """Tool names called, and every call id seen, in Responses input shape."""
+    called_names = set()
+    call_ids = []
+    for item in items:
+        if item.get("type") == "function_call":
+            name = item.get("name")
+            if name:
+                called_names.add(name)
+        if item.get("type") in ("function_call", "function_call_output"):
+            call_id = item.get("call_id")
+            if call_id:
+                call_ids.append(call_id)
+    return called_names, call_ids
+
+
+def _responses_tool_call_response(body, call_index=1):
     response = copy.deepcopy(RESPONSES_RESPONSE)
     response["id"] = "resp-mock-tool-001"
     response["model"] = body.get("model", response["model"])
@@ -238,8 +313,8 @@ def _responses_tool_call_response(body):
     response["output"] = [
         {
             "type": "function_call",
-            "id": "fc_mock_001",
-            "call_id": "call_mock_001",
+            "id": f"fc_mock_{call_index:03d}",
+            "call_id": f"call_mock_{call_index:03d}",
             "name": tool_name or "get_weather",
             "arguments": json.dumps(mock_tool_arguments(tool)),
             "status": "completed",
@@ -372,34 +447,66 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
-def _wants_tool_call(body):
-    """Whether this request should be answered with a call to its first tool.
-
-    Offered tools and no tool result yet, which is the same rule the
-    non-streaming path follows so a framework sees the same exchange either
-    way.
-    """
-    if not body.get("tools"):
+def _is_observation(message):
+    content = message.get("content")
+    if message.get("role") != "user" or not isinstance(content, list) or not content:
         return False
-    return not any(
-        message.get("role") == "tool" for message in body.get("messages", [])
-    )
+    first = content[0]
+    return isinstance(first, dict) and str(first.get("text", "")).startswith("Observation:")
 
 
-def _stream_tool_call(body, model, chunk_id):
+def _final_answer_after_observation(body):
+    """The ``final_answer`` tool, when a smolagents observation just came back.
+
+    smolagents replays a tool result as a user message whose text starts with
+    ``Observation:`` rather than as a ``tool`` message, so ``should_call_tool``
+    never sees the result and would call the same tool on every step.
+    """
+    messages = body.get("messages", [])
+    if not messages or not _is_observation(messages[-1]):
+        return None
+    for tool in body.get("tools") or []:
+        if tool.get("function", tool).get("name") == "final_answer":
+            return tool
+    return None
+
+
+def _next_tool_call(body):
+    """``(tool, name, call_id)`` to answer this request with, or ``None``."""
+    messages = body.get("messages", [])
+    final_answer_tool = _final_answer_after_observation(body)
+    if final_answer_tool:
+        # smolagents sends no assistant ``tool_calls``, so ids come from observations.
+        observations = sum(1 for message in messages if _is_observation(message))
+        return final_answer_tool, "final_answer", f"call_mock_{observations + 1:03d}"
+    if should_call_tool(body):
+        tool, tool_name = offered_tool(body)
+        return tool, tool_name, f"call_mock_{next_tool_call_index(messages):03d}"
+    return None
+
+
+def _tool_call_response(body, tool, tool_name, call_id):
+    resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
+    resp["model"] = body.get("model", resp["model"])
+    call = resp["choices"][0]["message"]["tool_calls"][0]
+    call["id"] = call_id
+    call["function"]["name"] = tool_name
+    call["function"]["arguments"] = json.dumps(mock_tool_arguments(tool))
+    resp["service_tier"] = _served_service_tier(body)
+    return resp
+
+
+def _stream_tool_call(model, chunk_id, tool, name, call_id):
     """Yield the SSE chunks of a streamed tool call.
 
     The call arrives split across deltas, name first and arguments after, the
     way OpenAI sends one: a client that only reassembles the first delta is
     wrong in a way a single-chunk mock would hide.
     """
-    tool = body.get("tools", [{}])[0]
-    function = tool.get("function", tool)
-    name = function.get("name") or "get_weather"
     arguments = json.dumps(mock_tool_arguments(tool))
 
     for delta in (
-        {"id": "call_mock_001", "type": "function", "function": {"name": name, "arguments": ""}},
+        {"id": call_id, "type": "function", "function": {"name": name, "arguments": ""}},
         {"function": {"arguments": arguments}},
     ):
         yield sse(
@@ -452,18 +559,23 @@ def _stream_chat(body):
         }
     )
 
-    if _wants_tool_call(body):
-        yield from _stream_tool_call(body, model, chunk_id)
-        return
-
     message_text = "\n".join(
         message.get("content", "")
         for message in body.get("messages", [])
         if isinstance(message.get("content"), str)
     )
-    content = _text_protocol_tool_call(body, message_text)
+    empty = "[MOCK_EMPTY_COMPLETION]" in _last_user_text(body)
+
+    tool_call = None if empty else _next_tool_call(body)
+    if tool_call:
+        yield from _stream_tool_call(model, chunk_id, *tool_call)
+        return
+
+    content = None if empty else _text_protocol_tool_call(body, message_text)
     words = (
-        [content]
+        []
+        if empty
+        else [content]
         if content
         else ["This ", "is ", "a ", "mock ", "streamed ", "response."]
     )
@@ -487,8 +599,8 @@ def _stream_chat(body):
             "choices": [{"index": 0, "delta": {"content": ""}, "finish_reason": "stop"}],
             "usage": {
                 "prompt_tokens": 25,
-                "completion_tokens": 6,
-                "total_tokens": 31,
+                "completion_tokens": 0 if empty else 6,
+                "total_tokens": 25 if empty else 31,
             },
         }
     )
@@ -502,30 +614,28 @@ def _stream_chat(body):
 @bp.route("/chat/completions", methods=["POST"])
 def chat_completions(deployment=None):
     body = request.get_json(silent=True) or {}
-
-    if body.get("stream"):
-        return Response(_stream_chat(body), mimetype="text/event-stream")
-
     message_text = "\n".join(
         message.get("content", "") for message in body.get("messages", []) if isinstance(message.get("content"), str)
     )
 
-    # Offered tools but no tool result yet: call the tool, else answer.
-    if body.get("tools"):
-        messages = body.get("messages", [])
-        has_tool_result = any(m.get("role") == "tool" for m in messages)
-        if not has_tool_result:
-            resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
-            resp["model"] = body.get("model", resp["model"])
-            tool = body.get("tools", [{}])[0]
-            tool_name = tool.get("function", {}).get("name")
-            if tool_name:
-                resp["choices"][0]["message"]["tool_calls"][0]["function"]["name"] = tool_name
-            resp["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"] = json.dumps(
-                mock_tool_arguments(tool)
-            )
-            resp["service_tier"] = _served_service_tier(body)
-            return resp
+    # [MOCK_BAD_REQUEST] and [MOCK_EMPTY_COMPLETION] let a scenario exercise the
+    # failed-call and zero-output paths of token usage recording, streamed or not.
+    user_text = _last_user_text(body)
+    if "[MOCK_BAD_REQUEST]" in user_text:
+        return CHAT_BAD_REQUEST_ERROR, 400
+    if "[MOCK_EMPTY_COMPLETION]" in user_text and not body.get("stream"):
+        resp = copy.deepcopy(CHAT_EMPTY_COMPLETION_RESPONSE)
+        resp["model"] = body.get("model", resp["model"])
+        resp["service_tier"] = _served_service_tier(body)
+        return resp
+
+    if body.get("stream"):
+        return Response(_stream_chat(body), mimetype="text/event-stream")
+
+    # Offered tools with no result for them in this turn: call the tool.
+    tool_call = _next_tool_call(body)
+    if tool_call:
+        return _tool_call_response(body, *tool_call)
 
     # CrewAI planner natural-retry path: a refusal, then a schema-invalid
     # answer, drives CrewAI through three LLM round-trips under one plan span.
@@ -616,26 +726,51 @@ def embeddings(deployment=None):
 @bp.route("/openai/v1/responses", methods=["POST"])
 def responses():
     body = request.get_json(silent=True) or {}
+    if any(
+        tool.get("type") in {"web_search", "web_search_preview", "web_search_preview_2025_03_11"}
+        for tool in body.get("tools") or []
+    ):
+        if body.get("stream"):
+            return {
+                "error": {
+                    "type": "invalid_request_error",
+                    "message": "Mock web search streaming is not supported.",
+                }
+            }, 400
+        resp = copy.deepcopy(RESPONSES_RESPONSE)
+        resp["id"] = "resp-mock-web-search-001"
+        resp["model"] = body.get("model", resp["model"])
+        resp["output"].insert(
+            0,
+            {
+                "id": "ws_1",
+                "type": "web_search_call",
+                "status": "completed",
+                "action": {"type": "search", "query": "OpenTelemetry"},
+            },
+        )
+        if body.get("store"):
+            _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+        return resp
     raw_request_input = body.get("input")
     if isinstance(raw_request_input, list):
         request_input = [item for item in raw_request_input if isinstance(item, dict)]
     else:
         request_input = []
-    # Call the first offered tool unless it has already been called in this
-    # input. Keying on the offered tool rather than on the presence of any
+    # Call the first offered tool unless the current turn already called it.
+    # Keying on the offered tool rather than on the presence of any
     # function_call_output lets a multi-agent run still exercise the tool of
     # the agent it handed off to, whose own handoff already produced one.
     offered = {
         tool.get("name") or (tool.get("function") or {}).get("name")
         for tool in body.get("tools") or []
     }
-    called = {
-        item.get("name")
-        for item in request_input
-        if item.get("type") == "function_call"
-    }
+    # Scoped to the current turn: a completed call must not stop the same tool
+    # from being called again after the user asks a second question.
+    called, _ = _responses_called_tool_info(_responses_current_turn(request_input))
+    _, call_ids = _responses_called_tool_info(request_input)
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
-        return _responses_tool_call_response(body)
+        return _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
 
     resp = copy.deepcopy(RESPONSES_RESPONSE)
     resp["model"] = body.get("model", resp["model"])

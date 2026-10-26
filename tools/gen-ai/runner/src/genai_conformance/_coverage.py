@@ -35,21 +35,30 @@ _OPERATION_NAMES = {
     },
     "gen_ai.plan.internal": {"plan"},
     "gen_ai.retrieval.client": {"retrieval"},
+    # Newer registries name span types gen_ai.{kind}.{operation}. A registry
+    # declares one name per type, and the classifier keeps whichever it declares.
+    "gen_ai.client.embeddings": {"embeddings"},
+    "gen_ai.client.inference": {"chat", "generate_content", "text_completion"},
+    "gen_ai.client.invoke_agent": {"invoke_agent"},
 }
 
 # What identifies a span that omits the operation name. create_agent and plan
 # share gen_ai.agent.{id,name} with invoke_agent, so nothing identifies them
 # but the operation name.
+_EMBEDDINGS_ATTRIBUTES = {
+    "gen_ai.embeddings.dimension.count",
+    "gen_ai.request.encoding_formats",
+}
+_AGENT_ATTRIBUTES = {"gen_ai.agent.id", "gen_ai.agent.name"}
 _IDENTIFYING_ATTRIBUTES = {
-    "gen_ai.embeddings.client": {
-        "gen_ai.embeddings.dimension.count",
-        "gen_ai.request.encoding_formats",
-    },
+    "gen_ai.client.embeddings": _EMBEDDINGS_ATTRIBUTES,
+    "gen_ai.embeddings.client": _EMBEDDINGS_ATTRIBUTES,
     "gen_ai.execute_tool.internal": {
         "gen_ai.tool.call.id",
         "gen_ai.tool.name",
     },
-    "gen_ai.invoke_agent.client": {"gen_ai.agent.id", "gen_ai.agent.name"},
+    "gen_ai.client.invoke_agent": _AGENT_ATTRIBUTES,
+    "gen_ai.invoke_agent.client": _AGENT_ATTRIBUTES,
     "gen_ai.invoke_agent.internal": {"gen_ai.agent.id", "gen_ai.agent.name"},
     "gen_ai.invoke_workflow.internal": {"gen_ai.workflow.name"},
     "gen_ai.retrieval.client": {"gen_ai.data_source.id"},
@@ -92,9 +101,11 @@ def classifier(
             if identifying & present
         }
 
+        spans = coverage_model["spans"]
+        matched = {t for t in matched if t in spans} or matched
+
         # Span kind separates otherwise identical types, e.g. an agent invoked
         # over the wire (client) from one running in-process (internal).
-        spans = coverage_model["spans"]
         of_this_kind = {
             span_type
             for span_type in matched

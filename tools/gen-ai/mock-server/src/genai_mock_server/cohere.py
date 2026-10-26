@@ -5,7 +5,12 @@ import json
 
 from flask import Blueprint, Response, request
 
-from ._common import mock_json_schema_value, mock_tool_arguments
+from ._common import (
+    mock_json_schema_value,
+    mock_tool_arguments,
+    next_tool_call_index,
+    should_call_tool,
+)
 
 bp = Blueprint("cohere", __name__)
 
@@ -22,16 +27,6 @@ CHAT_RESPONSE = {
     },
 }
 
-TOOL_CALL_ID = "cohere-mock-tool-call-001"
-
-
-def _wants_tool_call(body):
-    if not body.get("tools"):
-        return False
-    return not any(
-        message.get("role") == "tool" for message in body.get("messages", [])
-    )
-
 
 def _tool_call_response(body):
     resp = copy.deepcopy(CHAT_RESPONSE)
@@ -45,7 +40,7 @@ def _tool_call_response(body):
         "tool_plan": "I will look up the weather.",
         "tool_calls": [
             {
-                "id": TOOL_CALL_ID,
+                "id": f"cohere-mock-tool-call-{next_tool_call_index(body.get('messages', [])):03d}",
                 "type": "function",
                 "function": {
                     "name": function.get("name") or "get_weather",
@@ -62,7 +57,7 @@ def _tool_call_response(body):
 
 
 def _chat_response(body):
-    if _wants_tool_call(body):
+    if should_call_tool(body):
         return _tool_call_response(body)
 
     resp = copy.deepcopy(CHAT_RESPONSE)

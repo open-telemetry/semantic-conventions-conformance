@@ -102,3 +102,52 @@ def bedrock_agent_invoke(agent_id, alias_id, session_id):
             "x-amz-bedrock-agent-content-type": "application/json",
         },
     )
+
+
+@bp.route("/knowledgebases/<knowledge_base_id>/retrieve", methods=["POST"])
+def bedrock_retrieve(knowledge_base_id: str) -> dict[str, object]:
+    body = request.get_json(silent=True) or {}
+    configuration = (body.get("retrievalConfiguration") or {}).get("vectorSearchConfiguration") or {}
+    limit = configuration.get("numberOfResults", 2)
+    documents = [
+        ("Paris is the capital of France.", 0.87),
+        ("France is in Western Europe.", 0.61),
+    ]
+    return {
+        "retrievalResults": [
+            {
+                "content": {"type": "TEXT", "text": text},
+                "location": {
+                    "type": "S3",
+                    "s3Location": {"uri": f"s3://{knowledge_base_id}/document-{index}.txt"},
+                },
+                "score": score,
+            }
+            for index, (text, score) in enumerate(documents[:limit], start=1)
+        ]
+    }
+
+
+@bp.route("/retrieveAndGenerate", methods=["POST"])
+def bedrock_retrieve_and_generate() -> dict[str, object]:
+    body = request.get_json(silent=True) or {}
+    return {
+        "output": {"text": "Paris is the capital of France."},
+        "sessionId": body.get("sessionId", "mock-session-001"),
+    }
+
+
+@bp.route("/retrieveAndGenerateStream", methods=["POST"])
+def bedrock_retrieve_and_generate_stream() -> Response:
+    body = request.get_json(silent=True) or {}
+    chunks = (
+        encode_aws_event_stream_message("output", json.dumps({"text": text}).encode("utf-8"))
+        for text in ["Paris is the capital ", "of France."]
+    )
+    return Response(
+        chunks,
+        mimetype="application/vnd.amazon.eventstream",
+        headers={
+            "x-amzn-bedrock-knowledge-base-session-id": body.get("sessionId", "mock-session-001"),
+        },
+    )

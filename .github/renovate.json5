@@ -4,6 +4,9 @@
     "config:best-practices",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
+  "gitIgnoredAuthors": [
+    "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
+  ],
   "packageRules": [
     {
       "groupName": "all patch versions",
@@ -26,6 +29,20 @@
       ]
     },
     {
+      // Bump the setup-python `python-version` inputs in their own PR, out of
+      // the github actions group. The Python scenarios run on the interpreter
+      // setup-python puts on PATH, so a new Python is only mergeable once their
+      // locked dependencies (grpcio, pydantic-core, ...) publish wheels for it;
+      // until then every scenario builds them from source and the jobs time
+      // out, which must not hold back the other action updates.
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "groupName": "python",
+      "schedule": [
+        "before 8am on Tuesday"
+      ]
+    },
+    {
       // group all non-major Java dependency updates into a single PR
       "matchManagers": ["gradle"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -36,6 +53,12 @@
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "javascript-minor"
+    },
+    {
+      // group all non-major Ruby dependency updates into a single PR
+      "matchManagers": ["bundler"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "ruby-minor"
     },
     {
       // group all non-major .NET dependency updates into a single PR
@@ -53,6 +76,18 @@
       "matchManagers": ["pep621", "poetry"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "python-minor"
+    },
+    {
+      // group all non-major Go dependency updates into a single PR
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "go-minor"
+    },
+    {
+      // group all non-major PHP dependency updates into a single PR
+      "matchManagers": ["composer"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "php-minor"
     },
     {
       // Everything under this Maven group ships only `-alpha` versions, so
@@ -93,6 +128,28 @@
         "opentelemetry-util-genai"
       ],
       "ignoreUnstable": false
+    },
+    {
+      // requires-python specifies the supported Python version for a project,
+      // not a dependency to bump to the newest minor.
+      "matchPackageNames": ["python"],
+      "matchDepTypes": ["requires-python"],
+      "enabled": false
+    },
+    {
+      // google-adk and crewai cap opentelemetry-sdk below 1.43, so keep
+      // their core SDK packages pinned.
+      "matchFileNames": [
+        "scenarios/gen-ai/python/google-adk/**",
+        "scenarios/gen-ai/python/crewai/**"
+      ],
+      "matchPackageNames": [
+        "opentelemetry-api",
+        "opentelemetry-sdk",
+        "opentelemetry-exporter-otlp-proto-grpc",
+        "opentelemetry-distro"
+      ],
+      "enabled": false
     }
   ],
   "customManagers": [
@@ -110,7 +167,7 @@
       // The database runner invokes these images directly rather than through
       // Dockerfiles or Compose files, so Renovate needs their Python assignments.
       "customType": "regex",
-      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb)\\.py$/"],
+      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb|redis)\\.py$/"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?) versioning=(?<versioning>[^\\s]+?)\\s+[A-Z_]+_IMAGE = \"[^:\"]+:(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
       ]

@@ -261,28 +261,115 @@ def _has_function_response(body):
     return False
 
 
+def _function_call_part(body):
+    declaration = next(
+        (
+            declaration
+            for tool in body.get("tools") or []
+            for declaration in (tool or {}).get("functionDeclarations")
+            or (tool or {}).get("function_declarations")
+            or []
+        ),
+        None,
+    )
+    if declaration is None:
+        return None
+    part = copy.deepcopy(FUNCTION_CALL_RESPONSE["candidates"][0]["content"]["parts"][0])
+    if declaration.get("name"):
+        part["functionCall"]["name"] = declaration["name"]
+    # Newer google-genai/ADK send the schema as JSON Schema under
+    # `parameters_json_schema` (a.k.a. `parametersJsonSchema`) instead of `parameters`.
+    parameters = (
+        declaration.get("parameters")
+        or declaration.get("parameters_json_schema")
+        or declaration.get("parametersJsonSchema")
+        or {}
+    )
+    part["functionCall"]["args"] = mock_tool_arguments(
+        {"function": {"parameters": parameters}}
+    )
+    return part
+
+
+def _google_search_response(body):
+    resp = copy.deepcopy(RESPONSE)
+    resp["responseId"] = "response-search-1"
+    candidate = resp["candidates"][0]
+    # With tool combination the model searches, then asks for the function.
+    parts = [
+        _function_call_part(body)
+        or {"text": "OpenTelemetry is an observability framework."}
+    ]
+    tool_config = body.get("toolConfig") or body.get("tool_config") or {}
+    # Gemini returns the server-side call and result as parts only on opt-in.
+    if tool_config.get("includeServerSideToolInvocations") or tool_config.get(
+        "include_server_side_tool_invocations"
+    ):
+        parts = [
+            {
+                "toolCall": {
+                    "id": "search-1",
+                    "toolType": "GOOGLE_SEARCH_WEB",
+                    "args": {"queries": ["OpenTelemetry"]},
+                }
+            },
+            {
+                "toolResponse": {
+                    "id": "search-1",
+                    "toolType": "GOOGLE_SEARCH_WEB",
+                    "response": {
+                        "results": [
+                            {"title": "OpenTelemetry", "url": "https://opentelemetry.io/"}
+                        ]
+                    },
+                }
+            },
+            *parts,
+        ]
+    candidate["content"]["parts"] = parts
+    candidate["groundingMetadata"] = {
+        "webSearchQueries": ["OpenTelemetry"],
+        "groundingChunks": [
+            {"web": {"uri": "https://opentelemetry.io/", "title": "OpenTelemetry"}}
+        ],
+    }
+    return resp
+
+
 def _tool_response(body):
+    if any(
+        "codeExecution" in tool or "code_execution" in tool
+        for tool in body.get("tools") or []
+    ):
+        resp = copy.deepcopy(RESPONSE)
+        resp["responseId"] = "response-code-1"
+        resp["candidates"][0]["content"]["parts"] = [
+            {
+                "executableCode": {
+                    "id": "code-1",
+                    "code": "print(1)",
+                    "language": "PYTHON",
+                }
+            },
+            {
+                "codeExecutionResult": {
+                    "id": "code-1",
+                    "outcome": "OUTCOME_OK",
+                    "output": "1",
+                }
+            },
+            {"text": "The result is 1."},
+        ]
+        return resp
+    if any(
+        "googleSearch" in tool or "google_search" in tool
+        for tool in body.get("tools") or []
+    ):
+        return _google_search_response(body)
     resp = copy.deepcopy(FUNCTION_CALL_RESPONSE)
-    tools = body.get("tools") or []
-    function_declarations = []
-    if tools:
-        tool = tools[0] or {}
-        function_declarations = tool.get("functionDeclarations") or tool.get("function_declarations") or []
-    if function_declarations:
-        declaration = function_declarations[0]
-        if declaration.get("name"):
-            resp["candidates"][0]["content"]["parts"][0]["functionCall"]["name"] = declaration["name"]
-        # Newer google-genai/ADK send the schema as JSON Schema under
-        # `parameters_json_schema` (a.k.a. `parametersJsonSchema`) instead of `parameters`.
-        parameters = (
-            declaration.get("parameters")
-            or declaration.get("parameters_json_schema")
-            or declaration.get("parametersJsonSchema")
-            or {}
-        )
-        resp["candidates"][0]["content"]["parts"][0]["functionCall"]["args"] = mock_tool_arguments(
-            {"function": {"parameters": parameters}}
-        )
+    part = _function_call_part(body)
+    if part:
+        resp["candidates"][0]["content"]["parts"][0] = part
     return resp
 
 
@@ -386,11 +473,44 @@ def google_genai_agents():
 def google_genai_interactions():
     """Handle Google GenAI Interactions API requests."""
     body = request.get_json(silent=True) or {}
-    resp = {
-        "id": "interaction-mock-123",
-        "model": body.get("model", "gemini-2.0-flash"),
+    resp = _interaction_response(
+        "interaction-mock-123",
+        body.get("model", "gemini-2.0-flash"),
+        body.get("previous_interaction_id"),
+    )
+    if any(tool.get("type") == "google_search" for tool in body.get("tools") or []):
+        resp["steps"] = [
+            {
+                "type": "google_search_call",
+                "id": "search-1",
+                "arguments": {"queries": ["OpenTelemetry"]},
+                "search_type": "web_search",
+            },
+            {
+                "type": "google_search_result",
+                "call_id": "search-1",
+                "result": [],
+                "is_error": False,
+            },
+            *resp["steps"],
+        ]
+    return resp
+
+
+@bp.route("/v1beta/interactions/<interaction_id>", methods=["GET"])
+def google_genai_get_interaction(interaction_id: str) -> dict[str, object]:
+    """Return a completed interaction without requiring a preceding create."""
+    return _interaction_response(interaction_id, "gemini-2.0-flash")
+
+
+def _interaction_response(
+    interaction_id: str, model: str, previous_interaction_id: str | None = None
+) -> dict[str, object]:
+    return {
+        "id": interaction_id,
+        "model": model,
         "status": "completed",
-        "previous_interaction_id": body.get("previous_interaction_id"),
+        "previous_interaction_id": previous_interaction_id,
         "steps": [
             {
                 "type": "model_output",
@@ -410,7 +530,6 @@ def google_genai_interactions():
             "total_thought_tokens": 0,
         },
     }
-    return resp
 
 
 @bp.route("/v1/projects/<path:rest>", methods=["POST"])

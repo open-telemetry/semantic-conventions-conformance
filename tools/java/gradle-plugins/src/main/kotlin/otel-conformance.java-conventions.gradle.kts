@@ -18,12 +18,12 @@ repositories {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
 dependencies {
-    errorprone("com.google.errorprone:error_prone_core:2.50.0")
+    errorprone("com.google.errorprone:error_prone_core:2.51.0")
 
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -57,6 +57,19 @@ spotless {
         )
         toggleOffOn()
         target("src/**/*.java")
+    }
+    kotlin {
+        ktlint()
+        licenseHeader(
+            """
+            /*
+             * Copyright The OpenTelemetry Authors
+             * SPDX-License-Identifier: Apache-2.0
+             */
+            """.trimIndent(),
+            "(package|import|class|object|fun)",
+        )
+        target("src/**/*.kt")
     }
     kotlinGradle {
         ktlint()

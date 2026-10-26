@@ -275,6 +275,22 @@ def test_zero_count_signals_are_not_seen() -> None:
     assert check(scenario(metrics=()), report) == []
 
 
+def test_filtered_non_registry_metric_is_not_an_undeclared_metric() -> None:
+    report = Report(
+        statistics={"seen_non_registry_metrics": {"sdk.self.metric": 1}}
+    )
+
+    assert check(scenario(metrics=()), report) == []
+
+
+def test_declared_non_registry_metric_is_still_expected() -> None:
+    report = Report(
+        statistics={"seen_non_registry_metrics": {"custom.metric": 1}}
+    )
+
+    assert check(scenario(metrics=("custom.metric",)), report) == []
+
+
 def test_undeclared_violation_fails() -> None:
     report = Report(
         violations=[

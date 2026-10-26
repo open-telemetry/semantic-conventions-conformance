@@ -12,16 +12,22 @@ directly.
 from __future__ import annotations
 
 import json
+import socket
 import subprocess
 import sys
 from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Literal
 
 import pytest
 
 from opentelemetry.conformance import (
+    AttributeMatcher,
+    InstrumentationScopeExpectation,
+    SpanExpectation,
+    SpanMatch,
     SpecError,
     WeaverSpec,
     _session,
@@ -137,6 +143,64 @@ def test_the_scenario_gets_exactly_the_environment_it_was_given(
     assert completed.stdout.strip() == "value"
 
 
+def test_scope_expectation_is_rendered_beside_declared_policies(
+    directory: Path, tmp_path: Path
+) -> None:
+    policies = directory / "policies"
+    policies.mkdir()
+    (policies / "declared.rego").write_text("package live_check_advice\n")
+    opened = session(directory, tmp_path / "data.json")
+    scenario = replace(
+        opened.spec.scenarios["inference"],
+        spans=(
+            SpanExpectation(
+                match=SpanMatch(
+                    attributes={"operation": "chat"},
+                    kind="SPAN_KIND_CLIENT",
+                ),
+                instrumentation_scope=InstrumentationScopeExpectation(
+                    schema_url=AttributeMatcher(present=True)
+                ),
+            ),
+        ),
+    )
+
+    with opened._scenario_policies(
+        scenario, WeaverSpec(policies="policies")
+    ) as rendered:
+        assert rendered is not None
+        rendered_path = Path(rendered)
+        assert (rendered_path / "declared.rego").is_file()
+        scope_policy = (
+            rendered_path / "instrumentation_scope_validation.rego"
+        ).read_text()
+        assert (
+            '"global": {"name": {"present": true}, '
+            '"schema_url": {"present": true}}' in scope_policy
+        )
+        assert '"schema_url": {"present": true}' in scope_policy
+        assert '"operation": "chat"' in scope_policy
+        assert '"kind": "client"' in scope_policy
+
+
+def test_generated_scope_policy_does_not_replace_a_declared_policy(
+    directory: Path, tmp_path: Path
+) -> None:
+    policies = directory / "policies"
+    policies.mkdir()
+    (policies / "instrumentation_scope_validation.rego").write_text(
+        "package live_check_advice\n"
+    )
+    opened = session(directory, tmp_path / "data.json")
+    scenario = opened.spec.scenarios["inference"]
+
+    with pytest.raises(SpecError, match="conflicts with generated policy"):
+        with opened._scenario_policies(
+            scenario, WeaverSpec(policies="policies")
+        ):
+            pass
+
+
 @pytest.fixture
 def directory(tmp_path: Path) -> Path:
     (tmp_path / "conformance.yaml").write_text(SPEC)
@@ -148,9 +212,14 @@ def session(
     data_file: Path,
     setup: tuple[str, ...] | None = None,
     report_dir: Path | None = None,
+    otlp_protocol: Literal["grpc", "http/protobuf"] = "grpc",
 ) -> ConformanceSession:
     return ConformanceSession(
-        replace(load_spec(directory), setup=setup),
+        replace(
+            load_spec(directory),
+            setup=setup,
+            otlp_protocol=otlp_protocol,
+        ),
         report_dir if report_dir is not None else directory / "reports",
         variables={"ROOT": str(directory)},
         weaver=WeaverSpec(registry="model"),
@@ -161,6 +230,96 @@ def session(
             "reports": reports.name,
         },
     )
+
+
+def test_weaver_reserves_distinct_ports(
+    directory: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("opentelemetry.test.weaver_live_check")
+
+    ports: list[int] = []
+
+    def construct(
+        *, otlp_port: int, admin_port: int, **kwargs: object
+    ) -> None:
+        ports.extend([otlp_port, admin_port])
+        assert 0 < otlp_port <= 65535
+        assert 0 < admin_port <= 65535
+        assert otlp_port != admin_port
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+                with pytest.raises(OSError):
+                    other.bind(("127.0.0.1", port))
+        raise RuntimeError("weaver configured")
+
+    monkeypatch.setattr(
+        "opentelemetry.conformance._weaver.WeaverLiveCheck", construct
+    )
+
+    with pytest.raises(RuntimeError, match="weaver configured"):
+        session(directory, tmp_path / "data.json").run("inference")
+
+    assert len(ports) == 2
+    for port in ports:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+            other.bind(("127.0.0.1", port))
+
+
+@pytest.mark.parametrize("index", [None, 3])
+@pytest.mark.parametrize(
+    ("otlp_protocol", "otlp_endpoint"),
+    [
+        ("grpc", "http://localhost:4317"),
+        ("http/protobuf", "http://127.0.0.1:12345"),
+    ],
+)
+def test_scenario_uses_only_generic_otlp_configuration(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    otlp_protocol: Literal["grpc", "http/protobuf"],
+    otlp_endpoint: str,
+    index: int | None,
+) -> None:
+    captured: dict[str, str] = {}
+
+    def run(
+        command: tuple[str, ...],
+        *,
+        cwd: Path,
+        env: dict[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        captured.update(env)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(_session, "_run_command", run)
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT",
+            "http://example.com:4317",
+        )
+        monkeypatch.setenv(
+            f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL",
+            "ambient",
+        )
+    opened = session(
+        directory,
+        tmp_path / "data.json",
+        otlp_protocol=otlp_protocol,
+    )
+
+    opened._execute(  # noqa: SLF001
+        replace(opened.spec.scenarios["inference"], index=index),
+        otlp_endpoint,
+    )
+
+    assert captured["OTEL_EXPORTER_OTLP_ENDPOINT"] == otlp_endpoint
+    assert captured["OTEL_EXPORTER_OTLP_PROTOCOL"] == otlp_protocol
+    if index is not None:
+        assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == str(index)
+    for signal in ("TRACES", "METRICS", "LOGS"):
+        assert f"OTEL_EXPORTER_OTLP_{signal}_ENDPOINT" not in captured
+        assert f"OTEL_EXPORTER_OTLP_{signal}_PROTOCOL" not in captured
 
 
 def test_a_complete_run_writes_the_data_file(
@@ -265,10 +424,33 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
-def test_contract_index_is_injected_into_the_scenario_process(
+@pytest.mark.parametrize(
+    ("action", "expected_action"),
+    [
+        (
+            {"request": {"method": "POST", "path": "/items"}},
+            '{"request":{"method":"POST","path":"/items"}}',
+        ),
+        (
+            {
+                "kind": "prepared_query",
+                "sql": "SELECT ${1}, ${2}",
+                "parameters": [
+                    {"type": "integer", "value": 7},
+                    {"type": "integer", "value": -2},
+                ],
+            },
+            '{"kind":"prepared_query","parameters":[{"type":"integer","value":7},'
+            '{"type":"integer","value":-2}],"sql":"SELECT ${1}, ${2}"}',
+        ),
+    ],
+)
+def test_contract_selection_is_injected_into_the_scenario_process(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    action: dict[str, object],
+    expected_action: str,
 ) -> None:
     captured: dict[str, str] = {}
 
@@ -284,11 +466,13 @@ def test_contract_index_is_injected_into_the_scenario_process(
     scenario = replace(
         opened.spec.scenarios["inference"],
         index=3,
+        action=action,
     )
 
     opened._execute(scenario, "http://collector")
 
     assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
+    assert captured["OTEL_CONFORMANCE_SCENARIO_ACTION"] == expected_action
 
 
 def test_a_missing_registry_is_a_spec_error(

@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -27,6 +27,18 @@
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.groq' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.groq",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
@@ -79,6 +91,42 @@
       "signal_name": "Completions",
       "context": {
         "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.type"
       }
     },
     {

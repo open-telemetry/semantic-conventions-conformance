@@ -34,5 +34,8 @@ agent = Agent(
 Runner.run_sync(
     agent,
     "What's the weather in Seattle today?",
-    run_config=RunConfig(workflow_name="conformance_workflow"),
+    run_config=RunConfig(
+        workflow_name="conformance_workflow",
+        group_id="conv_7f3a9c2e",
+    ),
 )
