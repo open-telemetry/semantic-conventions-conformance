@@ -10,11 +10,11 @@ database-conformance path/to/directory
 ```
 
 A directory declaring `runner: database-conformance` gets the same wiring from
-plain `otel-conformance` and from `pytest`. See
-[`tools/runner/README.md`](../../runner/README.md) for the conformance directory
-format. Docker must be installed and its daemon running.
+plain `otel-conformance` and from `pytest`. See the
+[conformance directory format](../../runner/README.md). Docker and a running
+daemon are required.
 
-Each conformance package selects its backend in `conformance.yaml`:
+Each package selects a registered backend selector in `conformance.yaml`:
 
 ```yaml
 runner: database-conformance
@@ -22,41 +22,33 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`,
-`sql_server`, or `redis`. Each session starts one pinned container and removes
-it when the session closes. PostgreSQL, MariaDB, and Microsoft SQL Server apply
-packaged SQL schemas that create the same logical objects but no rows. Redis
-needs no initialization beyond its readiness check. Scenarios own any data
-their operations need. The SQL Server backend accepts Microsoft's EULA through
-the container's required `ACCEPT_EULA=Y` setting and runs the Developer edition.
+`runner_config` must contain exactly one string key, `backend`. The authoritative
+selector-to-factory and semantic-convention registration is in
+[`_registry.py`](src/database_conformance/_registry.py). A session starts one
+container, waits for its declared readiness check, applies any declared
+initialization, and removes the container when the session closes. Scenario data
+is not pre-seeded; each workload creates or verifies the data it needs.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
 
-| Variable | Value |
-| --- | --- |
-| `DATABASE_HOST` | Loopback address published by Docker |
-| `DATABASE_PORT` | Docker-assigned host port |
-| `DATABASE_NAME` | Test database name |
-| `DATABASE_USER` | Test user |
-| `DATABASE_PASSWORD` | Test-only password |
+| Variable            | Value                                        |
+| ------------------- | -------------------------------------------- |
+| `DATABASE_HOST`     | Loopback address published by Docker         |
+| `DATABASE_PORT`     | Docker-assigned host port                    |
+| `DATABASE_NAME`     | Test database name or logical database index |
+| `DATABASE_USER`     | Test user                                    |
+| `DATABASE_PASSWORD` | Test-only password                           |
 
-Connection fields rather than a language-specific URL let Java, Python,
-JavaScript, .NET, and future database scenarios construct their native client
-configuration from the same backend. SQL packages select their backend's contract
-from the shared [`contracts/`](../sql-test-client/contracts) directory using
-`scenario_contract`. The generic conformance runner injects only the selected
-contract entry's `action` into the scenario process.
+Connection fields let each language construct its native client configuration.
+SQL packages select a contract under
+[`contracts/`](../sql-test-client/contracts) using `scenario_contract`. The
+generic conformance runner injects only the selected contract entry's `action`
+into the scenario process.
 
-Redis scenarios use `DATABASE_NAME` as the logical database index and
-authenticate with `DATABASE_USER` and `DATABASE_PASSWORD` only when the password
-is non-empty. The Redis backend supplies database zero, user `default`, and an
-empty password, so its scenarios run without authentication.
-
-The package classifies only client spans for the backends it can run.
-PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
-`db.mariadb.client`, Microsoft SQL Server spans use `db.sql_server.client`, and
-Redis spans use `db.redis.client`. Adding a backend also requires adding its
-span classification and conformance scenarios.
+The classifier recognizes registered semantic-convention systems only on
+`CLIENT` spans and only when their client span type exists in the resolved
+coverage registry. The system identifiers and span types are defined alongside
+backend construction in [`_registry.py`](src/database_conformance/_registry.py).
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

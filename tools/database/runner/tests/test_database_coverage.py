@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 
 from database_conformance import classify_span
+from database_conformance._coverage import classifier
 
 
 @pytest.mark.parametrize("kind", ["client", "CLIENT", "SPAN_KIND_CLIENT"])
@@ -53,3 +54,20 @@ def test_a_span_of_an_unrelated_kind_is_not_a_database_client_span() -> None:
     assert classify_span("SELECT", "INTERNAL", attributes) == set()
     assert classify_span("SELECT", "SERVER", attributes) == set()
     assert classify_span("SELECT", "PRODUCER", attributes) == set()
+
+
+def test_classifier_only_returns_registered_client_types_in_the_registry() -> None:
+    classify = classifier(
+        {
+            "spans": {
+                "db.postgresql.client": {"kind": "server"},
+                "db.redis.client": {"kind": "client"},
+            }
+        }
+    )
+
+    assert classify("SELECT", "CLIENT", {"db.system.name": "postgresql"}) == set()
+    assert classify("SELECT", "CLIENT", {"db.system.name": "mariadb"}) == set()
+    assert classify("GET", "CLIENT", {"db.system.name": "redis"}) == {
+        "db.redis.client"
+    }

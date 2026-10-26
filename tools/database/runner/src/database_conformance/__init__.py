@@ -22,10 +22,7 @@ from opentelemetry.conformance import (
 
 from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
-from ._mariadb import MariaDB
-from ._postgres import Postgres
-from ._redis import Redis
-from ._sql_server import SQLServer
+from ._registry import BACKENDS as _BACKEND_REGISTRY
 
 _HERE = Path(__file__).parent
 
@@ -37,10 +34,8 @@ DOMAIN = Domain(
 )
 
 _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
-    "mariadb": MariaDB,
-    "postgresql": Postgres,
-    "redis": Redis,
-    "sql_server": SQLServer,
+    name: registration.factory
+    for name, registration in _BACKEND_REGISTRY.items()
 }
 
 

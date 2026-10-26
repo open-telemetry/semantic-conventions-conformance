@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from typing import Any, Callable, Mapping
 
-_SUPPORTED_SYSTEM_SPAN_TYPES = {
-    "mariadb": "db.mariadb.client",
-    "microsoft.sql_server": "db.sql_server.client",
-    "postgresql": "db.postgresql.client",
-    "redis": "db.redis.client",
-}
+from ._registry import BACKENDS
+
+_SYSTEM_SPAN_TYPES: dict[str, set[str]] = {}
+for registration in BACKENDS.values():
+    _SYSTEM_SPAN_TYPES.setdefault(registration.system, set()).add(
+        registration.client_span_type
+    )
 
 
 def classify_span(
@@ -28,20 +29,24 @@ def classify_span(
     if not isinstance(system, str):
         return set()
 
-    if specific := _SUPPORTED_SYSTEM_SPAN_TYPES.get(system):
-        return {specific}
-    return set()
+    return _SYSTEM_SPAN_TYPES.get(system, set()).copy()
 
 
 def classifier(
     coverage_model: Mapping[str, Any],
 ) -> Callable[[str, str, Mapping[str, object]], set[str]]:
     """Build a classifier restricted to span types in the resolved registry."""
-    declared = frozenset(coverage_model["spans"])
+    spans = coverage_model["spans"]
+    client_span_types = {
+        registration.client_span_type
+        for registration in BACKENDS.values()
+        if isinstance(spans.get(registration.client_span_type), Mapping)
+        and spans[registration.client_span_type].get("kind") == "client"
+    }
 
     def classify(
         span_name: str, span_kind: str, attributes: Mapping[str, object]
     ) -> set[str]:
-        return classify_span(span_name, span_kind, attributes) & declared
+        return classify_span(span_name, span_kind, attributes) & client_span_types
 
     return classify
