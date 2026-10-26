@@ -286,6 +286,25 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.wait_strategy is not None
 
 
+def test_mongodb_readiness_requires_authorization() -> None:
+    assert _mongodb.MONGODB.ready_command == (
+        "mongosh",
+        "--quiet",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "27017",
+        "--username",
+        "root",
+        "--password",
+        "conformance-root",
+        "--authenticationDatabase",
+        "admin",
+        "--eval",
+        "quit(db.adminCommand({getCmdLineOpts: 1}).parsed.security?.authorization === 'enabled' ? 0 : 1)",
+    )
+
+
 def test_redis_readiness_checks_for_server_errors() -> None:
     assert _redis.REDIS.ready_command == (
         "redis-cli",
@@ -383,7 +402,7 @@ def test_mongodb_bootstrap_failure_reports_output_and_cleans_up(
 
     with pytest.raises(
         RuntimeError,
-        match=r"(?s)Could not apply the MongoDB schema.*MongoServerError",
+        match=r"(?s)Could not initialize MongoDB.*MongoServerError.*ready to accept connections",
     ):
         MongoDB().start()
 
