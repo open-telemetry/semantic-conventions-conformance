@@ -137,11 +137,10 @@
       "enabled": false
     },
     {
-      // google-adk and crewai cap opentelemetry-sdk below 1.43, so keep
-      // their core SDK packages pinned.
+      // google-adk caps opentelemetry-sdk at 1.44, so keep its core SDK
+      // packages pinned.
       "matchFileNames": [
-        "scenarios/gen-ai/python/google-adk/**",
-        "scenarios/gen-ai/python/crewai/**"
+        "scenarios/gen-ai/python/google-adk/**"
       ],
       "matchPackageNames": [
         "opentelemetry-api",
