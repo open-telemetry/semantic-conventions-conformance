@@ -57,8 +57,8 @@ external service.
 
 ## Running
 
-Install PHP 8.4, Composer, and the extensions listed above. Then install the
-Python runner commands and run any package:
+Install PHP 8.4.1 or later, Composer, and the extensions listed above. Then
+install the Python runner commands and run any package:
 
 ```sh
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \

@@ -3,7 +3,7 @@
   "description": "WordPress HTTP server conformance measured by OpenTelemetry auto-instrumentation.",
   "license": "Apache-2.0",
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.4.1",
     "ext-pdo": "*",
     "ext-pdo_sqlite": "*",
     "aaemnnosttv/wp-sqlite-db": "^1.3",
@@ -24,6 +24,9 @@
     "allow-plugins": {
       "composer/installers": true,
       "johnpbloch/wordpress-core-installer": true
+    },
+    "platform": {
+      "php": "8.4.1"
     }
   },
   "extra": {
@@ -34,14 +37,20 @@
       "type": "path",
       "url": "../../../../../tools/http/test-client/php",
       "options": {
-        "symlink": false
+        "symlink": false,
+        "versions": {
+          "open-telemetry-conformance/http-test-client": "dev-main"
+        }
       }
     },
     {
       "type": "path",
       "url": "../../../../../tools/php/scenario",
       "options": {
-        "symlink": false
+        "symlink": false,
+        "versions": {
+          "open-telemetry-conformance/scenario": "dev-main"
+        }
       }
     }
   ]
