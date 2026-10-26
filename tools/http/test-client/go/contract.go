@@ -1,54 +1,23 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package httpcontract is the HTTP conformance exchanges, as Go reads them.
-//
-// The traffic is written down once, in tools/http/test-client/contract.yaml,
-// so a Go scenario and a scenario in any other language are measured against
-// the same requests and their coverage files stay comparable. Every Go
-// framework shares this package rather than restating the answers, while
-// server scenarios declare their routes in their framework's native form.
+// Package httpcontract decodes the HTTP conformance actions supplied by the runner.
 package httpcontract
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
-
-	"go.yaml.in/yaml/v3"
 )
 
-// ContentType is what every route answers, so a scenario has one content type
-// rather than a rule per route.
 const ContentType = "application/json"
-
-// UserAgent is fixed rather than the HTTP library's default, so a server
-// scenario sees the same client whichever language sent the requests.
 const UserAgent = "otel-http-conformance/1"
+const ActionVariable = "OTEL_CONFORMANCE_SCENARIO_ACTION"
+const ActionsVariable = "OTEL_CONFORMANCE_SCENARIO_ACTIONS"
 
-// PathVariable names the contract explicitly. //go:embed cannot reach outside
-// its own package directory, so the contract is found at run time; this is the
-// escape hatch for a binary run away from the checkout it was built in.
-const PathVariable = "OTEL_HTTP_CONTRACT"
-
-// ScenarioIndexVariable names the zero-based contract entry selected by the
-// runner for this process.
-const ScenarioIndexVariable = "OTEL_CONFORMANCE_SCENARIO_INDEX"
-
-// checkoutPath is where the contract sits in a checkout, searched for upwards
-// from the working directory — which the runner sets to the scenario
-// directory, and `go test` to the package's own.
-const checkoutPath = "tools/http/test-client/contract.yaml"
-
-// Exchange is one concrete request and the answer the contract requires.
-//
-// Body is empty for a request that carries none. The only substitution in
-// ResponseBody is the literal ${requestBody}, for the body that arrived.
 type Exchange struct {
 	Method       string
 	Path         string
@@ -59,7 +28,6 @@ type Exchange struct {
 	Description  string
 }
 
-// RenderResponseBody is the response body with the request body inserted.
 func (e Exchange) RenderResponseBody(requestBody string) string {
 	if requestBody == "" {
 		requestBody = "{}"
@@ -67,63 +35,76 @@ func (e Exchange) RenderResponseBody(requestBody string) string {
 	return strings.ReplaceAll(e.ResponseBody, "${requestBody}", requestBody)
 }
 
-// Response is the status and body returned by a request or route.
 type Response struct {
 	StatusCode int
 	Body       string
 }
 
-// Error reports a contract validation failure.
 type Error struct {
 	message string
 	cause   error
 }
 
 func (e *Error) Error() string { return e.message }
-
 func (e *Error) Unwrap() error { return e.cause }
 
 func contractError(format string, arguments ...any) error {
 	return &Error{message: fmt.Sprintf(format, arguments...)}
 }
 
-type document struct {
-	Readiness entry   `yaml:"readiness"`
-	Scenarios []entry `yaml:"scenarios"`
-}
-
-type entry struct {
-	Description string `yaml:"description"`
-	Action      action `yaml:"action"`
-}
-
 type action struct {
-	Request  request  `yaml:"request"`
-	Response response `yaml:"response"`
+	Request  request  `json:"request"`
+	Response response `json:"response"`
 }
 
 type request struct {
-	Method string `yaml:"method"`
-	Path   string `yaml:"path"`
-	Body   string `yaml:"body"`
+	Method string  `json:"method"`
+	Path   string  `json:"path"`
+	Body   *string `json:"body,omitempty"`
 }
 
 type response struct {
-	Status int    `yaml:"status"`
-	Body   string `yaml:"body"`
+	Status int     `json:"status"`
+	Body   *string `json:"body"`
 }
 
-// Read once: the contract is a constant for the life of a scenario, and every
-// route handler asks for it.
-var loaded = sync.OnceValues(load)
+var actionCache struct {
+	sync.Mutex
+	raw       string
+	exchanges []Exchange
+}
 
-// Exchanges is every exchange the contract describes, including readiness, in
-// order.
 func Exchanges() ([]Exchange, error) {
-	return loaded()
+	raw, ok := os.LookupEnv(ActionsVariable)
+	if !ok {
+		return nil, fmt.Errorf("%s is not set", ActionsVariable)
+	}
+	actionCache.Lock()
+	defer actionCache.Unlock()
+	if actionCache.exchanges != nil && actionCache.raw == raw {
+		return actionCache.exchanges, nil
+	}
+
+	var actions []action
+	if err := decodeJSON(raw, ActionsVariable, &actions); err != nil {
+		return nil, err
+	}
+	if len(actions) == 0 {
+		return nil, fmt.Errorf("%s must be a non-empty JSON array of actions", ActionsVariable)
+	}
+	exchanges := make([]Exchange, len(actions))
+	for index, action := range actions {
+		exchange, err := action.exchange(index == 0, fmt.Sprintf("%s[%d]", ActionsVariable, index))
+		if err != nil {
+			return nil, err
+		}
+		exchanges[index] = exchange
+	}
+	actionCache.raw = raw
+	actionCache.exchanges = exchanges
+	return exchanges, nil
 }
 
-// Requests is the measured requests to send, in order.
 func Requests() ([]Exchange, error) {
 	exchanges, err := Exchanges()
 	if err != nil {
@@ -132,32 +113,18 @@ func Requests() ([]Exchange, error) {
 	return exchanges[1:], nil
 }
 
-// ScenarioRequest is the one request selected by the runner's zero-based
-// contract index.
 func ScenarioRequest() (Exchange, error) {
-	raw, ok := os.LookupEnv(ScenarioIndexVariable)
+	raw, ok := os.LookupEnv(ActionVariable)
 	if !ok {
-		return Exchange{}, fmt.Errorf("%s is not set", ScenarioIndexVariable)
+		return Exchange{}, fmt.Errorf("%s is not set", ActionVariable)
 	}
-	index, err := strconv.Atoi(raw)
-	if err != nil || index < 0 || strconv.Itoa(index) != raw {
-		return Exchange{}, fmt.Errorf(
-			"%s must be a zero-based decimal index, got %q", ScenarioIndexVariable, raw)
-	}
-	requests, err := Requests()
-	if err != nil {
+	var selected action
+	if err := decodeJSON(raw, ActionVariable, &selected); err != nil {
 		return Exchange{}, err
 	}
-	if index >= len(requests) {
-		return Exchange{}, fmt.Errorf(
-			"%s=%d selects no contract entry; expected 0..%d",
-			ScenarioIndexVariable, index, len(requests)-1)
-	}
-	return requests[index], nil
+	return selected.exchange(false, ActionVariable)
 }
 
-// Lookup is the exchange answering "method path", if the contract describes
-// one. It returns an error when the contract cannot be loaded.
 func Lookup(method, path string) (Exchange, bool, error) {
 	exchanges, err := Exchanges()
 	if err != nil {
@@ -177,6 +144,53 @@ func Lookup(method, path string) (Exchange, bool, error) {
 	return Exchange{}, false, nil
 }
 
+func (a action) exchange(readiness bool, where string) (Exchange, error) {
+	if a.Request.Method == "" {
+		return Exchange{}, fmt.Errorf("%s.request.method must be a non-empty string", where)
+	}
+	if !strings.HasPrefix(a.Request.Path, "/") {
+		return Exchange{}, fmt.Errorf("%s.request.path must start with '/'", where)
+	}
+	if a.Response.Status < 100 || a.Response.Status > 599 {
+		return Exchange{}, fmt.Errorf("%s.response.status must be an HTTP status", where)
+	}
+	if a.Response.Body == nil {
+		return Exchange{}, fmt.Errorf("%s.response.body must be a string", where)
+	}
+	body := ""
+	if a.Request.Body != nil {
+		body = *a.Request.Body
+	}
+	description := "runner action"
+	if readiness {
+		description = "runner readiness action"
+	}
+	return Exchange{
+		Method:       a.Request.Method,
+		Path:         a.Request.Path,
+		Body:         body,
+		Status:       a.Response.Status,
+		ResponseBody: *a.Response.Body,
+		Readiness:    readiness,
+		Description:  description,
+	}, nil
+}
+
+func decodeJSON(raw, variable string, target any) error {
+	decoder := json.NewDecoder(strings.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return fmt.Errorf("%s contains malformed JSON: %w", variable, err)
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("%s contains more than one JSON value", variable)
+		}
+		return fmt.Errorf("%s contains malformed JSON: %w", variable, err)
+	}
+	return nil
+}
+
 func withoutQuery(path string) string {
 	if query := strings.IndexByte(path, '?'); query != -1 {
 		return path[:query]
@@ -193,65 +207,4 @@ func parse(body string) (any, error) {
 		}
 	}
 	return parsed, nil
-}
-
-func load() ([]Exchange, error) {
-	path, err := locate()
-	if err != nil {
-		return nil, err
-	}
-	raw, err := os.ReadFile(path) //nolint:gosec // the local contract path is intentional
-	if err != nil {
-		return nil, fmt.Errorf("could not read %s: %w", path, err)
-	}
-	var parsed document
-	if err := yaml.Unmarshal(raw, &parsed); err != nil {
-		return nil, fmt.Errorf("could not parse %s: %w", path, err)
-	}
-	if len(parsed.Scenarios) == 0 {
-		return nil, fmt.Errorf("%s describes no requests", path)
-	}
-	exchanges := make([]Exchange, 0, len(parsed.Scenarios)+1)
-	exchanges = append(exchanges, parsed.Readiness.exchange(true))
-	for _, scenario := range parsed.Scenarios {
-		exchanges = append(exchanges, scenario.exchange(false))
-	}
-	return exchanges, nil
-}
-
-func (e entry) exchange(readiness bool) Exchange {
-	return Exchange{
-		Method:       e.Action.Request.Method,
-		Path:         e.Action.Request.Path,
-		Body:         e.Action.Request.Body,
-		Status:       e.Action.Response.Status,
-		ResponseBody: e.Action.Response.Body,
-		Readiness:    readiness,
-		Description:  e.Description,
-	}
-}
-
-func locate() (string, error) {
-	if declared := os.Getenv(PathVariable); declared != "" {
-		return declared, nil
-	}
-	directory, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	for {
-		candidate := filepath.Join(directory, filepath.FromSlash(checkoutPath))
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate, nil
-		} else if !errors.Is(err, os.ErrNotExist) {
-			return "", fmt.Errorf("could not inspect %s: %w", candidate, err)
-		}
-		parent := filepath.Dir(directory)
-		if parent == directory {
-			return "", errors.New(
-				"no " + checkoutPath + " at or above the working directory — " +
-					"set " + PathVariable + " to run away from a checkout")
-		}
-		directory = parent
-	}
 }

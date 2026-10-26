@@ -25,10 +25,11 @@ java/redis/{jedis,lettuce,rediscala,redisson}/
 Each backend's combined SQL contract lives under
 [`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
 Each ordered scenario keeps its backend-specific `action` and generic telemetry
-`expect` object together. The runner executes each list position under its own
-live-check and passes only its selected `action` to the language helper as JSON,
-which translates it into its client API. Contracts can diverge as dialect-specific
-sanitization and summarization coverage grows.
+`expect` object together. The runner captures each list position in its own
+telemetry window, checks the package once with Weaver, and passes only the
+selected `action` to the language helper as JSON, which translates it into its
+client API. Contracts can diverge as dialect-specific sanitization and
+summarization coverage grows.
 
 Each operation is a separate scenario so a missing or malformed span identifies
 the client path that produced it:

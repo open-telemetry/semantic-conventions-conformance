@@ -4,12 +4,10 @@ The two halves of [the contract](../README.md) a Node scenario needs: answering
 a concrete request, and sending the measured ones.
 
 ```text
-src/contract.js         reads contract.yaml
+src/contract.js         decodes runner-injected JSON
 src/server-workload.js  answers one concrete request
 src/client-workload.js  sends one selected request
 ```
-
-The only dependency is the YAML parser used before the measured request.
 
 ## Answering
 
@@ -24,7 +22,7 @@ on `127.0.0.1`.
 ## Sending
 
 `drive(baseUrl, send)` sends the request selected by
-`OTEL_CONFORMANCE_SCENARIO_INDEX`. `send` is the call
+`OTEL_CONFORMANCE_SCENARIO_ACTION`. `send` is the call
 being measured, so the library under test is the scenario's to choose:
 
 ```js
@@ -34,10 +32,10 @@ await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {
 });
 ```
 
-## Finding the contract
+Server helpers decode the complete action table from
+`OTEL_CONFORMANCE_SCENARIO_ACTIONS`. The first entry is readiness. The package
+reads no YAML and discovers no contract file.
 
-`contract.yaml` is one directory above this package, and npm packs only a
-package's own directory. Rather than generating a copy into the source tree,
-the lookup walks up from this module until it finds the file at its place in
-the repository. That works both where this package lives and where npm
-installed a copy of it.
+Each client process handles one action and exits. A measured server decodes the
+action table once, stays up for the selected batch, and receives the requests
+sequentially from the external driver.

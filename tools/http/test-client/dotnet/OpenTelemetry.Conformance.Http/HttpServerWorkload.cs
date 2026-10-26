@@ -35,8 +35,15 @@ public static class HttpServerWorkload
     /// </para>
     /// </remarks>
     public static HttpContract.Response Respond(string method, string path, string? requestBody)
+        => Respond(method, path, requestBody, HttpContract.Exchanges);
+
+    internal static HttpContract.Response Respond(
+        string method,
+        string path,
+        string? requestBody,
+        IReadOnlyList<HttpContract.Exchange> exchanges)
     {
-        var exchange = HttpContract.Find(method, path);
+        var exchange = HttpContract.Find(exchanges, method, path);
         return exchange is null
             ? new HttpContract.Response(404, "{\"message\": \"no such route\"}")
             : new HttpContract.Response(
