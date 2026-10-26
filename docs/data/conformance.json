@@ -119,6 +119,22 @@
             "server.port": "conditionally_required_conditional"
           },
           "kind": "client"
+        },
+        "db.redis.client": {
+          "attributes": {
+            "db.namespace": "conditionally_required_conditional",
+            "db.operation.batch.size": "recommended",
+            "db.operation.name": "required",
+            "db.query.text": "recommended",
+            "db.response.status_code": "conditionally_required_conditional",
+            "db.stored_procedure.name": "recommended_conditional",
+            "error.type": "conditionally_required_conditional",
+            "network.peer.address": "recommended",
+            "network.peer.port": "recommended_conditional",
+            "server.address": "recommended",
+            "server.port": "conditionally_required_conditional"
+          },
+          "kind": "client"
         }
       }
     },
@@ -421,6 +437,21 @@
             "gen_ai.workflow.name": "conditionally_required_conditional"
           },
           "kind": "internal"
+        },
+        "gen_ai.retrieval.client": {
+          "attributes": {
+            "error.type": "conditionally_required_conditional",
+            "gen_ai.data_source.id": "conditionally_required_conditional",
+            "gen_ai.operation.name": "required",
+            "gen_ai.provider.name": "conditionally_required_conditional",
+            "gen_ai.request.model": "conditionally_required_conditional",
+            "gen_ai.retrieval.documents": "opt_in",
+            "gen_ai.retrieval.query.text": "opt_in",
+            "gen_ai.retrieval.top_k": "recommended",
+            "server.address": "recommended",
+            "server.port": "conditionally_required_conditional"
+          },
+          "kind": "client"
         }
       }
     },
@@ -1291,6 +1322,807 @@
       }
     },
     {
+      "backend": "redis",
+      "domain": "database",
+      "entities": {
+        "process.runtime": {
+          "description": [
+            "process.runtime.description"
+          ],
+          "identity": [
+            "process.runtime.name",
+            "process.runtime.version"
+          ]
+        },
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.distro": {
+          "description": [
+            "telemetry.distro.version"
+          ],
+          "identity": [
+            "telemetry.distro.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [],
+      "id": "database/java/redis/jedis/opentelemetry-javaagent",
+      "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
+      "instrumented_library": "jedis",
+      "label": "opentelemetry-javaagent",
+      "language": "java",
+      "path": "scenarios/database/java/redis/jedis/opentelemetry-javaagent",
+      "runner": "database-conformance",
+      "scenario_classes": [
+        "error",
+        "pipeline",
+        "set_get"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 4,
+              "emitted": 4
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.batch.size",
+            "db.operation.name",
+            "db.query.text",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "identity": {
+            "attributes": [
+              "db.namespace",
+              "db.operation.batch.size",
+              "db.operation.name",
+              "db.query.text",
+              "network.peer.address",
+              "network.peer.port",
+              "server.address",
+              "server.port"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "db.response.status_code",
+            "db.stored_procedure.name",
+            "error.type"
+          ],
+          "name": "db.redis.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 6,
+              "emitted": 3
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.name",
+            "db.system.name",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "missing": [
+            "db.collection.name",
+            "db.query.summary",
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name",
+            "error.type"
+          ],
+          "name": "db.client.operation.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 0,
+        "recommended": {
+          "declared": 5,
+          "emitted": 5
+        },
+        "required": {
+          "declared": 2,
+          "emitted": 2
+        }
+      }
+    },
+    {
+      "backend": "redis",
+      "domain": "database",
+      "entities": {
+        "process.runtime": {
+          "description": [
+            "process.runtime.description"
+          ],
+          "identity": [
+            "process.runtime.name",
+            "process.runtime.version"
+          ]
+        },
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.distro": {
+          "description": [
+            "telemetry.distro.version"
+          ],
+          "identity": [
+            "telemetry.distro.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [],
+      "id": "database/java/redis/lettuce/opentelemetry-javaagent",
+      "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
+      "instrumented_library": "lettuce",
+      "label": "opentelemetry-javaagent",
+      "language": "java",
+      "path": "scenarios/database/java/redis/lettuce/opentelemetry-javaagent",
+      "runner": "database-conformance",
+      "scenario_classes": [
+        "error",
+        "pipeline",
+        "set_get"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 4,
+              "emitted": 3
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.operation.name",
+            "db.query.text",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "identity": {
+            "attributes": [
+              "db.operation.name",
+              "db.query.text",
+              "error.type",
+              "network.peer.address",
+              "network.peer.port",
+              "server.address",
+              "server.port"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "db.namespace",
+            "db.operation.batch.size",
+            "db.response.status_code",
+            "db.stored_procedure.name"
+          ],
+          "name": "db.redis.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 6,
+              "emitted": 3
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.operation.name",
+            "db.system.name",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "missing": [
+            "db.collection.name",
+            "db.namespace",
+            "db.query.summary",
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name"
+          ],
+          "name": "db.client.operation.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 0,
+        "recommended": {
+          "declared": 5,
+          "emitted": 4
+        },
+        "required": {
+          "declared": 2,
+          "emitted": 2
+        }
+      }
+    },
+    {
+      "backend": "redis",
+      "domain": "database",
+      "entities": {
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [],
+      "id": "database/java/redis/lettuce/opentelemetry-library",
+      "instrumentation_library": "io.opentelemetry.instrumentation:opentelemetry-lettuce-5.1",
+      "instrumented_library": "lettuce",
+      "label": "opentelemetry-library",
+      "language": "java",
+      "path": "scenarios/database/java/redis/lettuce/opentelemetry-library",
+      "runner": "database-conformance",
+      "scenario_classes": [
+        "error",
+        "pipeline",
+        "set_get"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 4,
+              "emitted": 3
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.operation.name",
+            "db.query.text",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "identity": {
+            "attributes": [
+              "db.operation.name",
+              "db.query.text",
+              "error.type",
+              "network.peer.address",
+              "network.peer.port",
+              "server.address",
+              "server.port"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "db.namespace",
+            "db.operation.batch.size",
+            "db.response.status_code",
+            "db.stored_procedure.name"
+          ],
+          "name": "db.redis.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 6,
+              "emitted": 3
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.operation.name",
+            "db.system.name",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "missing": [
+            "db.collection.name",
+            "db.namespace",
+            "db.query.summary",
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name"
+          ],
+          "name": "db.client.operation.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 0,
+        "recommended": {
+          "declared": 5,
+          "emitted": 4
+        },
+        "required": {
+          "declared": 2,
+          "emitted": 2
+        }
+      }
+    },
+    {
+      "backend": "redis",
+      "domain": "database",
+      "entities": {
+        "process.runtime": {
+          "description": [
+            "process.runtime.description"
+          ],
+          "identity": [
+            "process.runtime.name",
+            "process.runtime.version"
+          ]
+        },
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.distro": {
+          "description": [
+            "telemetry.distro.version"
+          ],
+          "identity": [
+            "telemetry.distro.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [],
+      "id": "database/java/redis/rediscala/opentelemetry-javaagent",
+      "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
+      "instrumented_library": "rediscala",
+      "label": "opentelemetry-javaagent",
+      "language": "java",
+      "path": "scenarios/database/java/redis/rediscala/opentelemetry-javaagent",
+      "runner": "database-conformance",
+      "scenario_classes": [
+        "error",
+        "pipeline",
+        "set_get",
+        "transaction"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 3
+            },
+            "recommended": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.batch.size",
+            "db.operation.name",
+            "error.type",
+            "server.address",
+            "server.port"
+          ],
+          "identity": {
+            "attributes": [
+              "db.namespace",
+              "db.operation.batch.size",
+              "db.operation.name",
+              "error.type",
+              "server.address",
+              "server.port"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name",
+            "network.peer.address",
+            "network.peer.port"
+          ],
+          "name": "db.redis.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 6,
+              "emitted": 4
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 4,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.name",
+            "db.system.name",
+            "error.type",
+            "server.address",
+            "server.port"
+          ],
+          "missing": [
+            "db.collection.name",
+            "db.query.summary",
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name",
+            "network.peer.address",
+            "network.peer.port"
+          ],
+          "name": "db.client.operation.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 0,
+        "recommended": {
+          "declared": 5,
+          "emitted": 3
+        },
+        "required": {
+          "declared": 2,
+          "emitted": 2
+        }
+      }
+    },
+    {
+      "backend": "redis",
+      "domain": "database",
+      "entities": {
+        "process.runtime": {
+          "description": [
+            "process.runtime.description"
+          ],
+          "identity": [
+            "process.runtime.name",
+            "process.runtime.version"
+          ]
+        },
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.distro": {
+          "description": [
+            "telemetry.distro.version"
+          ],
+          "identity": [
+            "telemetry.distro.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [],
+      "id": "database/java/redis/redisson/opentelemetry-javaagent",
+      "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
+      "instrumented_library": "redisson",
+      "label": "opentelemetry-javaagent",
+      "language": "java",
+      "path": "scenarios/database/java/redis/redisson/opentelemetry-javaagent",
+      "runner": "database-conformance",
+      "scenario_classes": [
+        "error",
+        "pipeline",
+        "set_get"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 3
+            },
+            "recommended": {
+              "declared": 4,
+              "emitted": 4
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.batch.size",
+            "db.operation.name",
+            "db.query.text",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "identity": {
+            "attributes": [
+              "db.namespace",
+              "db.operation.batch.size",
+              "db.operation.name",
+              "db.query.text",
+              "error.type",
+              "network.peer.address",
+              "network.peer.port",
+              "server.address",
+              "server.port"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "db.response.status_code",
+            "db.stored_procedure.name"
+          ],
+          "name": "db.redis.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 6,
+              "emitted": 4
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.name",
+            "db.system.name",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port"
+          ],
+          "missing": [
+            "db.collection.name",
+            "db.query.summary",
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name"
+          ],
+          "name": "db.client.operation.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 0,
+        "recommended": {
+          "declared": 5,
+          "emitted": 5
+        },
+        "required": {
+          "declared": 2,
+          "emitted": 2
+        }
+      }
+    },
+    {
       "backend": null,
       "domain": "gen-ai",
       "entities": {},
@@ -2031,6 +2863,186 @@
         },
         {
           "context": {
+            "attribute_key": "graph.node.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'graph.node.id' does not exist in the registry.",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "graph.node.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'graph.node.name' does not exist in the registry.",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "graph.node.parent_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'graph.node.parent_id' does not exist in the registry.",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'answer.execute' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "answer.execute",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "agno.run.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'agno.run.id' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "agno.workflow.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'agno.workflow.id' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "agno.workflow.step_types"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'agno.workflow.step_types' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "agno.workflow.steps"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'agno.workflow.steps' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "agno.workflow.steps_count"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'agno.workflow.steps_count' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "graph.node.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'graph.node.id' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "graph.node.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'graph.node.name' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'conformance_workflow.run' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "conformance_workflow.run",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "input.mime_type"
           },
           "id": "missing_attribute",
@@ -2289,7 +3301,9 @@
       "runner": "genai-conformance",
       "scenario_classes": [
         "automatic_tool_calling",
-        "invoke_agent"
+        "invoke_agent",
+        "retrieval",
+        "workflow"
       ],
       "side": null,
       "signals": [
@@ -2495,7 +3509,7 @@
         }
       ],
       "summary": {
-        "findings": 61,
+        "findings": 81,
         "recommended": {
           "declared": 21,
           "emitted": 5
@@ -2686,7 +3700,9 @@
       "runner": "genai-conformance",
       "scenario_classes": [
         "automatic_tool_calling",
-        "invoke_agent"
+        "invoke_agent",
+        "retrieval",
+        "workflow"
       ],
       "side": null,
       "signals": [
@@ -2886,6 +3902,16 @@
           "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
           "signal_name": "invoke_agent weather_assistant",
           "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "server.address",
+            "operation": "retrieval"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'retrieval weather_notes' (operation 'retrieval') is missing expected attribute 'server.address'",
+          "signal_name": "retrieval weather_notes",
+          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/agno/opentelemetry-agno",
@@ -2897,7 +3923,9 @@
       "runner": "genai-conformance",
       "scenario_classes": [
         "automatic_tool_calling",
-        "invoke_agent"
+        "invoke_agent",
+        "retrieval",
+        "workflow"
       ],
       "side": null,
       "signals": [
@@ -3017,6 +4045,121 @@
         {
           "coverage": {
             "conditionally_required_conditional": {
+              "declared": 3,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.conversation.id",
+            "gen_ai.input.messages",
+            "gen_ai.operation.name",
+            "gen_ai.output.messages",
+            "gen_ai.workflow.name"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.conversation.id",
+              "gen_ai.input.messages",
+              "gen_ai.operation.name",
+              "gen_ai.output.messages",
+              "gen_ai.workflow.name"
+            ],
+            "span_kind": "internal"
+          },
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_workflow.internal",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 5,
+              "emitted": 3
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.data_source.id",
+            "gen_ai.operation.name",
+            "gen_ai.provider.name",
+            "gen_ai.request.model",
+            "gen_ai.retrieval.documents",
+            "gen_ai.retrieval.query.text",
+            "gen_ai.retrieval.top_k"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.data_source.id",
+              "gen_ai.operation.name",
+              "gen_ai.provider.name",
+              "gen_ai.request.model",
+              "gen_ai.retrieval.documents",
+              "gen_ai.retrieval.query.text",
+              "gen_ai.retrieval.top_k"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "error.type",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.retrieval.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.provider.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "error.type",
+            "gen_ai.response.model",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.client.operation.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
               "declared": 2,
               "emitted": 0
             },
@@ -3060,17 +4203,33 @@
           ],
           "name": "gen_ai.invoke_agent.duration",
           "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.workflow.name"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_workflow.duration",
+          "type": "metric"
         }
       ],
       "summary": {
-        "findings": 3,
+        "findings": 4,
         "recommended": {
-          "declared": 9,
-          "emitted": 0
+          "declared": 13,
+          "emitted": 1
         },
         "required": {
-          "declared": 4,
-          "emitted": 4
+          "declared": 7,
+          "emitted": 7
         }
       }
     },
@@ -16001,6 +17160,15 @@
         },
         {
           "context": {
+            "attribute_key": "session.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'session.id' does not exist in the registry.",
+          "signal_name": "ChatOpenAI",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "missing_attribute": "gen_ai.response.id",
             "operation": "chat"
           },
@@ -16101,6 +17269,89 @@
           "id": "span_status_ok_set_by_instrumentation",
           "message": "Span 'ChatPromptTemplate' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
           "signal_name": "ChatPromptTemplate",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "metadata"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'metadata' does not exist in the registry.",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.0.document.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.0.document.content' does not exist in the registry.",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.1.document.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.1.document.content' does not exist in the registry.",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'VectorStoreRetriever' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "retrieval",
+            "keyed_attr": "gen_ai.data_source.id",
+            "operation": "retrieval"
+          },
+          "id": "genai_span_name_format",
+          "message": "retrieval span name should be 'retrieval', got 'VectorStoreRetriever'",
+          "signal_name": "VectorStoreRetriever",
           "signal_type": "span"
         },
         {
@@ -16305,6 +17556,15 @@
         },
         {
           "context": {
+            "attribute_key": "session.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'session.id' does not exist in the registry.",
+          "signal_name": "model",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "status_code": "ok"
           },
           "id": "span_status_ok_set_by_instrumentation",
@@ -16440,6 +17700,15 @@
         },
         {
           "context": {
+            "attribute_key": "session.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'session.id' does not exist in the registry.",
+          "signal_name": "weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "status_code": "ok"
           },
           "id": "span_status_ok_set_by_instrumentation",
@@ -16458,6 +17727,7 @@
       "scenario_classes": [
         "automatic_tool_calling",
         "invoke_agent",
+        "retrieval",
         "workflow"
       ],
       "side": null,
@@ -16466,7 +17736,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 2
+              "emitted": 3
             },
             "opt_in": {
               "declared": 5,
@@ -16486,6 +17756,7 @@
             }
           },
           "emitted": [
+            "gen_ai.conversation.id",
             "gen_ai.input.messages",
             "gen_ai.operation.name",
             "gen_ai.output.messages",
@@ -16501,6 +17772,7 @@
           ],
           "identity": {
             "attributes": [
+              "gen_ai.conversation.id",
               "gen_ai.input.messages",
               "gen_ai.operation.name",
               "gen_ai.output.messages",
@@ -16519,7 +17791,6 @@
           "missing": [
             "error.type",
             "gen_ai.conversation.compacted",
-            "gen_ai.conversation.id",
             "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
@@ -16600,17 +17871,61 @@
           ],
           "name": "gen_ai.execute_tool.internal",
           "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 5,
+              "emitted": 0
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.retrieval.documents",
+            "gen_ai.retrieval.query.text"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.operation.name",
+              "gen_ai.retrieval.documents",
+              "gen_ai.retrieval.query.text"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.data_source.id",
+            "gen_ai.provider.name",
+            "gen_ai.request.model",
+            "gen_ai.retrieval.top_k",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.retrieval.client",
+          "type": "span"
         }
       ],
       "summary": {
-        "findings": 83,
+        "findings": 95,
         "recommended": {
-          "declared": 12,
+          "declared": 14,
           "emitted": 5
         },
         "required": {
-          "declared": 4,
-          "emitted": 4
+          "declared": 5,
+          "emitted": 5
         }
       }
     },
@@ -16797,6 +18112,15 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'traceloop.association.properties.ls_temperature' does not exist in the registry.",
+          "signal_name": "ChatOpenAI.chat",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.association.properties.thread_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.association.properties.thread_id' does not exist in the registry.",
           "signal_name": "ChatOpenAI.chat",
           "signal_type": "span"
         },
@@ -17202,6 +18526,15 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'traceloop.association.properties.ls_integration' does not exist in the registry.",
+          "signal_name": "execute_task model",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.association.properties.thread_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.association.properties.thread_id' does not exist in the registry.",
           "signal_name": "execute_task model",
           "signal_type": "span"
         },
@@ -17637,6 +18970,123 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.task.output"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.task.output' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.task.status"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.task.status' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.association.properties.ls_embedding_provider"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.association.properties.ls_embedding_provider' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.association.properties.ls_retriever_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.association.properties.ls_retriever_name' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.association.properties.ls_vector_store_provider"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.association.properties.ls_vector_store_provider' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.entity.input"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.entity.input' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.entity.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.entity.name' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.entity.output"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.entity.output' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.entity.path"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.entity.path' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.span.kind' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.workflow.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.workflow.name' does not exist in the registry.",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "operation": "vector_db_retrieve"
+          },
+          "id": "genai_operation_name_unknown",
+          "message": "Span 'vector_db_retrieve VectorStoreRetriever' has gen_ai.operation.name='vector_db_retrieve' which is not a documented enum value",
+          "signal_name": "vector_db_retrieve VectorStoreRetriever",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gen_ai.task.input"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gen_ai.task.input' does not exist in the registry.",
           "signal_name": "weather_assistant.workflow",
           "signal_type": "span"
         },
@@ -17673,6 +19123,15 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'traceloop.association.properties.ls_integration' does not exist in the registry.",
+          "signal_name": "weather_assistant.workflow",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "traceloop.association.properties.thread_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'traceloop.association.properties.thread_id' does not exist in the registry.",
           "signal_name": "weather_assistant.workflow",
           "signal_type": "span"
         },
@@ -17782,6 +19241,7 @@
       "scenario_classes": [
         "automatic_tool_calling",
         "invoke_agent",
+        "retrieval",
         "workflow"
       ],
       "side": null,
@@ -17978,7 +19438,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 8,
-              "emitted": 1
+              "emitted": 2
             },
             "opt_in": {
               "declared": 4,
@@ -17999,11 +19459,13 @@
           },
           "emitted": [
             "gen_ai.agent.name",
+            "gen_ai.conversation.id",
             "gen_ai.operation.name"
           ],
           "identity": {
             "attributes": [
               "gen_ai.agent.name",
+              "gen_ai.conversation.id",
               "gen_ai.operation.name"
             ],
             "span_kind": "internal"
@@ -18011,7 +19473,6 @@
           "missing": [
             "error.type",
             "gen_ai.agent.description",
-            "gen_ai.conversation.id",
             "gen_ai.data_source.id",
             "gen_ai.input.messages",
             "gen_ai.output.messages",
@@ -18065,7 +19526,7 @@
         }
       ],
       "summary": {
-        "findings": 126,
+        "findings": 142,
         "recommended": {
           "declared": 24,
           "emitted": 8
@@ -18135,6 +19596,26 @@
           "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
           "signal_name": "invoke_agent weather_assistant",
           "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.retrieval.top_k",
+            "operation": "retrieval"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'retrieval' (operation 'retrieval') is missing expected attribute 'gen_ai.retrieval.top_k'",
+          "signal_name": "retrieval",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "server.address",
+            "operation": "retrieval"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'retrieval' (operation 'retrieval') is missing expected attribute 'server.address'",
+          "signal_name": "retrieval",
+          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/langchain/opentelemetry-langchain",
@@ -18147,6 +19628,7 @@
       "scenario_classes": [
         "automatic_tool_calling",
         "invoke_agent",
+        "retrieval",
         "workflow"
       ],
       "side": null,
@@ -18155,7 +19637,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 1
+              "emitted": 2
             },
             "opt_in": {
               "declared": 5,
@@ -18175,6 +19657,7 @@
             }
           },
           "emitted": [
+            "gen_ai.conversation.id",
             "gen_ai.input.messages",
             "gen_ai.operation.name",
             "gen_ai.output.messages",
@@ -18191,6 +19674,7 @@
           ],
           "identity": {
             "attributes": [
+              "gen_ai.conversation.id",
               "gen_ai.input.messages",
               "gen_ai.operation.name",
               "gen_ai.output.messages",
@@ -18210,7 +19694,6 @@
           "missing": [
             "error.type",
             "gen_ai.conversation.compacted",
-            "gen_ai.conversation.id",
             "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
@@ -18298,7 +19781,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 8,
-              "emitted": 1
+              "emitted": 2
             },
             "opt_in": {
               "declared": 4,
@@ -18319,6 +19802,7 @@
           },
           "emitted": [
             "gen_ai.agent.name",
+            "gen_ai.conversation.id",
             "gen_ai.input.messages",
             "gen_ai.operation.name",
             "gen_ai.output.messages"
@@ -18326,6 +19810,7 @@
           "identity": {
             "attributes": [
               "gen_ai.agent.name",
+              "gen_ai.conversation.id",
               "gen_ai.input.messages",
               "gen_ai.operation.name",
               "gen_ai.output.messages"
@@ -18335,7 +19820,6 @@
           "missing": [
             "error.type",
             "gen_ai.agent.description",
-            "gen_ai.conversation.id",
             "gen_ai.data_source.id",
             "gen_ai.output.type",
             "gen_ai.request.choice.count",
@@ -18395,8 +19879,53 @@
         {
           "coverage": {
             "conditionally_required_conditional": {
-              "declared": 11,
+              "declared": 5,
               "emitted": 1
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.provider.name",
+            "gen_ai.retrieval.documents",
+            "gen_ai.retrieval.query.text"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.operation.name",
+              "gen_ai.provider.name",
+              "gen_ai.retrieval.documents",
+              "gen_ai.retrieval.query.text"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.data_source.id",
+            "gen_ai.request.model",
+            "gen_ai.retrieval.top_k",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.retrieval.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 11,
+              "emitted": 2
             },
             "opt_in": {
               "declared": 5,
@@ -18416,6 +19945,7 @@
             }
           },
           "emitted": [
+            "gen_ai.conversation.id",
             "gen_ai.input.messages",
             "gen_ai.operation.name",
             "gen_ai.output.messages",
@@ -18433,7 +19963,6 @@
           "missing": [
             "error.type",
             "gen_ai.conversation.compacted",
-            "gen_ai.conversation.id",
             "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
@@ -18562,14 +20091,14 @@
         }
       ],
       "summary": {
-        "findings": 6,
+        "findings": 8,
         "recommended": {
-          "declared": 35,
+          "declared": 37,
           "emitted": 15
         },
         "required": {
-          "declared": 10,
-          "emitted": 10
+          "declared": 11,
+          "emitted": 11
         }
       }
     },
@@ -23154,6 +24683,267 @@
           "message": "Span 'OpenAI.astream_chat' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
           "signal_name": "OpenAI.astream_chat",
           "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'OpenAIEmbedding._get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "OpenAIEmbedding._get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "chunks"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'chunks' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "class_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'class_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embeddings"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embeddings' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "id_"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'id_' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "model_dict.class_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'model_dict.class_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "model_dict.embed_batch_size"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'model_dict.embed_batch_size' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "model_dict.model_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'model_dict.model_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "span_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'span_id' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "timestamp"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'timestamp' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'OpenAIEmbedding.get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "chunks"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'chunks' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "class_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'class_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embeddings"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embeddings' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "id_"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'id_' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "model_dict.class_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'model_dict.class_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "model_dict.embed_batch_size"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'model_dict.embed_batch_size' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "model_dict.model_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'model_dict.model_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "span_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'span_id' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "timestamp"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'timestamp' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'OpenAIEmbedding.get_text_embedding_batch' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'VectorIndexRetriever._retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "class_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'class_name' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "id_"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'id_' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "nodes"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'nodes' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "span_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'span_id' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "str_or_query_bundle"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'str_or_query_bundle' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "timestamp"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'timestamp' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'VectorIndexRetriever.retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/llama-index/native",
@@ -23166,12 +24956,13 @@
       "scenario_classes": [
         "automatic_tool_calling",
         "invoke_agent",
+        "retrieval",
         "workflow"
       ],
       "side": null,
       "signals": [],
       "summary": {
-        "findings": 168,
+        "findings": 197,
         "recommended": {
           "declared": 0,
           "emitted": 0
@@ -24496,6 +26287,421 @@
           "message": "chat span name should be 'chat gpt-4o-mini', got 'OpenAI.astream_chat'",
           "signal_name": "OpenAI.astream_chat",
           "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.model_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.model_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding._get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.mime_type' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding._get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding._get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding._get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'OpenAIEmbedding._get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "OpenAIEmbedding._get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "embeddings text-embedding-3-small",
+            "keyed_attr": "gen_ai.request.model",
+            "operation": "embeddings"
+          },
+          "id": "genai_span_name_format",
+          "message": "embeddings span name should be 'embeddings text-embedding-3-small', got 'OpenAIEmbedding._get_query_embedding'",
+          "signal_name": "OpenAIEmbedding._get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.0.embedding.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.0.embedding.text' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.0.embedding.vector"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.0.embedding.vector' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.model_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.model_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.mime_type' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'OpenAIEmbedding.get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "embeddings text-embedding-3-small",
+            "keyed_attr": "gen_ai.request.model",
+            "operation": "embeddings"
+          },
+          "id": "genai_span_name_format",
+          "message": "embeddings span name should be 'embeddings text-embedding-3-small', got 'OpenAIEmbedding.get_query_embedding'",
+          "signal_name": "OpenAIEmbedding.get_query_embedding",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.0.embedding.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.0.embedding.text' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.0.embedding.vector"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.0.embedding.vector' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.1.embedding.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.1.embedding.text' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.1.embedding.vector"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.1.embedding.vector' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.2.embedding.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.2.embedding.text' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.embeddings.2.embedding.vector"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.embeddings.2.embedding.vector' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "embedding.model_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'embedding.model_name' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.mime_type' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'OpenAIEmbedding.get_text_embedding_batch' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "embeddings text-embedding-3-small",
+            "keyed_attr": "gen_ai.request.model",
+            "operation": "embeddings"
+          },
+          "id": "genai_span_name_format",
+          "message": "embeddings span name should be 'embeddings text-embedding-3-small', got 'OpenAIEmbedding.get_text_embedding_batch'",
+          "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.mime_type' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'VectorIndexRetriever._retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "retrieval",
+            "keyed_attr": "gen_ai.data_source.id",
+            "operation": "retrieval"
+          },
+          "id": "genai_span_name_format",
+          "message": "retrieval span name should be 'retrieval', got 'VectorIndexRetriever._retrieve'",
+          "signal_name": "VectorIndexRetriever._retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.0.document.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.0.document.content' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.0.document.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.0.document.id' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.0.document.score"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.0.document.score' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.1.document.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.1.document.content' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.1.document.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.1.document.id' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "retrieval.documents.1.document.score"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'retrieval.documents.1.document.score' does not exist in the registry.",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'VectorIndexRetriever.retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "retrieval",
+            "keyed_attr": "gen_ai.data_source.id",
+            "operation": "retrieval"
+          },
+          "id": "genai_span_name_format",
+          "message": "retrieval span name should be 'retrieval', got 'VectorIndexRetriever.retrieve'",
+          "signal_name": "VectorIndexRetriever.retrieve",
+          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/llama-index/openinference",
@@ -24508,6 +26714,7 @@
       "scenario_classes": [
         "automatic_tool_calling",
         "invoke_agent",
+        "retrieval",
         "workflow"
       ],
       "side": null,
@@ -24605,6 +26812,46 @@
         {
           "coverage": {
             "conditionally_required_conditional": {
+              "declared": 3,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 5,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.embeddings.dimension.count",
+            "gen_ai.operation.name",
+            "gen_ai.request.model"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.embeddings.dimension.count",
+              "gen_ai.operation.name",
+              "gen_ai.request.model"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.provider.name",
+            "gen_ai.request.encoding_formats",
+            "gen_ai.response.model",
+            "gen_ai.usage.input_tokens",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.embeddings.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
               "declared": 4,
               "emitted": 0
             },
@@ -24648,17 +26895,371 @@
           ],
           "name": "gen_ai.execute_tool.internal",
           "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 5,
+              "emitted": 0
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.retrieval.documents",
+            "gen_ai.retrieval.query.text"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.operation.name",
+              "gen_ai.retrieval.documents",
+              "gen_ai.retrieval.query.text"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.data_source.id",
+            "gen_ai.provider.name",
+            "gen_ai.request.model",
+            "gen_ai.retrieval.top_k",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.retrieval.client",
+          "type": "span"
         }
       ],
       "summary": {
-        "findings": 143,
+        "findings": 188,
         "recommended": {
-          "declared": 12,
-          "emitted": 3
+          "declared": 19,
+          "emitted": 4
         },
         "required": {
-          "declared": 4,
-          "emitted": 4
+          "declared": 7,
+          "emitted": 6
+        }
+      }
+    },
+    {
+      "backend": null,
+      "domain": "gen-ai",
+      "entities": {},
+      "findings": [
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.finish_reasons",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.input_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.usage.output_tokens",
+            "operation": "invoke_agent"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+          "signal_name": "invoke_agent weather_assistant",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "server.address",
+            "operation": "retrieval"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'retrieval' (operation 'retrieval') is missing expected attribute 'server.address'",
+          "signal_name": "retrieval",
+          "signal_type": "span"
+        }
+      ],
+      "id": "gen-ai/python/llama-index/opentelemetry-llama-index",
+      "instrumentation_library": "opentelemetry-instrumentation-genai-llama-index",
+      "instrumented_library": "llama-index",
+      "label": "opentelemetry-llama-index",
+      "language": "python",
+      "path": "scenarios/gen-ai/python/llama-index/opentelemetry-llama-index",
+      "runner": "genai-conformance",
+      "scenario_classes": [
+        "automatic_tool_calling",
+        "invoke_agent",
+        "retrieval",
+        "workflow"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name",
+            "gen_ai.operation.name",
+            "gen_ai.tool.call.arguments",
+            "gen_ai.tool.call.id",
+            "gen_ai.tool.call.result",
+            "gen_ai.tool.description",
+            "gen_ai.tool.name",
+            "gen_ai.tool.type"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.agent.name",
+              "gen_ai.operation.name",
+              "gen_ai.tool.call.arguments",
+              "gen_ai.tool.call.id",
+              "gen_ai.tool.call.result",
+              "gen_ai.tool.description",
+              "gen_ai.tool.name",
+              "gen_ai.tool.type"
+            ],
+            "span_kind": "internal"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.conversation.id"
+          ],
+          "name": "gen_ai.execute_tool.internal",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 8,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 4,
+              "emitted": 4
+            },
+            "recommended": {
+              "declared": 9,
+              "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.description",
+            "gen_ai.agent.name",
+            "gen_ai.input.messages",
+            "gen_ai.operation.name",
+            "gen_ai.output.messages",
+            "gen_ai.request.model",
+            "gen_ai.system_instructions",
+            "gen_ai.tool.definitions"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.agent.description",
+              "gen_ai.agent.name",
+              "gen_ai.input.messages",
+              "gen_ai.operation.name",
+              "gen_ai.output.messages",
+              "gen_ai.request.model",
+              "gen_ai.system_instructions",
+              "gen_ai.tool.definitions"
+            ],
+            "span_kind": "internal"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.conversation.id",
+            "gen_ai.data_source.id",
+            "gen_ai.output.type",
+            "gen_ai.request.choice.count",
+            "gen_ai.request.frequency_penalty",
+            "gen_ai.request.max_tokens",
+            "gen_ai.request.presence_penalty",
+            "gen_ai.request.seed",
+            "gen_ai.request.stop_sequences",
+            "gen_ai.request.temperature",
+            "gen_ai.request.top_p",
+            "gen_ai.response.finish_reasons",
+            "gen_ai.usage.input_tokens",
+            "gen_ai.usage.output_tokens"
+          ],
+          "name": "gen_ai.invoke_agent.internal",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 5,
+              "emitted": 0
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name",
+            "gen_ai.retrieval.documents",
+            "gen_ai.retrieval.query.text",
+            "gen_ai.retrieval.top_k"
+          ],
+          "identity": {
+            "attributes": [
+              "gen_ai.operation.name",
+              "gen_ai.retrieval.documents",
+              "gen_ai.retrieval.query.text",
+              "gen_ai.retrieval.top_k"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "error.type",
+            "gen_ai.data_source.id",
+            "gen_ai.provider.name",
+            "gen_ai.request.model",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.retrieval.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.operation.name"
+          ],
+          "missing": [
+            "error.type",
+            "gen_ai.provider.name",
+            "gen_ai.request.model",
+            "gen_ai.response.model",
+            "server.address",
+            "server.port"
+          ],
+          "name": "gen_ai.client.operation.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name",
+            "gen_ai.tool.name",
+            "gen_ai.tool.type"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.execute_tool.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "gen_ai.agent.name",
+            "gen_ai.request.model"
+          ],
+          "missing": [
+            "error.type"
+          ],
+          "name": "gen_ai.invoke_agent.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 4,
+        "recommended": {
+          "declared": 13,
+          "emitted": 1
+        },
+        "required": {
+          "declared": 6,
+          "emitted": 6
         }
       }
     },

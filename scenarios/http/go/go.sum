@@ -57,8 +57,8 @@ github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV91
 github.com/klauspost/cpuid/v2 v2.4.0/go.mod h1:19jmZ9mjzoF//ddRSUsv0zfBTJWh3QJh9FNxZTMrGxU=
 github.com/labstack/echo-otel/v5 v5.0.0 h1:/mcXe6HyOSoGJe8z4WuhWBfK3uFOkBi2oFEvaok1M0Q=
 github.com/labstack/echo-otel/v5 v5.0.0/go.mod h1:rMC5ekJzX2voZtHAW7SYMmxWBuTQBobCB+JC2gqfdxE=
-github.com/labstack/echo/v5 v5.4.1 h1:pxn7LF+AIepRAoSXRS6GMdjWysbOBt8B18G0VPjPH3U=
-github.com/labstack/echo/v5 v5.4.1/go.mod h1:4iEGNQiPPZnkfYpNR/L6fINd3NLiGWUD5+eBotFALas=
+github.com/labstack/echo/v5 v5.4.2 h1:6Jk4ur2Sc7R6vH3DflrvfWmyrf9xX0yosFKBn+/8nZA=
+github.com/labstack/echo/v5 v5.4.2/go.mod h1:4iEGNQiPPZnkfYpNR/L6fINd3NLiGWUD5+eBotFALas=
 github.com/leodido/go-urn v1.5.0 h1:pLqT2kq1zpHW/1D18QMjMpdtX7cekxqtJJjg5ANyWw0=
 github.com/leodido/go-urn v1.5.0/go.mod h1:9BORnCDhdPBJNDEX+w1bJisa8yOKYi116VeO96s4ifE=
 github.com/mattn/go-isatty v0.0.24 h1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=

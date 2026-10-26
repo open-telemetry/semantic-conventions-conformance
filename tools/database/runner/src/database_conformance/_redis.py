@@ -14,7 +14,7 @@ REDIS_USER = "default"
 REDIS_PASSWORD = ""
 REDIS_PORT = 6379
 # renovate: datasource=docker depName=redis versioning=docker
-REDIS_IMAGE = "redis:8.2.1-bookworm@sha256:5fa2edb1e408fa8235e6db8fab01d1afaaae96c9403ba67b70feceb8661e8621"
+REDIS_IMAGE = "redis:8.4.0-bookworm@sha256:c22af04bb576503bf16b3e34a1fd2fd82de0f765afd866d2e380145e0af30d78"
 
 REDIS = BackendSpec(
     name="Redis",

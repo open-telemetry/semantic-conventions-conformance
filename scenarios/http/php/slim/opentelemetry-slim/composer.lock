@@ -692,23 +692,23 @@
         },
         {
             "name": "open-telemetry/opentelemetry-auto-slim",
-            "version": "1.5.0",
+            "version": "1.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/contrib-auto-slim.git",
-                "reference": "11649c59e2f4432b7dc0dfe4662dc0f0e3f3b5cb"
+                "reference": "26575a2cde4b13e6a87dd31a3fcb995751d042ee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-slim/zipball/11649c59e2f4432b7dc0dfe4662dc0f0e3f3b5cb",
-                "reference": "11649c59e2f4432b7dc0dfe4662dc0f0e3f3b5cb",
+                "url": "https://api.github.com/repos/opentelemetry-php/contrib-auto-slim/zipball/26575a2cde4b13e6a87dd31a3fcb995751d042ee",
+                "reference": "26575a2cde4b13e6a87dd31a3fcb995751d042ee",
                 "shasum": ""
             },
             "require": {
                 "ext-opentelemetry": "*",
                 "ext-reflection": "*",
                 "open-telemetry/api": "^1.6",
-                "open-telemetry/sem-conv": "^1.36",
+                "open-telemetry/sem-conv": "^1.38",
                 "php": "^8.1",
                 "slim/slim": "^4"
             },
@@ -717,7 +717,7 @@
                 "mockery/mockery": "^1.5",
                 "nyholm/psr7": "*",
                 "open-telemetry/sdk": "^1.8",
-                "phan/phan": "^5.0",
+                "phan/phan": "^6.0",
                 "php-http/mock-client": "*",
                 "phpstan/phpstan": "^1.1",
                 "phpstan/phpstan-mockery": "^1.1.0",
@@ -754,9 +754,9 @@
                 "tracing"
             ],
             "support": {
-                "source": "https://github.com/opentelemetry-php/contrib-auto-slim/tree/1.5.0"
+                "source": "https://github.com/opentelemetry-php/contrib-auto-slim/tree/1.5.1"
             },
-            "time": "2026-06-08T12:54:17+00:00"
+            "time": "2026-09-02T12:13:51+00:00"
         },
         {
             "name": "open-telemetry/sdk",

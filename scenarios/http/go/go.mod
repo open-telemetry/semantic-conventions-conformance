@@ -14,7 +14,7 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/gorilla/mux v1.8.1
 	github.com/labstack/echo-otel/v5 v5.0.0
-	github.com/labstack/echo/v5 v5.4.1
+	github.com/labstack/echo/v5 v5.4.2
 	github.com/open-telemetry/semantic-conventions-conformance/tools/go v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/semantic-conventions-conformance/tools/http/test-client/go v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/github.com/emicklei/go-restful/otelrestful v0.72.0
