@@ -23,6 +23,12 @@ def test_mariadb_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.mariadb.client"}
 
 
+def test_elasticsearch_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "search", "CLIENT", {"db.system.name": "elasticsearch"}
+    ) == {"db.elasticsearch.client"}
+
+
 def test_redis_client_span_uses_the_vendor_refinement() -> None:
     assert classify_span("GET", "CLIENT", {"db.system.name": "redis"}) == {
         "db.redis.client"
@@ -31,7 +37,8 @@ def test_redis_client_span_uses_the_vendor_refinement() -> None:
 
 def test_an_unsupported_database_system_is_not_classified() -> None:
     assert (
-        classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"}) == set()
+        classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"})
+        == set()
     )
 
 

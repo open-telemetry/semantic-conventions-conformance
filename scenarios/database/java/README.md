@@ -1,9 +1,12 @@
 # Database conformance scenarios in Java
 
-Java database conformance for PostgreSQL, MariaDB, and Redis. JDBC is tested
-through the OpenTelemetry Java agent and JDBC library instrumentation. Jedis,
+Java database conformance for PostgreSQL, MariaDB, Redis, and Elasticsearch.
+JDBC is tested through the OpenTelemetry Java agent and JDBC library
+instrumentation. Jedis,
 Lettuce, Rediscala, and Redisson are tested through the Java agent, and Lettuce
-also exercises its supported standalone library instrumentation.
+also exercises its supported standalone library instrumentation. Elasticsearch
+conformance covers the 7.17 Low Level REST Client, Java API Client, and Transport
+Client through the Java agent.
 
 The language-neutral SQL actions and telemetry expectations live together in
 backend-specific files under
@@ -18,6 +21,11 @@ duplicating the shared JDBC code.
 The Java code only connects and performs measured operations. Database
 lifecycle and schema creation stay in the Python runner, where later languages
 can reuse them.
+
+The Elasticsearch launchers are separate Gradle projects. This keeps each
+client's dependency graph isolated while all three use the same 7.17.29
+Elasticsearch container and deterministic `conformance` index. The API Client
+uses 7.17.19, the last release in that line before native instrumentation.
 
 Redis client workloads live under `shared:redis`. Every client runs the same
 `set_get`, `pipeline`, and `error` operations described in the
@@ -46,6 +54,7 @@ Run the package from the repository root:
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/elasticsearch/rest/opentelemetry-javaagent
 ```
 
 Docker must be installed and running.

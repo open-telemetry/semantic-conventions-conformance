@@ -22,11 +22,13 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
-`redis`. Each session starts one pinned container and removes it when the
-session closes. PostgreSQL and MariaDB apply packaged SQL schemas that create
-the same logical objects but no rows. Redis needs no initialization beyond its
-readiness check. Scenarios own any data their operations need.
+`runner_config` must contain only `backend`, set to `elasticsearch`, `mariadb`,
+`postgresql`, or `redis`. Each session starts one digest-pinned container and
+removes it when the session closes. PostgreSQL and MariaDB apply packaged SQL schemas that create
+the same logical objects but no rows. Elasticsearch gets a fixed `conformance`
+index with one shard, no replicas, and refreshes disabled. Redis needs no
+initialization beyond its readiness check. Scenarios own any data their
+operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -38,6 +40,9 @@ environment declarations:
 | `DATABASE_NAME` | Test database name |
 | `DATABASE_USER` | Test user |
 | `DATABASE_PASSWORD` | Test-only password |
+
+Elasticsearch also provides `DATABASE_TRANSPORT_PORT`. Its user and password
+variables are empty because the disposable 7.17 node has security disabled.
 
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
@@ -53,7 +58,8 @@ empty password, so its scenarios run without authentication.
 
 The package classifies only client spans for the backends it can run.
 PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
-`db.mariadb.client`, and Redis spans use `db.redis.client`. Adding a backend
-also requires adding its span classification and conformance scenarios.
+`db.mariadb.client`, Elasticsearch spans use `db.elasticsearch.client`, and Redis
+spans use `db.redis.client`. Adding a backend also requires adding its span
+classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
