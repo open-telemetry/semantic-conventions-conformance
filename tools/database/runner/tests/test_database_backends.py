@@ -13,10 +13,12 @@ from typing import Any
 import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
+from testcontainers.core.wait_strategies import ExecWaitStrategy
 
-from database_conformance import _mariadb, _postgres, _redis
+from database_conformance import _mariadb, _oracle, _postgres, _redis
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
+from database_conformance._oracle import ORACLE_IMAGE, Oracle
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 from database_conformance._redis import REDIS_IMAGE, Redis
 
@@ -170,6 +172,34 @@ def install_stub(
             ),
         ),
         (
+            _oracle,
+            Oracle,
+            1521,
+            {
+                "ORACLE_PASSWORD": "conformance",
+                "APP_USER": "conformance",
+                "APP_USER_PASSWORD": "conformance",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "FREEPDB1",
+                "DATABASE_USER": "conformance",
+                "DATABASE_PASSWORD": "conformance",
+            },
+            ["/tmp/otel-conformance-oracle.sql"],
+            ExecConfig(
+                command=[
+                    "sqlplus",
+                    "-L",
+                    "-S",
+                    "conformance/conformance@//127.0.0.1:1521/FREEPDB1",
+                    "@/tmp/otel-conformance-oracle.sql",
+                ],
+                environment={},
+            ),
+        ),
+        (
             _redis,
             Redis,
             6379,
@@ -189,7 +219,7 @@ def install_stub(
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB] | type[Redis],
+    backend_type: type[Postgres] | type[MariaDB] | type[Oracle] | type[Redis],
     port: int,
     expected_environment: dict[str, str],
     expected_variables: dict[str, str],
@@ -224,6 +254,42 @@ def test_redis_readiness_checks_for_server_errors() -> None:
         "6379",
         "PING",
     )
+
+
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port", "override", "expected_timeout"),
+    [
+        (_postgres, Postgres, 5432, None, 60.0),
+        (_oracle, Oracle, 1521, None, 180.0),
+        (_oracle, Oracle, 1521, "240", 240.0),
+    ],
+)
+def test_a_backend_waits_for_its_own_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[Oracle],
+    port: int,
+    override: str | None,
+    expected_timeout: float,
+) -> None:
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
+    )
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", raising=False
+    )
+    if override is not None:
+        monkeypatch.setenv("OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", override)
+    container = StubContainer(port=port)
+    install_stub(monkeypatch, module, container)
+
+    with backend_type():
+        pass
+
+    strategy = container.wait_strategy
+    assert isinstance(strategy, ExecWaitStrategy)
+    # Testcontainers keeps the configured startup timeout private.
+    assert strategy._startup_timeout == expected_timeout
 
 
 def test_start_failure_cleans_up_the_container(
@@ -271,6 +337,24 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+def test_oracle_schema_failure_reports_sqlplus_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"ORA-00900: invalid SQL"),
+        port=1521,
+    )
+    install_stub(monkeypatch, _oracle, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)ORA-00900.*ready to accept connections",
+    ):
+        Oracle().start()
+
+    assert container.stopped
+
+
 def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
@@ -308,6 +392,7 @@ def test_cannot_start_postgres_twice(
     [
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
+        (ORACLE_IMAGE, "gvenzl/oracle-free"),
         (REDIS_IMAGE, "redis"),
     ],
 )
@@ -332,3 +417,12 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("oracle.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE TABLE items" in schema
+    assert "CREATE OR REPLACE PROCEDURE noop" in schema
+    assert "INSERT INTO" not in schema
