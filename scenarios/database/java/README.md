@@ -1,9 +1,9 @@
 # Database conformance scenarios in Java
 
-Java database conformance for PostgreSQL, MariaDB, and Redis. JDBC is tested
-through the OpenTelemetry Java agent and JDBC library instrumentation. Jedis,
-Lettuce, Rediscala, and Redisson are tested through the Java agent, and Lettuce
-also exercises its supported standalone library instrumentation.
+Java database conformance for PostgreSQL, MariaDB, MySQL, and Redis. JDBC is
+tested through the OpenTelemetry Java agent and JDBC library instrumentation.
+Jedis, Lettuce, Rediscala, and Redisson are tested through the Java agent, and
+Lettuce also exercises its supported standalone library instrumentation.
 
 The language-neutral SQL actions and telemetry expectations live together in
 backend-specific files under
