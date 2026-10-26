@@ -11,17 +11,7 @@ plugins {
 
 rootProject.name = "database-java-conformance"
 
-fileTree(rootDir) {
-    include("**/build.gradle", "**/build.gradle.kts")
-    exclude("**/build/**", "**/.gradle/**", "**/out/**", "**/target/**")
-}.files
-    .sortedBy { it.relativeTo(rootDir).invariantSeparatorsPath }
-    .forEach { buildFile ->
-        val directory = buildFile.parentFile.relativeTo(rootDir).invariantSeparatorsPath
-        if (directory.isNotEmpty()) {
-            include(directory.replace("/", ":"))
-        }
-    }
+apply(from = "discover-projects.gradle.kts")
 
 fun shared(name: String, directory: String) {
     include(name)
