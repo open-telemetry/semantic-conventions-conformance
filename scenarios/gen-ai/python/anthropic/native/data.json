@@ -83,6 +83,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'anthropic.beta' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.create",
+      "context": {
+        "attribute_key": "anthropic.beta"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'anthropic.message.stop_reason' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "anthropic.messages.create",

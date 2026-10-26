@@ -1,6 +1,7 @@
 {
   "spans": {
     "gen_ai.client.inference": [
+      "error.type",
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -77,6 +78,21 @@
       "signal_name": "gen_ai.client.token.usage"
     },
     {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "llm.openai.chat_completions.exceptions"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'exception.escaped' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "litellm.chat",
+      "context": {
+        "attribute_key": "exception.escaped"
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'llm.is_streaming' does not exist in the registry.",
       "signal_type": "span",
@@ -92,6 +108,56 @@
       "signal_name": "litellm.chat",
       "context": {
         "attribute_key": "llm.usage.total_tokens"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'litellm.chat' (operation 'chat') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "litellm.chat",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'litellm.chat' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
+      "signal_type": "span",
+      "signal_name": "litellm.chat",
+      "context": {
+        "missing_attribute": "gen_ai.response.id",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'litellm.chat' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "litellm.chat",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'litellm.chat' (operation 'chat') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "litellm.chat",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'litellm.chat' (operation 'chat') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "litellm.chat",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "chat"
       }
     },
     {

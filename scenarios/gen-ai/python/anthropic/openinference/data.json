@@ -556,6 +556,15 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.type' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "messages.create",
@@ -736,6 +745,24 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.1.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.1.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.output_messages.0.message.contents.1.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "llm.output_messages.0.message.contents.1.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'llm.output_messages.0.message.contents.2.message_content.text' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "messages.create",
@@ -876,6 +903,15 @@
       "signal_name": "messages.create",
       "context": {
         "attribute_key": "llm.tools.0.tool.json_schema"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "messages.create",
+      "context": {
+        "attribute_key": "metadata"
       }
     },
     {
