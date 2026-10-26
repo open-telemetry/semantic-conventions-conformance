@@ -3,26 +3,31 @@
 What database instrumentations emit, checked against the
 [database semantic conventions][database] and recorded as committed coverage.
 
-Initial support is Java-only. It exercises PostgreSQL and MariaDB through JDBC,
-and Redis through Jedis, Lettuce, Rediscala, and Redisson. JDBC runs against the
-OpenTelemetry Java agent and JDBC library instrumentation. Redis runs against
-the Java agent, with an additional Lettuce run against its standalone library
-instrumentation. The database runner starts the selected Docker container and
-applies any required initialization before measured processes start.
+Initial support is Java-only. PostgreSQL and MariaDB run through JDBC, while
+MongoDB covers the synchronous, legacy asynchronous, and Reactive Streams
+drivers. Redis runs through Jedis, Lettuce, Rediscala, and Redisson. JDBC and
+MongoDB run against the OpenTelemetry Java agent and their published standalone
+instrumentation libraries. Redis runs against the Java agent, with an additional
+Lettuce run against its standalone library instrumentation. The database runner
+starts the selected Docker container and applies any required initialization
+before measured processes start.
 
 ```text
 java/shared/jdbc/scenarios/                 the JDBC workload, with no OpenTelemetry
 java/shared/jdbc/opentelemetry-javaagent/   the shared Java agent launcher
 java/shared/jdbc/opentelemetry-library/     the shared library launcher
-contracts/                                 Redis telemetry expectations by client
+contracts/                                 MongoDB and Redis telemetry expectations
 java/{postgresql,mariadb}/jdbc/             vendor conformance packages
 java/shared/redis/                          Redis client workloads and launchers
 java/redis/{jedis,lettuce,rediscala,redisson}/
                                             Redis conformance packages
 ../../tools/database/sql-test-client/       combined SQL actions and expectations
+java/shared/mongodb/{sync,async,reactive}/  MongoDB workloads and launchers
+java/mongodb/{sync,async,reactive}/         MongoDB conformance packages
+contracts/mongodb.yaml                     shared MongoDB telemetry expectations
 ```
 
-Each backend's combined SQL contract lives under
+The PostgreSQL and MariaDB combined SQL contracts live under
 [`tools/database/sql-test-client/contracts`](../../tools/database/sql-test-client/contracts).
 Each ordered scenario keeps its backend-specific `action` and generic telemetry
 `expect` object together. The runner executes each list position under its own
@@ -39,6 +44,22 @@ the client path that produced it:
 | `prepared_query` | `PreparedStatement.executeQuery` |
 | `batch` | `Statement.executeBatch` |
 | `stored_procedure` | `CallableStatement.execute` |
+
+MongoDB packages share named telemetry expectations in
+[`contracts/mongodb.yaml`](contracts/mongodb.yaml), with driver-specific run
+commands. They use the same operation set across all three driver APIs:
+
+| Scenario | MongoDB command |
+| --- | --- |
+| `find` | `find` by `_id` |
+| `update` | `updateOne` by `_id` |
+| `delete` | `deleteOne` by `_id` |
+| `aggregate` | one-stage `$match` aggregation |
+
+Each expectation also accounts for the driver's `endSessions` command when the
+client closes. The standalone library launchers pass the driver's configured
+seed addresses to `MongoTelemetry.createCommandListener` so stable
+`server.address` and `server.port` describe the same target as the agent runs.
 
 Every Redis client runs the same workload with the same keys, values, and
 plain-string encoding in logical database zero:
@@ -65,6 +86,12 @@ otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-library
 otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-javaagent
 otel-conformance scenarios/database/java/mariadb/jdbc/opentelemetry-library
+otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-library
+otel-conformance scenarios/database/java/mongodb/async/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mongodb/async/opentelemetry-library
+otel-conformance scenarios/database/java/mongodb/reactive/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mongodb/reactive/opentelemetry-library
 otel-conformance scenarios/database/java/redis/jedis/opentelemetry-javaagent
 otel-conformance scenarios/database/java/redis/lettuce/opentelemetry-javaagent
 otel-conformance scenarios/database/java/redis/lettuce/opentelemetry-library
@@ -78,7 +105,9 @@ package run, then is removed. The runner owns the
 and
 [MariaDB](../../tools/database/runner/src/database_conformance/mariadb.sql)
 schemas. Both contain the empty table and stored procedure used by the shared
-workload. Neither seeds data.
+workload. Neither seeds data. The
+[MongoDB bootstrap](../../tools/database/runner/src/database_conformance/mongodb.js)
+recreates its collection and seed documents before each package run.
 
 The Redis backend uses logical database zero and requires only a readiness
 check. Each scenario uses namespaced keys and verifies its command results.

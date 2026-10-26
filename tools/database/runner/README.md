@@ -22,11 +22,16 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
-`redis`. Each session starts one pinned container and removes it when the
-session closes. PostgreSQL and MariaDB apply packaged SQL schemas that create
-the same logical objects but no rows. Redis needs no initialization beyond its
-readiness check. Scenarios own any data their operations need.
+`runner_config` must contain only `backend`, whose supported values are
+`postgresql`, `mariadb`, `mongodb`, and `redis`. Each session starts one pinned
+container and removes it when the session closes. PostgreSQL and MariaDB apply
+packaged SQL schemas that create the same logical objects but no rows. The
+MongoDB bootstrap recreates the `items` collection with
+deterministic documents for isolated read, update, delete, and aggregation
+operations. MongoDB readiness requires authorization to be enabled, so bootstrap
+waits for the final daemon rather than the image's temporary initialization
+server. Redis needs no initialization beyond its readiness check; its
+scenarios own any data their operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -53,7 +58,8 @@ empty password, so its scenarios run without authentication.
 
 The package classifies only client spans for the backends it can run.
 PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
-`db.mariadb.client`, and Redis spans use `db.redis.client`. Adding a backend
-also requires adding its span classification and conformance scenarios.
+`db.mariadb.client`, MongoDB spans use `db.mongodb.client`, and Redis spans use
+`db.redis.client`. Adding a backend also requires adding its span classification
+and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

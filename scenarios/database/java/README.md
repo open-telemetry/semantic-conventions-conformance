@@ -1,9 +1,11 @@
 # Database conformance scenarios in Java
 
-Java database conformance for PostgreSQL, MariaDB, and Redis. JDBC is tested
-through the OpenTelemetry Java agent and JDBC library instrumentation. Jedis,
-Lettuce, Rediscala, and Redisson are tested through the Java agent, and Lettuce
-also exercises its supported standalone library instrumentation.
+Java database conformance for PostgreSQL and MariaDB through JDBC, plus MongoDB
+synchronous, legacy asynchronous, and Reactive Streams drivers, and Redis
+through Jedis, Lettuce, Rediscala, and Redisson. JDBC and MongoDB are tested
+through the OpenTelemetry Java agent and their corresponding published
+standalone instrumentation libraries. Redis clients are tested through the
+Java agent, and Lettuce also exercises its standalone library instrumentation.
 
 The language-neutral SQL actions and telemetry expectations live together in
 backend-specific files under
@@ -16,8 +18,8 @@ another PostgreSQL client such as Vert.x SQL can sit beside JDBC without
 duplicating the shared JDBC code.
 
 The Java code only connects and performs measured operations. Database
-lifecycle and schema creation stay in the Python runner, where later languages
-can reuse them.
+lifecycle and bootstrap stay in the Python runner, where later languages can
+reuse them.
 
 Redis client workloads live under `shared:redis`. Every client runs the same
 `set_get`, `pipeline`, and `error` operations described in the
@@ -46,6 +48,7 @@ Run the package from the repository root:
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-javaagent
 ```
 
 Docker must be installed and running.

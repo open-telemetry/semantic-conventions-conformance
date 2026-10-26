@@ -23,6 +23,7 @@ from opentelemetry.conformance import (
 from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
 from ._mariadb import MariaDB
+from ._mongodb import MongoDB
 from ._postgres import Postgres
 from ._redis import Redis
 
@@ -37,6 +38,7 @@ DOMAIN = Domain(
 
 _BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
     "mariadb": MariaDB,
+    "mongodb": MongoDB,
     "postgresql": Postgres,
     "redis": Redis,
 }
