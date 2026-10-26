@@ -333,7 +333,7 @@ requires-dist = [
     { name = "haystack-ai", specifier = "==3.4.1" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
-    { name = "opentelemetry-haystack", specifier = "==1.0.0" },
+    { name = "opentelemetry-haystack", specifier = "==2.0.0" },
     { name = "opentelemetry-sdk", specifier = "==1.45.1" },
     { name = "otel-conformance-python", editable = "../../../../../tools/python" },
 ]
@@ -758,15 +758,15 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-haystack"
-version = "1.0.0"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "haystack-ai" },
     { name = "opentelemetry-sdk" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/91/7f/4ed8ca4e56b077ec6a52e7dc9bf62317c47bf0bc0f71de8f786bc58cd95c/opentelemetry_haystack-1.0.0.tar.gz", hash = "sha256:e09ec8edd48c28cc20a1fb6234fd733740bef3a44155c9fb3cd51f31eae23ddd", size = 10967, upload-time = "2026-06-23T13:06:52.375Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/93/43209f2927cbb2dc9d9d1353169c30c5ae3230bfeb37a2b66da85d039cf2/opentelemetry_haystack-2.0.0.tar.gz", hash = "sha256:a2609eeb7872421e8aeb50d4f2ed5f8a70f93ec3697e56c741304b7a20e2b7ad", size = 11108, upload-time = "2026-10-19T07:31:43.431Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/77/6c1140542dae1689f93ffc922b571fd0f08a12a50450157445d4e0c0643a/opentelemetry_haystack-1.0.0-py3-none-any.whl", hash = "sha256:e507c4499b27ca93f8f74aff35d8a6fbfe5832f43182a659bfc789bcfffb20a9", size = 9948, upload-time = "2026-06-23T13:06:51.263Z" },
+    { url = "https://files.pythonhosted.org/packages/49/c2/3d1938e49fedaf70e0f7d22a2c277700d8c1926026fe3942f88e86448cdd/opentelemetry_haystack-2.0.0-py3-none-any.whl", hash = "sha256:f75918307af2b36589e1e969894f07c30d7455032705f4828db502ced6c186c2", size = 9945, upload-time = "2026-10-19T07:31:42.184Z" },
 ]
 
 [[package]]

@@ -6,7 +6,7 @@ dependencies = [
     "haystack-ai==3.4.1",
     # deepset's own OpenTelemetry integration: the tracer Haystack documents,
     # not a third-party instrumentation of it.
-    "opentelemetry-haystack==1.0.0",
+    "opentelemetry-haystack==2.0.0",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",
     "opentelemetry-exporter-otlp-proto-grpc==1.45.1",
