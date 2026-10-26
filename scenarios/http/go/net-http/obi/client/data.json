@@ -1,0 +1,168 @@
+{
+  "spans": {
+    "http.client": [
+      "error.type",
+      "http.request.body.size",
+      "http.request.method",
+      "http.response.body.size",
+      "http.response.status_code",
+      "network.peer.address",
+      "network.peer.port",
+      "server.address",
+      "server.port",
+      "url.full",
+      "url.scheme",
+      "url.template"
+    ]
+  },
+  "events": {},
+  "metrics": {
+    "http.client.request.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.client.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ],
+    "http.client.response.body.size": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "server.address",
+      "server.port",
+      "url.scheme"
+    ]
+  },
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.distro": {
+      "identity": [
+        "telemetry.distro.name"
+      ],
+      "description": [
+        "telemetry.distro.version"
+      ]
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "instrumentation_scope_name_missing",
+      "message": "Instrumentation scope '<missing>' does not have name.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "<missing>",
+      "context": {
+        "actual": "",
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope '<missing>' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "<missing>",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'go.opentelemetry.io/obi' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "go.opentelemetry.io/obi",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'instance' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "target.info",
+      "context": {
+        "attribute_key": "instance"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'job' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "target.info",
+      "context": {
+        "attribute_key": "job"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "target.info"
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /status/*' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "GET /status/*",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'GET /users/*' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "GET /users/*",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    },
+    {
+      "id": "recommended_attribute_not_present",
+      "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
+      "signal_type": "span",
+      "signal_name": "POST /items",
+      "context": {
+        "attribute_key": "network.protocol.version",
+        "kind": "client"
+      }
+    }
+  ]
+}

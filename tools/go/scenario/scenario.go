@@ -16,6 +16,9 @@ import (
 	"os"
 )
 
+// GateVariable names the named pipe a scenario waits at before its workload.
+const GateVariable = "OTEL_CONFORMANCE_GATE"
+
 // Require returns the environment variable named by name or an error.
 func Require(name string) (string, error) {
 	value := os.Getenv(name)
@@ -36,4 +39,19 @@ func WaitForEOF(input io.Reader) error {
 		return fmt.Errorf("reading stop input: %w", err)
 	}
 	return nil
+}
+
+// WaitAtGate reads the named pipe at [GateVariable] until the launcher
+// closes it. It returns at once when the variable is unset.
+func WaitAtGate() error {
+	path := os.Getenv(GateVariable)
+	if path == "" {
+		return nil
+	}
+	gate, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("reaching the gate: %w", err)
+	}
+	defer gate.Close()
+	return WaitForEOF(gate)
 }
