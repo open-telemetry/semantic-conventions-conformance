@@ -642,7 +642,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "openai-agents", specifier = "==0.24.0" },
-    { name = "openinference-instrumentation-openai-agents", specifier = "==2.5.3" },
+    { name = "openinference-instrumentation-openai-agents", specifier = "==2.6.0" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
@@ -666,7 +666,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-openai-agents"
-version = "2.5.3"
+version = "2.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -677,9 +677,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3c/1c/1884bf7eb84988599318f572d3713396ae86f02dbf1c44229ea03c939ffa/openinference_instrumentation_openai_agents-2.5.3.tar.gz", hash = "sha256:1d9df4aa3cc9ea27c3582cd89317a43fe9b189d8af7c96a80d575c41c9a8aac5", size = 35752, upload-time = "2026-10-09T18:29:13.643Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/68/fb4e061ab555650530e3f85d7c0cab1745f8bf132042ffa1e7031d8d5154/openinference_instrumentation_openai_agents-2.6.0.tar.gz", hash = "sha256:10b7ddd33022957abb5fcea12e5980e08d08434b74c81b8ad473206aef747d31", size = 39213, upload-time = "2026-10-23T20:49:49.955Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/6a/1134bcf67fa2ef89ca2d5b9dacaea80811ae1b88a90ad9e4383716e52854/openinference_instrumentation_openai_agents-2.5.3-py3-none-any.whl", hash = "sha256:5516dfb1bd21d28c48954173480f8efa848943bb6a3376bcf71569c6de425d11", size = 39181, upload-time = "2026-10-09T18:29:12.512Z" },
+    { url = "https://files.pythonhosted.org/packages/17/77/3eb678fd5673bc966df5d431bcb02cc8c2d6075f205e078bf434da6eec5e/openinference_instrumentation_openai_agents-2.6.0-py3-none-any.whl", hash = "sha256:ef52c537fd9eacbdd2d2f46fd82c1c19880d28acb6b443fc3007f8b9b664a63f", size = 42610, upload-time = "2026-10-23T20:49:48.412Z" },
 ]
 
 [[package]]

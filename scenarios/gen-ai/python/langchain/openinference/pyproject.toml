@@ -8,7 +8,7 @@ dependencies = [
     "langgraph-checkpoint==4.3.0",
     # InMemoryVectorStore scores with numpy but does not depend on it.
     "numpy==2.5.4",
-    "openinference-instrumentation-langchain==0.1.79",
+    "openinference-instrumentation-langchain==0.1.80",
     "opentelemetry-api==1.45.1",
     "opentelemetry-sdk==1.45.1",
     "opentelemetry-exporter-otlp-proto-grpc==1.45.1",

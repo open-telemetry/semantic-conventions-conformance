@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -477,7 +477,7 @@ requires-dist = [
     { name = "langchain-openai", specifier = "==1.7.2" },
     { name = "langgraph-checkpoint", specifier = "==4.3.0" },
     { name = "numpy", specifier = "==2.5.4" },
-    { name = "openinference-instrumentation-langchain", specifier = "==0.1.79" },
+    { name = "openinference-instrumentation-langchain", specifier = "==0.1.80" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
@@ -687,7 +687,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-langchain"
-version = "0.1.79"
+version = "0.1.80"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -697,9 +697,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/5e/144c617d2964c6bd39d0580adc0c1f8cd2a022e95287b9fdb1c11a7ac407/openinference_instrumentation_langchain-0.1.79.tar.gz", hash = "sha256:8e0cd5b5e02191bf93f6e2d3816e47ee812168f9525ee40cfc5eed7c94cf24aa", size = 79928, upload-time = "2026-10-09T18:29:13.135Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/e9/48ba881a9d8996f56d5f44b8f774da74263454e41146ee44360be19f3b78/openinference_instrumentation_langchain-0.1.80.tar.gz", hash = "sha256:eaa187c306299cfcedaee9be6f00970406fcbf42cb3933ddfb601b971949b4e3", size = 79849, upload-time = "2026-10-23T20:49:48.117Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/71/567286ff47b4f6b597c6a8556ea20fc0164d69f9309cb2b7b83e1249e301/openinference_instrumentation_langchain-0.1.79-py3-none-any.whl", hash = "sha256:5bbd18ef6509d856f3964d4ed8af737e9f945273f7775bbed0d4e4afe50d78f7", size = 26047, upload-time = "2026-10-09T18:29:11.438Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/ff/9b2172bc79758498cd5fa131a3934a1d9702d20dd15ab590df5ec2be1f44/openinference_instrumentation_langchain-0.1.80-py3-none-any.whl", hash = "sha256:e8ea746b068699a4d2ebffd4eb7e00174bfb416fdec8d2fff4f66520cbcd73c7", size = 25428, upload-time = "2026-10-23T20:49:46.673Z" },
 ]
 
 [[package]]

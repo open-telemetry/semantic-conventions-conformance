@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -9,7 +9,7 @@ resolution-markers = [
 
 [[package]]
 name = "agno"
-version = "3.1.9"
+version = "3.1.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "agnoctl" },
@@ -23,9 +23,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cc/8f/eab5d2070684d3985838d2bf50f0aa106d6f81071e1ef5079e7eb3eff974/agno-3.1.9.tar.gz", hash = "sha256:99b210bf5ca617137bb2c30b5e9ff5e244f4da531d7d06d6715d072d011c5194", size = 4105979, upload-time = "2026-10-22T16:51:12.584Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/f7/002d37fab96dff126b56879578e745d6ceb2a99834342415c4ec5d9c1016/agno-3.1.10.tar.gz", hash = "sha256:1830567bd35ea0a178a5c213d6a93dde84d21caae147e4dd285351c3686a41c8", size = 4108774, upload-time = "2026-10-23T13:11:25.529Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/4a/4ded64c632f48b45a913fbcac3e6a10e09d56a41cf26dfdeaff6e8bda991/agno-3.1.9-py3-none-any.whl", hash = "sha256:15102267791d4f0f16289335d7c29181338a5b8915ea941ad0c3e1808dda2af3", size = 4654254, upload-time = "2026-10-22T16:51:09.092Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/38/0ca8cd1d0f29ee850566ebb15f4d4fdb4a2c78fc958903bcec398eaf9ba7/agno-3.1.10-py3-none-any.whl", hash = "sha256:ea1d0d2f8f7e8d0c413c2a1df57b4c784dac2f70ceac1f69b935fd8d2ef68c7e", size = 4657166, upload-time = "2026-10-23T13:11:21.745Z" },
 ]
 
 [[package]]
@@ -45,7 +45,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agno", specifier = "==3.1.9" },
+    { name = "agno", specifier = "==3.1.10" },
     { name = "openai", specifier = "==3.37.0" },
     { name = "openinference-instrumentation-agno", specifier = "==1.0.15" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
