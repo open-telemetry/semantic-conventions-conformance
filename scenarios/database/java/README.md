@@ -1,9 +1,11 @@
 # Database conformance scenarios in Java
 
-Java database conformance for PostgreSQL, MariaDB, and Redis. JDBC is tested
-through the OpenTelemetry Java agent and JDBC library instrumentation. Jedis,
-Lettuce, Rediscala, and Redisson are tested through the Java agent, and Lettuce
-also exercises its supported standalone library instrumentation.
+Java database conformance covers PostgreSQL and MariaDB JDBC, Cassandra
+driver 3.x and 4.x, and Redis. JDBC runs through the OpenTelemetry Java agent and
+JDBC library instrumentation. Cassandra runs every supported agent API line and
+the standalone driver 4.4+ instrumentation library. Jedis, Lettuce, Rediscala, and
+Redisson are tested through the Java agent, and Lettuce also exercises its
+supported standalone library instrumentation.
 
 The language-neutral SQL actions and telemetry expectations live together in
 backend-specific files under
@@ -18,6 +20,13 @@ duplicating the shared JDBC code.
 The Java code only connects and performs measured operations. Database
 lifecycle and schema creation stay in the Python runner, where later languages
 can reuse them.
+
+The Cassandra packages pin one current driver in each instrumentation range:
+3.11.5 for driver 3, 4.3.1 for the early driver 4 API, and Apache driver 4.19.3
+for driver 4.4 and later. Each of the four packages runs query, prepared,
+batch, and server-error operations against its own disposable Cassandra node.
+The library launcher passes the session's original contact points to
+`CassandraTelemetry.wrap` so it can emit stable server address and port attributes.
 
 Redis client workloads live under `shared:redis`. Every client runs the same
 `set_get`, `pipeline`, and `error` operations described in the

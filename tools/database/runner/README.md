@@ -22,11 +22,12 @@ runner_config:
   backend: postgresql
 ```
 
-`runner_config` must contain only `backend`, set to `postgresql`, `mariadb`, or
-`redis`. Each session starts one pinned container and removes it when the
-session closes. PostgreSQL and MariaDB apply packaged SQL schemas that create
-the same logical objects but no rows. Redis needs no initialization beyond its
-readiness check. Scenarios own any data their operations need.
+`runner_config` must contain only `backend`, set to `cassandra`, `mariadb`,
+`postgresql`, or `redis`. Each session starts one pinned container and removes
+it when the session closes. Cassandra, PostgreSQL, and MariaDB apply packaged
+schemas that create the objects used by the scenarios but no rows. Redis needs
+no initialization beyond its readiness check. Scenarios own any data their
+operations need.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -38,6 +39,10 @@ environment declarations:
 | `DATABASE_NAME` | Test database name |
 | `DATABASE_USER` | Test user |
 | `DATABASE_PASSWORD` | Test-only password |
+| `DATABASE_LOCAL_DATACENTER` | Cassandra local datacenter; absent for other backends |
+
+Cassandra runs without authentication, so `DATABASE_USER` and
+`DATABASE_PASSWORD` are empty for that backend.
 
 Connection fields rather than a language-specific URL let Java, Python,
 JavaScript, .NET, and future database scenarios construct their native client
@@ -52,8 +57,9 @@ is non-empty. The Redis backend supplies database zero, user `default`, and an
 empty password, so its scenarios run without authentication.
 
 The package classifies only client spans for the backends it can run.
-PostgreSQL spans use `db.postgresql.client`, MariaDB spans use
-`db.mariadb.client`, and Redis spans use `db.redis.client`. Adding a backend
+Cassandra, MariaDB, PostgreSQL, and Redis spans use their respective
+`db.cassandra.client`, `db.mariadb.client`, `db.postgresql.client`, and
+`db.redis.client` refinements. Adding a backend
 also requires adding its span classification and conformance scenarios.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/
