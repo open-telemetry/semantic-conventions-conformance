@@ -14,7 +14,7 @@ MARIADB_USER = "conformance"
 MARIADB_PASSWORD = "conformance"
 MARIADB_PORT = 3306
 # renovate: datasource=docker depName=mariadb versioning=docker
-MARIADB_IMAGE = "mariadb:12.3.3-noble@sha256:58919b5d041049f509624364148d8881e045679dc6bc520e5705bfdd47cba49d"
+MARIADB_IMAGE = "mariadb:12.3.3-noble@sha256:d46e102fa8b9b72bfcdeb56f9dd538742092119dc8b11f31fe662605cd234cd9"
 
 MARIADB = BackendSpec(
     name="MariaDB",
