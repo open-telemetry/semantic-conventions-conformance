@@ -200,10 +200,45 @@ def test_json_requires_content_on_every_matched_span(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("9007199254740993.0", 9007199254740992),
+        ("1e-4000", 0),
+        ("1.0000000000000001", 1),
+    ],
+)
+def test_json_numbers_do_not_match_after_lossy_rounding(
+    tmp_path: Path, value: str, expected: int
+) -> None:
+    result = findings(
+        tmp_path, {"json": {"path": [], "contains": expected}}, [value]
+    )
+
+    assert result.failures
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("0.1", 0.1), ("1e2", 100), ("9007199254740993.0", 9007199254740993)],
+)
+def test_json_numbers_compare_as_decimal_values(
+    tmp_path: Path, value: str, expected: int | float
+) -> None:
+    result = findings(
+        tmp_path, {"json": {"path": [], "contains": expected}}, [value]
+    )
+
+    assert result.failures == []
+
+
+@pytest.mark.parametrize(
     ("value", "path", "expected"),
     [
         pytest.param(MISSING, [], None, id="absent-attribute"),
         pytest.param("[", [], "image", id="malformed-json"),
+        pytest.param(
+            "1e9999999999999999999999999", [], 0, id="unsupported-exponent"
+        ),
         pytest.param(
             "[" * 2000 + "0" + "]" * 2000,
             [],

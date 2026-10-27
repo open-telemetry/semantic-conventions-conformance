@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from decimal import Decimal, DecimalException
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
 from ._report import carried_attributes
@@ -289,9 +290,11 @@ def _json_scalar_equal(value: object, expected: object) -> bool:
         return value is expected
     if isinstance(value, str):
         return isinstance(expected, str) and value == expected
+    if isinstance(expected, float):
+        expected = Decimal(str(expected))
     return (
-        isinstance(value, (int, float))
-        and isinstance(expected, (int, float))
+        isinstance(value, (int, Decimal))
+        and isinstance(expected, (int, Decimal))
         and value == expected
     )
 
@@ -311,9 +314,11 @@ def _check_json_attribute(
             else:
                 try:
                     decoded: object = json.loads(
-                        value, parse_constant=_reject_json_constant
+                        value,
+                        parse_float=Decimal,
+                        parse_constant=_reject_json_constant,
                     )
-                except (ValueError, RecursionError):
+                except (ValueError, RecursionError, DecimalException):
                     reason = "invalid or excessively nested JSON"
                 else:
                     if not any(

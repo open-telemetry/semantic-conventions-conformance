@@ -349,6 +349,8 @@ a step applied to the wrong container selects no nodes.
 `contains` is a required JSON scalar: a string, number, boolean, or `null`.
 It compares whole selected values, with no substring search or coercion.
 Numbers such as `1` and `1.0` compare equally; `true` and `1` do not.
+JSON fractions and exponents retain decimal precision. Finite YAML float
+expectations use the decimal string representation of the loaded value.
 An explicitly selected `null` can match `contains: null`; a missing path or
 an empty selection cannot.
 
