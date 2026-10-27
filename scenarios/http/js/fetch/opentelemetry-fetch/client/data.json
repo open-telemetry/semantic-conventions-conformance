@@ -30,6 +30,18 @@
   },
   "findings": [
     {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope '@opentelemetry/instrumentation-fetch' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "@opentelemetry/instrumentation-fetch",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
       "id": "recommended_attribute_not_present",
       "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
       "signal_type": "span",
