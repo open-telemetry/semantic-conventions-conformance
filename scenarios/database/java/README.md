@@ -10,6 +10,14 @@ from the repository root with:
 scenarios/database/java/gradlew --project-dir scenarios/database/java build
 ```
 
+Project-discovery integration tests require a JDK and run separately from the
+Python unit suite. CI runs them on Linux after setting up Java and Gradle.
+To run them locally from the repository root:
+
+```sh
+OTEL_CONFORMANCE_TEST_JAVA_DISCOVERY=1 python -m pytest tools/database/runner/tests/test_java_project_discovery.py
+```
+
 JDBC packages use the shared SQL workload and its
 [backend-specific action and telemetry contracts](../../../tools/database/sql-test-client/README.md).
 Their shared launchers exercise either the OpenTelemetry Java agent or JDBC

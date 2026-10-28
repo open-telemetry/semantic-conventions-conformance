@@ -3,13 +3,21 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from otel_conformance_java import gradle_command
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("OTEL_CONFORMANCE_TEST_JAVA_DISCOVERY") != "1",
+    reason="set OTEL_CONFORMANCE_TEST_JAVA_DISCOVERY=1 to run Gradle integration tests",
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SCENARIO_ROOT = REPO_ROOT / "scenarios/database/java"
