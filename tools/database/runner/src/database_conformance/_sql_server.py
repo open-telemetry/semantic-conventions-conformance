@@ -36,7 +36,9 @@ SQL_SERVER = BackendSpec(
         "/bin/bash",
         "-c",
         f'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" exec {_SQLCMD} '
-        '-S 127.0.0.1 -U sa -C -Q "SELECT 1"',
+        '-S 127.0.0.1 -U sa -C -b -Q "SET NOCOUNT ON; '
+        "IF EXISTS (SELECT 1 FROM sys.databases WHERE state_desc <> 'ONLINE') "
+        "RAISERROR('not ready', 16, 1)\"",
     ),
     schema_copy=("sql_server.sql", "/tmp/otel-conformance-sql-server.sql"),
     initialize_command=(

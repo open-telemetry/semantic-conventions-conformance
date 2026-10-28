@@ -262,6 +262,17 @@ def test_redis_readiness_checks_for_server_errors() -> None:
     )
 
 
+def test_sql_server_readiness_requires_online_databases() -> None:
+    assert _sql_server.SQL_SERVER.ready_command == (
+        "/bin/bash",
+        "-c",
+        'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" exec /opt/mssql-tools18/bin/sqlcmd '
+        '-S 127.0.0.1 -U sa -C -b -Q "SET NOCOUNT ON; '
+        "IF EXISTS (SELECT 1 FROM sys.databases WHERE state_desc <> 'ONLINE') "
+        "RAISERROR('not ready', 16, 1)\"",
+    )
+
+
 def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
