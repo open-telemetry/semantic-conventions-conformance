@@ -9,7 +9,7 @@ resolution-markers = [
 
 [[package]]
 name = "agno"
-version = "3.1.10"
+version = "3.1.11"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "agnoctl" },
@@ -23,9 +23,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/f7/002d37fab96dff126b56879578e745d6ceb2a99834342415c4ec5d9c1016/agno-3.1.10.tar.gz", hash = "sha256:1830567bd35ea0a178a5c213d6a93dde84d21caae147e4dd285351c3686a41c8", size = 4108774, upload-time = "2026-10-23T13:11:25.529Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/40/ddc2fbb0a5a77e80b48491f4b4f42b9ed874f32658b0b9dfbb2127f2feda/agno-3.1.11.tar.gz", hash = "sha256:4c5fb36fa367645047e0780bb6988ce94290d74261be2f54c497e2168e799393", size = 4131525, upload-time = "2026-10-27T19:29:37.374Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/38/0ca8cd1d0f29ee850566ebb15f4d4fdb4a2c78fc958903bcec398eaf9ba7/agno-3.1.10-py3-none-any.whl", hash = "sha256:ea1d0d2f8f7e8d0c413c2a1df57b4c784dac2f70ceac1f69b935fd8d2ef68c7e", size = 4657166, upload-time = "2026-10-23T13:11:21.745Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/d5/1965193b03f3ec4125415891c8416e4843af6d480ff9fa6c877456f9b885/agno-3.1.11-py3-none-any.whl", hash = "sha256:5d7ff7aa4801d834e8116c022421b1573910aa261d6ee39da741da9dc5ed02fa", size = 4681168, upload-time = "2026-10-27T19:29:33.958Z" },
 ]
 
 [[package]]
@@ -45,8 +45,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agno", specifier = "==3.1.10" },
-    { name = "openai", specifier = "==3.39.0" },
+    { name = "agno", specifier = "==3.1.11" },
+    { name = "openai", specifier = "==3.40.0" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
@@ -466,7 +466,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "3.39.0"
+version = "3.40.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -476,9 +476,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/25/c8242b66f7bc107d6a02887cb8463f45f54f77a150afb2613e61cb3e13f8/openai-3.39.0.tar.gz", hash = "sha256:02687994f7bb6a4e80ed7796426d46c654889821ce4eb48699be15b3a425e1d3", size = 2376122, upload-time = "2026-10-26T19:19:13.774Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/31/ce/5b2e20d41c4e82dbb4be0192c62ce53516111896f642466fa71b82dccf0f/openai-3.40.0.tar.gz", hash = "sha256:df309d434130e89a23e9c687fc4bcd3df0df705a33d3872503c87448df69f56f", size = 2391443, upload-time = "2026-10-27T15:38:54.916Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/f9/32f6ceadc53d887894fc0ee7c76cce5567b972045a1c7f35b2a79f912735/openai-3.39.0-py3-none-any.whl", hash = "sha256:e29bc8d9785d9a386cffa0bed1726e7f3989e096245c0c003cb29f1d4ae67e32", size = 2352830, upload-time = "2026-10-26T19:19:10.874Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/d2/b59435562e893730bb620c720ddaaa84b016e870c9b7b6b85fb505540bdc/openai-3.40.0-py3-none-any.whl", hash = "sha256:dfcfd4f65ee5a8bb824da90c9ad7fa0dda7f3bd472a7c564dffc6183f0a0b55c", size = 2353063, upload-time = "2026-10-27T15:38:52.679Z" },
 ]
 
 [[package]]
