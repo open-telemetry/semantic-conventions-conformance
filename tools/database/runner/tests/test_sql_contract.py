@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from database_conformance import _BACKEND_REGISTRY, _BACKENDS
+from database_conformance import _BACKEND_REGISTRY
 from opentelemetry.conformance import load_spec
 
 _REPOSITORY = Path(__file__).parents[4]
@@ -38,7 +38,7 @@ def test_sql_contract_metadata_matches_its_resource_and_runner() -> None:
         assert set(document) == {"backend", "description", "scenarios"}
         backend = document["backend"]
         assert backend == path.stem
-        assert backend in _BACKENDS
+        assert backend in _BACKEND_REGISTRY
         registration = _BACKEND_REGISTRY[backend]
         assert callable(registration.factory)
         assert registration.system
