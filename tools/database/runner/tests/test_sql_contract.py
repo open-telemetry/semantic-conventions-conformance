@@ -106,3 +106,17 @@ def test_sql_server_contract_keeps_its_dialect_specific_actions() -> None:
         "ELSE CAST(0 AS bit) END FROM conformance.items"
     )
     assert actions[3]["sql"] == "{call conformance.noop}"
+
+
+def test_sql_server_batch_requires_sanitized_query_text() -> None:
+    document = yaml.safe_load(
+        (_CONTRACTS / "sql_server.yaml").read_text(encoding="utf-8")
+    )
+    attributes = document["scenarios"][2]["expect"]["spans"][0]["expect"][
+        "attributes"
+    ]
+
+    assert attributes["db.query.text"] == (
+        "INSERT INTO conformance.items (id, name) VALUES (?, ?)"
+    )
+    assert attributes["db.query.summary"] == "BATCH INSERT conformance.items"
