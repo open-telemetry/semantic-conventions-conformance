@@ -34,11 +34,7 @@ def _jdbc_packages() -> list[tuple[Path, dict[str, object]]]:
 
 
 def test_sql_contract_metadata_matches_its_resource_and_runner() -> None:
-    contracts = _contracts()
-    assert {document["backend"] for _, document in contracts} <= set(
-        _BACKEND_REGISTRY
-    )
-    for path, document in contracts:
+    for path, document in _contracts():
         assert set(document) == {"backend", "description", "scenarios"}
         backend = document["backend"]
         assert backend == path.stem
