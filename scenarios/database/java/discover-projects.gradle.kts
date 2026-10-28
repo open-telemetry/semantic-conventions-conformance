@@ -1,47 +1,38 @@
-import java.nio.file.FileVisitResult
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
 
 val excludedDirectoryNames = setOf("bin", "build", "buildSrc", "node_modules", "out", "src", "target")
 val projectDirectories = mutableSetOf<String>()
 val rootPath = rootDir.toPath()
 
-Files.walkFileTree(
-    rootPath,
-    object : SimpleFileVisitor<Path>() {
-        override fun preVisitDirectory(
-            dir: Path,
-            attrs: BasicFileAttributes,
-        ): FileVisitResult {
-            if (
-                dir != rootPath &&
-                (
-                    dir.fileName.toString() in excludedDirectoryNames ||
-                        dir.fileName.toString().startsWith(".") ||
-                        Files.exists(dir.resolve("settings.gradle")) ||
-                        Files.exists(dir.resolve("settings.gradle.kts"))
-                )
-            ) {
-                return FileVisitResult.SKIP_SUBTREE
-            }
-            return FileVisitResult.CONTINUE
-        }
+fun discoverProjects(dir: Path) {
+    val name = dir.fileName.toString()
+    if (
+        dir != rootPath &&
+        (
+            name in excludedDirectoryNames ||
+                name.startsWith(".") ||
+                Files.exists(dir.resolve("settings.gradle")) ||
+                Files.exists(dir.resolve("settings.gradle.kts"))
+        )
+    ) {
+        return
+    }
 
-        override fun visitFile(
-            file: Path,
-            attrs: BasicFileAttributes,
-        ): FileVisitResult {
-            if (file.fileName.toString() in setOf("build.gradle", "build.gradle.kts")) {
+    Files.newDirectoryStream(dir).use { entries ->
+        for (file in entries) {
+            if (Files.isDirectory(file, LinkOption.NOFOLLOW_LINKS)) {
+                discoverProjects(file)
+            } else if (file.fileName.toString() in setOf("build.gradle", "build.gradle.kts")) {
                 val directory = rootPath.relativize(file.parent).joinToString(":")
                 if (directory.isNotEmpty()) {
                     projectDirectories.add(directory)
                 }
             }
-            return FileVisitResult.CONTINUE
         }
-    },
-)
+    }
+}
 
+discoverProjects(rootPath)
 projectDirectories.sorted().forEach { include(it) }

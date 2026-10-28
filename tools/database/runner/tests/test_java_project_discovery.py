@@ -46,16 +46,22 @@ def _projects(root: Path) -> set[str]:
     return set(re.findall(r"Project '(:[^']+)'", output))
 
 
-def test_discovers_owned_projects_and_prunes_excluded_trees(
+@pytest.fixture
+def discovery_root(
     tmp_path: Path,
-) -> None:
+) -> Path:
     shutil.copyfile(DISCOVERY_SCRIPT, tmp_path / DISCOVERY_SCRIPT.name)
     (tmp_path / "settings.gradle.kts").write_text(
         'rootProject.name = "fixture"\n'
         f'apply(from = "{DISCOVERY_SCRIPT.name}")\n',
         encoding="utf-8",
     )
+    return tmp_path
 
+
+def test_discovers_owned_projects_and_prunes_excluded_trees(
+    discovery_root: Path,
+) -> None:
     expected_projects = {
         "shared/jdbc/scenarios",
         "shared/jdbc/opentelemetry-javaagent",
@@ -69,7 +75,7 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
         "future-backend/new-client/opentelemetry-javaagent",
     }
     for project in expected_projects:
-        build_file = tmp_path / project / "build.gradle.kts"
+        build_file = discovery_root / project / "build.gradle.kts"
         build_file.parent.mkdir(parents=True, exist_ok=True)
         build_file.touch()
 
@@ -90,15 +96,16 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
         "shared/jdbc/scenarios/.hidden",
     }
     for tree in excluded_trees:
-        build_file = tmp_path / tree / "fixture" / "build.gradle.kts"
+        build_file = discovery_root / tree / "fixture" / "build.gradle.kts"
         build_file.parent.mkdir(parents=True, exist_ok=True)
         build_file.touch()
 
-    nested_build = tmp_path / "nested-build"
+    nested_build = discovery_root / "nested-build"
     (nested_build / "settings.gradle.kts").touch()
 
     projects = {
-        project.replace(":", "/").lstrip("/") for project in _projects(tmp_path)
+        project.replace(":", "/").lstrip("/")
+        for project in _projects(discovery_root)
     }
     assert projects >= expected_projects
     for tree in excluded_trees:
@@ -106,6 +113,40 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
             project == tree or project.startswith(f"{tree}/")
             for project in projects
         )
+
+
+def test_adding_a_project_invalidates_configuration_cache(
+    discovery_root: Path,
+) -> None:
+    (discovery_root / "build.gradle").write_text(
+        "tasks.register('projectSnapshot') {\n"
+        "    inputs.property('projectPaths', rootProject.allprojects.collect { it.path }.sort())\n"
+        "    doLast {\n"
+        "        println('DISCOVERED=' + inputs.properties.projectPaths.join(','))\n"
+        "    }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    baseline = discovery_root / "baseline" / "build.gradle.kts"
+    baseline.parent.mkdir()
+    baseline.touch()
+    # Gradle creates its report directory after settings evaluation.
+    (discovery_root / "build").mkdir()
+
+    output = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    assert "DISCOVERED=:,:baseline" in output
+
+    reused = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    assert "Reusing configuration cache." in reused
+    assert "DISCOVERED=:,:baseline" in reused
+
+    added = discovery_root / "future-backend" / "client" / "build.gradle.kts"
+    added.parent.mkdir(parents=True)
+    added.touch()
+
+    updated = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    assert "Reusing configuration cache." not in updated
+    assert "DISCOVERED=:,:baseline,:future-backend,:future-backend:client" in updated
 
 
 def test_preserves_database_project_names() -> None:
