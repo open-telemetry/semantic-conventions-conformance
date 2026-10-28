@@ -48,6 +48,14 @@ def test_a_span_without_a_database_system_is_not_a_database_span() -> None:
     )
 
 
+def test_classification_results_do_not_share_mutable_state() -> None:
+    classify_span("SELECT", "CLIENT", {"db.system.name": "postgresql"}).clear()
+
+    assert classify_span("SELECT", "CLIENT", {"db.system.name": "postgresql"}) == {
+        "db.postgresql.client"
+    }
+
+
 def test_a_span_of_an_unrelated_kind_is_not_a_database_client_span() -> None:
     attributes = {"db.system.name": "postgresql"}
 

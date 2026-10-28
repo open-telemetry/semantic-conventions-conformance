@@ -9,11 +9,10 @@ from typing import Any, Callable, Mapping
 
 from ._registry import BACKENDS
 
-_SYSTEM_SPAN_TYPES: dict[str, set[str]] = {}
-for registration in BACKENDS.values():
-    _SYSTEM_SPAN_TYPES.setdefault(registration.system, set()).add(
-        registration.client_span_type
-    )
+_SYSTEM_SPAN_TYPES = {
+    registration.system: registration.client_span_type
+    for registration in BACKENDS.values()
+}
 
 
 def classify_span(
@@ -29,7 +28,9 @@ def classify_span(
     if not isinstance(system, str):
         return set()
 
-    return _SYSTEM_SPAN_TYPES.get(system, set()).copy()
+    if span_type := _SYSTEM_SPAN_TYPES.get(system):
+        return {span_type}
+    return set()
 
 
 def classifier(
