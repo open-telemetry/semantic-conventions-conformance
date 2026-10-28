@@ -10,6 +10,11 @@ from the repository root with:
 scenarios/database/java/gradlew --project-dir scenarios/database/java build
 ```
 
+Discovery prunes nested builds with their own settings files, dot-prefixed
+directories, and `bin`, `build`, `buildSrc`, `node_modules`, `out`, `src`, and
+`target` trees. Build files inside source fixtures or generated output do not
+become subprojects.
+
 Project-discovery integration tests require a JDK and run separately from the
 Python unit suite. CI runs them on Linux after setting up Java and Gradle.
 To run them locally from the repository root:

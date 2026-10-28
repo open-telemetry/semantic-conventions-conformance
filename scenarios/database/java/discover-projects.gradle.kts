@@ -4,7 +4,7 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 
-val excludedDirectoryNames = setOf("build", "buildSrc", ".gradle", "out", "target")
+val excludedDirectoryNames = setOf("bin", "build", "buildSrc", "node_modules", "out", "src", "target")
 val projectDirectories = mutableSetOf<String>()
 val rootPath = rootDir.toPath()
 
@@ -17,11 +17,12 @@ Files.walkFileTree(
         ): FileVisitResult {
             if (
                 dir != rootPath &&
-                    (
-                        dir.fileName.toString() in excludedDirectoryNames ||
-                            Files.exists(dir.resolve("settings.gradle")) ||
-                            Files.exists(dir.resolve("settings.gradle.kts"))
-                    )
+                (
+                    dir.fileName.toString() in excludedDirectoryNames ||
+                        dir.fileName.toString().startsWith(".") ||
+                        Files.exists(dir.resolve("settings.gradle")) ||
+                        Files.exists(dir.resolve("settings.gradle.kts"))
+                )
             ) {
                 return FileVisitResult.SKIP_SUBTREE
             }

@@ -73,39 +73,39 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
         build_file.parent.mkdir(parents=True, exist_ok=True)
         build_file.touch()
 
-    excluded_projects = {
-        "nested-build/child",
-        "buildSrc/child",
-        ".gradle/cache",
-        "build/generated",
-        "out/generated",
-        "target/generated",
+    excluded_trees = {
+        "nested-build",
+        "buildSrc",
+        ".gradle",
+        "build",
+        "out",
+        "target",
+        "src/test/resources",
+        "shared/jdbc/scenarios/src/test/resources",
+        "bin",
+        "shared/jdbc/scenarios/bin",
+        "node_modules",
+        "future-backend/new-client/node_modules",
+        ".hidden",
+        "shared/jdbc/scenarios/.hidden",
     }
-    for project in excluded_projects:
-        build_file = tmp_path / project / "build.gradle.kts"
+    for tree in excluded_trees:
+        build_file = tmp_path / tree / "fixture" / "build.gradle.kts"
         build_file.parent.mkdir(parents=True, exist_ok=True)
         build_file.touch()
 
     nested_build = tmp_path / "nested-build"
     (nested_build / "settings.gradle.kts").touch()
 
-    projects = _projects(tmp_path)
-    assert {project.replace(":", "/").lstrip("/") for project in projects} >= (
-        expected_projects
-    )
-    assert not any(
-        project.startswith(
-            (
-                ":nested-build",
-                ":buildSrc",
-                ":.gradle",
-                ":build",
-                ":out",
-                ":target",
-            )
+    projects = {
+        project.replace(":", "/").lstrip("/") for project in _projects(tmp_path)
+    }
+    assert projects >= expected_projects
+    for tree in excluded_trees:
+        assert not any(
+            project == tree or project.startswith(f"{tree}/")
+            for project in projects
         )
-        for project in projects
-    )
 
 
 def test_preserves_database_project_names() -> None:
