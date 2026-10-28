@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, request
+from flask import Blueprint, Response, request
 
 from ._common import mock_tool_arguments
 
@@ -147,12 +147,154 @@ def _run_response(body, thread_id, run_id="run-mock-001", status="completed", re
     return response
 
 
+_ANSWER_TEXT = "This is a response from the mock server."
+
+
+def _assistant_message(thread_id, run, status, content):
+    return {
+        "id": "msg-mock-002",
+        "object": "thread.message",
+        "created_at": 1700000001,
+        "thread_id": thread_id,
+        "role": "assistant",
+        "status": status,
+        "assistant_id": run["assistant_id"],
+        "run_id": run["id"],
+        "attachments": [],
+        "content": content,
+        "metadata": {},
+    }
+
+
+def _text_content(value):
+    return [{"type": "text", "text": {"value": value, "annotations": []}}]
+
+
+def _run_step(run, status, step_details, step_id):
+    return {
+        "id": step_id,
+        "object": "thread.run.step",
+        "created_at": 1700000001,
+        "run_id": run["id"],
+        "assistant_id": run["assistant_id"],
+        "thread_id": run["thread_id"],
+        "type": step_details["type"],
+        "status": status,
+        "step_details": step_details,
+        "usage": None,
+    }
+
+
+def _with_status(run, status):
+    # Real streams report usage only once the run reaches a terminal state.
+    return {**run, "status": status, "usage": None}
+
+
+def _sse_event(event, data):
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+def _stream_run_start(run):
+    yield _sse_event("thread.run.created", _with_status(run, "queued"))
+    yield _sse_event("thread.run.queued", _with_status(run, "queued"))
+    yield _sse_event("thread.run.in_progress", _with_status(run, "in_progress"))
+
+
+def _stream_requires_action(run):
+    tool_calls = run["required_action"]["submit_tool_outputs"]["tool_calls"]
+    step_details = {"type": "tool_calls", "tool_calls": tool_calls}
+    for event, status in (
+        ("thread.run.step.created", "in_progress"),
+        ("thread.run.step.in_progress", "in_progress"),
+    ):
+        yield _sse_event(
+            event, _run_step(run, status, step_details, "step-mock-001")
+        )
+    yield _sse_event("thread.run.requires_action", run)
+
+
+def _stream_answer(run):
+    """Yield the assistant message and run completion of a streamed run."""
+    thread_id = run["thread_id"]
+    step_details = {
+        "type": "message_creation",
+        "message_creation": {"message_id": "msg-mock-002"},
+    }
+    yield _sse_event(
+        "thread.run.step.created",
+        _run_step(run, "in_progress", step_details, "step-mock-002"),
+    )
+    yield _sse_event(
+        "thread.run.step.in_progress",
+        _run_step(run, "in_progress", step_details, "step-mock-002"),
+    )
+    in_progress = _assistant_message(thread_id, run, "in_progress", [])
+    yield _sse_event("thread.message.created", in_progress)
+    yield _sse_event("thread.message.in_progress", in_progress)
+    for chunk in ("This is a ", "response from ", "the mock server."):
+        yield _sse_event(
+            "thread.message.delta",
+            {
+                "id": "msg-mock-002",
+                "object": "thread.message.delta",
+                "delta": {
+                    "content": [
+                        {
+                            "index": 0,
+                            "type": "text",
+                            "text": {"value": chunk, "annotations": []},
+                        }
+                    ]
+                },
+            },
+        )
+    yield _sse_event(
+        "thread.message.completed",
+        _assistant_message(
+            thread_id, run, "completed", _text_content(_ANSWER_TEXT)
+        ),
+    )
+    completed_step = _run_step(run, "completed", step_details, "step-mock-002")
+    completed_step["usage"] = run["usage"]
+    yield _sse_event("thread.run.step.completed", completed_step)
+    yield _sse_event("thread.run.completed", run)
+
+
+def _stream_done():
+    yield "event: done\ndata: [DONE]\n\n"
+
+
+def _stream_run(run, thread=None):
+    if thread is not None:
+        yield _sse_event("thread.created", thread)
+    yield from _stream_run_start(run)
+    if run["status"] == "requires_action":
+        yield from _stream_requires_action(run)
+    else:
+        yield from _stream_answer(run)
+    yield from _stream_done()
+
+
+def _stream_submitted_run(run):
+    yield _sse_event("thread.run.queued", _with_status(run, "queued"))
+    yield _sse_event("thread.run.in_progress", _with_status(run, "in_progress"))
+    yield from _stream_answer(run)
+    yield from _stream_done()
+
+
+def _event_stream(events):
+    return Response(events, mimetype="text/event-stream")
+
+
 @bp.route("/v1/threads/runs", methods=["POST"])
 @bp.route("/openai/threads/runs", methods=["POST"])
 @bp.route("/threads/runs", methods=["POST"])
 def create_thread_and_run():
     body = request.get_json(silent=True) or {}
-    return _run_response(body, thread_id="thread-mock-001")
+    run = _run_response(body, thread_id="thread-mock-001")
+    if body.get("stream"):
+        return _event_stream(_stream_run(run, thread=create_thread()))
+    return run
 
 
 @bp.route("/v1/threads/<thread_id>/runs", methods=["POST"])
@@ -177,6 +319,8 @@ def create_run(thread_id):
     else:
         run = _run_response(body, thread_id=thread_id)
     _runs[run["id"]] = run
+    if body.get("stream"):
+        return _event_stream(_stream_run(run))
     return run
 
 
@@ -194,6 +338,8 @@ def submit_tool_outputs(thread_id, run_id):
     )
     run["tool_outputs"] = body.get("tool_outputs", [])
     _runs[run_id] = run
+    if body.get("stream"):
+        return _event_stream(_stream_submitted_run(run))
     return run
 
 
