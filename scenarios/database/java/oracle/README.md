@@ -11,8 +11,8 @@ before measured processes start. The schema creates an empty table and a no-op
 stored procedure. SQL*Plus exits with failure on SQL or operating-system errors.
 
 Both JDBC instrumentation modes use the `ojdbc11` driver. The Java agent uses
-`jdbc:oracle:thin:@//host:port/FREEPDB1`; JDBC library instrumentation prefixes
-that URL with `jdbc:otel:`.
+`jdbc:oracle:thin:@//host:port/FREEPDB1`; JDBC library instrumentation uses
+`jdbc:otel:oracle:thin:@//host:port/FREEPDB1`.
 
 The [Oracle contract](../../../../tools/database/sql-test-client/contracts/oracle.yaml)
 defines direct and prepared queries, a two-insert batch, and a stored-procedure
