@@ -74,6 +74,7 @@ def test_classifier_only_returns_registered_client_types_in_the_registry() -> No
     classify = classifier(
         {
             "spans": {
+                "db.elasticsearch.client": {"kind": "client"},
                 "db.postgresql.client": {"kind": "server"},
                 "db.redis.client": {"kind": "client"},
             }
@@ -85,3 +86,12 @@ def test_classifier_only_returns_registered_client_types_in_the_registry() -> No
     assert classify("GET", "CLIENT", {"db.system.name": "redis"}) == {
         "db.redis.client"
     }
+    assert classify("search", "CLIENT", {"db.system.name": "elasticsearch"}) == {
+        "db.elasticsearch.client"
+    }
+
+
+def test_classifier_does_not_return_unresolved_elasticsearch_types() -> None:
+    classify = classifier({"spans": {"db.client": {"kind": "client"}}})
+
+    assert classify("search", "CLIENT", {"db.system.name": "elasticsearch"}) == set()

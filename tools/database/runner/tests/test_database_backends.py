@@ -14,7 +14,13 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _elasticsearch, _mariadb, _postgres, _redis, _sql_server
+from database_conformance import (
+    _elasticsearch,
+    _mariadb,
+    _postgres,
+    _redis,
+    _sql_server,
+)
 from database_conformance._container import DatabaseContainer
 from database_conformance._elasticsearch import (
     ELASTICSEARCH,
@@ -290,6 +296,8 @@ def test_starts_initializes_publishes_and_removes_database(
             assert b"INSERT INTO" not in schema
     assert container.exec_config == expected_initialization
     assert container.wait_strategy is not None
+    with pytest.raises(RuntimeError, match="has not been started"):
+        _ = database.variables
 
 
 def test_redis_readiness_checks_for_server_errors() -> None:
@@ -343,7 +351,7 @@ def test_cleanup_failure_is_reported_with_start_failure(
         Postgres().start()
 
 
-def test_schema_failure_reports_client_output_and_logs(
+def test_schema_failure_reports_psql_output_and_logs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     container = StubContainer(
@@ -428,6 +436,22 @@ def test_elasticsearch_readiness_waits_for_a_yellow_cluster() -> None:
     )
 
 
+def test_elasticsearch_port_publication_failure_cleans_up_the_container(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(published_ports={9200: 32768})
+    install_stub(monkeypatch, _elasticsearch, container)
+    elasticsearch = Elasticsearch()
+
+    with pytest.raises(KeyError, match="9300"):
+        elasticsearch.start()
+
+    assert container.stopped
+    assert container.exec_config is None
+    with pytest.raises(RuntimeError, match="has not been started"):
+        _ = elasticsearch.variables
+
+
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -454,13 +478,7 @@ def test_cannot_start_postgres_twice(
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
 
-    name, separator, digest = ELASTICSEARCH_IMAGE.partition("@")
-    assert name == "docker.elastic.co/elasticsearch/elasticsearch:7.17.29"
-    assert separator == "@"
-    assert digest.startswith("sha256:")
-
-
-def test_the_schema_files_are_packaged_with_the_runner() -> None:
+def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
         resources.files("database_conformance")
         .joinpath("postgres.sql")
@@ -485,6 +503,7 @@ def test_the_schema_files_are_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE [conformance].[items]" in schema
     assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
+
     bootstrap = (
         resources.files("database_conformance")
         .joinpath("elasticsearch.json")

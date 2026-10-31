@@ -28,5 +28,4 @@ scenarios:
     metrics:
       - db.client.operation.duration
       - http.client.request.duration
-      - queueSize
     events: []

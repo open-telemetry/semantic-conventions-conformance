@@ -159,8 +159,14 @@ def test_database_session_closes_backend_after_an_error(
     assert closed
 
 
-def test_elasticsearch_backend_is_available_for_dispatch() -> None:
-    assert database_conformance._BACKENDS["elasticsearch"] is Elasticsearch
+def test_elasticsearch_backend_is_available_for_dispatch(tmp_path: Path) -> None:
+    spec = _write_spec(tmp_path, "  backend: elasticsearch")
+
+    assert database_conformance._backend_name(spec) == "elasticsearch"
+    registration = database_conformance._BACKEND_REGISTRY["elasticsearch"]
+    assert registration.factory is Elasticsearch
+    assert registration.system == "elasticsearch"
+    assert registration.client_span_type == "db.elasticsearch.client"
 
 
 @pytest.mark.parametrize(
