@@ -15,7 +15,13 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _cassandra, _mariadb, _postgres, _redis, _sql_server
+from database_conformance import (
+    _cassandra,
+    _mariadb,
+    _postgres,
+    _redis,
+    _sql_server,
+)
 from database_conformance._cassandra import CASSANDRA_IMAGE, Cassandra
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
@@ -428,6 +434,7 @@ def test_cannot_start_postgres_twice(
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (

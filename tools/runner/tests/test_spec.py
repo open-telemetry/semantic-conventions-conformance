@@ -287,6 +287,8 @@ scenarios:
         - match:
             attributes: {url.full: "${SERVER}/one"}
           expect: {count: 1}
+      metrics: [http.client.request.duration]
+      allowed_metrics: [otlp.exporter.seen]
   - description: The same description may repeat.
     action: {request: {method: GET, path: /two}}
     expect: {events: []}
@@ -314,6 +316,9 @@ scenario_run: python client.py
     assert first.run == second.run == ("python", "client.py")
     assert first.spans is not None
     assert first.spans[0].match.attributes == {"url.full": "${SERVER}/one"}
+    assert first.metrics == ("http.client.request.duration",)
+    assert first.allowed_metrics == ("otlp.exporter.seen",)
+    assert second.allowed_metrics == ()
     assert second.events == ()
 
 

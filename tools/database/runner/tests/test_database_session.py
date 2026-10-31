@@ -189,7 +189,12 @@ def test_database_session_dispatches_and_closes_cassandra(
             events.append("session-exit")
 
     monkeypatch.setitem(
-        database_conformance._BACKENDS, "cassandra", StubBackend
+        database_conformance._BACKEND_REGISTRY,
+        "cassandra",
+        replace(
+            database_conformance._BACKEND_REGISTRY["cassandra"],
+            factory=StubBackend,
+        ),
     )
     monkeypatch.setattr(
         database_conformance,
@@ -208,6 +213,54 @@ def test_database_session_dispatches_and_closes_cassandra(
         "session-exit",
         "cassandra-exit",
     ]
+
+
+@pytest.mark.parametrize(
+    ("driver", "instrumentation"),
+    [
+        ("cassandra-driver-3", "opentelemetry-javaagent"),
+        ("cassandra-driver-4.3", "opentelemetry-javaagent"),
+        ("cassandra-driver-4.19", "opentelemetry-javaagent"),
+        ("cassandra-driver-4.19", "opentelemetry-library"),
+    ],
+)
+def test_cassandra_packages_share_contract_and_connection_variables(
+    driver: str, instrumentation: str
+) -> None:
+    directory = (
+        Path(__file__).resolve().parents[4]
+        / "scenarios"
+        / "database"
+        / "java"
+        / "cassandra"
+        / driver
+        / instrumentation
+    )
+    spec = load_spec(directory)
+
+    assert spec.runner_config == {"backend": "cassandra"}
+    assert spec.env["CASSANDRA_HOST"] == "${DATABASE_HOST}"
+    assert spec.env["CASSANDRA_PORT"] == "${DATABASE_PORT}"
+    if driver != "cassandra-driver-3":
+        assert (
+            spec.env["CASSANDRA_LOCAL_DATACENTER"]
+            == "${DATABASE_LOCAL_DATACENTER}"
+        )
+    assert list(spec.scenarios) == ["query", "prepared", "batch", "error"]
+    for scenario in spec.scenarios.values():
+        assert scenario.metrics == ("db.client.operation.duration",)
+        assert scenario.allowed_metrics == (
+            "queueSize",
+            "processedSpans",
+            "processedLogs",
+            "otlp.exporter.seen",
+            "otlp.exporter.exported",
+        )
+        assert scenario.spans is not None
+        assert len(scenario.spans) == 1
+        assert scenario.spans[0].match.attributes == {
+            "db.system.name": "cassandra"
+        }
 
 
 @pytest.mark.parametrize(

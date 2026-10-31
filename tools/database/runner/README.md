@@ -39,16 +39,15 @@ environment declarations:
 | `DATABASE_NAME`     | Test database name or logical database index |
 | `DATABASE_USER`     | Test user                                    |
 | `DATABASE_PASSWORD` | Test-only password                           |
-| `DATABASE_LOCAL_DATACENTER` | Cassandra local datacenter |
-
-Cassandra runs without authentication, so `DATABASE_USER` and
-`DATABASE_PASSWORD` are empty for that backend.
 
 Connection fields let each language construct its native client configuration.
 SQL packages select a contract under
 [`contracts/`](../sql-test-client/contracts) using `scenario_contract`. The
 generic conformance runner injects only the selected contract entry's `action`
 into the scenario process.
+
+Cassandra's additional connection variable and container prerequisites are
+documented in its [scenario notes](../../../scenarios/database/java/cassandra/README.md).
 
 The classifier recognizes registered semantic-convention systems only on
 `CLIENT` spans and only when their client span type exists in the resolved

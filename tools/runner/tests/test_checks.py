@@ -303,10 +303,8 @@ def test_allowed_metrics_may_be_present_or_absent(optional_count: int) -> None:
 def test_allowed_metrics_do_not_weaken_required_or_undeclared_checks() -> None:
     report = Report(
         statistics={
-            "seen_non_registry_metrics": {
-                "queueSize": 1,
-                "unexpected": 1,
-            },
+            "seen_registry_metrics": {"unexpected": 1},
+            "seen_non_registry_metrics": {"queueSize": 1},
         }
     )
 
