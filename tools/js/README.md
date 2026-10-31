@@ -8,6 +8,7 @@ itself, and the command that installs a Node build.
 scenarios/<domain>/js/      a domain's npm build root — workspaces and the lockfile
 tools/js/scenario-support/  what a scenario needs before any telemetry
 tools/js/scenario-sdk/      the SDK a library-instrumentation scenario owns
+tools/js/browser-launcher/  runs a browser scenario's page in headless Chrome
 tools/js/src/               `otel-conformance-js`, the launcher
 tools/js/tests/             the launcher's tests
 ```
@@ -15,11 +16,11 @@ tools/js/tests/             the launcher's tests
 ## A build root per domain
 
 A domain's Node scenarios are one npm workspace, rooted at its own
-`scenarios/<domain>/js` — today only
-[`scenarios/http/js`](../../scenarios/http/js). `otel-conformance-js` finds it
-by searching upwards from the scenario directory for `package-lock.json`, so a
-scenario file says nothing about how deep it is nested. Within a build,
-packages are grouped by the library they instrument, so
+`scenarios/<domain>/js`, today [`scenarios/http/js`](../../scenarios/http/js)
+and [`scenarios/browser/js`](../../scenarios/browser/js). `otel-conformance-js`
+finds it by searching upwards from the scenario directory for
+`package-lock.json`, so a scenario file says nothing about how deep it is
+nested. Within a build, packages are grouped by the library they instrument, so
 `express/opentelemetry-express` sits beside the Express workload it launches.
 
 The packages here are shared by depending on them by path, which npm installs
@@ -59,6 +60,29 @@ from being loaded before the instrumentation measuring it is registered:
 ```js
 runScenario({ instrumentations: [new ExpressInstrumentation()] }, () =>
   require("@otel-conformance/express-scenarios").serve(),
+);
+```
+
+## Browser scenarios
+
+[`browser-launcher/`](browser-launcher) runs a scenario whose code has to
+execute in a page. `index.js` is the Node half: it bundles the page with
+esbuild, serves it, and opens it in the Chrome the machine already has, through
+`playwright-core`, which downloads no browser. `page.js` is the page half: the
+logs SDK, and a `runScenario` that `index.js` calls.
+
+The page exports to its own origin and `index.js` relays that to the endpoint
+the runner injected. One origin is what lets a page export at all, since the
+runner's OTLP/HTTP bridge does not answer a CORS preflight.
+
+A browser event is emitted from a listener or an observer, some time after the
+workload returns. So a page names the events it expects, and `runScenario`
+waits for them before it flushes:
+
+```js
+exposeScenario(
+  { instrumentations: [new ErrorsInstrumentation()], events: { exception: 2 } },
+  raiseErrors,
 );
 ```
 
