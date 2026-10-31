@@ -200,17 +200,71 @@ def _stream_run_start(run):
     yield _sse_event("thread.run.in_progress", _with_status(run, "in_progress"))
 
 
+_TOOL_STEP_ID = "step-mock-001"
+
+
+def _pending_tool_calls(run):
+    return run["required_action"]["submit_tool_outputs"]["tool_calls"]
+
+
+def _tool_call_step_delta(tool_call_delta):
+    return _sse_event(
+        "thread.run.step.delta",
+        {
+            "id": _TOOL_STEP_ID,
+            "object": "thread.run.step.delta",
+            "delta": {
+                "step_details": {
+                    "type": "tool_calls",
+                    "tool_calls": [tool_call_delta],
+                }
+            },
+        },
+    )
+
+
 def _stream_requires_action(run):
-    tool_calls = run["required_action"]["submit_tool_outputs"]["tool_calls"]
-    step_details = {"type": "tool_calls", "tool_calls": tool_calls}
-    for event, status in (
-        ("thread.run.step.created", "in_progress"),
-        ("thread.run.step.in_progress", "in_progress"),
-    ):
+    # The SDK fires on_tool_call_created on the first delta of an index and
+    # on_tool_call_delta on later ones, so the step starts empty and each call
+    # arrives as a header delta followed by an arguments delta.
+    empty = {"type": "tool_calls", "tool_calls": []}
+    for event in ("thread.run.step.created", "thread.run.step.in_progress"):
         yield _sse_event(
-            event, _run_step(run, status, step_details, "step-mock-001")
+            event, _run_step(run, "in_progress", empty, _TOOL_STEP_ID)
         )
-    yield _sse_event("thread.run.requires_action", run)
+    for index, call in enumerate(_pending_tool_calls(run)):
+        function = call["function"]
+        yield _tool_call_step_delta(
+            {
+                "index": index,
+                "id": call["id"],
+                "type": "function",
+                "function": {"name": function["name"], "arguments": ""},
+            }
+        )
+        yield _tool_call_step_delta(
+            {
+                "index": index,
+                "type": "function",
+                "function": {"arguments": function["arguments"]},
+            }
+        )
+    yield _sse_event(
+        "thread.run.requires_action", _with_status(run, "requires_action")
+    )
+
+
+def _completed_tool_step(run, tool_calls, tool_outputs):
+    outputs = {o.get("tool_call_id"): o.get("output") for o in tool_outputs}
+    calls = [
+        {
+            **call,
+            "function": {**call["function"], "output": outputs.get(call["id"])},
+        }
+        for call in tool_calls
+    ]
+    step_details = {"type": "tool_calls", "tool_calls": calls}
+    return _run_step(run, "completed", step_details, _TOOL_STEP_ID)
 
 
 def _stream_answer(run):
@@ -275,9 +329,14 @@ def _stream_run(run, thread=None):
     yield from _stream_done()
 
 
-def _stream_submitted_run(run):
+def _stream_submitted_run(run, tool_calls):
     yield _sse_event("thread.run.queued", _with_status(run, "queued"))
     yield _sse_event("thread.run.in_progress", _with_status(run, "in_progress"))
+    if tool_calls:
+        yield _sse_event(
+            "thread.run.step.completed",
+            _completed_tool_step(run, tool_calls, run["tool_outputs"]),
+        )
     yield from _stream_answer(run)
     yield from _stream_done()
 
@@ -286,22 +345,7 @@ def _event_stream(events):
     return Response(events, mimetype="text/event-stream")
 
 
-@bp.route("/v1/threads/runs", methods=["POST"])
-@bp.route("/openai/threads/runs", methods=["POST"])
-@bp.route("/threads/runs", methods=["POST"])
-def create_thread_and_run():
-    body = request.get_json(silent=True) or {}
-    run = _run_response(body, thread_id="thread-mock-001")
-    if body.get("stream"):
-        return _event_stream(_stream_run(run, thread=create_thread()))
-    return run
-
-
-@bp.route("/v1/threads/<thread_id>/runs", methods=["POST"])
-@bp.route("/openai/threads/<thread_id>/runs", methods=["POST"])
-@bp.route("/threads/<thread_id>/runs", methods=["POST"])
-def create_run(thread_id):
-    body = request.get_json(silent=True) or {}
+def _start_run(body, thread_id):
     assistant_id = body.get("assistant_id", body.get("agent_id", "asst-mock-001"))
     tool_call = _assistant_tool_call(assistant_id)
     if tool_call is not None:
@@ -319,6 +363,26 @@ def create_run(thread_id):
     else:
         run = _run_response(body, thread_id=thread_id)
     _runs[run["id"]] = run
+    return run
+
+
+@bp.route("/v1/threads/runs", methods=["POST"])
+@bp.route("/openai/threads/runs", methods=["POST"])
+@bp.route("/threads/runs", methods=["POST"])
+def create_thread_and_run():
+    body = request.get_json(silent=True) or {}
+    run = _start_run(body, thread_id="thread-mock-001")
+    if body.get("stream"):
+        return _event_stream(_stream_run(run, thread=create_thread()))
+    return run
+
+
+@bp.route("/v1/threads/<thread_id>/runs", methods=["POST"])
+@bp.route("/openai/threads/<thread_id>/runs", methods=["POST"])
+@bp.route("/threads/<thread_id>/runs", methods=["POST"])
+def create_run(thread_id):
+    body = request.get_json(silent=True) or {}
+    run = _start_run(body, thread_id=thread_id)
     if body.get("stream"):
         return _event_stream(_stream_run(run))
     return run
@@ -329,9 +393,12 @@ def create_run(thread_id):
 @bp.route("/threads/<thread_id>/runs/<run_id>/submit_tool_outputs", methods=["POST"])
 def submit_tool_outputs(thread_id, run_id):
     body = request.get_json(silent=True) or {}
-    existing_run = _runs.get(run_id)
+    existing_run = _runs.get(run_id) or {}
+    tool_calls = (
+        _pending_tool_calls(existing_run) if "required_action" in existing_run else []
+    )
     run = _run_response(
-        existing_run or {},
+        existing_run,
         thread_id=thread_id,
         run_id=run_id,
         status="completed",
@@ -339,7 +406,7 @@ def submit_tool_outputs(thread_id, run_id):
     run["tool_outputs"] = body.get("tool_outputs", [])
     _runs[run_id] = run
     if body.get("stream"):
-        return _event_stream(_stream_submitted_run(run))
+        return _event_stream(_stream_submitted_run(run, tool_calls))
     return run
 
 

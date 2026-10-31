@@ -67,9 +67,23 @@ def test_streamed_run_stops_at_requires_action_when_tools_are_offered(
         "thread.run.in_progress",
         "thread.run.step.created",
         "thread.run.step.in_progress",
+        "thread.run.step.delta",
+        "thread.run.step.delta",
         "thread.run.requires_action",
     ]
-    assert events[-1][1] == plain
+    assert events[3][1]["step_details"]["tool_calls"] == []
+    [tool_call] = plain["required_action"]["submit_tool_outputs"]["tool_calls"]
+    header, arguments = (
+        data["delta"]["step_details"]["tool_calls"][0] for _, data in events[5:7]
+    )
+    assert header["index"] == arguments["index"] == 0
+    assert header["id"] == tool_call["id"]
+    assert header["function"]["name"] == tool_call["function"]["name"]
+    assert (
+        header["function"]["arguments"] + arguments["function"]["arguments"]
+        == tool_call["function"]["arguments"]
+    )
+    assert events[-1][1] == {**plain, "usage": None}
 
 
 def test_streamed_tool_outputs_complete_the_run(
@@ -94,7 +108,17 @@ def test_streamed_tool_outputs_complete_the_run(
     )
 
     names = [name for name, _ in events]
-    assert names[:2] == ["thread.run.queued", "thread.run.in_progress"]
+    assert names[:3] == [
+        "thread.run.queued",
+        "thread.run.in_progress",
+        "thread.run.step.completed",
+    ]
+    tool_step = events[2][1]
+    assert tool_step["id"] == "step-mock-001"
+    assert tool_step["status"] == "completed"
+    [tool_call] = tool_step["step_details"]["tool_calls"]
+    assert tool_call["id"] == "call_mock_001"
+    assert tool_call["function"]["output"] == "sunny"
     assert names[-1] == "thread.run.completed"
     text = "".join(
         data["delta"]["content"][0]["text"]["value"]
@@ -139,4 +163,32 @@ def test_streamed_create_thread_and_run_starts_with_the_thread(
 
     assert events[0][0] == "thread.created"
     assert events[0][1]["id"] == "thread-mock-001"
+    assert events[-1][0] == "thread.run.completed"
+
+
+def test_streamed_create_thread_and_run_with_tools_requires_action(
+    client: FlaskClient, assistant_with_tool: str
+) -> None:
+    events = _events(
+        client.post(
+            "/v1/threads/runs",
+            json={"assistant_id": assistant_with_tool, "stream": True},
+        )
+    )
+
+    assert events[0][0] == "thread.created"
+    assert events[-1][0] == "thread.run.requires_action"
+    run_id = events[-1][1]["id"]
+
+    events = _events(
+        client.post(
+            f"/v1/threads/thread-mock-001/runs/{run_id}/submit_tool_outputs",
+            json={
+                "tool_outputs": [
+                    {"tool_call_id": "call_mock_001", "output": "sunny"}
+                ],
+                "stream": True,
+            },
+        )
+    )
     assert events[-1][0] == "thread.run.completed"
