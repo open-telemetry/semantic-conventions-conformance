@@ -68,6 +68,12 @@ jobs:
             :shared:redis:rediscala:opentelemetry-javaagent:prepareRuntime \
             :shared:redis:redisson:opentelemetry-javaagent:prepareRuntime
 
+      - name: Test Java project discovery
+        if: runner.os == 'Linux'
+        env:
+          OTEL_CONFORMANCE_TEST_JAVA_DISCOVERY: "1"
+        run: python -m pytest tools/database/runner/tests/test_java_project_discovery.py
+
       # The report tests run here, not with the nightly rebuild: they never
       # resolve a coverage model, so they do not need weaver.
       - name: Test
