@@ -192,3 +192,36 @@ def test_streamed_create_thread_and_run_with_tools_requires_action(
         )
     )
     assert events[-1][0] == "thread.run.completed"
+
+
+def test_create_thread_and_run_without_stream_requires_action_with_tools(
+    client: FlaskClient, assistant_with_tool: str
+) -> None:
+    run = client.post(
+        "/v1/threads/runs", json={"assistant_id": assistant_with_tool}
+    ).json
+
+    assert run["status"] == "requires_action"
+    [tool_call] = run["required_action"]["submit_tool_outputs"]["tool_calls"]
+    assert tool_call["function"]["name"] == "get_weather"
+
+
+def test_repeated_streamed_tool_output_submission_is_identical(
+    client: FlaskClient, assistant_with_tool: str
+) -> None:
+    run = client.post(
+        "/v1/threads/thread-mock-001/runs",
+        json={"assistant_id": assistant_with_tool, "stream": True},
+    )
+    run_id = _events(run)[-1][1]["id"]
+    url = f"/v1/threads/thread-mock-001/runs/{run_id}/submit_tool_outputs"
+    body = {
+        "tool_outputs": [{"tool_call_id": "call_mock_001", "output": "sunny"}],
+        "stream": True,
+    }
+
+    first = client.post(url, json=body).get_data()
+    second = client.post(url, json=body).get_data()
+
+    assert b"thread.run.step.completed" in first
+    assert first == second

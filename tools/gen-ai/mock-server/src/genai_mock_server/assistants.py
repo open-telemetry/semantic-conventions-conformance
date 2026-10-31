@@ -12,6 +12,9 @@ bp = Blueprint("assistants", __name__)
 # Shared state for mock Assistants resources.
 _assistants: dict[str, dict] = {}
 _runs: dict[str, dict] = {}
+# Kept apart from _runs, which submission overwrites, so a repeated
+# submission replays the same tool-step completion.
+_run_tool_calls: dict[str, list[dict]] = {}
 
 
 @bp.route("/agents/<agent_name>/versions", methods=["POST"])
@@ -360,8 +363,10 @@ def _start_run(body, thread_id):
                 },
             },
         )
+        _run_tool_calls[run["id"]] = [tool_call]
     else:
         run = _run_response(body, thread_id=thread_id)
+        _run_tool_calls.pop(run["id"], None)
     _runs[run["id"]] = run
     return run
 
@@ -394,9 +399,6 @@ def create_run(thread_id):
 def submit_tool_outputs(thread_id, run_id):
     body = request.get_json(silent=True) or {}
     existing_run = _runs.get(run_id) or {}
-    tool_calls = (
-        _pending_tool_calls(existing_run) if "required_action" in existing_run else []
-    )
     run = _run_response(
         existing_run,
         thread_id=thread_id,
@@ -406,6 +408,7 @@ def submit_tool_outputs(thread_id, run_id):
     run["tool_outputs"] = body.get("tool_outputs", [])
     _runs[run_id] = run
     if body.get("stream"):
+        tool_calls = _run_tool_calls.get(run_id, [])
         return _event_stream(_stream_submitted_run(run, tool_calls))
     return run
 
