@@ -10,8 +10,10 @@ silently weakening the check it was meant to tighten.
 from __future__ import annotations
 
 import json
+import math
 import shlex
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Literal, Mapping, Sequence, cast
 
@@ -27,6 +29,27 @@ class SpecError(ValueError):
     """The package's ``conformance.yaml`` is invalid."""
 
 
+class JsonEach(Enum):
+    """Select the elements of an array, rather than a literal object key."""
+
+    EACH = "each"
+
+
+@dataclass(frozen=True)
+class JsonMatcher:
+    """A required scalar among the nodes selected from serialized JSON."""
+
+    path: tuple[str | int | JsonEach, ...]
+    contains: str | int | float | bool | None
+
+    def describe(self) -> str:
+        path = [
+            {"each": True} if segment is JsonEach.EACH else segment
+            for segment in self.path
+        ]
+        return f"JSON at path {path!r} contains the required scalar"
+
+
 @dataclass(frozen=True)
 class AttributeMatcher:
     """One expectation about an attribute across the matched spans."""
@@ -34,12 +57,15 @@ class AttributeMatcher:
     equals: object | None = None
     present: bool | None = None
     distinct: int | None = None
+    json: JsonMatcher | None = None
 
     def describe(self) -> str:
         if self.present is not None:
             return f"present={self.present}"
         if self.distinct is not None:
             return f"{self.distinct} distinct values"
+        if self.json is not None:
+            return self.json.describe()
         return f"== {self.equals!r}"
 
 
@@ -318,7 +344,7 @@ def _parse_action(value: object, where: str) -> Mapping[str, object]:
 def _check_keys(
     mapping: Mapping[str, object], allowed: Sequence[str], where: str
 ) -> None:
-    unknown = sorted(set(mapping) - set(allowed))
+    unknown = sorted(set(mapping) - set(allowed), key=repr)
     if unknown:
         raise SpecError(
             f"{where}: unknown key(s) {unknown}; allowed: {sorted(allowed)}"
@@ -363,9 +389,15 @@ def _parse_matcher(value: object, where: str) -> AttributeMatcher:
         return AttributeMatcher(equals=value)
 
     matcher = cast("Mapping[str, object]", value)
-    _check_keys(matcher, ("present", "distinct"), where)
+    _check_keys(matcher, ("present", "distinct", "json"), where)
     if len(matcher) != 1:
-        raise SpecError(f"{where}: expected exactly one of present/distinct")
+        raise SpecError(
+            f"{where}: expected exactly one matcher: present/distinct/json"
+        )
+    if "json" in matcher:
+        return AttributeMatcher(
+            json=_parse_json_matcher(matcher["json"], where)
+        )
     if "present" in matcher:
         present = matcher["present"]
         if not isinstance(present, bool):
@@ -375,6 +407,43 @@ def _parse_matcher(value: object, where: str) -> AttributeMatcher:
     if not isinstance(distinct, int) or isinstance(distinct, bool):
         raise SpecError(f"{where}: distinct must be an integer")
     return AttributeMatcher(distinct=distinct)
+
+
+def _parse_json_matcher(value: object, where: str) -> JsonMatcher:
+    where = f"{where}.json"
+    matcher = _require_mapping(value, where)
+    _check_keys(matcher, ("path", "contains"), where)
+    if "path" not in matcher or "contains" not in matcher:
+        raise SpecError(f"{where}: path and contains are required")
+
+    path: list[str | int | JsonEach] = []
+    for segment in _require_list(matcher["path"], f"{where}.path"):
+        if isinstance(segment, str):
+            path.append(segment)
+        elif (
+            isinstance(segment, int)
+            and not isinstance(segment, bool)
+            and segment >= 0
+        ):
+            path.append(segment)
+        elif (
+            isinstance(segment, Mapping)
+            and len(cast("Mapping[object, object]", segment)) == 1
+            and cast("Mapping[object, object]", segment).get("each") is True
+        ):
+            path.append(JsonEach.EACH)
+        else:
+            raise SpecError(
+                f"{where}.path: expected literal keys, non-negative indexes, "
+                "or {each: true}"
+            )
+
+    contains = matcher["contains"]
+    if not (contains is None or isinstance(contains, (str, bool, int, float))):
+        raise SpecError(f"{where}.contains: expected a JSON scalar")
+    if isinstance(contains, float) and not math.isfinite(contains):
+        raise SpecError(f"{where}.contains: expected a finite JSON number")
+    return JsonMatcher(path=tuple(path), contains=contains)
 
 
 def _parse_scope_field(value: object, where: str) -> AttributeMatcher:

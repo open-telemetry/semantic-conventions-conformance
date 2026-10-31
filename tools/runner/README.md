@@ -308,16 +308,61 @@ Each entry has two halves, declared separately so an attribute used to *find*
 a span never reads like one being *checked* on it. `match` selects — by
 attribute value or span `kind`. `expect` then asserts over what it selected:
 `count` is exact, and a span no entry selects fails as undeclared. Each entry
-under `expect.attributes` takes one of three forms:
+under `expect.attributes` takes one of four forms:
 
 | form | holds when |
 | --- | --- |
 | `gen_ai.request.stream: true` | every selected span carries the attribute, set to that value |
 | `present: true` | every selected span carries it, whatever the value (`false`: none does) |
 | `distinct: 2` | across the selected spans the attribute took exactly 2 different values |
+| `json: {path: [...], contains: value}` | every selected span carries a JSON string with at least one selected node equal to the required scalar |
 
 So `gen_ai.tool.name: { distinct: 2 }` above says the two `execute_tool` spans
 called two *different* tools, without pinning down which.
+
+### Values inside JSON attributes
+
+A complex attribute can remain valid JSON after a required part is dropped.
+Use a `json` expectation to check a nested value. For example, this requires a
+`blob` part in the input messages of every selected span:
+
+```yaml
+spans:
+  - match:
+      attributes:
+        gen_ai.operation.name: chat
+    expect:
+      count: 1
+      attributes:
+        gen_ai.input.messages:
+          json:
+            path: [{each: true}, parts, {each: true}, type]
+            contains: blob
+```
+
+`path` is a list of literal object keys, non-negative array indexes, or
+`{each: true}` to select every element of an array. Strings such as `"*"` and
+`"a.b"` are literal keys. This selector does not use JSONPath syntax.
+`path: []` selects the decoded root. A missing key, an out-of-range index, or
+a step applied to the wrong container selects no nodes.
+
+`contains` is a required JSON scalar: a string, number, boolean, or `null`.
+It compares whole selected values, with no substring search or coercion.
+Numbers such as `1` and `1.0` compare equally; `true` and `1` do not.
+JSON fractions and exponents retain decimal precision. Finite YAML float
+expectations use the decimal string representation of the loaded value.
+An explicitly selected `null` can match `contains: null`; a missing path or
+an empty selection cannot.
+
+The attribute must be a JSON string. Missing attributes, non-string values,
+malformed JSON, and nonstandard `NaN`/`Infinity` tokens fail the expectation.
+Each matched span must satisfy it independently. The new matcher reports
+attribute names, selectors, and failure counts without printing actual
+attribute content. These are structural failures, so `--report-only` does not
+suppress them. The existing literal, `present`, and `distinct` forms keep
+their behavior and cannot be combined with `json` on the same attribute.
+
+### Shared expectations
 
 `spans`, `metrics` and `events` follow the same rule. A key you leave out is
 **not checked** — a scenario with no expectations only has to run cleanly. A
