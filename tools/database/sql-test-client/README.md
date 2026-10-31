@@ -1,7 +1,10 @@
 # SQL database conformance test client
 
-The workload every SQL database conformance scenario executes, shared so each
-language measures the same operations.
+SQL workloads shared across languages so adapters measure the same operations.
+JDBC packages use these contracts. Other clients can reuse them when their
+scenario shapes and telemetry expectations match. The
+[R2DBC workload](../../../scenarios/database/java/shared/r2dbc/README.md) uses a
+separate named contract for its different telemetry and handled-error coverage.
 
 Each file under [`contracts/`](contracts) owns one backend's ordered scenarios.
 Every list entry keeps its description, SQL `action`, and telemetry `expect`
