@@ -12313,6 +12313,15 @@
         },
         {
           "context": {
+            "attribute_key": "user.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'user.id' does not exist in the registry.",
+          "signal_name": "gen_ai.client.inference.operation.details",
+          "signal_type": "log"
+        },
+        {
+          "context": {
             "attribute_key": "gen_ai.operation.name"
           },
           "id": "required_attribute_not_present",
@@ -13053,7 +13062,7 @@
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 1
+              "emitted": 4
             },
             "recommended": {
               "declared": 12,
@@ -13070,11 +13079,14 @@
           },
           "emitted": [
             "gen_ai.conversation.id",
+            "gen_ai.input.messages",
             "gen_ai.operation.name",
+            "gen_ai.output.messages",
             "gen_ai.provider.name",
             "gen_ai.request.max_tokens",
             "gen_ai.request.model",
             "gen_ai.response.finish_reasons",
+            "gen_ai.system_instructions",
             "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
@@ -13084,11 +13096,14 @@
           "identity": {
             "attributes": [
               "gen_ai.conversation.id",
+              "gen_ai.input.messages",
               "gen_ai.operation.name",
+              "gen_ai.output.messages",
               "gen_ai.provider.name",
               "gen_ai.request.max_tokens",
               "gen_ai.request.model",
               "gen_ai.response.finish_reasons",
+              "gen_ai.system_instructions",
               "gen_ai.tool.definitions",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
@@ -13100,8 +13115,6 @@
           "missing": [
             "error.type",
             "gen_ai.conversation.compacted",
-            "gen_ai.input.messages",
-            "gen_ai.output.messages",
             "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
@@ -13120,7 +13133,6 @@
             "gen_ai.response.id",
             "gen_ai.response.model",
             "gen_ai.response.time_to_first_chunk",
-            "gen_ai.system_instructions",
             "gen_ai.usage.audio.cache_read.input_tokens",
             "gen_ai.usage.audio.input_tokens",
             "gen_ai.usage.audio.output_tokens",
@@ -13292,7 +13304,7 @@
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 1
+              "emitted": 4
             },
             "recommended": {
               "declared": 12,
@@ -13309,8 +13321,11 @@
           },
           "emitted": [
             "gen_ai.conversation.id",
+            "gen_ai.input.messages",
+            "gen_ai.output.messages",
             "gen_ai.provider.name",
             "gen_ai.response.finish_reasons",
+            "gen_ai.system_instructions",
             "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
@@ -13320,9 +13335,7 @@
           "missing": [
             "error.type",
             "gen_ai.conversation.compacted",
-            "gen_ai.input.messages",
             "gen_ai.operation.name",
-            "gen_ai.output.messages",
             "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
@@ -13343,7 +13356,6 @@
             "gen_ai.response.id",
             "gen_ai.response.model",
             "gen_ai.response.time_to_first_chunk",
-            "gen_ai.system_instructions",
             "gen_ai.usage.audio.cache_read.input_tokens",
             "gen_ai.usage.audio.input_tokens",
             "gen_ai.usage.audio.output_tokens",
@@ -13482,7 +13494,7 @@
         }
       ],
       "summary": {
-        "findings": 83,
+        "findings": 84,
         "recommended": {
           "declared": 37,
           "emitted": 10
@@ -14509,16 +14521,6 @@
         },
         {
           "context": {
-            "missing_attribute": "gen_ai.response.id",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
-          "signal_name": "generate_content gemini-2.0-flash",
-          "signal_type": "span"
-        },
-        {
-          "context": {
             "missing_attribute": "server.address",
             "operation": "generate_content"
           },
@@ -14747,7 +14749,7 @@
         }
       ],
       "summary": {
-        "findings": 16,
+        "findings": 15,
         "recommended": {
           "declared": 14,
           "emitted": 6
@@ -14829,26 +14831,6 @@
           },
           "id": "type_mismatch",
           "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
-          "signal_name": "generate_content gemini-2.0-flash",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "gen_ai.response.id",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
-          "signal_name": "generate_content gemini-2.0-flash",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "gen_ai.response.model",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
           "signal_name": "generate_content gemini-2.0-flash",
           "signal_type": "span"
         }
@@ -15206,7 +15188,7 @@
         }
       ],
       "summary": {
-        "findings": 10,
+        "findings": 8,
         "recommended": {
           "declared": 31,
           "emitted": 29
