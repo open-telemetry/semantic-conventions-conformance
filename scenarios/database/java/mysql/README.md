@@ -7,7 +7,7 @@ before measured processes start. The schema creates the workload's empty table
 and stored procedure without seeding rows. MySQL has a 120-second startup
 timeout; `OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` overrides it.
 
-Both JDBC instrumentation modes use Connector/J with `otelTelemetry=DISABLED`
+Both JDBC instrumentation modes use Connector/J with `openTelemetry=DISABLED`
 so each package measures only its declared OpenTelemetry instrumentation.
 MySQL client spans use `db.mysql.client`. Each SQL operation's action and
 expected telemetry live together in the

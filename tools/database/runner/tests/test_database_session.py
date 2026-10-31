@@ -183,9 +183,16 @@ def test_database_session_dispatches_mysql(
         del directory, kwargs
         yield object()
 
-    assert database_conformance._BACKENDS.get("mysql") is MySQL
+    registration = database_conformance._BACKEND_REGISTRY["mysql"]
+    assert registration.factory is MySQL
+    assert registration.system == "mysql"
+    assert registration.client_span_type == "db.mysql.client"
 
-    monkeypatch.setitem(database_conformance._BACKENDS, "mysql", StubBackend)
+    monkeypatch.setitem(
+        database_conformance._BACKEND_REGISTRY,
+        "mysql",
+        replace(registration, factory=StubBackend),
+    )
     monkeypatch.setattr(
         database_conformance,
         "DOMAIN",
