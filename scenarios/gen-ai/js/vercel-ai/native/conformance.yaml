@@ -1,0 +1,37 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: genai-conformance
+instrumented_library: ai
+instrumentation_library: "@ai-sdk/otel"
+
+setup: otel-conformance-js install
+
+server:
+  run: genai-mock-server --port ${PORT}
+
+env:
+  OPENAI_BASE_URL: ${MOCK_SERVER_URL}/v1
+  OPENAI_API_KEY: test_openai_api_key
+
+scenarios:
+  inference:
+    run: node inference.js
+
+  streaming:
+    run: node streaming.js
+
+  tool_calling:
+    run: node tool_calling.js
+
+  multimodal:
+    run: node multimodal.js
+
+  structured_output:
+    run: node structured_output.js
+
+  embeddings:
+    run: node embeddings.js
+
+  automatic_tool_calling:
+    run: node automatic_tool_calling.js

@@ -1,0 +1,9 @@
+{
+  "name": "@otel-conformance/openai-scenarios",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "dependencies": {
+    "openai": "6.49.0"
+  }
+}
