@@ -1,0 +1,89 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# OBI Config v2. `otel-conformance-obi run` substitutes the ${...} references
+# and passes the result to `obi -config`.
+
+file_format: "1.0"
+log_level: info
+
+resource: {}
+propagator: {}
+
+tracer_provider:
+  processors:
+    - batch:
+        schedule_delay: 500
+        exporter:
+          otlp_grpc:
+            endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+            tls:
+              insecure: true
+
+meter_provider:
+  readers:
+    - periodic:
+        interval: ${OBI_METRIC_EXPORT_INTERVAL}
+        exporter:
+          otlp_grpc:
+            endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+            tls:
+              insecure: true
+
+extensions:
+  obi:
+    version: "2.0"
+    daemon:
+      internal_metrics:
+        exporter: prometheus
+        prometheus:
+          port: ${OBI_INTERNAL_METRICS_PORT}
+          path: /metrics
+    capture:
+      policy:
+        default_action: exclude
+        min_process_age: 0s
+      rules:
+        - action: include
+          name: scenario
+          match:
+            process: ${OBI_PROCESS_MATCH}
+      instrumentation:
+        http:
+          buffer_size: 65536
+          routes:
+            discovery:
+              java:
+                delay: 0s
+          payload_extraction:
+            enabled:
+              - graphql
+              - elasticsearch
+              - aws
+              - sqlpp
+              - openai
+              - anthropic
+              - gemini
+              - qwen
+              - bedrock
+              - mcp
+              - ollama
+              - openai_compatible
+              - embedding
+              - rerank
+              - retrieval
+              - jsonrpc
+        sql:
+          mysql:
+            buffer_size: 65536
+          postgres:
+            buffer_size: 65536
+      engine:
+        batching:
+          wakeup_len: 0
+          batch_timeout: 100ms
+    enrich:
+      attributes:
+        select:
+          "*":
+            include: ["*"]
