@@ -2,11 +2,14 @@
   "spans": {
     "gen_ai.client.inference": [
       "gen_ai.conversation.id",
+      "gen_ai.input.messages",
       "gen_ai.operation.name",
+      "gen_ai.output.messages",
       "gen_ai.provider.name",
       "gen_ai.request.max_tokens",
       "gen_ai.request.model",
       "gen_ai.response.finish_reasons",
+      "gen_ai.system_instructions",
       "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
@@ -38,8 +41,11 @@
   "events": {
     "gen_ai.client.inference.operation.details": [
       "gen_ai.conversation.id",
+      "gen_ai.input.messages",
+      "gen_ai.output.messages",
       "gen_ai.provider.name",
       "gen_ai.response.finish_reasons",
+      "gen_ai.system_instructions",
       "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
@@ -114,6 +120,15 @@
       "signal_name": "gen_ai.client.inference.operation.details",
       "context": {
         "attribute_key": "gcp.vertex.agent.invocation_id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'user.id' does not exist in the registry.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.client.inference.operation.details",
+      "context": {
+        "attribute_key": "user.id"
       }
     },
     {
