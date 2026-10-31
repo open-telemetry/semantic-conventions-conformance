@@ -89,6 +89,16 @@
     },
     {
       "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"description\":\"Get the current weather in a given location.\",\"input_schema\":{\"additionalProperties\":false,\"properties\":{\"location\":{\"description\":\"The city and state, e.g. Boston, MA\",\"title\":\"Location\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"},\"name\":\"get_current_weather\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "anthropic.chat",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"description\":\"Get the current weather in a given location.\",\"input_schema\":{\"additionalProperties\":false,\"properties\":{\"location\":{\"description\":\"The city and state, e.g. Boston, MA\",\"title\":\"Location\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"},\"name\":\"get_current_weather\"} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "genai_content_schema",
       "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"name\":\"web_search\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
       "signal_type": "span",
       "signal_name": "anthropic.chat",
