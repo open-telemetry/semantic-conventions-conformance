@@ -14,7 +14,13 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _mongodb, _postgres, _redis, _sql_server
+from database_conformance import (
+    _mariadb,
+    _mongodb,
+    _postgres,
+    _redis,
+    _sql_server,
+)
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._mongodb import MONGODB_IMAGE, MongoDB
@@ -251,6 +257,7 @@ def install_stub(
                     "--file",
                     "/tmp/otel-conformance-mongodb.js",
                 ],
+                environment={},
             ),
         ),
     ],
@@ -281,7 +288,9 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
     assert [path for _, path in container.transfers] == expected_schema_paths
     for schema, _ in container.transfers:
-        assert (b"createCollection" if backend_type is MongoDB else b"CREATE") in schema
+        assert (
+            b"createCollection" if backend_type is MongoDB else b"CREATE"
+        ) in schema
     assert container.exec_config == expected_initialization
     assert container.wait_strategy is not None
 
@@ -453,6 +462,7 @@ def test_cannot_start_postgres_twice(
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (
