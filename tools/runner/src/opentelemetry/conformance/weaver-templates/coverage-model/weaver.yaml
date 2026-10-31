@@ -36,10 +36,15 @@ templates:
         [.description[]? | {key: .key, value: (.requirement_level | level)}]
         | from_entries;
 
+      # Span name templates (weaver 0.28+), in the order they are tried.
+      def name_templates:
+        [.name | if type == "object" then .templates[]? else empty end
+          | {pattern: .pattern, attributes: .attributes, parts: .parts}];
+
       {
         spans: ([.refinements.spans[]?] | map({
           key: .id,
-          value: {kind: .kind, attributes: attributes},
+          value: {kind: .kind, attributes: attributes, name_templates: name_templates},
         }) | from_entries),
         events: ([.refinements.events[]? | select(.id == .name)] | map({
           key: .name,
