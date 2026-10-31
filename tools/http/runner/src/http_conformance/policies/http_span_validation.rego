@@ -69,6 +69,41 @@ deny contains _http_span_finding(
 	not _http_has_attr(input.sample.span, attr_name)
 }
 
+# The contract gives its query request a distinct path so this policy can
+# identify that request after an instrumentation omits `url.query`.
+deny contains _http_span_finding(
+	"required_attribute_not_present",
+	"violation",
+	input.sample.span,
+	{"attribute_key": "url.query", "kind": "server"},
+	sprintf(
+		"Span '%v' is missing required attribute 'url.query' for contract request '/users/456?fields=name&verbose=true'",
+		[input.sample.span.name],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "server"
+	path := _http_attr_value(input.sample.span, "url.path")
+	is_string(path)
+	split(path, "?")[0] == "/users/456"
+	not _http_has_attr(input.sample.span, "url.query")
+}
+
+deny contains _http_span_finding(
+	"http_url_path_format",
+	"violation",
+	input.sample.span,
+	{"attribute_key": "url.path", "kind": "server"},
+	sprintf(
+		"Server span '%v' includes a query string in 'url.path'; query strings belong in 'url.query'.",
+		[input.sample.span.name],
+	),
+) if {
+	_http_span_kind(input.sample.span) == "server"
+	path := _http_attr_value(input.sample.span, "url.path")
+	is_string(path)
+	contains(path, "?")
+}
+
 deny contains _http_span_finding(
 	"recommended_attribute_not_present",
 	"violation",
