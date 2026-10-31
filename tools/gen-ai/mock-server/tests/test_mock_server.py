@@ -1394,6 +1394,33 @@ def test_google_breaks_usage_down_by_input_and_output_modality(client):
     assert usage["cachedContentTokenCount"] < usage["promptTokenCount"]
 
 
+@pytest.mark.parametrize(
+    ("path", "parse"),
+    [
+        (
+            "/v1beta/models/gemini-2.0-flash:streamGenerateContent",
+            lambda text: [json.loads(line) for line in text.splitlines() if line],
+        ),
+        (
+            "/v1/projects/p/locations/us-central1/publishers/google/models/gemini-2.0-flash:streamGenerateContent",
+            json.loads,
+        ),
+        (
+            "/v1/projects/p/locations/us-central1/publishers/google/models/gemini-2.0-flash:streamGenerateContent?alt=sse",
+            lambda text: [json.loads(line[len("data: ") :]) for line in text.splitlines() if line],
+        ),
+    ],
+)
+def test_google_stream_reports_response_id_and_model_on_every_chunk(client, path, parse):
+    response = client.post(path, json={"contents": [{"role": "user", "parts": [{"text": "hi"}]}]})
+
+    chunks = parse(response.get_data(as_text=True))
+    assert len(chunks) > 1
+    for chunk in chunks:
+        assert chunk["responseId"]
+        assert chunk["modelVersion"] == "gemini-2.0-flash"
+
+
 def test_ollama_chat_calls_an_offered_tool(client):
     """Ollama carries the arguments as an object, not as a JSON string."""
     response = client.post(
