@@ -38,7 +38,7 @@ ORACLE = BackendSpec(
         f"@//127.0.0.1:{ORACLE_PORT}/{ORACLE_DATABASE}",
         "@/tmp/otel-conformance-oracle.sql",
     ),
-    startup_timeout=("OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", 180.0),
+    startup_timeout_seconds=180.0,
 )
 
 

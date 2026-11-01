@@ -311,29 +311,35 @@ def test_sql_server_readiness_requires_online_databases() -> None:
 
 
 @pytest.mark.parametrize(
-    ("module", "backend_type", "port", "override", "expected_timeout"),
+    ("module", "backend_type", "port", "default_timeout"),
     [
-        (_postgres, Postgres, 5432, None, 60.0),
-        (_oracle, Oracle, 1521, None, 180.0),
-        (_oracle, Oracle, 1521, "240", 240.0),
+        (_postgres, Postgres, 5432, 60.0),
+        (_mariadb, MariaDB, 3306, 60.0),
+        (_oracle, Oracle, 1521, 180.0),
+        (_redis, Redis, 6379, 60.0),
+        (_sql_server, SQLServer, 1433, 60.0),
     ],
 )
-def test_a_backend_waits_for_its_own_startup_timeout(
+@pytest.mark.parametrize("override", [None, "", "90", "240"])
+def test_database_startup_timeout_uses_backend_default_or_shared_override(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[Oracle],
+    backend_type: type[Postgres]
+    | type[MariaDB]
+    | type[Oracle]
+    | type[Redis]
+    | type[SQLServer],
     port: int,
+    default_timeout: float,
     override: str | None,
-    expected_timeout: float,
 ) -> None:
     monkeypatch.delenv(
         "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
     )
-    monkeypatch.delenv(
-        "OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", raising=False
-    )
     if override is not None:
-        monkeypatch.setenv("OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT", override)
+        monkeypatch.setenv(
+            "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", override
+        )
     container = StubContainer(port=port)
     install_stub(monkeypatch, module, container)
 
@@ -343,7 +349,29 @@ def test_a_backend_waits_for_its_own_startup_timeout(
     strategy = container.wait_strategy
     assert isinstance(strategy, ExecWaitStrategy)
     # Testcontainers keeps the configured startup timeout private.
-    assert strategy._startup_timeout == expected_timeout
+    assert strategy._startup_timeout == (
+        float(override) if override else default_timeout
+    )
+
+
+@pytest.mark.parametrize("override", ["invalid", "0", "-1", "nan", "inf", "-inf"])
+def test_invalid_database_startup_timeout_uses_oracle_default(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    override: str,
+) -> None:
+    monkeypatch.setenv("OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", override)
+    container = StubContainer(port=1521)
+    install_stub(monkeypatch, _oracle, container)
+
+    with Oracle():
+        pass
+
+    strategy = container.wait_strategy
+    assert isinstance(strategy, ExecWaitStrategy)
+    assert strategy._startup_timeout == 180.0
+    assert "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT" in caplog.text
+    assert "is not a finite positive number of seconds; using 180.0" in caplog.text
 
 
 def test_start_failure_cleans_up_the_container(

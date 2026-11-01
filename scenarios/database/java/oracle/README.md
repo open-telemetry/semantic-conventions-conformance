@@ -2,8 +2,8 @@
 
 The database runner starts a pinned Oracle Database Free `slim-faststart`
 container and waits for `healthcheck.sh`. Startup allows three minutes by
-default; set `OTEL_CONFORMANCE_ORACLE_STARTUP_TIMEOUT` to a positive number of
-seconds to override it.
+default; set `OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` to a finite positive
+number of seconds in the runner's environment to override it.
 
 The runner creates the `conformance` application user in `FREEPDB1` and applies
 the [scenario schema](../../../../tools/database/runner/src/database_conformance/oracle.sql)
