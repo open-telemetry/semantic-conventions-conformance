@@ -1,0 +1,21 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: elasticsearch
+instrumented_library: elasticsearch-java
+instrumentation_library: co.elastic.clients:elasticsearch-java
+scenario_contract: ../../../../contracts/elasticsearch-api-client.yaml
+
+env:
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:elasticsearch:api-client-native
+
+scenarios:
+  search:
+    run: otel-conformance-java run shared:elasticsearch:api-client-native ElasticsearchApiClientScenario

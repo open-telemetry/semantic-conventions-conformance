@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 
 import database_conformance
+from database_conformance._elasticsearch import Elasticsearch
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
 
 
@@ -156,6 +157,37 @@ def test_database_session_closes_backend_after_an_error(
             raise RuntimeError("scenario failed")
 
     assert closed
+
+
+def test_elasticsearch_backend_is_available_for_dispatch(tmp_path: Path) -> None:
+    spec = _write_spec(tmp_path, "  backend: elasticsearch")
+
+    assert database_conformance._backend_name(spec) == "elasticsearch"
+    registration = database_conformance._BACKEND_REGISTRY["elasticsearch"]
+    assert registration.factory is Elasticsearch
+    assert registration.system == "elasticsearch"
+    assert registration.client_span_type == "db.elasticsearch.client"
+
+
+def test_elasticsearch_native_package_uses_the_client_instrumentation() -> None:
+    directory = (
+        Path(__file__).resolve().parents[4]
+        / "scenarios/database/java/elasticsearch/api-client/native-instrumentation"
+    )
+    spec = load_spec(directory)
+    search = spec.scenarios["search"]
+
+    assert spec.instrumentation_library == "co.elastic.clients:elasticsearch-java"
+    assert "--agent" not in search.run
+    assert len(search.spans) == 1
+    assert search.spans[0].match.kind == "CLIENT"
+    assert search.spans[0].count == 1
+    scope = search.spans[0].instrumentation_scope
+    assert scope is not None
+    assert scope.name is not None
+    assert scope.name.equals == "elasticsearch-api"
+    assert search.metrics == ()
+    assert search.events == ()
 
 
 @pytest.mark.parametrize(

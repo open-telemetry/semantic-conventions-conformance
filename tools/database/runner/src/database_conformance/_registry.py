@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from ._container import DatabaseContainer
+from ._elasticsearch import Elasticsearch
 from ._mariadb import MariaDB
 from ._postgres import Postgres
 from ._redis import Redis
@@ -23,6 +24,9 @@ class BackendRegistration:
 
 
 BACKENDS = {
+    "elasticsearch": BackendRegistration(
+        Elasticsearch, "elasticsearch", "db.elasticsearch.client"
+    ),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"

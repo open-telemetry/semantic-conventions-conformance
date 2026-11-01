@@ -35,7 +35,9 @@ library instrumentation. The
 [Redis workload guide](shared/redis/README.md) documents its commands,
 connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
-[scenario notes](sql_server/README.md).
+[scenario notes](sql_server/README.md). The
+[Elasticsearch scenario notes](elasticsearch/README.md) describe the latest
+Java API Client, its native instrumentation, and its search workload.
 
 Run one package from the repository root:
 

@@ -1,0 +1,25 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+scenarios:
+  search:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system.name: elasticsearch
+        expect:
+          count: 1
+          instrumentation_scope:
+            name: elasticsearch-api
+            version: {present: true}
+          attributes:
+            db.operation.name: search
+            db.operation.parameter.index: conformance
+            http.request.method: POST
+            http.response.status_code: 200
+            server.address: 127.0.0.1
+            server.port: {present: true}
+            url.full: {present: true}
+    metrics: []
+    events: []

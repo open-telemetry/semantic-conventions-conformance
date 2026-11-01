@@ -44,7 +44,9 @@ Connection fields let each language construct its native client configuration.
 SQL packages select a contract under
 [`contracts/`](../sql-test-client/contracts) using `scenario_contract`. The
 generic conformance runner injects only the selected contract entry's `action`
-into the scenario process.
+into the scenario process. Backend-specific initialization and connection
+details for Elasticsearch are in its
+[scenario notes](../../../scenarios/database/java/elasticsearch/README.md).
 
 The classifier recognizes registered semantic-convention systems only on
 `CLIENT` spans and only when their client span type exists in the resolved

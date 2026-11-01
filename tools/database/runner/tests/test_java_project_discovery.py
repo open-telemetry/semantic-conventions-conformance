@@ -156,6 +156,7 @@ def test_preserves_database_project_names() -> None:
         ":scenario-sdk",
         ":agent-control",
         ":sql-test-client",
+        ":shared:elasticsearch:api-client-native",
         ":shared:jdbc:scenarios",
         ":shared:jdbc:opentelemetry-javaagent",
         ":shared:jdbc:opentelemetry-library",
@@ -166,6 +167,11 @@ def test_preserves_database_project_names() -> None:
         ":shared:redis:rediscala:opentelemetry-javaagent",
         ":shared:redis:redisson:opentelemetry-javaagent",
     } <= projects
+    assert not {
+        ":shared:elasticsearch:api-client-javaagent",
+        ":shared:elasticsearch:rest-javaagent",
+        ":shared:elasticsearch:transport-javaagent",
+    } & projects
     assert "prepareRuntime" in _gradle(
         SCENARIO_ROOT,
         ":shared:jdbc:opentelemetry-javaagent:tasks",
