@@ -166,26 +166,6 @@
         "attribute_type": "double",
         "expected": "int"
       }
-    },
-    {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
-      "signal_type": "span",
-      "signal_name": "generate_content gemini-2.0-flash",
-      "context": {
-        "missing_attribute": "gen_ai.response.id",
-        "operation": "generate_content"
-      }
-    },
-    {
-      "id": "genai_expected_attribute_missing",
-      "message": "Span 'generate_content gemini-2.0-flash' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
-      "signal_type": "span",
-      "signal_name": "generate_content gemini-2.0-flash",
-      "context": {
-        "missing_attribute": "gen_ai.response.model",
-        "operation": "generate_content"
-      }
     }
   ]
 }

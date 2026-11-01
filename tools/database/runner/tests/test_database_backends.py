@@ -14,11 +14,12 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _mariadb, _postgres, _redis
+from database_conformance import _mariadb, _postgres, _redis, _sql_server
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 from database_conformance._redis import REDIS_IMAGE, Redis
+from database_conformance._sql_server import SQL_SERVER_IMAGE, SQLServer
 
 
 @dataclass
@@ -184,12 +185,47 @@ def install_stub(
             [],
             None,
         ),
+        (
+            _sql_server,
+            SQLServer,
+            1433,
+            {
+                "ACCEPT_EULA": "Y",
+                "MSSQL_PID": "Developer",
+                "MSSQL_SA_PASSWORD": "Conformance1!",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "sa",
+                "DATABASE_PASSWORD": "Conformance1!",
+            },
+            ["/tmp/otel-conformance-sql-server.sql"],
+            ExecConfig(
+                command=[
+                    "/opt/mssql-tools18/bin/sqlcmd",
+                    "-S",
+                    "127.0.0.1",
+                    "-U",
+                    "sa",
+                    "-C",
+                    "-b",
+                    "-i",
+                    "/tmp/otel-conformance-sql-server.sql",
+                ],
+                environment={"SQLCMDPASSWORD": "Conformance1!"},
+            ),
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres] | type[MariaDB] | type[Redis],
+    backend_type: type[Postgres]
+    | type[MariaDB]
+    | type[Redis]
+    | type[SQLServer],
     port: int,
     expected_environment: dict[str, str],
     expected_variables: dict[str, str],
@@ -223,6 +259,17 @@ def test_redis_readiness_checks_for_server_errors() -> None:
         "-p",
         "6379",
         "PING",
+    )
+
+
+def test_sql_server_readiness_requires_online_databases() -> None:
+    assert _sql_server.SQL_SERVER.ready_command == (
+        "/bin/bash",
+        "-c",
+        'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" exec /opt/mssql-tools18/bin/sqlcmd '
+        '-S 127.0.0.1 -U sa -C -b -Q "SET NOCOUNT ON; '
+        "IF EXISTS (SELECT 1 FROM sys.databases WHERE state_desc <> 'ONLINE') "
+        "RAISERROR('not ready', 16, 1)\"",
     )
 
 
@@ -271,6 +318,24 @@ def test_schema_failure_reports_psql_output_and_logs(
     assert container.stopped
 
 
+def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"Incorrect syntax"),
+        port=1433,
+    )
+    install_stub(monkeypatch, _sql_server, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Incorrect syntax.*ready to accept connections",
+    ):
+        SQLServer().start()
+
+    assert container.stopped
+
+
 def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
@@ -309,6 +374,7 @@ def test_cannot_start_postgres_twice(
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
         (REDIS_IMAGE, "redis"),
+        (SQL_SERVER_IMAGE, "mcr.microsoft.com/mssql/server"),
     ],
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
@@ -332,3 +398,11 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("sql_server.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE TABLE [conformance].[items]" in schema
+    assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
