@@ -216,16 +216,10 @@ def test_database_session_dispatches_and_closes_cassandra(
 
 
 @pytest.mark.parametrize(
-    ("driver", "instrumentation"),
-    [
-        ("cassandra-driver-3", "opentelemetry-javaagent"),
-        ("cassandra-driver-4.3", "opentelemetry-javaagent"),
-        ("cassandra-driver-4.19", "opentelemetry-javaagent"),
-        ("cassandra-driver-4.19", "opentelemetry-library"),
-    ],
+    "instrumentation", ["opentelemetry-javaagent", "opentelemetry-library"],
 )
 def test_cassandra_packages_share_contract_and_connection_variables(
-    driver: str, instrumentation: str
+    instrumentation: str
 ) -> None:
     directory = (
         Path(__file__).resolve().parents[4]
@@ -233,19 +227,19 @@ def test_cassandra_packages_share_contract_and_connection_variables(
         / "database"
         / "java"
         / "cassandra"
-        / driver
+        / "java-driver"
         / instrumentation
     )
     spec = load_spec(directory)
 
+    assert spec.instrumented_library == "java-driver"
     assert spec.runner_config == {"backend": "cassandra"}
     assert spec.env["CASSANDRA_HOST"] == "${DATABASE_HOST}"
     assert spec.env["CASSANDRA_PORT"] == "${DATABASE_PORT}"
-    if driver != "cassandra-driver-3":
-        assert (
-            spec.env["CASSANDRA_LOCAL_DATACENTER"]
-            == "${DATABASE_LOCAL_DATACENTER}"
-        )
+    assert (
+        spec.env["CASSANDRA_LOCAL_DATACENTER"]
+        == "${DATABASE_LOCAL_DATACENTER}"
+    )
     assert list(spec.scenarios) == ["query", "prepared", "batch", "error"]
     for scenario in spec.scenarios.values():
         assert scenario.metrics == ("db.client.operation.duration",)
@@ -261,6 +255,23 @@ def test_cassandra_packages_share_contract_and_connection_variables(
         assert scenario.spans[0].match.attributes == {
             "db.system.name": "cassandra"
         }
+
+
+def test_cassandra_has_only_current_client_packages() -> None:
+    root = (
+        Path(__file__).resolve().parents[4]
+        / "scenarios"
+        / "database"
+        / "java"
+        / "cassandra"
+    )
+    assert {
+        path.relative_to(root).as_posix()
+        for path in root.rglob("conformance.yaml")
+    } == {
+        "java-driver/opentelemetry-javaagent/conformance.yaml",
+        "java-driver/opentelemetry-library/conformance.yaml",
+    }
 
 
 @pytest.mark.parametrize(

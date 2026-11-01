@@ -98,12 +98,6 @@
       "ignoreUnstable": false
     },
     {
-      // Driver 4.4 uses a separate instrumentation path; retain 4.0-4.3 coverage.
-      "matchFileNames": ["scenarios/database/java/gradle/libs.versions.toml"],
-      "matchPackageNames": ["com.datastax.oss:java-driver-core"],
-      "allowedVersions": "<4.4"
-    },
-    {
       // Akka 2.7 and later use the Business Source License. Keep the actor
       // and stream dependencies below 2.7 so this repository depends only
       // on open-source releases.
