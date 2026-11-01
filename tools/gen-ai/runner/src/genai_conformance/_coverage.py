@@ -14,7 +14,10 @@ from __future__ import annotations
 
 from typing import Any, Callable, Mapping
 
-# Which operation names belong to which span type.
+# Which operation names belong to which span type. gen_ai.invoke_agent.internal
+# absorbs gen_ai.invoke_workflow.internal and adds invoke_runner
+# (semantic-conventions-genai#571); a registry that still declares
+# gen_ai.invoke_workflow.internal keeps invoke_workflow spans there.
 _OPERATION_NAMES = {
     "gen_ai.create_agent.client": {"create_agent"},
     "gen_ai.embeddings.client": {"embeddings"},
@@ -22,7 +25,11 @@ _OPERATION_NAMES = {
     "gen_ai.fetch_response.client": {"fetch_response"},
     "gen_ai.inference.client": {"chat", "generate_content", "text_completion"},
     "gen_ai.invoke_agent.client": {"invoke_agent"},
-    "gen_ai.invoke_agent.internal": {"invoke_agent"},
+    "gen_ai.invoke_agent.internal": {
+        "invoke_agent",
+        "invoke_workflow",
+        "invoke_runner",
+    },
     "gen_ai.invoke_workflow.internal": {"invoke_workflow"},
     "gen_ai.memory.client": {
         "create_memory",
@@ -111,6 +118,8 @@ def classifier(
             for span_type in matched
             if spans.get(span_type, {}).get("kind") == span_kind.lower()
         }
+        if "gen_ai.invoke_workflow.internal" in of_this_kind:
+            of_this_kind.discard("gen_ai.invoke_agent.internal")
         return of_this_kind or matched
 
     return classify_span
