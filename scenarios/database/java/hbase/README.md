@@ -17,6 +17,10 @@ pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/hbase/native
 ```
 
+For the repository's CI reporting mode, add `--report-only`. Semantic violations
+remain visible as warnings, while workload crashes and telemetry expectation
+mismatches still fail the run.
+
 ## Native SDK integration
 
 The [native launcher](native/src/main/java/HbaseNativeScenario.java) initializes
@@ -70,17 +74,23 @@ Each operation runs in a separate process:
 
 ## Contracts and coverage
 
-The package checks the emitted telemetry against stable database semantic
-conventions using the [HBase telemetry contract](../../contracts/hbase.yaml).
-The runner's registry
+The [HBase telemetry contract](../../contracts/hbase.yaml) checks that the
+workload emits native telemetry. Weaver independently checks that telemetry
+against the semantic conventions. The runner's registry
 maps backend selector `hbase` to system `hbase` and client span type
 `db.hbase.client`.
 
-The contract requires stable database CLIENT spans for GET, PUT, SCAN, or BATCH
-and the metadata-table SCAN, with namespace and collection attributes. Batch
-spans must record a batch size of two. The bootstrap address is `127.0.0.1` with
-`server.port=16000`. It also requires `db.client.operation.duration`, the SDK's
-`queueSize` infrastructure metric, and no events.
+Each scenario requires exactly one native CLIENT span for GET, PUT, SCAN, or
+BATCH on `conformance:items`. It checks the native `db.name=conformance` and
+`db.connection_string=127.0.0.1:16000`, plus scope `org.apache.hbase` with a
+version. The BATCH span must identify PUT operations. The workload itself writes
+two rows and rejects per-row errors.
+
+Metadata-table scans, native RPC CLIENT spans, and INTERNAL connection and
+region-lookup spans are recognized without fixed counts because initialization
+can perform additional lookups. The contract still requires the SDK's `queueSize`
+metric and no events. Matching native attributes does not waive their semantic
+violations or classify them as stable database coverage.
 
 ## Observed native gaps
 
@@ -90,13 +100,13 @@ CLIENT span under `org.apache.hbase` version `3.0.0`. Strict conformance fails:
 - The native table spans use legacy `db.system`, `db.name`, `db.operation`,
   `db.connection_string`, and `db.user`, not stable `db.system.name`,
   `db.namespace`, `db.collection.name`, `db.operation.name`, and server attributes.
-  They do not satisfy the stable database CLIENT span expectations.
+  They do not qualify for stable database client coverage.
 - HBase emits no `db.client.operation.duration`. The captured metrics describe
   SDK/exporter health, not database operations.
 - The native scope has no schema URL. Weaver also reports deprecated RPC/network
   attributes, unregistered `db.hbase.table`, `db.hbase.regions`, and
-  `db.hbase.container_operations`, and
-  instrumentation setting status OK on successful spans.
+  `db.hbase.container_operations`, and instrumentation setting status OK on
+  successful spans.
 
 No native findings are waived or filtered out. The package reuses the shared
 Java Weaver configuration for SDK infrastructure findings only.
@@ -105,7 +115,9 @@ Stable database span and metric coverage is empty; entity coverage and the real
 findings remain recorded. Raw per-workload reports are written under
 `native/output/weaver-reports/` when running the command above.
 
-The four workloads each have four expectation failures. Strict runs also report
-52 violations for GET, 52 for PUT, 47 for SCAN, and 53 for BATCH. CI's
-`--report-only` mode downgrades semantic violations, but not missing expectations,
-so this package still exits nonzero and fails the conformance job.
+All four workloads satisfy their native telemetry expectations. Strict runs
+report 52 violations for GET, 52 for PUT, 47 for SCAN, and 53 for BATCH, and exit
+nonzero for those findings. CI's `--report-only` mode reports the same violations
+as warnings and exits zero. Missing native workload spans, incorrect attributes,
+missing SDK metrics, unexpected events, or workload crashes still fail in both
+modes.

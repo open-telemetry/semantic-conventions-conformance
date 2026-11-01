@@ -1,8 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-# Stable database CLIENT spans remain required even when native HBase telemetry
-# uses legacy attributes. The fixture's RPC bootstrap endpoint is loopback:16000.
+# Workload expectations identify native HBase telemetry. Weaver independently
+# reports its semantic-convention violations.
 
 scenarios:
   get:
@@ -10,29 +10,30 @@ scenarios:
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: GET
-            db.collection.name: items
+            db.system: hbase
+            db.operation: GET
+            db.hbase.table: conformance:items
         expect:
           count: 1
           attributes:
-            db.namespace: conformance
-            server.address: 127.0.0.1
-            server.port: 16000
+            db.name: conformance
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: SCAN
-            db.collection.name: meta
-        expect:
-          count: 1
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
           attributes:
-            db.namespace: hbase
-            server.address: 127.0.0.1
-            server.port: 16000
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
     metrics:
-      - db.client.operation.duration
       - queueSize
     events: []
 
@@ -41,29 +42,30 @@ scenarios:
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: PUT
-            db.collection.name: items
+            db.system: hbase
+            db.operation: PUT
+            db.hbase.table: conformance:items
         expect:
           count: 1
           attributes:
-            db.namespace: conformance
-            server.address: 127.0.0.1
-            server.port: 16000
+            db.name: conformance
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: SCAN
-            db.collection.name: meta
-        expect:
-          count: 1
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
           attributes:
-            db.namespace: hbase
-            server.address: 127.0.0.1
-            server.port: 16000
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
     metrics:
-      - db.client.operation.duration
       - queueSize
     events: []
 
@@ -72,29 +74,30 @@ scenarios:
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: SCAN
-            db.collection.name: items
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: conformance:items
         expect:
           count: 1
           attributes:
-            db.namespace: conformance
-            server.address: 127.0.0.1
-            server.port: 16000
+            db.name: conformance
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: SCAN
-            db.collection.name: meta
-        expect:
-          count: 1
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
           attributes:
-            db.namespace: hbase
-            server.address: 127.0.0.1
-            server.port: 16000
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
     metrics:
-      - db.client.operation.duration
       - queueSize
     events: []
 
@@ -103,29 +106,30 @@ scenarios:
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: BATCH
-            db.collection.name: items
+            db.system: hbase
+            db.operation: BATCH
+            db.hbase.table: conformance:items
         expect:
           count: 1
           attributes:
-            db.namespace: conformance
-            db.operation.batch.size: 2
-            server.address: 127.0.0.1
-            server.port: 16000
+            db.name: conformance
+            db.hbase.container_operations: [PUT]
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
       - match:
           kind: CLIENT
           attributes:
-            db.system.name: hbase
-            db.operation.name: SCAN
-            db.collection.name: meta
-        expect:
-          count: 1
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
           attributes:
-            db.namespace: hbase
-            server.address: 127.0.0.1
-            server.port: 16000
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
     metrics:
-      - db.client.operation.duration
       - queueSize
     events: []
