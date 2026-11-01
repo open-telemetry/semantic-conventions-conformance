@@ -230,7 +230,7 @@ def install_stub(
         (
             _elasticsearch,
             Elasticsearch,
-            {9200: 32768, 9300: 32769},
+            {9200: 32768},
             {
                 "discovery.type": "single-node",
                 "xpack.security.enabled": "false",
@@ -242,7 +242,6 @@ def install_stub(
                 "DATABASE_NAME": "conformance",
                 "DATABASE_USER": "",
                 "DATABASE_PASSWORD": "",
-                "DATABASE_TRANSPORT_PORT": "32769",
             },
             ["/tmp/otel-conformance-elasticsearch.json"],
             ExecConfig(
@@ -393,7 +392,7 @@ def test_elasticsearch_schema_failure_reports_curl_output_and_logs(
         exec_result=ExecResult(
             exit_code=22, output=b"index bootstrap rejected"
         ),
-        published_ports={9200: 32768, 9300: 32769},
+        published_ports={9200: 32768},
     )
     install_stub(monkeypatch, _elasticsearch, container)
 
@@ -436,22 +435,6 @@ def test_elasticsearch_readiness_waits_for_a_yellow_cluster() -> None:
     )
 
 
-def test_elasticsearch_port_publication_failure_cleans_up_the_container(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    container = StubContainer(published_ports={9200: 32768})
-    install_stub(monkeypatch, _elasticsearch, container)
-    elasticsearch = Elasticsearch()
-
-    with pytest.raises(KeyError, match="9300"):
-        elasticsearch.start()
-
-    assert container.stopped
-    assert container.exec_config is None
-    with pytest.raises(RuntimeError, match="has not been started"):
-        _ = elasticsearch.variables
-
-
 def test_cannot_start_postgres_twice(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -477,6 +460,7 @@ def test_cannot_start_postgres_twice(
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
     assert re.fullmatch(rf"{repository}:[^@\s]+@sha256:[0-9a-f]{{64}}", image)
+
 
 def test_the_schema_is_packaged_with_the_runner() -> None:
     schema = (

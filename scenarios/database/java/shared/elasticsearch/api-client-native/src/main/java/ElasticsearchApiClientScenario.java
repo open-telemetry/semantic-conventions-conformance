@@ -4,14 +4,11 @@
  */
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.json.JsonData;
+import co.elastic.clients.transport.instrumentation.OpenTelemetryForElasticsearch;
 import io.opentelemetry.conformance.scenario.ScenarioEnvironment;
+import io.opentelemetry.conformance.scenario.sdk.ScenarioSdk;
 import java.io.IOException;
-import java.util.Map;
-import org.apache.http.HttpHost;
-import org.elasticsearch.client.RestClient;
 
 public final class ElasticsearchApiClientScenario {
   private ElasticsearchApiClientScenario() {}
@@ -21,16 +18,23 @@ public final class ElasticsearchApiClientScenario {
     int port = Integer.parseInt(ScenarioEnvironment.require("DATABASE_PORT"));
     String index = ScenarioEnvironment.require("DATABASE_NAME");
 
-    try (RestClient restClient = RestClient.builder(new HttpHost(host, port, "http")).build();
-        ElasticsearchTransport transport =
-            new RestClientTransport(restClient, new JacksonJsonpMapper())) {
-      ElasticsearchClient client = new ElasticsearchClient(transport);
-      SearchResponse<Map> response =
+    try (ScenarioSdk sdk = ScenarioSdk.initialize();
+        ElasticsearchClient client =
+            ElasticsearchClient.of(
+                config ->
+                    config
+                        .host("http://" + host + ":" + port)
+                        .instrumentation(
+                            new OpenTelemetryForElasticsearch(sdk.openTelemetry(), false)))) {
+      SearchResponse<JsonData> response =
           client.search(
               search -> search.index(index).query(query -> query.matchAll(matchAll -> matchAll)),
-              Map.class);
+              JsonData.class);
       if (response.timedOut()) {
         throw new IllegalStateException("Elasticsearch search timed out");
+      }
+      if (response.shards().failed().longValue() != 0) {
+        throw new IllegalStateException("Elasticsearch search had failed shards");
       }
     }
   }

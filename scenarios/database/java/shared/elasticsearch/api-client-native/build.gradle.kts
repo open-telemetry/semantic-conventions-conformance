@@ -4,6 +4,6 @@ plugins {
 
 dependencies {
     implementation(project(":scenario-support"))
-    implementation(libs.elasticsearch.rest.client)
-    add("javaAgent", libs.opentelemetry.javaagent)
+    implementation(project(":scenario-sdk"))
+    implementation(libs.elasticsearch.api.client)
 }

@@ -11,9 +11,8 @@ from ._container import BackendSpec, DatabaseContainer
 
 ELASTICSEARCH_INDEX = "conformance"
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_TRANSPORT_PORT = 9300
 # renovate: datasource=docker depName=docker.elastic.co/elasticsearch/elasticsearch versioning=docker
-ELASTICSEARCH_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:7.17.29@sha256:3f55a7f6f29b95345dc33808d6e914f81d125d4ca90a414e26c81a3521400980"
+ELASTICSEARCH_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.5.5@sha256:13b4a40bb095774f5fda635e45fd5677cc6a26565e42b24997b0c72b88e75984"
 
 ELASTICSEARCH = BackendSpec(
     name="Elasticsearch",
@@ -51,9 +50,6 @@ ELASTICSEARCH = BackendSpec(
         f"http://127.0.0.1:{ELASTICSEARCH_PORT}/{ELASTICSEARCH_INDEX}",
         "--data-binary",
         "@/tmp/otel-conformance-elasticsearch.json",
-    ),
-    additional_ports=(
-        ("DATABASE_TRANSPORT_PORT", ELASTICSEARCH_TRANSPORT_PORT),
     ),
 )
 

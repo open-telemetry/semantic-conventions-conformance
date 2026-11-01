@@ -169,6 +169,27 @@ def test_elasticsearch_backend_is_available_for_dispatch(tmp_path: Path) -> None
     assert registration.client_span_type == "db.elasticsearch.client"
 
 
+def test_elasticsearch_native_package_uses_the_client_instrumentation() -> None:
+    directory = (
+        Path(__file__).resolve().parents[4]
+        / "scenarios/database/java/elasticsearch/api-client/native-instrumentation"
+    )
+    spec = load_spec(directory)
+    search = spec.scenarios["search"]
+
+    assert spec.instrumentation_library == "co.elastic.clients:elasticsearch-java"
+    assert "--agent" not in search.run
+    assert len(search.spans) == 1
+    assert search.spans[0].match.kind == "CLIENT"
+    assert search.spans[0].count == 1
+    scope = search.spans[0].instrumentation_scope
+    assert scope is not None
+    assert scope.name is not None
+    assert scope.name.equals == "elasticsearch-api"
+    assert search.metrics == ()
+    assert search.events == ()
+
+
 @pytest.mark.parametrize(
     ("runner_config", "message"),
     [

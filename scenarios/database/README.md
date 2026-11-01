@@ -16,8 +16,8 @@ expectations. The action is passed to a language helper as JSON, which translate
 it to the client API. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
-[shared workload guide](java/shared/redis/README.md). Elasticsearch's REST,
-Java API, and Transport clients use separate workloads and telemetry contracts,
+[shared workload guide](java/shared/redis/README.md). Elasticsearch's latest
+Java API Client uses its native instrumentation and a search workload,
 described in the [Elasticsearch scenario notes](java/elasticsearch/README.md).
 
 ## Running a package
