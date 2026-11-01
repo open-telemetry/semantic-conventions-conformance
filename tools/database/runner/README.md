@@ -26,8 +26,10 @@ runner_config:
 selector-to-factory and semantic-convention registration is in
 [`_registry.py`](src/database_conformance/_registry.py). A session starts one
 container, waits for its declared readiness check, applies any declared
-initialization, and removes the container when the session closes. Scenario data
-is not pre-seeded; each workload creates or verifies the data it needs.
+initialization, and removes the container when the session closes. Workloads
+normally create or verify their own data. The HBase fixture seeds its read row
+and uses fixed ports; its initialization, image pinning, and concurrency limits
+are documented in the [HBase scenario notes](../../../scenarios/database/java/hbase/README.md).
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -35,7 +37,7 @@ environment declarations:
 | Variable            | Value                                        |
 | ------------------- | -------------------------------------------- |
 | `DATABASE_HOST`     | Loopback address published by Docker         |
-| `DATABASE_PORT`     | Docker-assigned host port                    |
+| `DATABASE_PORT`     | Published host port; fixed for HBase         |
 | `DATABASE_NAME`     | Test database name or logical database index |
 | `DATABASE_USER`     | Test user                                    |
 | `DATABASE_PASSWORD` | Test-only password                           |

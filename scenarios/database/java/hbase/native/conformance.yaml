@@ -1,0 +1,31 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: hbase
+instrumented_library: hbase-client
+instrumentation_library: org.apache.hbase:hbase-client
+scenario_contract: ../../../contracts/hbase.yaml
+
+env:
+  HBASE_BOOTSTRAP_SERVERS: ${DATABASE_HOST}:${DATABASE_PORT}
+  OTEL_LOGS_EXPORTER: none
+
+weaver:
+  config: ../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare hbase:native
+
+scenarios:
+  get:
+    run: otel-conformance-java run hbase:native HbaseNativeScenario get
+
+  put:
+    run: otel-conformance-java run hbase:native HbaseNativeScenario put
+
+  scan:
+    run: otel-conformance-java run hbase:native HbaseNativeScenario scan
+
+  batch:
+    run: otel-conformance-java run hbase:native HbaseNativeScenario batch

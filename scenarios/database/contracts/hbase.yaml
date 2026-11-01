@@ -1,0 +1,131 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Workload expectations identify native HBase telemetry. Weaver independently
+# reports its semantic-convention violations.
+
+scenarios:
+  get:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: GET
+            db.hbase.table: conformance:items
+        expect:
+          count: 1
+          attributes:
+            db.name: conformance
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
+          attributes:
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
+    metrics: []
+    events: []
+
+  put:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: PUT
+            db.hbase.table: conformance:items
+        expect:
+          count: 1
+          attributes:
+            db.name: conformance
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
+          attributes:
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
+    metrics: []
+    events: []
+
+  scan:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: conformance:items
+        expect:
+          count: 1
+          attributes:
+            db.name: conformance
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
+          attributes:
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
+    metrics: []
+    events: []
+
+  batch:
+    spans:
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: BATCH
+            db.hbase.table: conformance:items
+        expect:
+          count: 1
+          attributes:
+            db.name: conformance
+            db.hbase.container_operations: [PUT]
+            db.connection_string: 127.0.0.1:16000
+          instrumentation_scope:
+            name: org.apache.hbase
+            version: {present: true}
+      - match:
+          kind: CLIENT
+          attributes:
+            db.system: hbase
+            db.operation: SCAN
+            db.hbase.table: hbase:meta
+      - match:
+          kind: CLIENT
+          attributes:
+            rpc.system: HBASE_RPC
+      - match:
+          kind: INTERNAL
+    metrics: []
+    events: []

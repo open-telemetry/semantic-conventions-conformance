@@ -37,6 +37,10 @@ connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
 
+HBase's shared workload exercises the latest stable client's native telemetry,
+without the Java agent. Its [scenario notes](hbase/README.md) cover SDK integration,
+Java toolchains, fixture requirements, and observed conformance gaps.
+
 Run one package from the repository root:
 
 ```sh

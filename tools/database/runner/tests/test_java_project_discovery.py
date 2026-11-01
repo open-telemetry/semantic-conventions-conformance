@@ -63,6 +63,8 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
     discovery_root: Path,
 ) -> None:
     expected_projects = {
+        "shared/hbase/scenarios",
+        "hbase/native",
         "shared/jdbc/scenarios",
         "shared/jdbc/opentelemetry-javaagent",
         "shared/jdbc/opentelemetry-library",
@@ -152,6 +154,8 @@ def test_adding_a_project_invalidates_configuration_cache(
 def test_preserves_database_project_names() -> None:
     projects = _projects(SCENARIO_ROOT)
     assert {
+        ":shared:hbase:scenarios",
+        ":hbase:native",
         ":scenario-support",
         ":scenario-sdk",
         ":agent-control",

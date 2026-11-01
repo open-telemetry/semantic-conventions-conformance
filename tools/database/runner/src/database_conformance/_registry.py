@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from ._container import DatabaseContainer
+from ._hbase import HBase
 from ._mariadb import MariaDB
 from ._postgres import Postgres
 from ._redis import Redis
@@ -23,6 +24,7 @@ class BackendRegistration:
 
 
 BACKENDS = {
+    "hbase": BackendRegistration(HBase, "hbase", "db.hbase.client"),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"
