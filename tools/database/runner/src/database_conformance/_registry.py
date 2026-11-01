@@ -10,6 +10,7 @@ from typing import Callable
 
 from ._container import DatabaseContainer
 from ._mariadb import MariaDB
+from ._mongodb import MongoDB
 from ._postgres import Postgres
 from ._redis import Redis
 from ._sql_server import SQLServer
@@ -24,6 +25,7 @@ class BackendRegistration:
 
 BACKENDS = {
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
+    "mongodb": BackendRegistration(MongoDB, "mongodb", "db.mongodb.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"
     ),

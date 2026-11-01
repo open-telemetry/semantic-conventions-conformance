@@ -26,8 +26,9 @@ runner_config:
 selector-to-factory and semantic-convention registration is in
 [`_registry.py`](src/database_conformance/_registry.py). A session starts one
 container, waits for its declared readiness check, applies any declared
-initialization, and removes the container when the session closes. Scenario data
-is not pre-seeded; each workload creates or verifies the data it needs.
+initialization, and removes the container when the session closes. Workloads
+create or verify their data; MongoDB uses deterministic bootstrap fixtures as
+described in its [backend notes](../../../scenarios/database/java/mongodb/README.md).
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
