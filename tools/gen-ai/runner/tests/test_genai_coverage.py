@@ -184,6 +184,25 @@ def test_spans_classify_into_the_type_name_the_registry_declares(
     assert DOMAIN.classifier(model)("", kind, attributes) == {span_type}
 
 
+@pytest.mark.parametrize(
+    "span_type", ["gen_ai.execute_tool.internal", "gen_ai.execute_tool"]
+)
+@pytest.mark.parametrize(
+    "attributes",
+    [
+        {"gen_ai.operation.name": "execute_tool"},
+        {"gen_ai.tool.name": "get_weather"},
+        {"gen_ai.tool.call.id": "call_1"},
+    ],
+)
+def test_tool_spans_classify_into_the_type_name_the_registry_declares(
+    span_type, attributes
+) -> None:
+    model = {"spans": {span_type: {"kind": "internal", "attributes": {}}}}
+
+    assert DOMAIN.classifier(model)("", "internal", attributes) == {span_type}
+
+
 def test_renamed_client_agent_type_still_separates_from_internal() -> None:
     model = {
         "spans": {
