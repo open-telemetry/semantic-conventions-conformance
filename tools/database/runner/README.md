@@ -26,17 +26,10 @@ runner_config:
 selector-to-factory and semantic-convention registration is in
 [`_registry.py`](src/database_conformance/_registry.py). A session starts one
 container, waits for its declared readiness check, applies any declared
-initialization, and removes the container when the session closes. SQL and Redis
-workloads create or verify the data they need. HBase creates its table and one
-deterministic row for read scenarios.
-
-The HBase fixtures build local images from checksum-verified Apache HBase
-1.7.2 and 2.4.18 binary distributions and a digest-pinned Eclipse Temurin
-base, then remove each image when its session closes. Each client runs
-against its matching server API line. HBase advertises fixed ZooKeeper,
-master, and region-server ports, so only one HBase conformance session can
-run on a host at a time. Startup failures include the fixture's container
-logs.
+initialization, and removes the container when the session closes. Workloads
+normally create or verify their own data. The HBase fixture seeds its read row
+and uses fixed ports; its initialization, image pinning, and concurrency limits
+are documented in the [HBase scenario notes](../../../scenarios/database/java/hbase/README.md).
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
@@ -44,7 +37,7 @@ environment declarations:
 | Variable            | Value                                        |
 | ------------------- | -------------------------------------------- |
 | `DATABASE_HOST`     | Loopback address published by Docker         |
-| `DATABASE_PORT`     | Published host port; fixed for HBase          |
+| `DATABASE_PORT`     | Published host port; fixed for HBase         |
 | `DATABASE_NAME`     | Test database name or logical database index |
 | `DATABASE_USER`     | Test user                                    |
 | `DATABASE_PASSWORD` | Test-only password                           |

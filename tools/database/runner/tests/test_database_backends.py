@@ -14,7 +14,13 @@ import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
 
-from database_conformance import _hbase, _mariadb, _postgres, _redis, _sql_server
+from database_conformance import (
+    _hbase,
+    _mariadb,
+    _postgres,
+    _redis,
+    _sql_server,
+)
 from database_conformance._container import DatabaseContainer
 from database_conformance._hbase import (
     HBASE_1_IMAGE,
@@ -309,8 +315,10 @@ class StubImage:
         self.removed = True
 
 
+@pytest.mark.parametrize("backend_type", [HBase1, HBase2])
 def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
     monkeypatch: pytest.MonkeyPatch,
+    backend_type: type[HBase1] | type[HBase2],
 ) -> None:
     container = StubContainer(
         port=HBASE_ZOOKEEPER_PORT,
@@ -325,7 +333,7 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
 
     install_stub(monkeypatch, _hbase, container)
     monkeypatch.setattr(_hbase, "DockerImage", image_factory)
-    with HBase1() as database:
+    with backend_type() as database:
         assert database.variables == {
             "DATABASE_HOST": "127.0.0.1",
             "DATABASE_PORT": "2181",
@@ -336,13 +344,18 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
 
     assert image.built
     assert image.removed
-    assert image_arguments["tag"] == HBASE_1_IMAGE
+    assert image_arguments["tag"] == (
+        HBASE_1_IMAGE if backend_type is HBase1 else HBASE_2_IMAGE
+    )
     assert image_arguments["clean_up"] is True
     assert image_arguments["buildargs"] == {
-        "HBASE_VERSION": "1.7.2",
+        "HBASE_VERSION": "1.7.2" if backend_type is HBase1 else "2.4.18",
         "HBASE_SHA512": (
             "43c633606f4316319d0e872862bfee935a191308239ca42ad9545402fb9a83f9"
             "399845123bdcda60c315bcb09bd7555375b73afcb3d668453d56e3985bf284fa"
+            if backend_type is HBase1
+            else "1d90aa46271d262abbebc6b807778353a71743be5c30491bec7ccafd05f2ecf8"
+            "b3ff5c193addf28efd8d0cae4e1748ee74fdefd97fc8499cb1c163f5a2eed48d"
         ),
     }
     assert container.started
@@ -363,6 +376,10 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
         "-n",
         "/tmp/otel-conformance-hbase.rb",
     ]
+    assert len(container.transfers) == 1
+    schema, destination = container.transfers[0]
+    assert destination == "/tmp/otel-conformance-hbase.rb"
+    assert b"put 'conformance:items', 'seed', 'data:name', 'seed'" in schema
 
 
 def test_hbase_image_build_failure_is_actionable(

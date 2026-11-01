@@ -36,6 +36,18 @@ def test_hbase_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.hbase.client"}
 
 
+@pytest.mark.parametrize("kind", ["client", "server", None])
+def test_hbase_classifier_requires_a_registered_client_span_type(
+    kind: str | None,
+) -> None:
+    classify = classifier(
+        {"spans": {"db.hbase.client": {"kind": kind}} if kind else {}}
+    )
+    assert classify("Get items", "CLIENT", {"db.system.name": "hbase"}) == (
+        {"db.hbase.client"} if kind == "client" else set()
+    )
+
+
 def test_an_unsupported_database_system_is_not_classified() -> None:
     assert (
         classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"}) == set()
