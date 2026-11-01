@@ -30,6 +30,10 @@ library instrumentation. A package directory holds its conformance
 configuration, so another client can reuse the workload without duplicating
 JDBC code.
 
+R2DBC packages share a reactive workload with Java-agent and standalone library
+launchers. Its [workload guide](shared/r2dbc/README.md) documents the named
+operations and separate PostgreSQL telemetry contract.
+
 Redis clients reuse a common workload and can be run with Java-agent or supported
 library instrumentation. The
 [Redis workload guide](shared/redis/README.md) documents its commands,
