@@ -14,6 +14,8 @@ import pytest
 import otel_conformance_php
 from otel_conformance_php import lock_projects, relock, relock_command
 
+REPOSITORY = Path(__file__).resolve().parents[3]
+
 TRACKED = (
     "scenarios/http/php/guzzle/opentelemetry-guzzle/composer.lock",
     "scenarios/http/php/slim/opentelemetry-slim/composer.lock",
@@ -63,10 +65,14 @@ def test_only_the_lock_is_rewritten_and_minimally() -> None:
 
 
 @pytest.mark.parametrize(
-    "relative", [path for path in TRACKED if path.startswith("scenarios/")]
+    "project",
+    [
+        project
+        for project in lock_projects(REPOSITORY)
+        if project.is_relative_to(REPOSITORY / "scenarios")
+    ],
 )
-def test_path_repositories_pin_the_required_versions(relative: str) -> None:
-    project = (Path(__file__).resolve().parents[3] / relative).parent
+def test_path_repositories_pin_the_required_versions(project: Path) -> None:
     manifest = json.loads(
         (project / "composer.json").read_text(encoding="utf-8")
     )
