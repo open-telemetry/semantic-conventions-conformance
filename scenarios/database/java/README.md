@@ -37,7 +37,7 @@ connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
 
-MongoDB covers synchronous, legacy asynchronous, and Reactive Streams drivers
+MongoDB covers the latest stable synchronous and Reactive Streams drivers
 with both Java-agent and published standalone library instrumentation. Its
 [workload guide](shared/mongodb/README.md) and
 [backend notes](mongodb/README.md) describe commands, connection settings, and

@@ -18,7 +18,8 @@ it to the client API. See the
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
 MongoDB's [workload guide](java/shared/mongodb/README.md) describes the shared
-commands and telemetry expectations across its three driver APIs.
+commands and telemetry expectations across its synchronous and Reactive Streams
+driver APIs.
 
 ## Running a package
 

@@ -27,8 +27,6 @@ Run packages from the repository root:
 pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-javaagent
 otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-library
-otel-conformance scenarios/database/java/mongodb/async/opentelemetry-javaagent
-otel-conformance scenarios/database/java/mongodb/async/opentelemetry-library
 otel-conformance scenarios/database/java/mongodb/reactive/opentelemetry-javaagent
 otel-conformance scenarios/database/java/mongodb/reactive/opentelemetry-library
 ```
