@@ -13,8 +13,8 @@ dependencies = [
     "opentelemetry-sdk==1.45.1",
     "opentelemetry-exporter-otlp-proto-grpc==1.45.1",
     "opentelemetry-distro==0.66b1",
-    "opentelemetry-util-genai==1.2b0",
-    "opentelemetry-instrumentation-genai-qwen-agent==1.2b0",
+    "opentelemetry-util-genai==1.3b0",
+    "opentelemetry-instrumentation-genai-qwen-agent==1.3b0",
 ]
 
 [tool.uv]
