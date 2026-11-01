@@ -1,0 +1,11 @@
+{
+  "name": "@otel-conformance/xml-http-request-scenarios",
+  "version": "0.1.0",
+  "private": true,
+  "description": "What the browser XMLHttpRequest HTTP conformance scenario does, with no OpenTelemetry in it.",
+  "license": "Apache-2.0",
+  "main": "client.js",
+  "dependencies": {
+    "@otel-conformance/http-test-client": "0.1.0"
+  }
+}

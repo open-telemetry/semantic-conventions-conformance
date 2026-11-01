@@ -6,11 +6,13 @@
   "license": "Apache-2.0",
   "workspaces": [
     "express/*",
+    "fetch/*",
     "http/*",
-    "undici/*"
+    "undici/*",
+    "xml-http-request/*"
   ],
   "scripts": {
-    "test": "npm ci --ignore-scripts --prefix ../../../tools/http/test-client/js && npm --prefix ../../../tools/http/test-client/js test && npm --prefix ../../../tools/js/scenario-sdk test",
+    "test": "npm ci --ignore-scripts --prefix ../../../tools/http/test-client/js && npm --prefix ../../../tools/http/test-client/js test && npm --prefix ../../../tools/js/scenario-sdk test && node node_modules/@otel-conformance/browser-runner/test/index.test.js && node fetch/opentelemetry-fetch/test/client.test.js && node xml-http-request/opentelemetry-xml-http-request/test/client.test.js",
     "format": "prettier --write . ../../../tools/js ../../../tools/http/test-client/js",
     "format:check": "prettier --check . ../../../tools/js ../../../tools/http/test-client/js"
   },
