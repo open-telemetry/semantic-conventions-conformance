@@ -16,7 +16,7 @@ MONGODB_ROOT_USER = "root"
 MONGODB_ROOT_PASSWORD = "conformance-root"
 MONGODB_PORT = 27017
 # renovate: datasource=docker depName=mongo versioning=docker
-MONGODB_IMAGE = "mongo:8.0.29-noble@sha256:021b2d5ae9d253f2cca17491cc8d03aed8df3c840f3252066aa62d3277fc406e"
+MONGODB_IMAGE = "mongo:7.0.45-jammy@sha256:94aea1479556ad4e5aba7a31a6d53eb7b0ae76741950da45a13d5df5cddf1b3b"
 
 MONGODB = BackendSpec(
     name="MongoDB",

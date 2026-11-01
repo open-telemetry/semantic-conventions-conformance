@@ -1,10 +1,17 @@
 # MongoDB backend
 
 Packages select `runner_config.backend: mongodb`. The runner starts a
-digest-pinned MongoDB 8.0 container and supplies `DATABASE_HOST`, `DATABASE_PORT`,
+digest-pinned MongoDB 7.0.45 container and supplies `DATABASE_HOST`, `DATABASE_PORT`,
 `DATABASE_NAME`, `DATABASE_USER`, and `DATABASE_PASSWORD`. Drivers construct
 their native connection settings from those fields and authenticate against
 the supplied database.
+
+MongoDB 7.0.45 is the temporary supported test server while available MongoDB 8.0
+images reject Ubuntu 26.04's kernel version string. The vendor's
+[Ubuntu kernel compatibility fix](https://jira.mongodb.org/browse/SERVER-131779)
+is in MongoDB 8.0.37, but that official Docker image is not yet published.
+The driver versions, instrumentation modes, workloads, and expectations do not
+change with this server choice.
 
 Readiness requires authorization to be enabled, so bootstrap waits for the
 final daemon rather than the image's temporary initialization server. The
