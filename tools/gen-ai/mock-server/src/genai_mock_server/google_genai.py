@@ -403,6 +403,10 @@ def _stream_chunks():
             },
         }
     )
+    # Real Gemini streams carry both on every chunk.
+    for chunk in chunks:
+        chunk["modelVersion"] = "gemini-2.0-flash"
+        chunk["responseId"] = "resp-mock-stream-001"
     return chunks
 
 

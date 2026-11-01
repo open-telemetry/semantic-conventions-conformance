@@ -1,9 +1,12 @@
-# Validates the JSON payload of GenAI content attributes against the semconv
-# JSON schemas. The schemas ship with the semconv-genai registry
+# Validates the payload of GenAI content attributes against the semconv JSON
+# schemas. The schemas ship with the semconv-genai registry
 # (model/gen-ai/*.json) and are loaded into rego data by weaver's `--advice-data`
 # flag, keyed by the schema file's stem (e.g. gen-ai-input-messages.json ->
 # data["gen-ai-input-messages"]), so this policy references them as data
 # documents rather than inlining them.
+#
+# A content attribute is checked in either form: a structured value (an array
+# or map) as is, or a JSON string after parsing it.
 
 package live_check_advice
 
@@ -25,7 +28,6 @@ _content_sample := {"name": attr_name, "value": attr_value, "schema": data[key]}
 	input.sample.attribute
 	attr_name := input.sample.attribute.name
 	attr_value := input.sample.attribute.value
-	is_string(attr_value)
 
 	key := _genai_content_schema_keys[attr_name]
 	data[key]
@@ -40,11 +42,21 @@ deny contains _content_finding(
 	),
 ) if {
 	sample := _content_sample
-	json.is_valid(sample.value)
-	parsed := json.unmarshal(sample.value)
+	document := _content_document(sample.value)
 
-	[matched, errors] := json.match_schema(parsed, sample.schema)
+	[matched, errors] := json.match_schema(document, sample.schema)
 	not matched
+}
+
+# The document the schema describes: a structured value is that document
+# already; a string is parsed first.
+_content_document(value) := value if is_array(value)
+
+_content_document(value) := value if is_object(value)
+
+_content_document(value) := json.unmarshal(value) if {
+	is_string(value)
+	json.is_valid(value)
 }
 
 # An implementation that puts something other than JSON in a content attribute
@@ -59,6 +71,7 @@ deny contains _content_finding(
 	),
 ) if {
 	sample := _content_sample
+	is_string(sample.value)
 	not json.is_valid(sample.value)
 }
 

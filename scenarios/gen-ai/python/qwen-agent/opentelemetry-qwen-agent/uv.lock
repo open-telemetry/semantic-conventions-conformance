@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -1216,7 +1216,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-genai-qwen-agent"
-version = "1.2b0"
+version = "1.3b0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1224,9 +1224,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-util-genai" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/67/2b17ed22b1641b68d62e20bab68903173829eb4410c6dadc4ce7e78c4acf/opentelemetry_instrumentation_genai_qwen_agent-1.2b0.tar.gz", hash = "sha256:67787c1c65f345685fa0e5d5c4797fec81feb465bf730903c5758a62fa7c8de8", size = 22869, upload-time = "2026-09-24T16:36:55.99Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/eb/33b8fcd70f01d0902ba80bae7d9026b38a407677467edc8175e55b4e6893/opentelemetry_instrumentation_genai_qwen_agent-1.3b0.tar.gz", hash = "sha256:0ec9b26f433a19ae31ec5fba600181e46fe29a86f32bf8cb616c97f024d709b6", size = 23865, upload-time = "2026-10-23T03:13:05.545Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/1c/2a02b86688750f48543291520dcbe340260dd165ad69be730ae59838d655/opentelemetry_instrumentation_genai_qwen_agent-1.2b0-py3-none-any.whl", hash = "sha256:f18d5b817aaedf7e1b1da2b9288978d7a86cf4026d62610e06dcfe735c84f7d0", size = 14529, upload-time = "2026-09-24T16:36:54.716Z" },
+    { url = "https://files.pythonhosted.org/packages/71/aa/2092697db4451125acf4c73e7b2d297337745e18166052b7b3f7eb0a6a95/opentelemetry_instrumentation_genai_qwen_agent-1.3b0-py3-none-any.whl", hash = "sha256:cff583cf8233e5fffcf1790ed0ddd3951ba110158a927bc4df065c79d39c2566", size = 14764, upload-time = "2026-10-23T03:13:03.989Z" },
 ]
 
 [[package]]
@@ -1270,7 +1270,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-util-genai"
-version = "1.2b0"
+version = "1.3b0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1278,9 +1278,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a2/57/6315b3fd34c4723e06769c60f7c956fe687e50201858ea91443b3ac84adb/opentelemetry_util_genai-1.2b0.tar.gz", hash = "sha256:1de6cadafc86f0c1a9c6d4495859d954652a5a48485e261a0506f15f9ede01a1", size = 95041, upload-time = "2026-09-24T16:38:06.17Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/ca/e0c67efb27e98f05228884f9ec3b7a807c1633a601d119df9a74c3ae9d47/opentelemetry_util_genai-1.3b0.tar.gz", hash = "sha256:29e7e9cf9b9f4742c178e837237f72356b8903a004b0edcc23e779232da7719f", size = 132472, upload-time = "2026-10-23T03:13:14.73Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/74/8f244eebabc40addd757bdccbc891f182bf70f9c6b24949e98f449a64363/opentelemetry_util_genai-1.2b0-py3-none-any.whl", hash = "sha256:2ac7ef06eb7f31396532cbdef7a53ee128b9fdf37f39098b8e2140bac31d9abb", size = 59187, upload-time = "2026-09-24T16:38:04.816Z" },
+    { url = "https://files.pythonhosted.org/packages/be/63/08996e24d3ac08598ff749b52d177fd71384343cc65eaa8320eb11bb6535/opentelemetry_util_genai-1.3b0-py3-none-any.whl", hash = "sha256:73ed59f1eeca33d6c41e6aff57b5d2c1133807bfc8832978ba3edeec7eab8cda", size = 74411, upload-time = "2026-10-23T03:13:13.145Z" },
 ]
 
 [[package]]
@@ -1719,9 +1719,9 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
-    { name = "opentelemetry-instrumentation-genai-qwen-agent", specifier = "==1.2b0" },
+    { name = "opentelemetry-instrumentation-genai-qwen-agent", specifier = "==1.3b0" },
     { name = "opentelemetry-sdk", specifier = "==1.45.1" },
-    { name = "opentelemetry-util-genai", specifier = "==1.2b0" },
+    { name = "opentelemetry-util-genai", specifier = "==1.3b0" },
     { name = "python-dateutil", specifier = "==2.9.0.post0" },
     { name = "qwen-agent", specifier = "==0.0.34" },
     { name = "soundfile", specifier = "==0.14.0" },

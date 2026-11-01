@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -986,9 +986,9 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
-    { name = "opentelemetry-instrumentation-genai-llama-index", specifier = "==1.2b0" },
+    { name = "opentelemetry-instrumentation-genai-llama-index", specifier = "==1.3b0" },
     { name = "opentelemetry-sdk", specifier = "==1.45.1" },
-    { name = "opentelemetry-util-genai", specifier = "==1.2b0" },
+    { name = "opentelemetry-util-genai", specifier = "==1.3b0" },
 ]
 
 [[package]]
@@ -1489,7 +1489,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-genai-llama-index"
-version = "1.2b0"
+version = "1.3b0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1497,9 +1497,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-util-genai" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/60/2e/149aac8e68e1d097241db2bd8419c01d95cfd5037a3367bb368469658f76/opentelemetry_instrumentation_genai_llama_index-1.2b0.tar.gz", hash = "sha256:cfadd5428f4dee30f3788470c4667f28dc2d8c93cfd0e2df5795c7e06270c7fe", size = 37258, upload-time = "2026-09-24T16:37:34.354Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/2e/b84c89e068fa106ffd0bb63d00ec5e0e0b9a185c444a43206160ad40fa40/opentelemetry_instrumentation_genai_llama_index-1.3b0.tar.gz", hash = "sha256:97e95028ea01030440adf1d39a320fa0351e41c4c4b6ef772605fb0cdc757f65", size = 37448, upload-time = "2026-10-23T03:13:02.182Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/8c/d5f9922d7c44fba27004b02a4afa3ce7793cb9fda1670b442509cfb5389e/opentelemetry_instrumentation_genai_llama_index-1.2b0-py3-none-any.whl", hash = "sha256:58f65d29492f7d55c05c06db1264ec5f912bf45438cf57d45ae38286f25ae849", size = 20191, upload-time = "2026-09-24T16:37:32.766Z" },
+    { url = "https://files.pythonhosted.org/packages/47/fc/7a86a205246d9c7fb3530b876ea42b71804f3c2ec1c5436f29ddeb34a5de/opentelemetry_instrumentation_genai_llama_index-1.3b0-py3-none-any.whl", hash = "sha256:f79785bdcb57e001259f5d87cf34f529a05b3a7227f3f321e9abbc3b027e3538", size = 20295, upload-time = "2026-10-23T03:13:00.724Z" },
 ]
 
 [[package]]
@@ -1543,7 +1543,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-util-genai"
-version = "1.2b0"
+version = "1.3b0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1551,9 +1551,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a2/57/6315b3fd34c4723e06769c60f7c956fe687e50201858ea91443b3ac84adb/opentelemetry_util_genai-1.2b0.tar.gz", hash = "sha256:1de6cadafc86f0c1a9c6d4495859d954652a5a48485e261a0506f15f9ede01a1", size = 95041, upload-time = "2026-09-24T16:38:06.17Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/ca/e0c67efb27e98f05228884f9ec3b7a807c1633a601d119df9a74c3ae9d47/opentelemetry_util_genai-1.3b0.tar.gz", hash = "sha256:29e7e9cf9b9f4742c178e837237f72356b8903a004b0edcc23e779232da7719f", size = 132472, upload-time = "2026-10-23T03:13:14.73Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/74/8f244eebabc40addd757bdccbc891f182bf70f9c6b24949e98f449a64363/opentelemetry_util_genai-1.2b0-py3-none-any.whl", hash = "sha256:2ac7ef06eb7f31396532cbdef7a53ee128b9fdf37f39098b8e2140bac31d9abb", size = 59187, upload-time = "2026-09-24T16:38:04.816Z" },
+    { url = "https://files.pythonhosted.org/packages/be/63/08996e24d3ac08598ff749b52d177fd71384343cc65eaa8320eb11bb6535/opentelemetry_util_genai-1.3b0-py3-none-any.whl", hash = "sha256:73ed59f1eeca33d6c41e6aff57b5d2c1133807bfc8832978ba3edeec7eab8cda", size = 74411, upload-time = "2026-10-23T03:13:13.145Z" },
 ]
 
 [[package]]

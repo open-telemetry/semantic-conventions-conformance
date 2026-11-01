@@ -18,7 +18,7 @@ and supplies its URL as `${MOCK_SERVER_URL}`.
 | --- | --- |
 | `anthropic` | `/v1/messages`, including client tools, non-streaming web search, streaming text and compaction |
 | `anthropic_agents`, `mistral_agents` | hosted-agent creation |
-| `assistants` | OpenAI Assistants, threads and runs |
+| `assistants` | OpenAI Assistants, threads and runs, including streamed runs and tool output submission |
 | `bedrock` | `converse`, `converse-stream`, `invoke` |
 | `bedrock_agent`, `bedrock_agentcore` | agent invocation, knowledge-base retrieval/generation (including streaming), and the memory APIs |
 | `cohere` | `/v1` and `/v2` chat and embed |

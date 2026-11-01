@@ -34,7 +34,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -48,7 +48,7 @@ jobs:
 
       - name: Set up Java for Redis connection tests
         if: runner.os == 'Linux'
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "25"
@@ -67,6 +67,12 @@ jobs:
             :shared:redis:lettuce:opentelemetry-library:prepareRuntime \
             :shared:redis:rediscala:opentelemetry-javaagent:prepareRuntime \
             :shared:redis:redisson:opentelemetry-javaagent:prepareRuntime
+
+      - name: Test Java project discovery
+        if: runner.os == 'Linux'
+        env:
+          OTEL_CONFORMANCE_TEST_JAVA_DISCOVERY: "1"
+        run: python -m pytest tools/database/runner/tests/test_java_project_discovery.py
 
       # The report tests run here, not with the nightly rebuild: they never
       # resolve a coverage model, so they do not need weaver.
@@ -106,7 +112,7 @@ jobs:
           args: check .
 
       - name: Set up Java
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "25"
@@ -123,7 +129,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.21.0"
+          node-version: "24.22.1"
 
       # Installs, formats and unit-tests every Node package the HTTP scenarios
       # use, including the ones shared with other domains.
@@ -140,9 +146,9 @@ jobs:
           npm --prefix docs test
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1.329.0
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
         with:
-          ruby-version: "4.0.7"
+          ruby-version: "4.0.9"
           bundler-cache: true
           working-directory: tools/http/test-client/ruby
 
@@ -243,7 +249,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
 
@@ -290,7 +296,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
 
@@ -365,39 +371,9 @@ jobs:
         id: matrix
         shell: bash
         run: |
-          scenario_paths="$(git ls-files 'scenarios/**/conformance.yaml')"
-          if [[ -z "$scenario_paths" ]]; then
-            echo "::error::no conformance scenarios found"
-            exit 1
-          fi
           matrix="$(
-            printf '%s\n' "$scenario_paths" |
-              jq -Rsc '
-                split("\n") |
-                map(
-                  select(length > 0) |
-                  split("/") as $parts |
-                  if ($parts | length) < 4 then
-                    error("unexpected conformance scenario path: " + ($parts | join("/")))
-                  elif $parts[2] == "ruby" then
-                    {
-                      domain: $parts[1],
-                      language: $parts[2],
-                      matrix_id: ($parts[1:-1] | join("-")),
-                      scenario_root: ($parts[0:-1] | join("/"))
-                    }
-                  else
-                    {
-                      domain: $parts[1],
-                      language: $parts[2],
-                      matrix_id: ($parts[1:3] | join("-")),
-                      scenario_root: ($parts[0:3] | join("/"))
-                    }
-                  end
-                ) |
-                unique_by(.scenario_root) |
-                {include: .}
-              '
+            git ls-files 'scenarios/**/conformance.yaml' |
+              python3 tools/runner/src/opentelemetry/conformance/_scenario_matrix.py
           )"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
@@ -445,7 +421,7 @@ jobs:
 
       # Every leg: the relock commands are Python CLIs.
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
 
@@ -458,7 +434,7 @@ jobs:
         if: matrix.ecosystem == 'js'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.21.0"
+          node-version: "24.22.1"
 
       - name: Set up Go
         if: matrix.ecosystem == 'go'
@@ -468,17 +444,17 @@ jobs:
 
       - name: Set up uv
         if: matrix.ecosystem == 'python'
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
-          version: "0.13.1"
+          version: "0.13.6"
 
       # No bundler-cache: it runs a frozen `bundle install`, which fails on
       # exactly the stale lock this job is here to fix.
       - name: Set up Ruby
         if: matrix.ecosystem == 'ruby'
-        uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1.329.0
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
         with:
-          ruby-version: "4.0.7"
+          ruby-version: "4.0.9"
 
       - name: Set up PHP
         if: matrix.ecosystem == 'php'
@@ -548,7 +524,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      SCENARIO_ROOT: ${{ matrix.scenario_root }}
+      SCENARIO_ROOTS: ${{ matrix.scenario_roots }}
     concurrency:
       group: ${{ github.workflow }}-scenarios-${{ matrix.matrix_id }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -587,26 +563,27 @@ jobs:
           fi
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
 
       - name: Set up uv
         if: matrix.language == 'python'
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           # `uv lock` can rewrite the lock format with a new uv, so relocking
           # needs the same uv every time.
-          version: "0.13.1"
+          version: "0.13.6"
           enable-cache: true
+          cache-suffix: ${{ matrix.matrix_id }}
           # Scope lockfiles to this matrix job so each Python matrix job caches
           # its own package set instead of sharing one.
-          cache-dependency-glob: "scenarios/${{ matrix.domain }}/${{ matrix.language }}/**/uv.lock"
+          cache-dependency-glob: ${{ matrix.cache_dependency_glob }}
 
       # A JVM scenario builds itself from source in its `setup:` before it runs.
       - name: Set up Java
         if: matrix.language == 'java'
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "25"
@@ -620,7 +597,7 @@ jobs:
         if: matrix.language == 'js'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.21.0"
+          node-version: "24.22.1"
           cache: npm
           cache-dependency-path: "scenarios/**/package-lock.json"
 
@@ -635,11 +612,11 @@ jobs:
 
       - name: Set up Ruby
         if: matrix.language == 'ruby'
-        uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1.329.0
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
         with:
-          ruby-version: "4.0.7"
+          ruby-version: "4.0.9"
           bundler-cache: true
-          working-directory: ${{ matrix.scenario_root }}
+          working-directory: ${{ matrix.scenario_roots }}
 
       - name: Set up PHP
         if: matrix.language == 'php'
@@ -704,11 +681,13 @@ jobs:
         env:
           FORCE_COLOR: "1" # the log renders ANSI; the step's stdout is no tty
         run: |
-          set -uo pipefail
-          mapfile -t directories < <(
-            find "$SCENARIO_ROOT" -name .venv -prune -o \
-              -name conformance.yaml -exec dirname {} \; | sort
-          )
+          set -euo pipefail
+          mapfile -t roots <<< "$SCENARIO_ROOTS"
+          # Write before reading: a failed find must not silently skip a shard.
+          find "${roots[@]}" -name .venv -prune -o \
+            -name conformance.yaml -exec dirname {} \; \
+            | sort > "$RUNNER_TEMP/scenario-directories"
+          mapfile -t directories < "$RUNNER_TEMP/scenario-directories"
           failed=()
           for directory in "${directories[@]}"; do
             echo "::group::$directory"
@@ -737,9 +716,13 @@ jobs:
         env:
           DATA_PATCH: ${{ runner.temp }}/data.patch
         run: |
-          data_pathspec=":(glob)$SCENARIO_ROOT/**/data.json"
-          git add --intent-to-add -- "$SCENARIO_ROOT"
-          git diff --binary -- "$data_pathspec" > "$DATA_PATCH"
+          mapfile -t roots <<< "$SCENARIO_ROOTS"
+          data_pathspecs=()
+          for root in "${roots[@]}"; do
+            data_pathspecs+=(":(glob)$root/**/data.json")
+          done
+          git add --intent-to-add -- "${roots[@]}"
+          git diff --binary -- "${data_pathspecs[@]}" > "$DATA_PATCH"
           if [[ -s "$DATA_PATCH" ]]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
@@ -756,8 +739,9 @@ jobs:
       - name: Check the committed coverage is up to date
         if: ${{ !cancelled() }}
         run: |
-          git add --intent-to-add -- "$SCENARIO_ROOT"
-          if ! git diff --exit-code -- "$SCENARIO_ROOT"; then
+          mapfile -t roots <<< "$SCENARIO_ROOTS"
+          git add --intent-to-add -- "${roots[@]}"
+          if ! git diff --exit-code -- "${roots[@]}"; then
             echo "::error::the committed data.json files are out of date — run the scenarios and commit the result"
             exit 1
           fi
@@ -776,7 +760,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: weaver-reports-${{ matrix.matrix_id }}
-          path: ${{ matrix.scenario_root }}/**/output/weaver-reports/*.json
+          path: ${{ matrix.report_paths }}
           if-no-files-found: warn
 
   required-status-check:

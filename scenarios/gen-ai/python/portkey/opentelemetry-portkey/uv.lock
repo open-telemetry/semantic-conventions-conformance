@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -355,7 +355,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-genai-portkey"
-version = "1.2b0"
+version = "1.3b0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -364,9 +364,9 @@ dependencies = [
     { name = "opentelemetry-util-genai" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c7/dd/28d2676b78689afc9e707746ff2d9583d1929ac083e739e0969c20aef88d/opentelemetry_instrumentation_genai_portkey-1.2b0.tar.gz", hash = "sha256:7b4cd134ff676f742529b548ce38ed603458bc6a12f41c539561e72a486c0c20", size = 31375, upload-time = "2026-09-24T16:38:35.658Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/93/97ee393162f0ad2ba771551e756d51b01212edd911e32a2f726896406ab3/opentelemetry_instrumentation_genai_portkey-1.3b0.tar.gz", hash = "sha256:237b5fe68005a49314e831edc717f33c5bf9d24d51243b1122c8b198d63fb168", size = 31769, upload-time = "2026-10-23T03:13:06.357Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/6f/cc658f4a674ad57a5abfec83253cd1cb4ca26c896a7c5ad29ee96d933eef/opentelemetry_instrumentation_genai_portkey-1.2b0-py3-none-any.whl", hash = "sha256:879e4858503625171925d41fa3b5840afaa0ca79eb3d741a1ecae13b98325e75", size = 16950, upload-time = "2026-09-24T16:38:34.368Z" },
+    { url = "https://files.pythonhosted.org/packages/69/db/09639ccb9d20f3c3dd68ea338ccf5b8b76741dd859a93c34b748b18722ff/opentelemetry_instrumentation_genai_portkey-1.3b0-py3-none-any.whl", hash = "sha256:9cbfbe42772c79d1e6f13e03de01f7a49d01271ebc6abfa9b65bedd5b7d0d883", size = 17022, upload-time = "2026-10-23T03:13:04.595Z" },
 ]
 
 [[package]]
@@ -410,7 +410,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-util-genai"
-version = "1.2b0"
+version = "1.3b0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -418,9 +418,9 @@ dependencies = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a2/57/6315b3fd34c4723e06769c60f7c956fe687e50201858ea91443b3ac84adb/opentelemetry_util_genai-1.2b0.tar.gz", hash = "sha256:1de6cadafc86f0c1a9c6d4495859d954652a5a48485e261a0506f15f9ede01a1", size = 95041, upload-time = "2026-09-24T16:38:06.17Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/ca/e0c67efb27e98f05228884f9ec3b7a807c1633a601d119df9a74c3ae9d47/opentelemetry_util_genai-1.3b0.tar.gz", hash = "sha256:29e7e9cf9b9f4742c178e837237f72356b8903a004b0edcc23e779232da7719f", size = 132472, upload-time = "2026-10-23T03:13:14.73Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/74/8f244eebabc40addd757bdccbc891f182bf70f9c6b24949e98f449a64363/opentelemetry_util_genai-1.2b0-py3-none-any.whl", hash = "sha256:2ac7ef06eb7f31396532cbdef7a53ee128b9fdf37f39098b8e2140bac31d9abb", size = 59187, upload-time = "2026-09-24T16:38:04.816Z" },
+    { url = "https://files.pythonhosted.org/packages/be/63/08996e24d3ac08598ff749b52d177fd71384343cc65eaa8320eb11bb6535/opentelemetry_util_genai-1.3b0-py3-none-any.whl", hash = "sha256:73ed59f1eeca33d6c41e6aff57b5d2c1133807bfc8832978ba3edeec7eab8cda", size = 74411, upload-time = "2026-10-23T03:13:13.145Z" },
 ]
 
 [[package]]
@@ -472,9 +472,9 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
-    { name = "opentelemetry-instrumentation-genai-portkey", specifier = "==1.2b0" },
+    { name = "opentelemetry-instrumentation-genai-portkey", specifier = "==1.3b0" },
     { name = "opentelemetry-sdk", specifier = "==1.45.1" },
-    { name = "opentelemetry-util-genai", specifier = "==1.2b0" },
+    { name = "opentelemetry-util-genai", specifier = "==1.3b0" },
     { name = "portkey-ai", specifier = "==2.3.4" },
 ]
 

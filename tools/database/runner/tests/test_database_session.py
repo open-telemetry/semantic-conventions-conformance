@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from contextlib import contextmanager
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -71,7 +72,12 @@ def test_database_session_injects_backend_variables(
             events.append("session-exit")
 
     monkeypatch.setitem(
-        database_conformance._BACKENDS, "postgresql", StubBackend
+        database_conformance._BACKEND_REGISTRY,
+        "postgresql",
+        replace(
+            database_conformance._BACKEND_REGISTRY["postgresql"],
+            factory=StubBackend,
+        ),
     )
     monkeypatch.setattr(
         database_conformance,
@@ -130,7 +136,14 @@ def test_database_session_closes_backend_after_an_error(
         del directory, kwargs
         yield object()
 
-    monkeypatch.setitem(database_conformance._BACKENDS, "redis", StubBackend)
+    monkeypatch.setitem(
+        database_conformance._BACKEND_REGISTRY,
+        "redis",
+        replace(
+            database_conformance._BACKEND_REGISTRY["redis"],
+            factory=StubBackend,
+        ),
+    )
     monkeypatch.setattr(
         database_conformance,
         "DOMAIN",

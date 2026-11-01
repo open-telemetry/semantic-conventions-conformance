@@ -235,7 +235,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-together"
-version = "0.1.12"
+version = "0.1.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -246,9 +246,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/58/0b/4529f180160a5517572d590e83cfaeb3761201757270e9dedcfb897cb026/openinference_instrumentation_together-0.1.12.tar.gz", hash = "sha256:de5f7ee7a47752133b75db61ad0d78e350d2a8428e3d7bbbe3616b1be9a0d877", size = 14401, upload-time = "2026-10-09T18:29:09.657Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/7c/53f346cf402e17ec297e7536d061a22318cdd6643be476eda7184374f15f/openinference_instrumentation_together-0.1.13.tar.gz", hash = "sha256:05489684e256a4f659bad2b025ae594c5ae4e09e85d486afdf51b11c98b6f6b0", size = 14362, upload-time = "2026-10-23T20:49:58.975Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/c2/f13232c5defda5a2296b310a678fbab2915149d06df3a43b38a06bfd4adb/openinference_instrumentation_together-0.1.12-py3-none-any.whl", hash = "sha256:85dd0c3500585044741028975ed17b566e33901efab72d35d8424dfce9c34b49", size = 19469, upload-time = "2026-10-09T18:29:08.345Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/f9/8ee42900c3bcbd2605cdf01da9ba022a575aee9dd1d625438a5ebfa84f72/openinference_instrumentation_together-0.1.13-py3-none-any.whl", hash = "sha256:00a93e9377f544ed60286bffa16926cfe30f5e9252392ca7afcc8c51f46cda1f", size = 19200, upload-time = "2026-10-23T20:49:57.641Z" },
 ]
 
 [[package]]
@@ -578,7 +578,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "openinference-instrumentation-together", specifier = "==0.1.12" },
+    { name = "openinference-instrumentation-together", specifier = "==0.1.13" },
     { name = "opentelemetry-api", specifier = "==1.45.1" },
     { name = "opentelemetry-distro", specifier = "==0.66b1" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.45.1" },
