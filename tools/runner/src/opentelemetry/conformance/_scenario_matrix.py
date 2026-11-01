@@ -73,7 +73,7 @@ def matrix(
                         f"{root}/**/uv.lock" for root in shard
                     ),
                     "report_paths": "\n".join(
-                        f"{root}/**/output/weaver-reports/*.json"
+                        f"{root}/**/output/reports/**/*.json"
                         for root in shard
                     ),
                 }

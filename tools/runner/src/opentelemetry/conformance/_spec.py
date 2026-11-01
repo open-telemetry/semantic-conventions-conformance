@@ -18,6 +18,8 @@ from typing import Literal, Mapping, Sequence, cast
 import yaml
 
 SPEC_FILE = "conformance.yaml"
+OtlpProtocol = Literal["grpc", "http/protobuf"]
+DEFAULT_OTLP_PROTOCOL: OtlpProtocol = "grpc"
 _SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
 
 # Who initiates the action a scenario measures, declared once at the top of a
@@ -52,6 +54,15 @@ class AttributeMatcher:
         if self.distinct is not None:
             return f"{self.distinct} distinct values"
         return f"== {self.equals!r}"
+
+
+@dataclass(frozen=True)
+class InstrumentationScopeExpectation:
+    """Expectations for a signal's instrumentation scope."""
+
+    name: AttributeMatcher | None = None
+    version: AttributeMatcher | None = None
+    schema_url: AttributeMatcher | None = None
 
 
 @dataclass(frozen=True)
@@ -119,6 +130,7 @@ class SpanExpectation:
     attributes: Mapping[str, AttributeMatcher] = field(
         default_factory=dict[str, AttributeMatcher]
     )
+    instrumentation_scope: InstrumentationScopeExpectation | None = None
 
     def describe(self) -> str:
         return self.match.describe()
@@ -177,6 +189,9 @@ class ScenarioSpec:
     check exact. ``optional_metrics`` names what an implementation records
     only for some of its actions: emitting one is never undeclared, and
     never emitting it is never missing.
+
+    ``action`` is the protocol-neutral mapping from an indexed contract. The
+    runner passes only the selected mapping to the scenario process as JSON.
     """
 
     name: str
@@ -286,6 +301,7 @@ class PackageSpec:
     # Which wrapper supplies the registry and the reduction (see
     # :mod:`._runners`). None means the caller supplies all available runners.
     runner: str | None = None
+    otlp_protocol: OtlpProtocol = DEFAULT_OTLP_PROTOCOL
     runner_config: Mapping[str, object] = field(
         default_factory=dict[str, object]
     )
@@ -440,6 +456,44 @@ def _parse_matcher(value: object, where: str) -> AttributeMatcher:
     return AttributeMatcher(distinct=distinct)
 
 
+def _parse_scope_field(value: object, where: str) -> AttributeMatcher:
+    if isinstance(value, str) and value:
+        return AttributeMatcher(equals=value)
+    if not isinstance(value, Mapping):
+        raise SpecError(
+            f"{where}: expected a non-empty string or a presence matcher"
+        )
+
+    matcher = cast("Mapping[str, object]", value)
+    _check_keys(matcher, ("present",), where)
+    if set(matcher) != {"present"} or not isinstance(matcher["present"], bool):
+        raise SpecError(f"{where}: present must be a boolean")
+    return AttributeMatcher(present=matcher["present"])
+
+
+def _parse_instrumentation_scope(
+    value: object, where: str
+) -> InstrumentationScopeExpectation:
+    scope = _require_mapping(value, where)
+    _check_keys(scope, ("name", "version", "schema_url"), where)
+    if not scope:
+        raise SpecError(f"{where}: declare at least one field to check")
+    expectation = InstrumentationScopeExpectation(
+        name=_parse_scope_field(scope["name"], f"{where}.name")
+        if "name" in scope
+        else None,
+        version=_parse_scope_field(scope["version"], f"{where}.version")
+        if "version" in scope
+        else None,
+        schema_url=_parse_scope_field(
+            scope["schema_url"], f"{where}.schema_url"
+        )
+        if "schema_url" in scope
+        else None,
+    )
+    return expectation
+
+
 def _parse_match(value: object, where: str) -> SpanMatch:
     match = _require_mapping(value or {}, where)
     _check_keys(match, ("attributes", "kind", "type"), where)
@@ -466,7 +520,11 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
         return SpanExpectation(match=match)
 
     expect = _require_mapping(span["expect"], f"{where}.expect")
-    _check_keys(expect, ("count", "attributes"), f"{where}.expect")
+    _check_keys(
+        expect,
+        ("count", "attributes", "instrumentation_scope"),
+        f"{where}.expect",
+    )
     count = expect.get("count")
     if not isinstance(count, int) or isinstance(count, bool):
         raise SpecError(
@@ -482,6 +540,12 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
             name: _parse_matcher(matcher, f"{where}.expect.attributes.{name}")
             for name, matcher in attributes.items()
         },
+        instrumentation_scope=_parse_instrumentation_scope(
+            expect["instrumentation_scope"],
+            f"{where}.expect.instrumentation_scope",
+        )
+        if "instrumentation_scope" in expect
+        else None,
     )
 
 
@@ -596,6 +660,17 @@ def _with_package_additions(
             else scenario.optional_metrics
         ),
     )
+
+
+def _parse_otlp_protocol(
+    mapping: Mapping[str, object], where: str
+) -> OtlpProtocol:
+    value = mapping.get("otlp_protocol", DEFAULT_OTLP_PROTOCOL)
+    if not isinstance(value, str) or value not in {"grpc", "http/protobuf"}:
+        raise SpecError(
+            f"{where}.otlp_protocol: expected 'grpc' or 'http/protobuf'"
+        )
+    return cast("OtlpProtocol", value)
 
 
 def _parse_string_list(value: object, where: str) -> tuple[str, ...]:
@@ -778,6 +853,7 @@ def load_spec(directory: Path) -> PackageSpec:
             "scenario_run",
             "instrumented_library",
             "instrumentation_library",
+            "otlp_protocol",
             "env",
             "weaver",
             "server",
@@ -842,7 +918,7 @@ def load_spec(directory: Path) -> PackageSpec:
         )
         _check_keys(
             contract,
-            ("description", "driver", "readiness", "scenarios"),
+            ("backend", "description", "driver", "readiness", "scenarios"),
             str(contract_path),
         )
         role = _parse_contract_driver(contract, contract_path)
@@ -955,6 +1031,7 @@ def load_spec(directory: Path) -> PackageSpec:
         setup=_parse_command(document["setup"], f"{path}.setup")
         if "setup" in document
         else None,
+        otlp_protocol=_parse_otlp_protocol(document, str(path)),
         expected_violations=expected_violations,
         scenarios=parsed_scenarios,
         action_table=action_table,

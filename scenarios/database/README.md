@@ -13,7 +13,8 @@ helpers and backend-specific workload contracts live under
 
 The shared SQL contract keeps each backend's action beside its generic telemetry
 expectations. The action is passed to a language helper as JSON, which translates
-it to the client API. See the
+it to the client API. Each action has its own OTLP capture window, and Weaver
+checks the package once. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).

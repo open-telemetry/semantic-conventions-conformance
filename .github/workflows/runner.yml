@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # --no-deps skips the SDK and lazy test-utils dependency. The capture
+      # --no-deps skips the lazy test-utils dependency. The capture
       # tests need only the listed OTLP transport and protobuf packages.
       - name: Install
         run: |

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from textwrap import indent
 
 import pytest
 
@@ -38,18 +39,94 @@ def write(tmp_path: Path, document: str) -> Path:
     return tmp_path
 
 
-def test_minimal_spec_leaves_every_expectation_unchecked(
+def test_minimal_spec_leaves_signal_expectations_unchecked(
     tmp_path: Path,
 ) -> None:
     spec = load_spec(write(tmp_path, MINIMAL))
 
     assert spec.instrumented_library == "demo"
     assert spec.instrumentation_library == "demo-instrumentation"
+    assert spec.otlp_protocol == "grpc"
     scenario = spec.scenarios["inference"]
     assert scenario.run == ("python", "inference.py")
     assert scenario.spans is None
     assert scenario.metrics is None
     assert scenario.events is None
+
+
+def test_instrumentation_scope_exact_match_is_scoped_to_signal(
+    tmp_path: Path,
+) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenarios:
+  inference:
+    run: python inference.py
+    spans:
+      - match:
+          attributes: {operation: chat}
+        expect:
+          count: 1
+          instrumentation_scope:
+            name: demo.instrumentation
+            version: 1.2.3
+            schema_url: {present: true}
+""",
+        )
+    )
+
+    scope = spec.scenarios["inference"].spans[0].instrumentation_scope
+    assert scope is not None
+    assert scope.name is not None
+    assert scope.name.equals == "demo.instrumentation"
+    assert scope.version is not None
+    assert scope.version.equals == "1.2.3"
+    assert scope.schema_url is not None
+    assert scope.schema_url.present is True
+
+
+@pytest.mark.parametrize(
+    ("scope", "message"),
+    [
+        ("{}", "declare at least one field"),
+        ("name: null", "non-empty string or a presence matcher"),
+        ("name: demo\nunknown: value", "unknown key"),
+        ("name: demo\nversion: ''", "non-empty string"),
+        ("name: demo\nversion: {distinct: 2}", "unknown key"),
+        (
+            "name: demo\nschema_url: {present: 1}",
+            "present must be a boolean",
+        ),
+    ],
+)
+def test_instrumentation_scope_is_strict(
+    tmp_path: Path, scope: str, message: str
+) -> None:
+    with pytest.raises(SpecError, match=message):
+        load_spec(
+            write(
+                tmp_path,
+                """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenarios:
+  inference:
+    run: python inference.py
+    spans:
+      - match:
+          attributes: {operation: chat}
+        expect:
+          count: 1
+          instrumentation_scope:
+"""
+                + indent(scope, "            ")
+                + "\n",
+            )
+        )
 
 
 def test_runner_config_is_available_to_the_selected_runner(
@@ -500,8 +577,7 @@ def test_http_representatives_resolve_their_own_side_contract() -> None:
             assert scenario.optional_metrics == optional_metrics
 
     client = load_spec(
-        root
-        / "scenarios/http/python/requests/opentelemetry-requests/client"
+        root / "scenarios/http/python/requests/opentelemetry-requests/client"
     )
     assert all(
         scenario.spans is not None
@@ -822,7 +898,7 @@ scenario_run: run
         (
             "variants:\n  client: {driver: instrumentation}",
             r"contract\.yaml: unknown key\(s\) \['variants'\]; allowed: "
-            r"\['description', 'driver', 'readiness', 'scenarios'\]",
+            r"\['backend', 'description', 'driver', 'readiness', 'scenarios'\]",
         ),
     ],
 )
@@ -901,9 +977,7 @@ def test_scenario_run_no_longer_declares_a_protocol(
 ) -> None:
     """`jsonl-v1` is between the runner and a driven process, not config."""
 
-    (tmp_path / "contract.yaml").write_text(
-        _SERVER_CONTRACT, encoding="utf-8"
-    )
+    (tmp_path / "contract.yaml").write_text(_SERVER_CONTRACT, encoding="utf-8")
 
     with pytest.raises(SpecError, match=message):
         load_spec(
@@ -974,6 +1048,23 @@ scenario_run: run
 """,
             )
         )
+
+
+def test_package_may_select_otlp_http_protobuf(tmp_path: Path) -> None:
+    spec = load_spec(
+        write(
+            tmp_path,
+            """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+otlp_protocol: http/protobuf
+scenarios:
+  inference:
+    run: python inference.py
+""",
+        )
+    )
+    assert spec.otlp_protocol == "http/protobuf"
 
 
 def test_span_expectation(tmp_path: Path) -> None:
@@ -1093,6 +1184,18 @@ def test_span_keys_survive_separators_in_a_value() -> None:
             "  a:\n    run: x",
             "unknown key",
             id="unknown-server-key",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: http/json\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="unknown-otlp-protocol",
+        ),
+        pytest.param(
+            "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\notlp_protocol: [grpc]\nscenarios:\n"
+            "  a:\n    run: x",
+            "expected 'grpc' or 'http/protobuf'",
+            id="non-string-otlp-protocol",
         ),
     ],
 )

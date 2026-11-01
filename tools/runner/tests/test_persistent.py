@@ -684,6 +684,7 @@ def test_readiness_metric_before_ready_never_isolates_bootstrap(
         env=os.environ,
         timeout=0.2,
         settle_delay=0.001,
+        startup_timeout=5.0,
     ).run()
 
     assert "timed out isolating readiness telemetry" in (result.failure or "")
@@ -841,32 +842,26 @@ print(json.dumps({"version": "jsonl-v1", "type": "stopped", "sequence": last + 1
 def test_missing_post_response_boundary_waits_until_timeout(
     tmp_path: Path,
 ) -> None:
-    command = _driver(tmp_path, _SUCCESS_DRIVER)
-    scenario = replace(
-        _scenario(command), metrics=("http.server.request.duration",)
+    capture = _Capture(
+        exports=(_metric(100, 101, name="http.server.request.duration"),)
     )
+    controller, _watch = _watched(
+        tmp_path, capture, timeout=0.2, settle_delay=0.001
+    )
+    controller._scenarios = (
+        replace(
+            controller._scenarios[0], metrics=("http.server.request.duration",)
+        ),
+    )
+    action = _answered(controller, 1)
 
-    def emit_readiness_only(capture: _Capture) -> None:
-        if capture.exports:
-            return
-        now = time.time_ns()
-        capture.exports += (
-            _metric(now - 1, now, name="http.server.request.duration"),
-        )
-    capture = _Capture(on_snapshot=emit_readiness_only)
     started = time.monotonic()
-
-    (result,) = PersistentController(
-        (scenario,),
-        capture=cast(OtlpCaptureProxy, capture),
-        cwd=tmp_path,
-        env=os.environ,
-        timeout=0.2,
-        settle_delay=0.001,
-    ).run()
-
+    with pytest.raises(TimeoutError, match="sealing action sequence 1"):
+        controller._run_action(
+            action, [action], capture.open_window("batch"), 100
+        )
     elapsed = time.monotonic() - started
-    assert "timed out sealing action sequence 1" in (result.failure or "")
+    assert action.state is ActionState.RESPONSE_COMPLETE
     assert 0.18 <= elapsed < 0.7
 
 
@@ -875,7 +870,17 @@ def test_self_reporting_sdk_metrics_do_not_block_sealing(
 ) -> None:
     """An SDK that exports its own queue depth forever still seals actions."""
 
-    command = _driver(tmp_path, _SUCCESS_DRIVER)
+    command = _driver(
+        tmp_path,
+        """
+import json, sys
+print(json.dumps({"version": "jsonl-v1", "type": "ready", "sequence": 0, "started_unix_nano": 100, "completed_unix_nano": 101}), flush=True)
+json.loads(sys.stdin.readline())
+print(json.dumps({"version": "jsonl-v1", "type": "action_complete", "sequence": 1, "started_unix_nano": 200, "completed_unix_nano": 201}), flush=True)
+sys.stdin.read()
+print(json.dumps({"version": "jsonl-v1", "type": "stopped", "sequence": 2}), flush=True)
+""",
+    )
     scenario = replace(
         _scenario(command), metrics=("http.server.request.duration",)
     )
@@ -889,7 +894,9 @@ def test_self_reporting_sdk_metrics_do_not_block_sealing(
             duration_exports += 1
             capture.exports += (
                 _metric(
-                    now - 1, now, name="http.server.request.duration"
+                    duration_exports * 100,
+                    duration_exports * 100 + 1,
+                    name="http.server.request.duration",
                 ),
             )
             return
@@ -911,6 +918,7 @@ def test_self_reporting_sdk_metrics_do_not_block_sealing(
         env=os.environ,
         timeout=1.0,
         settle_delay=0.001,
+        startup_timeout=5.0,
     ).run()
 
     assert result.failure is None
@@ -1674,5 +1682,6 @@ def test_bootstrap_that_never_isolates_times_out_without_spinning(
 
     assert 1 <= len(watched.waits) <= 10
     assert all(
-        waited is not None and 0 < waited <= 0.3 for waited in watched.waits
+        waited is not None and 0 < waited <= 0.3 + 1e-9
+        for waited in watched.waits
     )

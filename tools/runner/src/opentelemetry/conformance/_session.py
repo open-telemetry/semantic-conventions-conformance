@@ -13,11 +13,14 @@ from __future__ import annotations
 import json
 import logging
 import shlex
+import shutil
+import socket
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from string import Template
+from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -48,6 +51,7 @@ from ._otlp_capture import (
     OtlpCaptureProxy,
     UnexpectedExportsError,
 )
+from ._otlp_http import OtlpHttpBridge
 from ._persistent import (
     DEFAULT_SETTLE_DELAY,
     DEFAULT_WINDOW_TIMEOUT,
@@ -55,7 +59,7 @@ from ._persistent import (
     ActionState,
     PersistentController,
 )
-from ._registry import check_weaver
+from ._registry import check_weaver, local_registry, parse_git_registry
 from ._report import (
     READINESS_REPORT,
     SCENARIO_REPORT_DIR,
@@ -66,6 +70,7 @@ from ._report import (
     write_unwindowed,
     write_weaver,
 )
+from ._scope_policy import render as render_scope_policy
 from ._server import Server
 from ._spec import (
     PackageSpec,
@@ -92,11 +97,17 @@ _SCENARIO_SETTLE_DELAY = (
     "OTEL_CONFORMANCE_SCENARIO_SETTLE_DELAY",
     DEFAULT_SETTLE_DELAY,
 )
+_OTLP_SIGNAL_ENV = tuple(
+    f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
+    for signal in ("TRACES", "METRICS", "LOGS")
+    for setting in ("ENDPOINT", "PROTOCOL")
+)
 
 # Both relative to the conformance directory. The reports are diagnostic;
 # the data file is meant to be committed and diffed.
 DEFAULT_REPORT_DIR = Path("output") / "reports"
 DEFAULT_DATA_FILE = Path("data.json")
+_SCOPE_POLICY_NAME = "instrumentation_scope_validation.rego"
 
 # Fallback only: a config declared by the caller or the package replaces it.
 RUNNER_WEAVER_DEFAULTS = WeaverSpec(
@@ -234,8 +245,10 @@ class ConformanceSession:
         self._ran: set[str] = set()
         self._scenario_reports: list[ScenarioReport] = []
         self._resources: ExitStack | None = None
+        self._policies: str | None = None
         self._live_check: _WeaverProcess | None = None
         self._capture: OtlpCaptureProxy | None = None
+        self._otlp_endpoint: str | None = None
         self._package_report: PackageReport | None = None
         self._finalize_error: BaseException | None = None
         self._ending = False
@@ -270,9 +283,10 @@ class ConformanceSession:
             return self._run_persistent((scenario,))[0]
         self.start()
         assert self._capture is not None
+        assert self._otlp_endpoint is not None
         window = self._capture.open_window(name)
         try:
-            completed = self._execute(scenario, self._capture.endpoint)
+            completed = self._execute(scenario, self._otlp_endpoint)
         finally:
             telemetry = self._capture.close_window(
                 window,
@@ -339,12 +353,13 @@ class ConformanceSession:
     ) -> tuple[ScenarioReport, ...]:
         self.start()
         assert self._capture is not None
+        assert self._otlp_endpoint is not None
         first = scenarios[0]
         protocol = first.run_spec.protocol
         assert protocol is not None
         injected = {
-            "OTEL_EXPORTER_OTLP_ENDPOINT": self._capture.endpoint,
-            "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            "OTEL_EXPORTER_OTLP_ENDPOINT": self._otlp_endpoint,
+            "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
             # The command says what to start, not how it is driven. That
             # follows from the contract's driver role, so the runner tells
             # the process here rather than every package repeating a flag.
@@ -358,11 +373,14 @@ class ConformanceSession:
             injected[SCENARIO_ACTIONS_VARIABLE] = action_table_json(
                 self._spec.action_table
             )
+        env = self._env(first.env, injected)
+        for variable in _OTLP_SIGNAL_ENV:
+            env.pop(variable, None)
         controller = PersistentController(
             scenarios,
             capture=self._capture,
             cwd=first.directory,
-            env=self._env(first.env, injected),
+            env=env,
             timeout=timeout_seconds(*_SCENARIO_WINDOW_TIMEOUT),
             settle_delay=timeout_seconds(*_SCENARIO_SETTLE_DELAY),
             startup_timeout=timeout_seconds(*_SCENARIO_TIMEOUT),
@@ -403,6 +421,7 @@ class ConformanceSession:
 
         resources = ExitStack()
         try:
+            self._policies = resources.enter_context(self._package_policies())
             with _quiet_connection_retries():
                 live_check = resources.enter_context(
                     _start_weaver(self._new_live_check)
@@ -410,15 +429,22 @@ class ConformanceSession:
             capture = resources.enter_context(
                 OtlpCaptureProxy(live_check.otlp_endpoint)
             )
+            if self._spec.otlp_protocol == "http/protobuf":
+                otlp_endpoint = resources.enter_context(
+                    OtlpHttpBridge(capture.endpoint)
+                ).url
+            else:
+                otlp_endpoint = capture.endpoint
         except BaseException:
             resources.close()
             raise
         self._resources = resources
         self._live_check = live_check
         self._capture = capture
+        self._otlp_endpoint = otlp_endpoint
 
     def _new_live_check(self) -> _WeaverProcess:
-        from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
+        from ._weaver import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
 
@@ -431,14 +457,27 @@ class ConformanceSession:
                 "--advice-data",
                 self._resolve_path(weaver_spec.advice_data),
             ]
-        return WeaverLiveCheck(
-            inactivity_timeout=0,
-            registry=self._resolve_path(self._registry),
-            policies_dir=self._resolve_path(weaver_spec.policies)
-            if weaver_spec.policies
-            else None,
-            extra_args=extra_args,
-        )
+        with (
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM) as otlp,
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM) as admin,
+        ):
+            # Hold both sockets so the OS cannot assign the same port twice.
+            otlp.bind(("127.0.0.1", 0))
+            admin.bind(("127.0.0.1", 0))
+            return WeaverLiveCheck(
+                inactivity_timeout=0,
+                registry=str(
+                    registry_path(
+                        self._registry,
+                        directory=self._spec.directory,
+                        variables=self._variables,
+                    )
+                ),
+                policies_dir=self._policies,
+                extra_args=extra_args,
+                otlp_port=otlp.getsockname()[1],
+                admin_port=admin.getsockname()[1],
+            )
 
     def finalize(self) -> PackageReport:
         """Stop package telemetry once and return its aggregate result.
@@ -507,6 +546,40 @@ class ConformanceSession:
         if self._resources is not None:
             self._resources.close()
 
+    @contextmanager
+    def _package_policies(self) -> Generator[str, None, None]:
+        """Add instrumentation-scope validation to the package policies."""
+        weaver = self._weaver
+        declared = (
+            self._resolve_path(weaver.policies) if weaver.policies else None
+        )
+        with TemporaryDirectory(prefix="otel-conformance-policies-") as root:
+            policies = Path(root)
+            if declared:
+                source = Path(declared)
+                if source.is_dir():
+                    for policy in source.glob("*.rego"):
+                        shutil.copy(policy, policies / policy.name)
+                else:
+                    shutil.copy(source, policies / source.name)
+            generated = policies / _SCOPE_POLICY_NAME
+            if generated.exists():
+                raise SpecError(
+                    f"declared advice policy conflicts with generated policy: "
+                    f"{_SCOPE_POLICY_NAME}"
+                )
+            generated.write_text(
+                render_scope_policy(
+                    tuple(
+                        expectation
+                        for scenario in self._spec.scenarios.values()
+                        for expectation in scenario.spans or ()
+                    )
+                ),
+                encoding="utf-8",
+            )
+            yield str(policies)
+
     def _resolve(self, value: str) -> str:
         return Template(value).safe_substitute(self._variables)
 
@@ -533,7 +606,7 @@ class ConformanceSession:
             )
         injected = {
             "OTEL_EXPORTER_OTLP_ENDPOINT": otlp_endpoint,
-            "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+            "OTEL_EXPORTER_OTLP_PROTOCOL": self._spec.otlp_protocol,
             "OTEL_METRIC_EXPORT_INTERVAL": str(METRIC_EXPORT_INTERVAL_MILLIS),
         }
         if scenario.index is not None:
@@ -545,10 +618,13 @@ class ConformanceSession:
                 separators=(",", ":"),
                 sort_keys=True,
             )
+        env = self._env(scenario.env, injected)
+        for variable in _OTLP_SIGNAL_ENV:
+            env.pop(variable, None)
         return _run_command(
             scenario.run,
             cwd=scenario.directory,
-            env=self._env(scenario.env, injected),
+            env=env,
         )
 
     def _env(
@@ -723,6 +799,21 @@ def _default_report_dir(directory: Path) -> Path:
     lands in the same place however it was invoked.
     """
     return directory / DEFAULT_REPORT_DIR
+
+
+def registry_path(
+    value: str, *, directory: Path, variables: Mapping[str, str]
+) -> Path:
+    """A declared registry as a directory, fetched when it is a git URL.
+
+    A relative path is relative to the package that declared it, the way every
+    other path in a ``conformance.yaml`` is.
+    """
+    resolved = Template(value).safe_substitute(variables)
+    if parse_git_registry(resolved) is not None:
+        return local_registry(resolved)
+    path = Path(resolved)
+    return path if path.is_absolute() else directory / path
 
 
 @contextmanager

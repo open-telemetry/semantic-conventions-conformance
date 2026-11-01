@@ -19,6 +19,11 @@ Not on PyPI yet — install it from a checkout: `pip install -e tools/runner`.
 A Python scenario also wants [`tools/python`](../python), the launcher its
 `run` command names.
 
+Install the Weaver release pinned in `src/opentelemetry/conformance/versions.env`.
+Other versions produce a warning because findings can differ. The runner
+handles both the legacy report returned by `/stop` and the separate
+`/report` and `/shutdown` endpoints introduced in Weaver 0.27.
+
 A *wrapper* supplies those for one set of conventions;
 [`gen-ai/runner`](../gen-ai/runner) is one. A directory names the wrapper it
 wants and everything else follows from that.
@@ -93,6 +98,20 @@ it. In Python, `uv run --project .` syncs a `.venv` beside the directory's
 ```yaml
 run: uv run --project . opentelemetry-instrument python inference.py
 ```
+
+The runner uses OTLP/gRPC unless the package selects OTLP/HTTP protobuf:
+
+```yaml
+otlp_protocol: http/protobuf
+```
+
+The only accepted values are `grpc` and `http/protobuf`. The runner sets
+`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_PROTOCOL`, and removes
+their traces, metrics, and logs counterparts from the scenario process
+environment. For HTTP, SDK exporters append their standard `/v1/traces`,
+`/v1/metrics`, and `/v1/logs` paths to the local bridge endpoint.
+The bridge is temporary while
+[Weaver does not accept OTLP/HTTP directly](https://github.com/open-telemetry/weaver/issues/1563).
 
 Installing into whatever environment happened to be active instead — the
 runner's own, say — puts every implementation in one environment, which is
@@ -275,6 +294,47 @@ scenarios:
             gen_ai.tool.name:
               distinct: 2
 ```
+
+### Instrumentation scope
+
+Every instrumentation scope observed in a scenario must have a non-empty
+`name` and `schema_url`. Known gaps can be declared through
+`expected_violations`:
+
+```yaml
+expected_violations:
+  - id: instrumentation_scope_schema_url_missing
+    reason: Link to the instrumentation issue tracking the missing schema URL.
+```
+
+Expected violations apply across the package; scenario-level declarations are
+not supported.
+
+The default checks apply to every emitted scope, including scopes from SDK and
+dependency instrumentations.
+
+Exact checks belong to a matched signal because one package can emit telemetry
+from several scopes:
+
+```yaml
+spans:
+  - match:
+      attributes:
+        gen_ai.operation.name: chat
+    expect:
+      count: 1
+      instrumentation_scope:
+        name: opentelemetry.instrumentation.genai.openai
+        version: {present: true}
+        schema_url: https://opentelemetry.io/schemas/1.37.0
+```
+
+A string value is matched exactly. `{present: true}` or `{present: false}`
+checks whether `name`, `version`, or `schema_url` is set without fixing its
+value. Fields omitted from a matched signal still receive the default `name`
+and `schema_url` checks. `version` is unchecked unless declared.
+Explicit field expectations override defaults only for matching spans. Other
+spans retain the defaults, even when they share the same scope.
 
 Each entry has two halves, declared separately so an attribute used to *find*
 a span never reads like one being *checked* on it. `match` selects — by
@@ -707,6 +767,18 @@ A directory overrides any of it by declaring `weaver:` or `server:` itself,
 field by field — `server: {health: /ready}` keeps your server and only changes
 where it is probed. Paths declared inside a `conformance.yaml` are relative to
 that file, paths on the command line to your shell.
+
+`registry` also takes a git URL in weaver's own syntax, with an optional ref
+and sub folder:
+
+```yaml
+weaver:
+  registry: https://github.com/open-telemetry/semantic-conventions-genai.git@67dff024[model]
+```
+
+It is downloaded into `$SEMCONV_CACHE` under its ref and reused, so a ref that
+moves is fetched once until the cache is cleared. Only `github.com` URLs, since
+what is fetched is a GitHub archive.
 
 ## Limitations
 

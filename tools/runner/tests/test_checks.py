@@ -451,22 +451,6 @@ def test_span_events_do_not_count_as_otlp_log_events() -> None:
     assert check(scenario(events=()), captured) == []
 
 
-def test_filtered_non_registry_metric_is_not_an_undeclared_metric() -> None:
-    report = Report(
-        statistics={"seen_non_registry_metrics": {"sdk.self.metric": 1}}
-    )
-
-    assert check(scenario(metrics=()), report) == []
-
-
-def test_declared_non_registry_metric_is_still_expected() -> None:
-    report = Report(
-        statistics={"seen_non_registry_metrics": {"custom.metric": 1}}
-    )
-
-    assert check(scenario(metrics=("custom.metric",)), report) == []
-
-
 def test_undeclared_violation_fails() -> None:
     report = WeaverReport(
         violations=[

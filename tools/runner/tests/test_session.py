@@ -12,6 +12,7 @@ directly.
 from __future__ import annotations
 
 import json
+import socket
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
@@ -23,6 +24,10 @@ from typing import Literal, cast
 import pytest
 
 from opentelemetry.conformance import (
+    AttributeMatcher,
+    InstrumentationScopeExpectation,
+    SpanExpectation,
+    SpanMatch,
     SpecError,
     WeaverSpec,
     _session,
@@ -267,6 +272,84 @@ def test_the_scenario_gets_exactly_the_environment_it_was_given(
     assert completed.stdout.strip() == "value"
 
 
+def test_scope_expectation_is_rendered_beside_declared_policies(
+    directory: Path, tmp_path: Path
+) -> None:
+    policies = directory / "policies"
+    policies.mkdir()
+    (policies / "declared.rego").write_text("package live_check_advice\n")
+    opened = session(directory, tmp_path / "data.json")
+    scenario = replace(
+        opened.spec.scenarios["inference"],
+        spans=(
+            SpanExpectation(
+                match=SpanMatch(
+                    attributes={"operation": "chat"},
+                    kind="SPAN_KIND_CLIENT",
+                ),
+                instrumentation_scope=InstrumentationScopeExpectation(
+                    schema_url=AttributeMatcher(present=True)
+                ),
+            ),
+        ),
+    )
+
+    opened._spec = replace(
+        opened.spec,
+        scenarios={
+            "inference": scenario,
+            "tool_calling": replace(
+                opened.spec.scenarios["tool_calling"],
+                spans=(
+                    SpanExpectation(
+                        match=SpanMatch(attributes={"operation": "tool"}),
+                        instrumentation_scope=InstrumentationScopeExpectation(
+                            name=AttributeMatcher(equals="tool-scope")
+                        ),
+                    ),
+                ),
+            ),
+        },
+    )
+    opened._weaver = WeaverSpec(registry="model", policies="policies")
+
+    with opened._package_policies() as rendered:
+        assert rendered is not None
+        rendered_path = Path(rendered)
+        assert (rendered_path / "declared.rego").is_file()
+        scope_policy = (
+            rendered_path / "instrumentation_scope_validation.rego"
+        ).read_text()
+        assert (
+            '"global": {"name": {"present": true}, '
+            '"schema_url": {"present": true}}' in scope_policy
+        )
+        assert '"schema_url": {"present": true}' in scope_policy
+        assert '"operation": "chat"' in scope_policy
+        assert '"kind": "client"' in scope_policy
+        assert '"operation": "tool"' in scope_policy
+        assert '"name": {"equals": "tool-scope"}' in scope_policy
+
+    assert not rendered_path.exists()
+
+
+def test_generated_scope_policy_does_not_replace_a_declared_policy(
+    directory: Path, tmp_path: Path
+) -> None:
+    policies = directory / "policies"
+    policies.mkdir()
+    (policies / "instrumentation_scope_validation.rego").write_text(
+        "package live_check_advice\n"
+    )
+    opened = session(directory, tmp_path / "data.json")
+    opened._weaver = WeaverSpec(registry="model", policies="policies")
+
+    with pytest.raises(SpecError, match="conflicts with generated policy"):
+        opened.start()
+
+    assert _SessionWeaver.instances == []
+
+
 @pytest.fixture
 def directory(tmp_path: Path) -> Path:
     (tmp_path / "conformance.yaml").write_text(SPEC)
@@ -278,9 +361,14 @@ def session(
     data_file: Path,
     setup: tuple[str, ...] | None = None,
     report_dir: Path | None = None,
+    otlp_protocol: Literal["grpc", "http/protobuf"] = "grpc",
 ) -> ConformanceSession:
     return ConformanceSession(
-        replace(load_spec(directory), setup=setup),
+        replace(
+            load_spec(directory),
+            setup=setup,
+            otlp_protocol=otlp_protocol,
+        ),
         report_dir if report_dir is not None else directory / "reports",
         variables={"ROOT": str(directory)},
         weaver=WeaverSpec(registry="model"),
@@ -291,6 +379,39 @@ def session(
             "reports": reports.name,
         },
     )
+
+
+def test_weaver_reserves_distinct_ports(
+    directory: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ports: list[int] = []
+
+    def construct(
+        *, otlp_port: int, admin_port: int, **kwargs: object
+    ) -> None:
+        ports.extend([otlp_port, admin_port])
+        assert 0 < otlp_port <= 65535
+        assert 0 < admin_port <= 65535
+        assert otlp_port != admin_port
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+                with pytest.raises(OSError):
+                    other.bind(("127.0.0.1", port))
+        raise RuntimeError("weaver configured")
+
+    live_check = ModuleType("opentelemetry.conformance._weaver")
+    live_check.__dict__["WeaverLiveCheck"] = construct
+    monkeypatch.setitem(
+        sys.modules, "opentelemetry.conformance._weaver", live_check
+    )
+
+    with pytest.raises(RuntimeError, match="weaver configured"):
+        _new_live_check(session(directory, tmp_path / "data.json"))
+
+    assert len(ports) == 2
+    for port in ports:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+            other.bind(("127.0.0.1", port))
 
 
 @pytest.mark.parametrize("index", [None, 3])
@@ -719,15 +840,92 @@ def test_weaver_inactivity_timeout_is_disabled_for_the_package(
 
     # The test job installs the runner without its lazy test-utils
     # dependency, so the module `_new_live_check` imports has to be a stub.
-    live_check = ModuleType("opentelemetry.test.weaver_live_check")
+    live_check = ModuleType("opentelemetry.conformance._weaver")
     live_check.__dict__["WeaverLiveCheck"] = weaver
     monkeypatch.setitem(
-        sys.modules, "opentelemetry.test.weaver_live_check", live_check
+        sys.modules, "opentelemetry.conformance._weaver", live_check
     )
 
     _new_live_check(session(directory, tmp_path / "data.json"))
 
     assert options["inactivity_timeout"] == 0
+
+
+def test_generated_policies_live_until_the_package_weaver_stops(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    options: dict[str, object] = {}
+
+    class Weaver(_SessionWeaver):
+        def end(self, timeout: int) -> _LiveReport:
+            policies = options["policies_dir"]
+            assert isinstance(policies, str)
+            assert Path(policies).is_dir()
+            return super().end(timeout)
+
+    def weaver(**kwargs: object) -> Weaver:
+        options.update(kwargs)
+        return Weaver()
+
+    live_check = ModuleType("opentelemetry.conformance._weaver")
+    live_check.__dict__["WeaverLiveCheck"] = weaver
+    monkeypatch.setitem(
+        sys.modules, "opentelemetry.conformance._weaver", live_check
+    )
+    monkeypatch.setattr(ConformanceSession, "_new_live_check", _new_live_check)
+    opened = session(directory, tmp_path / "data.json")
+    opened.start()
+    opened.start()
+
+    policies = options["policies_dir"]
+    assert isinstance(policies, str)
+    policy_path = Path(policies) / "instrumentation_scope_validation.rego"
+    assert '"global": {"name": {"present": true}' in policy_path.read_text()
+    assert len(_SessionWeaver.instances) == 1
+    assert options["inactivity_timeout"] == 0
+
+    opened.finalize()
+
+    assert not Path(policies).exists()
+    assert _SessionWeaver.instances[0].ends == 1
+
+
+@pytest.mark.parametrize(
+    "registry",
+    ["model", "${ROOT}/model", "https://github.com/org/model.git@v1[model]"],
+)
+def test_package_weaver_uses_the_resolved_registry(
+    directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    registry: str,
+) -> None:
+    options: dict[str, object] = {}
+    fetched: list[str] = []
+
+    def weaver(**kwargs: object) -> _SessionWeaver:
+        options.update(kwargs)
+        return _SessionWeaver()
+
+    def local_registry(value: str) -> Path:
+        fetched.append(value)
+        return directory / "model"
+
+    live_check = ModuleType("opentelemetry.conformance._weaver")
+    live_check.__dict__["WeaverLiveCheck"] = weaver
+    monkeypatch.setitem(
+        sys.modules, "opentelemetry.conformance._weaver", live_check
+    )
+    monkeypatch.setattr(_session, "local_registry", local_registry)
+    opened = session(directory, tmp_path / "data.json")
+    opened._registry = registry
+
+    _new_live_check(opened)
+
+    assert options["registry"] == str(directory / "model")
+    assert fetched == ([registry] if registry.startswith("https:") else [])
 
 
 def test_setup_precedes_package_telemetry_start(
@@ -869,10 +1067,37 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
+@pytest.mark.parametrize(
+    ("action", "expected_action"),
+    [
+        (
+            {"z": [2, 1], "a": {"method": "GET"}},
+            '{"a":{"method":"GET"},"z":[2,1]}',
+        ),
+        (
+            {"request": {"method": "POST", "path": "/items"}},
+            '{"request":{"method":"POST","path":"/items"}}',
+        ),
+        (
+            {
+                "kind": "prepared_query",
+                "sql": "SELECT ${1}, ${2}",
+                "parameters": [
+                    {"type": "integer", "value": 7},
+                    {"type": "integer", "value": -2},
+                ],
+            },
+            '{"kind":"prepared_query","parameters":[{"type":"integer","value":7},'
+            '{"type":"integer","value":-2}],"sql":"SELECT ${1}, ${2}"}',
+        ),
+    ],
+)
 def test_contract_selection_is_injected_into_the_one_shot_process(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    action: dict[str, object],
+    expected_action: str,
 ) -> None:
     captured: dict[str, str] = {}
 
@@ -888,15 +1113,13 @@ def test_contract_selection_is_injected_into_the_one_shot_process(
     scenario = replace(
         opened.spec.scenarios["inference"],
         index=3,
-        action={"z": [2, 1], "a": {"method": "GET"}},
+        action=action,
     )
 
     opened._execute(scenario, "http://collector")
 
     assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
-    assert captured["OTEL_CONFORMANCE_SCENARIO_ACTION"] == (
-        '{"a":{"method":"GET"},"z":[2,1]}'
-    )
+    assert captured["OTEL_CONFORMANCE_SCENARIO_ACTION"] == expected_action
 
 
 def test_persistent_scenario_protocol_does_not_use_one_shot_execution(
