@@ -180,6 +180,34 @@
     },
     {
       "id": "http_route_not_present",
+      "message": "Server span 'GET /users/456' uses target '/users/456' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
+      "signal_type": "span",
+      "signal_name": "GET /users/456",
+      "context": {
+        "kind": "server",
+        "target": "/users/456"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/456 http receive",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'asgi.event.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET /users/456 http send",
+      "context": {
+        "attribute_key": "asgi.event.type"
+      }
+    },
+    {
+      "id": "http_route_not_present",
       "message": "Server span 'POST /items' uses target '/items' but lacks 'http.route', so the matched route and target cardinality cannot be verified.",
       "signal_type": "span",
       "signal_name": "POST /items",
