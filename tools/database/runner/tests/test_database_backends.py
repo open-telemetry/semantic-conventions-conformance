@@ -14,6 +14,7 @@ from typing import Any
 import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
+from testcontainers.core.wait_strategies import ExecWaitStrategy
 
 from database_conformance import (
     _cassandra,
@@ -23,7 +24,7 @@ from database_conformance import (
     _sql_server,
 )
 from database_conformance._cassandra import CASSANDRA_IMAGE, Cassandra
-from database_conformance._container import DatabaseContainer
+from database_conformance._container import BackendSpec, DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 from database_conformance._redis import REDIS_IMAGE, Redis
@@ -284,6 +285,61 @@ def test_starts_initializes_publishes_and_removes_database(
         assert b"INSERT INTO" not in schema
     assert container.exec_config == expected_initialization
     assert container.wait_strategy is not None
+
+
+@pytest.mark.parametrize(
+    ("spec", "default_seconds"),
+    [
+        (_cassandra.CASSANDRA, 180.0),
+        (_postgres.POSTGRES, 60.0),
+        (_mariadb.MARIADB, 60.0),
+        (_redis.REDIS, 60.0),
+        (_sql_server.SQL_SERVER, 60.0),
+    ],
+)
+@pytest.mark.parametrize(
+    ("override", "override_seconds"),
+    [
+        (None, None),
+        ("", None),
+        ("240", 240.0),
+        ("30", 30.0),
+        ("invalid", None),
+        ("0", None),
+        ("-1", None),
+        ("nan", None),
+        ("inf", None),
+        ("-inf", None),
+    ],
+)
+def test_backend_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    spec: BackendSpec,
+    default_seconds: float,
+    override: str | None,
+    override_seconds: float | None,
+) -> None:
+    variable = "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT"
+    if override is None:
+        monkeypatch.delenv(variable, raising=False)
+    else:
+        monkeypatch.setenv(variable, override)
+    container = StubContainer(port=spec.port)
+
+    with DatabaseContainer(spec, container_factory=lambda _: container):
+        assert spec.startup_timeout_seconds == default_seconds
+        assert isinstance(container.wait_strategy, ExecWaitStrategy)
+        assert container.wait_strategy._startup_timeout == (
+            default_seconds if override_seconds is None else override_seconds
+        )
+
+    if override not in (None, "") and override_seconds is None:
+        assert variable in caplog.text
+        assert "not a finite positive number of seconds" in caplog.text
+        assert f"using {default_seconds}" in caplog.text
+    else:
+        assert variable not in caplog.text
 
 
 def test_redis_readiness_checks_for_server_errors() -> None:

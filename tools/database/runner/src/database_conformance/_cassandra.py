@@ -45,7 +45,7 @@ CASSANDRA = BackendSpec(
         "/tmp/otel-conformance-cassandra.cql",
     ),
     variables=(("DATABASE_LOCAL_DATACENTER", CASSANDRA_DATACENTER),),
-    startup_timeout=180,
+    startup_timeout_seconds=180.0,
 )
 
 

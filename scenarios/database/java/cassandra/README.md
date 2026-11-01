@@ -41,8 +41,10 @@ recreates the `conformance` keyspace and `items` table without seeding rows.
 The fixed operations do not depend on package execution order.
 
 The node uses `datacenter1`, one token, a 256 MB maximum heap, and a 64 MB young
-generation. Cassandra's startup timeout defaults to 180 seconds; operators can
-override it with `OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT`.
+generation. Cassandra's startup timeout defaults to 180 seconds. Set
+`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` in the runner's environment to
+override it. The shared database lifecycle reads this override, not the package
+or workload environment.
 
 Packages map `DATABASE_HOST`, `DATABASE_PORT`, and
 `DATABASE_LOCAL_DATACENTER` to `CASSANDRA_HOST`, `CASSANDRA_PORT`, and

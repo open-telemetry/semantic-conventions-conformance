@@ -46,7 +46,7 @@ class BackendSpec:
     initialize_command: tuple[str, ...] | None
     initialize_environment: tuple[tuple[str, str], ...] = ()
     variables: tuple[tuple[str, str], ...] = ()
-    startup_timeout: float = _STARTUP_TIMEOUT[1]
+    startup_timeout_seconds: float = _STARTUP_TIMEOUT[1]
 
 
 class DatabaseContainer:
@@ -90,7 +90,7 @@ class DatabaseContainer:
             .with_startup_timeout(
                 timedelta(
                     seconds=timeout_seconds(
-                        _STARTUP_TIMEOUT[0], self._spec.startup_timeout
+                        _STARTUP_TIMEOUT[0], self._spec.startup_timeout_seconds
                     )
                 )
             )
