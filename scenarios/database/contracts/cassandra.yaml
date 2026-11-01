@@ -18,12 +18,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
     events: []
 
   prepared:
@@ -42,12 +36,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
     events: []
 
   batch:
@@ -67,12 +55,6 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
     events: []
 
   error:
@@ -92,10 +74,4 @@ scenarios:
             server.port: {present: true}
     metrics:
       - db.client.operation.duration
-    allowed_metrics:
-      - queueSize
-      - processedSpans
-      - processedLogs
-      - otlp.exporter.seen
-      - otlp.exporter.exported
     events: []

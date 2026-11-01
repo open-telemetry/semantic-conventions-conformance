@@ -243,13 +243,7 @@ def test_cassandra_packages_share_contract_and_connection_variables(
     assert list(spec.scenarios) == ["query", "prepared", "batch", "error"]
     for scenario in spec.scenarios.values():
         assert scenario.metrics == ("db.client.operation.duration",)
-        assert scenario.allowed_metrics == (
-            "queueSize",
-            "processedSpans",
-            "processedLogs",
-            "otlp.exporter.seen",
-            "otlp.exporter.exported",
-        )
+        assert scenario.events == ()
         assert scenario.spans is not None
         assert len(scenario.spans) == 1
         assert scenario.spans[0].match.attributes == {

@@ -28,9 +28,9 @@ original contact points to `CassandraTelemetry.wrap` so the instrumentation
 can emit stable server address and port attributes.
 
 The contract requires one Cassandra client span and
-`db.client.operation.duration` for each operation. It allows optional Java SDK
-and exporter self-metrics through `allowed_metrics`, without making the
-operation-duration metric optional.
+`db.client.operation.duration` for each operation, with no events. The
+[shared Java Weaver configuration](../../../../tools/java/weaver.toml) filters
+findings for optional SDK and exporter self-metrics.
 
 ## Container and connection
 

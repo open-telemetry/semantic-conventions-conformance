@@ -270,53 +270,53 @@ def test_declared_signal_lists_are_exact(signal: str) -> None:
 
 
 @pytest.mark.parametrize("optional_count", [0, 1])
-def test_allowed_metrics_may_be_present_or_absent(optional_count: int) -> None:
+def test_java_sdk_metrics_may_be_present_or_absent(
+    optional_count: int,
+) -> None:
     report = Report(
         statistics={
             "seen_registry_metrics": {
                 "db.client.operation.duration": 1,
-                "db.client.connection.count": optional_count,
             },
             "seen_non_registry_metrics": {
-                "queueSize": 1,
-                "processedSpans": 0,
+                "queueSize": optional_count,
+                "processedSpans": optional_count,
+                "processedLogs": optional_count,
+                "otlp.exporter.seen": optional_count,
+                "otlp.exporter.exported": optional_count,
             },
         }
     )
 
     assert (
         check(
-            scenario(
-                metrics=("db.client.operation.duration",),
-                allowed_metrics=(
-                    "db.client.connection.count",
-                    "queueSize",
-                    "processedSpans",
-                ),
-            ),
+            scenario(metrics=("db.client.operation.duration",)),
             report,
         )
         == []
     )
 
 
-def test_allowed_metrics_do_not_weaken_required_or_undeclared_checks() -> None:
+def test_java_sdk_metrics_do_not_weaken_required_or_undeclared_checks() -> None:
     report = Report(
         statistics={
-            "seen_registry_metrics": {"unexpected": 1},
-            "seen_non_registry_metrics": {"queueSize": 1},
+            "seen_registry_metrics": {"db.client.connection.count": 1},
+            "seen_non_registry_metrics": {
+                "queueSize": 1,
+                "processedSpans": 1,
+                "processedLogs": 1,
+                "otlp.exporter.seen": 1,
+                "otlp.exporter.exported": 1,
+            },
         }
     )
 
     assert check(
-        scenario(
-            metrics=("db.client.operation.duration",),
-            allowed_metrics=("queueSize",),
-        ),
+        scenario(metrics=("db.client.operation.duration",)),
         report,
     ) == [
         "expected metrics ['db.client.operation.duration'] but they were not emitted",
-        "undeclared metrics emitted: ['unexpected']",
+        "undeclared metrics emitted: ['db.client.connection.count']",
     ]
 
 

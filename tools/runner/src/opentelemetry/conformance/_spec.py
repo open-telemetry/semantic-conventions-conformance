@@ -20,7 +20,7 @@ import yaml
 SPEC_FILE = "conformance.yaml"
 OtlpProtocol = Literal["grpc", "http/protobuf"]
 DEFAULT_OTLP_PROTOCOL: OtlpProtocol = "grpc"
-_SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "allowed_metrics", "events")
+_SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
 
 
 class SpecError(ValueError):
@@ -156,10 +156,7 @@ class ScenarioSpec:
     ``spans``, ``metrics`` and ``events`` are ``None`` when the scenario
     doesn't declare them, which means "not checked" — a scenario with no
     expectations at all only has to run and stay free of semconv violations.
-    Declaring one makes its check exact, with one relaxation:
-    ``allowed_metrics`` names metrics that may appear alongside the required
-    ``metrics`` without failing the scenario. Every other undeclared metric
-    still fails it.
+    Declaring one makes its check exact.
 
     ``action`` is the protocol-neutral mapping from an indexed contract. The
     runner passes only the selected mapping to the scenario process as JSON.
@@ -180,7 +177,6 @@ class ScenarioSpec:
     events: tuple[str, ...] | None
     expected_violations: tuple[ExpectedViolation, ...]
     inherited_violations: tuple[ExpectedViolation, ...] = ()
-    allowed_metrics: tuple[str, ...] = ()
     description: str = ""
     index: int | None = None
     action: Mapping[str, object] | None = None
@@ -562,15 +558,7 @@ def _parse_scenario(
     scenario = _require_mapping(value or {}, where)
     _check_keys(
         scenario,
-        (
-            "env",
-            "run",
-            "spans",
-            "metrics",
-            "allowed_metrics",
-            "events",
-            "expected_violations",
-        ),
+        ("env", "run", "spans", "metrics", "events", "expected_violations"),
         where,
     )
     spans = (
@@ -586,11 +574,6 @@ def _parse_scenario(
         raise SpecError(
             f"{where}: run is required — name the command that runs this "
             "scenario, e.g. 'otel-conformance-python <scenario>.py'"
-        )
-    if "allowed_metrics" in scenario and "metrics" not in scenario:
-        raise SpecError(
-            f"{where}.allowed_metrics: metrics must be declared when allowing "
-            "additional metrics"
         )
     own = tuple(
         _parse_violation(violation, f"{where}.expected_violations[{index}]")
@@ -616,9 +599,6 @@ def _parse_scenario(
         metrics=_parse_string_list(scenario["metrics"], f"{where}.metrics")
         if "metrics" in scenario
         else None,
-        allowed_metrics=_parse_string_list(
-            scenario.get("allowed_metrics"), f"{where}.allowed_metrics"
-        ),
         events=_parse_string_list(scenario["events"], f"{where}.events")
         if "events" in scenario
         else None,
