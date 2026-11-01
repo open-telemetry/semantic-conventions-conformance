@@ -120,3 +120,20 @@ def test_sql_server_batch_requires_sanitized_query_text() -> None:
         "INSERT INTO conformance.items (id, name) VALUES (?, ?)"
     )
     assert attributes["db.query.summary"] == "BATCH INSERT conformance.items"
+
+
+def test_oracle_contract_keeps_its_dialect_specific_actions() -> None:
+    document = yaml.safe_load(
+        (_CONTRACTS / "oracle.yaml").read_text(encoding="utf-8")
+    )
+    actions = [scenario["action"] for scenario in document["scenarios"]]
+    assert [action["kind"] for action in actions] == [
+        "query",
+        "prepared_query",
+        "batch",
+        "stored_procedure",
+    ]
+    assert actions[0]["sql"] == (
+        "SELECT CASE WHEN count(*) >= 0 THEN 1 ELSE 0 END FROM conformance.items"
+    )
+    assert actions[3]["sql"] == "{call conformance.noop()}"

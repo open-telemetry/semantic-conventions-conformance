@@ -29,6 +29,14 @@ container, waits for its declared readiness check, applies any declared
 initialization, and removes the container when the session closes. Scenario data
 is not pre-seeded; each workload creates or verifies the data it needs.
 
+Database startup defaults to 60 seconds, or 180 seconds for Oracle. Set
+`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` to a finite positive number of
+seconds in the runner's environment to override the selected backend's default.
+Invalid values produce a warning and use the backend's default.
+
+See the [Oracle scenario notes](../../../scenarios/database/java/oracle/README.md)
+for its container initialization.
+
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
 

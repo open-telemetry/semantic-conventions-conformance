@@ -13,6 +13,7 @@ opentelemetry = "1.67.0"
 # different instrumentation from the agent scenarios.
 opentelemetry-instrumentation = "2.33.1"
 opentelemetry-instrumentation-alpha = "2.33.1-alpha"
+oracle = "23.26.3.0.0"
 postgresql = "42.7.14"
 rediscala = "1.17.0"
 redisson = "4.8.0"
@@ -32,6 +33,7 @@ opentelemetry-instrumentation-jdbc = { module = "io.opentelemetry.instrumentatio
 opentelemetry-instrumentation-lettuce = { module = "io.opentelemetry.instrumentation:opentelemetry-lettuce-5.1" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
+oracle = { module = "com.oracle.database.jdbc:ojdbc11", version.ref = "oracle" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 rediscala = { module = "io.github.rediscala:rediscala_2.13", version.ref = "rediscala" }
 redisson = { module = "org.redisson:redisson", version.ref = "redisson" }
