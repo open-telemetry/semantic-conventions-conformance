@@ -322,7 +322,8 @@ def test_sql_server_readiness_requires_online_databases() -> None:
         (_sql_server, SQLServer, 1433, 60.0),
     ],
 )
-def test_each_backend_applies_its_own_startup_timeout(
+@pytest.mark.parametrize("timeout_override", [None, "240.5"])
+def test_each_backend_applies_startup_timeout(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
     backend_type: type[Postgres]
@@ -332,10 +333,16 @@ def test_each_backend_applies_its_own_startup_timeout(
     | type[SQLServer],
     port: int,
     expected_seconds: float,
+    timeout_override: str | None,
 ) -> None:
-    monkeypatch.delenv(
-        "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
-    )
+    if timeout_override is None:
+        monkeypatch.delenv(
+            "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
+        )
+    else:
+        monkeypatch.setenv(
+            "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", timeout_override
+        )
     timeouts: list[timedelta | int] = []
 
     class RecordingWaitStrategy(ExecWaitStrategy):
@@ -352,7 +359,13 @@ def test_each_backend_applies_its_own_startup_timeout(
     with backend_type():
         pass
 
-    assert timeouts == [timedelta(seconds=expected_seconds)]
+    assert timeouts == [
+        timedelta(
+            seconds=expected_seconds
+            if timeout_override is None
+            else float(timeout_override)
+        )
+    ]
 
 
 def test_start_failure_cleans_up_the_container(
