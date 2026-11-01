@@ -39,9 +39,29 @@ that the target has bounded cardinality.
 Span status and `error.type` aren't checked here: neither is HTTP-specific, so
 both live in [the runner's own policies](../../runner/README.md#advice-policies).
 
-Client scenarios call [`http-mock-server`](../mock-server), which installs
-with this package. Server scenarios are driven from outside, by
-[`otel-http-drive --serve`](../test-client). Both use the request sequence
-in [`contract.yaml`](../test-client/contract.yaml).
+Each side has its own contract in
+[`../test-client`'s sibling `contracts/`](../contracts), and each package
+points at the one for its side. A contract declares who drives it, which is
+what decides how the package runs.
+
+Client scenarios use [`client.yaml`](../contracts/client.yaml), whose
+`instrumentation` role starts a one-shot process per contract entry from that
+entry's JSON action, each with one capture window and report. They call
+[`http-mock-server`](../mock-server), which installs with this package.
+Server scenarios use [`server.yaml`](../contracts/server.yaml), whose
+`runner` role has them driven from
+outside by [`otel-http-drive --serve`](../test-client), with
+one measured server process per selected batch and that contract's action
+table handed off as JSON. The runner invokes Weaver once for the package.
+
+The persistent driver sends readiness and then one request per action, in
+sequence and never concurrently. It stamps each exchange where it sent the
+request and where it saw the answer. The runner isolates an action from the
+timestamps the instrumentation itself reported, then waits for expected
+telemetry, forwarding drains, and a quiet settle period before sending the
+next request. Nothing is injected into the traffic under test. Ambiguous
+metric intervals, telemetry that arrives after its action was sealed, and
+driver protocol failures fail the package rather than falling back to an
+aggregate report.
 
 [http]: https://opentelemetry.io/docs/specs/semconv/http/

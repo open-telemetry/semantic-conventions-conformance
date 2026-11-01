@@ -12,9 +12,6 @@
   },
   "events": {},
   "metrics": {
-    "dns.lookup.duration": [
-      "dns.question.name"
-    ],
     "http.client.active_requests": [
       "http.request.method",
       "server.address",
@@ -69,18 +66,6 @@
       "message": "Instrumentation scope 'System.Net.Http' does not have schema_url.",
       "signal_type": "instrumentation_scope",
       "signal_name": "System.Net.Http",
-      "context": {
-        "actual": null,
-        "expected": {
-          "present": true
-        }
-      }
-    },
-    {
-      "id": "instrumentation_scope_schema_url_missing",
-      "message": "Instrumentation scope 'System.Net.NameResolution' does not have schema_url.",
-      "signal_type": "instrumentation_scope",
-      "signal_name": "System.Net.NameResolution",
       "context": {
         "actual": null,
         "expected": {

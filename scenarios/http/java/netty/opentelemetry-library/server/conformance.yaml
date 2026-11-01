@@ -10,6 +10,5 @@ weaver:
 
 setup: otel-conformance-java prepare netty:opentelemetry-library
 
-scenarios:
-  server:
-    run: otel-http-drive --serve otel-conformance-java run netty:opentelemetry-library NettyLibraryServerScenario
+scenario_contract: ../../../../../../tools/http/contracts/server.yaml
+scenario_run: otel-http-drive --serve otel-conformance-java run netty:opentelemetry-library NettyLibraryServerScenario

@@ -99,7 +99,7 @@ def test_sorted_round_robin_keeps_all_library_variants(group: str) -> None:
             f"{root}/**/uv.lock" for root in roots
         ]
         assert job["report_paths"].splitlines() == [
-            f"{root}/**/output/weaver-reports/*.json" for root in roots
+            f"{root}/**/output/reports/**/*.json" for root in roots
         ]
     assert Counter(selected) == Counter(paths)
 
@@ -144,6 +144,25 @@ def test_other_groups_and_ruby_keep_their_existing_grouping() -> None:
         assert job["matrix_id"] == job["scenario_roots"].removeprefix(
             "scenarios/"
         ).replace("/", "-")
+    for job in jobs:
+        assert job["report_paths"].splitlines() == [
+            f"{root}/**/output/reports/**/*.json"
+            for root in job["scenario_roots"].splitlines()
+        ]
+
+
+def test_workflow_uploads_package_and_scenario_reports() -> None:
+    workflow = yaml.safe_load((REPO / ".github/workflows/runner.yml").read_text())
+    uploads = [
+        step
+        for step in workflow["jobs"]["scenarios"]["steps"]
+        if step["name"] == "Upload the telemetry reports"
+    ]
+
+    assert len(uploads) == 1
+    assert uploads[0]["if"] == "always()"
+    assert uploads[0]["with"]["name"] == "telemetry-reports-${{ matrix.matrix_id }}"
+    assert uploads[0]["with"]["path"] == "${{ matrix.report_paths }}"
 
 
 @pytest.mark.parametrize(

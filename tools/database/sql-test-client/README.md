@@ -69,10 +69,11 @@ Adapters consume returned results without asserting row counts or values.
 Execution and result-consumption errors fail the scenario. Batch adapters also
 check that the driver reports a successful result for each submitted statement.
 
-The conformance runner creates a separate live-check for every list entry. The
-same selected entry provides both the injected action and the telemetry
-expectations, so language helpers do not load the full backend contract.
-Descriptions are labels and may repeat.
+The conformance runner captures each list entry in a separate telemetry window
+and runs one aggregate Weaver live-check for the package. The same selected
+entry provides both the injected action and the telemetry expectations, so
+language helpers do not load the full backend contract. Descriptions are labels
+and may repeat.
 
 ## Per language
 
