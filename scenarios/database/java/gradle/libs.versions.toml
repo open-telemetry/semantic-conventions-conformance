@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [versions]
-hbase1 = "1.7.2"
-hbase2 = "2.4.18"
+hbase = "3.0.0"
 jackson = "2.22.4"
 mariadb = "3.5.11"
 jedis = "8.0.2"
@@ -21,8 +20,7 @@ redisson = "4.8.0"
 scala = "2.13.18"
 
 [libraries]
-hbase1-client = { module = "org.apache.hbase:hbase-client", version.ref = "hbase1" }
-hbase2-client = { module = "org.apache.hbase:hbase-client", version.ref = "hbase2" }
+hbase-client = { module = "org.apache.hbase:hbase-client", version.ref = "hbase" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 mariadb = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb" }
 jedis = { module = "redis.clients:jedis", version.ref = "jedis" }

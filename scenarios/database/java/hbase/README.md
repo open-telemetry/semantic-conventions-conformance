@@ -1,36 +1,52 @@
 # HBase conformance scenarios
 
-Both HBase client API lines run the shared workload through the OpenTelemetry
-Java agent. The `hbase-1` package uses the 1.7.2 client and fixture; `hbase-2` uses
-2.4.18. Renovate keeps clients within `>=1.7.2 <2.0.0` and `>=2.4.18 <2.5.0`,
-the ranges covered by the agent's dedicated instrumentation. Fixture versions
-and checksums in the [backend](../../../../tools/database/runner/src/database_conformance/_hbase.py)
-are updated by hand.
+The latest stable `org.apache.hbase:hbase-client` runs the shared workload with
+HBase's own OpenTelemetry instrumentation against a matching fixture. No Java
+agent or external HBase instrumentation is attached. The client and
+fixture are pinned to 3.0.0, the highest stable release in
+[Maven Central](https://repo.maven.apache.org/maven2/org/apache/hbase/hbase-client/maven-metadata.xml)
+and an [official Apache distribution](https://downloads.apache.org/hbase/3.0.0/).
+Fixture versions and Apache SHA-512 checksums in the
+[backend](../../../../tools/database/runner/src/database_conformance/_hbase.py)
+are updated together with the client.
 
-Run either package from the repository root:
+Run the package from the repository root:
 
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
-otel-conformance scenarios/database/java/hbase/hbase-1/opentelemetry-javaagent
-otel-conformance scenarios/database/java/hbase/hbase-2/opentelemetry-javaagent
+otel-conformance scenarios/database/java/hbase/native
 ```
+
+## Native SDK integration
+
+The [native launcher](native/src/main/java/HbaseNativeScenario.java) initializes
+the repository's `ScenarioSdk` before opening an HBase connection. SDK
+autoconfiguration registers its result as `GlobalOpenTelemetry`, which HBase's
+`TraceUtil.getGlobalTracer()` uses with scope `org.apache.hbase` and client version
+`3.0.0`. The runner supplies a fresh OTLP endpoint for each measured process.
+
+The workload closes its table and connection before the SDK flushes traces,
+logs, then metrics and shuts down. Log export is disabled. The prepared
+application classpath contains HBase 3.0.0, the OpenTelemetry SDK and OTLP exporter,
+but no agent or external HBase instrumentation. The shared launcher plugin copies
+an unused agent-control support jar outside that classpath; native commands never
+attach it.
 
 ## Java toolchains
 
-CI uses Java 25 for the Gradle build. The HBase workload, launchers, and shared
-`scenario-support` and `agent-control` projects select Java 21 toolchains.
+CI uses Java 25 for the Gradle build. The HBase workload, launcher, and shared
+`scenario-support` and `scenario-sdk` projects select Java 21 toolchains.
 Gradle provisions that JDK when needed, and prepared HBase runtimes record
 Java 21. Other database projects retain the Java 25 default.
 
-The HBase clients' Hadoop dependencies call `Subject.getSubject`, which is no
-longer supported on Java 24 and later. Compiling them on a newer JDK does not
-make those dependencies compatible at runtime.
+HBase 3 requires Java 17 or later. Its Hadoop 3.4 dependencies run on the
+Java 21 toolchain used by the conformance package.
 
 ## Fixtures and workload
 
 Docker must be running. Each session builds a local image from a SHA-512-verified
-Apache HBase binary distribution and a digest-pinned Eclipse Temurin Java 8 base.
-It starts the matching server API line, waits for readiness, then applies the
+Apache HBase binary distribution and a digest-pinned Eclipse Temurin Java 17 base.
+It starts the matching server, waits for readiness, then applies the
 [initialization script](../../../../tools/database/runner/src/database_conformance/hbase.rb).
 The script creates namespace `conformance`, table `items`, column family `data`,
 and one row with key `seed` and `data:name=seed`. The session removes both its
@@ -38,8 +54,9 @@ container and local image on close. Startup failures include container logs.
 
 HBase advertises fixed loopback ports 2181 for ZooKeeper, 16000 for the master,
 and 16020 for the region server. Only one HBase conformance package can run on
-a host at a time. The runner supplies `DATABASE_HOST` and `DATABASE_PORT` as the
-ZooKeeper quorum and port; these fixtures use no client authentication.
+a host at a time. The runner supplies `DATABASE_HOST` and `DATABASE_PORT` as
+`HBASE_BOOTSTRAP_SERVERS` for the client's RPC connection registry on port 16000.
+These fixtures use no client authentication.
 
 The [shared workload](../shared/hbase/scenarios) imports no OpenTelemetry code.
 Each operation runs in a separate process:
@@ -53,19 +70,42 @@ Each operation runs in a separate process:
 
 ## Contracts and coverage
 
-Both packages opt into stable database semantic conventions and share the
-[HBase telemetry contract](../../contracts/hbase.yaml). The runner's registry
-maps both backend selectors to system `hbase` and client span type
+The package checks the emitted telemetry against stable database semantic
+conventions using the [HBase telemetry contract](../../contracts/hbase.yaml).
+The runner's registry
+maps backend selector `hbase` to system `hbase` and client span type
 `db.hbase.client`.
 
-The contract checks the measured Get, Mutate, Scan, or BATCH Mutate operation
-and the metadata-table Scan. Batch spans must record a batch size of two.
-The Java agent reports the ZooKeeper cluster key `127.0.0.1:2181:/hbase` as
-`server.address`, without a separate `server.port`. Expectations check that
-cluster address rather than the region-server RPC endpoint.
+The contract requires stable database CLIENT spans for GET, PUT, SCAN, or BATCH
+and the metadata-table SCAN, with namespace and collection attributes. Batch
+spans must record a batch size of two. The bootstrap address is `127.0.0.1` with
+`server.port=16000`. It also requires `db.client.operation.duration`, the SDK's
+`queueSize` infrastructure metric, and no events.
 
-The packages retain committed coverage for both client lines. Metrics include
-`db.client.operation.duration` and `queueSize`; contracts expect no events.
-Runtime telemetry and log export are disabled because HBase client logging
-activates SDK log-pipeline counters that may not export before these short-lived
-processes exit.
+## Observed native gaps
+
+All four workloads complete successfully and emit their corresponding native
+CLIENT span under `org.apache.hbase` version `3.0.0`. Strict conformance fails:
+
+- The native table spans use legacy `db.system`, `db.name`, `db.operation`,
+  `db.connection_string`, and `db.user`, not stable `db.system.name`,
+  `db.namespace`, `db.collection.name`, `db.operation.name`, and server attributes.
+  They do not satisfy the stable database CLIENT span expectations.
+- HBase emits no `db.client.operation.duration`. The captured metrics describe
+  SDK/exporter health, not database operations.
+- The native scope has no schema URL. Weaver also reports deprecated RPC/network
+  attributes, unregistered `db.hbase.table`, `db.hbase.regions`, and
+  `db.hbase.container_operations`, and
+  instrumentation setting status OK on successful spans.
+
+No native findings are waived or filtered out. The package reuses the shared
+Java Weaver configuration for SDK infrastructure findings only.
+The committed [coverage](native/data.json) comes from fresh native-only runs.
+Stable database span and metric coverage is empty; entity coverage and the real
+findings remain recorded. Raw per-workload reports are written under
+`native/output/weaver-reports/` when running the command above.
+
+The four workloads each have four expectation failures. Strict runs also report
+52 violations for GET, 52 for PUT, 47 for SCAN, and 53 for BATCH. CI's
+`--report-only` mode downgrades semantic violations, but not missing expectations,
+so this package still exits nonzero and fails the conformance job.

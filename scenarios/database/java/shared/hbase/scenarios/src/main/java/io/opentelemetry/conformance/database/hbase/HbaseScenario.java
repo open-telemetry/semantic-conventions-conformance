@@ -35,9 +35,7 @@ public final class HbaseScenario {
 
     Configuration configuration = HBaseConfiguration.create();
     configuration.set(
-        "hbase.zookeeper.quorum", ScenarioEnvironment.require("HBASE_ZOOKEEPER_QUORUM"));
-    configuration.set(
-        "hbase.zookeeper.property.clientPort", ScenarioEnvironment.require("HBASE_ZOOKEEPER_PORT"));
+        "hbase.client.bootstrap.servers", ScenarioEnvironment.require("HBASE_BOOTSTRAP_SERVERS"));
     configuration.setInt("hbase.client.retries.number", 2);
     configuration.setInt("hbase.client.operation.timeout", 15_000);
     configuration.setInt("hbase.rpc.timeout", 5_000);

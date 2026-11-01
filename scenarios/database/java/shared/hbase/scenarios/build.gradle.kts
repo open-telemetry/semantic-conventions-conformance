@@ -5,5 +5,5 @@ plugins {
 
 dependencies {
     implementation(project(":scenario-support"))
-    compileOnly(libs.hbase1.client)
+    compileOnly(libs.hbase.client)
 }

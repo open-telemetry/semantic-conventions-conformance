@@ -18,32 +18,18 @@ HBASE_DATABASE = "conformance"
 HBASE_ZOOKEEPER_PORT = 2181
 HBASE_MASTER_PORT = 16000
 HBASE_REGIONSERVER_PORT = 16020
-HBASE_1_VERSION = "1.7.2"
-HBASE_2_VERSION = "2.4.18"
-_HBASE_1_SHA512 = (
-    "43c633606f4316319d0e872862bfee935a191308239ca42ad9545402fb9a83f9"
-    "399845123bdcda60c315bcb09bd7555375b73afcb3d668453d56e3985bf284fa"
+HBASE_VERSION = "3.0.0"
+_HBASE_SHA512 = (
+    "8290bc3cece084d36f7f47aae726268c7332e4828c6e8599df1343b03348e93f"
+    "91165fad03ac6107bfbf0d8535e72024fa5d19217890d2848d013d8418a584ed"
 )
-_HBASE_2_SHA512 = (
-    "1d90aa46271d262abbebc6b807778353a71743be5c30491bec7ccafd05f2ecf8"
-    "b3ff5c193addf28efd8d0cae4e1748ee74fdefd97fc8499cb1c163f5a2eed48d"
-)
-
-
-def _image_name(version: str) -> str:
-    """The local tag of the fixture built from Apache HBase ``version``."""
-    return f"otel-conformance-hbase:{version}"
-
-
-HBASE_1_IMAGE = _image_name(HBASE_1_VERSION)
-HBASE_2_IMAGE = _image_name(HBASE_2_VERSION)
+HBASE_IMAGE = f"otel-conformance-hbase:{HBASE_VERSION}"
 
 
 class HBase(DatabaseContainer):
     """Own an HBase fixture built from an Apache distribution."""
 
-    def __init__(self, version: str, checksum: str) -> None:
-        image_name = _image_name(version)
+    def __init__(self) -> None:
         image_context = Path(
             str(
                 resources.files("database_conformance").joinpath("hbase-image")
@@ -51,18 +37,19 @@ class HBase(DatabaseContainer):
         )
         self._image = DockerImage(
             path=image_context,
-            tag=image_name,
+            tag=HBASE_IMAGE,
             clean_up=True,
             buildargs={
-                "HBASE_VERSION": version,
-                "HBASE_SHA512": checksum,
+                "HBASE_VERSION": HBASE_VERSION,
+                "HBASE_SHA512": _HBASE_SHA512,
             },
         )
+        self._image_owned = False
         super().__init__(
             BackendSpec(
-                name=f"HBase {version}",
-                image=image_name,
-                port=HBASE_ZOOKEEPER_PORT,
+                name=f"HBase {HBASE_VERSION}",
+                image=HBASE_IMAGE,
+                port=HBASE_MASTER_PORT,
                 database=HBASE_DATABASE,
                 user="",
                 password="",
@@ -90,32 +77,32 @@ class HBase(DatabaseContainer):
         )
 
     def start(self) -> HBase:
+        if self._image_owned:
+            raise DatabaseBackendError("HBase has already been started")
+        self._image_owned = True
         try:
-            self._image.build()
-        except DockerException as error:
-            self._image.remove()
-            raise DatabaseBackendError(
-                "Could not build the HBase fixture from the Apache HBase "
-                f"distribution: {error}"
-            ) from error
-        return super().start()
+            try:
+                self._image.build()
+            except DockerException as error:
+                raise DatabaseBackendError(
+                    "Could not build the HBase fixture from the Apache HBase "
+                    f"distribution: {error}"
+                ) from error
+            return super().start()
+        except BaseException as error:
+            try:
+                self.close()
+            except DockerException as cleanup_error:
+                raise DatabaseBackendError(
+                    f"{error}\nHBase fixture cleanup also failed: "
+                    f"{cleanup_error}"
+                ) from error
+            raise
 
     def close(self) -> None:
         try:
             super().close()
         finally:
-            self._image.remove()
-
-
-class HBase1(HBase):
-    """Own an HBase fixture compatible with the 1.x client line."""
-
-    def __init__(self) -> None:
-        super().__init__(HBASE_1_VERSION, _HBASE_1_SHA512)
-
-
-class HBase2(HBase):
-    """Own an HBase fixture compatible with the 2.x client line."""
-
-    def __init__(self) -> None:
-        super().__init__(HBASE_2_VERSION, _HBASE_2_SHA512)
+            if self._image_owned:
+                self._image.remove()
+                self._image_owned = False

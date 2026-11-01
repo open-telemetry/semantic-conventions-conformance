@@ -23,13 +23,11 @@ from database_conformance import (
 )
 from database_conformance._container import DatabaseContainer
 from database_conformance._hbase import (
-    HBASE_1_IMAGE,
-    HBASE_2_IMAGE,
+    HBASE_IMAGE,
     HBASE_MASTER_PORT,
     HBASE_REGIONSERVER_PORT,
     HBASE_ZOOKEEPER_PORT,
-    HBase1,
-    HBase2,
+    HBase,
 )
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
@@ -300,10 +298,17 @@ def test_sql_server_readiness_requires_online_databases() -> None:
 
 
 class StubImage:
-    def __init__(self, *, build_error: DockerException | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        build_error: BaseException | None = None,
+        remove_error: DockerException | None = None,
+    ) -> None:
         self.build_error = build_error
+        self.remove_error = remove_error
         self.built = False
         self.removed = False
+        self.remove_calls = 0
 
     def build(self) -> StubImage:
         if self.build_error is not None:
@@ -312,17 +317,18 @@ class StubImage:
         return self
 
     def remove(self) -> None:
+        self.remove_calls += 1
+        if self.remove_error is not None:
+            raise self.remove_error
         self.removed = True
 
 
-@pytest.mark.parametrize("backend_type", [HBase1, HBase2])
 def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
     monkeypatch: pytest.MonkeyPatch,
-    backend_type: type[HBase1] | type[HBase2],
 ) -> None:
     container = StubContainer(
-        port=HBASE_ZOOKEEPER_PORT,
-        published_port=HBASE_ZOOKEEPER_PORT,
+        port=HBASE_MASTER_PORT,
+        published_port=HBASE_MASTER_PORT,
     )
     image = StubImage()
     image_arguments: dict[str, Any] = {}
@@ -333,10 +339,10 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
 
     install_stub(monkeypatch, _hbase, container)
     monkeypatch.setattr(_hbase, "DockerImage", image_factory)
-    with backend_type() as database:
+    with HBase() as database:
         assert database.variables == {
             "DATABASE_HOST": "127.0.0.1",
-            "DATABASE_PORT": "2181",
+            "DATABASE_PORT": "16000",
             "DATABASE_NAME": "conformance",
             "DATABASE_USER": "",
             "DATABASE_PASSWORD": "",
@@ -344,18 +350,13 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
 
     assert image.built
     assert image.removed
-    assert image_arguments["tag"] == (
-        HBASE_1_IMAGE if backend_type is HBase1 else HBASE_2_IMAGE
-    )
+    assert image_arguments["tag"] == HBASE_IMAGE
     assert image_arguments["clean_up"] is True
     assert image_arguments["buildargs"] == {
-        "HBASE_VERSION": "1.7.2" if backend_type is HBase1 else "2.4.18",
+        "HBASE_VERSION": "3.0.0",
         "HBASE_SHA512": (
-            "43c633606f4316319d0e872862bfee935a191308239ca42ad9545402fb9a83f9"
-            "399845123bdcda60c315bcb09bd7555375b73afcb3d668453d56e3985bf284fa"
-            if backend_type is HBase1
-            else "1d90aa46271d262abbebc6b807778353a71743be5c30491bec7ccafd05f2ecf8"
-            "b3ff5c193addf28efd8d0cae4e1748ee74fdefd97fc8499cb1c163f5a2eed48d"
+            "8290bc3cece084d36f7f47aae726268c7332e4828c6e8599df1343b03348e93f"
+            "91165fad03ac6107bfbf0d8535e72024fa5d19217890d2848d013d8418a584ed"
         ),
     }
     assert container.started
@@ -395,9 +396,95 @@ def test_hbase_image_build_failure_is_actionable(
             "distribution: builder unavailable"
         ),
     ):
-        HBase2().start()
+        HBase().start()
 
     assert image.removed
+
+
+@pytest.mark.parametrize(
+    "error", [RuntimeError("build interrupted"), KeyboardInterrupt()]
+)
+def test_hbase_cleans_up_unexpected_build_failures(
+    monkeypatch: pytest.MonkeyPatch, error: BaseException
+) -> None:
+    image = StubImage(build_error=error)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(type(error)) as caught:
+        HBase().start()
+    assert caught.value is error
+    assert image.removed
+    assert image.remove_calls == 1
+
+
+def test_hbase_preserves_build_and_image_cleanup_failures(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    image = StubImage(
+        build_error=DockerException("builder unavailable"),
+        remove_error=DockerException("image removal failed"),
+    )
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)builder unavailable.*HBase fixture cleanup also failed: "
+        r"image removal failed",
+    ):
+        HBase().start()
+
+
+@pytest.mark.parametrize("stage", ["configuration", "start", "initialization"])
+def test_hbase_removes_its_image_on_container_failures(
+    monkeypatch: pytest.MonkeyPatch, stage: str
+) -> None:
+    container = StubContainer(
+        port=HBASE_MASTER_PORT,
+        start_error=RuntimeError("startup failed") if stage == "start" else None,
+        exec_result=ExecResult(exit_code=1, output=b"schema failed")
+        if stage == "initialization"
+        else None,
+    )
+    if stage == "configuration":
+        def fail_configuration(**_: Any) -> None:
+            raise RuntimeError("configuration failed")
+        monkeypatch.setattr(container, "with_kwargs", fail_configuration)
+    image = StubImage()
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(RuntimeError, match="failed"):
+        HBase().start()
+    assert image.removed
+    assert image.remove_calls == 1
+    assert container.stopped is (stage != "configuration")
+
+
+def test_hbase_removes_its_fixture_after_scenario_setup_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(port=HBASE_MASTER_PORT)
+    image = StubImage()
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(RuntimeError, match="setup failed"):
+        with HBase():
+            raise RuntimeError("setup failed")
+    assert container.stopped
+    assert image.removed
+    assert image.remove_calls == 1
+
+
+def test_hbase_cannot_build_a_second_image_while_started(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(port=HBASE_MASTER_PORT)
+    image = StubImage()
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with HBase() as backend:
+        with pytest.raises(RuntimeError, match="already been started"):
+            backend.start()
+        assert not container.stopped
+        assert not image.removed
+    assert image.remove_calls == 1
 
 
 def test_start_failure_cleans_up_the_container(
@@ -582,8 +669,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
 
 def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
-    assert HBASE_1_IMAGE == "otel-conformance-hbase:1.7.2"
-    assert HBASE_2_IMAGE == "otel-conformance-hbase:2.4.18"
+    assert HBASE_IMAGE == "otel-conformance-hbase:3.0.0"
     dockerfile = (
         resources.files("database_conformance")
         .joinpath("hbase-image", "Dockerfile")
@@ -591,10 +677,10 @@ def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
     )
 
     assert (
-        "FROM eclipse-temurin:8-jre-jammy@sha256:"
-        "d53aa7811eba390450721b1037978605992f5d9467c4af629384f23a49f78436"
+        "FROM eclipse-temurin:17-jre-jammy@sha256:"
+        "c35794d1348777e6bc310b9b7f420098ef8f37e988199549b545fded79a895a2"
         in dockerfile
     )
-    assert f"ARG HBASE_VERSION={_hbase.HBASE_2_VERSION}" in dockerfile
-    assert f"ARG HBASE_SHA512={_hbase._HBASE_2_SHA512}" in dockerfile
+    assert f"ARG HBASE_VERSION={_hbase.HBASE_VERSION}" in dockerfile
+    assert f"ARG HBASE_SHA512={_hbase._HBASE_SHA512}" in dockerfile
     assert "sha512sum --check --strict" in dockerfile

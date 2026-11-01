@@ -1,10 +1,10 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM eclipse-temurin:8-jre-jammy@sha256:d53aa7811eba390450721b1037978605992f5d9467c4af629384f23a49f78436
+FROM eclipse-temurin:17-jre-jammy@sha256:c35794d1348777e6bc310b9b7f420098ef8f37e988199549b545fded79a895a2
 
-ARG HBASE_VERSION=2.4.18
-ARG HBASE_SHA512=1d90aa46271d262abbebc6b807778353a71743be5c30491bec7ccafd05f2ecf8b3ff5c193addf28efd8d0cae4e1748ee74fdefd97fc8499cb1c163f5a2eed48d
+ARG HBASE_VERSION=3.0.0
+ARG HBASE_SHA512=8290bc3cece084d36f7f47aae726268c7332e4828c6e8599df1343b03348e93f91165fad03ac6107bfbf0d8535e72024fa5d19217890d2848d013d8418a584ed
 
 ADD https://archive.apache.org/dist/hbase/${HBASE_VERSION}/hbase-${HBASE_VERSION}-bin.tar.gz /tmp/hbase.tar.gz
 RUN echo "${HBASE_SHA512}  /tmp/hbase.tar.gz" | sha512sum --check --strict \

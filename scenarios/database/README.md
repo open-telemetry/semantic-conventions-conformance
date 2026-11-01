@@ -17,7 +17,7 @@ it to the client API. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
-HBase's client API lines, workloads, and fixture requirements are documented in
+HBase's native telemetry, workloads, and conformance gaps are documented in
 its [scenario notes](java/hbase/README.md).
 
 ## Running a package
@@ -32,7 +32,8 @@ otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 
 Docker must be installed and running. A package run uses one backend container,
 which is removed when the run ends. Stable database semantic conventions are
-opted into by the scenarios because Java instrumentation otherwise emits legacy
-database attributes during the migration period.
+opted into by Java-agent and library scenarios because those instrumentations
+otherwise emit legacy database attributes during the migration period. Native
+HBase telemetry is measured as emitted, including its legacy attributes.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

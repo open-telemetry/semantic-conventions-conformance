@@ -1,0 +1,903 @@
+{
+  "spans": {},
+  "events": {},
+  "metrics": {},
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.apache.hbase' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.apache.hbase",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'AsyncConnection.close' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "AsyncConnection.close",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.connection_string' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` and `server.port`.\n'.",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "attribute_key": "db.connection_string",
+        "deprecation_note": "Replaced by `server.address` and `server.port`.\n",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.regions' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "attribute_key": "db.hbase.regions"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.table' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "attribute_key": "db.hbase.table"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.name' is deprecated; reason = 'renamed', note = 'Replaced by `db.namespace`.'.",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "attribute_key": "db.name",
+        "deprecation_note": "Replaced by `db.namespace`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.system' is deprecated; reason = 'renamed', note = 'Replaced by `db.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "attribute_key": "db.system",
+        "deprecation_note": "Replaced by `db.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.user' is deprecated; reason = 'obsoleted', note = 'Removed, no replacement at this time.'.",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "attribute_key": "db.user",
+        "deprecation_note": "Removed, no replacement at this time.",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'AsyncRegionLocator.getRegionLocation' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.connection_string' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` and `server.port`.\n'.",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.connection_string",
+        "deprecation_note": "Replaced by `server.address` and `server.port`.\n",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.container_operations' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.hbase.container_operations"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.table' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.hbase.table"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.name' is deprecated; reason = 'renamed', note = 'Replaced by `db.namespace`.'.",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.name",
+        "deprecation_note": "Replaced by `db.namespace`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.operation' is deprecated; reason = 'renamed', note = 'Replaced by `db.operation.name`.'.",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.operation",
+        "deprecation_note": "Replaced by `db.operation.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.system' is deprecated; reason = 'renamed', note = 'Replaced by `db.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.system",
+        "deprecation_note": "Replaced by `db.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.user' is deprecated; reason = 'obsoleted', note = 'Removed, no replacement at this time.'.",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.user",
+        "deprecation_note": "Removed, no replacement at this time.",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'BATCH conformance:items' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'ConnectionFactory.createAsyncConnection' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "ConnectionFactory.createAsyncConnection",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.connection_string' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` and `server.port`.\n'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:items",
+      "context": {
+        "attribute_key": "db.connection_string",
+        "deprecation_note": "Replaced by `server.address` and `server.port`.\n",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.table' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:items",
+      "context": {
+        "attribute_key": "db.hbase.table"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.name' is deprecated; reason = 'renamed', note = 'Replaced by `db.namespace`.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:items",
+      "context": {
+        "attribute_key": "db.name",
+        "deprecation_note": "Replaced by `db.namespace`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.operation' is deprecated; reason = 'renamed', note = 'Replaced by `db.operation.name`.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:items",
+      "context": {
+        "attribute_key": "db.operation",
+        "deprecation_note": "Replaced by `db.operation.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.system' is deprecated; reason = 'renamed', note = 'Replaced by `db.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:items",
+      "context": {
+        "attribute_key": "db.system",
+        "deprecation_note": "Replaced by `db.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.user' is deprecated; reason = 'obsoleted', note = 'Removed, no replacement at this time.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:items",
+      "context": {
+        "attribute_key": "db.user",
+        "deprecation_note": "Removed, no replacement at this time.",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'GET conformance:items' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "GET conformance:items",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.connection_string' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` and `server.port`.\n'.",
+      "signal_type": "span",
+      "signal_name": "PUT conformance:items",
+      "context": {
+        "attribute_key": "db.connection_string",
+        "deprecation_note": "Replaced by `server.address` and `server.port`.\n",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.table' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "PUT conformance:items",
+      "context": {
+        "attribute_key": "db.hbase.table"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.name' is deprecated; reason = 'renamed', note = 'Replaced by `db.namespace`.'.",
+      "signal_type": "span",
+      "signal_name": "PUT conformance:items",
+      "context": {
+        "attribute_key": "db.name",
+        "deprecation_note": "Replaced by `db.namespace`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.operation' is deprecated; reason = 'renamed', note = 'Replaced by `db.operation.name`.'.",
+      "signal_type": "span",
+      "signal_name": "PUT conformance:items",
+      "context": {
+        "attribute_key": "db.operation",
+        "deprecation_note": "Replaced by `db.operation.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.system' is deprecated; reason = 'renamed', note = 'Replaced by `db.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "PUT conformance:items",
+      "context": {
+        "attribute_key": "db.system",
+        "deprecation_note": "Replaced by `db.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.user' is deprecated; reason = 'obsoleted', note = 'Removed, no replacement at this time.'.",
+      "signal_type": "span",
+      "signal_name": "PUT conformance:items",
+      "context": {
+        "attribute_key": "db.user",
+        "deprecation_note": "Removed, no replacement at this time.",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'PUT conformance:items' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "PUT conformance:items",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'RpcConnectionRegistry.close' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "RpcConnectionRegistry.close",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'RpcConnectionRegistry.getClusterId' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "RpcConnectionRegistry.getClusterId",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'RpcConnectionRegistry.getMetaRegionLocations' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "RpcConnectionRegistry.getMetaRegionLocations",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.connection_string' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` and `server.port`.\n'.",
+      "signal_type": "span",
+      "signal_name": "SCAN conformance:items",
+      "context": {
+        "attribute_key": "db.connection_string",
+        "deprecation_note": "Replaced by `server.address` and `server.port`.\n",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.table' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "SCAN conformance:items",
+      "context": {
+        "attribute_key": "db.hbase.table"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.name' is deprecated; reason = 'renamed', note = 'Replaced by `db.namespace`.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN conformance:items",
+      "context": {
+        "attribute_key": "db.name",
+        "deprecation_note": "Replaced by `db.namespace`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.operation' is deprecated; reason = 'renamed', note = 'Replaced by `db.operation.name`.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN conformance:items",
+      "context": {
+        "attribute_key": "db.operation",
+        "deprecation_note": "Replaced by `db.operation.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.system' is deprecated; reason = 'renamed', note = 'Replaced by `db.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN conformance:items",
+      "context": {
+        "attribute_key": "db.system",
+        "deprecation_note": "Replaced by `db.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.user' is deprecated; reason = 'obsoleted', note = 'Removed, no replacement at this time.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN conformance:items",
+      "context": {
+        "attribute_key": "db.user",
+        "deprecation_note": "Removed, no replacement at this time.",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'SCAN conformance:items' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "SCAN conformance:items",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.connection_string' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` and `server.port`.\n'.",
+      "signal_type": "span",
+      "signal_name": "SCAN hbase:meta",
+      "context": {
+        "attribute_key": "db.connection_string",
+        "deprecation_note": "Replaced by `server.address` and `server.port`.\n",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.table' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "SCAN hbase:meta",
+      "context": {
+        "attribute_key": "db.hbase.table"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.name' is deprecated; reason = 'renamed', note = 'Replaced by `db.namespace`.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN hbase:meta",
+      "context": {
+        "attribute_key": "db.name",
+        "deprecation_note": "Replaced by `db.namespace`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.operation' is deprecated; reason = 'renamed', note = 'Replaced by `db.operation.name`.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN hbase:meta",
+      "context": {
+        "attribute_key": "db.operation",
+        "deprecation_note": "Replaced by `db.operation.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.system' is deprecated; reason = 'renamed', note = 'Replaced by `db.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN hbase:meta",
+      "context": {
+        "attribute_key": "db.system",
+        "deprecation_note": "Replaced by `db.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.user' is deprecated; reason = 'obsoleted', note = 'Removed, no replacement at this time.'.",
+      "signal_type": "span",
+      "signal_name": "SCAN hbase:meta",
+      "context": {
+        "attribute_key": "db.user",
+        "deprecation_note": "Removed, no replacement at this time.",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'SCAN hbase:meta' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "SCAN hbase:meta",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.name' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` on client spans and `client.address` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetClusterId",
+      "context": {
+        "attribute_key": "net.peer.name",
+        "deprecation_note": "Replaced by `server.address` on client spans and `client.address` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.port' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.port` on client spans and `client.port` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetClusterId",
+      "context": {
+        "attribute_key": "net.peer.port",
+        "deprecation_note": "Replaced by `server.port` on client spans and `client.port` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.service' is deprecated; reason = 'uncategorized', note = 'Value should be included in `rpc.method` which is expected to be a fully-qualified name.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetClusterId",
+      "context": {
+        "attribute_key": "rpc.service",
+        "deprecation_note": "Value should be included in `rpc.method` which is expected to be a fully-qualified name.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.system' is deprecated; reason = 'renamed', note = 'Replaced by `rpc.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetClusterId",
+      "context": {
+        "attribute_key": "rpc.system",
+        "deprecation_note": "Replaced by `rpc.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'hbase.pb.ClientMetaService/GetClusterId' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetClusterId",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.name' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` on client spans and `client.address` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetMetaRegionLocations",
+      "context": {
+        "attribute_key": "net.peer.name",
+        "deprecation_note": "Replaced by `server.address` on client spans and `client.address` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.port' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.port` on client spans and `client.port` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetMetaRegionLocations",
+      "context": {
+        "attribute_key": "net.peer.port",
+        "deprecation_note": "Replaced by `server.port` on client spans and `client.port` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.service' is deprecated; reason = 'uncategorized', note = 'Value should be included in `rpc.method` which is expected to be a fully-qualified name.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetMetaRegionLocations",
+      "context": {
+        "attribute_key": "rpc.service",
+        "deprecation_note": "Value should be included in `rpc.method` which is expected to be a fully-qualified name.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.system' is deprecated; reason = 'renamed', note = 'Replaced by `rpc.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetMetaRegionLocations",
+      "context": {
+        "attribute_key": "rpc.system",
+        "deprecation_note": "Replaced by `rpc.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'hbase.pb.ClientMetaService/GetMetaRegionLocations' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientMetaService/GetMetaRegionLocations",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.name' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` on client spans and `client.address` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Get",
+      "context": {
+        "attribute_key": "net.peer.name",
+        "deprecation_note": "Replaced by `server.address` on client spans and `client.address` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.port' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.port` on client spans and `client.port` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Get",
+      "context": {
+        "attribute_key": "net.peer.port",
+        "deprecation_note": "Replaced by `server.port` on client spans and `client.port` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.service' is deprecated; reason = 'uncategorized', note = 'Value should be included in `rpc.method` which is expected to be a fully-qualified name.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Get",
+      "context": {
+        "attribute_key": "rpc.service",
+        "deprecation_note": "Value should be included in `rpc.method` which is expected to be a fully-qualified name.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.system' is deprecated; reason = 'renamed', note = 'Replaced by `rpc.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Get",
+      "context": {
+        "attribute_key": "rpc.system",
+        "deprecation_note": "Replaced by `rpc.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'hbase.pb.ClientService/Get' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Get",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.name' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` on client spans and `client.address` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Multi",
+      "context": {
+        "attribute_key": "net.peer.name",
+        "deprecation_note": "Replaced by `server.address` on client spans and `client.address` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.port' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.port` on client spans and `client.port` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Multi",
+      "context": {
+        "attribute_key": "net.peer.port",
+        "deprecation_note": "Replaced by `server.port` on client spans and `client.port` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.service' is deprecated; reason = 'uncategorized', note = 'Value should be included in `rpc.method` which is expected to be a fully-qualified name.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Multi",
+      "context": {
+        "attribute_key": "rpc.service",
+        "deprecation_note": "Value should be included in `rpc.method` which is expected to be a fully-qualified name.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.system' is deprecated; reason = 'renamed', note = 'Replaced by `rpc.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Multi",
+      "context": {
+        "attribute_key": "rpc.system",
+        "deprecation_note": "Replaced by `rpc.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'hbase.pb.ClientService/Multi' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Multi",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.name' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` on client spans and `client.address` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Mutate",
+      "context": {
+        "attribute_key": "net.peer.name",
+        "deprecation_note": "Replaced by `server.address` on client spans and `client.address` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.port' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.port` on client spans and `client.port` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Mutate",
+      "context": {
+        "attribute_key": "net.peer.port",
+        "deprecation_note": "Replaced by `server.port` on client spans and `client.port` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.service' is deprecated; reason = 'uncategorized', note = 'Value should be included in `rpc.method` which is expected to be a fully-qualified name.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Mutate",
+      "context": {
+        "attribute_key": "rpc.service",
+        "deprecation_note": "Value should be included in `rpc.method` which is expected to be a fully-qualified name.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.system' is deprecated; reason = 'renamed', note = 'Replaced by `rpc.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Mutate",
+      "context": {
+        "attribute_key": "rpc.system",
+        "deprecation_note": "Replaced by `rpc.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'hbase.pb.ClientService/Mutate' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Mutate",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.name' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` on client spans and `client.address` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Scan",
+      "context": {
+        "attribute_key": "net.peer.name",
+        "deprecation_note": "Replaced by `server.address` on client spans and `client.address` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.port' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.port` on client spans and `client.port` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Scan",
+      "context": {
+        "attribute_key": "net.peer.port",
+        "deprecation_note": "Replaced by `server.port` on client spans and `client.port` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.service' is deprecated; reason = 'uncategorized', note = 'Value should be included in `rpc.method` which is expected to be a fully-qualified name.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Scan",
+      "context": {
+        "attribute_key": "rpc.service",
+        "deprecation_note": "Value should be included in `rpc.method` which is expected to be a fully-qualified name.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.system' is deprecated; reason = 'renamed', note = 'Replaced by `rpc.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Scan",
+      "context": {
+        "attribute_key": "rpc.system",
+        "deprecation_note": "Replaced by `rpc.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'hbase.pb.ClientService/Scan' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ClientService/Scan",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.name' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` on client spans and `client.address` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ConnectionRegistryService/GetConnectionRegistry",
+      "context": {
+        "attribute_key": "net.peer.name",
+        "deprecation_note": "Replaced by `server.address` on client spans and `client.address` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'net.peer.port' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.port` on client spans and `client.port` on server spans.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ConnectionRegistryService/GetConnectionRegistry",
+      "context": {
+        "attribute_key": "net.peer.port",
+        "deprecation_note": "Replaced by `server.port` on client spans and `client.port` on server spans.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.service' is deprecated; reason = 'uncategorized', note = 'Value should be included in `rpc.method` which is expected to be a fully-qualified name.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ConnectionRegistryService/GetConnectionRegistry",
+      "context": {
+        "attribute_key": "rpc.service",
+        "deprecation_note": "Value should be included in `rpc.method` which is expected to be a fully-qualified name.",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'rpc.system' is deprecated; reason = 'renamed', note = 'Replaced by `rpc.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ConnectionRegistryService/GetConnectionRegistry",
+      "context": {
+        "attribute_key": "rpc.system",
+        "deprecation_note": "Replaced by `rpc.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'hbase.pb.ConnectionRegistryService/GetConnectionRegistry' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "hbase.pb.ConnectionRegistryService/GetConnectionRegistry",
+      "context": {
+        "status_code": "ok"
+      }
+    }
+  ]
+}

@@ -2,10 +2,9 @@
 configure(
     listOf(
         project(":shared:hbase:scenarios"),
-        project(":hbase:hbase-1:opentelemetry-javaagent"),
-        project(":hbase:hbase-2:opentelemetry-javaagent"),
+        project(":hbase:native"),
         project(":scenario-support"),
-        project(":agent-control"),
+        project(":scenario-sdk"),
     ),
 ) {
     plugins.withId("otel-conformance.java-conventions") {

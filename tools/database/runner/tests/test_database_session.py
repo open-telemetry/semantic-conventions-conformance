@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 
 import database_conformance
-from database_conformance._hbase import HBase1, HBase2
+from database_conformance._hbase import HBase
 from database_conformance._registry import BACKENDS
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
 
@@ -37,7 +37,7 @@ scenarios:
     return load_spec(tmp_path)
 
 
-@pytest.mark.parametrize("backend", ["postgresql", "hbase-1", "hbase-2"])
+@pytest.mark.parametrize("backend", ["postgresql", "hbase"])
 def test_database_session_injects_backend_variables(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -117,14 +117,9 @@ def test_database_session_injects_backend_variables(
     ]
 
 
-@pytest.mark.parametrize(
-    ("selector", "factory"), [("hbase-1", HBase1), ("hbase-2", HBase2)]
-)
-def test_hbase_selectors_register_their_factory_and_shared_span_type(
-    selector: str, factory: type[HBase1] | type[HBase2]
-) -> None:
-    registration = BACKENDS[selector]
-    assert registration.factory is factory
+def test_hbase_registers_its_factory_and_span_type() -> None:
+    registration = BACKENDS["hbase"]
+    assert registration.factory is HBase
     assert registration.system == "hbase"
     assert registration.client_span_type == "db.hbase.client"
 
@@ -178,6 +173,8 @@ def test_database_session_closes_backend_after_an_error(
     ("runner_config", "message"),
     [
         ("  backend: sqlite", "unsupported backend 'sqlite'"),
+        ("  backend: hbase-1", "unsupported backend 'hbase-1'"),
+        ("  backend: hbase-2", "unsupported backend 'hbase-2'"),
         ("  backend: [postgresql]", "expected a string"),
         (
             "  backend: postgresql\n  extra: value",
