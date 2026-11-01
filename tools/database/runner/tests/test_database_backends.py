@@ -26,7 +26,6 @@ from database_conformance._hbase import (
     HBASE_IMAGE,
     HBASE_MASTER_PORT,
     HBASE_REGIONSERVER_PORT,
-    HBASE_ZOOKEEPER_PORT,
     HBase,
 )
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
@@ -363,13 +362,13 @@ def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
     assert container.stopped
     assert container.kwargs == {"hostname": "localhost"}
     assert container.ports == {
-        f"{HBASE_ZOOKEEPER_PORT}/tcp": ("127.0.0.1", HBASE_ZOOKEEPER_PORT),
         f"{HBASE_MASTER_PORT}/tcp": ("127.0.0.1", HBASE_MASTER_PORT),
         f"{HBASE_REGIONSERVER_PORT}/tcp": (
             "127.0.0.1",
             HBASE_REGIONSERVER_PORT,
         ),
     }
+    assert "2181/tcp" not in container.ports
     assert container.exec_config is not None
     assert container.exec_config.command == [
         "hbase",

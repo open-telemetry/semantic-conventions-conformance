@@ -33,8 +33,7 @@ scenarios:
             rpc.system: HBASE_RPC
       - match:
           kind: INTERNAL
-    metrics:
-      - queueSize
+    metrics: []
     events: []
 
   put:
@@ -65,8 +64,7 @@ scenarios:
             rpc.system: HBASE_RPC
       - match:
           kind: INTERNAL
-    metrics:
-      - queueSize
+    metrics: []
     events: []
 
   scan:
@@ -97,8 +95,7 @@ scenarios:
             rpc.system: HBASE_RPC
       - match:
           kind: INTERNAL
-    metrics:
-      - queueSize
+    metrics: []
     events: []
 
   batch:
@@ -130,6 +127,5 @@ scenarios:
             rpc.system: HBASE_RPC
       - match:
           kind: INTERNAL
-    metrics:
-      - queueSize
+    metrics: []
     events: []

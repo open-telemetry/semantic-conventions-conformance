@@ -6,12 +6,38 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from database_conformance import classify_span
 from opentelemetry.conformance import load_spec
-from opentelemetry.conformance._checks import ObservedSpan, _check_spans
+from opentelemetry.conformance._checks import ObservedSpan, _check_spans, check
+
+
+class Report(dict[str, Any]):
+    def __init__(
+        self, spans: list[ObservedSpan], sdk_metrics: dict[str, int]
+    ) -> None:
+        super().__init__(
+            samples=[
+                {
+                    "span": {
+                        "name": span.name,
+                        "kind": span.kind,
+                        "attributes": [
+                            {"name": name, "value": value}
+                            for name, value in span.attributes.items()
+                        ],
+                    }
+                }
+                for span in spans
+            ],
+            statistics={"seen_non_registry_metrics": sdk_metrics},
+        )
+        self.violations = [
+            {"id": "deprecated_attribute", "message": "Legacy HBase attributes"}
+        ]
 
 
 @pytest.mark.parametrize(
@@ -37,6 +63,13 @@ from opentelemetry.conformance._checks import ObservedSpan, _check_spans
         ({"db.connection_string": "127.0.0.1:2181"}, "CLIENT", 1, False),
     ],
 )
+@pytest.mark.parametrize(
+    "sdk_metrics",
+    [
+        {},
+        {"queueSize": 1, "processedSpans": 1, "otlp.exporter.exported": 1},
+    ],
+)
 def test_hbase_contract_requires_the_native_workload_span(
     scenario: str,
     operation: str,
@@ -44,6 +77,7 @@ def test_hbase_contract_requires_the_native_workload_span(
     kind: str,
     count: int,
     valid: bool,
+    sdk_metrics: dict[str, int],
 ) -> None:
     root = Path(__file__).resolve().parents[4]
     spec = load_spec(root / "scenarios/database/java/hbase/native").scenarios[
@@ -81,7 +115,11 @@ def test_hbase_contract_requires_the_native_workload_span(
         ObservedSpan("AsyncConnection.close", "INTERNAL", {}),
     ]
 
-    assert (not _check_spans(spec, spans)) is valid
+    findings = check(spec, Report(spans, sdk_metrics))
+    assert (not findings.failures) is valid
+    assert findings.violations == [
+        "[deprecated_attribute] Legacy HBase attributes"
+    ]
     assert classify_span(f"{operation} conformance:items", kind, attributes) == set()
 
 
@@ -152,7 +190,7 @@ def test_hbase_native_package_keeps_emission_checks_without_waivers_or_agent() -
             name,
         )
         assert not scenario.expected_violations
-        assert scenario.metrics == ("queueSize",)
+        assert scenario.metrics == ()
         assert scenario.events == ()
         assert scenario.spans is not None
         assert all(expectation.match.type is None for expectation in scenario.spans)

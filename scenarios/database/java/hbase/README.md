@@ -56,9 +56,10 @@ The script creates namespace `conformance`, table `items`, column family `data`,
 and one row with key `seed` and `data:name=seed`. The session removes both its
 container and local image on close. Startup failures include container logs.
 
-HBase advertises fixed loopback ports 2181 for ZooKeeper, 16000 for the master,
-and 16020 for the region server. Only one HBase conformance package can run on
-a host at a time. The runner supplies `DATABASE_HOST` and `DATABASE_PORT` as
+The fixture publishes fixed loopback ports 16000 for the master and 16020 for
+the region server. ZooKeeper uses port 2181 only inside the container.
+Only one HBase conformance package can run on a host at a time.
+The runner supplies `DATABASE_HOST` and `DATABASE_PORT` as
 `HBASE_BOOTSTRAP_SERVERS` for the client's RPC connection registry on port 16000.
 These fixtures use no client authentication.
 
@@ -88,8 +89,9 @@ two rows and rejects per-row errors.
 
 Metadata-table scans, native RPC CLIENT spans, and INTERNAL connection and
 region-lookup spans are recognized without fixed counts because initialization
-can perform additional lookups. The contract still requires the SDK's `queueSize`
-metric and no events. Matching native attributes does not waive their semantic
+can perform additional lookups. The contract declares no metrics or events.
+SDK self-metrics such as `queueSize` are not workload telemetry and are not
+required. Matching native attributes does not waive their semantic
 violations or classify them as stable database coverage.
 
 ## Observed native gaps
@@ -119,5 +121,4 @@ All four workloads satisfy their native telemetry expectations. Strict runs
 report 52 violations for GET, 52 for PUT, 47 for SCAN, and 53 for BATCH, and exit
 nonzero for those findings. CI's `--report-only` mode reports the same violations
 as warnings and exits zero. Missing native workload spans, incorrect attributes,
-missing SDK metrics, unexpected events, or workload crashes still fail in both
-modes.
+unexpected events, or workload crashes still fail in both modes.

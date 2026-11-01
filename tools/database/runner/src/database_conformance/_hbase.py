@@ -15,7 +15,6 @@ from testcontainers.core.image import DockerImage
 from ._container import BackendSpec, DatabaseBackendError, DatabaseContainer
 
 HBASE_DATABASE = "conformance"
-HBASE_ZOOKEEPER_PORT = 2181
 HBASE_MASTER_PORT = 16000
 HBASE_REGIONSERVER_PORT = 16020
 HBASE_VERSION = "3.0.0"
@@ -68,7 +67,6 @@ class HBase(DatabaseContainer):
                 ),
                 hostname="localhost",
                 fixed_ports=(
-                    HBASE_ZOOKEEPER_PORT,
                     HBASE_MASTER_PORT,
                     HBASE_REGIONSERVER_PORT,
                 ),
