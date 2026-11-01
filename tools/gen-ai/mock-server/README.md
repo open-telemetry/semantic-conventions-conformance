@@ -18,7 +18,7 @@ and supplies its URL as `${MOCK_SERVER_URL}`.
 | --- | --- |
 | `anthropic` | `/v1/messages`, including client tools, non-streaming web search, streaming text and compaction |
 | `anthropic_agents`, `mistral_agents` | hosted-agent creation |
-| `assistants` | OpenAI Assistants, threads and runs |
+| `assistants` | OpenAI Assistants, threads and runs, including streamed runs and tool output submission |
 | `bedrock` | `converse`, `converse-stream`, `invoke` |
 | `bedrock_agent`, `bedrock_agentcore` | agent invocation, knowledge-base retrieval/generation (including streaming), and the memory APIs |
 | `cohere` | `/v1` and `/v2` chat and embed |
@@ -38,9 +38,19 @@ ID, model output, and token usage. No create request is needed, so a fetch
 scenario emits only retrieval telemetry.
 
 Non-streaming Gemini and Vertex `generateContent` requests with `codeExecution`
-return fixed code and execution results. Interaction creation requests with
-`google_search` return a search call, its result, and model output. The server
-does not execute code or search the web.
+return fixed code and execution results. With `googleSearch` they return
+grounding metadata and a text answer, plus `toolCall`/`toolResponse` parts when
+`toolConfig.includeServerSideToolInvocations` is set. Sent next to
+`functionDeclarations`, the answer is a function call instead of text.
+Interaction creation requests with `google_search` return a search call, its
+result, and model output. The server does not execute code or search the web.
+
+For OpenAI chat completions, streamed or not, a request whose last user message contains
+`[MOCK_EMPTY_COMPLETION]` gets an empty completion whose usage reports `completion_tokens: 0`, and one
+whose last user message contains `[MOCK_BAD_REQUEST]` gets a 400 `invalid_request_error` with no usage.
+Markers in earlier turns or in system, assistant, or tool messages are ignored.
+They exist so a scenario can exercise the zero-output and failed-call paths of
+token usage recording.
 
 ## Adding a response
 

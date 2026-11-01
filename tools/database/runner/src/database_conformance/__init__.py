@@ -20,10 +20,8 @@ from opentelemetry.conformance import (
     require_pin,
 )
 
-from ._container import DatabaseContainer
 from ._coverage import classifier, classify_span
-from ._mariadb import MariaDB
-from ._postgres import Postgres
+from ._registry import BACKENDS as _BACKEND_REGISTRY
 
 _HERE = Path(__file__).parent
 
@@ -34,12 +32,6 @@ DOMAIN = Domain(
     classifier=classifier,
 )
 
-_BACKENDS: dict[str, Callable[[], DatabaseContainer]] = {
-    "mariadb": MariaDB,
-    "postgresql": Postgres,
-}
-
-
 def _backend_name(spec: PackageSpec) -> str:
     where = f"{spec.directory / 'conformance.yaml'}.runner_config"
     config = spec.runner_config
@@ -49,11 +41,9 @@ def _backend_name(spec: PackageSpec) -> str:
         )
     backend = config["backend"]
     if not isinstance(backend, str):
-        raise SpecError(
-            f"{where}.backend: expected a string"
-        )
-    if backend not in _BACKENDS:
-        choices = ", ".join(sorted(_BACKENDS))
+        raise SpecError(f"{where}.backend: expected a string")
+    if backend not in _BACKEND_REGISTRY:
+        choices = ", ".join(sorted(_BACKEND_REGISTRY))
         raise SpecError(
             f"{where}.backend selects unsupported backend {backend!r}; "
             f"expected one of: {choices}"
@@ -76,7 +66,7 @@ def database_session(
 ) -> Generator[ConformanceSession, None, None]:
     """Open a database conformance session with its configured backend."""
     spec = spec or load_spec(Path(directory))
-    with _BACKENDS[_backend_name(spec)]() as backend:
+    with _BACKEND_REGISTRY[_backend_name(spec)].factory() as backend:
         resolved = dict(variables or {})
         resolved.update(backend.variables)
         session_context = DOMAIN.session(

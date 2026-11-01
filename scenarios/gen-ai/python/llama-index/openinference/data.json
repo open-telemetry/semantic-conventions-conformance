@@ -1,14 +1,6 @@
 {
   "spans": {
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.arguments",
-      "gen_ai.tool.call.result",
-      "gen_ai.tool.description",
-      "gen_ai.tool.name",
-      "gen_ai.tool.type"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -18,6 +10,24 @@
       "gen_ai.tool.definitions",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.embeddings.client": [
+      "gen_ai.embeddings.dimension.count",
+      "gen_ai.operation.name",
+      "gen_ai.request.model"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.retrieval.client": [
+      "gen_ai.operation.name",
+      "gen_ai.retrieval.documents",
+      "gen_ai.retrieval.query.text"
     ]
   },
   "events": {},
@@ -1332,6 +1342,421 @@
         "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding._get_query_embedding",
+      "context": {
+        "attribute_key": "embedding.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding._get_query_embedding",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding._get_query_embedding",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding._get_query_embedding",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIEmbedding._get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding._get_query_embedding",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "embeddings span name should be 'embeddings text-embedding-3-small', got 'OpenAIEmbedding._get_query_embedding'",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding._get_query_embedding",
+      "context": {
+        "expected_form": "embeddings text-embedding-3-small",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.0.embedding.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "embedding.embeddings.0.embedding.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.0.embedding.vector' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "embedding.embeddings.0.embedding.vector"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "embedding.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIEmbedding.get_query_embedding' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "embeddings span name should be 'embeddings text-embedding-3-small', got 'OpenAIEmbedding.get_query_embedding'",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_query_embedding",
+      "context": {
+        "expected_form": "embeddings text-embedding-3-small",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.0.embedding.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embedding.embeddings.0.embedding.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.0.embedding.vector' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embedding.embeddings.0.embedding.vector"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.1.embedding.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embedding.embeddings.1.embedding.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.1.embedding.vector' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embedding.embeddings.1.embedding.vector"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.2.embedding.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embedding.embeddings.2.embedding.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.embeddings.2.embedding.vector' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embedding.embeddings.2.embedding.vector"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'embedding.model_name' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "embedding.model_name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'OpenAIEmbedding.get_text_embedding_batch' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "embeddings span name should be 'embeddings text-embedding-3-small', got 'OpenAIEmbedding.get_text_embedding_batch'",
+      "signal_type": "span",
+      "signal_name": "OpenAIEmbedding.get_text_embedding_batch",
+      "context": {
+        "expected_form": "embeddings text-embedding-3-small",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "embeddings"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "attribute_key": "input.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'VectorIndexRetriever._retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "retrieval span name should be 'retrieval', got 'VectorIndexRetriever._retrieve'",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever._retrieve",
+      "context": {
+        "expected_form": "retrieval",
+        "keyed_attr": "gen_ai.data_source.id",
+        "operation": "retrieval"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.0.document.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "retrieval.documents.0.document.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.0.document.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "retrieval.documents.0.document.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.0.document.score' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "retrieval.documents.0.document.score"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.1.document.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "retrieval.documents.1.document.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.1.document.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "retrieval.documents.1.document.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.1.document.score' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "attribute_key": "retrieval.documents.1.document.score"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'VectorIndexRetriever.retrieve' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "retrieval span name should be 'retrieval', got 'VectorIndexRetriever.retrieve'",
+      "signal_type": "span",
+      "signal_name": "VectorIndexRetriever.retrieve",
+      "context": {
+        "expected_form": "retrieval",
+        "keyed_attr": "gen_ai.data_source.id",
+        "operation": "retrieval"
       }
     }
   ]

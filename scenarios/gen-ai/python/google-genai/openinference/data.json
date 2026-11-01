@@ -1,12 +1,6 @@
 {
   "spans": {
-    "gen_ai.embeddings.client": [
-      "gen_ai.embeddings.dimension.count",
-      "gen_ai.operation.name",
-      "gen_ai.provider.name",
-      "gen_ai.request.model"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -24,6 +18,12 @@
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.embeddings.client": [
+      "gen_ai.embeddings.dimension.count",
+      "gen_ai.operation.name",
+      "gen_ai.provider.name",
+      "gen_ai.request.model"
     ]
   },
   "events": {},
@@ -161,6 +161,16 @@
         "attribute_key": "gen_ai.request.top_k",
         "attribute_type": "double",
         "expected": "int"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "GenerateContent",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"google_search\":{}} is not valid under any of the schemas listed in the 'anyOf' keyword"
       }
     },
     {

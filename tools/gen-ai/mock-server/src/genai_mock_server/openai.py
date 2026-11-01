@@ -76,6 +76,40 @@ CHAT_RESPONSE = {
     },
 }
 
+# A completion the provider ends without output: usage reports an explicit 0,
+# which instrumentation has to record rather than treat as missing.
+CHAT_EMPTY_COMPLETION_RESPONSE = {
+    "id": "chatcmpl-mock-empty-001",
+    "object": "chat.completion",
+    "service_tier": "default",
+    "created": 1700000000,
+    "model": "gpt-4o-mini",
+    "choices": [
+        {
+            "index": 0,
+            "message": {"role": "assistant", "content": ""},
+            "finish_reason": "stop",
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 25,
+        "completion_tokens": 0,
+        "total_tokens": 25,
+    },
+}
+
+# A rejected request: no completion and no usage, so the operation fails
+# without any token count from the provider.
+CHAT_BAD_REQUEST_ERROR = {
+    "error": {
+        "message": "The mock server rejected this request.",
+        "type": "invalid_request_error",
+        "param": None,
+        "code": "mock_rejected",
+    }
+}
+
+
 CHAT_TOOL_CALL_RESPONSE = {
     "id": "chatcmpl-mock-002",
     "object": "chat.completion",
@@ -244,6 +278,15 @@ def _responses_current_turn(request_input):
     return request_input[last_user + 1 :]
 
 
+def _last_user_text(body):
+    """String content of the last user message, where the chat sentinels are read."""
+    for message in reversed(body.get("messages", [])):
+        if message.get("role") == "user":
+            content = message.get("content")
+            return content if isinstance(content, str) else ""
+    return ""
+
+
 def _responses_called_tool_info(items):
     """Tool names called, and every call id seen, in Responses input shape."""
     called_names = set()
@@ -404,19 +447,63 @@ def _text_protocol_tool_call(body, message_text):
     )
 
 
-def _stream_tool_call(body, model, chunk_id):
+def _is_observation(message):
+    content = message.get("content")
+    if message.get("role") != "user" or not isinstance(content, list) or not content:
+        return False
+    first = content[0]
+    return isinstance(first, dict) and str(first.get("text", "")).startswith("Observation:")
+
+
+def _final_answer_after_observation(body):
+    """The ``final_answer`` tool, when a smolagents observation just came back.
+
+    smolagents replays a tool result as a user message whose text starts with
+    ``Observation:`` rather than as a ``tool`` message, so ``should_call_tool``
+    never sees the result and would call the same tool on every step.
+    """
+    messages = body.get("messages", [])
+    if not messages or not _is_observation(messages[-1]):
+        return None
+    for tool in body.get("tools") or []:
+        if tool.get("function", tool).get("name") == "final_answer":
+            return tool
+    return None
+
+
+def _next_tool_call(body):
+    """``(tool, name, call_id)`` to answer this request with, or ``None``."""
+    messages = body.get("messages", [])
+    final_answer_tool = _final_answer_after_observation(body)
+    if final_answer_tool:
+        # smolagents sends no assistant ``tool_calls``, so ids come from observations.
+        observations = sum(1 for message in messages if _is_observation(message))
+        return final_answer_tool, "final_answer", f"call_mock_{observations + 1:03d}"
+    if should_call_tool(body):
+        tool, tool_name = offered_tool(body)
+        return tool, tool_name, f"call_mock_{next_tool_call_index(messages):03d}"
+    return None
+
+
+def _tool_call_response(body, tool, tool_name, call_id):
+    resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
+    resp["model"] = body.get("model", resp["model"])
+    call = resp["choices"][0]["message"]["tool_calls"][0]
+    call["id"] = call_id
+    call["function"]["name"] = tool_name
+    call["function"]["arguments"] = json.dumps(mock_tool_arguments(tool))
+    resp["service_tier"] = _served_service_tier(body)
+    return resp
+
+
+def _stream_tool_call(model, chunk_id, tool, name, call_id):
     """Yield the SSE chunks of a streamed tool call.
 
     The call arrives split across deltas, name first and arguments after, the
     way OpenAI sends one: a client that only reassembles the first delta is
     wrong in a way a single-chunk mock would hide.
     """
-    tool = body.get("tools", [{}])[0]
-    function = tool.get("function", tool)
-    name = function.get("name") or "get_weather"
     arguments = json.dumps(mock_tool_arguments(tool))
-
-    call_id = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
 
     for delta in (
         {"id": call_id, "type": "function", "function": {"name": name, "arguments": ""}},
@@ -472,18 +559,23 @@ def _stream_chat(body):
         }
     )
 
-    if should_call_tool(body):
-        yield from _stream_tool_call(body, model, chunk_id)
-        return
-
     message_text = "\n".join(
         message.get("content", "")
         for message in body.get("messages", [])
         if isinstance(message.get("content"), str)
     )
-    content = _text_protocol_tool_call(body, message_text)
+    empty = "[MOCK_EMPTY_COMPLETION]" in _last_user_text(body)
+
+    tool_call = None if empty else _next_tool_call(body)
+    if tool_call:
+        yield from _stream_tool_call(model, chunk_id, *tool_call)
+        return
+
+    content = None if empty else _text_protocol_tool_call(body, message_text)
     words = (
-        [content]
+        []
+        if empty
+        else [content]
         if content
         else ["This ", "is ", "a ", "mock ", "streamed ", "response."]
     )
@@ -507,8 +599,8 @@ def _stream_chat(body):
             "choices": [{"index": 0, "delta": {"content": ""}, "finish_reason": "stop"}],
             "usage": {
                 "prompt_tokens": 25,
-                "completion_tokens": 6,
-                "total_tokens": 31,
+                "completion_tokens": 0 if empty else 6,
+                "total_tokens": 25 if empty else 31,
             },
         }
     )
@@ -522,25 +614,28 @@ def _stream_chat(body):
 @bp.route("/chat/completions", methods=["POST"])
 def chat_completions(deployment=None):
     body = request.get_json(silent=True) or {}
-
-    if body.get("stream"):
-        return Response(_stream_chat(body), mimetype="text/event-stream")
-
     message_text = "\n".join(
         message.get("content", "") for message in body.get("messages", []) if isinstance(message.get("content"), str)
     )
 
-    # Offered tools with no result for them in this turn: call the tool.
-    if should_call_tool(body):
-        tool, tool_name = offered_tool(body)
-        resp = copy.deepcopy(CHAT_TOOL_CALL_RESPONSE)
+    # [MOCK_BAD_REQUEST] and [MOCK_EMPTY_COMPLETION] let a scenario exercise the
+    # failed-call and zero-output paths of token usage recording, streamed or not.
+    user_text = _last_user_text(body)
+    if "[MOCK_BAD_REQUEST]" in user_text:
+        return CHAT_BAD_REQUEST_ERROR, 400
+    if "[MOCK_EMPTY_COMPLETION]" in user_text and not body.get("stream"):
+        resp = copy.deepcopy(CHAT_EMPTY_COMPLETION_RESPONSE)
         resp["model"] = body.get("model", resp["model"])
-        call = resp["choices"][0]["message"]["tool_calls"][0]
-        call["id"] = f"call_mock_{next_tool_call_index(body.get('messages', [])):03d}"
-        call["function"]["name"] = tool_name
-        call["function"]["arguments"] = json.dumps(mock_tool_arguments(tool))
         resp["service_tier"] = _served_service_tier(body)
         return resp
+
+    if body.get("stream"):
+        return Response(_stream_chat(body), mimetype="text/event-stream")
+
+    # Offered tools with no result for them in this turn: call the tool.
+    tool_call = _next_tool_call(body)
+    if tool_call:
+        return _tool_call_response(body, *tool_call)
 
     # CrewAI planner natural-retry path: a refusal, then a schema-invalid
     # answer, drives CrewAI through three LLM round-trips under one plan span.

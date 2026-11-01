@@ -1394,6 +1394,33 @@ def test_google_breaks_usage_down_by_input_and_output_modality(client):
     assert usage["cachedContentTokenCount"] < usage["promptTokenCount"]
 
 
+@pytest.mark.parametrize(
+    ("path", "parse"),
+    [
+        (
+            "/v1beta/models/gemini-2.0-flash:streamGenerateContent",
+            lambda text: [json.loads(line) for line in text.splitlines() if line],
+        ),
+        (
+            "/v1/projects/p/locations/us-central1/publishers/google/models/gemini-2.0-flash:streamGenerateContent",
+            json.loads,
+        ),
+        (
+            "/v1/projects/p/locations/us-central1/publishers/google/models/gemini-2.0-flash:streamGenerateContent?alt=sse",
+            lambda text: [json.loads(line[len("data: ") :]) for line in text.splitlines() if line],
+        ),
+    ],
+)
+def test_google_stream_reports_response_id_and_model_on_every_chunk(client, path, parse):
+    response = client.post(path, json={"contents": [{"role": "user", "parts": [{"text": "hi"}]}]})
+
+    chunks = parse(response.get_data(as_text=True))
+    assert len(chunks) > 1
+    for chunk in chunks:
+        assert chunk["responseId"]
+        assert chunk["modelVersion"] == "gemini-2.0-flash"
+
+
 def test_ollama_chat_calls_an_offered_tool(client):
     """Ollama carries the arguments as an object, not as a JSON string."""
     response = client.post(
@@ -1674,3 +1701,124 @@ def test_google_interaction_create_preserves_request_fields(
     assert response.status_code == 200
     assert response.json["model"] == "gemini-2.5-flash"
     assert response.json["previous_interaction_id"] == "interaction-previous"
+
+
+def test_chat_reports_an_explicit_zero_for_an_empty_completion(client):
+    body = {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "[MOCK_EMPTY_COMPLETION] hi"}]}
+    first = client.post("/v1/chat/completions", json=body)
+    assert first.status_code == 200
+    assert first.json["model"] == "gpt-4.1-nano"
+    assert first.json["choices"][0]["message"]["content"] == ""
+    assert first.json["usage"]["completion_tokens"] == 0
+    assert first.json["usage"]["prompt_tokens"] == first.json["usage"]["total_tokens"]
+    assert client.post("/v1/chat/completions", json=body).data == first.data
+
+
+def test_chat_rejects_a_bad_request_without_usage(client):
+    body = {"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "[MOCK_BAD_REQUEST] hi"}]}
+    first = client.post("/v1/chat/completions", json=body)
+    assert first.status_code == 400
+    assert first.json["error"]["type"] == "invalid_request_error"
+    assert "usage" not in first.json
+    assert client.post("/v1/chat/completions", json=body).data == first.data
+
+
+def test_streaming_chat_honours_the_empty_completion_and_bad_request_sentinels(client):
+    empty = {"model": "gpt-4o-mini", "stream": True,
+             "messages": [{"role": "user", "content": "[MOCK_EMPTY_COMPLETION] hi"}]}
+    response = client.post("/v1/chat/completions", json=empty)
+    chunks = [json.loads(line[6:]) for line in response.get_data(as_text=True).splitlines()
+              if line.startswith("data: {")]
+    assert "".join(c["choices"][0]["delta"].get("content") or "" for c in chunks) == ""
+    assert chunks[-1]["usage"]["completion_tokens"] == 0
+    assert client.post("/v1/chat/completions", json=empty).data == response.data
+    with_tools = {**empty, "tools": [{"type": "function", "function": {"name": "get_weather", "parameters": {}}}]}
+    streamed = client.post("/v1/chat/completions", json=with_tools).get_data(as_text=True)
+    assert "tool_calls" not in streamed and '"completion_tokens": 0' in streamed.replace('":0', '": 0')
+
+    rejected = {"model": "gpt-4o-mini", "stream": True,
+                "messages": [{"role": "user", "content": "[MOCK_BAD_REQUEST] hi"}]}
+    response = client.post("/v1/chat/completions", json=rejected)
+    assert response.status_code == 400
+    assert response.json["error"]["type"] == "invalid_request_error"
+
+
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("marker", ["[MOCK_EMPTY_COMPLETION]", "[MOCK_BAD_REQUEST]"])
+def test_chat_sentinels_only_read_the_last_user_message(client, marker, stream):
+    history = [
+        {"role": "system", "content": f"Quote {marker} if asked."},
+        {"role": "user", "content": f"{marker} hi"},
+        {"role": "assistant", "content": f"You said {marker}."},
+        {"role": "user", "content": "hello again"},
+    ]
+    response = client.post("/v1/chat/completions",
+                           json={"model": "gpt-4o-mini", "stream": stream, "messages": history})
+    assert response.status_code == 200
+    text = response.get_data(as_text=True).replace('":0', '": 0')
+    assert '"completion_tokens": 0' not in text
+
+
+def _smolagents_request(*extra_messages):
+    def tool(name, properties):
+        return {
+            "type": "function",
+            "function": {
+                "name": name,
+                "parameters": {"type": "object", "properties": properties, "required": list(properties)},
+            },
+        }
+
+    return {
+        "model": "gpt-4o-mini",
+        "tool_choice": "required",
+        "tools": [tool("get_weather", {"location": {"type": "string"}}), tool("final_answer", {"answer": {"type": "string"}})],
+        "messages": [
+            {"role": "system", "content": [{"type": "text", "text": "You are an expert assistant."}]},
+            {"role": "user", "content": [{"type": "text", "text": "New task:\nweather in Seattle?"}]},
+            *extra_messages,
+        ],
+    }
+
+
+def test_smolagents_gets_the_first_tool_before_any_observation(client):
+    response = client.post("/v1/chat/completions", json=_smolagents_request())
+
+    call = response.json["choices"][0]["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "get_weather"
+
+
+def test_smolagents_gets_final_answer_after_an_observation(client):
+    body = _smolagents_request(
+        {"role": "assistant", "content": [{"type": "text", "text": "Calling tools:\n[{'id': 'call_mock_001'}]"}]},
+        {"role": "user", "content": [{"type": "text", "text": "Observation:\n70 degrees"}]},
+    )
+
+    first = client.post("/v1/chat/completions", json=body)
+    second = client.post("/v1/chat/completions", json=body)
+
+    assert first.get_data() == second.get_data()
+    call = first.json["choices"][0]["message"]["tool_calls"][0]
+    assert call["function"]["name"] == "final_answer"
+    assert json.loads(call["function"]["arguments"]) == {"answer": "mock-answer"}
+    assert call["id"] == "call_mock_002"
+
+
+def test_smolagents_gets_final_answer_after_an_observation_streamed(client):
+    body = _smolagents_request(
+        {"role": "assistant", "content": [{"type": "text", "text": "Calling tools:\n[{'id': 'call_mock_001'}]"}]},
+        {"role": "user", "content": [{"type": "text", "text": "Observation:\n70 degrees"}]},
+    )
+
+    response = client.post("/v1/chat/completions", json={**body, "stream": True})
+
+    deltas = [
+        call
+        for line in response.get_data(as_text=True).splitlines()
+        if line.startswith("data: ") and line != "data: [DONE]"
+        for call in json.loads(line[len("data: ") :])["choices"][0]["delta"].get("tool_calls", [])
+    ]
+    assert deltas[0]["id"] == "call_mock_002"
+    assert deltas[0]["function"]["name"] == "final_answer"
+    arguments = "".join(delta["function"]["arguments"] for delta in deltas)
+    assert json.loads(arguments) == {"answer": "mock-answer"}

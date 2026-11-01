@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from database_conformance import _BACKENDS
+from database_conformance import _BACKEND_REGISTRY
 from opentelemetry.conformance import load_spec
 
 _REPOSITORY = Path(__file__).parents[4]
@@ -38,7 +38,11 @@ def test_sql_contract_metadata_matches_its_resource_and_runner() -> None:
         assert set(document) == {"backend", "description", "scenarios"}
         backend = document["backend"]
         assert backend == path.stem
-        assert backend in _BACKENDS
+        assert backend in _BACKEND_REGISTRY
+        registration = _BACKEND_REGISTRY[backend]
+        assert callable(registration.factory)
+        assert registration.system
+        assert registration.client_span_type.endswith(".client")
         assert isinstance(document["description"], str)
         assert document["description"]
 
@@ -84,3 +88,35 @@ def test_every_jdbc_package_uses_its_backend_contract() -> None:
         assert [
             scenario.action for scenario in loaded_scenarios
         ] == [scenario["action"] for scenario in scenarios], path
+
+
+def test_sql_server_contract_keeps_its_dialect_specific_actions() -> None:
+    document = yaml.safe_load(
+        (_CONTRACTS / "sql_server.yaml").read_text(encoding="utf-8")
+    )
+    actions = [scenario["action"] for scenario in document["scenarios"]]
+    assert [action["kind"] for action in actions] == [
+        "query",
+        "prepared_query",
+        "batch",
+        "stored_procedure",
+    ]
+    assert actions[0]["sql"] == (
+        "SELECT CASE WHEN count(*) >= 0 THEN CAST(1 AS bit) "
+        "ELSE CAST(0 AS bit) END FROM conformance.items"
+    )
+    assert actions[3]["sql"] == "{call conformance.noop}"
+
+
+def test_sql_server_batch_requires_sanitized_query_text() -> None:
+    document = yaml.safe_load(
+        (_CONTRACTS / "sql_server.yaml").read_text(encoding="utf-8")
+    )
+    attributes = document["scenarios"][2]["expect"]["spans"][0]["expect"][
+        "attributes"
+    ]
+
+    assert attributes["db.query.text"] == (
+        "INSERT INTO conformance.items (id, name) VALUES (?, ?)"
+    )
+    assert attributes["db.query.summary"] == "BATCH INSERT conformance.items"

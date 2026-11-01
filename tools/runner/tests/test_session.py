@@ -12,6 +12,7 @@ directly.
 from __future__ import annotations
 
 import json
+import socket
 import subprocess
 import sys
 from collections.abc import Mapping
@@ -229,6 +230,39 @@ def session(
             "reports": reports.name,
         },
     )
+
+
+def test_weaver_reserves_distinct_ports(
+    directory: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("opentelemetry.test.weaver_live_check")
+
+    ports: list[int] = []
+
+    def construct(
+        *, otlp_port: int, admin_port: int, **kwargs: object
+    ) -> None:
+        ports.extend([otlp_port, admin_port])
+        assert 0 < otlp_port <= 65535
+        assert 0 < admin_port <= 65535
+        assert otlp_port != admin_port
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+                with pytest.raises(OSError):
+                    other.bind(("127.0.0.1", port))
+        raise RuntimeError("weaver configured")
+
+    monkeypatch.setattr(
+        "opentelemetry.conformance._weaver.WeaverLiveCheck", construct
+    )
+
+    with pytest.raises(RuntimeError, match="weaver configured"):
+        session(directory, tmp_path / "data.json").run("inference")
+
+    assert len(ports) == 2
+    for port in ports:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+            other.bind(("127.0.0.1", port))
 
 
 @pytest.mark.parametrize("index", [None, 3])
