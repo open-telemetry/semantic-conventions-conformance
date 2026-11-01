@@ -15,10 +15,12 @@
 
 const contract = require("./contract");
 const clientWorkload = require("./client-workload");
+const jsonEqual = require("./json-equal");
 const serverWorkload = require("./server-workload");
 
 module.exports = {
   ...contract,
   ...clientWorkload,
+  ...jsonEqual,
   ...serverWorkload,
 };
