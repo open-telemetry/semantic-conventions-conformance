@@ -144,3 +144,68 @@ def delete_memory_record(memory_id, record_id):
         return _json({"message": f"Memory record {record_id} not found"}, status=404)
     _RECORDS[memory_id] = [r for r in store if r["memoryRecordId"] != record_id]
     return _json({"memoryRecordId": record_id})
+
+
+# Evaluations -----------------------------------------------------------------
+
+_EVALUATOR_RATING_SCALE = {
+    "numerical": [
+        {"value": 1.0, "label": "Poor", "definition": "The response does not address the request."},
+        {"value": 3.0, "label": "Fair", "definition": "The response partly addresses the request."},
+        {"value": 5.0, "label": "Good", "definition": "The response fully addresses the request."},
+    ]
+}
+
+
+@bp.route("/evaluators/<evaluator_id>", methods=["GET"])
+def get_evaluator(evaluator_id):
+    return _json(
+        {
+            "evaluatorArn": f"arn:aws:bedrock-agentcore:us-east-1:123456789012:evaluator/{evaluator_id}",
+            "evaluatorId": evaluator_id,
+            "evaluatorName": "response_quality",
+            "evaluatorConfig": {
+                "llmAsAJudge": {
+                    "instructions": "Rate how well the response addresses the request.",
+                    "ratingScale": _EVALUATOR_RATING_SCALE,
+                    "modelConfig": {"bedrockEvaluatorModelConfig": {"modelId": "mock-judge-model"}},
+                }
+            },
+            "level": "TRACE",
+            "status": "ACTIVE",
+            "createdAt": 1735689600.0,
+            "updatedAt": 1735689600.0,
+        }
+    )
+
+
+def _evaluated_span_context():
+    """Identify the evaluated session (and trace) from the first span in the request."""
+    body = request.get_json(silent=True) or {}
+    spans = (body.get("evaluationInput") or {}).get("sessionSpans") or []
+    span = spans[0] if spans else {}
+    attributes = span.get("attributes") or {}
+    context = {"sessionId": attributes.get("session.id", "session-mock-001")}
+    if span.get("traceId"):
+        context["traceId"] = span["traceId"]
+    return context
+
+
+@bp.route("/evaluations/evaluate/<evaluator_id>", methods=["POST"])
+def evaluate(evaluator_id):
+    return _json(
+        {
+            "evaluationResults": [
+                {
+                    "evaluatorArn": f"arn:aws:bedrock-agentcore:us-east-1:123456789012:evaluator/{evaluator_id}",
+                    "evaluatorId": evaluator_id,
+                    "evaluatorName": "response_quality",
+                    "context": {"spanContext": _evaluated_span_context()},
+                    "explanation": "The response fully addresses the request.",
+                    "value": 5.0,
+                    "label": "Good",
+                    "tokenUsage": {"inputTokens": 120, "outputTokens": 30, "totalTokens": 150},
+                }
+            ]
+        }
+    )
