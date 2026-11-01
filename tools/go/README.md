@@ -29,7 +29,9 @@ each other's builds.
 [`scenario/`](scenario) carries no OpenTelemetry dependency at all. An
 out-of-process agent — eBPF, for Go — measures a binary that asked for no SDK,
 so what every scenario needs regardless, the runner's environment and the
-driver's shutdown protocol, is kept where such a scenario can reach it.
+driver's shutdown protocol, is kept where such a scenario can reach it. So is
+`WaitAtGate`, which holds such a scenario before its workload until the agent's
+launcher has attached to it.
 
 [`scenariosdk/`](scenariosdk) is the other half: the OTLP exporters over gRPC,
 the providers installed globally where instrumentation libraries look for them,
