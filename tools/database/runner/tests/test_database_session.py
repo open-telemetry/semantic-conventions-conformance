@@ -158,6 +158,116 @@ def test_database_session_closes_backend_after_an_error(
     assert closed
 
 
+def test_database_session_dispatches_and_closes_cassandra(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    events: list[str] = []
+
+    class StubBackend:
+        variables = {"DATABASE_LOCAL_DATACENTER": "datacenter1"}
+
+        def __enter__(self) -> StubBackend:
+            events.append("cassandra-enter")
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            events.append("cassandra-exit")
+
+    @contextmanager
+    def stub_session(
+        directory: Path | str, **kwargs: Any
+    ) -> Generator[object, None, None]:
+        del directory
+        assert kwargs["variables"] == {
+            "DATABASE_LOCAL_DATACENTER": "datacenter1"
+        }
+        events.append("session-enter")
+        try:
+            yield object()
+        finally:
+            events.append("session-exit")
+
+    monkeypatch.setitem(
+        database_conformance._BACKEND_REGISTRY,
+        "cassandra",
+        replace(
+            database_conformance._BACKEND_REGISTRY["cassandra"],
+            factory=StubBackend,
+        ),
+    )
+    monkeypatch.setattr(
+        database_conformance,
+        "DOMAIN",
+        SimpleNamespace(session=stub_session),
+    )
+    spec = _write_spec(tmp_path, "  backend: cassandra")
+
+    with pytest.raises(RuntimeError, match="scenario failed"):
+        with database_conformance.database_session(tmp_path, spec=spec):
+            raise RuntimeError("scenario failed")
+
+    assert events == [
+        "cassandra-enter",
+        "session-enter",
+        "session-exit",
+        "cassandra-exit",
+    ]
+
+
+@pytest.mark.parametrize(
+    "instrumentation", ["opentelemetry-javaagent", "opentelemetry-library"],
+)
+def test_cassandra_packages_share_contract_and_connection_variables(
+    instrumentation: str
+) -> None:
+    directory = (
+        Path(__file__).resolve().parents[4]
+        / "scenarios"
+        / "database"
+        / "java"
+        / "cassandra"
+        / "java-driver"
+        / instrumentation
+    )
+    spec = load_spec(directory)
+
+    assert spec.instrumented_library == "java-driver"
+    assert spec.runner_config == {"backend": "cassandra"}
+    assert spec.env["CASSANDRA_HOST"] == "${DATABASE_HOST}"
+    assert spec.env["CASSANDRA_PORT"] == "${DATABASE_PORT}"
+    assert (
+        spec.env["CASSANDRA_LOCAL_DATACENTER"]
+        == "${DATABASE_LOCAL_DATACENTER}"
+    )
+    assert list(spec.scenarios) == ["query", "prepared", "batch", "error"]
+    for scenario in spec.scenarios.values():
+        assert scenario.metrics == ("db.client.operation.duration",)
+        assert scenario.events == ()
+        assert scenario.spans is not None
+        assert len(scenario.spans) == 1
+        assert scenario.spans[0].match.attributes == {
+            "db.system.name": "cassandra"
+        }
+
+
+def test_cassandra_has_only_current_client_packages() -> None:
+    root = (
+        Path(__file__).resolve().parents[4]
+        / "scenarios"
+        / "database"
+        / "java"
+        / "cassandra"
+    )
+    assert {
+        path.relative_to(root).as_posix()
+        for path in root.rglob("conformance.yaml")
+    } == {
+        "java-driver/opentelemetry-javaagent/conformance.yaml",
+        "java-driver/opentelemetry-library/conformance.yaml",
+    }
+
+
 @pytest.mark.parametrize(
     ("runner_config", "message"),
     [

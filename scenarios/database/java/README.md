@@ -36,6 +36,8 @@ library instrumentation. The
 connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
+Cassandra's workload and supported instrumentation modes are
+documented in its [scenario notes](cassandra/README.md).
 
 Run one package from the repository root:
 

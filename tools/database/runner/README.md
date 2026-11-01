@@ -29,6 +29,18 @@ container, waits for its declared readiness check, applies any declared
 initialization, and removes the container when the session closes. Scenario data
 is not pre-seeded; each workload creates or verifies the data it needs.
 
+Backend readiness timeouts default to 60 seconds, except Cassandra, which uses
+180 seconds. Set `OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` in the runner's
+environment to override any backend's default:
+
+```sh
+OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT=240 database-conformance path/to/directory
+```
+
+The shared container lifecycle reads this value, not `conformance.yaml` or the
+workload environment. It must be a finite positive number of seconds; invalid
+values produce a warning and use the backend's default.
+
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
 
@@ -45,6 +57,9 @@ SQL packages select a contract under
 [`contracts/`](../sql-test-client/contracts) using `scenario_contract`. The
 generic conformance runner injects only the selected contract entry's `action`
 into the scenario process.
+
+Cassandra's additional connection variable and container prerequisites are
+documented in its [scenario notes](../../../scenarios/database/java/cassandra/README.md).
 
 The classifier recognizes registered semantic-convention systems only on
 `CLIENT` spans and only when their client span type exists in the resolved
