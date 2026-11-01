@@ -1,0 +1,11 @@
+{
+  "name": "@otel-conformance/openai-opentelemetry-openai",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@otel-conformance/openai-scenarios": "*",
+    "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
+    "@opentelemetry/instrumentation-openai": "0.21.0"
+  }
+}
