@@ -140,6 +140,24 @@ def test_match_on_kind() -> None:
     )
 
 
+def test_a_kind_matches_however_it_is_spelled() -> None:
+    """Weaver writes ``client``; a spec writes the ``CLIENT`` of the API."""
+    expectation = SpanExpectation(
+        match=SpanMatch(attributes={}, kind="CLIENT"),
+        count=1,
+        attributes={},
+    )
+
+    for spelling in ("client", "CLIENT", "SPAN_KIND_CLIENT"):
+        assert (
+            check(
+                scenario(spans=(expectation,)),
+                Report([span_sample(kind=spelling)]),
+            )
+            == []
+        )
+
+
 @pytest.mark.parametrize(
     ("matcher", "values", "ok"),
     [
@@ -255,6 +273,22 @@ def test_zero_count_signals_are_not_seen() -> None:
     report = Report(statistics={"seen_registry_metrics": {"never.emitted": 0}})
 
     assert check(scenario(metrics=()), report) == []
+
+
+def test_filtered_non_registry_metric_is_not_an_undeclared_metric() -> None:
+    report = Report(
+        statistics={"seen_non_registry_metrics": {"sdk.self.metric": 1}}
+    )
+
+    assert check(scenario(metrics=()), report) == []
+
+
+def test_declared_non_registry_metric_is_still_expected() -> None:
+    report = Report(
+        statistics={"seen_non_registry_metrics": {"custom.metric": 1}}
+    )
+
+    assert check(scenario(metrics=("custom.metric",)), report) == []
 
 
 def test_undeclared_violation_fails() -> None:

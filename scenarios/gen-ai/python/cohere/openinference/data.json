@@ -1,11 +1,6 @@
 {
   "spans": {
-    "gen_ai.embeddings.client": [
-      "gen_ai.embeddings.dimension.count",
-      "gen_ai.operation.name",
-      "gen_ai.request.model"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -23,12 +18,29 @@
       "gen_ai.tool.definitions",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.embeddings.client": [
+      "gen_ai.embeddings.dimension.count",
+      "gen_ai.operation.name",
+      "gen_ai.request.model"
     ]
   },
   "events": {},
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.cohere' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.cohere",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
@@ -330,11 +342,22 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'ClientV2.chat'",
+      "message": "chat span name should be 'chat command-a-03-2025', got 'ClientV2.chat'",
       "signal_type": "span",
       "signal_name": "ClientV2.chat",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat command-a-03-2025",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat command-a-vision-07-2025', got 'ClientV2.chat'",
+      "signal_type": "span",
+      "signal_name": "ClientV2.chat",
+      "context": {
+        "expected_form": "chat command-a-vision-07-2025",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -542,11 +565,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'ClientV2.chat_stream'",
+      "message": "chat span name should be 'chat command-a-03-2025', got 'ClientV2.chat_stream'",
       "signal_type": "span",
       "signal_name": "ClientV2.chat_stream",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat command-a-03-2025",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -661,11 +684,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "embeddings span name should be 'embeddings' or 'embeddings <value of gen_ai.request.model>', got 'CreateEmbeddings'",
+      "message": "embeddings span name should be 'embeddings embed-v4.0', got 'CreateEmbeddings'",
       "signal_type": "span",
       "signal_name": "CreateEmbeddings",
       "context": {
-        "expected_form": "embeddings or 'embeddings <gen_ai.request.model>'",
+        "expected_form": "embeddings embed-v4.0",
         "keyed_attr": "gen_ai.request.model",
         "operation": "embeddings"
       }

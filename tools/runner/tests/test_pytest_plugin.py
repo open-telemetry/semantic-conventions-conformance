@@ -91,6 +91,41 @@ def test_each_declared_scenario_becomes_a_test(pytester, scenarios) -> None:
     )
 
 
+def test_list_entries_use_descriptions_without_merging_duplicates(
+    pytester, scenarios
+) -> None:
+    scenarios()
+    conformance = pytester.path / "conformance"
+    (conformance / "contract.yaml").write_text(
+        """
+description: Repeated-label contract.
+scenarios:
+  - description: Repeated human label.
+    action: {kind: first}
+    expect: {}
+  - description: Repeated human label.
+    action: {kind: second}
+    expect: {}
+"""
+    )
+    (conformance / "conformance.yaml").write_text(
+        """
+runner: demo-conformance
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: python client.py
+"""
+    )
+
+    result = pytester.runpytest("-v")
+
+    result.assert_outcomes(passed=2)
+    output = result.stdout.str()
+    assert "conformance.yaml::[0] Repeated human label. PASSED" in output
+    assert "conformance.yaml::[1] Repeated human label. PASSED" in output
+
+
 def test_a_scenarios_failures_are_the_test_failure(
     pytester, scenarios
 ) -> None:
@@ -113,10 +148,32 @@ def test_one_session_is_shared_by_a_directory(pytester, scenarios) -> None:
     assert len(opened) == 1, opened
 
 
+def test_collection_and_execution_share_one_loaded_spec(
+    pytester, scenarios, monkeypatch
+) -> None:
+    scenarios()
+    loads: list[Path] = []
+    load_spec = pytest_plugin.load_spec
+
+    def counted_load_spec(directory: Path):
+        loads.append(directory)
+        return load_spec(directory)
+
+    monkeypatch.setattr(pytest_plugin, "load_spec", counted_load_spec)
+
+    result = pytester.runpytest()
+
+    result.assert_outcomes(passed=2)
+    assert len(loads) == 1
+
+
 def test_a_broken_spec_is_a_collection_error(pytester, scenarios) -> None:
     scenarios()
     pytester.makefile(
-        ".yaml", **{"conformance/conformance": "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\n"}
+        ".yaml",
+        **{
+            "conformance/conformance": "instrumented_library: demo\ninstrumentation_library: demo-instrumentation\n"
+        },
     )
 
     result = pytester.runpytest()

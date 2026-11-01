@@ -54,6 +54,15 @@ import rego.v1
 
 _inference_ops := {"chat", "generate_content", "text_completion"}
 
+# Newer registries name span types `gen_ai.{kind}.{operation}`, e.g.
+# `gen_ai.client.inference` for `gen_ai.inference.client`. Accept both so
+# older and newer registries validate the same way.
+_inference_span_types := {"gen_ai.client.inference", "gen_ai.inference.client"}
+
+_embeddings_span_types := {"gen_ai.client.embeddings", "gen_ai.embeddings.client"}
+
+_invoke_agent_client_span_types := {"gen_ai.client.invoke_agent", "gen_ai.invoke_agent.client"}
+
 _embeddings_ops := {"embeddings"}
 
 _tool_ops := {"execute_tool"}
@@ -90,12 +99,11 @@ deny contains _span_finding(
 	{
 		"operation":     op,
 		"keyed_attr":    keyed_attr,
-		"expected_form": concat("", [op, " or '", op, " <", keyed_attr, ">'"]),
+		"expected_form": expected,
 	},
 	concat("", [
 		op, " span name should be '",
-		op, "' or '",
-		op, " <value of ", keyed_attr, ">', got '",
+		expected, "', got '",
 		input.sample.span.name, "'",
 	]),
 ) if {
@@ -104,12 +112,14 @@ deny contains _span_finding(
 	op := _attr_value(input.sample.span, "gen_ai.operation.name")
 	keyed_attr := _span_name_keyed_attr[op]
 	not _valid_op_and_attr_span_name(input.sample.span, op, keyed_attr)
+	expected := _expected_span_name(input.sample.span, op, keyed_attr)
 }
 
 # ─── Per-operation expected attributes (violation) ──────────────────────────
 
-_matching_span_type(op, _, "gen_ai.inference.client") if {
+_matching_span_type(op, _, span_type) if {
 	op in {"chat", "generate_content", "text_completion"}
+	span_type in _inference_span_types
 }
 
 _matching_span_type(op, kind, span_type) if {
@@ -117,6 +127,18 @@ _matching_span_type(op, kind, span_type) if {
 	data["coverage-model"].spans[span_type]
 	startswith(span_type, sprintf("gen_ai.%v", [op]))
 	endswith(span_type, sprintf(".%v", [kind]))
+}
+
+_matching_span_type(op, kind, span_type) if {
+	op in _embeddings_ops
+	kind == "client"
+	span_type in _embeddings_span_types
+}
+
+_matching_span_type(op, kind, span_type) if {
+	op in _invoke_agent_ops
+	kind == "client"
+	span_type in _invoke_agent_client_span_types
 }
 
 # attributes marked as recommended without a note,
@@ -189,8 +211,20 @@ _op_allowed_kind(op, span_type, span_def) := kind if {
 }
 
 _op_allowed_kind(op, span_type, span_def) := kind if {
+	op in _embeddings_ops
+	span_type in _embeddings_span_types
+	kind := span_def.kind
+}
+
+_op_allowed_kind(op, span_type, span_def) := kind if {
+	op in _invoke_agent_ops
+	span_type in _invoke_agent_client_span_types
+	kind := span_def.kind
+}
+
+_op_allowed_kind(op, span_type, span_def) := kind if {
 	op in {"chat", "generate_content", "text_completion"}
-	span_type == "gen_ai.inference.client"
+	span_type in _inference_span_types
 	kind := span_def.kind
 }
 
@@ -281,6 +315,15 @@ _attr_value(span, name) := value if {
 	some attr in span.attributes
 	attr.name == name
 	value := attr.value
+}
+
+_expected_span_name(span, op, attr_key) := concat(" ", [op, val]) if {
+	val := _attr_value(span, attr_key)
+	is_string(val)
+}
+
+_expected_span_name(span, op, attr_key) := op if {
+	not _has_attr(span, attr_key)
 }
 
 # A valid span name is either exactly `{op}` (when the keyed attribute is

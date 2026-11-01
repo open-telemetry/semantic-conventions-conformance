@@ -3,15 +3,14 @@ plugins {
 }
 
 dependencies {
-    // Reading the contract, which is JSON because every language has to.
-    // Not `api`: no Jackson type appears in this module's public API.
     implementation(libs.jackson.databind)
+    implementation(libs.jackson.dataformat.yaml)
 }
 
 // The contract is shared with every other language, so it is read from where
 // it lives rather than copied into this module's sources.
 tasks.processResources {
-    from("../contract.json") {
-        rename { "otel-http-contract.json" }
+    from("../contract.yaml") {
+        rename { "otel-http-contract.yaml" }
     }
 }

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-conformance-php"
+version = "0.1.0.dev0"
+description = "Installs and serves PHP conformance scenarios portably."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+otel-conformance-php = "otel_conformance_php:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_conformance_php"]

@@ -14,7 +14,7 @@ POSTGRES_USER = "conformance"
 POSTGRES_PASSWORD = "conformance"
 POSTGRES_PORT = 5432
 # renovate: datasource=docker depName=postgres versioning=docker
-POSTGRES_IMAGE = "postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af"
+POSTGRES_IMAGE = "postgres:18.6-bookworm@sha256:5c4783a8cc3f0074912164f94dfa1be4e043438f0f707cf968d7af9a0d31a2c8"
 
 POSTGRES = BackendSpec(
     name="PostgreSQL",
@@ -39,9 +39,8 @@ POSTGRES = BackendSpec(
         "--dbname",
         POSTGRES_DATABASE,
     ),
-    schema_resource="postgres.sql",
-    schema_path="/tmp/otel-conformance-postgres.sql",
-    schema_command=(
+    schema_copy=("postgres.sql", "/tmp/otel-conformance-postgres.sql"),
+    initialize_command=(
         "psql",
         "--no-psqlrc",
         "--set",
@@ -57,7 +56,7 @@ POSTGRES = BackendSpec(
         "--file",
         "/tmp/otel-conformance-postgres.sql",
     ),
-    schema_environment=(("PGPASSWORD", POSTGRES_PASSWORD),),
+    initialize_environment=(("PGPASSWORD", POSTGRES_PASSWORD),),
 )
 
 

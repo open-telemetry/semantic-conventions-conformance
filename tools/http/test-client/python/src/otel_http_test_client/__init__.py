@@ -4,7 +4,7 @@
 """The HTTP conformance exchanges a server answers or a client sends.
 
 Coverage files are only comparable if every scenario is exercised the same
-way, so both halves live in ``contract.json`` once rather than in each
+way, so both halves live in ``contract.yaml`` once rather than in each
 language. Both sides of the domain use it:
 
 - A **server** scenario is a plain server process. It declares matching routes
@@ -13,20 +13,19 @@ language. Both sides of the domain use it:
     ``otel-http-drive`` starts it, sends :data:`REQUESTS` at it from outside,
     then closes standard input so it flushes and exits.
 - A **client** scenario is the sender. It passes its own library as ``send``
-  to :func:`drive`, pointed at a server the runner started — see
+  to :func:`drive_selected`, pointed at a server the runner started — see
   ``tools/http/mock-server``, which answers :data:`EXCHANGES` from this module.
 
 Nothing under test ever drives a server scenario: the driver is a separate
 process, so no instrumentation loaded into the scenario can pick the driver up
 and record client spans the scenario never meant to produce.
 
-:func:`drive` checks every response against its exchange. A server scenario
-declares routes in its framework's native form — that declaration is what an
-instrumentation reads a route from — but every status and body is a constant
-from the shared file because the requests are fixed.
+The external server driver checks every response against its exchange. A
+server scenario declares routes in its framework's native form — that
+declaration is what an instrumentation reads a route from — but every status
+and body is a constant from the shared file because the requests are fixed.
 
-This package is standard library only, so installing it next to a scenario
-drags no dependency into a run.
+This package adds only the shared YAML parser needed to read the contract.
 """
 
 from __future__ import annotations
@@ -41,8 +40,10 @@ import urllib.error
 import urllib.request
 from collections.abc import Awaitable
 from pathlib import Path
-from typing import Callable, NamedTuple, Sequence
+from typing import Any, Callable, Mapping, NamedTuple, Sequence
 from wsgiref.simple_server import WSGIRequestHandler, make_server
+
+import yaml
 
 __all__ = [
     "CONTENT_TYPE",
@@ -51,6 +52,7 @@ __all__ = [
     "PORT_VARIABLE",
     "REQUEST_TIMEOUT_SECONDS",
     "REQUESTS",
+    "SCENARIO_INDEX_VARIABLE",
     "USER_AGENT",
     "AsyncSend",
     "ContractError",
@@ -58,12 +60,16 @@ __all__ = [
     "Send",
     "client_headers",
     "drive",
+    "drive_all",
     "drive_async",
+    "drive_selected",
+    "drive_selected_async",
     "mock_server_url",
     "request",
     "reserve_port",
     "respond",
     "scenario_port",
+    "scenario_request",
     "serve",
     "verify",
     "wait_for_health",
@@ -97,6 +103,7 @@ AsyncSend = Callable[[str, str, "str | None"], Awaitable["tuple[int, str]"]]
 # The port a server scenario listens on. ``otel-http-drive`` chooses it, which
 # is what lets different scenarios run in parallel without colliding.
 PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
+SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX"
 
 # Fixed rather than the interpreter's default, so a server scenario is driven
 # by the same client whichever Python happens to be installed.
@@ -107,39 +114,43 @@ REQUEST_TIMEOUT_SECONDS = 10
 
 
 def _contract() -> Path:
-    """Where ``contract.json`` is.
+    """Where ``contract.yaml`` is.
 
     Installed beside this module, or — in a checkout — above the Python
     package, since the contract belongs to every language rather than to this
     one.
     """
-    packaged = Path(__file__).parent / "contract.json"
+    packaged = Path(__file__).parent / "contract.yaml"
     if packaged.is_file():
         return packaged
-    return Path(__file__).resolve().parents[3] / "contract.json"
+    return Path(__file__).resolve().parents[3] / "contract.yaml"
 
 
 CONTRACT = _contract()
 
-_DOCUMENT = json.loads(CONTRACT.read_text(encoding="utf-8"))
+_DOCUMENT = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
+_SCENARIOS = _DOCUMENT["scenarios"]
 
-EXCHANGES: Sequence[Exchange] = tuple(
-    Exchange(
-        method=entry["method"],
-        path=entry["path"],
-        body=entry.get("body"),
-        status=entry["status"],
-        response_body=entry["responseBody"],
-        readiness=entry.get("readiness", False),
+
+def _exchange(entry: Mapping[str, Any], *, readiness: bool) -> Exchange:
+    action = entry["action"]
+    return Exchange(
+        method=action["request"]["method"],
+        path=action["request"]["path"],
+        body=action["request"].get("body"),
+        status=action["response"]["status"],
+        response_body=action["response"]["body"],
+        readiness=readiness,
         description=entry["description"],
     )
-    for entry in _DOCUMENT["requests"]
-)
+
 
 REQUESTS: Sequence[Exchange] = tuple(
-    exchange for exchange in EXCHANGES if not exchange.readiness
+    _exchange(entry, readiness=False) for entry in _SCENARIOS
 )
-_READINESS = next(exchange for exchange in EXCHANGES if exchange.readiness)
+
+_READINESS = _exchange(_DOCUMENT["readiness"], readiness=True)
+EXCHANGES: Sequence[Exchange] = (_READINESS, *REQUESTS)
 
 # Every route answers JSON, so a scenario that reads the contract has one
 # content type to send rather than a rule per route.
@@ -155,6 +166,38 @@ def mock_server_url() -> str:
             "server the package declares"
         )
     return base_url
+
+
+def scenario_request(index: int | None = None) -> Exchange:
+    """The one request selected by the runner's zero-based contract index."""
+    if index is None:
+        raw = os.environ.get(SCENARIO_INDEX_VARIABLE)
+        if raw is None:
+            raise RuntimeError(f"{SCENARIO_INDEX_VARIABLE} is not set")
+        try:
+            index = int(raw)
+        except ValueError as error:
+            raise RuntimeError(
+                f"{SCENARIO_INDEX_VARIABLE} must be a zero-based decimal "
+                f"index, got {raw!r}"
+            ) from error
+        if str(index) != raw or index < 0:
+            raise RuntimeError(
+                f"{SCENARIO_INDEX_VARIABLE} must be a zero-based decimal "
+                f"index, got {raw!r}"
+            )
+    if index < 0:
+        raise RuntimeError(
+            f"{SCENARIO_INDEX_VARIABLE}={index} selects no contract entry; "
+            f"expected 0..{len(REQUESTS) - 1}"
+        )
+    try:
+        return REQUESTS[index]
+    except IndexError as error:
+        raise RuntimeError(
+            f"{SCENARIO_INDEX_VARIABLE}={index} selects no contract entry; "
+            f"expected 0..{len(REQUESTS) - 1}"
+        ) from error
 
 
 def client_headers(body: str | None) -> dict[str, str]:
@@ -177,24 +220,79 @@ def _exchange_for(method: str, path: str) -> Exchange | None:
     return None
 
 
+def _canonical_json(value: object) -> str:
+    """``value`` written so that only its JSON content can differ.
+
+    Sorting keys and dropping insignificant whitespace makes two documents
+    compare equal exactly when they carry the same JSON, and writing them
+    back out keeps ``1`` and ``true`` apart, which Python's ``==`` does not.
+    """
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def _carries_the_contracts_body(exchange: Exchange, body: str | None) -> bool:
+    """Whether ``body`` is the body the contract's request sends.
+
+    Parsed rather than compared as text: how a client library spaces and
+    orders its JSON is its own business. A request the contract declares
+    without a body carries whatever arrived, since nothing describes it.
+    """
+    if exchange.body is None:
+        return True
+    try:
+        got, want = json.loads(body or ""), json.loads(exchange.body)
+    except json.JSONDecodeError:
+        return False
+    return _canonical_json(got) == _canonical_json(want)
+
+
 def respond(
-    method: str, path: str, body: str | None = None
+    method: str,
+    path: str,
+    body: str | None = None,
+    *,
+    check_request_body: bool = False,
 ) -> tuple[int, str]:
     """What the contract answers to one request.
 
     The whole answer contract in one function, so the mock server a client
     scenario calls and any Python server scenario answer identically.
+
+    ``check_request_body`` answers 400 when a request the contract declares
+    with a body arrives without that body. Only the mock server asks for
+    that. A server scenario's answers are read by :func:`verify`, which
+    compares the echoed body and so already fails a scenario that never read
+    the request; the answer a client scenario receives is read by nothing, so
+    a client that never sent the body would otherwise be echoed an empty
+    payload and pass.
     """
     exchange = _exchange_for(method, path)
     if exchange is None:
         return 404, '{"message": "no such route"}'
+    if check_request_body and not _carries_the_contracts_body(exchange, body):
+        return 400, '{"message": "not the body the contract sends"}'
     return exchange.status, exchange.response_body.replace(
         "${requestBody}", body or "{}"
     )
 
 
-def drive(base_url: str, send: Send | None = None) -> None:
-    """Send :data:`REQUESTS` at ``base_url`` in order, checking each answer.
+def drive(
+    base_url: str,
+    send: Send | None = None,
+) -> None:
+    """Send and verify every measured request.
+
+    This is the original public driver. Indexed client scenarios use
+    :func:`drive_selected` instead.
+    """
+    drive_all(base_url, send)
+
+
+def drive_selected(
+    base_url: str,
+    send: Send | None = None,
+) -> None:
+    """Send the runner-selected request at ``base_url``.
 
     ``send`` defaults to the standard library. A client scenario passes its
     own library instead — that call is the thing being measured.
@@ -202,7 +300,22 @@ def drive(base_url: str, send: Send | None = None) -> None:
     The server is assumed to be up: waiting is :func:`wait_for_health`, kept
     separate because every extra request a driver makes while a server starts
     is a span in that server's report.
+
+    The returned status and body are logged for diagnostics. Telemetry is the
+    conformance result.
     """
+    sender = send or request
+    exchange = scenario_request()
+    status, response = sender(
+        exchange.method,
+        f"{base_url}{exchange.path}",
+        exchange.body,
+    )
+    print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
+
+
+def drive_all(base_url: str, send: Send | None = None) -> None:
+    """Send and verify every measured request when driving a server scenario."""
     sender = send or request
     for exchange in REQUESTS:
         status, response = sender(
@@ -215,7 +328,7 @@ def drive(base_url: str, send: Send | None = None) -> None:
 
 
 async def drive_async(base_url: str, send: AsyncSend) -> None:
-    """Asynchronously send :data:`REQUESTS` and check every answer."""
+    """Asynchronously send and verify every measured request."""
     for exchange in REQUESTS:
         status, response = await send(
             exchange.method,
@@ -224,6 +337,17 @@ async def drive_async(base_url: str, send: AsyncSend) -> None:
         )
         print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
         verify(exchange, status, response)
+
+
+async def drive_selected_async(base_url: str, send: AsyncSend) -> None:
+    """Asynchronously send the runner-selected request."""
+    exchange = scenario_request()
+    status, response = await send(
+        exchange.method,
+        f"{base_url}{exchange.path}",
+        exchange.body,
+    )
+    print(f"{exchange.method} {exchange.path} -> {status} {response[:60]}")
 
 
 def verify(exchange: Exchange, status: int, response: str) -> None:
@@ -253,7 +377,7 @@ def verify(exchange: Exchange, status: int, response: str) -> None:
             f"{exchange.method} {exchange.path} answered {response[:200]!r}, "
             "which is not the JSON the contract's request describes"
         ) from error
-    if got != want:
+    if _canonical_json(got) != _canonical_json(want):
         raise ContractError(
             f"{exchange.method} {exchange.path} answered {got!r}, but the "
             f"contract's request answers {want!r}"

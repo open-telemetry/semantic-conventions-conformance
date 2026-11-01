@@ -9,6 +9,7 @@ scenarios/<domain>/java/      a domain's Gradle build root — wrapper, settings
 tools/java/gradle-plugins/    the convention plugins, as an included build
 tools/java/scenario-support/  what a scenario needs before any telemetry
 tools/java/scenario-sdk/      the SDK a library-instrumentation scenario owns
+tools/java/agent-control/     the extension controlling an agent-owned SDK
 tools/java/src/               `otel-conformance-java`, the launcher
 tools/java/tests/             the launcher's tests
 ```
@@ -16,8 +17,9 @@ tools/java/tests/             the launcher's tests
 ## A build root per domain
 
 A domain's Java scenarios are one Gradle build, rooted at its own
-`scenarios/<domain>/java` — today only
-[`scenarios/http/java`](../../scenarios/http/java). `otel-conformance-java`
+`scenarios/<domain>/java`, including
+[`scenarios/http/java`](../../scenarios/http/java) and
+[`scenarios/database/java`](../../scenarios/database/java). `otel-conformance-java`
 finds it by searching upwards from the scenario directory for
 `settings.gradle.kts`, so a scenario file says nothing about how deep it is
 nested. Within a build, projects are grouped by the library they instrument,
@@ -39,6 +41,24 @@ The projects under `tools/java` are shared the same way: a build root includes
 them by directory, so both a `scenario-support` and a domain's own framework
 projects sit in one project list.
 
+Java 25 is the Gradle build, compiler, application bytecode, test and default
+scenario-runtime baseline. Set `JAVA_HOME` to a JDK 25 installation for
+`prepare`. To use a different Java version for a scenario, configure its
+framework and launcher projects:
+
+```kotlin
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(27)
+    }
+}
+```
+
+Both builds use the Foojay toolchain resolver, so Gradle downloads a missing
+JDK automatically. CI installs only Java 25 for the build JVM and lets Gradle
+provision additional JDKs required by scenario toolchains. `JAVA_HOME` stays
+on Java 25.
+
 Versions are pinned in a build root's `gradle/libs.versions.toml`. The Java
 agent and the instrumentation BOM are one release published under two
 coordinates, so a catalog is what keeps them from drifting apart and having the
@@ -56,6 +76,17 @@ OTLP exporter, and shutdown, for scenarios measuring explicit library
 instrumentation. A framework's launch project supplies only its own decorators.
 Agent launch projects do not depend on it, so those jars never reach a runtime
 that is meant to be measuring the agent.
+
+Both SDK paths use the same pre-shutdown order: start trace and log flushes,
+await both, flush metrics, then let normal SDK and process shutdown continue.
+The 15-second budget is shared across the flush phases. A timeout or failed
+flush fails the scenario.
+
+For `--agent`, `prepare` packages a Java-agent extension that captures the
+agent's processors and metric readers through
+`AutoConfigurationCustomizerProvider`. The shared scenario launcher invokes
+that extension through an in-process JMX control after the scenario main
+returns. Scenario code does not know about the control or call a flush helper.
 
 ## `otel-conformance-java`
 
@@ -87,7 +118,15 @@ name. That is under the build root rather than under each project, so where a
 Gradle project sits on disk is the build's business and not something the
 launcher has to know.
 
-`run` executes `java` directly rather than through Gradle, so the scenario
+`prepareRuntime` also writes `java-runtime.json` beside `lib` and `agent`. It
+records the absolute Java executable path and language version selected by
+the project's Gradle toolchain. `run` uses that executable, independent of
+the current `JAVA_HOME` or `PATH`. Missing or invalid metadata, or an
+unavailable executable, fails with guidance to prepare again. These are local
+prepared runtimes, not portable distributions: prepare again after moving the
+checkout or moving or removing a JDK.
+
+`run` executes the selected JVM directly rather than through Gradle, so the scenario
 inherits the fresh OTLP endpoint the runner injected instead of whatever a
 long-lived Gradle daemon started with.
 

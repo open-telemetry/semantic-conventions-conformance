@@ -44,7 +44,7 @@ replaces it: every span is classified into a registry span type, and the file
 records which of that type's attributes were present.
 
 ```json
-{"spans": {"gen_ai.inference.client": ["gen_ai.input.messages", "gen_ai.operation.name", "…"]}}
+{"spans": {"gen_ai.client.inference": ["gen_ai.input.messages", "gen_ai.operation.name", "…"]}}
 ```
 
 Two implementations of one library diff directly.
@@ -77,4 +77,11 @@ A repo checking its own working tree overrides just the registry:
 
 ```sh
 otel-conformance path/to/directory --registry ./model
+```
+
+`--registry` also takes a git URL:
+
+```sh
+otel-conformance path/to/directory \
+    --registry 'https://github.com/open-telemetry/semantic-conventions-genai.git@67dff024[model]'
 ```

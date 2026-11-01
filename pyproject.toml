@@ -28,13 +28,18 @@ detect-same-package = false
 known-first-party = [
   "database_conformance",
   "opentelemetry",
+  "conformance_report",
+  "conftest",
   "genai_conformance",
   "genai_mock_server",
   "http_conformance",
   "http_mock_server",
   "otel_conformance_dotnet",
   "otel_conformance_java",
+  "otel_conformance_go",
   "otel_conformance_js",
+  "otel_conformance_php",
+  "otel_conformance_ruby",
   "otel_http_test_client",
 ]
 known-third-party = ["pytest"]
@@ -50,6 +55,7 @@ pythonVersion = "3.10"
 include = [
   "tools/runner/src",
   "tools/database/runner/src",
+  "tools/report/src",
   "tools/gen-ai/runner/src",
   "tools/http/runner/src",
   "tools/http/mock-server/src",
@@ -58,4 +64,7 @@ include = [
   "tools/java/src",
   "tools/js/src",
   "tools/python/src",
+  "tools/php/src",
+  "tools/go/src",
+  "tools/ruby/src",
 ]

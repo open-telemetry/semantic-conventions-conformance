@@ -13,11 +13,13 @@ import json
 import shlex
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Mapping, Sequence, cast
+from typing import Literal, Mapping, Sequence, cast
 
 import yaml
 
 SPEC_FILE = "conformance.yaml"
+OtlpProtocol = Literal["grpc", "http/protobuf"]
+DEFAULT_OTLP_PROTOCOL: OtlpProtocol = "grpc"
 _SCENARIO_CONTRACT_KEYS = ("spans", "metrics", "events")
 
 
@@ -39,6 +41,15 @@ class AttributeMatcher:
         if self.distinct is not None:
             return f"{self.distinct} distinct values"
         return f"== {self.equals!r}"
+
+
+@dataclass(frozen=True)
+class InstrumentationScopeExpectation:
+    """Expectations for a signal's instrumentation scope."""
+
+    name: AttributeMatcher | None = None
+    version: AttributeMatcher | None = None
+    schema_url: AttributeMatcher | None = None
 
 
 @dataclass(frozen=True)
@@ -106,6 +117,7 @@ class SpanExpectation:
     attributes: Mapping[str, AttributeMatcher] = field(
         default_factory=dict[str, AttributeMatcher]
     )
+    instrumentation_scope: InstrumentationScopeExpectation | None = None
 
     def describe(self) -> str:
         return self.match.describe()
@@ -146,6 +158,9 @@ class ScenarioSpec:
     expectations at all only has to run and stay free of semconv violations.
     Declaring one makes its check exact.
 
+    ``action`` is the protocol-neutral mapping from an indexed contract. The
+    runner passes only the selected mapping to the scenario process as JSON.
+
     ``expected_violations`` are this scenario's own and are checked both ways:
     reported, they pass; no longer reported, the run says to remove them.
     ``inherited_violations`` come from the package and only ever suppress —
@@ -162,6 +177,17 @@ class ScenarioSpec:
     events: tuple[str, ...] | None
     expected_violations: tuple[ExpectedViolation, ...]
     inherited_violations: tuple[ExpectedViolation, ...] = ()
+    description: str = ""
+    index: int | None = None
+    action: Mapping[str, object] | None = None
+
+    @property
+    def display_name(self) -> str:
+        """A human label that keeps an indexed scenario unambiguous."""
+        description = self.description or self.name
+        if self.index is None:
+            return description
+        return f"[{self.index}] {description}"
 
 
 @dataclass(frozen=True)
@@ -244,6 +270,7 @@ class PackageSpec:
     # Which wrapper supplies the registry and the reduction (see
     # :mod:`._runners`). None means the caller supplies all available runners.
     runner: str | None = None
+    otlp_protocol: OtlpProtocol = DEFAULT_OTLP_PROTOCOL
     runner_config: Mapping[str, object] = field(
         default_factory=dict[str, object]
     )
@@ -263,6 +290,29 @@ def _require_list(value: object, where: str) -> list[object]:
             f"{where}: expected a list, got {type(value).__name__}"
         )
     return cast("list[object]", value)
+
+
+def _parse_action(value: object, where: str) -> Mapping[str, object]:
+    action = _require_mapping(value, where)
+    if not action:
+        raise SpecError(f"{where}: expected a non-empty mapping")
+    try:
+        encoded = json.dumps(
+            action,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    except (TypeError, ValueError) as error:
+        raise SpecError(
+            f"{where}: expected values that can be represented as JSON: {error}"
+        ) from error
+    decoded = json.loads(encoded)
+    if decoded != action:
+        raise SpecError(
+            f"{where}: expected an object with string keys and JSON values"
+        )
+    return cast("Mapping[str, object]", decoded)
 
 
 def _check_keys(
@@ -298,8 +348,14 @@ def _required_string(
 def _parse_command(value: object, where: str) -> tuple[str, ...]:
     """A command is a shell-style string, or an already-split list."""
     if isinstance(value, str):
-        return tuple(shlex.split(value))
-    return _parse_string_list(value, f"{where} (a command string or list)")
+        command = tuple(shlex.split(value))
+    else:
+        command = _parse_string_list(
+            value, f"{where} (a command string or list)"
+        )
+    if not command:
+        raise SpecError(f"{where}: expected a non-empty command")
+    return command
 
 
 def _parse_matcher(value: object, where: str) -> AttributeMatcher:
@@ -319,6 +375,44 @@ def _parse_matcher(value: object, where: str) -> AttributeMatcher:
     if not isinstance(distinct, int) or isinstance(distinct, bool):
         raise SpecError(f"{where}: distinct must be an integer")
     return AttributeMatcher(distinct=distinct)
+
+
+def _parse_scope_field(value: object, where: str) -> AttributeMatcher:
+    if isinstance(value, str) and value:
+        return AttributeMatcher(equals=value)
+    if not isinstance(value, Mapping):
+        raise SpecError(
+            f"{where}: expected a non-empty string or a presence matcher"
+        )
+
+    matcher = cast("Mapping[str, object]", value)
+    _check_keys(matcher, ("present",), where)
+    if set(matcher) != {"present"} or not isinstance(matcher["present"], bool):
+        raise SpecError(f"{where}: present must be a boolean")
+    return AttributeMatcher(present=matcher["present"])
+
+
+def _parse_instrumentation_scope(
+    value: object, where: str
+) -> InstrumentationScopeExpectation:
+    scope = _require_mapping(value, where)
+    _check_keys(scope, ("name", "version", "schema_url"), where)
+    if not scope:
+        raise SpecError(f"{where}: declare at least one field to check")
+    expectation = InstrumentationScopeExpectation(
+        name=_parse_scope_field(scope["name"], f"{where}.name")
+        if "name" in scope
+        else None,
+        version=_parse_scope_field(scope["version"], f"{where}.version")
+        if "version" in scope
+        else None,
+        schema_url=_parse_scope_field(
+            scope["schema_url"], f"{where}.schema_url"
+        )
+        if "schema_url" in scope
+        else None,
+    )
+    return expectation
 
 
 def _parse_match(value: object, where: str) -> SpanMatch:
@@ -347,7 +441,11 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
         return SpanExpectation(match=match)
 
     expect = _require_mapping(span["expect"], f"{where}.expect")
-    _check_keys(expect, ("count", "attributes"), f"{where}.expect")
+    _check_keys(
+        expect,
+        ("count", "attributes", "instrumentation_scope"),
+        f"{where}.expect",
+    )
     count = expect.get("count")
     if not isinstance(count, int) or isinstance(count, bool):
         raise SpecError(
@@ -363,6 +461,12 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
             name: _parse_matcher(matcher, f"{where}.expect.attributes.{name}")
             for name, matcher in attributes.items()
         },
+        instrumentation_scope=_parse_instrumentation_scope(
+            expect["instrumentation_scope"],
+            f"{where}.expect.instrumentation_scope",
+        )
+        if "instrumentation_scope" in expect
+        else None,
     )
 
 
@@ -420,6 +524,17 @@ def _parse_server(value: object, where: str) -> ServerSpec:
     )
 
 
+def _parse_otlp_protocol(
+    mapping: Mapping[str, object], where: str
+) -> OtlpProtocol:
+    value = mapping.get("otlp_protocol", DEFAULT_OTLP_PROTOCOL)
+    if not isinstance(value, str) or value not in {"grpc", "http/protobuf"}:
+        raise SpecError(
+            f"{where}.otlp_protocol: expected 'grpc' or 'http/protobuf'"
+        )
+    return cast("OtlpProtocol", value)
+
+
 def _parse_string_list(value: object, where: str) -> tuple[str, ...]:
     if value is None:
         return ()
@@ -436,6 +551,9 @@ def _parse_scenario(
     where: str,
     *,
     inherited: tuple[ExpectedViolation, ...] = (),
+    description: str | None = None,
+    index: int | None = None,
+    action: Mapping[str, object] | None = None,
 ) -> ScenarioSpec:
     scenario = _require_mapping(value or {}, where)
     _check_keys(
@@ -486,12 +604,15 @@ def _parse_scenario(
         else None,
         expected_violations=own,
         inherited_violations=inherited,
+        description=description or name,
+        index=index,
+        action=action,
     )
 
 
 def _load_scenario_contract(
     directory: Path, value: object, where: str
-) -> Mapping[str, object]:
+) -> tuple[Path, object]:
     contract = _required_string(
         {"scenario_contract": value}, "scenario_contract", where
     )
@@ -499,11 +620,18 @@ def _load_scenario_contract(
     if not path.is_file():
         raise SpecError(f"{path} not found")
 
-    document = yaml.safe_load(path.read_text(encoding="utf-8"))
-    document = _require_mapping(document or {}, str(path))
-    _check_keys(document, ("scenarios",), str(path))
+    return path, cast(
+        "object", yaml.safe_load(path.read_text(encoding="utf-8"))
+    )
+
+
+def _named_contract_scenarios(
+    document: object, path: Path
+) -> Mapping[str, object]:
+    mapping = _require_mapping(document or {}, str(path))
+    _check_keys(mapping, ("scenarios",), str(path))
     scenarios = _require_mapping(
-        document.get("scenarios") or {}, f"{path}.scenarios"
+        mapping.get("scenarios") or {}, f"{path}.scenarios"
     )
     if not scenarios:
         raise SpecError(f"{path}: declares no scenarios")
@@ -516,6 +644,43 @@ def _load_scenario_contract(
             f"{path}.scenarios.{name}",
         )
     return scenarios
+
+
+def _list_contract_scenarios(
+    document: object,
+    path: Path,
+    run: tuple[str, ...],
+    directory: Path,
+    inherited: tuple[ExpectedViolation, ...],
+) -> Mapping[str, ScenarioSpec]:
+    contract = _require_mapping(document or {}, str(path))
+    entries = _require_list(contract.get("scenarios"), f"{path}.scenarios")
+    if not entries:
+        raise SpecError(f"{path}: declares no scenarios")
+
+    parsed: dict[str, ScenarioSpec] = {}
+    for index, value in enumerate(entries):
+        where = f"{path}.scenarios[{index}]"
+        entry = _require_mapping(value, where)
+        _check_keys(entry, ("description", "action", "expect"), where)
+        description = _required_string(entry, "description", where)
+        action = _parse_action(entry.get("action"), f"{where}.action")
+        if "expect" not in entry:
+            raise SpecError(f"{where}.expect is required")
+        expect = _require_mapping(entry["expect"], f"{where}.expect")
+        _check_keys(expect, _SCENARIO_CONTRACT_KEYS, f"{where}.expect")
+        name = f"{index:04d}"
+        parsed[name] = _parse_scenario(
+            name,
+            {**expect, "run": list(run)},
+            directory,
+            where,
+            inherited=inherited,
+            description=description,
+            index=index,
+            action=action,
+        )
+    return parsed
 
 
 def _merge_scenarios(
@@ -547,8 +712,10 @@ def load_spec(directory: Path) -> PackageSpec:
             "runner",
             "runner_config",
             "scenario_contract",
+            "scenario_run",
             "instrumented_library",
             "instrumentation_library",
+            "otlp_protocol",
             "env",
             "weaver",
             "server",
@@ -569,19 +736,6 @@ def load_spec(directory: Path) -> PackageSpec:
     local_scenarios = _require_mapping(
         document.get("scenarios") or {}, f"{path}.scenarios"
     )
-    contract_scenarios: Mapping[str, object]
-    if "scenario_contract" in document:
-        contract_scenarios = _load_scenario_contract(
-            directory,
-            document["scenario_contract"],
-            str(path),
-        )
-    else:
-        contract_scenarios = {}
-    declared = _merge_scenarios(contract_scenarios, local_scenarios, path)
-    if not declared:
-        raise SpecError(f"{path}: declares no scenarios")
-
     inherited = tuple(
         _parse_violation(violation, f"{path}.expected_violations[{index}]")
         for index, violation in enumerate(
@@ -591,6 +745,66 @@ def load_spec(directory: Path) -> PackageSpec:
             )
         )
     )
+
+    contract_document: object | None = None
+    contract_path: Path | None = None
+    if "scenario_contract" in document:
+        contract_path, contract_document = _load_scenario_contract(
+            directory,
+            document["scenario_contract"],
+            str(path),
+        )
+    contract_scenario_declarations = (
+        _require_mapping(
+            contract_document if contract_document is not None else {},
+            str(contract_path),
+        ).get("scenarios")
+        if contract_path is not None
+        else None
+    )
+    if isinstance(contract_scenario_declarations, list):
+        if local_scenarios:
+            raise SpecError(
+                f"{path}: scenarios cannot be combined with an indexed "
+                "contract; use scenario_run"
+            )
+        if "scenario_run" not in document:
+            raise SpecError(
+                f"{path}: scenario_run is required for an indexed contract"
+            )
+        assert contract_path is not None
+        parsed_scenarios = _list_contract_scenarios(
+            cast("object", contract_document),
+            contract_path,
+            _parse_command(document["scenario_run"], f"{path}.scenario_run"),
+            directory,
+            inherited,
+        )
+    else:
+        if "scenario_run" in document:
+            raise SpecError(
+                f"{path}: scenario_run requires an indexed contract"
+            )
+        named_contract_scenarios: Mapping[str, object] = (
+            _named_contract_scenarios(contract_document, contract_path)
+            if contract_path is not None
+            else {}
+        )
+        declared = _merge_scenarios(
+            named_contract_scenarios, local_scenarios, path
+        )
+        if not declared:
+            raise SpecError(f"{path}: declares no scenarios")
+        parsed_scenarios = {
+            name: _parse_scenario(
+                name,
+                scenario,
+                directory,
+                f"{path}.scenarios.{name}",
+                inherited=inherited,
+            )
+            for name, scenario in declared.items()
+        }
 
     return PackageSpec(
         instrumented_library=instrumented,
@@ -610,17 +824,9 @@ def load_spec(directory: Path) -> PackageSpec:
         setup=_parse_command(document["setup"], f"{path}.setup")
         if "setup" in document
         else None,
+        otlp_protocol=_parse_otlp_protocol(document, str(path)),
         expected_violations=inherited,
-        scenarios={
-            name: _parse_scenario(
-                name,
-                scenario,
-                directory,
-                f"{path}.scenarios.{name}",
-                inherited=inherited,
-            )
-            for name, scenario in declared.items()
-        },
+        scenarios=parsed_scenarios,
     )
 
 

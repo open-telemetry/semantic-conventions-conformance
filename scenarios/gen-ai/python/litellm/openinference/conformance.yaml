@@ -14,6 +14,11 @@ env:
   # OpenInference records its own `llm.*` attributes by default;
   # this is the switch that adds the GenAI conventions beside them.
   OPENINFERENCE_ENABLE_GENAI_SEMCONV: "true"
+  # LiteLLM downloads its model price map at import and silently falls back
+  # to the copy it ships with when the download fails, so cost attributes
+  # would depend on the network and on upstream edits to that map. Pin the
+  # map to the locked LiteLLM version.
+  LITELLM_LOCAL_MODEL_COST_MAP: "True"
 
 scenarios:
   inference:

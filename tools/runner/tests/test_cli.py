@@ -53,6 +53,13 @@ scenarios:
     run: python tool_calling.py
 """
 
+INDEXED_SPEC = """
+instrumented_library: demo
+instrumentation_library: demo-instrumentation
+scenario_contract: contract.yaml
+scenario_run: python scenario.py
+"""
+
 
 class FakeSession:
     """Records what ran; never starts weaver or a server."""
@@ -68,7 +75,7 @@ class FakeSession:
     def run(self, name: str) -> ScenarioReport:
         self.ran.append(name)
         return ScenarioReport(
-            name=name,
+            name=self.spec.scenarios[name].display_name,
             failures=[f"{name}: nope"] if name in self._failing else [],
             violations=[f"{name} is missing server.address, id=some_advice"]
             if name in self._violating
@@ -79,6 +86,24 @@ class FakeSession:
 @pytest.fixture
 def directory(tmp_path: Path) -> Path:
     (tmp_path / "conformance.yaml").write_text(SPEC)
+    return tmp_path
+
+
+@pytest.fixture
+def indexed_directory(tmp_path: Path) -> Path:
+    (tmp_path / "contract.yaml").write_text(
+        """
+description: Duplicate labels remain independent.
+scenarios:
+  - description: Same label.
+    action: {kind: first}
+    expect: {}
+  - description: Same label.
+    action: {kind: second}
+    expect: {}
+"""
+    )
+    (tmp_path / "conformance.yaml").write_text(INDEXED_SPEC)
     return tmp_path
 
 
@@ -126,6 +151,35 @@ def test_scenario_filter(directory: Path) -> None:
         == 0
     )
     assert sessions[0].ran == ["tool_calling"]
+
+
+def test_indexed_scenarios_keep_internal_keys_and_display_descriptions(
+    indexed_directory: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    sessions: list[FakeSession] = []
+
+    assert main([str(indexed_directory)], session=factory(sessions, [])) == 0
+
+    assert sessions[0].ran == ["0000", "0001"]
+    out = capsys.readouterr().out
+    assert "scenario: [0] Same label., status: ok" in out
+    assert "scenario: [1] Same label., status: ok" in out
+
+
+def test_indexed_scenario_filter_uses_the_internal_key(
+    indexed_directory: Path,
+) -> None:
+    sessions: list[FakeSession] = []
+
+    assert (
+        main(
+            [str(indexed_directory), "--scenario", "0001"],
+            session=factory(sessions, []),
+        )
+        == 0
+    )
+
+    assert sessions[0].ran == ["0001"]
 
 
 def test_failures_become_a_non_zero_exit(directory: Path) -> None:

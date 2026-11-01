@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, request
+from flask import Blueprint, Response, request
 
 from ._common import mock_tool_arguments
 
@@ -12,6 +12,9 @@ bp = Blueprint("assistants", __name__)
 # Shared state for mock Assistants resources.
 _assistants: dict[str, dict] = {}
 _runs: dict[str, dict] = {}
+# Kept apart from _runs, which submission overwrites, so a repeated
+# submission replays the same tool-step completion.
+_run_tool_calls: dict[str, list[dict]] = {}
 
 
 @bp.route("/agents/<agent_name>/versions", methods=["POST"])
@@ -147,19 +150,205 @@ def _run_response(body, thread_id, run_id="run-mock-001", status="completed", re
     return response
 
 
-@bp.route("/v1/threads/runs", methods=["POST"])
-@bp.route("/openai/threads/runs", methods=["POST"])
-@bp.route("/threads/runs", methods=["POST"])
-def create_thread_and_run():
-    body = request.get_json(silent=True) or {}
-    return _run_response(body, thread_id="thread-mock-001")
+_ANSWER_TEXT = "This is a response from the mock server."
 
 
-@bp.route("/v1/threads/<thread_id>/runs", methods=["POST"])
-@bp.route("/openai/threads/<thread_id>/runs", methods=["POST"])
-@bp.route("/threads/<thread_id>/runs", methods=["POST"])
-def create_run(thread_id):
-    body = request.get_json(silent=True) or {}
+def _assistant_message(thread_id, run, status, content):
+    return {
+        "id": "msg-mock-002",
+        "object": "thread.message",
+        "created_at": 1700000001,
+        "thread_id": thread_id,
+        "role": "assistant",
+        "status": status,
+        "assistant_id": run["assistant_id"],
+        "run_id": run["id"],
+        "attachments": [],
+        "content": content,
+        "metadata": {},
+    }
+
+
+def _text_content(value):
+    return [{"type": "text", "text": {"value": value, "annotations": []}}]
+
+
+def _run_step(run, status, step_details, step_id):
+    return {
+        "id": step_id,
+        "object": "thread.run.step",
+        "created_at": 1700000001,
+        "run_id": run["id"],
+        "assistant_id": run["assistant_id"],
+        "thread_id": run["thread_id"],
+        "type": step_details["type"],
+        "status": status,
+        "step_details": step_details,
+        "usage": None,
+    }
+
+
+def _with_status(run, status):
+    # Real streams report usage only once the run reaches a terminal state.
+    return {**run, "status": status, "usage": None}
+
+
+def _sse_event(event, data):
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+def _stream_run_start(run):
+    yield _sse_event("thread.run.created", _with_status(run, "queued"))
+    yield _sse_event("thread.run.queued", _with_status(run, "queued"))
+    yield _sse_event("thread.run.in_progress", _with_status(run, "in_progress"))
+
+
+_TOOL_STEP_ID = "step-mock-001"
+
+
+def _pending_tool_calls(run):
+    return run["required_action"]["submit_tool_outputs"]["tool_calls"]
+
+
+def _tool_call_step_delta(tool_call_delta):
+    return _sse_event(
+        "thread.run.step.delta",
+        {
+            "id": _TOOL_STEP_ID,
+            "object": "thread.run.step.delta",
+            "delta": {
+                "step_details": {
+                    "type": "tool_calls",
+                    "tool_calls": [tool_call_delta],
+                }
+            },
+        },
+    )
+
+
+def _stream_requires_action(run):
+    # The SDK fires on_tool_call_created on the first delta of an index and
+    # on_tool_call_delta on later ones, so the step starts empty and each call
+    # arrives as a header delta followed by an arguments delta.
+    empty = {"type": "tool_calls", "tool_calls": []}
+    for event in ("thread.run.step.created", "thread.run.step.in_progress"):
+        yield _sse_event(
+            event, _run_step(run, "in_progress", empty, _TOOL_STEP_ID)
+        )
+    for index, call in enumerate(_pending_tool_calls(run)):
+        function = call["function"]
+        yield _tool_call_step_delta(
+            {
+                "index": index,
+                "id": call["id"],
+                "type": "function",
+                "function": {"name": function["name"], "arguments": ""},
+            }
+        )
+        yield _tool_call_step_delta(
+            {
+                "index": index,
+                "type": "function",
+                "function": {"arguments": function["arguments"]},
+            }
+        )
+    yield _sse_event(
+        "thread.run.requires_action", _with_status(run, "requires_action")
+    )
+
+
+def _completed_tool_step(run, tool_calls, tool_outputs):
+    outputs = {o.get("tool_call_id"): o.get("output") for o in tool_outputs}
+    calls = [
+        {
+            **call,
+            "function": {**call["function"], "output": outputs.get(call["id"])},
+        }
+        for call in tool_calls
+    ]
+    step_details = {"type": "tool_calls", "tool_calls": calls}
+    return _run_step(run, "completed", step_details, _TOOL_STEP_ID)
+
+
+def _stream_answer(run):
+    """Yield the assistant message and run completion of a streamed run."""
+    thread_id = run["thread_id"]
+    step_details = {
+        "type": "message_creation",
+        "message_creation": {"message_id": "msg-mock-002"},
+    }
+    yield _sse_event(
+        "thread.run.step.created",
+        _run_step(run, "in_progress", step_details, "step-mock-002"),
+    )
+    yield _sse_event(
+        "thread.run.step.in_progress",
+        _run_step(run, "in_progress", step_details, "step-mock-002"),
+    )
+    in_progress = _assistant_message(thread_id, run, "in_progress", [])
+    yield _sse_event("thread.message.created", in_progress)
+    yield _sse_event("thread.message.in_progress", in_progress)
+    for chunk in ("This is a ", "response from ", "the mock server."):
+        yield _sse_event(
+            "thread.message.delta",
+            {
+                "id": "msg-mock-002",
+                "object": "thread.message.delta",
+                "delta": {
+                    "content": [
+                        {
+                            "index": 0,
+                            "type": "text",
+                            "text": {"value": chunk, "annotations": []},
+                        }
+                    ]
+                },
+            },
+        )
+    yield _sse_event(
+        "thread.message.completed",
+        _assistant_message(
+            thread_id, run, "completed", _text_content(_ANSWER_TEXT)
+        ),
+    )
+    completed_step = _run_step(run, "completed", step_details, "step-mock-002")
+    completed_step["usage"] = run["usage"]
+    yield _sse_event("thread.run.step.completed", completed_step)
+    yield _sse_event("thread.run.completed", run)
+
+
+def _stream_done():
+    yield "event: done\ndata: [DONE]\n\n"
+
+
+def _stream_run(run, thread=None):
+    if thread is not None:
+        yield _sse_event("thread.created", thread)
+    yield from _stream_run_start(run)
+    if run["status"] == "requires_action":
+        yield from _stream_requires_action(run)
+    else:
+        yield from _stream_answer(run)
+    yield from _stream_done()
+
+
+def _stream_submitted_run(run, tool_calls):
+    yield _sse_event("thread.run.queued", _with_status(run, "queued"))
+    yield _sse_event("thread.run.in_progress", _with_status(run, "in_progress"))
+    if tool_calls:
+        yield _sse_event(
+            "thread.run.step.completed",
+            _completed_tool_step(run, tool_calls, run["tool_outputs"]),
+        )
+    yield from _stream_answer(run)
+    yield from _stream_done()
+
+
+def _event_stream(events):
+    return Response(events, mimetype="text/event-stream")
+
+
+def _start_run(body, thread_id):
     assistant_id = body.get("assistant_id", body.get("agent_id", "asst-mock-001"))
     tool_call = _assistant_tool_call(assistant_id)
     if tool_call is not None:
@@ -174,9 +363,33 @@ def create_run(thread_id):
                 },
             },
         )
+        _run_tool_calls[run["id"]] = [tool_call]
     else:
         run = _run_response(body, thread_id=thread_id)
+        _run_tool_calls.pop(run["id"], None)
     _runs[run["id"]] = run
+    return run
+
+
+@bp.route("/v1/threads/runs", methods=["POST"])
+@bp.route("/openai/threads/runs", methods=["POST"])
+@bp.route("/threads/runs", methods=["POST"])
+def create_thread_and_run():
+    body = request.get_json(silent=True) or {}
+    run = _start_run(body, thread_id="thread-mock-001")
+    if body.get("stream"):
+        return _event_stream(_stream_run(run, thread=create_thread()))
+    return run
+
+
+@bp.route("/v1/threads/<thread_id>/runs", methods=["POST"])
+@bp.route("/openai/threads/<thread_id>/runs", methods=["POST"])
+@bp.route("/threads/<thread_id>/runs", methods=["POST"])
+def create_run(thread_id):
+    body = request.get_json(silent=True) or {}
+    run = _start_run(body, thread_id=thread_id)
+    if body.get("stream"):
+        return _event_stream(_stream_run(run))
     return run
 
 
@@ -185,15 +398,18 @@ def create_run(thread_id):
 @bp.route("/threads/<thread_id>/runs/<run_id>/submit_tool_outputs", methods=["POST"])
 def submit_tool_outputs(thread_id, run_id):
     body = request.get_json(silent=True) or {}
-    existing_run = _runs.get(run_id)
+    existing_run = _runs.get(run_id) or {}
     run = _run_response(
-        existing_run or {},
+        existing_run,
         thread_id=thread_id,
         run_id=run_id,
         status="completed",
     )
     run["tool_outputs"] = body.get("tool_outputs", [])
     _runs[run_id] = run
+    if body.get("stream"):
+        tool_calls = _run_tool_calls.get(run_id, [])
+        return _event_stream(_stream_submitted_run(run, tool_calls))
     return run
 
 
@@ -218,6 +434,22 @@ def get_run(thread_id, run_id):
             "total_tokens": 37,
         },
         "metadata": {},
+    }
+
+
+@bp.route("/v1/threads/<thread_id>/runs", methods=["GET"])
+@bp.route("/openai/threads/<thread_id>/runs", methods=["GET"])
+@bp.route("/threads/<thread_id>/runs", methods=["GET"])
+def list_runs(thread_id):
+    runs = [r for r in _runs.values() if r.get("thread_id") == thread_id]
+    if not runs:
+        runs = [_run_response({}, thread_id=thread_id)]
+    return {
+        "object": "list",
+        "data": runs,
+        "first_id": runs[0]["id"],
+        "last_id": runs[-1]["id"],
+        "has_more": False,
     }
 
 

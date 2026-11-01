@@ -19,7 +19,16 @@ httpclient/opentelemetry-http/           the launcher, and client/
 [`http-dotnet-conformance.slnx`](http-dotnet-conformance.slnx) is the build
 root. It lists the shared projects under [`tools/`](../../../tools) alongside
 these four rather than restating them, so `dotnet build` here compiles every
-project a .NET HTTP scenario depends on, including the test project.
+project a .NET HTTP scenario depends on, including both tooling test projects.
+
+## Building and testing
+
+Run these commands from this directory:
+
+```sh
+dotnet build http-dotnet-conformance.slnx
+dotnet test --solution http-dotnet-conformance.slnx --no-build
+```
 
 ## What the launchers add
 
@@ -48,7 +57,7 @@ app.MapGet("/users/{userId}", AnswerAsync);
 
 `/users/123` arrives, `GET /users/{userId}` is recorded. Answering is a lookup
 of the concrete request in the shared
-[contract](../../../tools/http/test-client/contract.json), identical for every
+[contract](../../../tools/http/test-client/contract.yaml), identical for every
 framework, so a route here says only what its template is.
 
 ## Versions

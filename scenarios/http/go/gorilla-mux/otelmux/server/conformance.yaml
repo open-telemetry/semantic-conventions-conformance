@@ -1,0 +1,12 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: github.com/gorilla/mux
+instrumentation_library: go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux
+
+setup: otel-conformance-go build
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-go run

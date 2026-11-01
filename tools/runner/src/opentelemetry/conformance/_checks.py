@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
 from ._report import carried_attributes
+from ._spans import span_kind
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
@@ -79,6 +80,24 @@ def seen_events(statistics: Mapping[str, object]) -> set[str]:
     )
 
 
+def _seen_expected_names(
+    statistics: Mapping[str, object],
+    *,
+    expected: set[str],
+    registry_key: str,
+    non_registry_key: str,
+) -> set[str]:
+    """Registry signals plus declared non-registry signals.
+
+    Weaver reports undeclared non-registry signals as findings. Leaving them
+    to that check lets a language config filter SDK-owned telemetry without
+    hiding it from the report.
+    """
+    return _seen(statistics, registry_key) | (
+        expected & _seen(statistics, non_registry_key)
+    )
+
+
 @dataclass(frozen=True)
 class Findings:
     """Two kinds of problem, kept apart because callers weigh them apart.
@@ -99,6 +118,8 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
     """Return every way the report fails to match the scenario spec."""
     statistics = report["statistics"]
     spans = observed_spans(report)
+    expected_metrics = set(spec.metrics or ())
+    expected_events = set(spec.events or ())
     return Findings(
         failures=[
             *(() if spec.spans is None else _check_spans(spec, spans)),
@@ -107,8 +128,13 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
                 if spec.metrics is None
                 else _check_names(
                     "metric",
-                    expected=set(spec.metrics),
-                    seen=seen_metrics(statistics),
+                    expected=expected_metrics,
+                    seen=_seen_expected_names(
+                        statistics,
+                        expected=expected_metrics,
+                        registry_key="seen_registry_metrics",
+                        non_registry_key="seen_non_registry_metrics",
+                    ),
                 )
             ),
             *(
@@ -116,8 +142,13 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
                 if spec.events is None
                 else _check_names(
                     "event",
-                    expected=set(spec.events),
-                    seen=seen_events(statistics),
+                    expected=expected_events,
+                    seen=_seen_expected_names(
+                        statistics,
+                        expected=expected_events,
+                        registry_key="seen_registry_events",
+                        non_registry_key="seen_non_registry_events",
+                    ),
                 )
             ),
         ],
@@ -130,7 +161,7 @@ def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
     return all(
         span.attributes.get(attribute) == value
         for attribute, value in match.attributes.items()
-    ) and (match.kind is None or span.kind == match.kind)
+    ) and (match.kind is None or span_kind(span.kind) == span_kind(match.kind))
 
 
 def _check_spans(
@@ -159,14 +190,14 @@ def _check_spans(
                 selected.add(index)
         if len(matched) != expectation.count:
             failures.append(
-                f"{spec.name}: expected {expectation.count} span(s) matching "
+                f"{spec.display_name}: expected {expectation.count} span(s) matching "
                 f"{expectation.describe()}, saw {len(matched)}"
             )
         for attribute, matcher in expectation.attributes.items():
             failure = _check_attribute(matched, attribute, matcher)
             if failure:
                 failures.append(
-                    f"{spec.name}: {expectation.describe()}: {failure}"
+                    f"{spec.display_name}: {expectation.describe()}: {failure}"
                 )
 
     if has_assertions:
@@ -175,7 +206,7 @@ def _check_spans(
         ]
         if undeclared:
             failures.append(
-                f"{spec.name}: {len(undeclared)} undeclared span(s): "
+                f"{spec.display_name}: {len(undeclared)} undeclared span(s): "
                 f"{sorted({span.name for span in undeclared})}"
             )
     return failures

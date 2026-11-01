@@ -9,7 +9,9 @@ import io.opentelemetry.conformance.http.HttpContract.Response;
 import io.opentelemetry.conformance.http.HttpServerWorkload;
 import io.opentelemetry.conformance.scenario.ScenarioLifecycle;
 import java.net.InetAddress;
+import java.util.function.Consumer;
 import ratpack.handling.Context;
+import ratpack.registry.RegistrySpec;
 import ratpack.server.RatpackServer;
 
 /** Hosts the shared HTTP exchanges on a Ratpack handler chain until the driver says stop. */
@@ -17,6 +19,10 @@ public final class RatpackServerScenario {
   private RatpackServerScenario() {}
 
   public static void run() throws Exception {
+    run(registry -> {});
+  }
+
+  public static void run(Consumer<RegistrySpec> registryCustomizer) throws Exception {
     RatpackServer server =
         RatpackServer.of(
             definition -> {
@@ -25,6 +31,7 @@ public final class RatpackServerScenario {
                       config
                           .port(HttpServerWorkload.scenarioPort())
                           .address(InetAddress.getByName("127.0.0.1")));
+              definition.registryOf(registryCustomizer::accept);
               definition.handlers(
                   chain ->
                       chain

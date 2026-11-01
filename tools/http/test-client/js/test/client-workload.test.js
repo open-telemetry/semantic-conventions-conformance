@@ -6,29 +6,41 @@
 const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
-const {
-  ContractError,
-  drive,
-  exchangeFor,
-  respond,
-  verify,
-} = require("../src");
+const { drive, requests, respond, SCENARIO_INDEX_VARIABLE } = require("../src");
 
 const BASE_URL = "http://127.0.0.1:0";
+
+async function withScenarioIndex(index, callback) {
+  const previous = process.env[SCENARIO_INDEX_VARIABLE];
+  process.env[SCENARIO_INDEX_VARIABLE] = String(index);
+  try {
+    return await callback();
+  } finally {
+    if (previous === undefined) {
+      delete process.env[SCENARIO_INDEX_VARIABLE];
+    } else {
+      process.env[SCENARIO_INDEX_VARIABLE] = previous;
+    }
+  }
+}
 
 /** A sender backed by the other side of the same contract, which is what a run measures. */
 async function driveAgainstTheContract() {
   const sent = [];
-  await drive(BASE_URL, (method, url, body) => {
-    const target = url.slice(BASE_URL.length);
-    sent.push(`${method} ${target}`);
-    return respond(method, target, body);
-  });
+  for (let index = 0; index < requests().length; index += 1) {
+    await withScenarioIndex(index, () =>
+      drive(BASE_URL, (method, url, body) => {
+        const target = url.slice(BASE_URL.length);
+        sent.push(`${method} ${target}`);
+        return respond(method, target, body);
+      }),
+    );
+  }
   return sent;
 }
 
 describe("driving the contract", () => {
-  it("has both sides agree", async () => {
+  it("sends every contract request", async () => {
     assert.deepEqual(await driveAgainstTheContract(), [
       "GET /users/123",
       "GET /users/123?fields=name&verbose=true",
@@ -38,40 +50,20 @@ describe("driving the contract", () => {
     ]);
   });
 
-  it("fails the run on a wrong status", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    assert.throws(
-      () => verify(users, { status: 500, body: users.responseBody }),
-      (error) =>
-        error instanceof ContractError &&
-        error.message.includes("answered 500"),
+  it("does not validate the response", async () => {
+    const previous = process.env[SCENARIO_INDEX_VARIABLE];
+    await withScenarioIndex(0, () =>
+      drive(BASE_URL, () => ({ status: 599, body: "not json" })),
     );
-  });
-
-  it("leaves whitespace and key order to the JSON writer", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    verify(users, {
-      status: users.status,
-      body: '{ "name" :"Alice",\n  "id": 123 }',
-    });
-  });
-
-  it("says so when an answer is not JSON", () => {
-    const users = exchangeFor("GET", "/users/123");
-
-    assert.throws(
-      () => verify(users, { status: users.status, body: "<html>" }),
-      (error) =>
-        error instanceof ContractError && error.message.startsWith("not JSON"),
-    );
+    assert.equal(process.env[SCENARIO_INDEX_VARIABLE], previous);
   });
 
   it("refuses a blank base URL before anything is sent", async () => {
-    await assert.rejects(
-      () => drive("  ", () => ({ status: 200, body: "{}" })),
-      TypeError,
+    await withScenarioIndex(0, () =>
+      assert.rejects(
+        () => drive("  ", () => ({ status: 200, body: "{}" })),
+        TypeError,
+      ),
     );
   });
 });

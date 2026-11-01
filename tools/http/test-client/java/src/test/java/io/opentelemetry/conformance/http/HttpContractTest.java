@@ -4,11 +4,16 @@
  */
 package io.opentelemetry.conformance.http;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.opentelemetry.conformance.http.HttpContract.Exchange;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +22,11 @@ class HttpContractTest {
   @Test
   void itIsReadFromTheFileEveryLanguageReads() {
     assertFalse(HttpContract.exchanges().isEmpty());
+  }
+
+  @Test
+  void theCombinedExchangesAreCachedWithTheContract() {
+    assertSame(HttpContract.exchanges(), HttpContract.exchanges());
   }
 
   @Test
@@ -32,6 +42,35 @@ class HttpContractTest {
     assertTrue(HttpContract.exchanges().stream().anyMatch(Exchange::readiness));
     assertTrue(requests.stream().noneMatch(Exchange::readiness));
     assertEquals(HttpContract.exchanges().size() - 1, requests.size());
+  }
+
+  @Test
+  void aContractWithoutScenariosSaysSo() {
+    ByteArrayInputStream contract =
+        new ByteArrayInputStream("readiness: {}\n".getBytes(StandardCharsets.UTF_8));
+
+    IllegalStateException failure =
+        assertThrows(IllegalStateException.class, () -> HttpContract.load(contract));
+
+    assertTrue(requireNonNull(failure.getMessage()).contains("declares no scenarios"));
+  }
+
+  @Test
+  void eachOrdinalSelectsOneIndependentRequest() {
+    for (int index = 0; index < HttpContract.requests().size(); index++) {
+      assertEquals(HttpContract.requests().get(index), HttpContract.request(index));
+    }
+    assertThrows(IllegalArgumentException.class, () -> HttpContract.request(-1));
+    assertThrows(
+        IllegalArgumentException.class, () -> HttpContract.request(HttpContract.requests().size()));
+  }
+
+  @Test
+  void aScenarioIndexThatIsNotSetSaysSo() {
+    IllegalStateException failure =
+        assertThrows(IllegalStateException.class, HttpContract::scenarioRequest);
+
+    assertEquals(HttpContract.SCENARIO_INDEX_VARIABLE + " is not set", failure.getMessage());
   }
 
   @Test

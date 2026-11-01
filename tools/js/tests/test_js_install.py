@@ -82,7 +82,9 @@ class TestInstalling:
         monkeypatch.setattr(
             otel_conformance_js.subprocess,
             "call",
-            lambda command, cwd: calls.append((command, cwd)) or 0,
+            lambda command, cwd, creationflags: (
+                calls.append((command, cwd)) or 0
+            ),
         )
 
         assert otel_conformance_js.main(["install"]) == 0

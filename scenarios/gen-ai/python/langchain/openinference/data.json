@@ -1,13 +1,7 @@
 {
   "spans": {
-    "gen_ai.execute_tool.internal": [
-      "gen_ai.operation.name",
-      "gen_ai.tool.call.result",
-      "gen_ai.tool.description",
-      "gen_ai.tool.name",
-      "gen_ai.tool.type"
-    ],
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
+      "gen_ai.conversation.id",
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -20,12 +14,36 @@
       "gen_ai.tool.definitions",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.retrieval.client": [
+      "gen_ai.operation.name",
+      "gen_ai.retrieval.documents",
+      "gen_ai.retrieval.query.text"
     ]
   },
   "events": {},
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.langchain' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.langchain",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "missing_attribute",
       "message": "Attribute 'input.mime_type' does not exist in the registry.",
@@ -324,6 +342,15 @@
       }
     },
     {
+      "id": "missing_attribute",
+      "message": "Attribute 'session.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "ChatOpenAI",
+      "context": {
+        "attribute_key": "session.id"
+      }
+    },
+    {
       "id": "genai_expected_attribute_missing",
       "message": "Span 'ChatOpenAI' (operation 'chat') is missing expected attribute 'gen_ai.response.id'",
       "signal_type": "span",
@@ -364,11 +391,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'ChatOpenAI'",
+      "message": "chat span name should be 'chat gpt-4o-mini', got 'ChatOpenAI'",
       "signal_type": "span",
       "signal_name": "ChatOpenAI",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat gpt-4o-mini",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }
@@ -425,6 +452,89 @@
       "signal_name": "ChatPromptTemplate",
       "context": {
         "status_code": "ok"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'input.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "attribute_key": "input.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'metadata' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "attribute_key": "metadata"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "attribute_key": "openinference.span.kind"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "attribute_key": "output.mime_type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'output.value' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.0.document.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "attribute_key": "retrieval.documents.0.document.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'retrieval.documents.1.document.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "attribute_key": "retrieval.documents.1.document.content"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'VectorStoreRetriever' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "retrieval span name should be 'retrieval', got 'VectorStoreRetriever'",
+      "signal_type": "span",
+      "signal_name": "VectorStoreRetriever",
+      "context": {
+        "expected_form": "retrieval",
+        "keyed_attr": "gen_ai.data_source.id",
+        "operation": "retrieval"
       }
     },
     {
@@ -546,11 +656,11 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "execute_tool span name should be 'execute_tool' or 'execute_tool <value of gen_ai.tool.name>', got 'get_current_weather'",
+      "message": "execute_tool span name should be 'execute_tool get_current_weather', got 'get_current_weather'",
       "signal_type": "span",
       "signal_name": "get_current_weather",
       "context": {
-        "expected_form": "execute_tool or 'execute_tool <gen_ai.tool.name>'",
+        "expected_form": "execute_tool get_current_weather",
         "keyed_attr": "gen_ai.tool.name",
         "operation": "execute_tool"
       }
@@ -625,6 +735,15 @@
       "signal_name": "model",
       "context": {
         "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'session.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "model",
+      "context": {
+        "attribute_key": "session.id"
       }
     },
     {
@@ -760,6 +879,15 @@
       "signal_name": "weather_assistant",
       "context": {
         "attribute_key": "output.value"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'session.id' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "weather_assistant",
+      "context": {
+        "attribute_key": "session.id"
       }
     },
     {

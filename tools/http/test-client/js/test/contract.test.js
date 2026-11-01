@@ -7,10 +7,12 @@ const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
 const {
+  SCENARIO_INDEX_VARIABLE,
   exchangeFor,
   exchanges,
   renderResponseBody,
   requests,
+  scenarioRequest,
 } = require("../src");
 
 describe("the contract", () => {
@@ -22,6 +24,31 @@ describe("the contract", () => {
     assert.ok(exchanges().some((exchange) => exchange.readiness));
     assert.ok(!requests().some((exchange) => exchange.readiness));
     assert.equal(requests().length, exchanges().length - 1);
+  });
+
+  it("selects each request by its independent ordinal", () => {
+    requests().forEach((exchange, index) => {
+      assert.equal(scenarioRequest(index), exchange);
+    });
+    assert.throws(() => scenarioRequest(-1), /zero-based decimal/);
+    assert.throws(() => scenarioRequest(requests().length), /selects no/);
+  });
+
+  it("says when the scenario index is not set", () => {
+    const previous = process.env[SCENARIO_INDEX_VARIABLE];
+    delete process.env[SCENARIO_INDEX_VARIABLE];
+    try {
+      assert.throws(
+        () => scenarioRequest(),
+        new RegExp(`${SCENARIO_INDEX_VARIABLE} is not set`),
+      );
+    } finally {
+      if (previous === undefined) {
+        delete process.env[SCENARIO_INDEX_VARIABLE];
+      } else {
+        process.env[SCENARIO_INDEX_VARIABLE] = previous;
+      }
+    }
   });
 
   // A field this reader names but the contract does not is `undefined` here

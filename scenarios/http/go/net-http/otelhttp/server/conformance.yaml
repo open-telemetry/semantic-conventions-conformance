@@ -1,0 +1,14 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: net/http
+instrumentation_library: go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
+
+setup: otel-conformance-go build
+
+scenarios:
+  server:
+    # The external driver prevents server instrumentation from recording client
+    # spans and closes stdin after the traffic so the server can flush.
+    run: otel-http-drive --serve otel-conformance-go run

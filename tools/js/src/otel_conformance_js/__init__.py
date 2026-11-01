@@ -13,11 +13,18 @@ the install. That step is here instead.
     What a package's ``setup:`` runs. Installs the whole npm workspace from
     its committed lockfile, so a scenario gets the versions the lockfile pins
     rather than whatever resolves today.
+
+``relock``
+    Regenerates every committed ``package-lock.json`` under ``scenarios/``
+    and ``tools/`` in place, changing only what the manifests require. What
+    CI runs on a Renovate PR, and what a maintainer runs by hand when a
+    lockfile is stale.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -27,6 +34,7 @@ from typing import Sequence
 # The file that marks the root of the Node build. Searched for upwards from the
 # scenario directory, so a scenario says nothing about how deep it is nested.
 BUILD_MARKER = "package-lock.json"
+CREATION_FLAGS = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
 
 class LayoutError(RuntimeError):
@@ -54,6 +62,100 @@ def npm_command() -> list[str]:
     return [shutil.which("npm") or "npm", "ci"]
 
 
+RELOCK = "relock"
+
+
+def repository_root(start: Path | None = None) -> Path:
+    """The top of the git repository ``start`` is in."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],  # noqa: S607
+        cwd=start or Path.cwd(),
+        capture_output=True,
+        text=True,
+        check=True,
+        creationflags=CREATION_FLAGS,
+    )
+    return Path(result.stdout.strip())
+
+
+def lock_projects(root: Path) -> list[Path]:
+    """Every directory under scenarios/ or tools/ with a tracked lockfile."""
+    result = subprocess.run(
+        [  # noqa: S607
+            "git",
+            "ls-files",
+            "-z",
+            "--",
+            f":(glob)scenarios/**/{BUILD_MARKER}",
+            f":(glob)tools/**/{BUILD_MARKER}",
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+        creationflags=CREATION_FLAGS,
+    )
+    listed = (path for path in result.stdout.split("\0") if path)
+    return sorted({(root / path).parent for path in listed})
+
+
+def relock_command() -> list[str]:
+    """Rewrite the lockfile only: nothing installed, no scripts run."""
+    return [
+        shutil.which("npm") or "npm",
+        "install",
+        "--package-lock-only",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+    ]
+
+
+def refresh_local_packages(project: Path) -> None:
+    """Discard copied file-package snapshots so npm reads their manifests."""
+    path = project / BUILD_MARKER
+    lock = json.loads(path.read_text(encoding="utf-8"))
+    packages = lock.get("packages", {})
+    copied = [
+        name
+        for name, package in packages.items()
+        if package.get("resolved", "").startswith("file:")
+        and not package.get("link")
+    ]
+    if copied:
+        for name in copied:
+            del packages[name]
+        path.write_text(
+            json.dumps(lock, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+
+
+def relock(root: Path | None = None) -> int:
+    """Relock every project, stopping at the first that fails."""
+    root = root or repository_root()
+    for project in lock_projects(root):
+        name = project.relative_to(root).as_posix()
+        print(f"relocking {name}", flush=True)
+        lockfile = project / BUILD_MARKER
+        original = lockfile.read_bytes()
+        succeeded = False
+        try:
+            refresh_local_packages(project)
+            status = subprocess.call(  # noqa: S603
+                relock_command(), cwd=project, creationflags=CREATION_FLAGS
+            )
+            succeeded = status == 0
+        finally:
+            if not succeeded:
+                lockfile.write_bytes(original)
+        if status != 0:
+            print(f"relocking {name} failed", file=sys.stderr)
+            return status
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="otel-conformance-js",
@@ -64,8 +166,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     subcommands.add_parser(
         "install", help="install the workspace from its committed lockfile"
     )
+    subcommands.add_parser(
+        RELOCK,
+        help="regenerate every committed package-lock.json in place",
+    )
 
-    parser.parse_args(argv)
+    arguments = parser.parse_args(argv)
+    if arguments.command == RELOCK:
+        try:
+            return relock()
+        except subprocess.CalledProcessError:
+            print(
+                "`relock` runs inside the conformance git repository",
+                file=sys.stderr,
+            )
+            return 1
+        except FileNotFoundError as error:
+            print(f"could not start {error.filename}", file=sys.stderr)
+            return 1
     try:
         root = build_root()
     except LayoutError as error:
@@ -74,7 +192,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     # From the build root, so every scenario in it installs the same tree
     # however deep its own directory sits.
     try:
-        return subprocess.call(npm_command(), cwd=root)  # noqa: S603
+        return subprocess.call(  # noqa: S603
+            npm_command(), cwd=root, creationflags=CREATION_FLAGS
+        )
     except FileNotFoundError:
         # A `setup:` step reports what it printed, so what is missing should be
         # the first line of it rather than the bottom of a traceback.

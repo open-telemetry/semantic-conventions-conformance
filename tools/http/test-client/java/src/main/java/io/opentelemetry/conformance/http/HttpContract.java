@@ -5,19 +5,21 @@
 package io.opentelemetry.conformance.http;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The HTTP conformance exchanges, as the JVM reads them.
  *
- * <p>Read from {@code otel-http-contract.json} on the classpath, which the build copies from {@code
- * tools/http/test-client/contract.json} — the one place it is written down, so a Java scenario and
+ * <p>Read from {@code otel-http-contract.yaml} on the classpath, which the build copies from {@code
+ * tools/http/test-client/contract.yaml} — the one place it is written down, so a Java scenario and
  * a scenario in any other language are measured against the same traffic.
  *
  * <p>{@link #exchanges()} carries the concrete traffic and its answers. Every Java framework shares
@@ -35,14 +37,17 @@ public final class HttpContract {
    */
   public static final String USER_AGENT = "otel-http-conformance/1";
 
-  private static final String RESOURCE = "/otel-http-contract.json";
+  public static final String SCENARIO_INDEX_VARIABLE = "OTEL_CONFORMANCE_SCENARIO_INDEX";
 
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+  private static final String RESOURCE = "/otel-http-contract.yaml";
+
+  private static final ObjectMapper YAML =
+      new ObjectMapper(new YAMLFactory())
+          .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
   // Loaded on first use rather than in a static initializer, so a classpath problem arrives as the
   // message below rather than wrapped in ExceptionInInitializerError.
-  private static volatile Document document;
+  private static volatile Contract contract;
 
   private HttpContract() {}
 
@@ -68,14 +73,73 @@ public final class HttpContract {
     }
   }
 
+  private record Request(String method, String path, String body) {}
+
+  private record ExpectedResponse(int status, String body) {}
+
+  private record Action(Request request, ExpectedResponse response) {}
+
+  private record ContractDocument(
+      String description, ScenarioEntry readiness, List<ScenarioEntry> scenarios) {}
+
+  private record ScenarioEntry(String description, Action action) {
+    Exchange exchange(boolean readiness) {
+      return new Exchange(
+          action.request.method,
+          action.request.path,
+          action.request.body,
+          action.response.status,
+          action.response.body,
+          readiness,
+          description);
+    }
+  }
+
+  /** The readiness exchange and the measured requests, as one load of the file. */
+  record Contract(List<Exchange> exchanges, List<Exchange> requests) {}
+
   /** Every exchange the contract describes, including readiness, in order. */
   public static List<Exchange> exchanges() {
-    return document().requests();
+    return contract().exchanges();
   }
 
   /** The measured requests to send, in order. */
   public static List<Exchange> requests() {
-    return exchanges().stream().filter(exchange -> !exchange.readiness()).toList();
+    return contract().requests();
+  }
+
+  private static Contract contract() {
+    Contract loaded = contract;
+    if (loaded == null) {
+      loaded = load();
+      contract = loaded;
+    }
+    return loaded;
+  }
+
+  /** The one request selected by the runner's zero-based contract index. */
+  public static Exchange scenarioRequest() {
+    String raw = System.getenv(SCENARIO_INDEX_VARIABLE);
+    if (raw == null) {
+      throw new IllegalStateException(SCENARIO_INDEX_VARIABLE + " is not set");
+    }
+    if (!raw.matches("0|[1-9][0-9]*")) {
+      throw new IllegalStateException(
+          SCENARIO_INDEX_VARIABLE + " must be a zero-based decimal index, got " + raw);
+    }
+    return request(Integer.parseInt(raw));
+  }
+
+  static Exchange request(int index) {
+    if (index < 0 || index >= requests().size()) {
+      throw new IllegalArgumentException(
+          SCENARIO_INDEX_VARIABLE
+              + "="
+              + index
+              + " selects no contract entry; expected 0.."
+              + (requests().size() - 1));
+    }
+    return requests().get(index);
   }
 
   /**
@@ -100,53 +164,34 @@ public final class HttpContract {
     return query == -1 ? path : path.substring(0, query);
   }
 
-  /**
-   * Parses {@code json}, so two bodies compare by structure rather than by spacing.
-   *
-   * <p>Package-private: Jackson is how this module reads the contract, not something a scenario has
-   * to depend on.
-   */
-  static JsonNode parse(String json) {
-    JsonNode parsed;
-    try {
-      parsed = MAPPER.readTree(json);
-    } catch (IOException e) {
-      throw new ContractError("not JSON: " + json, e);
-    }
-    // An empty or blank body parses to a missing node rather than failing, which would otherwise
-    // surface as a confusing comparison instead of "this is not JSON".
-    if (parsed == null || parsed.isMissingNode()) {
-      throw new ContractError("not JSON: " + json);
-    }
-    return parsed;
-  }
-
-  private record Document(List<Exchange> requests) {
-    Document {
-      requests = List.copyOf(requests);
-    }
-  }
-
-  private static Document document() {
-    Document loaded = document;
-    if (loaded == null) {
-      loaded = load();
-      document = loaded;
-    }
-    return loaded;
-  }
-
-  private static Document load() {
+  private static Contract load() {
     try (InputStream stream = HttpContract.class.getResourceAsStream(RESOURCE)) {
       if (stream == null) {
         throw new IllegalStateException(
             RESOURCE
                 + " is not on the classpath — the build copies it from"
-                + " tools/http/test-client/contract.json");
+                + " tools/http/test-client/contract.yaml");
       }
-      return MAPPER.readValue(stream, Document.class);
+      return load(stream);
     } catch (IOException e) {
       throw new UncheckedIOException("could not read " + RESOURCE, e);
     }
+  }
+
+  static Contract load(InputStream stream) throws IOException {
+    ContractDocument document = YAML.readValue(stream, ContractDocument.class);
+    if (document.readiness() == null) {
+      throw new IllegalStateException(RESOURCE + " declares no readiness exchange");
+    }
+    List<ScenarioEntry> scenarios = document.scenarios();
+    if (scenarios == null || scenarios.isEmpty()) {
+      throw new IllegalStateException(RESOURCE + " declares no scenarios");
+    }
+    Exchange readiness = document.readiness().exchange(true);
+    List<Exchange> requests =
+        scenarios.stream()
+            .map(entry -> entry.exchange(false))
+            .collect(Collectors.toUnmodifiableList());
+    return new Contract(Stream.concat(Stream.of(readiness), requests.stream()).toList(), requests);
   }
 }

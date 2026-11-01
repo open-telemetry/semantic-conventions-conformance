@@ -16,6 +16,8 @@ import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
  * its SDK configured for it, and must not carry these jars on its classpath at all.
  */
 public final class ScenarioSdk implements AutoCloseable {
+  private static final long FLUSH_TIMEOUT_MILLIS = 15_000;
+
   private final OpenTelemetrySdk openTelemetrySdk;
 
   /** Autoconfigures the SDK, failing early rather than exporting nowhere. */
@@ -34,6 +36,14 @@ public final class ScenarioSdk implements AutoCloseable {
 
   @Override
   public void close() {
-    openTelemetrySdk.close();
+    try {
+      TelemetryLifecycle.flushBeforeShutdown(
+          openTelemetrySdk.getSdkTracerProvider()::forceFlush,
+          openTelemetrySdk.getSdkLoggerProvider()::forceFlush,
+          openTelemetrySdk.getSdkMeterProvider()::forceFlush,
+          FLUSH_TIMEOUT_MILLIS);
+    } finally {
+      openTelemetrySdk.close();
+    }
   }
 }

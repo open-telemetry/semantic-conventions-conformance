@@ -1,6 +1,6 @@
 {
   "spans": {
-    "gen_ai.inference.client": [
+    "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
       "gen_ai.output.messages",
@@ -27,6 +27,18 @@
   "metrics": {},
   "entities": {},
   "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'openinference.instrumentation.together' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "openinference.instrumentation.together",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
     {
       "id": "type_mismatch",
       "message": "Attribute 'gen_ai.request.top_k' has type 'double'. Type should be 'int'.",
@@ -90,6 +102,60 @@
       "signal_name": "Completions",
       "context": {
         "attribute_key": "llm.input_messages.1.message.content"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.audio.audio.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.audio.audio.url"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.type' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.video.video.url' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.video.video.url"
       }
     },
     {
@@ -340,11 +406,33 @@
     },
     {
       "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat' or 'chat <value of gen_ai.request.model>', got 'Completions'",
+      "message": "chat span name should be 'chat Qwen/Qwen2-Audio-7B-Instruct', got 'Completions'",
       "signal_type": "span",
       "signal_name": "Completions",
       "context": {
-        "expected_form": "chat or 'chat <gen_ai.request.model>'",
+        "expected_form": "chat Qwen/Qwen2-Audio-7B-Instruct",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat meta-llama/Llama-3.3-70B-Instruct-Turbo', got 'Completions'",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "expected_form": "chat meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat meta-llama/Llama-4-Scout-17B-16E-Instruct', got 'Completions'",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "expected_form": "chat meta-llama/Llama-4-Scout-17B-16E-Instruct",
         "keyed_attr": "gen_ai.request.model",
         "operation": "chat"
       }

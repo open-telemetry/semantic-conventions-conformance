@@ -14,18 +14,24 @@ import io.opentelemetry.conformance.http.HttpContract;
 import io.opentelemetry.conformance.http.HttpContract.Response;
 import io.opentelemetry.conformance.http.HttpServerWorkload;
 import io.opentelemetry.conformance.scenario.ScenarioLifecycle;
+import java.util.function.Consumer;
 
 /** Hosts the shared HTTP exchanges on a Helidon {@link WebServer} until the driver says stop. */
 public final class HelidonServerScenario {
   private HelidonServerScenario() {}
 
   public static void run() throws Exception {
+    run(builder -> {});
+  }
+
+  public static void run(Consumer<HttpRouting.Builder> routingCustomizer) throws Exception {
     HttpRouting.Builder routing =
         HttpRouting.builder()
             .get("/health", HelidonServerScenario::answer)
             .get("/users/{userId}", HelidonServerScenario::answer)
             .post("/items", HelidonServerScenario::answer)
             .get("/status/{code}", HelidonServerScenario::answer);
+    routingCustomizer.accept(routing);
 
     WebServer server =
         WebServer.builder()

@@ -11,9 +11,7 @@ plugins {
 
 rootProject.name = "database-java-conformance"
 
-include("shared:jdbc:scenarios")
-include("shared:jdbc:opentelemetry-javaagent")
-include("shared:jdbc:opentelemetry-library")
+apply(from = "discover-projects.gradle.kts")
 
 fun shared(name: String, directory: String) {
     include(name)
@@ -22,3 +20,5 @@ fun shared(name: String, directory: String) {
 
 shared("scenario-support", "../../../tools/java/scenario-support")
 shared("scenario-sdk", "../../../tools/java/scenario-sdk")
+shared("agent-control", "../../../tools/java/agent-control")
+shared("sql-test-client", "../../../tools/database/sql-test-client/java")
