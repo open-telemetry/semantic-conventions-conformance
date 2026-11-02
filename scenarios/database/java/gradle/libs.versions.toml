@@ -3,7 +3,7 @@
 
 [versions]
 jackson = "2.22.4"
-mariadb = "3.5.11"
+mariadb = "4.0.0"
 jedis = "8.0.2"
 lettuce = "7.9.0.RELEASE"
 mssql = "13.4.0.jre11"
