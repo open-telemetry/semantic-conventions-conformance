@@ -129,7 +129,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.22.1"
+          node-version: "26.13.0"
 
       # Installs, formats and unit-tests every Node package the HTTP scenarios
       # use, including the ones shared with other domains.
@@ -434,7 +434,7 @@ jobs:
         if: matrix.ecosystem == 'js'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.22.1"
+          node-version: "26.13.0"
 
       - name: Set up Go
         if: matrix.ecosystem == 'go'
@@ -597,7 +597,7 @@ jobs:
         if: matrix.language == 'js'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.22.1"
+          node-version: "26.13.0"
           cache: npm
           cache-dependency-path: "scenarios/**/package-lock.json"
 
