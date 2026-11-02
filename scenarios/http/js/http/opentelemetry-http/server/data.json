@@ -1,7 +1,69 @@
 {
-  "spans": {},
+  "spans": {
+    "http.server": [
+      "client.address",
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.peer.address",
+      "network.peer.port",
+      "network.protocol.version",
+      "server.address",
+      "server.port",
+      "url.path",
+      "url.query",
+      "url.scheme",
+      "user_agent.original"
+    ]
+  },
   "events": {},
-  "metrics": {},
-  "entities": {},
-  "findings": []
+  "metrics": {
+    "http.server.request.duration": [
+      "error.type",
+      "http.request.method",
+      "http.response.status_code",
+      "network.protocol.version",
+      "url.scheme"
+    ]
+  },
+  "entities": {
+    "process.runtime": {
+      "identity": [
+        "process.runtime.name",
+        "process.runtime.version"
+      ],
+      "description": [
+        "process.runtime.description"
+      ]
+    },
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope '@opentelemetry/instrumentation-http' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "@opentelemetry/instrumentation-http",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    }
+  ]
 }
