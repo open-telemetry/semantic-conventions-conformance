@@ -16,7 +16,7 @@
       "matchUpdateTypes": ["patch"]
     },
     {
-      // group all GitHub Actions updates together
+      // group non-major GitHub Actions updates together
       // (Renovate applies packageRules in order and later rules win)
       "groupName": "github actions",
       "matchManagers": [
@@ -88,8 +88,9 @@
       "groupName": "docker-minor"
     },
     {
-      // An empty schedule lets major upgrades bypass the weekly update window.
+      // Major upgrades get individual PRs outside the weekly update window.
       "matchUpdateTypes": ["major"],
+      "groupName": null,
       "schedule": []
     },
     {
