@@ -14,7 +14,7 @@
       "matchUpdateTypes": ["patch"]
     },
     {
-      // group all GitHub Actions updates into a single weekly PR
+      // group all GitHub Actions updates together
       // (Renovate applies packageRules in order and later rules win)
       "groupName": "github actions",
       "matchManagers": [
@@ -84,6 +84,11 @@
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["minor", "patch", "pin", "pinDigest", "digest"],
       "groupName": "docker-minor"
+    },
+    {
+      // An empty schedule lets major upgrades bypass the weekly update window.
+      "matchUpdateTypes": ["major"],
+      "schedule": []
     },
     {
       // Everything under this Maven group ships only `-alpha` versions, so
