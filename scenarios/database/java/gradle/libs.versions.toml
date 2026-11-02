@@ -16,7 +16,7 @@ opentelemetry-instrumentation-alpha = "2.33.1-alpha"
 postgresql = "42.7.14"
 rediscala = "1.17.0"
 redisson = "4.8.0"
-scala = "2.13.18"
+scala = "3.10.0"
 
 [libraries]
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
