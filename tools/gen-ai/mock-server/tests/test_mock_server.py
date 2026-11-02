@@ -203,7 +203,16 @@ ENDPOINTS = [
         "bedrock-agentcore-evaluate",
         "post",
         "/evaluations/evaluate/eval-mock-0123456789",
-        {"evaluationInput": {"sessionSpans": []}},
+        {
+            "evaluationInput": {
+                "sessionSpans": [
+                    {
+                        "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+                        "attributes": {"session.id": "session-001"},
+                    }
+                ]
+            }
+        },
     ),
 ]
 

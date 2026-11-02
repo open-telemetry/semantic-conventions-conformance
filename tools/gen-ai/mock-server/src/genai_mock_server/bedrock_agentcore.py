@@ -1,4 +1,4 @@
-"""AWS Bedrock AgentCore Memory-compatible endpoints.
+"""AWS Bedrock AgentCore Memory- and Evaluations-compatible endpoints.
 
 Serves both the ``bedrock-agentcore-control`` (control plane) and
 ``bedrock-agentcore`` (data plane) operations against a single mock URL,
