@@ -53,6 +53,21 @@
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.system' does not exist in the registry.",
       "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.time_to_first_chunk",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "gen_ai.client.operation.time_to_first_chunk"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "metric",
       "signal_name": "gen_ai.client.token.usage",
       "context": {
         "attribute_key": "gen_ai.system"
@@ -95,6 +110,15 @@
       "signal_name": "chat gpt-4o-mini",
       "context": {
         "attribute_key": "gen_ai.agent.call.id"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.client.operation.time_to_first_chunk' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.client.operation.time_to_first_chunk"
       }
     },
     {
