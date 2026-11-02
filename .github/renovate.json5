@@ -10,7 +10,9 @@
   "schedule": ["before 8am on Tuesday"],
   "packageRules": [
     {
-      "groupName": "all patch versions",
+      // Fallback for patch updates not assigned to a group by a later rule.
+      // Review PRs in this group for missing grouping rules.
+      "groupName": "unclassified patch updates",
       "matchUpdateTypes": ["patch"]
     },
     {
