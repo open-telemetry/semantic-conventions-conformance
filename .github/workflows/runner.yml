@@ -678,6 +678,7 @@ jobs:
           key: semconv-${{ matrix.domain }}-${{ hashFiles('tools/**/versions.env') }}
 
       - name: Run scenarios
+        id: run-scenarios
         env:
           FORCE_COLOR: "1" # the log renders ANSI; the step's stdout is no tty
         run: |
@@ -710,9 +711,11 @@ jobs:
             exit 1
           fi
 
+      # Only successful scenario output is eligible for autofix, even when
+      # the freshness checks below fail.
       - name: Create the generated data patch
         id: data-patch
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.run-scenarios.outcome == 'success' }}
         env:
           DATA_PATCH: ${{ runner.temp }}/data.patch
         run: |
@@ -728,7 +731,7 @@ jobs:
           fi
 
       - name: Upload the generated data patch
-        if: ${{ !cancelled() && steps.data-patch.outputs.exists == 'true' }}
+        if: ${{ !cancelled() && steps.run-scenarios.outcome == 'success' && steps.data-patch.outputs.exists == 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: renovate-data-${{ matrix.matrix_id }}
