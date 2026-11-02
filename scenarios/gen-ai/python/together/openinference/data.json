@@ -3,7 +3,6 @@
     "gen_ai.client.inference": [
       "gen_ai.input.messages",
       "gen_ai.operation.name",
-      "gen_ai.output.messages",
       "gen_ai.output.type",
       "gen_ai.provider.name",
       "gen_ai.request.frequency_penalty",
@@ -15,12 +14,7 @@
       "gen_ai.request.stream",
       "gen_ai.request.temperature",
       "gen_ai.request.top_p",
-      "gen_ai.response.finish_reasons",
-      "gen_ai.response.id",
-      "gen_ai.response.model",
-      "gen_ai.tool.definitions",
-      "gen_ai.usage.input_tokens",
-      "gen_ai.usage.output_tokens"
+      "gen_ai.tool.definitions"
     ]
   },
   "events": {},
@@ -37,6 +31,15 @@
         "expected": {
           "present": true
         }
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'exception.escaped' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "attribute_key": "exception.escaped"
       }
     },
     {
@@ -66,15 +69,6 @@
       "signal_name": "Completions",
       "context": {
         "attribute_key": "input.value"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.finish_reason' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.finish_reason"
       }
     },
     {
@@ -124,15 +118,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.audio.audio.url' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.audio.audio.url"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "Completions",
@@ -151,83 +136,11 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.video.video.url' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.1.message.contents.1.message_content.video.video.url"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "Completions",
       "context": {
         "attribute_key": "llm.input_messages.1.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.content"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.input_messages.3.message.tool_call_id"
       }
     },
     {
@@ -241,92 +154,11 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'llm.model_name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.model_name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.content' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.content"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.role"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'llm.provider' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "Completions",
       "context": {
         "attribute_key": "llm.provider"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.token_count.completion"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.token_count.prompt"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "llm.token_count.total"
       }
     },
     {
@@ -348,21 +180,13 @@
       }
     },
     {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.mime_type' does not exist in the registry.",
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'Completions' (operation 'chat') is missing expected attribute 'gen_ai.response.finish_reasons'",
       "signal_type": "span",
       "signal_name": "Completions",
       "context": {
-        "attribute_key": "output.mime_type"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'output.value' does not exist in the registry.",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "attribute_key": "output.value"
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "chat"
       }
     },
     {
@@ -387,6 +211,26 @@
     },
     {
       "id": "genai_expected_attribute_missing",
+      "message": "Span 'Completions' (operation 'chat') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'Completions' (operation 'chat') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "Completions",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
       "message": "Span 'Completions' (operation 'chat') is missing expected attribute 'server.address'",
       "signal_type": "span",
       "signal_name": "Completions",
@@ -396,23 +240,12 @@
       }
     },
     {
-      "id": "span_status_ok_set_by_instrumentation",
-      "message": "Span 'Completions' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "id": "error_type_missing_on_error",
+      "message": "Span 'Completions' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
       "signal_type": "span",
       "signal_name": "Completions",
       "context": {
-        "status_code": "ok"
-      }
-    },
-    {
-      "id": "genai_span_name_format",
-      "message": "chat span name should be 'chat Qwen/Qwen2-Audio-7B-Instruct', got 'Completions'",
-      "signal_type": "span",
-      "signal_name": "Completions",
-      "context": {
-        "expected_form": "chat Qwen/Qwen2-Audio-7B-Instruct",
-        "keyed_attr": "gen_ai.request.model",
-        "operation": "chat"
+        "status_code": "error"
       }
     },
     {
