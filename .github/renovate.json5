@@ -82,7 +82,8 @@
       "groupName": "php-minor"
     },
     {
-      // Match the datasource to include images read by custom managers.
+      // Match Docker images from all managers, including workflows and custom managers.
+      // config:best-practices enables Docker digest pinning, so include pinDigest.
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["minor", "patch", "pin", "pinDigest", "digest"],
       "groupName": "docker-minor"
