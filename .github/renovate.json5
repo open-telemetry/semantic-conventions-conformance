@@ -7,7 +7,7 @@
   "gitIgnoredAuthors": [
     "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
   ],
-  "schedule": ["before 8am on Monday"],
+  "schedule": ["before 8am on Tuesday"],
   "packageRules": [
     {
       "groupName": "all patch versions",
@@ -19,9 +19,6 @@
       "groupName": "github actions",
       "matchManagers": [
         "github-actions"
-      ],
-      "schedule": [
-        "before 8am on Tuesday"
       ]
     },
     {
@@ -33,10 +30,7 @@
       // out, which must not hold back the other action updates.
       "matchManagers": ["github-actions"],
       "matchDepNames": ["python"],
-      "groupName": "python",
-      "schedule": [
-        "before 8am on Tuesday"
-      ]
+      "groupName": "python"
     },
     {
       // group all non-major Java dependency updates into a single PR
