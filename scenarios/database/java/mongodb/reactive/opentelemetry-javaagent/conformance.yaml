@@ -6,7 +6,7 @@ runner_config:
   backend: mongodb
 instrumented_library: mongodb-reactive
 instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
-scenario_contract: ../../../../contracts/mongodb.yaml
+scenario_contract: ../../../../contracts/mongodb-reactive.yaml
 
 env:
   OTEL_LOGS_EXPORTER: none
@@ -30,32 +30,3 @@ scenarios:
 
   aggregate:
     run: otel-conformance-java run --agent shared:mongodb:reactive:opentelemetry-javaagent MongoReactiveJavaagentScenario aggregate
-    spans:
-      - match:
-          attributes:
-            db.system.name: mongodb
-            db.operation.name: aggregate
-        expect:
-          count: 1
-          attributes:
-            db.namespace: conformance
-            db.collection.name: items
-            db.operation.name: aggregate
-            db.query.text: '{"aggregate": "items", "pipeline": [{"$match": {"_id": "?"}}], "cursor": {"batchSize": "?"}, "$db": "?", "lsid": {"id": "?"}}'
-            db.query.summary: {present: false}
-            server.address: 127.0.0.1
-            server.port: {present: true}
-      - match:
-          attributes:
-            db.system.name: mongodb
-            db.operation.name: endSessions
-        expect:
-          count: 1
-          attributes:
-            db.namespace: admin
-            db.collection.name: {present: false}
-            db.operation.name: endSessions
-            db.query.text: '{"endSessions": [{"id": "?"}], "$db": "?", "$readPreference": {"mode": "?"}}'
-            db.query.summary: {present: false}
-            server.address: 127.0.0.1
-            server.port: {present: true}

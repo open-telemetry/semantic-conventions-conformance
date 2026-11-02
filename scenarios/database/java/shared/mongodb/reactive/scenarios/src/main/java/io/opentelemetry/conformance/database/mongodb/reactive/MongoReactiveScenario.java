@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.bson.Document;
 import org.reactivestreams.Publisher;
@@ -48,7 +50,11 @@ public final class MongoReactiveScenario {
       settings.addCommandListener(
           commandListenerFactory.apply(settings.build().getClusterSettings().getHosts()));
     }
-    try (MongoClient client = MongoClients.create(settings.build())) {
+    run(MongoClients.create(settings.build()), operation);
+  }
+
+  static void run(MongoClient client, String operation) throws Exception {
+    try (client) {
       MongoCollection<Document> collection =
           client.getDatabase(MongoContract.databaseName()).getCollection(MongoContract.COLLECTION);
       switch (operation) {
@@ -111,14 +117,24 @@ public final class MongoReactiveScenario {
   }
 
   private static <T> T await(Publisher<T> publisher) throws Exception {
+    return await(publisher, TIMEOUT);
+  }
+
+  static <T> T await(Publisher<T> publisher, Duration timeout) throws Exception {
     CompletableFuture<T> future = new CompletableFuture<>();
+    AtomicReference<Subscription> subscription = new AtomicReference<>();
     publisher.subscribe(
         new Subscriber<T>() {
           private volatile T result;
 
           @Override
-          public void onSubscribe(Subscription subscription) {
-            subscription.request(Long.MAX_VALUE);
+          public void onSubscribe(Subscription value) {
+            subscription.set(value);
+            if (future.isCancelled()) {
+              value.cancel();
+            } else {
+              value.request(Long.MAX_VALUE);
+            }
           }
 
           @Override
@@ -136,6 +152,15 @@ public final class MongoReactiveScenario {
             future.complete(result);
           }
         });
-    return future.get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+    try {
+      return future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | TimeoutException error) {
+      future.cancel(false);
+      Subscription current = subscription.get();
+      if (current != null) {
+        current.cancel();
+      }
+      throw error;
+    }
   }
 }

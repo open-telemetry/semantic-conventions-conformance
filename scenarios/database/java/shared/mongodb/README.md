@@ -12,11 +12,16 @@ importing OpenTelemetry; launcher projects configure instrumentation.
 | `delete` | `deleteOne` by `_id` |
 | `aggregate` | one-stage `$match` aggregation |
 
-Packages share named telemetry expectations in
-[`contracts/mongodb.yaml`](../../../contracts/mongodb.yaml), with driver-specific
-run commands. Each expectation also accounts for the driver's `endSessions`
-command when the client closes. MongoDB instrumentation does not currently emit
-`db.query.summary`; expectations assert that gap.
+Each driver's agent and library packages share named telemetry expectations in
+the [synchronous contract](../../../contracts/mongodb.yaml) or
+[reactive contract](../../../contracts/mongodb-reactive.yaml). The reactive
+aggregation command includes `cursor.batchSize`, unlike the synchronous command.
+Package configurations declare only their run commands. Each expectation also
+accounts for the driver's `endSessions` command when the client closes.
+
+MongoDB instrumentation does not currently emit `db.query.summary`. Coverage
+records that omission; the contracts accept the attribute if instrumentation
+starts emitting it.
 
 Standalone library launchers pass the driver's configured seed addresses to
 `MongoTelemetry.createCommandListener` so `server.address` and `server.port`
