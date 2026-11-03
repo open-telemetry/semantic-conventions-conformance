@@ -49,6 +49,19 @@ function readBody(request) {
 }
 
 /**
+ * Cancels `upstream` when `response` closes before it was finished, as it
+ * does when the run is over. Left open, a server that never answers would
+ * keep the process alive after the run.
+ */
+function cancelWith(response, upstream) {
+  response.on("close", () => {
+    if (!response.writableFinished) {
+      upstream.destroy();
+    }
+  });
+}
+
+/**
  * Sends one export on to the endpoint, with the Content-Length the bridge
  * requires, and notes it in `refused` when the endpoint did not accept it.
  */
@@ -80,6 +93,7 @@ function relay(otlpEndpoint, signalPath, request, body, response, refused) {
     },
   );
   upstream.on("error", fail);
+  cancelWith(response, upstream);
   upstream.end(body);
 }
 
@@ -91,6 +105,7 @@ function proxy(mockServer, request, response) {
     headers: { ...request.headers, host: target.host },
   });
   upstream.on("response", (answer) => {
+    answer.on("error", () => response.destroy());
     response.writeHead(answer.statusCode, answer.headers);
     answer.pipe(response);
   });
@@ -102,6 +117,7 @@ function proxy(mockServer, request, response) {
     response.writeHead(502, { "content-type": "text/plain" });
     response.end(`${error}\n`);
   });
+  cancelWith(response, upstream);
   request.pipe(upstream);
 }
 
