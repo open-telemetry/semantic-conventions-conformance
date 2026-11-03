@@ -24,8 +24,8 @@ function loadServe() {
 }
 
 /**
- * An OTLP endpoint that answers with what it was sent, and refuses anything
- * but logs the way the runner's bridge refuses a path it does not serve.
+ * A mock OTLP endpoint that echoes logs and rejects other paths. The real
+ * bridge also accepts traces and metrics.
  */
 function endpoint() {
   const server = http.createServer((request, response) => {

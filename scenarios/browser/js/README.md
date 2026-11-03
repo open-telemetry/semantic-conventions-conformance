@@ -17,6 +17,12 @@ one instrumentation scope:
 | `console`    | `experimental/console`    | `browser.console`   |
 | `web_vitals` | `experimental/web-vitals` | `browser.web_vital` |
 
+The errors page waits for two `exception` events and the console page waits
+for three `browser.console` events. These checks count event names, they do not
+assert each exception type or console method. The web-vitals page waits for
+one `browser.web_vital` event, so it does not establish coverage of every
+web vital, including interaction and page-lifecycle measurements.
+
 `browser.console` is not in the registry at the pinned version, so its findings
 are recorded rather than its attributes.
 
