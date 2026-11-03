@@ -25,21 +25,18 @@ public final class AgentControlCustomizerProvider implements AutoConfigurationCu
   @Override
   public void customize(AutoConfigurationCustomizer configuration) {
     configuration
-        .addSpanProcessorCustomizer(
-            (processor, properties) -> {
-              FLUSHER.addTrace(processor::forceFlush);
-              return processor;
-            })
-        .addLogRecordProcessorCustomizer(
-            (processor, properties) -> {
-              FLUSHER.addLog(processor::forceFlush);
-              return processor;
-            })
-        .addMetricReaderCustomizer(
-            (reader, properties) -> {
-              FLUSHER.addMetric(reader::forceFlush);
-              return reader;
-            });
+        .addSpanProcessorCustomizer((processor, properties) -> {
+          FLUSHER.addTrace(processor::forceFlush);
+          return processor;
+        })
+        .addLogRecordProcessorCustomizer((processor, properties) -> {
+          FLUSHER.addLog(processor::forceFlush);
+          return processor;
+        })
+        .addMetricReaderCustomizer((reader, properties) -> {
+          FLUSHER.addMetric(reader::forceFlush);
+          return reader;
+        });
   }
 
   private static void register(TelemetryFlusher control) {

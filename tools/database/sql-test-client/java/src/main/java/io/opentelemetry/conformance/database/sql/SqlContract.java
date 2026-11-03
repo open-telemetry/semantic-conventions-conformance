@@ -212,12 +212,11 @@ public final class SqlContract {
     List<String> unknown = new ArrayList<>();
     object
         .fieldNames()
-        .forEachRemaining(
-            field -> {
-              if (!allowed.contains(field)) {
-                unknown.add(field);
-              }
-            });
+        .forEachRemaining(field -> {
+          if (!allowed.contains(field)) {
+            unknown.add(field);
+          }
+        });
     if (!unknown.isEmpty()) {
       unknown.sort(String::compareTo);
       throw new IllegalArgumentException(label + " has unknown field(s): " + unknown);
