@@ -30,21 +30,18 @@ public final class VertxHttpClientClientScenario {
                           .setAbsoluteURI(url)
                           .setMethod(HttpMethod.valueOf(method))
                           .putHeader("user-agent", HttpContract.USER_AGENT))
-                  .compose(
-                      request -> {
-                        if (body != null) {
-                          request.putHeader("content-type", HttpContract.CONTENT_TYPE);
-                        }
-                        return (body == null ? request.send() : request.send(body))
-                            .compose(
-                                response ->
-                                    response
-                                        .body()
-                                        .map(
-                                            buffer ->
-                                                new HttpContract.Response(
-                                                    response.statusCode(), buffer.toString())));
-                      })
+                  .compose(request -> {
+                    if (body != null) {
+                      request.putHeader("content-type", HttpContract.CONTENT_TYPE);
+                    }
+                    return (body == null ? request.send() : request.send(body))
+                        .compose(response ->
+                            response
+                                .body()
+                                .map(buffer ->
+                                    new HttpContract.Response(
+                                        response.statusCode(), buffer.toString())));
+                  })
                   .toCompletionStage()
                   .toCompletableFuture()
                   .get(HttpClientWorkload.REQUEST_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
