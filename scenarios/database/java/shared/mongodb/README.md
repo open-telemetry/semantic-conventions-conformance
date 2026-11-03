@@ -11,6 +11,7 @@ importing OpenTelemetry; launcher projects configure instrumentation.
 | `update` | `updateOne` by `_id` |
 | `delete` | `deleteOne` by `_id` |
 | `aggregate` | one-stage `$match` aggregation |
+| `error` | `find` with an unknown `$invalid` filter operator |
 
 All four packages share named telemetry expectations in the
 [MongoDB contract](../../../contracts/mongodb.yaml).
@@ -19,6 +20,15 @@ accounts for the driver's `endSessions` command when the client closes.
 
 MongoDB semantic conventions do not define `db.query.text` or `db.query.summary`
 on spans. The contract does not require them or reject extra attributes.
+
+The error workload requires a `MongoQueryException` with server code `2`
+and the unknown-operator message. Unexpected success or unrelated failures fail
+the scenario. This command reaches `commandFailed`; duplicate-key writes can
+instead reach `commandSucceeded` with `writeErrors` and no instrumentation error.
+The contract requires `error.type: "2"`. Instrumentation 2.33.1 does not emit
+`db.response.status_code`, which is a conformance gap. Recording this missing
+conditional attribute as a finding is deferred to
+[#384](https://github.com/open-telemetry/semantic-conventions-conformance/issues/384).
 
 Standalone library launchers pass the driver's configured seed addresses to
 `MongoTelemetry.createCommandListener` so `server.address` and `server.port`

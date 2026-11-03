@@ -89,3 +89,23 @@ scenarios:
     metrics:
       - db.client.operation.duration
     events: []
+
+  error:
+    spans:
+      - match:
+          attributes:
+            db.system.name: mongodb
+            db.operation.name: find
+        expect:
+          count: 1
+          attributes:
+            db.namespace: conformance
+            db.collection.name: items
+            db.operation.name: find
+            error.type: "2"
+            server.address: 127.0.0.1
+            server.port: {present: true}
+      - *end-sessions
+    metrics:
+      - db.client.operation.duration
+    events: []

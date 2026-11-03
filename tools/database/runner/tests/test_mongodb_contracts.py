@@ -32,6 +32,7 @@ def test_packages_use_shared_contracts_without_local_expectations(
         "update",
         "delete",
         "aggregate",
+        "error",
     }
     assert all(
         set(scenario) == {"run"} for scenario in package["scenarios"].values()
@@ -47,3 +48,9 @@ def test_packages_use_shared_contracts_without_local_expectations(
         )
         assert scenario.metrics == ("db.client.operation.duration",)
         assert scenario.events == ()
+
+    error = spec.scenarios["error"]
+    assert error.spans is not None
+    assert error.spans[0].match.attributes["db.operation.name"] == "find"
+    assert error.spans[0].attributes["error.type"].equals == "2"
+    assert error.spans[1].match.attributes["db.operation.name"] == "endSessions"

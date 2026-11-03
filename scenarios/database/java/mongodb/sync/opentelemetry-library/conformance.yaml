@@ -30,3 +30,6 @@ scenarios:
 
   aggregate:
     run: otel-conformance-java run shared:mongodb:sync:opentelemetry-library MongoSyncLibraryScenario aggregate
+
+  error:
+    run: otel-conformance-java run shared:mongodb:sync:opentelemetry-library MongoSyncLibraryScenario error

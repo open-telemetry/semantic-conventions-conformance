@@ -6,6 +6,7 @@ package io.opentelemetry.conformance.database.mongodb.sync;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoQueryException;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -39,7 +40,11 @@ public final class MongoSyncScenario {
       settings.addCommandListener(
           commandListenerFactory.apply(settings.build().getClusterSettings().getHosts()));
     }
-    try (MongoClient client = MongoClients.create(settings.build())) {
+    run(MongoClients.create(settings.build()), operation);
+  }
+
+  static void run(MongoClient client, String operation) {
+    try (client) {
       MongoCollection<Document> collection =
           client.getDatabase(MongoContract.databaseName()).getCollection(MongoContract.COLLECTION);
       switch (operation) {
@@ -54,6 +59,9 @@ public final class MongoSyncScenario {
           break;
         case "aggregate":
           aggregate(collection);
+          break;
+        case "error":
+          error(collection);
           break;
         default:
           throw new IllegalArgumentException("unknown MongoDB operation: " + operation);
@@ -97,5 +105,17 @@ public final class MongoSyncScenario {
     if (result == null || !MongoContract.DOCUMENT_AGGREGATE.equals(result.getString("name"))) {
       throw new IllegalStateException("aggregate returned an unexpected document: " + result);
     }
+  }
+
+  private static void error(MongoCollection<Document> collection) {
+    try {
+      collection.find(new Document("_id", new Document("$invalid", 1))).first();
+    } catch (MongoQueryException error) {
+      if (error.getCode() != 2 || !error.getErrorMessage().contains("unknown operator: $invalid")) {
+        throw error;
+      }
+      return;
+    }
+    throw new IllegalStateException("MongoDB accepted an invalid find filter");
   }
 }

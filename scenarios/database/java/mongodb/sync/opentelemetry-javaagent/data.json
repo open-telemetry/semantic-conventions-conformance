@@ -4,6 +4,7 @@
       "db.collection.name",
       "db.namespace",
       "db.operation.name",
+      "error.type",
       "server.address",
       "server.port"
     ]
@@ -15,6 +16,7 @@
       "db.namespace",
       "db.operation.name",
       "db.system.name",
+      "error.type",
       "network.peer.address",
       "network.peer.port",
       "server.address",

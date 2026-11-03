@@ -11,8 +11,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.mongodb.MongoQueryException;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
@@ -24,6 +26,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.bson.BsonDocument;
+import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -200,6 +204,94 @@ class MongoReactiveScenarioTest {
     assertTrue(closed.get());
   }
 
+  @Test
+  void acceptsExpectedRejectedFindAndClosesClient() throws Exception {
+    AtomicBoolean closed = new AtomicBoolean();
+    MongoQueryException failure =
+        new MongoQueryException(
+            BsonDocument.parse(
+                "{\"ok\": 0, \"code\": 2, \"errmsg\": \"unknown operator: $invalid\"}"),
+            new ServerAddress());
+
+    MongoReactiveScenario.run(findClient(failingFind(failure), closed), "error");
+
+    assertTrue(closed.get());
+  }
+
+  @Test
+  void rejectsUnexpectedCommandSuccessAndClosesClient() {
+    AtomicBoolean closed = new AtomicBoolean();
+    Publisher<Document> publisher =
+        subscriber -> {
+          subscriber.onSubscribe(subscription(new AtomicBoolean()));
+          subscriber.onComplete();
+        };
+
+    IllegalStateException thrown =
+        assertThrows(
+            IllegalStateException.class,
+            () -> MongoReactiveScenario.run(findClient(publisher, closed), "error"));
+
+    assertEquals("MongoDB accepted an invalid find filter", thrown.getMessage());
+    assertTrue(closed.get());
+  }
+
+  @Test
+  void propagatesUnexpectedServerCode() {
+    AtomicBoolean closed = new AtomicBoolean();
+    MongoQueryException failure =
+        new MongoQueryException(
+            BsonDocument.parse(
+                "{\"ok\": 0, \"code\": 13, \"errmsg\": \"unknown operator: $invalid\"}"),
+            new ServerAddress());
+
+    ExecutionException thrown =
+        assertThrows(
+            ExecutionException.class,
+            () -> MongoReactiveScenario.run(findClient(failingFind(failure), closed), "error"));
+
+    assertSame(failure, thrown.getCause());
+    assertTrue(closed.get());
+  }
+
+  @Test
+  void propagatesUnrelatedQueryFailureWithSameCode() {
+    AtomicBoolean closed = new AtomicBoolean();
+    MongoQueryException failure =
+        new MongoQueryException(
+            BsonDocument.parse("{\"ok\": 0, \"code\": 2, \"errmsg\": \"unrelated invalid query\"}"),
+            new ServerAddress());
+
+    ExecutionException thrown =
+        assertThrows(
+            ExecutionException.class,
+            () -> MongoReactiveScenario.run(findClient(failingFind(failure), closed), "error"));
+
+    assertSame(failure, thrown.getCause());
+    assertTrue(closed.get());
+  }
+
+  @Test
+  void propagatesUnrelatedPublisherFailure() {
+    AtomicBoolean closed = new AtomicBoolean();
+    IllegalStateException failure = new IllegalStateException("publisher failed");
+
+    ExecutionException thrown =
+        assertThrows(
+            ExecutionException.class,
+            () -> MongoReactiveScenario.run(findClient(failingFind(failure), closed), "error"));
+
+    assertSame(failure, thrown.getCause());
+    assertTrue(closed.get());
+  }
+
+  private static Publisher<Document> failingFind(Throwable failure) {
+    return subscriber -> {
+      subscriber.onSubscribe(subscription(new AtomicBoolean()));
+      subscriber.onError(failure);
+    };
+  }
+
   private static Subscription subscription(AtomicBoolean cancelled) {
     return new Subscription() {
       @Override
@@ -225,6 +317,33 @@ class MongoReactiveScenarioTest {
               }
               throw new AssertionError("unexpected MongoCollection method: " + method.getName());
             });
+    return client(collection, closed);
+  }
+
+  private static MongoClient findClient(Publisher<Document> result, AtomicBoolean closed) {
+    FindPublisher<?> find =
+        proxy(
+            FindPublisher.class,
+            (ignored, method, arguments) -> {
+              if (method.getName().equals("first")) {
+                return result;
+              }
+              throw new AssertionError("unexpected FindPublisher method: " + method.getName());
+            });
+    MongoCollection<?> collection =
+        proxy(
+            MongoCollection.class,
+            (ignored, method, arguments) -> {
+              if (method.getName().equals("find")) {
+                assertEquals(new Document("_id", new Document("$invalid", 1)), arguments[0]);
+                return find;
+              }
+              throw new AssertionError("unexpected MongoCollection method: " + method.getName());
+            });
+    return client(collection, closed);
+  }
+
+  private static MongoClient client(MongoCollection<?> collection, AtomicBoolean closed) {
     MongoDatabase database =
         proxy(
             MongoDatabase.class,

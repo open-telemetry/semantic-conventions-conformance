@@ -6,6 +6,7 @@ package io.opentelemetry.conformance.database.mongodb.reactive;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoQueryException;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
@@ -21,6 +22,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -70,6 +72,9 @@ public final class MongoReactiveScenario {
         case "aggregate":
           aggregate(collection);
           break;
+        case "error":
+          error(collection);
+          break;
         default:
           throw new IllegalArgumentException("unknown MongoDB operation: " + operation);
       }
@@ -114,6 +119,20 @@ public final class MongoReactiveScenario {
     if (result == null || !MongoContract.DOCUMENT_AGGREGATE.equals(result.getString("name"))) {
       throw new IllegalStateException("aggregate returned an unexpected document: " + result);
     }
+  }
+
+  private static void error(MongoCollection<Document> collection) throws Exception {
+    try {
+      await(collection.find(new Document("_id", new Document("$invalid", 1))).first());
+    } catch (ExecutionException error) {
+      if (!(error.getCause() instanceof MongoQueryException failure)
+          || failure.getCode() != 2
+          || !failure.getErrorMessage().contains("unknown operator: $invalid")) {
+        throw error;
+      }
+      return;
+    }
+    throw new IllegalStateException("MongoDB accepted an invalid find filter");
   }
 
   private static <T> T await(Publisher<T> publisher) throws Exception {

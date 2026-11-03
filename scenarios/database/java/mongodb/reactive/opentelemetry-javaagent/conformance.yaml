@@ -30,3 +30,6 @@ scenarios:
 
   aggregate:
     run: otel-conformance-java run --agent shared:mongodb:reactive:opentelemetry-javaagent MongoReactiveJavaagentScenario aggregate
+
+  error:
+    run: otel-conformance-java run --agent shared:mongodb:reactive:opentelemetry-javaagent MongoReactiveJavaagentScenario error
