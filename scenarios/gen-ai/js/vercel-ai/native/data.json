@@ -71,102 +71,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'host.arch' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "host.arch"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'host.id' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "host.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'host.name' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "host.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.command' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.command"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.command_args' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.command_args"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.executable.name' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.executable.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.executable.path' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.executable.path"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.owner' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.owner"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.pid' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.pid"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.runtime.description' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.runtime.description"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.runtime.name' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.runtime.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.runtime.version' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.runtime.version"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.client.operation.duration' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-audio-preview",
@@ -209,6 +113,15 @@
       "signal_name": "chat gpt-4o-mini",
       "context": {
         "attribute_key": "gen_ai.client.operation.time_to_first_chunk"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_creation.input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_creation.input_tokens"
       }
     },
     {
@@ -289,6 +202,15 @@
         "expected_form": "invoke_agent",
         "keyed_attr": "gen_ai.agent.name",
         "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.usage.cache_creation.input_tokens' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "invoke_agent gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.usage.cache_creation.input_tokens"
       }
     },
     {

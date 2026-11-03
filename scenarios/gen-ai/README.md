@@ -147,8 +147,8 @@ files, with these implementations:
 
 | Library | Classes | Implementations |
 | --- | --- | --- |
-| `openai` | inference, streaming, tool_calling, automatic_tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai` |
-| `vercel-ai` | inference, streaming, tool_calling, automatic_tool_calling, structured_output, multimodal, embeddings | `native` (`@ai-sdk/otel`, the AI SDK's first-party telemetry integration) |
+| `openai` | inference, streaming, tool_calling, server_tool_calling, automatic_tool_calling, structured_output, multimodal, embeddings | `opentelemetry-openai` |
+| `vercel-ai` | inference, streaming, tool_calling, server_tool_calling, automatic_tool_calling, structured_output, multimodal, embeddings | `native` (`@ai-sdk/otel`, the AI SDK's first-party telemetry integration) |
 
 The JavaScript domain is one npm workspace with a committed lockfile, using
 the [Node launcher and SDK bootstrap](../../tools/js/README.md). Workloads

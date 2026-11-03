@@ -2,6 +2,7 @@
   "spans": {
     "gen_ai.client.inference": [
       "gen_ai.operation.name",
+      "gen_ai.provider.name",
       "gen_ai.request.frequency_penalty",
       "gen_ai.request.max_tokens",
       "gen_ai.request.model",
@@ -12,6 +13,7 @@
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.system_instructions",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens",
       "server.address",
@@ -27,10 +29,17 @@
       "server.port"
     ]
   },
-  "events": {},
+  "events": {
+    "gen_ai.client.inference.operation.details": [
+      "gen_ai.input.messages",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name"
+    ]
+  },
   "metrics": {
     "gen_ai.client.operation.duration": [
       "gen_ai.operation.name",
+      "gen_ai.provider.name",
       "gen_ai.request.model",
       "gen_ai.response.model",
       "server.address",
@@ -68,6 +77,15 @@
       }
     },
     {
+      "id": "required_attribute_not_present",
+      "message": "Required attribute 'gen_ai.operation.name' is not present.",
+      "signal_type": "log",
+      "signal_name": "gen_ai.client.inference.operation.details",
+      "context": {
+        "attribute_key": "gen_ai.operation.name"
+      }
+    },
+    {
       "id": "missing_attribute",
       "message": "Attribute 'gen_ai.system' does not exist in the registry.",
       "signal_type": "metric",
@@ -102,102 +120,6 @@
     },
     {
       "id": "missing_attribute",
-      "message": "Attribute 'host.arch' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "host.arch"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'host.id' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "host.id"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'host.name' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "host.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.command' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.command"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.command_args' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.command_args"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.executable.name' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.executable.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.executable.path' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.executable.path"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.owner' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.owner"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.pid' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.pid"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.runtime.description' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.runtime.description"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.runtime.name' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.runtime.name"
-      }
-    },
-    {
-      "id": "missing_attribute",
-      "message": "Attribute 'process.runtime.version' does not exist in the registry.",
-      "signal_type": "resource",
-      "context": {
-        "attribute_key": "process.runtime.version"
-      }
-    },
-    {
-      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.system' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-audio-preview",
@@ -222,6 +144,16 @@
       "signal_name": "chat gpt-4o-mini",
       "context": {
         "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.system_instructions' value is not JSON, so it cannot carry the GenAI content schema",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute": "gen_ai.system_instructions",
+        "errors": "value is not JSON"
       }
     },
     {

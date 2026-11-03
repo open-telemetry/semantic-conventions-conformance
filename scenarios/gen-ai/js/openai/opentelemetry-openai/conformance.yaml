@@ -25,6 +25,9 @@ scenarios:
   tool_calling:
     run: node tool_calling.js
 
+  server_tool_calling:
+    run: node server_tool_calling.js
+
   automatic_tool_calling:
     run: node automatic_tool_calling.js
 
