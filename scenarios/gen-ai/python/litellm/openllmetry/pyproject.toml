@@ -1,7 +1,8 @@
 [project]
 name = "litellm-openllmetry-conformance"
 version = "0.0.0"
-requires-python = ">=3.12"
+# litellm needs fastuuid, which has no 3.15 wheel and whose PyO3 cannot build for 3.15.
+requires-python = ">=3.12,<3.15"
 dependencies = [
     "litellm[mcp]==1.106.6",
     "opentelemetry-instrumentation-litellm==0.62.4",

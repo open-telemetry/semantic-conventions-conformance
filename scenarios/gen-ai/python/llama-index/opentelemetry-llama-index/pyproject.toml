@@ -1,7 +1,9 @@
 [project]
 name = "llama-index-opentelemetry-conformance"
 version = "0.0.0"
-requires-python = ">=3.12"
+# The instrumentor imports llama_index from sitecustomize, where pydantic-core
+# 2.50 panics on 3.15 ("The Python interpreter is not initialized").
+requires-python = ">=3.12,<3.15"
 dependencies = [
     "llama-index-core==0.14.25",
     "llama-index-llms-openai==0.8.3",
