@@ -18,8 +18,15 @@ parameter attributes. The [search contract](../../contracts/elasticsearch-api-cl
 requires one `CLIENT` span from the `elasticsearch-api` instrumentation scope,
 with `db.system.name=elasticsearch`, `db.operation.name=search`, and
 `db.operation.parameter.index=conformance`. It also checks the HTTP method,
-successful response status, and server connection attributes on that span.
+full URL, and server connection attributes on that span.
 The native client emits no separate HTTP span or duration metrics.
+
+For this successful search, the native telemetry lacks
+`db.response.status_code="200"` and `db.collection.name=conformance`.
+The emitted `http.response.status_code=200` is not a substitute for the database
+response status and is not required by the contract. Extra HTTP attributes are
+not forbidden. The coverage report records emitted attributes, but its current
+validation does not report these missing conditional attributes as findings.
 
 The runner starts a digest-pinned Elasticsearch 9.5.5 node with security
 disabled, waits for yellow cluster health, and creates the `conformance` index

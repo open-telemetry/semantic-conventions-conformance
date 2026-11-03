@@ -17,7 +17,6 @@ scenarios:
             db.operation.name: search
             db.operation.parameter.index: conformance
             http.request.method: POST
-            http.response.status_code: 200
             server.address: 127.0.0.1
             server.port: {present: true}
             url.full: {present: true}
