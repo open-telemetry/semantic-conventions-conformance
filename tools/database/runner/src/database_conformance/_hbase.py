@@ -56,7 +56,7 @@ class HBase(DatabaseContainer):
                 ready_command=(
                     "bash",
                     "-c",
-                    "echo \"status 'simple'\" | hbase shell -n",
+                    "echo 'list_namespace' | hbase shell -n",
                 ),
                 schema_copy=("hbase.rb", "/tmp/otel-conformance-hbase.rb"),
                 initialize_command=(

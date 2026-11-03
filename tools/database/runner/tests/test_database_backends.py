@@ -322,6 +322,17 @@ class StubImage:
         self.removed = True
 
 
+def test_hbase_readiness_requires_an_initialized_master(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: StubImage())
+    assert HBase()._spec.ready_command == (
+        "bash",
+        "-c",
+        "echo 'list_namespace' | hbase shell -n",
+    )
+
+
 def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

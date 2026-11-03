@@ -50,7 +50,8 @@ Java 21 toolchain used by the conformance package.
 
 Docker must be running. Each session builds a local image from a SHA-512-verified
 Apache HBase binary distribution and a digest-pinned Eclipse Temurin Java 17 base.
-It starts the matching server, waits for readiness, then applies the
+It starts the matching server, waits until listing namespaces succeeds on the
+initialized master, then applies the
 [initialization script](../../../../tools/database/runner/src/database_conformance/hbase.rb).
 The script creates namespace `conformance`, table `items`, column family `data`,
 and one row with key `seed` and `data:name=seed`. The session removes both its
@@ -117,7 +118,7 @@ CLIENT span under `org.apache.hbase` version `3.0.0`. Strict conformance fails:
   successful spans.
 - The two-Put batch emits `db.operation=BATCH` with
   `db.hbase.container_operations=[PUT]`. The
-  [HBase conventions](https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/db/hbase.md)
+  [HBase conventions](https://github.com/open-telemetry/semantic-conventions/blob/v1.45.0/docs/db/hbase.md)
   recommend `db.operation.name=BATCH PUT` and `db.operation.batch.size=2` for
   this workload.
 - The missing-table GET has ERROR status and a `TableNotFoundException`
