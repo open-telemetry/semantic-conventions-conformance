@@ -133,10 +133,14 @@ def test_adding_a_project_invalidates_configuration_cache(
     # Gradle creates its report directory after settings evaluation.
     (discovery_root / "build").mkdir()
 
-    output = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    output = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "DISCOVERED=:,:baseline" in output
 
-    reused = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    reused = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "Reusing configuration cache." in reused
     assert "DISCOVERED=:,:baseline" in reused
 
@@ -144,9 +148,14 @@ def test_adding_a_project_invalidates_configuration_cache(
     added.parent.mkdir(parents=True)
     added.touch()
 
-    updated = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    updated = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "Reusing configuration cache." not in updated
-    assert "DISCOVERED=:,:baseline,:future-backend,:future-backend:client" in updated
+    assert (
+        "DISCOVERED=:,:baseline,:future-backend,:future-backend:client"
+        in updated
+    )
 
 
 def test_preserves_database_project_names() -> None:
@@ -166,6 +175,9 @@ def test_preserves_database_project_names() -> None:
         ":shared:mongodb:reactive:scenarios",
         ":shared:mongodb:reactive:opentelemetry-javaagent",
         ":shared:mongodb:reactive:opentelemetry-library",
+        ":shared:r2dbc:scenarios",
+        ":shared:r2dbc:opentelemetry-javaagent",
+        ":shared:r2dbc:opentelemetry-library",
         ":shared:redis:lettuce:scenarios",
         ":shared:redis:lettuce:opentelemetry-javaagent",
         ":shared:redis:lettuce:opentelemetry-library",

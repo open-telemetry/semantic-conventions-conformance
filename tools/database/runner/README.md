@@ -30,6 +30,17 @@ initialization, and removes the container when the session closes. Workloads
 create or verify their data; MongoDB uses deterministic bootstrap fixtures as
 described in its [backend notes](../../../scenarios/database/java/mongodb/README.md).
 
+Database startup defaults to 60 seconds, 120 seconds for MySQL, or 180 seconds
+for Oracle. Set
+`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` to a finite positive number of
+seconds in the runner's environment to override the selected backend's default.
+Invalid values produce a warning and use the backend's default.
+
+See the [Oracle scenario notes](../../../scenarios/database/java/oracle/README.md)
+for its container initialization, and the
+[MySQL scenario notes](../../../scenarios/database/java/mysql/README.md) for its
+container setup.
+
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
 
@@ -42,10 +53,12 @@ environment declarations:
 | `DATABASE_PASSWORD` | Test-only password                           |
 
 Connection fields let each language construct its native client configuration.
-SQL packages select a contract under
+Packages using indexed SQL contracts select a contract under
 [`contracts/`](../sql-test-client/contracts) using `scenario_contract`. The
 generic conformance runner injects only the selected contract entry's `action`
-into the scenario process.
+into the scenario process. Named telemetry-only contracts, such as
+[R2DBC's](../../../scenarios/database/java/shared/r2dbc/README.md), instead
+declare a run command for each scenario.
 
 The classifier recognizes registered semantic-convention systems only on
 `CLIENT` spans and only when their client span type exists in the resolved

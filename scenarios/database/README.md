@@ -20,6 +20,8 @@ Redis uses named workloads and records client-specific telemetry in its
 MongoDB's [workload guide](java/shared/mongodb/README.md) describes the shared
 commands and telemetry expectations across its synchronous and Reactive Streams
 driver APIs.
+R2DBC also uses named workloads, with a separate PostgreSQL telemetry contract.
+See its [reactive workload guide](java/shared/r2dbc/README.md).
 
 ## Running a package
 

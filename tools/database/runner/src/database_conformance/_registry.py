@@ -12,6 +12,7 @@ from ._container import DatabaseContainer
 from ._mariadb import MariaDB
 from ._mongodb import MongoDB
 from ._mysql import MySQL
+from ._oracle import Oracle
 from ._postgres import Postgres
 from ._redis import Redis
 from ._sql_server import SQLServer
@@ -28,6 +29,7 @@ BACKENDS = {
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
     "mongodb": BackendRegistration(MongoDB, "mongodb", "db.mongodb.client"),
     "mysql": BackendRegistration(MySQL, "mysql", "db.mysql.client"),
+    "oracle": BackendRegistration(Oracle, "oracle.db", "db.oracledb.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"
     ),
