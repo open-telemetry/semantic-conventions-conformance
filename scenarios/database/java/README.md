@@ -46,6 +46,12 @@ its [scenario notes](oracle/README.md).
 MySQL's container setup and Connector/J telemetry settings are documented in its
 [scenario notes](mysql/README.md).
 
+HBase's shared workload exercises the latest stable client's native telemetry,
+without the Java agent. Its [scenario notes](hbase/README.md) cover SDK integration,
+Java toolchains, fixture requirements, and observed conformance gaps. The package
+is `hbase/hbase-client/native`; its launcher and workload live under
+`shared/hbase/hbase-client/`.
+
 MongoDB covers the latest stable synchronous and Reactive Streams drivers
 with both Java-agent and published standalone library instrumentation. Its
 [workload guide](shared/mongodb/README.md) and

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from ._container import DatabaseContainer
+from ._hbase import HBase
 from ._mariadb import MariaDB
 from ._mongodb import MongoDB
 from ._mysql import MySQL
@@ -26,6 +27,7 @@ class BackendRegistration:
 
 
 BACKENDS = {
+    "hbase": BackendRegistration(HBase, "hbase", "db.hbase.client"),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
     "mongodb": BackendRegistration(MongoDB, "mongodb", "db.mongodb.client"),
     "mysql": BackendRegistration(MySQL, "mysql", "db.mysql.client"),

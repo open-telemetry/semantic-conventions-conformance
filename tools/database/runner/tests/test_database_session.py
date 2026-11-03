@@ -15,10 +15,12 @@ from typing import Any
 import pytest
 
 import database_conformance
+from database_conformance._hbase import HBase
 from database_conformance._mongodb import MongoDB
 from database_conformance._mysql import MySQL
 from database_conformance._oracle import Oracle
 from database_conformance._redis import Redis
+from database_conformance._registry import BACKENDS
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
 
 
@@ -39,9 +41,11 @@ scenarios:
     return load_spec(tmp_path)
 
 
+@pytest.mark.parametrize("backend", ["postgresql", "hbase"])
 def test_database_session_injects_backend_variables(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    backend: str,
 ) -> None:
     events: list[str] = []
     captured: dict[str, Any] = {}
@@ -77,9 +81,9 @@ def test_database_session_injects_backend_variables(
 
     monkeypatch.setitem(
         database_conformance._BACKEND_REGISTRY,
-        "postgresql",
+        backend,
         replace(
-            database_conformance._BACKEND_REGISTRY["postgresql"],
+            database_conformance._BACKEND_REGISTRY[backend],
             factory=StubBackend,
         ),
     )
@@ -89,7 +93,7 @@ def test_database_session_injects_backend_variables(
         SimpleNamespace(session=stub_session),
     )
 
-    spec = _write_spec(tmp_path, "  backend: postgresql")
+    spec = _write_spec(tmp_path, f"  backend: {backend}")
     with database_conformance.database_session(
         tmp_path,
         variables={"DATABASE_HOST": "wrong", "CUSTOM": "value"},
@@ -115,6 +119,13 @@ def test_database_session_injects_backend_variables(
         "session-exit",
         "backend-exit",
     ]
+
+
+def test_hbase_registers_its_factory_and_span_type() -> None:
+    registration = BACKENDS["hbase"]
+    assert registration.factory is HBase
+    assert registration.system == "hbase"
+    assert registration.client_span_type == "db.hbase.client"
 
 
 @pytest.mark.parametrize(
@@ -220,6 +231,8 @@ def test_database_session_dispatches_mysql(
     ("runner_config", "message"),
     [
         ("  backend: sqlite", "unsupported backend 'sqlite'"),
+        ("  backend: hbase-1", "unsupported backend 'hbase-1'"),
+        ("  backend: hbase-2", "unsupported backend 'hbase-2'"),
         ("  backend: [postgresql]", "expected a string"),
         (
             "  backend: postgresql\n  extra: value",
