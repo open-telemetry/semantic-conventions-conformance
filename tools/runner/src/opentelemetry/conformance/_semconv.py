@@ -82,6 +82,8 @@ def _signals(
         if name not in declared:
             continue
         definition = declared[name]
+        if definition.get("name", name) != name:
+            continue
         attributes = set(definition["attributes"])
         for refinement in definition.get("refinements", {}).values():
             attributes.update(refinement["attributes"])
