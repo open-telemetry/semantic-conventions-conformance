@@ -33,6 +33,23 @@ Packages construct `R2DBC_URL`, `R2DBC_USER`, and `R2DBC_PASSWORD` from the runn
 `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, and
 `DATABASE_PASSWORD`. Both modes opt into stable database semantic conventions.
 
+## Telemetry differences
+
+- R2DBC records `db.namespace: conformance`, while JDBC records
+  `conformance|conformance`. The workload does not configure a schema option,
+  and the R2DBC instrumentation takes the namespace from the `DATABASE`
+  connection option.
+  [PostgreSQL semantic conventions](https://opentelemetry.io/docs/specs/semconv/db/postgresql/)
+  allow a database-only namespace when the schema is unavailable, so this
+  difference alone is not a semantic-convention violation.
+- The handled `error` span records SQLSTATE `42P01` in `error.type` but omits
+  `db.response.status_code: 42P01`, which PostgreSQL semantic conventions
+  require on errors. The contract does not assert the missing status code while
+  [#384](https://github.com/open-telemetry/semantic-conventions-conformance/issues/384)
+  tracks recording conditional semantic-convention violations as findings.
+  An ordinary expectation would cause a hard contract failure even with
+  `--report-only`, rather than record the omission in `data.json` findings.
+
 ## Running the packages
 
 From the repository root, with Docker installed and running:
