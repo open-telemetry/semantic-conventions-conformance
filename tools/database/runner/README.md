@@ -30,6 +30,8 @@ initialization, and removes the container when the session closes. Workloads
 normally create or verify their own data. The HBase fixture seeds its read row
 and uses fixed ports; its initialization, image pinning, and concurrency limits
 are documented in the [HBase scenario notes](../../../scenarios/database/java/hbase/README.md).
+MongoDB uses deterministic bootstrap fixtures as
+described in its [backend notes](../../../scenarios/database/java/mongodb/README.md).
 
 Database startup defaults to 60 seconds, 120 seconds for MySQL, or 180 seconds
 for Oracle. Set
