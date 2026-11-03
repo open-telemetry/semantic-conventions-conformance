@@ -29,6 +29,7 @@ def _model():
         ("mariadb", "db.mariadb.client"),
         ("microsoft.sql_server", "db.sql_server.client"),
         ("mongodb", "db.mongodb.client"),
+        ("mysql", "db.mysql.client"),
         ("postgresql", "db.postgresql.client"),
         ("redis", "db.redis.client"),
     ],

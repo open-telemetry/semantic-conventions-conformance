@@ -7,16 +7,20 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, replace
+from datetime import timedelta
 from importlib import resources
 from typing import Any
 
 import pytest
 from docker.errors import DockerException
 from testcontainers.core.container import ExecConfig
+from testcontainers.core.wait_strategies import ExecWaitStrategy
 
 from database_conformance import (
+    _container,
     _mariadb,
     _mongodb,
+    _mysql,
     _postgres,
     _redis,
     _sql_server,
@@ -24,6 +28,7 @@ from database_conformance import (
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._mongodb import MONGODB_IMAGE, MongoDB
+from database_conformance._mysql import MYSQL_IMAGE, MySQL
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 from database_conformance._redis import REDIS_IMAGE, Redis
 from database_conformance._sql_server import SQL_SERVER_IMAGE, SQLServer
@@ -260,6 +265,34 @@ def install_stub(
                 environment={},
             ),
         ),
+        (
+            _mysql,
+            MySQL,
+            3306,
+            {
+                "MYSQL_DATABASE": "conformance",
+                "MYSQL_USER": "conformance",
+                "MYSQL_PASSWORD": "conformance",
+                "MYSQL_RANDOM_ROOT_PASSWORD": "yes",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "conformance",
+                "DATABASE_PASSWORD": "conformance",
+            },
+            ["/tmp/otel-conformance-mysql.sql"],
+            ExecConfig(
+                command=[
+                    "sh",
+                    "-c",
+                    "exec mysql --user=conformance --database=conformance "
+                    "--binary-mode < /tmp/otel-conformance-mysql.sql",
+                ],
+                environment={"MYSQL_PWD": "conformance"},
+            ),
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
@@ -268,6 +301,7 @@ def test_starts_initializes_publishes_and_removes_database(
     backend_type: type[Postgres]
     | type[MariaDB]
     | type[MongoDB]
+    | type[MySQL]
     | type[Redis]
     | type[SQLServer],
     port: int,
@@ -337,6 +371,62 @@ def test_sql_server_readiness_requires_online_databases() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port", "expected_seconds"),
+    [
+        (_postgres, Postgres, 5432, 60.0),
+        (_mariadb, MariaDB, 3306, 60.0),
+        (_mysql, MySQL, 3306, 120.0),
+        (_redis, Redis, 6379, 60.0),
+        (_sql_server, SQLServer, 1433, 60.0),
+    ],
+)
+@pytest.mark.parametrize("timeout_override", [None, "240.5"])
+def test_each_backend_applies_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres]
+    | type[MariaDB]
+    | type[MySQL]
+    | type[Redis]
+    | type[SQLServer],
+    port: int,
+    expected_seconds: float,
+    timeout_override: str | None,
+) -> None:
+    if timeout_override is None:
+        monkeypatch.delenv(
+            "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
+        )
+    else:
+        monkeypatch.setenv(
+            "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", timeout_override
+        )
+    timeouts: list[timedelta | int] = []
+
+    class RecordingWaitStrategy(ExecWaitStrategy):
+        def with_startup_timeout(
+            self, timeout: timedelta | int
+        ) -> RecordingWaitStrategy:
+            timeouts.append(timeout)
+            super().with_startup_timeout(timeout)
+            return self
+
+    monkeypatch.setattr(_container, "ExecWaitStrategy", RecordingWaitStrategy)
+    install_stub(monkeypatch, module, StubContainer(port=port))
+
+    with backend_type():
+        pass
+
+    assert timeouts == [
+        timedelta(
+            seconds=expected_seconds
+            if timeout_override is None
+            else float(timeout_override)
+        )
+    ]
+
+
 def test_start_failure_cleans_up_the_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -365,19 +455,27 @@ def test_cleanup_failure_is_reported_with_start_failure(
         Postgres().start()
 
 
-def test_schema_failure_reports_psql_output_and_logs(
+@pytest.mark.parametrize(
+    ("module", "backend_type", "port"),
+    [(_postgres, Postgres, 5432), (_mysql, MySQL, 3306)],
+)
+def test_schema_failure_reports_client_output_and_logs(
     monkeypatch: pytest.MonkeyPatch,
+    module: Any,
+    backend_type: type[Postgres] | type[MySQL],
+    port: int,
 ) -> None:
     container = StubContainer(
-        exec_result=ExecResult(exit_code=3, output=b"syntax error")
+        exec_result=ExecResult(exit_code=3, output=b"syntax error"),
+        port=port,
     )
-    install_stub(monkeypatch, _postgres, container)
+    install_stub(monkeypatch, module, container)
 
     with pytest.raises(
         RuntimeError,
         match=r"(?s)syntax error.*ready to accept connections",
     ):
-        Postgres().start()
+        backend_type().start()
 
     assert container.stopped
 
@@ -456,6 +554,7 @@ def test_cannot_start_postgres_twice(
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
         (MONGODB_IMAGE, "mongo"),
+        (MYSQL_IMAGE, "mysql"),
         (REDIS_IMAGE, "redis"),
         (SQL_SERVER_IMAGE, "mcr.microsoft.com/mssql/server"),
     ],
@@ -501,3 +600,11 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     assert 'createCollection("items")' in bootstrap
     assert "createUser({" in bootstrap
     assert bootstrap.count("_id:") == 4
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("mysql.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE TABLE IF NOT EXISTS items" in schema
+    assert "CREATE PROCEDURE noop()" in schema
