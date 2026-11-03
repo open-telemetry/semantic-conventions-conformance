@@ -93,45 +93,16 @@ _TWeaver = TypeVar("_TWeaver", bound=_WeaverProcess)
 
 
 @contextmanager
-def _quiet_connection_retries() -> Generator[None, None, None]:
-    """Silence urllib3's per-retry warning while weaver is coming up.
-
-    Its ``/health`` is polled through a retrying session, so every refused
-    connection before weaver binds its port is logged as a warning. That is
-    the wait working, not a problem to report.
-    """
-    logger = logging.getLogger("urllib3.connectionpool")
-    previous = logger.level
-    logger.setLevel(logging.ERROR)
-    try:
-        yield
-    finally:
-        logger.setLevel(previous)
-
-
-@contextmanager
 def _start_weaver(
     factory: Callable[[], _TWeaver],
 ) -> Generator[_TWeaver, None, None]:
-    """Start weaver, retrying once if its fixed readiness window expires."""
-    for attempt in range(2):
-        weaver = factory()
-        try:
-            weaver.start()
-        except TimeoutError:
-            weaver.close()
-            if attempt == 1:
-                raise
-            logger.warning("Weaver live-check startup timed out; retrying")
-            continue
-
-        try:
-            yield weaver
-        finally:
-            weaver.close()
-        return
-
-    raise AssertionError("unreachable")
+    """Start one weaver process and close it even if startup fails."""
+    weaver = factory()
+    try:
+        weaver.start()
+        yield weaver
+    finally:
+        weaver.close()
 
 
 class SessionFactory(Protocol):
@@ -251,7 +222,6 @@ class ConformanceSession:
 
         with (
             self._scenario_policies(scenario, weaver_spec) as policies,
-            _quiet_connection_retries(),
             _start_weaver(lambda: start_weaver(policies)) as weaver,
         ):
             if self._spec.otlp_protocol == "http/protobuf":
