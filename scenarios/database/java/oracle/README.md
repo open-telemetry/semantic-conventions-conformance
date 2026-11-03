@@ -7,8 +7,9 @@ number of seconds in the runner's environment to override it.
 
 The runner creates the `conformance` application user in `FREEPDB1` and applies
 the [scenario schema](../../../../tools/database/runner/src/database_conformance/oracle.sql)
-before measured processes start. The schema creates an empty table and a no-op
-stored procedure. SQL*Plus exits with failure on SQL or operating-system errors.
+once, before measured processes start. Each session uses a fresh container
+without reused volumes. The schema creates an empty table and a no-op stored
+procedure. SQL*Plus exits with failure on SQL or operating-system errors.
 
 Both JDBC instrumentation modes use the `ojdbc11` driver. The Java agent uses
 `jdbc:oracle:thin:@//host:port/FREEPDB1`; JDBC library instrumentation uses

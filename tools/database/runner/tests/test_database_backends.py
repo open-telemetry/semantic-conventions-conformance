@@ -532,6 +532,11 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
         .joinpath("oracle.sql")
         .read_text(encoding="utf-8")
     )
+    assert "WHENEVER OSERROR EXIT FAILURE" in schema
+    assert "WHENEVER SQLERROR EXIT FAILURE" in schema
     assert "CREATE TABLE items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop" in schema
+    assert "DROP TABLE" not in schema
+    assert "WHEN OTHERS" not in schema
     assert "INSERT INTO" not in schema
+    assert "EXIT SUCCESS" in schema
