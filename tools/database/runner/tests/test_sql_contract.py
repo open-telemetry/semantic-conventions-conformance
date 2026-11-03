@@ -137,3 +137,12 @@ def test_oracle_contract_keeps_its_dialect_specific_actions() -> None:
         "SELECT CASE WHEN count(*) >= 0 THEN 1 ELSE 0 END FROM conformance.items"
     )
     assert actions[3]["sql"] == "{call conformance.noop()}"
+
+
+def test_oracle_contract_does_not_require_a_namespace_lookup() -> None:
+    document = yaml.safe_load(
+        (_CONTRACTS / "oracle.yaml").read_text(encoding="utf-8")
+    )
+    for scenario in document["scenarios"]:
+        attributes = scenario["expect"]["spans"][0]["expect"]["attributes"]
+        assert "db.namespace" not in attributes

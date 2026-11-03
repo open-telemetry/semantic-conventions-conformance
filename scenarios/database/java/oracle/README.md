@@ -18,5 +18,16 @@ The [Oracle contract](../../../../tools/database/sql-test-client/contracts/oracl
 defines direct and prepared queries, a two-insert batch, and a stored-procedure
 call. The direct query uses `CASE` to return a number rather than a SQL boolean,
 and the procedure uses JDBC escape syntax, `{call conformance.noop()}`.
-Expected telemetry uses `db.system.name=oracle.db` and the lowercase
-`db.namespace=freepdb1`.
+Expected telemetry uses `db.system.name=oracle.db`.
+
+The [pinned Oracle semantic conventions][oracle-semconv] define `db.namespace`
+as `DB_UNIQUE_NAME`, which is `FREE` in this fixture, not the PDB or service name
+`FREEPDB1`. Instrumentation may omit it if obtaining it requires an additional
+network call. Java currently emits the lowercase service name `freepdb1`, which
+does not satisfy this definition. The shared contract does not require
+`db.namespace`; coverage still records the emitted attribute, but Weaver does
+not check its Oracle-specific meaning. Recording this gap as a report-only
+finding depends on [#384][contract-findings].
+
+[oracle-semconv]: https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/db/oracledb.md
+[contract-findings]: https://github.com/open-telemetry/semantic-conventions-conformance/issues/384

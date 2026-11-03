@@ -17,7 +17,6 @@ scenarios:
           expect:
             count: 1
             attributes:
-              db.namespace: freepdb1
               db.query.summary: SELECT conformance.items
               db.query.text: SELECT CASE WHEN count(*) >= ? THEN ? ELSE ? END FROM conformance.items
               server.address: 127.0.0.1
@@ -42,7 +41,6 @@ scenarios:
           expect:
             count: 1
             attributes:
-              db.namespace: freepdb1
               db.query.summary: SELECT conformance.items
               db.query.text: SELECT name FROM conformance.items WHERE id = ?
               server.address: 127.0.0.1
@@ -66,7 +64,6 @@ scenarios:
           expect:
             count: 1
             attributes:
-              db.namespace: freepdb1
               db.operation.batch.size: 2
               db.query.summary: BATCH INSERT conformance.items
               db.query.text: INSERT INTO conformance.items (id, name) VALUES (?, ?)
@@ -89,7 +86,6 @@ scenarios:
           expect:
             count: 1
             attributes:
-              db.namespace: freepdb1
               db.query.summary: call conformance.noop
               db.query.text: '{call conformance.noop()}'
               db.stored_procedure.name: conformance.noop
