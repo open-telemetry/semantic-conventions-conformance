@@ -11,10 +11,8 @@ public final class ArmeriaLibraryServerScenario {
 
   public static void main(String[] args) throws Exception {
     try (ScenarioSdk sdk = ScenarioSdk.initialize()) {
-      ArmeriaServerScenario.run(
-          builder ->
-              builder.decorator(
-                  ArmeriaServerTelemetry.create(sdk.openTelemetry()).createDecorator()));
+      ArmeriaServerScenario.run(builder ->
+          builder.decorator(ArmeriaServerTelemetry.create(sdk.openTelemetry()).createDecorator()));
     }
   }
 }

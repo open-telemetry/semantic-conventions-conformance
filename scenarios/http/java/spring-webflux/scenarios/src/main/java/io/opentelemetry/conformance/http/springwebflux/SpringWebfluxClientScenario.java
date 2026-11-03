@@ -40,15 +40,12 @@ public final class SpringWebfluxClientScenario {
 
           HttpContract.Response response =
               requestHeaders
-                  .exchangeToMono(
-                      received ->
-                          received
-                              .bodyToMono(String.class)
-                              .defaultIfEmpty("")
-                              .map(
-                                  text ->
-                                      new HttpContract.Response(
-                                          received.statusCode().value(), text)))
+                  .exchangeToMono(received ->
+                      received
+                          .bodyToMono(String.class)
+                          .defaultIfEmpty("")
+                          .map(text ->
+                              new HttpContract.Response(received.statusCode().value(), text)))
                   .block(HttpClientWorkload.REQUEST_TIMEOUT);
           if (response == null) {
             throw new IllegalStateException("the WebClient completed without a response");

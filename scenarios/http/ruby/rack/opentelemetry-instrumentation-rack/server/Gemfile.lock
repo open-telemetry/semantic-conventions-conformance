@@ -109,7 +109,7 @@ GEM
     opentelemetry-semantic_conventions (1.44.0)
       opentelemetry-api (~> 1.0)
     prism (1.9.0)
-    rack (3.2.7)
+    rack (3.2.8)
     rackup (2.3.1)
       rack (>= 3)
     rake (13.4.2)
@@ -138,7 +138,7 @@ DEPENDENCIES
   opentelemetry-sdk (= 1.13.1)
   otel-conformance-scenario-sdk!
   otel-conformance-scenario-support!
-  rack (= 3.2.7)
+  rack (= 3.2.8)
   rackup (= 2.3.1)
   rake (~> 13.0)
   webrick (= 1.9.2)

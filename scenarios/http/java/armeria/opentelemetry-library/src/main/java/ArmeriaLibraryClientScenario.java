@@ -12,11 +12,10 @@ public final class ArmeriaLibraryClientScenario {
 
   public static void main(String[] args) throws Exception {
     try (ScenarioSdk sdk = ScenarioSdk.initialize()) {
-      ArmeriaClientScenario.run(
-          baseUrl ->
-              WebClient.builder(baseUrl)
-                  .decorator(ArmeriaClientTelemetry.create(sdk.openTelemetry()).createDecorator())
-                  .build());
+      ArmeriaClientScenario.run(baseUrl ->
+          WebClient.builder(baseUrl)
+              .decorator(ArmeriaClientTelemetry.create(sdk.openTelemetry()).createDecorator())
+              .build());
     }
   }
 }
