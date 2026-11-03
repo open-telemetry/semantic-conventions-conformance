@@ -6,10 +6,10 @@
 const {
   ErrorsInstrumentation,
 } = require("@opentelemetry/browser-instrumentation/experimental/errors");
-const { exposeScenario } = require("@otel-conformance/browser-launcher/page");
+const { exposeEvents } = require("../events");
 const { raiseErrors } = require("@otel-conformance/chromium-scenarios/errors");
 
-exposeScenario(
+exposeEvents(
   { instrumentations: [new ErrorsInstrumentation()], events: { exception: 2 } },
   raiseErrors,
 );

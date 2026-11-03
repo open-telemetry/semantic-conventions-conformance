@@ -6,12 +6,12 @@
 const {
   ConsoleInstrumentation,
 } = require("@opentelemetry/browser-instrumentation/experimental/console");
-const { exposeScenario } = require("@otel-conformance/browser-launcher/page");
+const { exposeEvents } = require("../events");
 const {
   writeToConsole,
 } = require("@otel-conformance/chromium-scenarios/console");
 
-exposeScenario(
+exposeEvents(
   {
     instrumentations: [new ConsoleInstrumentation()],
     events: { "browser.console": 3 },

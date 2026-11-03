@@ -4,8 +4,8 @@
 "use strict";
 
 /**
- * The page half of a browser scenario: the logs SDK, exporting to the page's
- * own origin, which the launcher relays to the runner.
+ * What every page here shares: the logs SDK, exporting through the shared
+ * browser runner, and a wait for the events the page expects.
  *
  * Bundled into the page, never loaded by Node.
  */
@@ -16,6 +16,11 @@ const {
 } = require("@opentelemetry/sdk-logs");
 const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-proto");
 const { registerInstrumentations } = require("@opentelemetry/instrumentation");
+const {
+  exportUrl,
+  exposeScenario,
+  within,
+} = require("@otel-conformance/browser-runner/page");
 
 const EVENTS_TIMEOUT_MILLIS = 20_000;
 
@@ -47,34 +52,24 @@ function counting(expected) {
   };
 }
 
-function within(promise, millis, describe) {
-  let timer;
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(describe())), millis);
-  });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
-}
-
 /**
- * Registers `instrumentations` and exposes `workload` to the launcher, which
+ * Registers `instrumentations` and hands `workload` to the runner, which
  * calls it once and waits until the `events` it names have been emitted and
  * their export answered.
  */
-function exposeScenario({ instrumentations = [], events = {} } = {}, workload) {
+function exposeEvents({ instrumentations = [], events = {} } = {}, workload) {
   const counted = counting(events);
   const provider = new LoggerProvider({
     processors: [
       new BatchLogRecordProcessor({
-        exporter: new OTLPLogExporter({
-          url: new URL("/v1/logs", location.href).href,
-        }),
+        exporter: new OTLPLogExporter({ url: exportUrl("logs") }),
       }),
       counted.processor,
     ],
   });
   registerInstrumentations({ instrumentations, loggerProvider: provider });
 
-  globalThis.runScenario = async () => {
+  exposeScenario(async () => {
     await workload();
     await within(
       counted.emitted(),
@@ -87,7 +82,7 @@ function exposeScenario({ instrumentations = [], events = {} } = {}, workload) {
     // runner's bridge has handed the records to weaver.
     await provider.forceFlush();
     return counted.seen;
-  };
+  });
 }
 
-module.exports = { exposeScenario };
+module.exports = { exposeEvents };

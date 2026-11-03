@@ -16,9 +16,9 @@ which defines the `exception` and `browser.web_vital` events, and because its
 span classifier only acts on spans carrying `http.request.method`. The report
 files a target by its path, so these appear under `browser`.
 
-[`tools/js/browser-launcher`](../../tools/js/browser-launcher) serves each page
-and relays its OTLP exports to the runner. See [`js/`](js/README.md) for the
-build root and what is measured.
+[`tools/js/browser-runner`](../../tools/js/browser-runner), which the HTTP
+Fetch scenario also uses, serves each page and relays its OTLP exports to the
+runner. See [`js/`](js/README.md) for the build root and what is measured.
 
 ## Not covered yet
 

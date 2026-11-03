@@ -9,6 +9,12 @@
  * report holds that module's telemetry and nothing else.
  */
 
-const { runInBrowser } = require("@otel-conformance/browser-launcher");
+const { runInBrowser } = require("@otel-conformance/browser-runner");
 
-runInBrowser({ page: require.resolve(`./pages/${process.argv[2]}.js`) });
+runInBrowser({ page: require.resolve(`./pages/${process.argv[2]}.js`) }).then(
+  (seen) => console.log(JSON.stringify(seen)),
+  (error) => {
+    console.error(error);
+    process.exitCode = 1;
+  },
+);
