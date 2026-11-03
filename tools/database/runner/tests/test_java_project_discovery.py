@@ -165,9 +165,9 @@ def test_preserves_database_project_names() -> None:
         ":shared:redis:jedis:opentelemetry-javaagent",
         ":shared:redis:rediscala:opentelemetry-javaagent",
         ":shared:redis:redisson:opentelemetry-javaagent",
-        ":shared:cassandra:scenarios",
-        ":shared:cassandra:opentelemetry-javaagent",
-        ":shared:cassandra:opentelemetry-library",
+        ":shared:cassandra:java-driver:scenarios",
+        ":shared:cassandra:java-driver:opentelemetry-javaagent",
+        ":shared:cassandra:java-driver:opentelemetry-library",
     } <= projects
     assert "prepareRuntime" in _gradle(
         SCENARIO_ROOT,

@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":shared:cassandra:scenarios"))
+    implementation(project(":shared:cassandra:java-driver:scenarios"))
     implementation(project(":scenario-sdk"))
     implementation(libs.cassandra.driver)
 

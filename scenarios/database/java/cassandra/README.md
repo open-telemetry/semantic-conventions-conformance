@@ -22,9 +22,10 @@ Each package runs four named scenarios using the
 | `batch` | Two-statement logged batch with fixed IDs and values |
 | `error` | Query against a missing table, rejected by Cassandra |
 
-The shared workload contains no OpenTelemetry code. Launchers choose the
-instrumentation. The library launcher passes the session's
-original contact points to `CassandraTelemetry.wrap` so the instrumentation
+The [shared workload and launchers](../shared/cassandra/java-driver) mirror the
+packages' `cassandra/java-driver` layout. The workload contains no OpenTelemetry
+code. Launchers choose the instrumentation. The library launcher passes the
+session's original contact points to `CassandraTelemetry.wrap` so the instrumentation
 can emit stable server address and port attributes.
 
 The contract requires one Cassandra client span and

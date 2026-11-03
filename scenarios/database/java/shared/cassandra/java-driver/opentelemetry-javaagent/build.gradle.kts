@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":shared:cassandra:scenarios"))
+    implementation(project(":shared:cassandra:java-driver:scenarios"))
     implementation(libs.cassandra.driver)
     add("javaAgent", libs.opentelemetry.javaagent)
 }

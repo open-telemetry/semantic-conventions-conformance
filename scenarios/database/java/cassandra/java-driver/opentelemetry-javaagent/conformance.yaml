@@ -18,17 +18,17 @@ env:
 weaver:
   config: ../../../../../../tools/java/weaver.toml
 
-setup: otel-conformance-java prepare shared:cassandra:opentelemetry-javaagent
+setup: otel-conformance-java prepare shared:cassandra:java-driver:opentelemetry-javaagent
 
 scenarios:
   query:
-    run: otel-conformance-java run --agent shared:cassandra:opentelemetry-javaagent CassandraJavaagentScenario query
+    run: otel-conformance-java run --agent shared:cassandra:java-driver:opentelemetry-javaagent CassandraJavaagentScenario query
 
   prepared:
-    run: otel-conformance-java run --agent shared:cassandra:opentelemetry-javaagent CassandraJavaagentScenario prepared
+    run: otel-conformance-java run --agent shared:cassandra:java-driver:opentelemetry-javaagent CassandraJavaagentScenario prepared
 
   batch:
-    run: otel-conformance-java run --agent shared:cassandra:opentelemetry-javaagent CassandraJavaagentScenario batch
+    run: otel-conformance-java run --agent shared:cassandra:java-driver:opentelemetry-javaagent CassandraJavaagentScenario batch
 
   error:
-    run: otel-conformance-java run --agent shared:cassandra:opentelemetry-javaagent CassandraJavaagentScenario error
+    run: otel-conformance-java run --agent shared:cassandra:java-driver:opentelemetry-javaagent CassandraJavaagentScenario error
