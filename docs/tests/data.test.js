@@ -237,3 +237,22 @@ test("committed targets round-trip", async (t) => {
   assert.equal(ratio({ emitted: 0, declared: 0 }), null);
   assert.equal(ratio({ emitted: 1, declared: 2 }), 0.5);
 });
+
+test("refinement-only attributes are visible without becoming base requirements", async (t) => {
+  const document = report();
+  const declaration =
+    document.registry["database-conformance"].metrics["db.duration"];
+  declaration.refinements = {
+    "vendor.db.duration": {
+      attributes: { "db.system": "opt_in", "vendor.response": "required" },
+    },
+  };
+  t.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => document,
+  }));
+  const signal = (await load()).signals.get("metric:db.duration");
+  assert.equal(signal.attributes["db.system"], "required");
+  assert.equal(signal.attributes["vendor.response"], "refinement");
+  assert.equal(declaration.attributes["vendor.response"], undefined);
+});

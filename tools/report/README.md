@@ -78,6 +78,13 @@ reported as per-signal counts, a signal being one span type, metric or event.
 An attribute counts as *emitted* when at least one observation carried it with
 an accepted type.
 
+Span and metric refinements share their base signal's identity. A reduction
+keeps attributes declared by those refinements under the base signal, without
+claiming which refinement applies. The coverage model retains each refinement's
+declarations separately. These extra emitted attributes do not change the base
+signal's missing attributes or its required/recommended coverage score. A
+refinement selected explicitly by a scenario retains its own declarations.
+
 Every number has two inputs: what the instrumentation emitted the last time its
 scenarios ran and its `data.json` was committed, and what the registry pin
 declares now. Either one changing will impact the results. Semconv adding attributes

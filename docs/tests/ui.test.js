@@ -337,3 +337,25 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
   assert.ok(main.querySelector("table"));
   assert.doesNotMatch(main.textContent, /Could not render/);
 });
+
+test("refinement attributes appear separately from scored requirements", async (t) => {
+  const document = report();
+  document.targets[0].signals[0].emitted.push("vendor.response");
+  document.registry["database-conformance"].metrics["db.duration"].refinements =
+    {
+      "vendor.db.duration": {
+        attributes: { "vendor.response": "required" },
+      },
+    };
+  const window = await setup(t, document);
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+  const ui = driver(window, main);
+
+  assert.match(main.textContent, /Refinement attributes \(unscored\)/);
+  assert.match(main.textContent, /vendor.response/);
+  assert.equal(main.querySelectorAll("td.cell-yes").length, 2);
+  ui.level("Required + recommended");
+  assert.doesNotMatch(main.textContent, /vendor.response/);
+  assert.equal(main.querySelectorAll("td.cell-yes").length, 1);
+});

@@ -250,7 +250,9 @@ export default function signals(data, key, params) {
           "attribute was observed at least once with an accepted type; it does " +
           "not mean every observation conformed. A blank cell means no accepted " +
           "value was observed. Missing conditional or opt-in attributes are not " +
-          "automatically conformance failures.",
+          "automatically conformance failures. Refinement attributes are shown " +
+          "without a score, since the signal does not identify which refinement " +
+          "applies. Their blank cells do not establish a conformance gap.",
       }),
     ]),
     body,

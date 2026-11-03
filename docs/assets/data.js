@@ -14,6 +14,7 @@ export const LEVELS = [
   "recommended",
   "recommended_conditional",
   "opt_in",
+  "refinement",
 ];
 
 export const LEVEL_LABEL = {
@@ -22,6 +23,7 @@ export const LEVEL_LABEL = {
   recommended: "Recommended",
   recommended_conditional: "Recommended (conditional)",
   opt_in: "Opt-in",
+  refinement: "Refinement attributes (unscored)",
 };
 
 const LEVEL_VAR = {
@@ -30,6 +32,7 @@ const LEVEL_VAR = {
   recommended: "--recommended",
   recommended_conditional: "--conditional",
   opt_in: "--optin",
+  refinement: "--conditional",
 };
 
 /**
@@ -149,7 +152,8 @@ export const signalKey = (type, name) => `${type}:${name}`;
  * @property {Object<string,{identity: string[], description: string[]}>} entities
  * @property {string[]} scenario_classes
  * @property {ReportSignal[]} signals
- * @typedef {{attributes: Object<string,string>, kind?: string}} Declaration
+ * @typedef {{attributes: Object<string,string>, kind?: string,
+ *   refinements?: Object<string,{attributes: Object<string,string>}>}} Declaration
  * @typedef {{registry_repo: string, registry_ref: string,
  *   registry_dir: string}} Pin one runner's registry pin
  * @typedef {object} Report
@@ -195,13 +199,13 @@ function index(report) {
           type: signal.type,
           kind: declared?.kind ?? null,
           runner: target.runner,
-          attributes: declared?.attributes ?? null,
+          attributes: displayAttributes(declared),
           rows: [],
         };
         signals.set(key, entry);
       } else if (
         entry.kind !== (declared?.kind ?? null) ||
-        !sameAttributes(entry.attributes, declared?.attributes ?? null)
+        !sameAttributes(entry.attributes, displayAttributes(declared))
       ) {
         throw new Error(
           `Conflicting declarations for ${key} in ${entry.runner} and ${target.runner}`,
@@ -217,6 +221,17 @@ function index(report) {
     signals,
     byId: new Map(targets.map((target) => [target.id, target])),
   };
+}
+
+function displayAttributes(declared) {
+  if (!declared?.attributes) return null;
+  const attributes = { ...declared.attributes };
+  for (const refinement of Object.values(declared.refinements ?? {})) {
+    for (const name of Object.keys(refinement.attributes)) {
+      attributes[name] ??= "refinement";
+    }
+  }
+  return attributes;
 }
 
 function sameAttributes(left, right) {
