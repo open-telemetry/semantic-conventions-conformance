@@ -4,6 +4,7 @@
       "db.collection.name",
       "db.namespace",
       "db.operation.name",
+      "db.system.name",
       "error.type",
       "server.address",
       "server.port"
