@@ -1,0 +1,18 @@
+-- Copyright The OpenTelemetry Authors
+-- SPDX-License-Identifier: Apache-2.0
+
+WHENEVER OSERROR EXIT FAILURE
+WHENEVER SQLERROR EXIT FAILURE
+
+CREATE TABLE items (
+    id NUMBER(10) PRIMARY KEY,
+    name VARCHAR2(255) NOT NULL
+);
+
+CREATE OR REPLACE PROCEDURE noop AS
+BEGIN
+    NULL;
+END;
+/
+
+EXIT SUCCESS

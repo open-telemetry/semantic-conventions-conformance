@@ -29,9 +29,10 @@ container, waits for its declared readiness check, applies any declared
 initialization, and removes the container when the session closes. Scenario data
 is not pre-seeded; each workload creates or verifies the data it needs.
 
-Backend readiness timeouts default to 60 seconds, except Cassandra, which uses
-180 seconds. Set `OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` in the runner's
-environment to override any backend's default:
+Backend readiness timeouts default to 60 seconds, 120 seconds for MySQL, and
+180 seconds for Cassandra and Oracle. Set
+`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` in the runner's environment to
+override any backend's default:
 
 ```sh
 OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT=240 database-conformance path/to/directory
@@ -40,6 +41,11 @@ OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT=240 database-conformance path/to/direc
 The shared container lifecycle reads this value, not `conformance.yaml` or the
 workload environment. It must be a finite positive number of seconds; invalid
 values produce a warning and use the backend's default.
+
+See the [Oracle scenario notes](../../../scenarios/database/java/oracle/README.md)
+for its container initialization, and the
+[MySQL scenario notes](../../../scenarios/database/java/mysql/README.md) for its
+container setup.
 
 Conformance packages can use these runner variables in setup and scenario
 environment declarations:
