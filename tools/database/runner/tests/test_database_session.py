@@ -17,6 +17,8 @@ import pytest
 import database_conformance
 from database_conformance._elasticsearch import Elasticsearch
 from database_conformance._mysql import MySQL
+from database_conformance._oracle import Oracle
+from database_conformance._redis import Redis
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
 
 
@@ -115,9 +117,14 @@ def test_database_session_injects_backend_variables(
     ]
 
 
+@pytest.mark.parametrize(
+    "backend, backend_type", [("oracle", Oracle), ("redis", Redis)]
+)
 def test_database_session_closes_backend_after_an_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    backend: str,
+    backend_type: type[Oracle] | type[Redis],
 ) -> None:
     closed = False
 
@@ -138,11 +145,14 @@ def test_database_session_closes_backend_after_an_error(
         del directory, kwargs
         yield object()
 
+    assert (
+        database_conformance._BACKEND_REGISTRY[backend].factory is backend_type
+    )
     monkeypatch.setitem(
         database_conformance._BACKEND_REGISTRY,
-        "redis",
+        backend,
         replace(
-            database_conformance._BACKEND_REGISTRY["redis"],
+            database_conformance._BACKEND_REGISTRY[backend],
             factory=StubBackend,
         ),
     )
@@ -152,7 +162,7 @@ def test_database_session_closes_backend_after_an_error(
         SimpleNamespace(session=stub_session),
     )
 
-    spec = _write_spec(tmp_path, "  backend: redis")
+    spec = _write_spec(tmp_path, f"  backend: {backend}")
     with pytest.raises(RuntimeError, match="scenario failed"):
         with database_conformance.database_session(tmp_path, spec=spec):
             raise RuntimeError("scenario failed")
