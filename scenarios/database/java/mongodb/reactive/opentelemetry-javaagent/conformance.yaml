@@ -9,7 +9,6 @@ instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
 scenario_contract: ../../../../contracts/mongodb.yaml
 
 env:
-  OTEL_LOGS_EXPORTER: none
   OTEL_SEMCONV_STABILITY_OPT_IN: database
   OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
 

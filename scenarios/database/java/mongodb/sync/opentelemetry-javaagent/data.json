@@ -64,5 +64,18 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'org.mongodb.driver' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "org.mongodb.driver",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    }
+  ]
 }

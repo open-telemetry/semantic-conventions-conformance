@@ -21,6 +21,11 @@ accounts for the driver's `endSessions` command when the client closes.
 MongoDB semantic conventions do not define `db.query.text` or `db.query.summary`
 on spans. The contract does not require them or reject extra attributes.
 
+Java-agent packages export the MongoDB driver's startup warning. Its
+`org.mongodb.driver` instrumentation scope has no schema URL, which appears in
+`data.json` as `instrumentation_scope_schema_url_missing`. Report-only runs keep
+this finding; strict runs fail on it.
+
 The error workload requires a `MongoQueryException` with server code `2`
 and the unknown-operator message. Unexpected success or unrelated failures fail
 the scenario. This command reaches `commandFailed`; duplicate-key writes can

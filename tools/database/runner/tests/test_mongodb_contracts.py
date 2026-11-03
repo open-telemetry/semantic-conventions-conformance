@@ -24,6 +24,7 @@ def test_packages_use_shared_contracts_without_local_expectations(
     package = yaml.safe_load(
         (directory / "conformance.yaml").read_text(encoding="utf-8")
     )
+    assert "OTEL_LOGS_EXPORTER" not in package["env"]
     assert (directory / package["scenario_contract"]).resolve() == (
         _DATABASE / "contracts" / "mongodb.yaml"
     ).resolve()
