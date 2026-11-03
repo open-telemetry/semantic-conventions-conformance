@@ -112,7 +112,7 @@ def relock_command() -> list[str]:
 
 
 def refresh_local_packages(project: Path) -> None:
-    """Discard copied file-package snapshots so npm reads their manifests."""
+    """Discard copied file-package snapshots and their nested dependencies."""
     path = project / BUILD_MARKER
     lock = json.loads(path.read_text(encoding="utf-8"))
     packages = lock.get("packages", {})
@@ -123,8 +123,13 @@ def refresh_local_packages(project: Path) -> None:
         and not package.get("link")
     ]
     if copied:
-        for name in copied:
-            del packages[name]
+        for name in list(packages):
+            if any(
+                name == parent
+                or name.startswith(f"{parent}/node_modules/")
+                for parent in copied
+            ):
+                del packages[name]
         path.write_text(
             json.dumps(lock, indent=2) + "\n",
             encoding="utf-8",
