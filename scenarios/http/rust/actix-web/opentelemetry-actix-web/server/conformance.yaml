@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: actix-web
+instrumentation_library: opentelemetry-instrumentation-actix-web
+
+# Compiling before measurement keeps Cargo and rustc out of the scenario.
+setup: otel-conformance-rust build
+
+scenarios:
+  server:
+    # The driver owns the sender, chooses the port, and closes stdin after the
+    # measured traffic, so this process emits server telemetry only.
+    run: otel-http-drive --serve otel-conformance-rust run
