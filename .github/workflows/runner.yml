@@ -251,7 +251,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       # Real dependencies here, unlike the test job: pyright needs every import
       # to resolve. `semconv_genai` is the exception — it ships with the
@@ -298,7 +298,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       - name: Install weaver
         run: |
@@ -419,7 +419,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # Every leg: the relock commands are Python CLIs.
+      # Every leg: the relock commands are Python CLIs. Stays on the
+      # scenarios job's Python (see there).
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -562,6 +563,9 @@ jobs:
             echo "applied=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # Python scenarios run on this interpreter. Stays on 3.14 until every
+      # scenario lock has 3.15 wheels (grpcio, pydantic-core, ...), otherwise
+      # they build from source and time out. Renovate skips it (renovate.json5).
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:

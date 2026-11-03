@@ -35,6 +35,14 @@
       "groupName": "python"
     },
     {
+      // The scenarios and relock jobs stay on 3.14 until every Python
+      // scenario lock has 3.15 wheels; other jobs keep updating.
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "matchCurrentValue": "3.14",
+      "enabled": false
+    },
+    {
       // group all non-major Java dependency updates into a single PR
       "matchManagers": ["gradle", "gradle-wrapper"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
