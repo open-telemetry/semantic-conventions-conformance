@@ -77,7 +77,7 @@ scenarios:
   - description: Calls the no-op stored procedure.
     action:
       kind: stored_procedure
-      sql: '{call conformance.noop()}'
+      sql: CALL conformance.noop()
     expect:
       spans:
         - match:
@@ -86,8 +86,8 @@ scenarios:
           expect:
             count: 1
             attributes:
-              db.query.summary: call conformance.noop
-              db.query.text: '{call conformance.noop()}'
+              db.query.summary: CALL conformance.noop
+              db.query.text: CALL conformance.noop()
               db.stored_procedure.name: conformance.noop
               server.address: 127.0.0.1
               server.port:

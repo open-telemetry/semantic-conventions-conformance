@@ -136,7 +136,20 @@ def test_oracle_contract_keeps_its_dialect_specific_actions() -> None:
     assert actions[0]["sql"] == (
         "SELECT CASE WHEN count(*) >= 0 THEN 1 ELSE 0 END FROM conformance.items"
     )
-    assert actions[3]["sql"] == "{call conformance.noop()}"
+    assert actions[3]["sql"] == "CALL conformance.noop()"
+
+
+def test_oracle_stored_procedure_requires_native_query_telemetry() -> None:
+    document = yaml.safe_load(
+        (_CONTRACTS / "oracle.yaml").read_text(encoding="utf-8")
+    )
+    attributes = document["scenarios"][3]["expect"]["spans"][0]["expect"][
+        "attributes"
+    ]
+
+    assert attributes["db.query.text"] == "CALL conformance.noop()"
+    assert attributes["db.query.summary"] == "CALL conformance.noop"
+    assert attributes["db.stored_procedure.name"] == "conformance.noop"
 
 
 def test_oracle_contract_does_not_require_a_namespace_lookup() -> None:

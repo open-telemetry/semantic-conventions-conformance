@@ -18,7 +18,7 @@ Both JDBC instrumentation modes use the `ojdbc11` driver. The Java agent uses
 The [Oracle contract](../../../../tools/database/sql-test-client/contracts/oracle.yaml)
 defines direct and prepared queries, a two-insert batch, and a stored-procedure
 call. The direct query uses `CASE` to return a number rather than a SQL boolean,
-and the procedure uses JDBC escape syntax, `{call conformance.noop()}`.
+and the procedure uses native SQL, `CALL conformance.noop()`.
 Expected telemetry uses `db.system.name=oracle.db`.
 
 The [pinned Oracle semantic conventions][oracle-semconv] define `db.namespace`
