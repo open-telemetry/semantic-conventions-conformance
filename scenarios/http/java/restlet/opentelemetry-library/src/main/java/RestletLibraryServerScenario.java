@@ -13,12 +13,11 @@ public final class RestletLibraryServerScenario {
   public static void main(String[] args) throws Exception {
     try (ScenarioSdk sdk = ScenarioSdk.initialize()) {
       RestletTelemetry telemetry = RestletTelemetry.create(sdk.openTelemetry());
-      RestletServerScenario.run(
-          (route, next) -> {
-            Filter filter = telemetry.createFilter(route);
-            filter.setNext(next);
-            return filter;
-          });
+      RestletServerScenario.run((route, next) -> {
+        Filter filter = telemetry.createFilter(route);
+        filter.setNext(next);
+        return filter;
+      });
     }
   }
 }

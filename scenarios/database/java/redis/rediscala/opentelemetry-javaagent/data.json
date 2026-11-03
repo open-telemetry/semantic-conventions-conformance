@@ -4,6 +4,7 @@
       "db.namespace",
       "db.operation.batch.size",
       "db.operation.name",
+      "db.system.name",
       "error.type",
       "server.address",
       "server.port"
