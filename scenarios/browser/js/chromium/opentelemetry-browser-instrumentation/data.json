@@ -40,7 +40,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "@opentelemetry/browser-instrumentation/console",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -52,7 +52,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "@opentelemetry/browser-instrumentation/errors",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -64,7 +64,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "@opentelemetry/browser-instrumentation/web-vitals",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
