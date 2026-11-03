@@ -29,13 +29,12 @@ class TelemetryLifecycleTest {
 
     try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
       Future<?> flushing =
-          executor.submit(
-              () ->
-                  TelemetryLifecycle.flushBeforeShutdown(
-                      () -> pending("trace", events, started, trace),
-                      () -> pending("log", events, started, log),
-                      () -> completed("metric", events),
-                      1_000));
+          executor.submit(() ->
+              TelemetryLifecycle.flushBeforeShutdown(
+                  () -> pending("trace", events, started, trace),
+                  () -> pending("log", events, started, log),
+                  () -> completed("metric", events),
+                  1_000));
 
       assertTrue(started.await(1, TimeUnit.SECONDS));
       assertEquals(List.of("trace", "log"), events);
