@@ -20,6 +20,7 @@ from database_conformance import (
     _container,
     _mariadb,
     _mysql,
+    _oracle,
     _postgres,
     _redis,
     _sql_server,
@@ -27,6 +28,7 @@ from database_conformance import (
 from database_conformance._container import DatabaseContainer
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
 from database_conformance._mysql import MYSQL_IMAGE, MySQL
+from database_conformance._oracle import ORACLE_IMAGE, Oracle
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
 from database_conformance._redis import REDIS_IMAGE, Redis
 from database_conformance._sql_server import SQL_SERVER_IMAGE, SQLServer
@@ -181,6 +183,34 @@ def install_stub(
             ),
         ),
         (
+            _oracle,
+            Oracle,
+            1521,
+            {
+                "ORACLE_PASSWORD": "conformance",
+                "APP_USER": "conformance",
+                "APP_USER_PASSWORD": "conformance",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "FREEPDB1",
+                "DATABASE_USER": "conformance",
+                "DATABASE_PASSWORD": "conformance",
+            },
+            ["/tmp/otel-conformance-oracle.sql"],
+            ExecConfig(
+                command=[
+                    "sqlplus",
+                    "-L",
+                    "-S",
+                    "conformance/conformance@//127.0.0.1:1521/FREEPDB1",
+                    "@/tmp/otel-conformance-oracle.sql",
+                ],
+                environment={},
+            ),
+        ),
+        (
             _redis,
             Redis,
             6379,
@@ -262,6 +292,7 @@ def test_starts_initializes_publishes_and_removes_database(
     module: Any,
     backend_type: type[Postgres]
     | type[MariaDB]
+    | type[Oracle]
     | type[MySQL]
     | type[Redis]
     | type[SQLServer],
@@ -313,35 +344,37 @@ def test_sql_server_readiness_requires_online_databases() -> None:
 
 
 @pytest.mark.parametrize(
-    ("module", "backend_type", "port", "expected_seconds"),
+    ("module", "backend_type", "port", "default_timeout"),
     [
         (_postgres, Postgres, 5432, 60.0),
         (_mariadb, MariaDB, 3306, 60.0),
+        (_oracle, Oracle, 1521, 180.0),
         (_mysql, MySQL, 3306, 120.0),
         (_redis, Redis, 6379, 60.0),
         (_sql_server, SQLServer, 1433, 60.0),
     ],
 )
-@pytest.mark.parametrize("timeout_override", [None, "240.5"])
-def test_each_backend_applies_startup_timeout(
+@pytest.mark.parametrize("override", [None, "", "90", "240.5"])
+def test_database_startup_timeout_uses_backend_default_or_shared_override(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
     backend_type: type[Postgres]
     | type[MariaDB]
+    | type[Oracle]
     | type[MySQL]
     | type[Redis]
     | type[SQLServer],
     port: int,
-    expected_seconds: float,
-    timeout_override: str | None,
+    default_timeout: float,
+    override: str | None,
 ) -> None:
-    if timeout_override is None:
+    if override is None:
         monkeypatch.delenv(
             "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", raising=False
         )
     else:
         monkeypatch.setenv(
-            "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", timeout_override
+            "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", override
         )
     timeouts: list[timedelta | int] = []
 
@@ -359,13 +392,33 @@ def test_each_backend_applies_startup_timeout(
     with backend_type():
         pass
 
-    assert timeouts == [
-        timedelta(
-            seconds=expected_seconds
-            if timeout_override is None
-            else float(timeout_override)
-        )
-    ]
+    expected_timeout = default_timeout if not override else float(override)
+    assert timeouts == [timedelta(seconds=expected_timeout)]
+
+
+@pytest.mark.parametrize(
+    "override", ["invalid", "0", "-1", "nan", "inf", "-inf"]
+)
+def test_invalid_database_startup_timeout_uses_oracle_default(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    override: str,
+) -> None:
+    monkeypatch.setenv("OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT", override)
+    container = StubContainer(port=1521)
+    install_stub(monkeypatch, _oracle, container)
+
+    with Oracle():
+        pass
+
+    strategy = container.wait_strategy
+    assert isinstance(strategy, ExecWaitStrategy)
+    assert strategy._startup_timeout == 180.0
+    assert "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT" in caplog.text
+    assert (
+        "is not a finite positive number of seconds; using 180.0"
+        in caplog.text
+    )
 
 
 def test_start_failure_cleans_up_the_container(
@@ -439,6 +492,24 @@ def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
     assert container.stopped
 
 
+def test_oracle_schema_failure_reports_sqlplus_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"ORA-00900: invalid SQL"),
+        port=1521,
+    )
+    install_stub(monkeypatch, _oracle, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)ORA-00900.*ready to accept connections",
+    ):
+        Oracle().start()
+
+    assert container.stopped
+
+
 def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
@@ -476,6 +547,7 @@ def test_cannot_start_postgres_twice(
     [
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
+        (ORACLE_IMAGE, "gvenzl/oracle-free"),
         (MYSQL_IMAGE, "mysql"),
         (REDIS_IMAGE, "redis"),
         (SQL_SERVER_IMAGE, "mcr.microsoft.com/mssql/server"),
@@ -510,6 +582,20 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE [conformance].[items]" in schema
     assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("oracle.sql")
+        .read_text(encoding="utf-8")
+    )
+    assert "WHENEVER OSERROR EXIT FAILURE" in schema
+    assert "WHENEVER SQLERROR EXIT FAILURE" in schema
+    assert "CREATE TABLE items" in schema
+    assert "CREATE OR REPLACE PROCEDURE noop" in schema
+    assert "DROP TABLE" not in schema
+    assert "WHEN OTHERS" not in schema
+    assert "INSERT INTO" not in schema
+    assert "EXIT SUCCESS" in schema
 
     schema = (
         resources.files("database_conformance")

@@ -14,6 +14,7 @@ opentelemetry = "1.67.0"
 # different instrumentation from the agent scenarios.
 opentelemetry-instrumentation = "2.33.1"
 opentelemetry-instrumentation-alpha = "2.33.1-alpha"
+oracle = "23.26.3.0.0"
 postgresql = "42.7.14"
 r2dbc-postgresql = "1.1.2.RELEASE"
 r2dbc-spi = "1.0.0.RELEASE"
@@ -38,6 +39,7 @@ opentelemetry-instrumentation-lettuce = { module = "io.opentelemetry.instrumenta
 opentelemetry-instrumentation-r2dbc = { module = "io.opentelemetry.instrumentation:opentelemetry-r2dbc-1.0" }
 opentelemetry-javaagent = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-instrumentation" }
 opentelemetry-sdk-extension-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure" }
+oracle = { module = "com.oracle.database.jdbc:ojdbc11", version.ref = "oracle" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "r2dbc-postgresql" }
 r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc-spi" }

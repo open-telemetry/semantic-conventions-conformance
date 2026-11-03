@@ -40,6 +40,9 @@ library instrumentation. The
 connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
+Oracle's container, JDBC runtime, and workload requirements are documented in
+its [scenario notes](oracle/README.md).
+
 MySQL's container setup and Connector/J telemetry settings are documented in its
 [scenario notes](mysql/README.md).
 
