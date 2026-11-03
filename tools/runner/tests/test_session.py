@@ -84,22 +84,23 @@ def test_a_command_that_overruns(
     assert "did not finish within" in completed.stderr
 
 
-def test_weaver_startup_retries_after_a_timeout() -> None:
+def test_weaver_starts_one_process() -> None:
     attempts: list[_FakeWeaver] = []
 
     def factory() -> _FakeWeaver:
-        weaver = _FakeWeaver(fail_start=not attempts)
+        weaver = _FakeWeaver(fail_start=False)
         attempts.append(weaver)
         return weaver
 
     with _start_weaver(factory) as weaver:
-        assert weaver is attempts[1]
+        assert weaver is attempts[0]
 
-    assert [attempt.starts for attempt in attempts] == [1, 1]
-    assert [attempt.closes for attempt in attempts] == [1, 1]
+    assert len(attempts) == 1
+    assert attempts[0].starts == 1
+    assert attempts[0].closes == 1
 
 
-def test_weaver_startup_stops_after_the_retry() -> None:
+def test_weaver_startup_timeout_closes_without_retrying() -> None:
     attempts: list[_FakeWeaver] = []
 
     def factory() -> _FakeWeaver:
@@ -110,8 +111,20 @@ def test_weaver_startup_stops_after_the_retry() -> None:
     with pytest.raises(TimeoutError), _start_weaver(factory):
         pass
 
-    assert len(attempts) == 2
-    assert [attempt.closes for attempt in attempts] == [1, 1]
+    assert len(attempts) == 1
+    assert attempts[0].starts == 1
+    assert attempts[0].closes == 1
+
+
+def test_weaver_closes_when_the_scenario_raises() -> None:
+    weaver = _FakeWeaver(fail_start=False)
+
+    with pytest.raises(RuntimeError, match="scenario failed"):
+        with _start_weaver(lambda: weaver):
+            raise RuntimeError("scenario failed")
+
+    assert weaver.starts == 1
+    assert weaver.closes == 1
 
 
 class _FakeWeaver:
