@@ -32,6 +32,7 @@ public final class CassandraScenario {
         CqlSession.builder()
             .addContactPoints(contactPoints)
             .withLocalDatacenter(ScenarioEnvironment.require("CASSANDRA_LOCAL_DATACENTER"))
+            .withKeyspace("conformance")
             .build();
     try (CqlSession instrumented = instrumentSession.apply(session, contactPoints)) {
       switch (operation) {

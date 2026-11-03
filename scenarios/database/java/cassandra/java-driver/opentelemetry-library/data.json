@@ -8,6 +8,7 @@
       "cassandra.query.idempotent",
       "cassandra.speculative_execution.count",
       "db.collection.name",
+      "db.namespace",
       "db.operation.batch.size",
       "db.operation.name",
       "db.query.summary",
@@ -23,6 +24,7 @@
   "metrics": {
     "db.client.operation.duration": [
       "db.collection.name",
+      "db.namespace",
       "db.operation.name",
       "db.query.summary",
       "db.system.name",

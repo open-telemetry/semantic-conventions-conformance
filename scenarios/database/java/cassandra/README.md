@@ -52,6 +52,10 @@ pinned Cassandra 5.0.9 container per package. Its
 recreates the `conformance` keyspace and `items` table without seeding rows.
 The fixed operations do not depend on package execution order.
 
+The underlying `CqlSession` uses `conformance` as its default keyspace in both
+instrumentation modes. The contract checks `db.namespace: conformance` on all
+four operations.
+
 The node uses `datacenter1`, one token, a 256 MB maximum heap, and a 64 MB young
 generation. Cassandra's startup timeout defaults to 180 seconds. Set
 `OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` in the runner's environment to
