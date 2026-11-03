@@ -19,6 +19,7 @@ _OPERATION_NAMES = {
     "gen_ai.create_agent.client": {"create_agent"},
     "gen_ai.embeddings.client": {"embeddings"},
     "gen_ai.execute_tool.internal": {"execute_tool"},
+    "gen_ai.execute_tool": {"execute_tool"},
     "gen_ai.fetch_response.client": {"fetch_response"},
     "gen_ai.inference.client": {"chat", "generate_content", "text_completion"},
     "gen_ai.invoke_agent.client": {"invoke_agent"},
@@ -50,13 +51,12 @@ _EMBEDDINGS_ATTRIBUTES = {
     "gen_ai.request.encoding_formats",
 }
 _AGENT_ATTRIBUTES = {"gen_ai.agent.id", "gen_ai.agent.name"}
+_TOOL_ATTRIBUTES = {"gen_ai.tool.call.id", "gen_ai.tool.name"}
 _IDENTIFYING_ATTRIBUTES = {
     "gen_ai.client.embeddings": _EMBEDDINGS_ATTRIBUTES,
     "gen_ai.embeddings.client": _EMBEDDINGS_ATTRIBUTES,
-    "gen_ai.execute_tool.internal": {
-        "gen_ai.tool.call.id",
-        "gen_ai.tool.name",
-    },
+    "gen_ai.execute_tool.internal": _TOOL_ATTRIBUTES,
+    "gen_ai.execute_tool": _TOOL_ATTRIBUTES,
     "gen_ai.client.invoke_agent": _AGENT_ATTRIBUTES,
     "gen_ai.invoke_agent.client": _AGENT_ATTRIBUTES,
     "gen_ai.invoke_agent.internal": {"gen_ai.agent.id", "gen_ai.agent.name"},

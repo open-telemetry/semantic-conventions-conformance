@@ -2,6 +2,7 @@
   "spans": {
     "db.elasticsearch.client": [
       "db.operation.name",
+      "db.system.name",
       "http.request.method",
       "server.address",
       "server.port",

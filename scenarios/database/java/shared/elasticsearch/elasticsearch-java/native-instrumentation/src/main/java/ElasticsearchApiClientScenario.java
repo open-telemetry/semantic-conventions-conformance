@@ -20,12 +20,11 @@ public final class ElasticsearchApiClientScenario {
 
     try (ScenarioSdk sdk = ScenarioSdk.initialize();
         ElasticsearchClient client =
-            ElasticsearchClient.of(
-                config ->
-                    config
-                        .host("http://" + host + ":" + port)
-                        .instrumentation(
-                            new OpenTelemetryForElasticsearch(sdk.openTelemetry(), false)))) {
+            ElasticsearchClient.of(config ->
+                config
+                    .host("http://" + host + ":" + port)
+                    .instrumentation(
+                        new OpenTelemetryForElasticsearch(sdk.openTelemetry(), false)))) {
       SearchResponse<JsonData> response =
           client.search(
               search -> search.index(index).query(query -> query.matchAll(matchAll -> matchAll)),

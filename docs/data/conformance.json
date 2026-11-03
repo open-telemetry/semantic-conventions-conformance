@@ -3,7 +3,7 @@
   "domains": {
     "database-conformance": {
       "registry_dir": "model",
-      "registry_ref": "v1.44.0",
+      "registry_ref": "v1.45.0",
       "registry_repo": "open-telemetry/semantic-conventions"
     },
     "genai-conformance": {
@@ -13,7 +13,7 @@
     },
     "http-conformance": {
       "registry_dir": "model",
-      "registry_ref": "v1.44.0",
+      "registry_ref": "v1.45.0",
       "registry_repo": "open-telemetry/semantic-conventions"
     }
   },
@@ -40,7 +40,10 @@
           }
         },
         "service.instance": {
-          "description": {},
+          "description": {
+            "service.instance.cost_center.id": "opt_in",
+            "service.instance.cost_center.name": "opt_in"
+          },
           "identity": {
             "service.instance.id": null
           }
@@ -96,6 +99,7 @@
             "db.response.returned_rows": "opt_in",
             "db.response.status_code": "conditionally_required_conditional",
             "db.stored_procedure.name": "recommended_conditional",
+            "db.system.name": "required",
             "error.type": "conditionally_required_conditional",
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
@@ -114,6 +118,7 @@
             "db.response.returned_rows": "opt_in",
             "db.response.status_code": "conditionally_required_conditional",
             "db.stored_procedure.name": "recommended_conditional",
+            "db.system.name": "required",
             "error.type": "conditionally_required_conditional",
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
@@ -128,9 +133,29 @@
             "db.query.text": "recommended",
             "db.response.status_code": "conditionally_required_conditional",
             "db.stored_procedure.name": "recommended_conditional",
+            "db.system.name": "required",
             "error.type": "conditionally_required_conditional",
             "network.peer.address": "recommended",
             "network.peer.port": "recommended_conditional",
+            "server.address": "recommended",
+            "server.port": "conditionally_required_conditional"
+          },
+          "kind": "client"
+        },
+        "db.sql_server.client": {
+          "attributes": {
+            "db.collection.name": "recommended_conditional",
+            "db.namespace": "conditionally_required_conditional",
+            "db.operation.batch.size": "recommended",
+            "db.operation.name": "recommended_conditional",
+            "db.query.parameter": "opt_in",
+            "db.query.summary": "recommended_conditional",
+            "db.query.text": "recommended_conditional",
+            "db.response.returned_rows": "opt_in",
+            "db.response.status_code": "conditionally_required_conditional",
+            "db.stored_procedure.name": "recommended_conditional",
+            "db.system.name": "required",
+            "error.type": "conditionally_required_conditional",
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
@@ -457,6 +482,21 @@
     },
     "http-conformance": {
       "entities": {
+        "host": {
+          "description": {
+            "host.arch": "recommended",
+            "host.image.id": "recommended",
+            "host.image.name": "recommended",
+            "host.image.version": "recommended",
+            "host.ip": "opt_in",
+            "host.mac": "opt_in",
+            "host.name": "recommended",
+            "host.type": "recommended"
+          },
+          "identity": {
+            "host.id": null
+          }
+        },
         "process.runtime": {
           "description": {
             "process.runtime.description": "recommended"
@@ -476,7 +516,10 @@
           }
         },
         "service.instance": {
-          "description": {},
+          "description": {
+            "service.instance.cost_center.id": "opt_in",
+            "service.instance.cost_center.name": "opt_in"
+          },
           "identity": {
             "service.instance.id": null
           }
@@ -629,12 +672,14 @@
         "http.client": {
           "attributes": {
             "error.type": "conditionally_required_conditional",
+            "http.request.body.content": "opt_in",
             "http.request.body.size": "opt_in",
             "http.request.header": "opt_in",
             "http.request.method": "required",
             "http.request.method_original": "conditionally_required_conditional",
             "http.request.resend_count": "recommended_conditional",
             "http.request.size": "opt_in",
+            "http.response.body.content": "opt_in",
             "http.response.body.size": "opt_in",
             "http.response.header": "opt_in",
             "http.response.size": "opt_in",
@@ -659,11 +704,13 @@
             "client.address": "recommended",
             "client.port": "opt_in",
             "error.type": "conditionally_required_conditional",
+            "http.request.body.content": "opt_in",
             "http.request.body.size": "opt_in",
             "http.request.header": "opt_in",
             "http.request.method": "required",
             "http.request.method_original": "conditionally_required_conditional",
             "http.request.size": "opt_in",
+            "http.response.body.content": "opt_in",
             "http.response.body.size": "opt_in",
             "http.response.header": "opt_in",
             "http.response.size": "opt_in",
@@ -767,6 +814,10 @@
             "recommended_conditional": {
               "declared": 5,
               "emitted": 3
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
             }
           },
           "emitted": [
@@ -775,6 +826,7 @@
             "db.query.summary",
             "db.query.text",
             "db.stored_procedure.name",
+            "db.system.name",
             "server.address",
             "server.port"
           ],
@@ -785,6 +837,7 @@
               "db.query.summary",
               "db.query.text",
               "db.stored_procedure.name",
+              "db.system.name",
               "server.address",
               "server.port"
             ],
@@ -852,8 +905,8 @@
           "emitted": 3
         },
         "required": {
-          "declared": 1,
-          "emitted": 1
+          "declared": 2,
+          "emitted": 2
         }
       }
     },
@@ -916,6 +969,10 @@
             "recommended_conditional": {
               "declared": 5,
               "emitted": 3
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
             }
           },
           "emitted": [
@@ -924,6 +981,7 @@
             "db.query.summary",
             "db.query.text",
             "db.stored_procedure.name",
+            "db.system.name",
             "server.address",
             "server.port"
           ],
@@ -934,6 +992,7 @@
               "db.query.summary",
               "db.query.text",
               "db.stored_procedure.name",
+              "db.system.name",
               "server.address",
               "server.port"
             ],
@@ -1001,8 +1060,8 @@
           "emitted": 3
         },
         "required": {
-          "declared": 1,
-          "emitted": 1
+          "declared": 2,
+          "emitted": 2
         }
       }
     },
@@ -1082,6 +1141,10 @@
             "recommended_conditional": {
               "declared": 5,
               "emitted": 3
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
             }
           },
           "emitted": [
@@ -1090,6 +1153,7 @@
             "db.query.summary",
             "db.query.text",
             "db.stored_procedure.name",
+            "db.system.name",
             "server.address",
             "server.port"
           ],
@@ -1100,6 +1164,7 @@
               "db.query.summary",
               "db.query.text",
               "db.stored_procedure.name",
+              "db.system.name",
               "server.address",
               "server.port"
             ],
@@ -1167,8 +1232,8 @@
           "emitted": 3
         },
         "required": {
-          "declared": 1,
-          "emitted": 1
+          "declared": 2,
+          "emitted": 2
         }
       }
     },
@@ -1231,6 +1296,10 @@
             "recommended_conditional": {
               "declared": 5,
               "emitted": 3
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
             }
           },
           "emitted": [
@@ -1239,6 +1308,7 @@
             "db.query.summary",
             "db.query.text",
             "db.stored_procedure.name",
+            "db.system.name",
             "server.address",
             "server.port"
           ],
@@ -1249,6 +1319,7 @@
               "db.query.summary",
               "db.query.text",
               "db.stored_procedure.name",
+              "db.system.name",
               "server.address",
               "server.port"
             ],
@@ -1316,8 +1387,8 @@
           "emitted": 3
         },
         "required": {
-          "declared": 1,
-          "emitted": 1
+          "declared": 2,
+          "emitted": 2
         }
       }
     },
@@ -1394,8 +1465,8 @@
               "emitted": 1
             },
             "required": {
-              "declared": 1,
-              "emitted": 1
+              "declared": 2,
+              "emitted": 2
             }
           },
           "emitted": [
@@ -1403,6 +1474,7 @@
             "db.operation.batch.size",
             "db.operation.name",
             "db.query.text",
+            "db.system.name",
             "network.peer.address",
             "network.peer.port",
             "server.address",
@@ -1414,6 +1486,7 @@
               "db.operation.batch.size",
               "db.operation.name",
               "db.query.text",
+              "db.system.name",
               "network.peer.address",
               "network.peer.port",
               "server.address",
@@ -1480,8 +1553,8 @@
           "emitted": 5
         },
         "required": {
-          "declared": 2,
-          "emitted": 2
+          "declared": 3,
+          "emitted": 3
         }
       }
     },
@@ -1558,13 +1631,14 @@
               "emitted": 1
             },
             "required": {
-              "declared": 1,
-              "emitted": 1
+              "declared": 2,
+              "emitted": 2
             }
           },
           "emitted": [
             "db.operation.name",
             "db.query.text",
+            "db.system.name",
             "error.type",
             "network.peer.address",
             "network.peer.port",
@@ -1575,6 +1649,7 @@
             "attributes": [
               "db.operation.name",
               "db.query.text",
+              "db.system.name",
               "error.type",
               "network.peer.address",
               "network.peer.port",
@@ -1643,8 +1718,8 @@
           "emitted": 4
         },
         "required": {
-          "declared": 2,
-          "emitted": 2
+          "declared": 3,
+          "emitted": 3
         }
       }
     },
@@ -1704,13 +1779,14 @@
               "emitted": 1
             },
             "required": {
-              "declared": 1,
-              "emitted": 1
+              "declared": 2,
+              "emitted": 2
             }
           },
           "emitted": [
             "db.operation.name",
             "db.query.text",
+            "db.system.name",
             "error.type",
             "network.peer.address",
             "network.peer.port",
@@ -1721,6 +1797,7 @@
             "attributes": [
               "db.operation.name",
               "db.query.text",
+              "db.system.name",
               "error.type",
               "network.peer.address",
               "network.peer.port",
@@ -1789,8 +1866,8 @@
           "emitted": 4
         },
         "required": {
-          "declared": 2,
-          "emitted": 2
+          "declared": 3,
+          "emitted": 3
         }
       }
     },
@@ -1868,14 +1945,15 @@
               "emitted": 0
             },
             "required": {
-              "declared": 1,
-              "emitted": 1
+              "declared": 2,
+              "emitted": 2
             }
           },
           "emitted": [
             "db.namespace",
             "db.operation.batch.size",
             "db.operation.name",
+            "db.system.name",
             "error.type",
             "server.address",
             "server.port"
@@ -1885,6 +1963,7 @@
               "db.namespace",
               "db.operation.batch.size",
               "db.operation.name",
+              "db.system.name",
               "error.type",
               "server.address",
               "server.port"
@@ -1952,8 +2031,8 @@
           "emitted": 3
         },
         "required": {
-          "declared": 2,
-          "emitted": 2
+          "declared": 3,
+          "emitted": 3
         }
       }
     },
@@ -2030,8 +2109,8 @@
               "emitted": 1
             },
             "required": {
-              "declared": 1,
-              "emitted": 1
+              "declared": 2,
+              "emitted": 2
             }
           },
           "emitted": [
@@ -2039,6 +2118,7 @@
             "db.operation.batch.size",
             "db.operation.name",
             "db.query.text",
+            "db.system.name",
             "error.type",
             "network.peer.address",
             "network.peer.port",
@@ -2051,6 +2131,7 @@
               "db.operation.batch.size",
               "db.operation.name",
               "db.query.text",
+              "db.system.name",
               "error.type",
               "network.peer.address",
               "network.peer.port",
@@ -2115,6 +2196,333 @@
         "recommended": {
           "declared": 5,
           "emitted": 5
+        },
+        "required": {
+          "declared": 3,
+          "emitted": 3
+        }
+      }
+    },
+    {
+      "backend": "sql_server",
+      "domain": "database",
+      "entities": {
+        "process.runtime": {
+          "description": [
+            "process.runtime.description"
+          ],
+          "identity": [
+            "process.runtime.name",
+            "process.runtime.version"
+          ]
+        },
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.distro": {
+          "description": [
+            "telemetry.distro.version"
+          ],
+          "identity": [
+            "telemetry.distro.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [],
+      "id": "database/java/sql_server/jdbc/opentelemetry-javaagent",
+      "instrumentation_library": "io.opentelemetry.javaagent:opentelemetry-javaagent",
+      "instrumented_library": "jdbc",
+      "label": "opentelemetry-javaagent",
+      "language": "java",
+      "path": "scenarios/database/java/sql_server/jdbc/opentelemetry-javaagent",
+      "runner": "database-conformance",
+      "scenario_classes": [
+        "0000",
+        "0001",
+        "0002",
+        "0003"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended_conditional": {
+              "declared": 5,
+              "emitted": 3
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.batch.size",
+            "db.query.summary",
+            "db.query.text",
+            "db.stored_procedure.name",
+            "db.system.name",
+            "server.address",
+            "server.port"
+          ],
+          "identity": {
+            "attributes": [
+              "db.namespace",
+              "db.operation.batch.size",
+              "db.query.summary",
+              "db.query.text",
+              "db.stored_procedure.name",
+              "db.system.name",
+              "server.address",
+              "server.port"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "db.collection.name",
+            "db.operation.name",
+            "db.query.parameter",
+            "db.response.returned_rows",
+            "db.response.status_code",
+            "error.type"
+          ],
+          "name": "db.sql_server.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 6,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 4,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.query.summary",
+            "db.system.name",
+            "server.address",
+            "server.port"
+          ],
+          "missing": [
+            "db.collection.name",
+            "db.operation.name",
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port"
+          ],
+          "name": "db.client.operation.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 0,
+        "recommended": {
+          "declared": 3,
+          "emitted": 3
+        },
+        "required": {
+          "declared": 2,
+          "emitted": 2
+        }
+      }
+    },
+    {
+      "backend": "sql_server",
+      "domain": "database",
+      "entities": {
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [],
+      "id": "database/java/sql_server/jdbc/opentelemetry-library",
+      "instrumentation_library": "io.opentelemetry.instrumentation:opentelemetry-jdbc",
+      "instrumented_library": "jdbc",
+      "label": "opentelemetry-library",
+      "language": "java",
+      "path": "scenarios/database/java/sql_server/jdbc/opentelemetry-library",
+      "runner": "database-conformance",
+      "scenario_classes": [
+        "0000",
+        "0001",
+        "0002",
+        "0003"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended_conditional": {
+              "declared": 5,
+              "emitted": 3
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.operation.batch.size",
+            "db.query.summary",
+            "db.query.text",
+            "db.stored_procedure.name",
+            "db.system.name",
+            "server.address",
+            "server.port"
+          ],
+          "identity": {
+            "attributes": [
+              "db.namespace",
+              "db.operation.batch.size",
+              "db.query.summary",
+              "db.query.text",
+              "db.stored_procedure.name",
+              "db.system.name",
+              "server.address",
+              "server.port"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "db.collection.name",
+            "db.operation.name",
+            "db.query.parameter",
+            "db.response.returned_rows",
+            "db.response.status_code",
+            "error.type"
+          ],
+          "name": "db.sql_server.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 6,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 4,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 1,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "db.namespace",
+            "db.query.summary",
+            "db.system.name",
+            "server.address",
+            "server.port"
+          ],
+          "missing": [
+            "db.collection.name",
+            "db.operation.name",
+            "db.query.text",
+            "db.response.status_code",
+            "db.stored_procedure.name",
+            "error.type",
+            "network.peer.address",
+            "network.peer.port"
+          ],
+          "name": "db.client.operation.duration",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 0,
+        "recommended": {
+          "declared": 3,
+          "emitted": 3
         },
         "required": {
           "declared": 2,
@@ -5054,19 +5462,28 @@
         },
         {
           "context": {
-            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.document.document.mime_type"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.document.document.mime_type' does not exist in the registry.",
           "signal_name": "messages.create",
           "signal_type": "span"
         },
         {
           "context": {
-            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.text"
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.document.document.url"
           },
           "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.text' does not exist in the registry.",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.document.document.url' does not exist in the registry.",
+          "signal_name": "messages.create",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.1.message_content.image.image.url"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.1.message_content.image.image.url' does not exist in the registry.",
           "signal_name": "messages.create",
           "signal_type": "span"
         },
@@ -5835,7 +6252,7 @@
         }
       ],
       "summary": {
-        "findings": 120,
+        "findings": 121,
         "recommended": {
           "declared": 12,
           "emitted": 9
@@ -12474,6 +12891,380 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gcp.vertex.agent.invocation_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gcp.vertex.agent.invocation_id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.mime_type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "input.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'input.value' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.0.message.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.0.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.1.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.content"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.input_messages.3.message.tool_call_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.invocation_parameters"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.model_name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.model_name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.role"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.provider"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.provider' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.completion"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.completion_details.reasoning"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.completion_details.reasoning' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.prompt"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.token_count.total"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "llm.tools.0.tool.json_schema"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "openinference.span.kind"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.mime_type"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.mime_type' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "output.value"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'output.value' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "session.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'session.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "user.id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'user.id' does not exist in the registry.",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.id",
+            "operation": "generate_content"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.model",
+            "operation": "generate_content"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "server.address",
+            "operation": "generate_content"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'call_llm' (operation 'generate_content') is missing expected attribute 'server.address'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'call_llm' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "generate_content gemini-2.0-flash",
+            "keyed_attr": "gen_ai.request.model",
+            "operation": "generate_content"
+          },
+          "id": "genai_span_name_format",
+          "message": "generate_content span name should be 'generate_content gemini-2.0-flash', got 'call_llm'",
+          "signal_name": "call_llm",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "gcp.vertex.agent.event_id"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
           "signal_name": "execute_tool get_current_weather",
           "signal_type": "span"
         },
@@ -12656,389 +13447,6 @@
           "message": "Span 'invocation [conformance]' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
           "signal_name": "invocation [conformance]",
           "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gcp.vertex.agent.event_id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gcp.vertex.agent.event_id' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "gcp.vertex.agent.invocation_id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'gcp.vertex.agent.invocation_id' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "input.mime_type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'input.mime_type' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "input.value"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'input.value' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.0.message.content"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.0.message.content' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.0.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.0.message.role' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.text"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.text' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.1.message.contents.0.message_content.type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.contents.0.message_content.type' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.1.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.1.message.role' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.role' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.function.name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.2.message.tool_calls.0.tool_call.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.2.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.content"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.content' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.name' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.role' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.input_messages.3.message.tool_call_id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.input_messages.3.message.tool_call_id' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.invocation_parameters"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.invocation_parameters' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.model_name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.model_name' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.text"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.text' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.contents.0.message_content.type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.contents.0.message_content.type' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.role"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.role' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.arguments' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.function.name"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.function.name' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.output_messages.0.message.tool_calls.0.tool_call.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.output_messages.0.message.tool_calls.0.tool_call.id' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.provider"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.provider' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.completion"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.completion' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.completion_details.reasoning"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.completion_details.reasoning' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.prompt"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.prompt' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.token_count.total"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.token_count.total' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "llm.tools.0.tool.json_schema"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "openinference.span.kind"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "output.mime_type"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'output.mime_type' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "output.value"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'output.value' does not exist in the registry.",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "gen_ai.response.id",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'invoke_agent weather_assistant' (operation 'generate_content') is missing expected attribute 'gen_ai.response.id'",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "gen_ai.response.model",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'invoke_agent weather_assistant' (operation 'generate_content') is missing expected attribute 'gen_ai.response.model'",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "missing_attribute": "server.address",
-            "operation": "generate_content"
-          },
-          "id": "genai_expected_attribute_missing",
-          "message": "Span 'invoke_agent weather_assistant' (operation 'generate_content') is missing expected attribute 'server.address'",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "status_code": "ok"
-          },
-          "id": "span_status_ok_set_by_instrumentation",
-          "message": "Span 'invoke_agent weather_assistant' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "expected_form": "generate_content gemini-2.0-flash",
-            "keyed_attr": "gen_ai.request.model",
-            "operation": "generate_content"
-          },
-          "id": "genai_span_name_format",
-          "message": "generate_content span name should be 'generate_content gemini-2.0-flash', got 'invoke_agent weather_assistant'",
-          "signal_name": "invoke_agent weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "openinference.span.kind"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'openinference.span.kind' does not exist in the registry.",
-          "signal_name": "invoke_workflow weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "session.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'session.id' does not exist in the registry.",
-          "signal_name": "invoke_workflow weather_assistant",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "user.id"
-          },
-          "id": "missing_attribute",
-          "message": "Attribute 'user.id' does not exist in the registry.",
-          "signal_name": "invoke_workflow weather_assistant",
-          "signal_type": "span"
         }
       ],
       "id": "gen-ai/python/google-adk/openinference",
@@ -13066,7 +13474,7 @@
             },
             "recommended": {
               "declared": 12,
-              "emitted": 4
+              "emitted": 5
             },
             "recommended_conditional": {
               "declared": 16,
@@ -13085,6 +13493,7 @@
             "gen_ai.provider.name",
             "gen_ai.request.max_tokens",
             "gen_ai.request.model",
+            "gen_ai.request.temperature",
             "gen_ai.response.finish_reasons",
             "gen_ai.system_instructions",
             "gen_ai.tool.definitions",
@@ -13102,6 +13511,7 @@
               "gen_ai.provider.name",
               "gen_ai.request.max_tokens",
               "gen_ai.request.model",
+              "gen_ai.request.temperature",
               "gen_ai.response.finish_reasons",
               "gen_ai.system_instructions",
               "gen_ai.tool.definitions",
@@ -13127,7 +13537,6 @@
             "gen_ai.request.seed",
             "gen_ai.request.stop_sequences",
             "gen_ai.request.stream",
-            "gen_ai.request.temperature",
             "gen_ai.request.top_k",
             "gen_ai.request.top_p",
             "gen_ai.response.id",
@@ -13258,42 +13667,6 @@
             "gen_ai.usage.output_tokens"
           ],
           "name": "gen_ai.invoke_agent.internal",
-          "type": "span"
-        },
-        {
-          "coverage": {
-            "conditionally_required_conditional": {
-              "declared": 3,
-              "emitted": 2
-            },
-            "opt_in": {
-              "declared": 2,
-              "emitted": 0
-            },
-            "required": {
-              "declared": 1,
-              "emitted": 1
-            }
-          },
-          "emitted": [
-            "gen_ai.conversation.id",
-            "gen_ai.operation.name",
-            "gen_ai.workflow.name"
-          ],
-          "identity": {
-            "attributes": [
-              "gen_ai.conversation.id",
-              "gen_ai.operation.name",
-              "gen_ai.workflow.name"
-            ],
-            "span_kind": "internal"
-          },
-          "missing": [
-            "error.type",
-            "gen_ai.input.messages",
-            "gen_ai.output.messages"
-          ],
-          "name": "gen_ai.invoke_workflow.internal",
           "type": "span"
         },
         {
@@ -13494,14 +13867,14 @@
         }
       ],
       "summary": {
-        "findings": 84,
+        "findings": 83,
         "recommended": {
           "declared": 37,
-          "emitted": 10
+          "emitted": 11
         },
         "required": {
-          "declared": 10,
-          "emitted": 9
+          "declared": 9,
+          "emitted": 8
         }
       }
     },
@@ -32876,6 +33249,15 @@
         },
         {
           "context": {
+            "attribute_key": "llm.tools.0.tool.json_schema"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+          "signal_name": "Completions",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "openinference.span.kind"
           },
           "id": "missing_attribute",
@@ -33025,15 +33407,15 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 2
+              "emitted": 4
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 2
+              "emitted": 3
             },
             "recommended": {
               "declared": 12,
-              "emitted": 8
+              "emitted": 11
             },
             "recommended_conditional": {
               "declared": 16,
@@ -33048,14 +33430,20 @@
             "gen_ai.input.messages",
             "gen_ai.operation.name",
             "gen_ai.output.messages",
+            "gen_ai.output.type",
+            "gen_ai.request.frequency_penalty",
             "gen_ai.request.max_tokens",
             "gen_ai.request.model",
+            "gen_ai.request.presence_penalty",
+            "gen_ai.request.seed",
+            "gen_ai.request.stop_sequences",
             "gen_ai.request.stream",
             "gen_ai.request.temperature",
             "gen_ai.request.top_p",
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.tool.definitions",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
           ],
@@ -33064,14 +33452,20 @@
               "gen_ai.input.messages",
               "gen_ai.operation.name",
               "gen_ai.output.messages",
+              "gen_ai.output.type",
+              "gen_ai.request.frequency_penalty",
               "gen_ai.request.max_tokens",
               "gen_ai.request.model",
+              "gen_ai.request.presence_penalty",
+              "gen_ai.request.seed",
+              "gen_ai.request.stop_sequences",
               "gen_ai.request.stream",
               "gen_ai.request.temperature",
               "gen_ai.request.top_p",
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
+              "gen_ai.tool.definitions",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens"
             ],
@@ -33081,22 +33475,16 @@
             "error.type",
             "gen_ai.conversation.compacted",
             "gen_ai.conversation.id",
-            "gen_ai.output.type",
             "gen_ai.prompt.name",
             "gen_ai.prompt.variable",
             "gen_ai.prompt.version",
             "gen_ai.provider.name",
             "gen_ai.request.choice.count",
-            "gen_ai.request.frequency_penalty",
-            "gen_ai.request.presence_penalty",
             "gen_ai.request.previous_response.id",
             "gen_ai.request.reasoning.level",
-            "gen_ai.request.seed",
-            "gen_ai.request.stop_sequences",
             "gen_ai.request.top_k",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
-            "gen_ai.tool.definitions",
             "gen_ai.usage.audio.cache_read.input_tokens",
             "gen_ai.usage.audio.input_tokens",
             "gen_ai.usage.audio.output_tokens",
@@ -33117,10 +33505,10 @@
         }
       ],
       "summary": {
-        "findings": 40,
+        "findings": 41,
         "recommended": {
           "declared": 12,
-          "emitted": 8
+          "emitted": 11
         },
         "required": {
           "declared": 2,
@@ -36536,7 +36924,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -36584,10 +36972,12 @@
           "missing": [
             "client.address",
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -36748,7 +37138,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -36786,11 +37176,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -37011,7 +37403,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -37064,10 +37456,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -37263,7 +37657,7 @@
               "emitted": 3
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -37315,10 +37709,12 @@
           "missing": [
             "client.port",
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.header",
             "http.response.size",
             "network.local.address",
@@ -37545,7 +37941,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -37596,10 +37992,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -37688,7 +38086,7 @@
               "emitted": 3
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 2
             },
             "recommended": {
@@ -37742,9 +38140,11 @@
           "missing": [
             "client.port",
             "error.type",
+            "http.request.body.content",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.header",
             "http.response.size",
             "network.local.address",
@@ -37955,7 +38355,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -37993,11 +38393,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -38198,7 +38600,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 2
             },
             "recommended": {
@@ -38250,9 +38652,11 @@
           "missing": [
             "client.port",
             "error.type",
+            "http.request.body.content",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.header",
             "http.response.size",
             "http.route",
@@ -38450,7 +38854,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -38503,10 +38907,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -38635,7 +39041,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -38673,11 +39079,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -38808,7 +39216,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -38846,11 +39254,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -38964,7 +39374,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -39002,11 +39412,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -39137,7 +39549,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -39179,11 +39591,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -39308,7 +39722,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -39361,10 +39775,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -39476,7 +39892,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -39518,11 +39934,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -39630,7 +40048,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -39683,10 +40101,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -39815,7 +40235,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -39857,11 +40277,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -40011,7 +40433,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -40062,10 +40484,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -40240,7 +40664,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -40293,10 +40717,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -40404,7 +40830,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -40457,10 +40883,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -40589,7 +41017,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -40627,11 +41055,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -40762,7 +41192,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -40800,11 +41230,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -40918,7 +41350,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -40956,11 +41388,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -41087,7 +41521,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -41140,10 +41574,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -41251,7 +41687,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -41304,10 +41740,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -41436,7 +41874,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -41474,11 +41912,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -41592,7 +42032,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -41630,11 +42070,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -41765,7 +42207,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -41803,11 +42245,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -41921,7 +42365,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -41959,11 +42403,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -42073,7 +42519,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -42124,10 +42570,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -42257,7 +42705,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -42299,11 +42747,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -42428,7 +42878,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -42479,10 +42929,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -42595,7 +43047,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -42637,11 +43089,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -42749,7 +43203,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -42800,10 +43254,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -42933,7 +43389,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -42975,11 +43431,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -43091,7 +43549,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -43133,11 +43591,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -43262,7 +43722,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -43315,10 +43775,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -43447,7 +43909,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -43485,11 +43947,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -43616,7 +44080,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -43669,10 +44133,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -43805,7 +44271,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -43841,11 +44307,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -43997,7 +44465,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -44045,10 +44513,12 @@
           "missing": [
             "client.address",
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -44179,7 +44649,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -44221,11 +44691,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -44375,7 +44847,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -44428,10 +44900,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -44539,7 +45013,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -44592,10 +45066,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -44769,7 +45245,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -44822,10 +45298,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -44933,7 +45411,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -44984,10 +45462,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -45121,7 +45601,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -45157,11 +45637,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -45293,7 +45775,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -45331,11 +45813,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -45499,7 +45983,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -45552,10 +46036,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -45688,7 +46174,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -45724,11 +46210,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -45880,7 +46368,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -45931,10 +46419,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -46043,7 +46533,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -46096,10 +46586,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -46273,7 +46765,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -46326,10 +46818,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -46491,7 +46985,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -46542,10 +47036,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -46675,7 +47171,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -46717,11 +47213,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -46787,6 +47285,15 @@
       "backend": null,
       "domain": "http",
       "entities": {
+        "host": {
+          "description": [
+            "host.arch",
+            "host.name"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
         "process.runtime": {
           "description": [
             "process.runtime.description"
@@ -46956,7 +47463,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -47008,10 +47515,12 @@
           "missing": [
             "client.port",
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -47077,6 +47586,15 @@
       "backend": null,
       "domain": "http",
       "entities": {
+        "host": {
+          "description": [
+            "host.arch",
+            "host.name"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
         "process.runtime": {
           "description": [
             "process.runtime.description"
@@ -47148,7 +47666,7 @@
               "emitted": 1
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -47191,11 +47709,13 @@
           },
           "missing": [
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -47260,6 +47780,15 @@
       "backend": null,
       "domain": "http",
       "entities": {
+        "host": {
+          "description": [
+            "host.arch",
+            "host.name"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
         "process.runtime": {
           "description": [
             "process.runtime.description"
@@ -47327,7 +47856,7 @@
               "emitted": 3
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -47377,10 +47906,12 @@
           "missing": [
             "client.port",
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -47447,6 +47978,15 @@
       "backend": null,
       "domain": "http",
       "entities": {
+        "host": {
+          "description": [
+            "host.arch",
+            "host.name"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
         "process.runtime": {
           "description": [
             "process.runtime.description"
@@ -47509,7 +48049,7 @@
               "emitted": 3
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 2
             },
             "recommended": {
@@ -47557,10 +48097,12 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -47624,6 +48166,15 @@
       "backend": null,
       "domain": "http",
       "entities": {
+        "host": {
+          "description": [
+            "host.arch",
+            "host.name"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
         "process.runtime": {
           "description": [],
           "identity": [
@@ -47733,7 +48284,7 @@
               "emitted": 1
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -47772,11 +48323,13 @@
           },
           "missing": [
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -47808,6 +48361,15 @@
       "backend": null,
       "domain": "http",
       "entities": {
+        "host": {
+          "description": [
+            "host.arch",
+            "host.name"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
         "process.runtime": {
           "description": [],
           "identity": [
@@ -47997,7 +48559,7 @@
               "emitted": 3
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -48042,10 +48604,12 @@
             "client.address",
             "client.port",
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -48145,7 +48709,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -48181,11 +48745,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -48337,7 +48903,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -48385,10 +48951,12 @@
           "missing": [
             "client.address",
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -48661,7 +49229,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -48709,10 +49277,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -48917,7 +49487,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -48967,10 +49537,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -49149,7 +49721,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -49199,10 +49771,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -49407,7 +49981,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -49457,10 +50031,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -49664,7 +50240,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -49714,10 +50290,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -49853,7 +50431,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -49895,11 +50473,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -50048,7 +50628,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -50098,10 +50678,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -50237,7 +50819,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -50281,11 +50863,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -50465,7 +51049,7 @@
               "emitted": 5
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -50515,10 +51099,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -50809,7 +51395,7 @@
               "emitted": 3
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -50856,10 +51442,12 @@
           },
           "missing": [
             "client.port",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -51205,7 +51793,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -51237,11 +51825,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -51489,7 +52079,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -51521,11 +52111,13 @@
             "span_kind": "client"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -51759,7 +52351,7 @@
               "emitted": 4
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -51807,10 +52399,12 @@
             "span_kind": "server"
           },
           "missing": [
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -52008,7 +52602,7 @@
               "emitted": 1
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 1
             },
             "recommended": {
@@ -52043,11 +52637,13 @@
           },
           "missing": [
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.resend_count",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
@@ -52188,7 +52784,7 @@
               "emitted": 2
             },
             "opt_in": {
-              "declared": 11,
+              "declared": 13,
               "emitted": 0
             },
             "recommended": {
@@ -52229,10 +52825,12 @@
             "client.address",
             "client.port",
             "error.type",
+            "http.request.body.content",
             "http.request.body.size",
             "http.request.header",
             "http.request.method_original",
             "http.request.size",
+            "http.response.body.content",
             "http.response.body.size",
             "http.response.header",
             "http.response.size",
