@@ -29,3 +29,6 @@ scenarios:
 
   batch:
     run: otel-conformance-java run hbase:native HbaseNativeScenario batch
+
+  error:
+    run: otel-conformance-java run hbase:native HbaseNativeScenario error

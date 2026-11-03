@@ -72,6 +72,11 @@ Each operation runs in a separate process:
 | `put` | `Table.put` | Write `put-row` with `data:name=put-value` |
 | `scan` | `Table.getScanner` | Require at least one row |
 | `batch` | `Table.batch` | Write two rows and reject per-row errors |
+| `error` | `Table.get` | Require `TableNotFoundException` for `conformance:missing` |
+
+The error scenario accepts only the missing-table exception from the Get.
+Unexpected success, other request failures, and resource cleanup failures fail
+the workload.
 
 ## Contracts and coverage
 
@@ -82,21 +87,21 @@ maps backend selector `hbase` to system `hbase` and client span type
 `db.hbase.client`.
 
 Each scenario requires exactly one native CLIENT span for GET, PUT, SCAN, or
-BATCH on `conformance:items`. It checks the native `db.name=conformance` and
+BATCH on `conformance:items`, or a failed GET on `conformance:missing`. It checks the native `db.name=conformance` and
 `db.connection_string=127.0.0.1:16000`, plus scope `org.apache.hbase` with a
 version. The BATCH span must identify PUT operations. The workload itself writes
 two rows and rejects per-row errors.
 
 Metadata-table scans, native RPC CLIENT spans, and INTERNAL connection and
 region-lookup spans are recognized without fixed counts because initialization
-can perform additional lookups. The contract declares no metrics or events.
+can perform additional lookups. The contract declares no metrics or log events.
 SDK self-metrics such as `queueSize` are not workload telemetry and are not
 required. Matching native attributes does not waive their semantic
 violations or classify them as stable database coverage.
 
 ## Observed native gaps
 
-All four workloads complete successfully and emit their corresponding native
+All five scenarios complete and emit their corresponding native
 CLIENT span under `org.apache.hbase` version `3.0.0`. Strict conformance fails:
 
 - The native table spans use legacy `db.system`, `db.name`, `db.operation`,
@@ -109,6 +114,10 @@ CLIENT span under `org.apache.hbase` version `3.0.0`. Strict conformance fails:
   attributes, unregistered `db.hbase.table`, `db.hbase.regions`, and
   `db.hbase.container_operations`, and instrumentation setting status OK on
   successful spans.
+- The missing-table GET has ERROR status and a `TableNotFoundException`
+  exception span event, but lacks `error.type`. Weaver records
+  `error_type_missing_on_error`. No `db.response.status_code` is emitted, and
+  the native contract does not invent one.
 
 No native findings are waived or filtered out. The package reuses the shared
 Java Weaver configuration for SDK infrastructure findings only.
@@ -117,8 +126,9 @@ Stable database span and metric coverage is empty; entity coverage and the real
 findings remain recorded. Raw per-workload reports are written under
 `native/output/weaver-reports/` when running the command above.
 
-All four workloads satisfy their native telemetry expectations. Strict runs
-report 52 violations for GET, 52 for PUT, 47 for SCAN, and 53 for BATCH, and exit
+All five scenarios satisfy their native telemetry expectations. Strict runs
+report 52 violations for GET, 52 for PUT, 47 for SCAN, 53 for BATCH, and 48 for
+the missing-table GET, and exit
 nonzero for those findings. CI's `--report-only` mode reports the same violations
 as warnings and exits zero. Missing native workload spans, incorrect attributes,
 unexpected events, or workload crashes still fail in both modes.

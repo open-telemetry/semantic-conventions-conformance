@@ -36,7 +36,10 @@ class Report(dict[str, Any]):
             statistics={"seen_non_registry_metrics": sdk_metrics},
         )
         self.violations = [
-            {"id": "deprecated_attribute", "message": "Legacy HBase attributes"}
+            {
+                "id": "deprecated_attribute",
+                "message": "Legacy HBase attributes",
+            }
         ]
 
 
@@ -47,6 +50,7 @@ class Report(dict[str, Any]):
         ("put", "PUT"),
         ("scan", "SCAN"),
         ("batch", "BATCH"),
+        ("error", "GET"),
     ],
 )
 @pytest.mark.parametrize(
@@ -83,10 +87,13 @@ def test_hbase_contract_requires_the_native_workload_span(
     spec = load_spec(root / "scenarios/database/java/hbase/native").scenarios[
         scenario
     ]
+    table = (
+        "conformance:missing" if scenario == "error" else "conformance:items"
+    )
     attributes: dict[str, object] = {
         "db.system": "hbase",
         "db.operation": operation,
-        "db.hbase.table": "conformance:items",
+        "db.hbase.table": table,
         "db.name": "conformance",
         "db.connection_string": "127.0.0.1:16000",
         **overrides,
@@ -95,7 +102,7 @@ def test_hbase_contract_requires_the_native_workload_span(
         attributes["db.hbase.container_operations"] = ["PUT"]
     spans = [
         *[
-            ObservedSpan(f"{operation} conformance:items", kind, attributes)
+            ObservedSpan(f"{operation} {table}", kind, attributes)
             for _ in range(count)
         ],
         ObservedSpan(
@@ -120,11 +127,13 @@ def test_hbase_contract_requires_the_native_workload_span(
     assert findings.violations == [
         "[deprecated_attribute] Legacy HBase attributes"
     ]
-    assert classify_span(f"{operation} conformance:items", kind, attributes) == set()
+    assert classify_span(f"{operation} {table}", kind, attributes) == set()
 
 
 @pytest.mark.parametrize("operations", [[], ["GET"], ["PUT", "GET"]])
-def test_hbase_batch_requires_native_put_operations(operations: list[str]) -> None:
+def test_hbase_batch_requires_native_put_operations(
+    operations: list[str],
+) -> None:
     root = Path(__file__).resolve().parents[4]
     spec = load_spec(root / "scenarios/database/java/hbase/native").scenarios[
         "batch"
@@ -174,13 +183,15 @@ def test_hbase_contract_rejects_unrelated_client_spans() -> None:
     assert "1 undeclared span(s): ['unrelated']" in failures[0]
 
 
-def test_hbase_native_package_keeps_emission_checks_without_waivers_or_agent() -> None:
+def test_hbase_native_package_keeps_emission_checks_without_waivers_or_agent() -> (
+    None
+):
     root = Path(__file__).resolve().parents[4]
     spec = load_spec(root / "scenarios/database/java/hbase/native")
     assert spec.runner_config == {"backend": "hbase"}
     assert spec.instrumentation_library == "org.apache.hbase:hbase-client"
     assert spec.setup == ("otel-conformance-java", "prepare", "hbase:native")
-    assert set(spec.scenarios) == {"get", "put", "scan", "batch"}
+    assert set(spec.scenarios) == {"get", "put", "scan", "batch", "error"}
     for name, scenario in spec.scenarios.items():
         assert scenario.run == (
             "otel-conformance-java",
@@ -193,7 +204,9 @@ def test_hbase_native_package_keeps_emission_checks_without_waivers_or_agent() -
         assert scenario.metrics == ()
         assert scenario.events == ()
         assert scenario.spans is not None
-        assert all(expectation.match.type is None for expectation in scenario.spans)
+        assert all(
+            expectation.match.type is None for expectation in scenario.spans
+        )
         assert scenario.spans[0].count == 1
         scope = scenario.spans[0].instrumentation_scope
         assert scope is not None

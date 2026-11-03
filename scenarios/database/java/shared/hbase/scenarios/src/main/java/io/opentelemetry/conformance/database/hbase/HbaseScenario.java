@@ -10,6 +10,7 @@ import java.util.Arrays;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Get;
@@ -56,6 +57,9 @@ public final class HbaseScenario {
         case "batch":
           batch(table);
           break;
+        case "error":
+          error(connection);
+          break;
         default:
           throw new IllegalArgumentException("unknown HBase operation: " + args[0]);
       }
@@ -93,6 +97,17 @@ public final class HbaseScenario {
     table.batch(Arrays.asList(first, second), results);
     if (Arrays.stream(results).anyMatch(result -> result instanceof Throwable)) {
       throw new IllegalStateException("HBase batch returned an error: " + Arrays.toString(results));
+    }
+  }
+
+  static void error(Connection connection) throws IOException {
+    try (Table missing = connection.getTable(TableName.valueOf("conformance:missing"))) {
+      try {
+        missing.get(new Get(Bytes.toBytes("seed")));
+      } catch (TableNotFoundException expected) {
+        return;
+      }
+      throw new IllegalStateException("expected TableNotFoundException");
     }
   }
 }

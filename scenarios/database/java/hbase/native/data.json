@@ -110,6 +110,15 @@
       }
     },
     {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'AsyncRegionLocator.getRegionLocation' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "AsyncRegionLocator.getRegionLocation",
+      "context": {
+        "status_code": "error"
+      }
+    },
+    {
       "id": "span_status_ok_set_by_instrumentation",
       "message": "Span 'AsyncRegionLocator.getRegionLocation' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
       "signal_type": "span",
@@ -280,6 +289,79 @@
       "signal_name": "GET conformance:items",
       "context": {
         "status_code": "ok"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.connection_string' is deprecated; reason = 'uncategorized', note = 'Replaced by `server.address` and `server.port`.\n'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:missing",
+      "context": {
+        "attribute_key": "db.connection_string",
+        "deprecation_note": "Replaced by `server.address` and `server.port`.\n",
+        "deprecation_reason": "uncategorized"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'db.hbase.table' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:missing",
+      "context": {
+        "attribute_key": "db.hbase.table"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.name' is deprecated; reason = 'renamed', note = 'Replaced by `db.namespace`.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:missing",
+      "context": {
+        "attribute_key": "db.name",
+        "deprecation_note": "Replaced by `db.namespace`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.operation' is deprecated; reason = 'renamed', note = 'Replaced by `db.operation.name`.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:missing",
+      "context": {
+        "attribute_key": "db.operation",
+        "deprecation_note": "Replaced by `db.operation.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.system' is deprecated; reason = 'renamed', note = 'Replaced by `db.system.name`.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:missing",
+      "context": {
+        "attribute_key": "db.system",
+        "deprecation_note": "Replaced by `db.system.name`.",
+        "deprecation_reason": "renamed"
+      }
+    },
+    {
+      "id": "deprecated",
+      "message": "Attribute 'db.user' is deprecated; reason = 'obsoleted', note = 'Removed, no replacement at this time.'.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:missing",
+      "context": {
+        "attribute_key": "db.user",
+        "deprecation_note": "Removed, no replacement at this time.",
+        "deprecation_reason": "obsoleted"
+      }
+    },
+    {
+      "id": "error_type_missing_on_error",
+      "message": "Span 'GET conformance:missing' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "signal_type": "span",
+      "signal_name": "GET conformance:missing",
+      "context": {
+        "status_code": "error"
       }
     },
     {
