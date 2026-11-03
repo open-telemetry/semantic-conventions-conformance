@@ -6,6 +6,7 @@
       "db.query.summary",
       "db.query.text",
       "db.stored_procedure.name",
+      "db.system.name",
       "error.type",
       "server.address",
       "server.port"
