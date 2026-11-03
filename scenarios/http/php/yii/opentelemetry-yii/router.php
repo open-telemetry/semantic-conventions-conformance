@@ -26,12 +26,7 @@ $config = [
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
-            'rules' => [
-                'GET health' => 'site/health',
-                'GET users/<userId:\d+>' => 'site/users',
-                'POST items' => 'site/items',
-                'GET status/<code:\d+>' => 'site/status',
-            ],
+            'rules' => require __DIR__ . '/../scenarios/routes.php',
         ],
     ],
 ];
