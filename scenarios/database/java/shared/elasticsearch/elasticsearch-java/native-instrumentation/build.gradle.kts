@@ -5,5 +5,5 @@ plugins {
 dependencies {
     implementation(project(":scenario-support"))
     implementation(project(":scenario-sdk"))
-    implementation(libs.elasticsearch.api.client)
+    implementation(libs.elasticsearch.java)
 }

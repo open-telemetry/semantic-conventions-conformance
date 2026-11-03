@@ -176,13 +176,25 @@ def test_elasticsearch_native_package_uses_the_client_instrumentation() -> (
 ):
     directory = (
         Path(__file__).resolve().parents[4]
-        / "scenarios/database/java/elasticsearch/api-client/native-instrumentation"
+        / "scenarios/database/java/elasticsearch/elasticsearch-java/native-instrumentation"
     )
     spec = load_spec(directory)
     search = spec.scenarios["search"]
 
+    assert spec.instrumented_library == "elasticsearch-java"
     assert (
         spec.instrumentation_library == "co.elastic.clients:elasticsearch-java"
+    )
+    assert spec.setup == (
+        "otel-conformance-java",
+        "prepare",
+        "shared:elasticsearch:elasticsearch-java:native-instrumentation",
+    )
+    assert search.run == (
+        "otel-conformance-java",
+        "run",
+        "shared:elasticsearch:elasticsearch-java:native-instrumentation",
+        "ElasticsearchApiClientScenario",
     )
     assert "--agent" not in search.run
     assert len(search.spans) == 1

@@ -63,6 +63,7 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
     discovery_root: Path,
 ) -> None:
     expected_projects = {
+        "shared/elasticsearch/elasticsearch-java/native-instrumentation",
         "shared/jdbc/scenarios",
         "shared/jdbc/opentelemetry-javaagent",
         "shared/jdbc/opentelemetry-library",
@@ -133,10 +134,14 @@ def test_adding_a_project_invalidates_configuration_cache(
     # Gradle creates its report directory after settings evaluation.
     (discovery_root / "build").mkdir()
 
-    output = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    output = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "DISCOVERED=:,:baseline" in output
 
-    reused = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    reused = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "Reusing configuration cache." in reused
     assert "DISCOVERED=:,:baseline" in reused
 
@@ -144,9 +149,14 @@ def test_adding_a_project_invalidates_configuration_cache(
     added.parent.mkdir(parents=True)
     added.touch()
 
-    updated = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    updated = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "Reusing configuration cache." not in updated
-    assert "DISCOVERED=:,:baseline,:future-backend,:future-backend:client" in updated
+    assert (
+        "DISCOVERED=:,:baseline,:future-backend,:future-backend:client"
+        in updated
+    )
 
 
 def test_preserves_database_project_names() -> None:
@@ -156,7 +166,7 @@ def test_preserves_database_project_names() -> None:
         ":scenario-sdk",
         ":agent-control",
         ":sql-test-client",
-        ":shared:elasticsearch:api-client-native",
+        ":shared:elasticsearch:elasticsearch-java:native-instrumentation",
         ":shared:jdbc:scenarios",
         ":shared:jdbc:opentelemetry-javaagent",
         ":shared:jdbc:opentelemetry-library",
@@ -167,11 +177,15 @@ def test_preserves_database_project_names() -> None:
         ":shared:redis:rediscala:opentelemetry-javaagent",
         ":shared:redis:redisson:opentelemetry-javaagent",
     } <= projects
-    assert not {
-        ":shared:elasticsearch:api-client-javaagent",
-        ":shared:elasticsearch:rest-javaagent",
-        ":shared:elasticsearch:transport-javaagent",
-    } & projects
+    assert (
+        not {
+            ":shared:elasticsearch:elasticsearch-java:opentelemetry-javaagent",
+            ":shared:elasticsearch:elasticsearch-java:opentelemetry-library",
+            ":shared:elasticsearch:rest-javaagent",
+            ":shared:elasticsearch:transport-javaagent",
+        }
+        & projects
+    )
     assert "prepareRuntime" in _gradle(
         SCENARIO_ROOT,
         ":shared:jdbc:opentelemetry-javaagent:tasks",
