@@ -19,6 +19,8 @@ Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
 Cassandra's client, operations, and connection settings are documented
 in its [scenario notes](java/cassandra/README.md).
+R2DBC also uses named workloads, with a separate PostgreSQL telemetry contract.
+See its [reactive workload guide](java/shared/r2dbc/README.md).
 
 ## Running a package
 

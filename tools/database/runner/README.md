@@ -53,10 +53,12 @@ environment declarations:
 | `DATABASE_PASSWORD` | Test-only password                           |
 
 Connection fields let each language construct its native client configuration.
-SQL packages select a contract under
+Packages using indexed SQL contracts select a contract under
 [`contracts/`](../sql-test-client/contracts) using `scenario_contract`. The
 generic conformance runner injects only the selected contract entry's `action`
-into the scenario process.
+into the scenario process. Named telemetry-only contracts, such as
+[R2DBC's](../../../scenarios/database/java/shared/r2dbc/README.md), instead
+declare a run command for each scenario.
 
 Cassandra's additional connection variable and container prerequisites are
 documented in its [scenario notes](../../../scenarios/database/java/cassandra/README.md).
