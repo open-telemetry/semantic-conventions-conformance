@@ -6,19 +6,77 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import cast
 
 from requests import get, post
+from urllib3 import HTTPConnectionPool
+from urllib3.exceptions import (
+    ConnectTimeoutError,
+    ProtocolError,
+    ReadTimeoutError,
+)
+from urllib3.util import Timeout as HttpTimeout
 
 from opentelemetry.test.weaver_live_check import LiveCheckReport
 from opentelemetry.test.weaver_live_check import (
     WeaverLiveCheck as _WeaverLiveCheck,
 )
 
+from ._env import timeout_seconds
+
 logger = logging.getLogger(__name__)
+
+_STARTUP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT", 120.0)
+_HEALTH_TIMEOUT_SECONDS = 1.0
+_POLL_INTERVAL_SECONDS = 0.1
 
 
 class WeaverLiveCheck(_WeaverLiveCheck):
+    def _wait_for_ready(self) -> None:
+        assert self._process is not None
+        startup = timeout_seconds(*_STARTUP_TIMEOUT)
+        deadline = time.monotonic() + startup
+        last_error: ConnectTimeoutError | ProtocolError | ReadTimeoutError | None = None
+        exit_code: int | None = None
+        with HTTPConnectionPool("127.0.0.1", self._admin_port) as health:
+            while (remaining := deadline - time.monotonic()) > 0:
+                exit_code = self._process.poll()
+                if exit_code is not None:
+                    break
+                try:
+                    with health.urlopen(
+                        "GET",
+                        "/health",
+                        timeout=HttpTimeout(
+                            total=min(_HEALTH_TIMEOUT_SECONDS, remaining)
+                        ),
+                        retries=False,
+                        redirect=False,
+                        preload_content=False,
+                    ) as response:
+                        ready = response.status == 200
+                except (ConnectTimeoutError, ProtocolError, ReadTimeoutError) as exc:
+                    last_error = exc
+                    ready = False
+                exit_code = self._process.poll()
+                if exit_code is not None:
+                    break
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                if ready:
+                    return
+                time.sleep(min(_POLL_INTERVAL_SECONDS, remaining))
+        if exit_code is not None:
+            raise RuntimeError(
+                f"WeaverLiveCheck process exited unexpectedly (code {exit_code})"
+            )
+        raise TimeoutError(
+            f"WeaverLiveCheck did not become ready within {startup}s on "
+            f"http://127.0.0.1:{self._admin_port}/health"
+        ) from last_error
+
     def _do_stop(self, timeout: int) -> tuple[LiveCheckReport, int]:
         if not self._ready:
             raise RuntimeError("WeaverLiveCheck process did not start successfully")
