@@ -29,6 +29,7 @@ def _model():
         ("elasticsearch", "db.elasticsearch.client"),
         ("mariadb", "db.mariadb.client"),
         ("microsoft.sql_server", "db.sql_server.client"),
+        ("mysql", "db.mysql.client"),
         ("postgresql", "db.postgresql.client"),
         ("redis", "db.redis.client"),
     ],

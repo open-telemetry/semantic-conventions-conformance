@@ -11,6 +11,7 @@ from typing import Callable
 from ._container import DatabaseContainer
 from ._elasticsearch import Elasticsearch
 from ._mariadb import MariaDB
+from ._mysql import MySQL
 from ._postgres import Postgres
 from ._redis import Redis
 from ._sql_server import SQLServer
@@ -28,6 +29,7 @@ BACKENDS = {
         Elasticsearch, "elasticsearch", "db.elasticsearch.client"
     ),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
+    "mysql": BackendRegistration(MySQL, "mysql", "db.mysql.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"
     ),

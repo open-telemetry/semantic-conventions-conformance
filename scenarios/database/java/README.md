@@ -37,7 +37,9 @@ connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md). The
 [Elasticsearch scenario notes](elasticsearch/README.md) describe the latest
-Java API Client, its native instrumentation, and its search workload.
+Java API Client, its native instrumentation, and its search workload. MySQL's
+container setup and Connector/J telemetry settings are documented in its
+[scenario notes](mysql/README.md).
 
 Run one package from the repository root:
 
