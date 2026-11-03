@@ -22,9 +22,9 @@ auto-instrumentation packages.
 Each instrumentation side is its own Composer package with its own committed
 `composer.lock`. This keeps the measured dependency graph exact without
 creating a PHP-wide build root. All packages use the path dependency from
-[`tools/http/test-client/php`](../../../tools/http/test-client/php). All except
-Slim also use [`tools/php/scenario`](../../../tools/php/scenario) to read
-runtime configuration such as the mock server's URL.
+[`tools/http/test-client/php`](../../../tools/http/test-client/php). Client
+packages also use [`tools/php/scenario`](../../../tools/php/scenario) to read
+the mock server's URL.
 
 PHP auto-instrumentation needs the `opentelemetry` extension and
 `OTEL_PHP_AUTOLOAD_ENABLED=true`. OTLP uses gRPC because Weaver live-check

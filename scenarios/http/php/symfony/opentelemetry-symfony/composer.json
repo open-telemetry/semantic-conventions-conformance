@@ -9,7 +9,6 @@
     "open-telemetry/sdk": "^1.15",
     "open-telemetry/transport-grpc": "^1.2",
     "open-telemetry-conformance/http-test-client": "dev-main",
-    "open-telemetry-conformance/scenario": "dev-main",
     "symfony/event-dispatcher": "^7.4",
     "symfony/http-foundation": "^7.4",
     "symfony/http-kernel": "^7.4",
@@ -28,16 +27,6 @@
         "symlink": false,
         "versions": {
           "open-telemetry-conformance/http-test-client": "dev-main"
-        }
-      }
-    },
-    {
-      "type": "path",
-      "url": "../../../../../tools/php/scenario",
-      "options": {
-        "symlink": false,
-        "versions": {
-          "open-telemetry-conformance/scenario": "dev-main"
         }
       }
     }

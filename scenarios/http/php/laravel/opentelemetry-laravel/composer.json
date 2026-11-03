@@ -9,8 +9,7 @@
     "open-telemetry/opentelemetry-auto-laravel": "^1.8",
     "open-telemetry/sdk": "^1.15",
     "open-telemetry/transport-grpc": "^1.2",
-    "open-telemetry-conformance/http-test-client": "dev-main",
-    "open-telemetry-conformance/scenario": "dev-main"
+    "open-telemetry-conformance/http-test-client": "dev-main"
   },
   "config": {
     "platform": {
@@ -25,16 +24,6 @@
         "symlink": false,
         "versions": {
           "open-telemetry-conformance/http-test-client": "dev-main"
-        }
-      }
-    },
-    {
-      "type": "path",
-      "url": "../../../../../tools/php/scenario",
-      "options": {
-        "symlink": false,
-        "versions": {
-          "open-telemetry-conformance/scenario": "dev-main"
         }
       }
     }

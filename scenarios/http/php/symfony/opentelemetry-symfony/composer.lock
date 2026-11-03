@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0785cddb21f4a35cbbf5a1e55a7e69ea",
+    "content-hash": "ccbc840c117853bdfbe9edd377e91367",
     "packages": [
         {
             "name": "brick/math",
@@ -323,37 +323,6 @@
                 "Apache-2.0"
             ],
             "description": "The HTTP conformance exchanges a PHP scenario answers or sends.",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
-        },
-        {
-            "name": "open-telemetry-conformance/scenario",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../../../../../tools/php/scenario",
-                "reference": "52f6e23e90c815d2b2eacb536e26153db800e979"
-            },
-            "require": {
-                "php": ">=8.2"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "OpenTelemetry\\Conformance\\Scenario\\": "src/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "@php tests/run.php"
-                ]
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Environment support shared by PHP conformance scenarios.",
             "transport-options": {
                 "symlink": false,
                 "relative": true
@@ -2628,8 +2597,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "open-telemetry-conformance/http-test-client": 20,
-        "open-telemetry-conformance/scenario": 20
+        "open-telemetry-conformance/http-test-client": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
