@@ -30,5 +30,5 @@ does not satisfy this definition. The shared contract does not require
 not check its Oracle-specific meaning. Recording this gap as a report-only
 finding depends on [#384][contract-findings].
 
-[oracle-semconv]: https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/db/oracledb.md
+[oracle-semconv]: https://github.com/open-telemetry/semantic-conventions/blob/v1.45.0/docs/db/oracledb.md
 [contract-findings]: https://github.com/open-telemetry/semantic-conventions-conformance/issues/384
