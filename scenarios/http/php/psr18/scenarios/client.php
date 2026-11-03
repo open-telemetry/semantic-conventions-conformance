@@ -10,11 +10,12 @@ use OpenTelemetry\Conformance\Http\ClientWorkload;
 use OpenTelemetry\Conformance\Http\Contract;
 use OpenTelemetry\Conformance\Http\Response;
 use OpenTelemetry\Conformance\Scenario\Environment;
+use Symfony\Component\HttpClient\CurlHttpClient;
 use Symfony\Component\HttpClient\Psr18Client;
 
 function drivePsr18Scenario(): void
 {
-    $client = new Psr18Client();
+    $client = new Psr18Client(new CurlHttpClient());
     ClientWorkload::drive(
         Environment::requireValue('MOCK_SERVER_URL'),
         static function (

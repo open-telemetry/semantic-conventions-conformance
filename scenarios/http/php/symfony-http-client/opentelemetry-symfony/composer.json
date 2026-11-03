@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "require": {
     "php": ">=8.4.1",
+    "ext-curl": "*",
     "open-telemetry/exporter-otlp": "^1.4",
     "open-telemetry/opentelemetry-auto-symfony": "^1.4",
     "open-telemetry/sdk": "^1.15",

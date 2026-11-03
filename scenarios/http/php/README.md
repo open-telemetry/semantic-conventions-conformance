@@ -29,8 +29,9 @@ the mock server's URL.
 PHP auto-instrumentation needs the `opentelemetry` extension and
 `OTEL_PHP_AUTOLOAD_ENABLED=true`. OTLP uses gRPC because Weaver live-check
 receives OTLP gRPC, so the runtime also needs the `grpc` and `protobuf`
-extensions. CodeIgniter needs `intl`, curl needs `curl`, and the self-contained
-WordPress fixture uses `pdo_sqlite`.
+extensions. CodeIgniter needs `intl`, and the curl, PSR-18, and Symfony HTTP
+Client scenarios need `curl`. The self-contained WordPress fixture uses
+`pdo_sqlite`.
 
 The measured releases emit stable HTTP attributes by default. Runs therefore
 need no `OTEL_SEMCONV_STABILITY_OPT_IN`.
