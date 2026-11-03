@@ -3,15 +3,20 @@
 
 "use strict";
 
-const path = require("node:path");
-
-const { runBrowserScenario } = require("@otel-conformance/browser-runner");
+const { runInBrowser } = require("@otel-conformance/browser-runner");
 const { scenarioRequest } = require("@otel-conformance/http-test-client");
 
-runBrowserScenario({
-  entrypoint: path.join(__dirname, "browser.js"),
-  exchanges: [scenarioRequest()],
-}).catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+runInBrowser({
+  page: require.resolve("./browser.js"),
+  data: { exchanges: [scenarioRequest()] },
+}).then(
+  (answered) => {
+    for (const line of answered) {
+      console.log(line);
+    }
+  },
+  (error) => {
+    console.error(error);
+    process.exitCode = 1;
+  },
+);

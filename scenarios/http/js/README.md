@@ -61,19 +61,22 @@ undici does not go through Node's `http` module, so its client spans come from
 ## Fetch
 
 Fetch is a browser API, so its scenario opens a headless browser through the
-shared browser runner. The runner serves the bundled browser workload, reserves
-only its own exporter and script endpoints, and proxies every contract request
-to the mock server unchanged. Browser spans therefore retain the contract's
-exact path and query string. Its telemetry bridge accepts the browser's
-OTLP/HTTP protobuf exports and forwards them to the runner's OTLP/gRPC
-collector; the exporter endpoint is ignored by Fetch instrumentation.
+[shared browser runner](../../../tools/js/README.md#browser-scenarios). The page
+sends the contract request to its own origin, which proxies it to the mock
+server unchanged, so a span keeps the contract's exact path and query string.
+Spans export over OTLP/HTTP to the same origin and on to the runner's bridge,
+and Fetch instrumentation ignores those exports.
 
-The browser runner first launches an installed Google Chrome and falls back to
-Playwright-managed Chromium. Install that fallback once in the build root when
+Fetch ends a span only after the response and its resource timing arrive, so
+the page waits up to 20 seconds for the span to be exported and reports how
+many were if it times out.
+
+The runner first launches an installed Google Chrome and falls back to
+Playwright's Chromium. Install that fallback once in the build root when
 Chrome is unavailable:
 
 ```sh
-npm exec playwright install chromium
+npm exec playwright-core install chromium
 ```
 
 ## Running one

@@ -12,11 +12,23 @@ const {
 } = require("@opentelemetry/instrumentation-fetch");
 const {
   SimpleSpanProcessor,
-  WebTracerProvider,
-} = require("@opentelemetry/sdk-trace-web");
+  TracerProvider,
+} = require("@opentelemetry/sdk-trace");
+const {
+  BRIDGE_PATH,
+  exportUrl,
+  exposeScenario,
+  within,
+} = require("@otel-conformance/browser-runner/page");
 const { drive } = require("@otel-conformance/fetch-scenarios");
 
-/** Resolves once exactly `expected` Fetch spans have reached the exporter. */
+const SPANS_TIMEOUT_MILLIS = 20_000;
+
+/**
+ * Counts the spans the exporter has handed on. Fetch instrumentation ends a
+ * span only after the response and its resource timing arrive, so the spans
+ * come after the workload returned.
+ */
 function trackingExporter(exporter, expected) {
   let exported = 0;
   let resolve;
@@ -48,40 +60,31 @@ function trackingExporter(exporter, expected) {
       return exporter.shutdown();
     },
     waitForExpectedSpans() {
-      return complete;
+      return within(
+        complete,
+        SPANS_TIMEOUT_MILLIS,
+        () => `expected ${expected} Fetch spans, exported ${exported}`,
+      );
     },
   };
 }
 
-async function run() {
-  const { baseUrl, exchanges, traceExporterUrl } = window.__otelConformance;
+exposeScenario(async ({ exchanges }) => {
   const exporter = trackingExporter(
-    new OTLPTraceExporter({ url: traceExporterUrl }),
+    new OTLPTraceExporter({ url: exportUrl("traces") }),
     exchanges.filter((exchange) => !exchange.readiness).length,
   );
-  const provider = new WebTracerProvider({
-    spanProcessors: [new SimpleSpanProcessor(exporter)],
+  const provider = new TracerProvider({
+    spanProcessors: [new SimpleSpanProcessor({ exporter })],
   });
-  provider.register();
   registerInstrumentations({
     tracerProvider: provider,
     instrumentations: [
-      new FetchInstrumentation({ ignoreUrls: [traceExporterUrl] }),
+      new FetchInstrumentation({ ignoreUrls: [new RegExp(`${BRIDGE_PATH}/`)] }),
     ],
   });
-  await drive(baseUrl, exchanges);
+  const answered = await drive(location.origin, exchanges);
   await exporter.waitForExpectedSpans();
   await provider.forceFlush();
-}
-
-run().then(
-  () => {
-    window.__otelConformanceResult = { ok: true };
-  },
-  (error) => {
-    window.__otelConformanceResult = {
-      ok: false,
-      error: String(error.stack || error),
-    };
-  },
-);
+  return answered;
+});

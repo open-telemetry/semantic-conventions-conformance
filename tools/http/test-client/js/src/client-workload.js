@@ -14,8 +14,8 @@
  * The shared telemetry contract checks what these requests emit.
  */
 
-const { renderResponseBody, scenarioRequest } = require("./contract");
-const { isJsonEqual } = require("./json-equal");
+const { scenarioRequest } = require("./contract");
+const { verify } = require("./response");
 
 /**
  * Sends the runner-selected contract request at `baseUrl` through `send`.
@@ -42,28 +42,6 @@ async function drive(baseUrl, send) {
       `${abbreviate(response.body)}`,
   );
   verify(exchange, response);
-}
-
-/** Checks one answer against the exchange that describes it. */
-function verify(exchange, response) {
-  const where = `${exchange.method} ${exchange.path}`;
-  if (response.status !== exchange.status) {
-    throw new Error(
-      `${where} answered ${response.status}, but the contract's request ` +
-        `answers ${exchange.status}`,
-    );
-  }
-
-  // Parsed, not compared as text: whitespace and key order are a language's
-  // choice of JSON writer, and neither is part of the contract.
-  const expected = JSON.parse(renderResponseBody(exchange, exchange.body));
-  const actual = JSON.parse(response.body);
-  if (!isJsonEqual(actual, expected)) {
-    throw new Error(
-      `${where} answered ${JSON.stringify(actual)}, but the contract's ` +
-        `request answers ${JSON.stringify(expected)}`,
-    );
-  }
 }
 
 function abbreviate(value) {

@@ -2,15 +2,22 @@
   "name": "@otel-conformance/browser-runner",
   "version": "0.1.0",
   "private": true,
-  "description": "Runs a bundled browser conformance workload and bridges its OTLP telemetry.",
+  "description": "Runs a browser conformance scenario in headless Chrome and relays what it exports.",
   "license": "Apache-2.0",
   "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./page": "./page.js"
+  },
+  "files": [
+    "index.js",
+    "page.js"
+  ],
   "scripts": {
-    "test": "node test/index.test.js"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
-    "@grpc/grpc-js": "1.14.4",
-    "@playwright/test": "1.62.1",
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "playwright-core": "1.64.1"
   }
 }

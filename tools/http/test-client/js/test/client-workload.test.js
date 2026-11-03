@@ -59,6 +59,15 @@ describe("driving the contract", () => {
     );
   });
 
+  it("names the request when the body is not JSON", async () => {
+    await withScenarioIndex(0, () =>
+      assert.rejects(
+        () => drive(BASE_URL, () => ({ status: 200, body: "not json" })),
+        /^Error: GET \/users\/123 answered "not json", which is not JSON$/,
+      ),
+    );
+  });
+
   it("accepts equivalent JSON with a different object key order", async () => {
     await withScenarioIndex(0, () =>
       drive(BASE_URL, () => ({

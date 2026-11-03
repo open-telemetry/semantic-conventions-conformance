@@ -7,7 +7,7 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./json-equal": "./src/json-equal.js"
+    "./response": "./src/response.js"
   },
   "files": [
     "src"

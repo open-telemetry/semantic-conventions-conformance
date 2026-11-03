@@ -8,6 +8,12 @@ scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 setup: otel-conformance-js install
 
+# A browser exports OTLP/HTTP only. The page posts to its own origin, which
+# relays to the runner's bridge.
+otlp_protocol: http/protobuf
+
+# The mock server answers the same contract; the page reaches it through its
+# own origin, which proxies to ${MOCK_SERVER_URL}.
 server:
   run: http-mock-server --port ${PORT}
 
