@@ -2,6 +2,7 @@
   "spans": {
     "http.server": [
       "client.address",
+      "error.type",
       "http.request.method",
       "http.response.status_code",
       "http.route",
@@ -28,6 +29,15 @@
     ]
   },
   "entities": {
+    "host": {
+      "identity": [
+        "host.id"
+      ],
+      "description": [
+        "host.arch",
+        "host.name"
+      ]
+    },
     "process.runtime": {
       "identity": [
         "process.runtime.name",
@@ -76,15 +86,6 @@
         "expected": {
           "present": true
         }
-      }
-    },
-    {
-      "id": "error_type_missing_on_error",
-      "message": "Span 'GET /status/:code' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
-      "signal_type": "span",
-      "signal_name": "GET /status/:code",
-      "context": {
-        "status_code": "error"
       }
     },
     {

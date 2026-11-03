@@ -29,11 +29,10 @@ class TelemetryFlusherTest {
     CountDownLatch started = new CountDownLatch(2);
     flusher.addTrace(() -> pending("trace", events, started, trace));
     flusher.addLog(() -> pending("log", events, started, log));
-    flusher.addMetric(
-        () -> {
-          events.add("metric");
-          return CompletableResultCode.ofSuccess();
-        });
+    flusher.addMetric(() -> {
+      events.add("metric");
+      return CompletableResultCode.ofSuccess();
+    });
 
     try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
       Future<?> flushing = executor.submit(() -> flusher.flushTracesAndLogs(1_000));

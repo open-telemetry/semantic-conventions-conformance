@@ -24,28 +24,25 @@ public final class RatpackServerScenario {
 
   public static void run(Consumer<RegistrySpec> registryCustomizer) throws Exception {
     RatpackServer server =
-        RatpackServer.of(
-            definition -> {
-              definition.serverConfig(
-                  config ->
-                      config
-                          .port(HttpServerWorkload.scenarioPort())
-                          .address(InetAddress.getByName("127.0.0.1")));
-              definition.registryOf(registryCustomizer::accept);
-              definition.handlers(
-                  chain ->
-                      chain
-                          .get("health", context -> answer(context, null))
-                          .get("users/:userId", context -> answer(context, null))
-                          .post(
-                              "items",
-                              context ->
-                                  context
-                                      .getRequest()
-                                      .getBody()
-                                      .then(body -> answer(context, body.getText())))
-                          .get("status/:code", context -> answer(context, null)));
-            });
+        RatpackServer.of(definition -> {
+          definition.serverConfig(config ->
+              config
+                  .port(HttpServerWorkload.scenarioPort())
+                  .address(InetAddress.getByName("127.0.0.1")));
+          definition.registryOf(registryCustomizer::accept);
+          definition.handlers(chain ->
+              chain
+                  .get("health", context -> answer(context, null))
+                  .get("users/:userId", context -> answer(context, null))
+                  .post(
+                      "items",
+                      context ->
+                          context
+                              .getRequest()
+                              .getBody()
+                              .then(body -> answer(context, body.getText())))
+                  .get("status/:code", context -> answer(context, null)));
+        });
 
     server.start();
     try {
