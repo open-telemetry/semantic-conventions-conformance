@@ -23,10 +23,10 @@ jobs:
         include:
           # Test the runner on each supported operating system.
           - os: ubuntu-latest
-            python-version: "3.14"
+            python-version: "3.15"
           # A native PowerShell run for the supported Windows path.
           - os: windows-latest
-            python-version: "3.14"
+            python-version: "3.15"
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -419,12 +419,11 @@ jobs:
         with:
           persist-credentials: false
 
-      # Every leg: the relock commands are Python CLIs. Stays on the
-      # scenarios job's Python (see there).
+      # Every leg: the relock commands are Python CLIs.
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       # Toolchains pinned exactly as in the scenarios job, since the tool
       # version can change what a lock file says. Every setup step below
@@ -563,13 +562,10 @@ jobs:
             echo "applied=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # Python scenarios run on this interpreter. Stays on 3.14 until every
-      # scenario lock has 3.15 wheels (grpcio, pydantic-core, ...), otherwise
-      # they build from source and time out. Renovate skips it (renovate.json5).
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       - name: Set up uv
         if: matrix.language == 'python'
