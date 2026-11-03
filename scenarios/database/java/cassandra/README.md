@@ -33,10 +33,9 @@ The contract requires one Cassandra client span and
 [shared Java Weaver configuration](../../../../tools/java/weaver.toml) filters
 findings for optional SDK and exporter self-metrics.
 
-The missing-table fixture expects `error.type` to be
-`com.datastax.oss.driver.api.core.servererrors.InvalidQueryException`, the
-classification both pinned instrumentations emit. This fixture expectation
-does not restrict the other representations semantic conventions permit.
+The missing-table fixture requires `error.type` without pinning a
+language-specific value. Semantic conventions permit a protocol status code or
+the canonical exception name.
 
 Both instrumentations omit `db.response.status_code` on this failure.
 Cassandra's Invalid protocol error is `0x2200`, so the expected attribute value
@@ -44,6 +43,8 @@ is `"8704"`. Recording this conditional requirement as a report-only finding
 is tracked in [#384](https://github.com/open-telemetry/semantic-conventions-conformance/issues/384).
 An ordinary contract assertion would fail even with `--report-only`, so the
 contract does not assert this known instrumentation gap.
+Capturing the protocol code is tracked in
+[open-telemetry/opentelemetry-java-instrumentation#21188](https://github.com/open-telemetry/opentelemetry-java-instrumentation/issues/21188).
 
 ## Container and connection
 

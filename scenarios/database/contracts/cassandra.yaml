@@ -73,7 +73,7 @@ scenarios:
             db.collection.name: conformance.missing_table
             db.query.summary: SELECT conformance.missing_table
             db.query.text: SELECT * FROM conformance.missing_table
-            error.type: com.datastax.oss.driver.api.core.servererrors.InvalidQueryException
+            error.type: {present: true}
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics:
