@@ -55,7 +55,7 @@ jobs:
 
       - name: Set up Gradle for Redis connection tests
         if: runner.os == 'Linux'
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Prepare Redis connection tests
         if: runner.os == 'Linux'
@@ -118,7 +118,7 @@ jobs:
           java-version: "25"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       # Compiles, formats and unit-tests every Java scenario build.
       - name: Build Java
@@ -146,7 +146,7 @@ jobs:
           npm --prefix docs test
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
         with:
           ruby-version: "4.0.9"
           bundler-cache: true
@@ -173,7 +173,7 @@ jobs:
           bundle exec rake
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           global-json-file: scenarios/http/dotnet/global.json
 
@@ -444,15 +444,15 @@ jobs:
 
       - name: Set up uv
         if: matrix.ecosystem == 'python'
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.13.6"
+          version: "0.13.7"
 
       # No bundler-cache: it runs a frozen `bundle install`, which fails on
       # exactly the stale lock this job is here to fix.
       - name: Set up Ruby
         if: matrix.ecosystem == 'ruby'
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
         with:
           ruby-version: "4.0.9"
 
@@ -569,11 +569,11 @@ jobs:
 
       - name: Set up uv
         if: matrix.language == 'python'
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           # `uv lock` can rewrite the lock format with a new uv, so relocking
           # needs the same uv every time.
-          version: "0.13.6"
+          version: "0.13.7"
           enable-cache: true
           cache-suffix: ${{ matrix.matrix_id }}
           # Scope lockfiles to this matrix job so each Python matrix job caches
@@ -590,7 +590,7 @@ jobs:
 
       - name: Set up Gradle
         if: matrix.language == 'java'
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       # A Node scenario installs its workspace from the lockfile in its `setup:`.
       - name: Set up Node
@@ -606,13 +606,13 @@ jobs:
       # `global.json` pins.
       - name: Set up .NET
         if: matrix.language == 'dotnet'
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           global-json-file: scenarios/${{ matrix.domain }}/${{ matrix.language }}/global.json
 
       - name: Set up Ruby
         if: matrix.language == 'ruby'
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
         with:
           ruby-version: "4.0.9"
           bundler-cache: true
