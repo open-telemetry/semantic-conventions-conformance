@@ -14,7 +14,7 @@ Run the package from the repository root:
 
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
-otel-conformance scenarios/database/java/hbase/native
+otel-conformance scenarios/database/java/hbase/hbase-client/native
 ```
 
 For the repository's CI reporting mode, add `--report-only`. Semantic violations
@@ -23,7 +23,7 @@ mismatches still fail the run.
 
 ## Native SDK integration
 
-The [native launcher](native/src/main/java/HbaseNativeScenario.java) initializes
+The [native launcher](../shared/hbase/hbase-client/native/src/main/java/HbaseNativeScenario.java) initializes
 the repository's `ScenarioSdk` before opening an HBase connection. SDK
 autoconfiguration registers its result as `GlobalOpenTelemetry`, which HBase's
 `TraceUtil.getGlobalTracer()` uses with scope `org.apache.hbase` and client version
@@ -63,7 +63,7 @@ The runner supplies `DATABASE_HOST` and `DATABASE_PORT` as
 `HBASE_BOOTSTRAP_SERVERS` for the client's RPC connection registry on port 16000.
 These fixtures use no client authentication.
 
-The [shared workload](../shared/hbase/scenarios) imports no OpenTelemetry code.
+The [shared workload](../shared/hbase/hbase-client/scenarios) imports no OpenTelemetry code.
 Each operation runs in a separate process:
 
 | Scenario | HBase client call | Workload |
@@ -87,7 +87,8 @@ maps backend selector `hbase` to system `hbase` and client span type
 `db.hbase.client`.
 
 Each scenario requires exactly one native CLIENT span for GET, PUT, SCAN, or
-BATCH on `conformance:items`, or a failed GET on `conformance:missing`. It checks the native `db.name=conformance` and
+BATCH on `conformance:items`, or a failed GET on `conformance:missing`. It checks
+the native `db.name=conformance` and
 `db.connection_string=127.0.0.1:16000`, plus scope `org.apache.hbase` with a
 version. The BATCH span must identify PUT operations. The workload itself writes
 two rows and rejects per-row errors.
@@ -121,10 +122,10 @@ CLIENT span under `org.apache.hbase` version `3.0.0`. Strict conformance fails:
 
 No native findings are waived or filtered out. The package reuses the shared
 Java Weaver configuration for SDK infrastructure findings only.
-The committed [coverage](native/data.json) comes from fresh native-only runs.
+The committed [coverage](hbase-client/native/data.json) comes from fresh native-only runs.
 Stable database span and metric coverage is empty; entity coverage and the real
 findings remain recorded. Raw per-workload reports are written under
-`native/output/weaver-reports/` when running the command above.
+`hbase-client/native/output/weaver-reports/` when running the command above.
 
 All five scenarios satisfy their native telemetry expectations. Strict runs
 report 52 violations for GET, 52 for PUT, 47 for SCAN, 53 for BATCH, and 48 for

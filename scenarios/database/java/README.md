@@ -39,7 +39,9 @@ JDBC prerequisites are documented in its
 
 HBase's shared workload exercises the latest stable client's native telemetry,
 without the Java agent. Its [scenario notes](hbase/README.md) cover SDK integration,
-Java toolchains, fixture requirements, and observed conformance gaps.
+Java toolchains, fixture requirements, and observed conformance gaps. The package
+is `hbase/hbase-client/native`; its launcher and workload live under
+`shared/hbase/hbase-client/`.
 
 Run one package from the repository root:
 

@@ -84,9 +84,9 @@ def test_hbase_contract_requires_the_native_workload_span(
     sdk_metrics: dict[str, int],
 ) -> None:
     root = Path(__file__).resolve().parents[4]
-    spec = load_spec(root / "scenarios/database/java/hbase/native").scenarios[
-        scenario
-    ]
+    spec = load_spec(
+        root / "scenarios/database/java/hbase/hbase-client/native"
+    ).scenarios[scenario]
     table = (
         "conformance:missing" if scenario == "error" else "conformance:items"
     )
@@ -135,9 +135,9 @@ def test_hbase_batch_requires_native_put_operations(
     operations: list[str],
 ) -> None:
     root = Path(__file__).resolve().parents[4]
-    spec = load_spec(root / "scenarios/database/java/hbase/native").scenarios[
-        "batch"
-    ]
+    spec = load_spec(
+        root / "scenarios/database/java/hbase/hbase-client/native"
+    ).scenarios["batch"]
     assert _check_spans(
         spec,
         [
@@ -159,9 +159,9 @@ def test_hbase_batch_requires_native_put_operations(
 
 def test_hbase_contract_rejects_unrelated_client_spans() -> None:
     root = Path(__file__).resolve().parents[4]
-    spec = load_spec(root / "scenarios/database/java/hbase/native").scenarios[
-        "get"
-    ]
+    spec = load_spec(
+        root / "scenarios/database/java/hbase/hbase-client/native"
+    ).scenarios["get"]
     failures = _check_spans(
         spec,
         [
@@ -187,16 +187,22 @@ def test_hbase_native_package_keeps_emission_checks_without_waivers_or_agent() -
     None
 ):
     root = Path(__file__).resolve().parents[4]
-    spec = load_spec(root / "scenarios/database/java/hbase/native")
+    spec = load_spec(
+        root / "scenarios/database/java/hbase/hbase-client/native"
+    )
     assert spec.runner_config == {"backend": "hbase"}
     assert spec.instrumentation_library == "org.apache.hbase:hbase-client"
-    assert spec.setup == ("otel-conformance-java", "prepare", "hbase:native")
+    assert spec.setup == (
+        "otel-conformance-java",
+        "prepare",
+        "shared:hbase:hbase-client:native",
+    )
     assert set(spec.scenarios) == {"get", "put", "scan", "batch", "error"}
     for name, scenario in spec.scenarios.items():
         assert scenario.run == (
             "otel-conformance-java",
             "run",
-            "hbase:native",
+            "shared:hbase:hbase-client:native",
             "HbaseNativeScenario",
             name,
         )

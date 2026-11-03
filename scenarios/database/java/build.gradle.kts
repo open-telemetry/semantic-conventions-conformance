@@ -1,8 +1,8 @@
 // HBase's Hadoop dependencies need Java 21, including the shared code it loads.
 configure(
     listOf(
-        project(":shared:hbase:scenarios"),
-        project(":hbase:native"),
+        project(":shared:hbase:hbase-client:scenarios"),
+        project(":shared:hbase:hbase-client:native"),
         project(":scenario-support"),
         project(":scenario-sdk"),
     ),
