@@ -49,6 +49,33 @@ function mockServer() {
   });
 }
 
+/**
+ * A server that takes a request and never answers it. `requested` resolves
+ * when the request arrives and `closed` when its connection is dropped.
+ */
+function hanging() {
+  let requested;
+  let closed;
+  const server = http.createServer((request, response) => {
+    response.on("close", closed);
+    requested();
+  });
+  server.requested = new Promise((resolve) => (requested = resolve));
+  server.closed = new Promise((resolve) => (closed = resolve));
+  return new Promise((resolve) => {
+    server.listen(0, "127.0.0.1", () => resolve(server));
+  });
+}
+
+/** Rejects with `what` if `promise` has not settled within a few seconds. */
+function soon(promise, what) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${what} timed out`)), 5_000);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 const url = (server) => `http://127.0.0.1:${server.address().port}`;
 
 function closeAll(...servers) {
@@ -217,6 +244,49 @@ describe("serve, with the endpoint down", () => {
   });
 });
 
+describe("serve, with nothing answering", () => {
+  let otlp;
+  let mock;
+  let origin;
+
+  before(async () => {
+    otlp = await hanging();
+    mock = await hanging();
+    origin = await serve({
+      script: "",
+      otlpEndpoint: new URL(url(otlp)),
+      mockServer: new URL(url(mock)),
+    });
+  });
+
+  after(() => closeAll(origin, otlp, mock));
+
+  /** Requests `path`, then gives up once `server` has it. */
+  async function abandon(path, server, init = {}) {
+    const controller = new AbortController();
+    const answered = fetch(`${url(origin)}${path}`, {
+      ...init,
+      signal: controller.signal,
+    }).catch(() => {});
+    await soon(server.requested, "the request");
+    controller.abort();
+    await answered;
+  }
+
+  it("cancels an export once nothing waits for it", async () => {
+    await abandon("/_otel-conformance/v1/logs", otlp, {
+      method: "POST",
+      body: new Uint8Array([1]),
+    });
+    await soon(otlp.closed, "cancelling the export");
+  });
+
+  it("cancels a proxied request once nothing waits for it", async () => {
+    await abandon("/users/123", mock);
+    await soon(mock.closed, "cancelling the request");
+  });
+});
+
 describe("launchBrowser", () => {
   it("falls back to Playwright's Chromium", async () => {
     const launches = [];
@@ -308,6 +378,19 @@ describe("runInBrowser", () => {
       run(otlp, "exports", { data: { path: "/" } }),
       /exports were not accepted: \/v1\/traces failed: /,
     );
+  });
+
+  it("lets go of an endpoint that never answers", async () => {
+    const otlp = await hanging();
+    try {
+      await assert.rejects(
+        run(otlp, "exports", { data: { path: "/" }, timeoutMillis: 1_000 }),
+        /the page's workload did not finish within 1000 ms/,
+      );
+      await soon(otlp.closed, "cancelling the export");
+    } finally {
+      closeAll(otlp);
+    }
   });
 
   it("fails with the page's own error when its bundle throws", async () => {
