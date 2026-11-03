@@ -24,12 +24,11 @@ public final class ReactorNettyClientScenario {
         (method, url, body) -> {
           HttpClient.RequestSender sender =
               client
-                  .headers(
-                      headers -> {
-                        if (body != null) {
-                          headers.set("content-type", HttpContract.CONTENT_TYPE);
-                        }
-                      })
+                  .headers(headers -> {
+                    if (body != null) {
+                      headers.set("content-type", HttpContract.CONTENT_TYPE);
+                    }
+                  })
                   .request(HttpMethod.valueOf(method))
                   .uri(url);
           HttpClient.ResponseReceiver<?> receiver =
@@ -39,12 +38,11 @@ public final class ReactorNettyClientScenario {
 
           HttpContract.Response response =
               receiver
-                  .responseSingle(
-                      (status, content) ->
-                          content
-                              .asString()
-                              .defaultIfEmpty("")
-                              .map(text -> new HttpContract.Response(status.status().code(), text)))
+                  .responseSingle((status, content) ->
+                      content
+                          .asString()
+                          .defaultIfEmpty("")
+                          .map(text -> new HttpContract.Response(status.status().code(), text)))
                   .block(HttpClientWorkload.REQUEST_TIMEOUT);
           if (response == null) {
             throw new IllegalStateException(

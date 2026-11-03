@@ -64,24 +64,20 @@ public final class ArmeriaServerScenario {
         .route()
         .methods(method)
         .path(path)
-        .build(
-            (context, request) ->
-                HttpResponse.of(
-                    request
-                        .aggregate()
-                        .thenApply(
-                            aggregated -> {
-                              Response answer =
-                                  HttpServerWorkload.respond(
-                                      aggregated.method().name(),
-                                      context.path(),
-                                      aggregated.content().isEmpty()
-                                          ? null
-                                          : aggregated.contentUtf8());
-                              return HttpResponse.of(
-                                  HttpStatus.valueOf(answer.statusCode()),
-                                  MediaType.parse(HttpContract.CONTENT_TYPE),
-                                  answer.body());
-                            })));
+        .build((context, request) ->
+            HttpResponse.of(
+                request
+                    .aggregate()
+                    .thenApply(aggregated -> {
+                      Response answer =
+                          HttpServerWorkload.respond(
+                              aggregated.method().name(),
+                              context.path(),
+                              aggregated.content().isEmpty() ? null : aggregated.contentUtf8());
+                      return HttpResponse.of(
+                          HttpStatus.valueOf(answer.statusCode()),
+                          MediaType.parse(HttpContract.CONTENT_TYPE),
+                          answer.body());
+                    })));
   }
 }

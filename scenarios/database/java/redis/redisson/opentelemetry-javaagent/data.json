@@ -5,6 +5,7 @@
       "db.operation.batch.size",
       "db.operation.name",
       "db.query.text",
+      "db.system.name",
       "error.type",
       "network.peer.address",
       "network.peer.port",
