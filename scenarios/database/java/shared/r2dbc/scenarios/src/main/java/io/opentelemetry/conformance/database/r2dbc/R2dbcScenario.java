@@ -81,11 +81,10 @@ public final class R2dbcScenario {
                 .execute())
         .flatMapMany(result -> result.map((row, metadata) -> row.get(0, String.class)))
         .hasElements()
-        .flatMap(
-            hasRows ->
-                hasRows
-                    ? Mono.error(new IllegalStateException("bind returned an unexpected row"))
-                    : Mono.empty());
+        .flatMap(hasRows ->
+            hasRows
+                ? Mono.error(new IllegalStateException("bind returned an unexpected row"))
+                : Mono.empty());
   }
 
   private static Mono<Void> batch(Connection connection) {

@@ -58,11 +58,10 @@ class R2dbcScenarioTest {
             Result.class,
             (ignored, method, arguments) -> {
               if (method.getName().equals("getRowsUpdated")) {
-                return Mono.fromSupplier(
-                    () -> {
-                      resultConsumed.set(true);
-                      return 0L;
-                    });
+                return Mono.fromSupplier(() -> {
+                  resultConsumed.set(true);
+                  return 0L;
+                });
               }
               throw new AssertionError("unexpected Result method: " + method.getName());
             });
@@ -84,11 +83,10 @@ class R2dbcScenarioTest {
                 return statement;
               }
               if (method.getName().equals("close")) {
-                return Mono.fromRunnable(
-                    () -> {
-                      assertTrue(resultConsumed.get(), "result was not consumed before close");
-                      connectionClosed.set(true);
-                    });
+                return Mono.fromRunnable(() -> {
+                  assertTrue(resultConsumed.get(), "result was not consumed before close");
+                  connectionClosed.set(true);
+                });
               }
               throw new AssertionError("unexpected Connection method: " + method.getName());
             });
