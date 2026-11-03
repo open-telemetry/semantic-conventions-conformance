@@ -17,6 +17,9 @@ it to the client API. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
+MongoDB's [workload guide](java/shared/mongodb/README.md) describes the shared
+commands and telemetry expectations across its synchronous and Reactive Streams
+driver APIs.
 R2DBC also uses named workloads, with a separate PostgreSQL telemetry contract.
 See its [reactive workload guide](java/shared/r2dbc/README.md).
 

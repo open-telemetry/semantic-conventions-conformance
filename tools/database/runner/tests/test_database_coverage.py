@@ -36,6 +36,12 @@ def test_redis_client_span_uses_the_vendor_refinement() -> None:
     }
 
 
+def test_mongodb_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span("find items", "CLIENT", {"db.system.name": "mongodb"}) == {
+        "db.mongodb.client"
+    }
+
+
 def test_an_unsupported_database_system_is_not_classified() -> None:
     assert (
         classify_span("SELECT", "CLIENT", {"db.system.name": "sqlite"}) == set()
@@ -94,6 +100,7 @@ def test_classifier_only_returns_registered_client_types_in_the_registry() -> No
         {
             "spans": {
                 "db.postgresql.client": {"kind": "server"},
+                "db.mongodb.client": {"kind": "client"},
                 "db.redis.client": {"kind": "client"},
             }
         }
@@ -101,6 +108,9 @@ def test_classifier_only_returns_registered_client_types_in_the_registry() -> No
 
     assert classify("SELECT", "CLIENT", {"db.system.name": "postgresql"}) == set()
     assert classify("SELECT", "CLIENT", {"db.system.name": "mariadb"}) == set()
+    assert classify("find items", "CLIENT", {"db.system.name": "mongodb"}) == {
+        "db.mongodb.client"
+    }
     assert classify("GET", "CLIENT", {"db.system.name": "redis"}) == {
         "db.redis.client"
     }

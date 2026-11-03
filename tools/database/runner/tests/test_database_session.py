@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 
 import database_conformance
+from database_conformance._mongodb import MongoDB
 from database_conformance._mysql import MySQL
 from database_conformance._oracle import Oracle
 from database_conformance._redis import Redis
@@ -117,13 +118,14 @@ def test_database_session_injects_backend_variables(
 
 
 @pytest.mark.parametrize(
-    "backend, backend_type", [("oracle", Oracle), ("redis", Redis)]
+    "backend, backend_type",
+    [("mongodb", MongoDB), ("oracle", Oracle), ("redis", Redis)],
 )
 def test_database_session_closes_backend_after_an_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     backend: str,
-    backend_type: type[Oracle] | type[Redis],
+    backend_type: type[MongoDB] | type[Oracle] | type[Redis],
 ) -> None:
     closed = False
 
