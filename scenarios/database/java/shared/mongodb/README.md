@@ -19,9 +19,8 @@ aggregation command includes `cursor.batchSize`, unlike the synchronous command.
 Package configurations declare only their run commands. Each expectation also
 accounts for the driver's `endSessions` command when the client closes.
 
-MongoDB instrumentation does not currently emit `db.query.summary`. Coverage
-records that omission; the contracts accept the attribute if instrumentation
-starts emitting it.
+MongoDB semantic conventions do not define `db.query.summary` on spans, so its
+absence is conformant.
 
 Standalone library launchers pass the driver's configured seed addresses to
 `MongoTelemetry.createCommandListener` so `server.address` and `server.port`
