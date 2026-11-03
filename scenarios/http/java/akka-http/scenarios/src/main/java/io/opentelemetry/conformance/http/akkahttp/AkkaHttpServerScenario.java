@@ -74,11 +74,10 @@ public final class AkkaHttpServerScenario {
           path(
               "items",
               () ->
-                  post(
-                      () ->
-                          entity(
-                              Unmarshaller.entityToString(),
-                              body -> complete(answer("POST", "/items", body))))),
+                  post(() ->
+                      entity(
+                          Unmarshaller.entityToString(),
+                          body -> complete(answer("POST", "/items", body))))),
           pathPrefix(
               "status",
               () ->

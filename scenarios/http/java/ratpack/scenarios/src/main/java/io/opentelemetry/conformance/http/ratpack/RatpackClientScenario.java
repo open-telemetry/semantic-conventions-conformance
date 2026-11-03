@@ -40,13 +40,12 @@ public final class RatpackClientScenario {
   public static void run(ClientInstrumenter instrumenter, ExecInitializer execInitializer)
       throws Exception {
     RatpackServer server =
-        RatpackServer.start(
-            definition -> {
-              definition.serverConfig(
-                  config -> config.port(0).address(InetAddress.getByName("127.0.0.1")));
-              definition.registryOf(registry -> registry.add(execInitializer));
-              definition.handlers(chain -> {});
-            });
+        RatpackServer.start(definition -> {
+          definition.serverConfig(
+              config -> config.port(0).address(InetAddress.getByName("127.0.0.1")));
+          definition.registryOf(registry -> registry.add(execInitializer));
+          definition.handlers(chain -> {});
+        });
     try {
       ExecController controller =
           server
@@ -82,23 +81,21 @@ public final class RatpackClientScenario {
             URI.create(url),
             request -> {
               request.method(method);
-              request.headers(
-                  headers -> {
-                    headers.set("user-agent", HttpContract.USER_AGENT);
-                    if (body != null) {
-                      headers.set("content-type", HttpContract.CONTENT_TYPE);
-                    }
-                  });
+              request.headers(headers -> {
+                headers.set("user-agent", HttpContract.USER_AGENT);
+                if (body != null) {
+                  headers.set("content-type", HttpContract.CONTENT_TYPE);
+                }
+              });
               if (body != null) {
                 request.body(content -> content.text(body));
               }
             })
         // Read inside the execution: the buffer backing the response is released as soon as it
         // ends.
-        .map(
-            response ->
-                new HttpContract.Response(
-                    response.getStatus().getCode(), response.getBody().getText()));
+        .map(response ->
+            new HttpContract.Response(
+                response.getStatus().getCode(), response.getBody().getText()));
   }
 
   @FunctionalInterface
