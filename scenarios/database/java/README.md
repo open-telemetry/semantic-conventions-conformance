@@ -39,6 +39,9 @@ JDBC prerequisites are documented in its
 Oracle's container, JDBC runtime, and workload requirements are documented in
 its [scenario notes](oracle/README.md).
 
+MySQL's container setup and Connector/J telemetry settings are documented in its
+[scenario notes](mysql/README.md).
+
 Run one package from the repository root:
 
 ```sh

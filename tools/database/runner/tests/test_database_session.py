@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 
 import database_conformance
+from database_conformance._mysql import MySQL
 from database_conformance._oracle import Oracle
 from database_conformance._redis import Redis
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
@@ -143,7 +144,9 @@ def test_database_session_closes_backend_after_an_error(
         del directory, kwargs
         yield object()
 
-    assert database_conformance._BACKEND_REGISTRY[backend].factory is backend_type
+    assert (
+        database_conformance._BACKEND_REGISTRY[backend].factory is backend_type
+    )
     monkeypatch.setitem(
         database_conformance._BACKEND_REGISTRY,
         backend,
@@ -164,6 +167,51 @@ def test_database_session_closes_backend_after_an_error(
             raise RuntimeError("scenario failed")
 
     assert closed
+
+
+def test_database_session_dispatches_mysql(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    entered = False
+
+    class StubBackend:
+        variables: dict[str, str] = {}
+
+        def __enter__(self) -> StubBackend:
+            nonlocal entered
+            entered = True
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            pass
+
+    @contextmanager
+    def stub_session(
+        directory: Path | str, **kwargs: Any
+    ) -> Generator[object, None, None]:
+        del directory, kwargs
+        yield object()
+
+    registration = database_conformance._BACKEND_REGISTRY["mysql"]
+    assert registration.factory is MySQL
+    assert registration.system == "mysql"
+    assert registration.client_span_type == "db.mysql.client"
+
+    monkeypatch.setitem(
+        database_conformance._BACKEND_REGISTRY,
+        "mysql",
+        replace(registration, factory=StubBackend),
+    )
+    monkeypatch.setattr(
+        database_conformance,
+        "DOMAIN",
+        SimpleNamespace(session=stub_session),
+    )
+    spec = _write_spec(tmp_path, "  backend: mysql")
+
+    with database_conformance.database_session(tmp_path, spec=spec):
+        assert entered
 
 
 @pytest.mark.parametrize(

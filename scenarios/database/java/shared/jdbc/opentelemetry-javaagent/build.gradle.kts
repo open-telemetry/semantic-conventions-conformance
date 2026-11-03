@@ -7,6 +7,7 @@ dependencies {
     runtimeOnly(libs.mariadb)
     runtimeOnly(libs.mssql)
     runtimeOnly(libs.oracle)
+    runtimeOnly(libs.mysql)
     runtimeOnly(libs.postgresql)
     add("javaAgent", libs.opentelemetry.javaagent)
 }

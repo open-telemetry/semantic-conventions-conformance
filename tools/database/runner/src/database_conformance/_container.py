@@ -87,7 +87,8 @@ class DatabaseContainer:
             .with_startup_timeout(
                 timedelta(
                     seconds=timeout_seconds(
-                        _STARTUP_TIMEOUT[0], self._spec.startup_timeout_seconds
+                        _STARTUP_TIMEOUT[0],
+                        self._spec.startup_timeout_seconds,
                     )
                 )
             )
