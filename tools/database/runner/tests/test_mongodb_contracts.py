@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""MongoDB packages share driver-specific telemetry contracts."""
+"""MongoDB packages share one telemetry contract."""
 
 from pathlib import Path
 
@@ -25,9 +25,7 @@ def test_packages_use_shared_contracts_without_local_expectations(
         (directory / "conformance.yaml").read_text(encoding="utf-8")
     )
     assert (directory / package["scenario_contract"]).resolve() == (
-        _DATABASE
-        / "contracts"
-        / ("mongodb-reactive.yaml" if driver == "reactive" else "mongodb.yaml")
+        _DATABASE / "contracts" / "mongodb.yaml"
     ).resolve()
     assert set(package["scenarios"]) == {
         "find",
@@ -44,24 +42,8 @@ def test_packages_use_shared_contracts_without_local_expectations(
         assert scenario.spans is not None
         assert len(scenario.spans) == 2
         assert all(span.count == 1 for span in scenario.spans)
+        assert all(
+            "db.query.text" not in span.attributes for span in scenario.spans
+        )
         assert scenario.metrics == ("db.client.operation.duration",)
         assert scenario.events == ()
-
-
-def test_driver_contracts_only_differ_in_aggregate_cursor() -> None:
-    synchronous = yaml.safe_load(
-        (_DATABASE / "contracts" / "mongodb.yaml").read_text(encoding="utf-8")
-    )
-    reactive = yaml.safe_load(
-        (_DATABASE / "contracts" / "mongodb-reactive.yaml").read_text(
-            encoding="utf-8"
-        )
-    )
-    synchronous["scenarios"]["aggregate"]["spans"][0]["expect"]["attributes"][
-        "db.query.text"
-    ] = (
-        '{"aggregate": "items", "pipeline": [{"$match": {"_id": "?"}}], '
-        '"cursor": {"batchSize": "?"}, "$db": "?", "lsid": {"id": "?"}}'
-    )
-
-    assert reactive == synchronous

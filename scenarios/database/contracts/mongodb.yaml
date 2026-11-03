@@ -14,7 +14,6 @@ scenarios:
             db.namespace: conformance
             db.collection.name: items
             db.operation.name: find
-            db.query.text: '{"find": "items", "filter": {"_id": "?"}, "limit": "?", "singleBatch": "?", "$db": "?", "lsid": {"id": "?"}}'
             server.address: 127.0.0.1
             server.port: {present: true}
       - &end-sessions
@@ -28,7 +27,6 @@ scenarios:
             db.namespace: admin
             db.collection.name: {present: false}
             db.operation.name: endSessions
-            db.query.text: '{"endSessions": [{"id": "?"}], "$db": "?", "$readPreference": {"mode": "?"}}'
             server.address: 127.0.0.1
             server.port: {present: true}
     metrics:
@@ -47,7 +45,6 @@ scenarios:
             db.namespace: conformance
             db.collection.name: items
             db.operation.name: update
-            db.query.text: '{"update": "items", "ordered": "?", "$db": "?", "lsid": {"id": "?"}, "updates": [{"q": {"_id": "?"}, "u": {"$set": {"name": "?"}}}]}'
             server.address: 127.0.0.1
             server.port: {present: true}
       - *end-sessions
@@ -67,7 +64,6 @@ scenarios:
             db.namespace: conformance
             db.collection.name: items
             db.operation.name: delete
-            db.query.text: '{"delete": "items", "ordered": "?", "$db": "?", "lsid": {"id": "?"}, "deletes": [{"q": {"_id": "?"}, "limit": "?"}]}'
             server.address: 127.0.0.1
             server.port: {present: true}
       - *end-sessions
@@ -87,7 +83,6 @@ scenarios:
             db.namespace: conformance
             db.collection.name: items
             db.operation.name: aggregate
-            db.query.text: '{"aggregate": "items", "pipeline": [{"$match": {"_id": "?"}}], "cursor": {}, "$db": "?", "lsid": {"id": "?"}}'
             server.address: 127.0.0.1
             server.port: {present: true}
       - *end-sessions

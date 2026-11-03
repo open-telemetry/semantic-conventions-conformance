@@ -6,7 +6,7 @@ runner_config:
   backend: mongodb
 instrumented_library: mongodb-reactive
 instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-mongo-3.1
-scenario_contract: ../../../../contracts/mongodb-reactive.yaml
+scenario_contract: ../../../../contracts/mongodb.yaml
 
 env:
   OTEL_LOGS_EXPORTER: none
