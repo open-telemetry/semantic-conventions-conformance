@@ -14,6 +14,15 @@
   "events": {},
   "metrics": {},
   "entities": {
+    "host": {
+      "identity": [
+        "host.id"
+      ],
+      "description": [
+        "host.arch",
+        "host.name"
+      ]
+    },
     "process.runtime": {
       "identity": [
         "process.runtime.name",

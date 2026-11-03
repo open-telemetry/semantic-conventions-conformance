@@ -9,6 +9,15 @@
   "events": {},
   "metrics": {},
   "entities": {
+    "host": {
+      "identity": [
+        "host.id"
+      ],
+      "description": [
+        "host.arch",
+        "host.name"
+      ]
+    },
     "process.runtime": {
       "identity": [
         "process.runtime.name",
@@ -43,13 +52,13 @@
   "findings": [
     {
       "id": "deprecated",
-      "message": "Attribute 'peer.service' is deprecated; reason = 'renamed', note = 'Replaced by `service.peer.name`.'.",
+      "message": "Attribute 'peer.service' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
       "signal_type": "span",
       "signal_name": "GET",
       "context": {
         "attribute_key": "peer.service",
-        "deprecation_note": "Replaced by `service.peer.name`.",
-        "deprecation_reason": "renamed"
+        "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
+        "deprecation_reason": "uncategorized"
       }
     },
     {
@@ -93,13 +102,13 @@
     },
     {
       "id": "deprecated",
-      "message": "Attribute 'peer.service' is deprecated; reason = 'renamed', note = 'Replaced by `service.peer.name`.'.",
+      "message": "Attribute 'peer.service' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
       "signal_type": "span",
       "signal_name": "POST",
       "context": {
         "attribute_key": "peer.service",
-        "deprecation_note": "Replaced by `service.peer.name`.",
-        "deprecation_reason": "renamed"
+        "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
+        "deprecation_reason": "uncategorized"
       }
     },
     {
