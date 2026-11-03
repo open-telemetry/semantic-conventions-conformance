@@ -38,6 +38,8 @@ JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
 Cassandra's workload and supported instrumentation modes are
 documented in its [scenario notes](cassandra/README.md).
+MySQL's container setup and Connector/J telemetry settings are documented in its
+[scenario notes](mysql/README.md).
 
 Run one package from the repository root:
 

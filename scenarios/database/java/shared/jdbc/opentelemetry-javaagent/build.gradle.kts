@@ -6,6 +6,7 @@ dependencies {
     implementation(project(":shared:jdbc:scenarios"))
     runtimeOnly(libs.mariadb)
     runtimeOnly(libs.mssql)
+    runtimeOnly(libs.mysql)
     runtimeOnly(libs.postgresql)
     add("javaAgent", libs.opentelemetry.javaagent)
 }

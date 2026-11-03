@@ -11,6 +11,7 @@ from typing import Callable
 from ._cassandra import Cassandra
 from ._container import DatabaseContainer
 from ._mariadb import MariaDB
+from ._mysql import MySQL
 from ._postgres import Postgres
 from ._redis import Redis
 from ._sql_server import SQLServer
@@ -26,6 +27,7 @@ class BackendRegistration:
 BACKENDS = {
     "cassandra": BackendRegistration(Cassandra, "cassandra", "db.cassandra.client"),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
+    "mysql": BackendRegistration(MySQL, "mysql", "db.mysql.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"
     ),
