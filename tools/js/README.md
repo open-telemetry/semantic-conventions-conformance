@@ -8,7 +8,7 @@ itself, and the command that installs a Node build.
 scenarios/<domain>/js/      a domain's npm build root — workspaces and the lockfile
 tools/js/scenario-support/  what a scenario needs before any telemetry
 tools/js/scenario-sdk/      the SDK a library-instrumentation scenario owns
-tools/js/browser-runner/    browser launch and OTLP/HTTP-to-gRPC bridge
+tools/js/browser-runner/    runs a browser scenario's page in headless Chrome
 tools/js/src/               `otel-conformance-js`, the launcher
 tools/js/tests/             the launcher's tests
 ```
@@ -62,6 +62,33 @@ runScenario({ instrumentations: [new ExpressInstrumentation()] }, () =>
   require("@otel-conformance/express-scenarios").serve(),
 );
 ```
+
+## Browser scenarios
+
+[`browser-runner/`](browser-runner) runs a scenario whose code has to execute
+in a page. `index.js` is the Node half: it bundles the page with esbuild,
+serves it, and opens it in the Chrome the machine already has through
+`playwright-core`, falling back to Playwright's own Chromium. `page.js` is the
+page half, which hands the workload to `index.js` and says where to export:
+
+```js
+exposeScenario(async ({ exchanges }) => {
+  // register instrumentations exporting to exportUrl("traces"), then
+  return drive(location.origin, exchanges);
+});
+```
+
+Everything is one origin, since the runner's OTLP/HTTP bridge does not answer
+a CORS preflight. Exports under `/_otel-conformance/v1/` are relayed to the
+endpoint the runner injected, with a `Content-Length` because the bridge
+refuses a chunked body, and an export it does not accept fails the run. Any
+other path is proxied to `MOCK_SERVER_URL` when there is one, so a request
+keeps the contract's path and query. A scenario declares
+`otlp_protocol: http/protobuf`, as a browser cannot export gRPC.
+
+A run is bounded: an error thrown while the page loads fails it at once with
+that error, the workload gets 30 seconds, and the page's console and errors go
+to stderr.
 
 ## CommonJS, not ESM
 

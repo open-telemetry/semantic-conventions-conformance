@@ -10,23 +10,7 @@ const path = require("node:path");
 const test = require("node:test");
 const { URL } = require("node:url");
 
-const grpc = require("@grpc/grpc-js");
 const { respond } = require("@otel-conformance/http-test-client");
-
-const TRACE_EXPORT_PATH =
-  "/opentelemetry.proto.collector.trace.v1.TraceService/Export";
-
-const service = {
-  export: {
-    path: TRACE_EXPORT_PATH,
-    requestStream: false,
-    responseStream: false,
-    requestSerialize: (value) => value,
-    requestDeserialize: (value) => value,
-    responseSerialize: (value) => value,
-    responseDeserialize: (value) => value,
-  },
-};
 
 function listen(server) {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -35,16 +19,6 @@ function listen(server) {
 function close(server) {
   server.closeAllConnections?.();
   return new Promise((resolve) => server.close(resolve));
-}
-
-function bind(server) {
-  return new Promise((resolve, reject) => {
-    server.bindAsync(
-      "127.0.0.1:0",
-      grpc.ServerCredentials.createInsecure(),
-      (error, port) => (error ? reject(error) : resolve(port)),
-    );
-  });
 }
 
 function run(environment) {
@@ -172,26 +146,30 @@ test("measures only the selected browser Fetch request", async () => {
   });
   await listen(mock);
 
+  // Stands in for the runner's OTLP/HTTP bridge.
   const exports = [];
-  const collector = new grpc.Server();
-  collector.addService(service, {
-    export(call, callback) {
-      exports.push(call.request);
-      callback(null, Buffer.alloc(0));
-    },
+  const bridge = http.createServer(async (request, response) => {
+    const chunks = [];
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+    assert.equal(request.url, "/v1/traces");
+    exports.push(Buffer.concat(chunks));
+    response.writeHead(200, { "content-type": "application/x-protobuf" });
+    response.end();
   });
-  const collectorPort = await bind(collector);
-  collector.start();
+  await listen(bridge);
 
   try {
     await run({
       MOCK_SERVER_URL: `http://127.0.0.1:${mock.address().port}`,
       OTEL_CONFORMANCE_SCENARIO_INDEX: "2",
-      OTEL_EXPORTER_OTLP_ENDPOINT: `http://127.0.0.1:${collectorPort}`,
+      OTEL_EXPORTER_OTLP_ENDPOINT: `http://127.0.0.1:${bridge.address().port}`,
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf",
     });
   } finally {
     await close(mock);
-    collector.forceShutdown();
+    await close(bridge);
   }
   const spans = exports.flatMap(decodeSpans);
   assert.equal(spans.length, 1, "the exporter request must not create a span");
