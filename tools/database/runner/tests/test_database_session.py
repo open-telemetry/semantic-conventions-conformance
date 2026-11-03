@@ -16,6 +16,9 @@ import pytest
 
 import database_conformance
 from database_conformance._hbase import HBase
+from database_conformance._mysql import MySQL
+from database_conformance._oracle import Oracle
+from database_conformance._redis import Redis
 from database_conformance._registry import BACKENDS
 from opentelemetry.conformance import PackageSpec, SpecError, load_spec
 
@@ -124,9 +127,14 @@ def test_hbase_registers_its_factory_and_span_type() -> None:
     assert registration.client_span_type == "db.hbase.client"
 
 
+@pytest.mark.parametrize(
+    "backend, backend_type", [("oracle", Oracle), ("redis", Redis)]
+)
 def test_database_session_closes_backend_after_an_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    backend: str,
+    backend_type: type[Oracle] | type[Redis],
 ) -> None:
     closed = False
 
@@ -147,11 +155,14 @@ def test_database_session_closes_backend_after_an_error(
         del directory, kwargs
         yield object()
 
+    assert (
+        database_conformance._BACKEND_REGISTRY[backend].factory is backend_type
+    )
     monkeypatch.setitem(
         database_conformance._BACKEND_REGISTRY,
-        "redis",
+        backend,
         replace(
-            database_conformance._BACKEND_REGISTRY["redis"],
+            database_conformance._BACKEND_REGISTRY[backend],
             factory=StubBackend,
         ),
     )
@@ -161,12 +172,57 @@ def test_database_session_closes_backend_after_an_error(
         SimpleNamespace(session=stub_session),
     )
 
-    spec = _write_spec(tmp_path, "  backend: redis")
+    spec = _write_spec(tmp_path, f"  backend: {backend}")
     with pytest.raises(RuntimeError, match="scenario failed"):
         with database_conformance.database_session(tmp_path, spec=spec):
             raise RuntimeError("scenario failed")
 
     assert closed
+
+
+def test_database_session_dispatches_mysql(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    entered = False
+
+    class StubBackend:
+        variables: dict[str, str] = {}
+
+        def __enter__(self) -> StubBackend:
+            nonlocal entered
+            entered = True
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            pass
+
+    @contextmanager
+    def stub_session(
+        directory: Path | str, **kwargs: Any
+    ) -> Generator[object, None, None]:
+        del directory, kwargs
+        yield object()
+
+    registration = database_conformance._BACKEND_REGISTRY["mysql"]
+    assert registration.factory is MySQL
+    assert registration.system == "mysql"
+    assert registration.client_span_type == "db.mysql.client"
+
+    monkeypatch.setitem(
+        database_conformance._BACKEND_REGISTRY,
+        "mysql",
+        replace(registration, factory=StubBackend),
+    )
+    monkeypatch.setattr(
+        database_conformance,
+        "DOMAIN",
+        SimpleNamespace(session=stub_session),
+    )
+    spec = _write_spec(tmp_path, "  backend: mysql")
+
+    with database_conformance.database_session(tmp_path, spec=spec):
+        assert entered
 
 
 @pytest.mark.parametrize(

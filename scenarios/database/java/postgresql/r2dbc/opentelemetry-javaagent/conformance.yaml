@@ -1,0 +1,37 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: postgresql
+instrumented_library: r2dbc
+instrumentation_library: io.opentelemetry.javaagent:opentelemetry-javaagent
+scenario_contract: ../../../../contracts/postgresql-r2dbc.yaml
+
+env:
+  R2DBC_URL: r2dbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+  R2DBC_USER: ${DATABASE_USER}
+  R2DBC_PASSWORD: ${DATABASE_PASSWORD}
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:r2dbc:opentelemetry-javaagent
+
+scenarios:
+  statement:
+    run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario statement
+
+  bind:
+    run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario bind
+
+  batch:
+    run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario batch
+
+  stored_procedure:
+    run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario stored_procedure
+
+  error:
+    run: otel-conformance-java run --agent shared:r2dbc:opentelemetry-javaagent R2dbcJavaagentScenario error

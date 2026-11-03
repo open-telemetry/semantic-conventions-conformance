@@ -30,12 +30,21 @@ library instrumentation. A package directory holds its conformance
 configuration, so another client can reuse the workload without duplicating
 JDBC code.
 
+R2DBC packages share a reactive workload with Java-agent and standalone library
+launchers. Its [workload guide](shared/r2dbc/README.md) documents the named
+operations and separate PostgreSQL telemetry contract.
+
 Redis clients reuse a common workload and can be run with Java-agent or supported
 library instrumentation. The
 [Redis workload guide](shared/redis/README.md) documents its commands,
 connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
+Oracle's container, JDBC runtime, and workload requirements are documented in
+its [scenario notes](oracle/README.md).
+
+MySQL's container setup and Connector/J telemetry settings are documented in its
+[scenario notes](mysql/README.md).
 
 HBase's shared workload exercises the latest stable client's native telemetry,
 without the Java agent. Its [scenario notes](hbase/README.md) cover SDK integration,

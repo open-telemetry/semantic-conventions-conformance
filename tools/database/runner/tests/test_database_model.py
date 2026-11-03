@@ -29,6 +29,8 @@ def _model():
         ("hbase", "db.hbase.client"),
         ("mariadb", "db.mariadb.client"),
         ("microsoft.sql_server", "db.sql_server.client"),
+        ("oracle.db", "db.oracledb.client"),
+        ("mysql", "db.mysql.client"),
         ("postgresql", "db.postgresql.client"),
         ("redis", "db.redis.client"),
     ],

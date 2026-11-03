@@ -24,6 +24,12 @@ def test_mariadb_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.mariadb.client"}
 
 
+def test_oracle_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "SELECT", "CLIENT", {"db.system.name": "oracle.db"}
+    ) == {"db.oracledb.client"}
+
+
 def test_redis_client_span_uses_the_vendor_refinement() -> None:
     assert classify_span("GET", "CLIENT", {"db.system.name": "redis"}) == {
         "db.redis.client"
@@ -58,6 +64,25 @@ def test_sql_server_client_span_uses_the_vendor_refinement() -> None:
     assert classify_span(
         "SELECT", "CLIENT", {"db.system.name": "microsoft.sql_server"}
     ) == {"db.sql_server.client"}
+
+
+def test_mysql_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "SELECT", "CLIENT", {"db.system.name": "mysql"}
+    ) == {"db.mysql.client"}
+
+
+@pytest.mark.parametrize("kind", [None, "server", "client"])
+def test_mysql_classifier_requires_a_client_type_in_the_registry(
+    kind: str | None,
+) -> None:
+    classify = classifier(
+        {"spans": {} if kind is None else {"db.mysql.client": {"kind": kind}}}
+    )
+
+    assert classify("SELECT", "CLIENT", {"db.system.name": "mysql"}) == (
+        {"db.mysql.client"} if kind == "client" else set()
+    )
 
 
 def test_a_span_without_a_database_system_is_not_a_database_span() -> None:
