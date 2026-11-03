@@ -24,6 +24,7 @@ against expectations declared in YAML.
 | [`scenarios/gen-ai/`](scenarios/gen-ai) | the GenAI scenarios and the coverage they produce |
 | [`scenarios/database/`](scenarios/database) | the database scenarios and the coverage they produce |
 | [`scenarios/http/`](scenarios/http) | the HTTP scenarios and the coverage they produce |
+| [`scenarios/browser/`](scenarios/browser) | the browser scenarios and the coverage they produce |
 | [`docs/`](docs) | the static site over that report, published to GitHub Pages |
 
 A conformance directory names the wrapper it wants under `runner:`, so one
