@@ -129,6 +129,19 @@ otel-conformance path/to/directory --registry …/model --policies …/policies
 otel-conformance path/to/directory --scenario inference   # just this one
 ```
 
+Weaver startup waits up to 120 seconds for `/health` to return HTTP 200,
+including time spent resolving registry dependencies. Set
+`OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT` to a finite positive number of seconds
+to change that limit:
+
+```sh
+OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT=240 otel-conformance path/to/directory
+```
+
+Each health request is limited to one second or the remaining startup time,
+whichever is smaller. Startup uses one process; a timeout or an unexpected
+exit raises an error with Weaver's logs and cleans up the process.
+
 Each scenario prints one line — green `✔`, yellow `▲` for a violation under
 `--report-only`, red `✖` — with the findings under it. Colour follows
 `NO_COLOR`/`FORCE_COLOR` and is off when stdout isn't a terminal.
