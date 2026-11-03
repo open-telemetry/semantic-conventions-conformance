@@ -11,7 +11,7 @@ server:
 env:
   # Together is OpenAI-compatible on the wire, so the mock's OpenAI blueprint
   # answers it.
-  TOGETHER_BASE_URL: ${MOCK_SERVER_URL}/v1
+  TOGETHER_BASE_URL: ${MOCK_SERVER_URL}
   TOGETHER_API_KEY: test_together_api_key
   # OpenInference records its own `llm.*` attributes by default;
   # this is the switch that adds the GenAI conventions beside them.

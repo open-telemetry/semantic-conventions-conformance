@@ -7,25 +7,20 @@
   "gitIgnoredAuthors": [
     "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
   ],
+  "schedule": ["before 8am on Tuesday"],
   "packageRules": [
     {
-      "groupName": "all patch versions",
-      "matchUpdateTypes": ["patch"],
-      "schedule": ["before 8am every weekday"]
+      // Fallback for patch updates not assigned to a group by a later rule.
+      // Review PRs in this group for missing grouping rules.
+      "groupName": "unclassified patch updates",
+      "matchUpdateTypes": ["patch"]
     },
     {
-      "matchUpdateTypes": ["minor", "major"],
-      "schedule": ["before 8am on Monday"]
-    },
-    {
-      // group all GitHub Actions updates into a single weekly PR
+      // group non-major GitHub Actions updates together
       // (Renovate applies packageRules in order and later rules win)
       "groupName": "github actions",
       "matchManagers": [
         "github-actions"
-      ],
-      "schedule": [
-        "before 8am on Tuesday"
       ]
     },
     {
@@ -37,14 +32,11 @@
       // out, which must not hold back the other action updates.
       "matchManagers": ["github-actions"],
       "matchDepNames": ["python"],
-      "groupName": "python",
-      "schedule": [
-        "before 8am on Tuesday"
-      ]
+      "groupName": "python"
     },
     {
       // group all non-major Java dependency updates into a single PR
-      "matchManagers": ["gradle"],
+      "matchManagers": ["gradle", "gradle-wrapper"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "java-minor"
     },
@@ -88,6 +80,19 @@
       "matchManagers": ["composer"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "php-minor"
+    },
+    {
+      // Match Docker images from all managers, including workflows and custom managers.
+      // config:best-practices enables Docker digest pinning, so include pinDigest.
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "pinDigest", "digest"],
+      "groupName": "docker-minor"
+    },
+    {
+      // Major upgrades get individual PRs outside the weekly update window.
+      "matchUpdateTypes": ["major"],
+      "groupName": null,
+      "schedule": []
     },
     {
       // Everything under this Maven group ships only `-alpha` versions, so
