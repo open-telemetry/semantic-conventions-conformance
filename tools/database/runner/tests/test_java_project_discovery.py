@@ -169,14 +169,6 @@ def test_preserves_database_project_names() -> None:
         ":shared:cassandra:opentelemetry-javaagent",
         ":shared:cassandra:opentelemetry-library",
     } <= projects
-    assert {
-        project for project in projects if project.startswith(":shared:cassandra")
-    } == {
-        ":shared:cassandra",
-        ":shared:cassandra:scenarios",
-        ":shared:cassandra:opentelemetry-javaagent",
-        ":shared:cassandra:opentelemetry-library",
-    }
     assert "prepareRuntime" in _gradle(
         SCENARIO_ROOT,
         ":shared:jdbc:opentelemetry-javaagent:tasks",

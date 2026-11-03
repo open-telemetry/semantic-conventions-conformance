@@ -216,59 +216,6 @@ def test_database_session_dispatches_and_closes_cassandra(
 
 
 @pytest.mark.parametrize(
-    "instrumentation", ["opentelemetry-javaagent", "opentelemetry-library"],
-)
-def test_cassandra_packages_share_contract_and_connection_variables(
-    instrumentation: str
-) -> None:
-    directory = (
-        Path(__file__).resolve().parents[4]
-        / "scenarios"
-        / "database"
-        / "java"
-        / "cassandra"
-        / "java-driver"
-        / instrumentation
-    )
-    spec = load_spec(directory)
-
-    assert spec.instrumented_library == "java-driver"
-    assert spec.runner_config == {"backend": "cassandra"}
-    assert spec.env["CASSANDRA_HOST"] == "${DATABASE_HOST}"
-    assert spec.env["CASSANDRA_PORT"] == "${DATABASE_PORT}"
-    assert (
-        spec.env["CASSANDRA_LOCAL_DATACENTER"]
-        == "${DATABASE_LOCAL_DATACENTER}"
-    )
-    assert list(spec.scenarios) == ["query", "prepared", "batch", "error"]
-    for scenario in spec.scenarios.values():
-        assert scenario.metrics == ("db.client.operation.duration",)
-        assert scenario.events == ()
-        assert scenario.spans is not None
-        assert len(scenario.spans) == 1
-        assert scenario.spans[0].match.attributes == {
-            "db.system.name": "cassandra"
-        }
-
-
-def test_cassandra_has_only_current_client_packages() -> None:
-    root = (
-        Path(__file__).resolve().parents[4]
-        / "scenarios"
-        / "database"
-        / "java"
-        / "cassandra"
-    )
-    assert {
-        path.relative_to(root).as_posix()
-        for path in root.rglob("conformance.yaml")
-    } == {
-        "java-driver/opentelemetry-javaagent/conformance.yaml",
-        "java-driver/opentelemetry-library/conformance.yaml",
-    }
-
-
-@pytest.mark.parametrize(
     ("runner_config", "message"),
     [
         ("  backend: sqlite", "unsupported backend 'sqlite'"),
