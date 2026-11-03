@@ -209,8 +209,7 @@ def test_workflow_only_patches_successful_scenarios() -> None:
         "${{ !cancelled() && steps.run-scenarios.outcome == 'success' }}"
     )
     assert steps["Upload the generated data patch"]["if"] == (
-        "${{ !cancelled() && steps.run-scenarios.outcome == 'success' "
-        "&& steps.data-patch.outputs.exists == 'true' }}"
+        "${{ !cancelled() && steps.data-patch.outputs.exists == 'true' }}"
     )
     assert steps["Check the committed coverage is up to date"]["if"] == (
         "${{ !cancelled() }}"

@@ -731,7 +731,7 @@ jobs:
           fi
 
       - name: Upload the generated data patch
-        if: ${{ !cancelled() && steps.run-scenarios.outcome == 'success' && steps.data-patch.outputs.exists == 'true' }}
+        if: ${{ !cancelled() && steps.data-patch.outputs.exists == 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: renovate-data-${{ matrix.matrix_id }}
