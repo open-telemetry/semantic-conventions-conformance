@@ -115,6 +115,11 @@ CLIENT span under `org.apache.hbase` version `3.0.0`. Strict conformance fails:
   attributes, unregistered `db.hbase.table`, `db.hbase.regions`, and
   `db.hbase.container_operations`, and instrumentation setting status OK on
   successful spans.
+- The two-Put batch emits `db.operation=BATCH` with
+  `db.hbase.container_operations=[PUT]`. The
+  [HBase conventions](https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/db/hbase.md)
+  recommend `db.operation.name=BATCH PUT` and `db.operation.batch.size=2` for
+  this workload.
 - The missing-table GET has ERROR status and a `TableNotFoundException`
   exception span event, but lacks `error.type`. Weaver records
   `error_type_missing_on_error`. No `db.response.status_code` is emitted, and
