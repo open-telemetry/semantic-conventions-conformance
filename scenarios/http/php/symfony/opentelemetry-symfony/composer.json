@@ -9,7 +9,7 @@
     "open-telemetry/sdk": "^1.15",
     "open-telemetry/transport-grpc": "^1.2",
     "open-telemetry-conformance/http-test-client": "dev-main",
-    "symfony/event-dispatcher": "^7.4",
+    "symfony/event-dispatcher": "^8.0",
     "symfony/http-foundation": "^7.4",
     "symfony/http-kernel": "^7.4",
     "symfony/routing": "^7.4"
