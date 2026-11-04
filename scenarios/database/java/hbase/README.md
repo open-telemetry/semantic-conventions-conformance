@@ -49,7 +49,7 @@ Java 21 toolchain used by the conformance package.
 ## Fixtures and workload
 
 Docker must be running. Each session builds a local image from a SHA-512-verified
-Apache HBase binary distribution and a digest-pinned Eclipse Temurin Java 17 base.
+Apache HBase binary distribution and a digest-pinned Eclipse Temurin Java 25 base.
 It starts the matching server, waits until listing namespaces succeeds on the
 initialized master, then applies the
 [initialization script](../../../../tools/database/runner/src/database_conformance/hbase.rb).
