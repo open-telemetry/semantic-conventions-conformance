@@ -28,7 +28,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
-from ._registry import check_weaver, weaver_version
+from ._registry import cache_dir, check_weaver, weaver_version
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +51,38 @@ def fingerprint() -> str:
     return digest.hexdigest()[:12]
 
 
+def coverage_model_for(registry: Path, *, pin: str | None = None) -> Path:
+    """The coverage model for ``registry``, resolved once into the cache.
+
+    A pinned registry is cached under its pin. Any other is somebody's working
+    tree, so it is cached under a digest of its files: an edit, a delete or a
+    rename asks for a fresh model, and a repeat run over the same files reuses
+    the last one.
+    """
+    key = pin if pin is not None else f"{registry.name}-{_digest(registry)}"
+    return resolve(
+        registry,
+        cache_dir() / "coverage-models" / f"{key}-{fingerprint()}.json",
+    )
+
+
+def _digest(registry: Path) -> str:
+    """A digest of every file under ``registry`` and where it sits."""
+    digest = hashlib.sha256()
+    for path in sorted(registry.rglob("*")):
+        if path.is_file():
+            digest.update(path.relative_to(registry).as_posix().encode())
+            digest.update(b"\0")
+            digest.update(hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()[:12]
+
+
 def resolve(registry: Path, output: Path) -> Path:
     """Resolve ``registry`` into a coverage model at ``output``, once.
 
-    ``output`` is expected to name the pin it belongs to, so moving a pin asks
-    for a fresh model rather than silently reusing the old registry's.
+    ``output`` is expected to name what it was resolved from, so a new pin or
+    an edited registry asks for a fresh model rather than silently reusing the
+    old one.
     """
     if output.is_file():
         return output

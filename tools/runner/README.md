@@ -472,7 +472,11 @@ That view is `weaver registry generate --v2` over the
 [coverage-model template](src/opentelemetry/conformance/weaver-templates/coverage-model),
 resolved once into the cache, under the pin it came from and the template that
 produced it. Starting a session resolves it if the pin hasn't got one, so the weaver run
-happens up front rather than after the scenarios have. To see what it
+happens up front rather than after the scenarios have. A registry passed with
+`--registry` is cached under a digest of its files instead, so an edit, delete
+or rename gets a fresh model and a repeat run reuses the last one. A repo that
+needs the same model for its own reports can call
+`coverage_model_for(registry)` for it. To see what was
 resolved, list the cached models and choose the file whose name contains the
 pin and fingerprint you need:
 

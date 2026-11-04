@@ -16,16 +16,14 @@ import inspect
 import shutil
 import sys
 from collections.abc import Generator, Mapping
-from contextlib import ExitStack, contextmanager
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Any, Callable
 
-from ._model import fingerprint as model_fingerprint
+from ._model import coverage_model_for
 from ._model import load as load_coverage_model
-from ._model import resolve as resolve_coverage_model
 from ._registry import cache_dir, check_weaver, provision
 from ._report import ClassifySpan
 from ._semconv import BuildData, semconv_coverage
@@ -93,13 +91,9 @@ class Domain:
         Cached under its pin rather than inside the checkout, so it survives a
         re-fetch and doesn't depend on the registry being a local directory.
         """
-        model = (
-            cache_dir()
-            / "coverage-models"
-            / f"{self._pin}-{model_fingerprint()}.json"
+        return load_coverage_model(
+            coverage_model_for(self.registry, pin=self._pin)
         )
-        resolve_coverage_model(self.registry, model)
-        return load_coverage_model(model)
 
     @property
     def _pin(self) -> str:
@@ -223,45 +217,35 @@ class Domain:
             if declared
             else None
         )
-        with ExitStack() as stack:
-            resolved_build_data, model_path = self._coverage(stack, override)
-            if build_data is None:
-                build_data = resolved_build_data
-            with conformance_session(
-                directory,
-                report_dir=report_dir,
-                data_file=data_file,
-                variables=variables,
-                weaver=(weaver or WeaverSpec()).over(
-                    self.weaver_defaults(override, model_path)
-                ),
-                server=server,
-                env=env,
-                build_data=build_data,
-                spec=spec,
-            ) as session:
-                yield session
+        resolved_build_data, model_path = self._coverage(override)
+        if build_data is None:
+            build_data = resolved_build_data
+        with conformance_session(
+            directory,
+            report_dir=report_dir,
+            data_file=data_file,
+            variables=variables,
+            weaver=(weaver or WeaverSpec()).over(
+                self.weaver_defaults(override, model_path)
+            ),
+            server=server,
+            env=env,
+            build_data=build_data,
+            spec=spec,
+        ) as session:
+            yield session
 
-    def _coverage(
-        self, stack: ExitStack, override: Path | None
-    ) -> tuple[BuildData, Path]:
+    def _coverage(self, override: Path | None) -> tuple[BuildData, Path]:
         """Reduce a run against whichever registry it is checked against.
 
-        The pinned one is resolved into the cache and reused. An
-        overriding one is somebody's working tree, so its model is resolved
-        fresh for the session and thrown away with it.
+        Both are resolved into the cache and reused: the pinned one under its
+        pin, an overriding one under a digest of its files, since it is
+        somebody's working tree and may have changed since the last run.
         """
         if override is None:
-            model_path = (
-                cache_dir()
-                / "coverage-models"
-                / f"{self._pin}-{model_fingerprint()}.json"
-            )
-            resolve_coverage_model(self.registry, model_path)
+            model_path = coverage_model_for(self.registry, pin=self._pin)
         else:
-            scratch = Path(stack.enter_context(TemporaryDirectory()))
-            model_path = scratch / "coverage-model.json"
-            resolve_coverage_model(override, model_path)
+            model_path = coverage_model_for(override)
 
         model = load_coverage_model(model_path)
         build_data = semconv_coverage(self.classifier(model), lambda: model)
