@@ -63,6 +63,9 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
     discovery_root: Path,
 ) -> None:
     expected_projects = {
+        "shared/elasticsearch/elasticsearch-java/native-instrumentation",
+        "shared/hbase/hbase-client/scenarios",
+        "shared/hbase/hbase-client/native",
         "shared/jdbc/scenarios",
         "shared/jdbc/opentelemetry-javaagent",
         "shared/jdbc/opentelemetry-library",
@@ -133,10 +136,14 @@ def test_adding_a_project_invalidates_configuration_cache(
     # Gradle creates its report directory after settings evaluation.
     (discovery_root / "build").mkdir()
 
-    output = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    output = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "DISCOVERED=:,:baseline" in output
 
-    reused = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    reused = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "Reusing configuration cache." in reused
     assert "DISCOVERED=:,:baseline" in reused
 
@@ -144,28 +151,61 @@ def test_adding_a_project_invalidates_configuration_cache(
     added.parent.mkdir(parents=True)
     added.touch()
 
-    updated = _gradle(discovery_root, "projectSnapshot", "--configuration-cache")
+    updated = _gradle(
+        discovery_root, "projectSnapshot", "--configuration-cache"
+    )
     assert "Reusing configuration cache." not in updated
-    assert "DISCOVERED=:,:baseline,:future-backend,:future-backend:client" in updated
+    assert (
+        "DISCOVERED=:,:baseline,:future-backend,:future-backend:client"
+        in updated
+    )
 
 
 def test_preserves_database_project_names() -> None:
     projects = _projects(SCENARIO_ROOT)
     assert {
+        ":shared:hbase:hbase-client:scenarios",
+        ":shared:hbase:hbase-client:native",
         ":scenario-support",
         ":scenario-sdk",
         ":agent-control",
         ":sql-test-client",
+        ":shared:elasticsearch:elasticsearch-java:native-instrumentation",
         ":shared:jdbc:scenarios",
         ":shared:jdbc:opentelemetry-javaagent",
         ":shared:jdbc:opentelemetry-library",
+        ":shared:mongodb:support",
+        ":shared:mongodb:sync:scenarios",
+        ":shared:mongodb:sync:opentelemetry-javaagent",
+        ":shared:mongodb:sync:opentelemetry-library",
+        ":shared:mongodb:reactive:scenarios",
+        ":shared:mongodb:reactive:opentelemetry-javaagent",
+        ":shared:mongodb:reactive:opentelemetry-library",
+        ":shared:r2dbc:scenarios",
+        ":shared:r2dbc:opentelemetry-javaagent",
+        ":shared:r2dbc:opentelemetry-library",
         ":shared:redis:lettuce:scenarios",
         ":shared:redis:lettuce:opentelemetry-javaagent",
         ":shared:redis:lettuce:opentelemetry-library",
         ":shared:redis:jedis:opentelemetry-javaagent",
         ":shared:redis:rediscala:opentelemetry-javaagent",
         ":shared:redis:redisson:opentelemetry-javaagent",
+        ":shared:cassandra:java-driver:scenarios",
+        ":shared:cassandra:java-driver:opentelemetry-javaagent",
+        ":shared:cassandra:java-driver:opentelemetry-library",
     } <= projects
+    assert (
+        not {
+            ":shared:elasticsearch:elasticsearch-java:opentelemetry-javaagent",
+            ":shared:elasticsearch:elasticsearch-java:opentelemetry-library",
+            ":shared:elasticsearch:rest-javaagent",
+            ":shared:elasticsearch:transport-javaagent",
+        }
+        & projects
+    )
+    assert ":hbase:hbase-client:native" not in projects
+    assert ":hbase:native" not in projects
+    assert ":shared:hbase:scenarios" not in projects
     assert "prepareRuntime" in _gradle(
         SCENARIO_ROOT,
         ":shared:jdbc:opentelemetry-javaagent:tasks",

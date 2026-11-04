@@ -1,12 +1,16 @@
-# HTTP conformance test client for Node
+# HTTP conformance test client for JavaScript
 
-The two halves of [the contract](../README.md) a Node scenario needs: answering
-a concrete request, and sending the measured ones.
+Shared [contract](../README.md) support for Node and browser scenarios. Node
+scenarios use the request sender and server response helpers. A browser
+scenario cannot bundle `contract.yaml`'s reader, so it imports the response
+check on its own through the `response` export, the same check `drive` runs.
 
 ```text
 src/contract.js         reads contract.yaml
 src/server-workload.js  answers one concrete request
-src/client-workload.js  sends one selected request
+src/client-workload.js  sends and checks one selected request
+src/response.js         checks an answer against its exchange, browser-safe
+src/json-equal.js       compares parsed JSON without object key ordering
 ```
 
 The only dependency is the YAML parser used before the measured request.
@@ -25,7 +29,9 @@ on `127.0.0.1`.
 
 `drive(baseUrl, send)` sends the request selected by
 `OTEL_CONFORMANCE_SCENARIO_INDEX`. `send` is the call
-being measured, so the library under test is the scenario's to choose:
+being measured, so the library under test is the scenario's to choose. Its
+answer is then checked, the status and the body parsed as JSON, so a client
+that misreads a response fails the run:
 
 ```js
 await drive(process.env.MOCK_SERVER_URL, async (method, url, body) => {

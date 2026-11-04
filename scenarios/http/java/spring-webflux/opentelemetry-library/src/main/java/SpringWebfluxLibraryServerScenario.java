@@ -15,13 +15,9 @@ public final class SpringWebfluxLibraryServerScenario {
       SpringWebfluxServerTelemetry telemetry =
           SpringWebfluxServerTelemetry.create(sdk.openTelemetry());
       WebFilter filter = telemetry.createWebFilterAndRegisterReactorHook();
-      SpringWebfluxServerScenario.run(
-          application ->
-              application.addInitializers(
-                  context ->
-                      context
-                          .getBeanFactory()
-                          .registerSingleton("openTelemetryWebFilter", filter)));
+      SpringWebfluxServerScenario.run(application ->
+          application.addInitializers(context ->
+              context.getBeanFactory().registerSingleton("openTelemetryWebFilter", filter)));
     }
   }
 }

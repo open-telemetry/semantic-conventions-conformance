@@ -8,6 +8,7 @@ itself, and the command that installs a Node build.
 scenarios/<domain>/js/      a domain's npm build root — workspaces and the lockfile
 tools/js/scenario-support/  what a scenario needs before any telemetry
 tools/js/scenario-sdk/      the SDK a library-instrumentation scenario owns
+tools/js/browser-runner/    runs a browser scenario's page in headless Chrome
 tools/js/src/               `otel-conformance-js`, the launcher
 tools/js/tests/             the launcher's tests
 ```
@@ -15,8 +16,9 @@ tools/js/tests/             the launcher's tests
 ## A build root per domain
 
 A domain's Node scenarios are one npm workspace, rooted at its own
-`scenarios/<domain>/js` — today only
-[`scenarios/http/js`](../../scenarios/http/js). `otel-conformance-js` finds it
+`scenarios/<domain>/js` —
+[`scenarios/http/js`](../../scenarios/http/js) and
+[`scenarios/gen-ai/js`](../../scenarios/gen-ai/js). `otel-conformance-js` finds it
 by searching upwards from the scenario directory for `package-lock.json`, so a
 scenario file says nothing about how deep it is nested. Within a build,
 packages are grouped by the library they instrument, so
@@ -62,6 +64,33 @@ runScenario({ instrumentations: [new ExpressInstrumentation()] }, () =>
 );
 ```
 
+## Browser scenarios
+
+[`browser-runner/`](browser-runner) runs a scenario whose code has to execute
+in a page. `index.js` is the Node half: it bundles the page with esbuild,
+serves it, and opens it in the Chrome the machine already has through
+`playwright-core`, falling back to Playwright's own Chromium. `page.js` is the
+page half, which hands the workload to `index.js` and says where to export:
+
+```js
+exposeScenario(async ({ exchanges }) => {
+  // register instrumentations exporting to exportUrl("traces"), then
+  return drive(location.origin, exchanges);
+});
+```
+
+Everything is one origin, since the runner's OTLP/HTTP bridge does not answer
+a CORS preflight. Exports under `/_otel-conformance/v1/` are relayed to the
+endpoint the runner injected, with a `Content-Length` because the bridge
+refuses a chunked body, and an export it does not accept fails the run. Any
+other path is proxied to `MOCK_SERVER_URL` when there is one, so a request
+keeps the contract's path and query. A scenario declares
+`otlp_protocol: http/protobuf`, as a browser cannot export gRPC.
+
+A run is bounded: an error thrown while the page loads fails it at once with
+that error, the workload gets 30 seconds, and the page's console and errors go
+to stderr.
+
 ## CommonJS, not ESM
 
 Scenarios are CommonJS because that is what Node's instrumentations can
@@ -94,9 +123,10 @@ in the build is installed once however deep its own directory sits.
 regenerates every committed `package-lock.json` under `scenarios/` and `tools/`
 with `npm install --package-lock-only --ignore-scripts`, which installs nothing,
 runs no scripts, and changes only what the manifests require. Before invoking
-npm, it removes the cached snapshots of copied `file:` packages from the
-lockfile so npm reads their current manifests and resolves their dependencies.
-Registry package pins remain in place. If regeneration fails, the project's
+npm, it removes the cached snapshots of copied `file:` packages and their
+nested dependency entries from the lockfile so npm reads their current
+manifests and resolves their dependencies. Registry package pins outside
+those subtrees remain in place. If regeneration fails, the project's
 original lockfile is restored byte for byte. CI runs `relock` on Renovate
 PRs and commits the result. Run it by hand when `npm ci` reports that the
 lockfile is out of sync:

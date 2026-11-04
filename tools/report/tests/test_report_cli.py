@@ -115,10 +115,14 @@ def test_markdown_against_a_previous_report_says_what_moved(
             [{"type": "span", "name": "demo.client", "emitted": ["a"]}],
         ),
         ("findings", [{"id": "unit_mismatch"}]),
+        (
+            "entities",
+            {"service": {"identity": ["service.name"], "description": []}},
+        ),
     ],
 )
 def test_target_changes_are_summarised_without_details(
-    field: str, value: list[dict[str, Any]]
+    field: str, value: list[dict[str, Any]] | dict[str, Any]
 ) -> None:
     target = {"id": TARGET, "signals": [], "findings": []}
     changes = _markdown.render_diff(
@@ -126,6 +130,58 @@ def test_target_changes_are_summarised_without_details(
         {"targets": [{**target, field: value}]},
     )
     assert changes == "### Conformance changes\n\n- 1 target changed\n"
+
+
+@pytest.mark.parametrize(
+    "before, after",
+    [
+        ({}, {"service": {"identity": ["service.name"], "description": []}}),
+        ({"service": {"identity": ["service.name"], "description": []}}, {}),
+        (
+            {"service": {"identity": ["service.name"], "description": []}},
+            {
+                "service": {
+                    "identity": ["service.name", "service.namespace"],
+                    "description": [],
+                }
+            },
+        ),
+        (
+            {"service": {"identity": ["service.name"], "description": []}},
+            {
+                "service": {
+                    "identity": ["service.name"],
+                    "description": ["service.version"],
+                }
+            },
+        ),
+    ],
+)
+def test_entity_changes_are_in_the_markdown_summary(
+    before: dict[str, Any], after: dict[str, Any]
+) -> None:
+    def report(entities: dict[str, Any]) -> dict[str, Any]:
+        return {"targets": [{"id": TARGET, "entities": entities}]}
+
+    summary = _markdown.render(report(after), report(before))
+    assert summary.endswith("### Conformance changes\n\n- 1 target changed\n")
+
+
+def test_unchanged_entities_have_no_diff_to_show() -> None:
+    same = {
+        "targets": [
+            {
+                "id": TARGET,
+                "entities": {
+                    "service": {
+                        "identity": ["service.name"],
+                        "description": [],
+                    }
+                },
+            }
+        ]
+    }
+    assert _markdown.render_diff(same, same) == ""
 
 
 def test_target_additions_and_removals_are_counted() -> None:

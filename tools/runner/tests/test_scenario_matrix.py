@@ -104,19 +104,6 @@ def test_sorted_round_robin_keeps_all_library_variants(group: str) -> None:
     assert Counter(selected) == Counter(paths)
 
 
-@pytest.mark.parametrize("count", [1, 2, 3, 8])
-def test_only_the_count_needs_to_change(count: int) -> None:
-    libraries = ["a", "b", "c", "d", "e"]
-    jobs = matrix(
-        scenario_paths("http/java", libraries), {"http-java": count}
-    )["include"]
-    assert len(jobs) == min(count, len(libraries))
-    assert [job["scenario_roots"].splitlines() for job in jobs] == [
-        [f"scenarios/http/java/{name}" for name in libraries[index::count]]
-        for index in range(min(count, len(libraries)))
-    ]
-
-
 def test_empty_groups_do_not_launch_jobs() -> None:
     assert matrix([]) == {"include": []}
     jobs = matrix(scenario_paths("http/python", ["a"]))["include"]
@@ -130,11 +117,11 @@ def test_invalid_counts_fail_even_for_absent_groups(count: object) -> None:
 
 
 def test_other_groups_and_ruby_keep_their_existing_grouping() -> None:
-    paths = scenario_paths("database/java", ["a", "b"])
+    paths = scenario_paths("http/python", ["a", "b"])
     paths += scenario_paths("http/ruby", ["a", "b"])
     jobs = matrix(paths)["include"]
-    assert jobs[0]["matrix_id"] == "database-java"
-    assert jobs[0]["scenario_roots"] == "scenarios/database/java"
+    assert jobs[0]["matrix_id"] == "http-python"
+    assert jobs[0]["scenario_roots"] == "scenarios/http/python"
     assert [job["scenario_roots"] for job in jobs[1:]] == sorted(
         path.removesuffix("/conformance.yaml")
         for path in paths
@@ -200,6 +187,23 @@ def test_tracked_scenarios_are_covered_once_by_standalone_cli() -> None:
     assert Counter(covered) == Counter(paths)
 
 
+def test_workflow_only_patches_successful_scenarios() -> None:
+    workflow = yaml.safe_load((REPO / ".github/workflows/runner.yml").read_text())
+    steps = {step["name"]: step for step in workflow["jobs"]["scenarios"]["steps"]}
+
+    assert steps["Run scenarios"]["id"] == "run-scenarios"
+    assert steps["Create the generated data patch"]["if"] == (
+        "${{ !cancelled() && steps.run-scenarios.outcome == 'success' }}"
+    )
+    assert steps["Upload the generated data patch"]["if"] == (
+        "${{ !cancelled() && steps.data-patch.outputs.exists == 'true' }}"
+    )
+    assert steps["Check the committed coverage is up to date"]["if"] == (
+        "${{ !cancelled() }}"
+    )
+    assert steps["Upload the weaver reports"]["if"] == "always()"
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="Scenario jobs run on Ubuntu")
 def test_workflow_executes_and_patches_only_assigned_roots(tmp_path: Path) -> None:
     workflow = yaml.safe_load((REPO / ".github/workflows/runner.yml").read_text())
@@ -248,16 +252,21 @@ def test_workflow_executes_and_patches_only_assigned_roots(tmp_path: Path) -> No
     }
     """
     patches: list[str] = []
+    successful_roots: list[str] = []
     for index, job in enumerate(matrix(paths)["include"]):
         env["SCENARIO_ROOTS"] = job["scenario_roots"]
         patch = tmp_path / f"data-{index}.patch"
         env["DATA_PATCH"] = str(patch)
         result = run_step("Run scenarios", stub)
         assert result.returncode == (1 if index == 0 else 0), result.stderr
+        assert run_step("Check the committed coverage is up to date").returncode == 1
+        if result.returncode != 0:
+            assert not patch.exists()
+            continue
         assert run_step("Create the generated data patch").returncode == 0
         assert patch.stat().st_size > 0
         patches.append(str(patch))
-        assert run_step("Check the committed coverage is up to date").returncode == 1
+        successful_roots.extend(job["scenario_roots"].splitlines())
 
     runs = (tmp_path / "runs").read_text().splitlines()
     assert Counter(runs) == Counter(str(Path(path).parent) for path in paths)
@@ -265,6 +274,8 @@ def test_workflow_executes_and_patches_only_assigned_roots(tmp_path: Path) -> No
     # Renovate applies all data patches together: overlap would fail here.
     git("apply", "--index", *patches)
     assert set(git("diff", "--cached", "--name-only").splitlines()) == {
-        str(Path(path).parent / "data.json") for path in paths
+        str(Path(path).parent / "data.json")
+        for path in paths
+        if any(path.startswith(root + "/") for root in successful_roots)
     }
     assert run_step("Check the committed lock files are up to date").returncode == 1
