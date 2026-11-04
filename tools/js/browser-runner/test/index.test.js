@@ -418,6 +418,18 @@ describe("runInBrowser", () => {
     }
   });
 
+  it("fails when the page never exposes a workload", async () => {
+    const otlp = await endpoint();
+    try {
+      await assert.rejects(
+        run(otlp, "no-workload", { timeoutMillis: 1_000 }),
+        /the page did not expose a workload within 1000 ms/,
+      );
+    } finally {
+      closeAll(otlp);
+    }
+  });
+
   it("refuses a gRPC endpoint before anything starts", async () => {
     await withEnv({ OTEL_EXPORTER_OTLP_PROTOCOL: "grpc" }, () =>
       assert.rejects(
