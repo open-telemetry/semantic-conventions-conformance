@@ -976,8 +976,8 @@ def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
     )
 
     assert (
-        "FROM eclipse-temurin:17-jre-jammy@sha256:"
-        "c35794d1348777e6bc310b9b7f420098ef8f37e988199549b545fded79a895a2"
+        "FROM eclipse-temurin:25-jre-jammy@sha256:"
+        "659b528cca74a0edc5c25315ec5819f35bce40bbcec645c4c534987e4c6be7c1"
         in dockerfile
     )
     assert f"ARG HBASE_VERSION={_hbase.HBASE_VERSION}" in dockerfile
