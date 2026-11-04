@@ -169,6 +169,76 @@ def test_nonready_health_response_times_out(
     assert not starting_weaver._ready
 
 
+def test_startup_timeout_is_forwarded_when_the_helper_accepts_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_weaver, "_PARENT_ACCEPTS_STARTUP_TIMEOUT", True)
+    seen: dict[str, object] = {}
+
+    def parent_init(self: object, *args: object, **kwargs: object) -> None:
+        del self, args
+        seen.update(kwargs)
+
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "__init__", parent_init)
+    weaver = _weaver.WeaverLiveCheck(startup_timeout=120.0, registry="model")
+
+    assert seen["startup_timeout"] == 120.0
+    assert weaver._delegate_startup_wait is True
+
+
+def test_startup_timeout_stays_local_when_the_helper_lacks_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_weaver, "_PARENT_ACCEPTS_STARTUP_TIMEOUT", False)
+    seen: dict[str, object] = {}
+
+    def parent_init(self: object, *args: object, **kwargs: object) -> None:
+        del self, args
+        seen.update(kwargs)
+
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "__init__", parent_init)
+    weaver = _weaver.WeaverLiveCheck(startup_timeout=120.0)
+
+    assert "startup_timeout" not in seen
+    assert weaver._delegate_startup_wait is False
+
+
+def test_local_poll_uses_the_timeout_passed_by_the_session(
+    starting_weaver: _weaver.WeaverLiveCheck,
+    clock: list[float],
+    health: Mock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT", "30")
+    starting_weaver._startup_timeout_fallback = 2.5
+    health.side_effect = ReadTimeoutError(None, "/health", "slow")
+
+    with pytest.raises(TimeoutError, match="within 2.5s"):
+        starting_weaver._wait_for_ready()
+
+    assert clock[0] == 2.5
+
+
+def test_readiness_uses_the_helper_wait_when_startup_timeout_is_forwarded(
+    starting_weaver: _weaver.WeaverLiveCheck,
+    health: Mock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    called: list[str] = []
+
+    def parent_wait(self: object) -> None:
+        del self
+        called.append("parent")
+
+    starting_weaver._delegate_startup_wait = True
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "_wait_for_ready", parent_wait)
+
+    starting_weaver._wait_for_ready()
+
+    assert called == ["parent"]
+    health.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "error",
     [

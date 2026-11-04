@@ -64,6 +64,12 @@ _WEAVER_INACTIVITY_TIMEOUT = (
     300.0,
 )
 _WEAVER_STOP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STOP_TIMEOUT", 120.0)
+# Same limit as the helper's own poll. Passed through when that helper
+# accepts startup_timeout, and used by the poll when it does not.
+_WEAVER_STARTUP_TIMEOUT = (
+    "OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT",
+    120.0,
+)
 _SCENARIO_TIMEOUT = ("OTEL_CONFORMANCE_SCENARIO_TIMEOUT", 600.0)
 _OTLP_SIGNAL_ENV = tuple(
     f"OTEL_EXPORTER_OTLP_{signal}_{setting}"
@@ -207,6 +213,7 @@ class ConformanceSession:
                     inactivity_timeout=int(
                         timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
                     ),
+                    startup_timeout=timeout_seconds(*_WEAVER_STARTUP_TIMEOUT),
                     registry=str(
                         registry_path(
                             self._registry,

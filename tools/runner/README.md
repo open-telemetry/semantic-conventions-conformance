@@ -130,7 +130,9 @@ otel-conformance path/to/directory --scenario inference   # just this one
 ```
 
 Weaver startup waits up to 120 seconds for `/health` to return HTTP 200,
-including time spent resolving registry dependencies. Set
+including time spent resolving registry dependencies. That limit is passed
+as `startup_timeout` when the installed live-check helper accepts it.
+Otherwise the runner keeps polling `/health` for the same limit. Set
 `OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT` to a finite positive number of seconds
 to change that limit:
 

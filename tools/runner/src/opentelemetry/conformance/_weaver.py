@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 import time
-from typing import cast
+from typing import Any, cast
 
 from requests import get, post
 from urllib3 import HTTPConnectionPool
@@ -31,11 +32,41 @@ _STARTUP_TIMEOUT = ("OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT", 120.0)
 _HEALTH_TIMEOUT_SECONDS = 1.0
 _POLL_INTERVAL_SECONDS = 0.1
 
+# opentelemetry-test-utils 0.66b2 has no startup_timeout. A later helper
+# polls /health until that deadline. Weaver v0.28.0, the newest release,
+# still binds /health only after registry resolution.
+_PARENT_ACCEPTS_STARTUP_TIMEOUT = (
+    "startup_timeout"
+    in inspect.signature(_WeaverLiveCheck.__init__).parameters
+)
+
 
 class WeaverLiveCheck(_WeaverLiveCheck):
+    def __init__(
+        self,
+        *args: Any,
+        startup_timeout: float | None = None,
+        **kwargs: Any,
+    ) -> None:
+        # 0.66b2 rejects this argument, so the poll below is the wait.
+        self._delegate_startup_wait = False
+        self._startup_timeout_fallback = startup_timeout
+        if startup_timeout is not None and _PARENT_ACCEPTS_STARTUP_TIMEOUT:
+            kwargs["startup_timeout"] = startup_timeout
+            self._delegate_startup_wait = True
+        super().__init__(*args, **kwargs)
+
     def _wait_for_ready(self) -> None:
+        if getattr(self, "_delegate_startup_wait", False):
+            super()._wait_for_ready()
+            return
         assert self._process is not None
-        startup = timeout_seconds(*_STARTUP_TIMEOUT)
+        passed = getattr(self, "_startup_timeout_fallback", None)
+        startup = (
+            float(passed)
+            if isinstance(passed, (int, float))
+            else timeout_seconds(*_STARTUP_TIMEOUT)
+        )
         deadline = time.monotonic() + startup
         last_error: ConnectTimeoutError | ProtocolError | ReadTimeoutError | None = None
         exit_code: int | None = None
