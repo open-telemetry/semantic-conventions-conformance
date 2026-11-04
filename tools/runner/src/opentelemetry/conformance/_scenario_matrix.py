@@ -14,8 +14,8 @@ import sys
 from collections import defaultdict
 from typing import Iterable, Mapping
 
-# Change only these counts to resize the library-level CI shards.
-SHARD_COUNTS = {"gen-ai-python": 4, "http-java": 4}
+# Change only these counts to resize the CI shards.
+SHARD_COUNTS = {"database-java": 4, "gen-ai-python": 4, "http-java": 4}
 
 
 def matrix(

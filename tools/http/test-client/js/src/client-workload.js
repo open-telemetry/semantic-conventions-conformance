@@ -15,6 +15,7 @@
  */
 
 const { scenarioRequest } = require("./contract");
+const { verify } = require("./response");
 
 /**
  * Sends the runner-selected contract request at `baseUrl` through `send`.
@@ -40,6 +41,7 @@ async function drive(baseUrl, send) {
     `${exchange.method} ${exchange.path} -> ${response.status} ` +
       `${abbreviate(response.body)}`,
   );
+  verify(exchange, response);
 }
 
 function abbreviate(value) {
