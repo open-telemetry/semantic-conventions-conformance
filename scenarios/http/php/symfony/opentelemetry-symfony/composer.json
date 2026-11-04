@@ -12,7 +12,7 @@
     "symfony/event-dispatcher": "^8.0",
     "symfony/http-foundation": "^8.0",
     "symfony/http-kernel": "^8.0",
-    "symfony/routing": "^7.4"
+    "symfony/routing": "^8.0"
   },
   "config": {
     "platform": {
