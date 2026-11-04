@@ -48,18 +48,13 @@ class WeaverLiveCheck(_WeaverLiveCheck):
         startup_timeout: float | None = None,
         **kwargs: Any,
     ) -> None:
-        # 0.66b2 rejects this argument, so the poll below is the wait.
-        self._delegate_startup_wait = False
+        # Keep the local deadline even when the helper accepts the timeout.
         self._startup_timeout_fallback = startup_timeout
         if startup_timeout is not None and _PARENT_ACCEPTS_STARTUP_TIMEOUT:
             kwargs["startup_timeout"] = startup_timeout
-            self._delegate_startup_wait = True
         super().__init__(*args, **kwargs)
 
     def _wait_for_ready(self) -> None:
-        if getattr(self, "_delegate_startup_wait", False):
-            super()._wait_for_ready()
-            return
         assert self._process is not None
         passed = getattr(self, "_startup_timeout_fallback", None)
         startup = (

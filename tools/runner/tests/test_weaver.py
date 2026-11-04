@@ -183,7 +183,7 @@ def test_startup_timeout_is_forwarded_when_the_helper_accepts_it(
     weaver = _weaver.WeaverLiveCheck(startup_timeout=120.0, registry="model")
 
     assert seen["startup_timeout"] == 120.0
-    assert weaver._delegate_startup_wait is True
+    assert weaver._startup_timeout_fallback == 120.0
 
 
 def test_startup_timeout_stays_local_when_the_helper_lacks_it(
@@ -200,7 +200,7 @@ def test_startup_timeout_stays_local_when_the_helper_lacks_it(
     weaver = _weaver.WeaverLiveCheck(startup_timeout=120.0)
 
     assert "startup_timeout" not in seen
-    assert weaver._delegate_startup_wait is False
+    assert weaver._startup_timeout_fallback == 120.0
 
 
 def test_local_poll_uses_the_timeout_passed_by_the_session(
@@ -219,24 +219,40 @@ def test_local_poll_uses_the_timeout_passed_by_the_session(
     assert clock[0] == 2.5
 
 
-def test_readiness_uses_the_helper_wait_when_startup_timeout_is_forwarded(
+@pytest.mark.parametrize("response_time", [0.5, 0.6])
+def test_forwarded_startup_timeout_rejects_health_at_or_after_deadline(
     starting_weaver: _weaver.WeaverLiveCheck,
+    clock: list[float],
     health: Mock,
     monkeypatch: pytest.MonkeyPatch,
+    response_time: float,
 ) -> None:
-    called: list[str] = []
-
-    def parent_wait(self: object) -> None:
-        del self
-        called.append("parent")
-
-    starting_weaver._delegate_startup_wait = True
+    monkeypatch.setattr(_weaver, "_PARENT_ACCEPTS_STARTUP_TIMEOUT", True)
+    parent_init = Mock()
+    parent_wait = Mock()
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "__init__", parent_init)
     monkeypatch.setattr(_weaver._WeaverLiveCheck, "_wait_for_ready", parent_wait)
+    starting_weaver.__init__(startup_timeout=0.5)
+    parent_init.assert_called_once_with(startup_timeout=0.5)
+    response = HTTPResponse(body=BytesIO(), status=200, preload_content=False)
 
-    starting_weaver._wait_for_ready()
+    def get(
+        method: str, url: str, *, timeout: HttpTimeout, **kwargs: object
+    ) -> HTTPResponse:
+        assert timeout.total == 0.5
+        clock[0] = response_time
+        return response
 
-    assert called == ["parent"]
-    health.assert_not_called()
+    health.side_effect = get
+
+    with pytest.raises(TimeoutError, match="within 0.5s"):
+        starting_weaver._wait_for_ready()
+
+    assert clock[0] == response_time
+    assert response.closed
+    assert not starting_weaver._ready
+    health.assert_called_once()
+    parent_wait.assert_not_called()
 
 
 @pytest.mark.parametrize(
