@@ -50,12 +50,31 @@ describe("driving the contract", () => {
     ]);
   });
 
-  it("does not validate the response", async () => {
-    const previous = process.env[SCENARIO_INDEX_VARIABLE];
+  it("rejects a response outside the contract", async () => {
     await withScenarioIndex(0, () =>
-      drive(BASE_URL, () => ({ status: 599, body: "not json" })),
+      assert.rejects(
+        () => drive(BASE_URL, () => ({ status: 599, body: "not json" })),
+        /answered 599/,
+      ),
     );
-    assert.equal(process.env[SCENARIO_INDEX_VARIABLE], previous);
+  });
+
+  it("names the request when the body is not JSON", async () => {
+    await withScenarioIndex(0, () =>
+      assert.rejects(
+        () => drive(BASE_URL, () => ({ status: 200, body: "not json" })),
+        /^Error: GET \/users\/123 answered "not json", which is not JSON$/,
+      ),
+    );
+  });
+
+  it("accepts equivalent JSON with a different object key order", async () => {
+    await withScenarioIndex(0, () =>
+      drive(BASE_URL, () => ({
+        status: 200,
+        body: '{"name":"Alice","id":123}',
+      })),
+    );
   });
 
   it("refuses a blank base URL before anything is sent", async () => {

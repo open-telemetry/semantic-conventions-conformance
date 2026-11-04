@@ -7,6 +7,8 @@ other language.
 ```text
 express/scenarios/                    what the server does, no OTel
 express/opentelemetry-express/        server.js, server/
+fetch/scenarios/                      what the browser Fetch client does, no OTel
+fetch/opentelemetry-fetch/            browser.js, client/
 http/scenarios/                       built-in client and server, no OTel
 http/opentelemetry-http/              client.js, server.js, client/, server/
 undici/scenarios/                     what the client does, no OTel
@@ -56,6 +58,27 @@ undici does not go through Node's `http` module, so its client spans come from
 `undici.request`, which reports every status rather than throwing on 4xx and
 5xx: the contract's failing statuses are traffic to be measured like any other.
 
+## Fetch
+
+Fetch is a browser API, so its scenario opens a headless browser through the
+[shared browser runner](../../../tools/js/README.md#browser-scenarios). The page
+sends the contract request to its own origin, which proxies it to the mock
+server unchanged, so a span keeps the contract's exact path and query string.
+Spans export over OTLP/HTTP to the same origin and on to the runner's bridge,
+and Fetch instrumentation ignores those exports.
+
+Fetch ends a span only after the response and its resource timing arrive, so
+the page waits up to 20 seconds for the span to be exported and reports how
+many were if it times out.
+
+The runner first launches an installed Google Chrome and falls back to
+Playwright's Chromium. Install that fallback once in the build root when
+Chrome is unavailable:
+
+```sh
+npm exec playwright-core install chromium
+```
+
 ## Running one
 
 Use Node 22.19.0 or newer. The lockfile pins `undici@8.10.0`, which requires
@@ -65,6 +88,7 @@ that version.
 pip install -e tools/runner -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/js
 otel-conformance scenarios/http/js/express/opentelemetry-express/server
+otel-conformance scenarios/http/js/fetch/opentelemetry-fetch/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/client
 otel-conformance scenarios/http/js/http/opentelemetry-http/server
 otel-conformance scenarios/http/js/undici/opentelemetry-undici/client
