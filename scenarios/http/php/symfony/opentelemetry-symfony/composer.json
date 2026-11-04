@@ -11,7 +11,7 @@
     "open-telemetry-conformance/http-test-client": "dev-main",
     "symfony/event-dispatcher": "^8.0",
     "symfony/http-foundation": "^8.0",
-    "symfony/http-kernel": "^7.4",
+    "symfony/http-kernel": "^8.0",
     "symfony/routing": "^7.4"
   },
   "config": {
