@@ -64,8 +64,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-12T10:28:18+00:00",
-            "published-time": "2026-09-12T12:23:30+00:00"
+            "time": "2026-09-12T10:28:18+00:00"
         },
         {
             "name": "codeigniter4/framework",
@@ -142,8 +141,7 @@
                 "slack": "https://codeigniterchat.slack.com",
                 "source": "https://github.com/codeigniter4/CodeIgniter4"
             },
-            "time": "2026-11-01T18:17:59+00:00",
-            "published-time": "2026-11-01T18:18:03+00:00"
+            "time": "2026-11-01T18:17:59+00:00"
         },
         {
             "name": "composer/semver",
@@ -220,8 +218,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-29T09:13:34+00:00",
-            "published-time": "2026-10-29T09:14:11+00:00"
+            "time": "2026-10-29T09:13:34+00:00"
         },
         {
             "name": "google/protobuf",
@@ -265,8 +262,7 @@
             "support": {
                 "source": "https://github.com/protocolbuffers/protobuf-php/tree/v5.36.2"
             },
-            "time": "2026-09-17T15:56:42+00:00",
-            "published-time": "2026-09-17T15:56:48+00:00"
+            "time": "2026-09-17T15:56:42+00:00"
         },
         {
             "name": "grpc/grpc",
@@ -310,8 +306,7 @@
             "support": {
                 "source": "https://github.com/grpc/grpc-php/tree/v1.85.0"
             },
-            "time": "2026-10-28T05:30:17+00:00",
-            "published-time": "2026-10-28T05:31:43+00:00"
+            "time": "2026-10-28T05:30:17+00:00"
         },
         {
             "name": "laminas/laminas-escaper",
@@ -372,8 +367,7 @@
                     "type": "community_bridge"
                 }
             ],
-            "time": "2025-10-14T18:31:13+00:00",
-            "published-time": "2025-10-14T19:13:23+00:00"
+            "time": "2025-10-14T18:31:13+00:00"
         },
         {
             "name": "nyholm/psr7-server",
@@ -439,8 +433,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-11-08T09:30:43+00:00",
-            "published-time": "2023-11-08T09:33:01+00:00"
+            "time": "2023-11-08T09:30:43+00:00"
         },
         {
             "name": "open-telemetry-conformance/http-test-client",
@@ -542,8 +535,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2026-09-16T01:59:09+00:00",
-            "published-time": "2026-10-20T00:48:16+00:00"
+            "time": "2026-09-16T01:59:09+00:00"
         },
         {
             "name": "open-telemetry/context",
@@ -602,8 +594,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2025-10-19T06:44:33+00:00",
-            "published-time": "2026-03-25T14:04:42+00:00"
+            "time": "2025-10-19T06:44:33+00:00"
         },
         {
             "name": "open-telemetry/exporter-otlp",
@@ -667,8 +658,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2026-02-05T09:44:52+00:00",
-            "published-time": "2026-02-10T10:37:07+00:00"
+            "time": "2026-02-05T09:44:52+00:00"
         },
         {
             "name": "open-telemetry/gen-otlp-protobuf",
@@ -731,8 +721,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2026-06-17T12:06:32+00:00",
-            "published-time": "2026-07-15T15:51:53+00:00"
+            "time": "2026-06-17T12:06:32+00:00"
         },
         {
             "name": "open-telemetry/opentelemetry-auto-codeigniter",
@@ -796,8 +785,7 @@
             "support": {
                 "source": "https://github.com/opentelemetry-php/contrib-auto-codeigniter/tree/0.3.1"
             },
-            "time": "2026-09-02T12:13:51+00:00",
-            "published-time": "2026-10-24T19:55:40+00:00"
+            "time": "2026-09-02T12:13:51+00:00"
         },
         {
             "name": "open-telemetry/sdk",
@@ -897,8 +885,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2026-07-14T13:09:54+00:00",
-            "published-time": "2026-07-15T15:52:03+00:00"
+            "time": "2026-07-14T13:09:54+00:00"
         },
         {
             "name": "open-telemetry/sem-conv",
@@ -955,8 +942,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2026-11-03T22:37:22+00:00",
-            "published-time": "2026-11-03T22:42:45+00:00"
+            "time": "2026-11-03T22:37:22+00:00"
         },
         {
             "name": "open-telemetry/transport-grpc",
@@ -1018,8 +1004,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2025-10-19T06:44:33+00:00",
-            "published-time": "2026-03-25T14:05:19+00:00"
+            "time": "2025-10-19T06:44:33+00:00"
         },
         {
             "name": "php-http/discovery",
@@ -1098,8 +1083,7 @@
                 "issues": "https://github.com/php-http/discovery/issues",
                 "source": "https://github.com/php-http/discovery/tree/1.20.0"
             },
-            "time": "2024-10-02T11:20:13+00:00",
-            "published-time": "2024-10-02T11:21:00+00:00"
+            "time": "2024-10-02T11:20:13+00:00"
         },
         {
             "name": "psr/http-client",
@@ -1151,8 +1135,7 @@
             "support": {
                 "source": "https://github.com/php-fig/http-client"
             },
-            "time": "2023-09-23T14:17:50+00:00",
-            "published-time": "2023-09-23T14:18:12+00:00"
+            "time": "2023-09-23T14:17:50+00:00"
         },
         {
             "name": "psr/http-factory",
@@ -1207,8 +1190,7 @@
             "support": {
                 "source": "https://github.com/php-fig/http-factory"
             },
-            "time": "2024-04-15T12:06:14+00:00",
-            "published-time": "2024-05-10T07:32:19+00:00"
+            "time": "2024-04-15T12:06:14+00:00"
         },
         {
             "name": "psr/http-message",
@@ -1261,8 +1243,7 @@
             "support": {
                 "source": "https://github.com/php-fig/http-message/tree/2.0"
             },
-            "time": "2023-04-04T09:54:51+00:00",
-            "published-time": "2023-04-04T09:55:35+00:00"
+            "time": "2023-04-04T09:54:51+00:00"
         },
         {
             "name": "psr/log",
@@ -1312,8 +1293,7 @@
             "support": {
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
-            "time": "2024-09-11T13:17:53+00:00",
-            "published-time": "2024-09-11T13:21:14+00:00"
+            "time": "2024-09-11T13:17:53+00:00"
         },
         {
             "name": "ramsey/collection",
@@ -1389,8 +1369,7 @@
                 "issues": "https://github.com/ramsey/collection/issues",
                 "source": "https://github.com/ramsey/collection/tree/2.1.1"
             },
-            "time": "2025-03-22T05:38:12+00:00",
-            "published-time": "2025-03-22T05:39:22+00:00"
+            "time": "2025-03-22T05:38:12+00:00"
         },
         {
             "name": "ramsey/uuid",
@@ -1468,8 +1447,7 @@
                 "issues": "https://github.com/ramsey/uuid/issues",
                 "source": "https://github.com/ramsey/uuid/tree/4.9.4"
             },
-            "time": "2026-09-16T11:39:30+00:00",
-            "published-time": "2026-09-16T11:41:15+00:00"
+            "time": "2026-09-16T11:39:30+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -1552,8 +1530,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-04-10T16:19:22+00:00",
-            "published-time": "2026-04-26T14:44:50+00:00"
+            "time": "2026-04-10T16:19:22+00:00"
         },
         {
             "name": "symfony/polyfill-mbstring",
@@ -1638,8 +1615,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-28T09:35:49+00:00",
-            "published-time": "2026-10-28T10:07:45+00:00"
+            "time": "2026-10-28T09:35:49+00:00"
         },
         {
             "name": "symfony/polyfill-php82",
@@ -1719,8 +1695,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-25T15:50:05+00:00",
-            "published-time": "2026-09-30T10:23:32+00:00"
+            "time": "2026-09-25T15:50:05+00:00"
         },
         {
             "name": "symfony/yaml",
@@ -1796,8 +1771,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-18T14:56:39+00:00",
-            "published-time": "2026-10-28T18:23:45+00:00"
+            "time": "2026-10-18T14:56:39+00:00"
         },
         {
             "name": "tbachert/spi",
@@ -1849,8 +1823,7 @@
                 "issues": "https://github.com/Nevay/spi/issues",
                 "source": "https://github.com/Nevay/spi/tree/v1.0.5"
             },
-            "time": "2025-06-29T15:42:06+00:00",
-            "published-time": "2025-06-30T18:37:38+00:00"
+            "time": "2025-06-29T15:42:06+00:00"
         }
     ],
     "packages-dev": [],
@@ -1868,5 +1841,5 @@
     "platform-overrides": {
         "php": "8.4.1"
     },
-    "plugin-api-version": "2.11.0"
+    "plugin-api-version": "2.9.0"
 }
