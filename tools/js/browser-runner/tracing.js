@@ -21,6 +21,7 @@ const SPANS_TIMEOUT_MILLIS = 20_000;
  */
 function trackingExporter(exporter, expected) {
   let exported = 0;
+  let exportError;
   let resolve;
   let reject;
   const complete = new Promise((onResolve, onReject) => {
@@ -32,7 +33,8 @@ function trackingExporter(exporter, expected) {
       exporter.export(spans, (result) => {
         callback(result);
         if (result.code !== 0) {
-          reject(result.error || new Error("OTLP export failed"));
+          exportError ||= result.error || new Error("OTLP export failed");
+          reject(exportError);
           return;
         }
         exported += spans.length;
@@ -48,6 +50,14 @@ function trackingExporter(exporter, expected) {
     },
     shutdown() {
       return exporter.shutdown();
+    },
+    assertExpectedSpans() {
+      if (exportError) {
+        throw exportError;
+      }
+      if (exported !== expected) {
+        throw new Error(`exported ${exported} spans, expected ${expected}`);
+      }
     },
     waitForExpectedSpans() {
       return within(
@@ -72,6 +82,7 @@ async function runWithTracing({ instrumentations, expectedSpans, workload }) {
   const answered = await workload();
   await exporter.waitForExpectedSpans();
   await provider.forceFlush();
+  exporter.assertExpectedSpans();
   return answered;
 }
 

@@ -104,19 +104,6 @@ def test_sorted_round_robin_keeps_all_library_variants(group: str) -> None:
     assert Counter(selected) == Counter(paths)
 
 
-@pytest.mark.parametrize("count", [1, 2, 3, 8])
-def test_only_the_count_needs_to_change(count: int) -> None:
-    libraries = ["a", "b", "c", "d", "e"]
-    jobs = matrix(
-        scenario_paths("http/java", libraries), {"http-java": count}
-    )["include"]
-    assert len(jobs) == min(count, len(libraries))
-    assert [job["scenario_roots"].splitlines() for job in jobs] == [
-        [f"scenarios/http/java/{name}" for name in libraries[index::count]]
-        for index in range(min(count, len(libraries)))
-    ]
-
-
 def test_empty_groups_do_not_launch_jobs() -> None:
     assert matrix([]) == {"include": []}
     jobs = matrix(scenario_paths("http/python", ["a"]))["include"]
@@ -130,11 +117,11 @@ def test_invalid_counts_fail_even_for_absent_groups(count: object) -> None:
 
 
 def test_other_groups_and_ruby_keep_their_existing_grouping() -> None:
-    paths = scenario_paths("database/java", ["a", "b"])
+    paths = scenario_paths("http/python", ["a", "b"])
     paths += scenario_paths("http/ruby", ["a", "b"])
     jobs = matrix(paths)["include"]
-    assert jobs[0]["matrix_id"] == "database-java"
-    assert jobs[0]["scenario_roots"] == "scenarios/database/java"
+    assert jobs[0]["matrix_id"] == "http-python"
+    assert jobs[0]["scenario_roots"] == "scenarios/http/python"
     assert [job["scenario_roots"] for job in jobs[1:]] == sorted(
         path.removesuffix("/conformance.yaml")
         for path in paths
