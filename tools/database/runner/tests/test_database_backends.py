@@ -20,6 +20,7 @@ from testcontainers.core.wait_strategies import ExecWaitStrategy
 from database_conformance import (
     _cassandra,
     _container,
+    _elasticsearch,
     _hbase,
     _mariadb,
     _mongodb,
@@ -31,6 +32,11 @@ from database_conformance import (
 )
 from database_conformance._cassandra import CASSANDRA_IMAGE, Cassandra
 from database_conformance._container import BackendSpec, DatabaseContainer
+from database_conformance._elasticsearch import (
+    ELASTICSEARCH,
+    ELASTICSEARCH_IMAGE,
+    Elasticsearch,
+)
 from database_conformance._hbase import (
     HBASE_IMAGE,
     HBASE_MASTER_PORT,
@@ -60,15 +66,19 @@ class StubContainer:
         stop_error: Exception | None = None,
         log_error: Exception | None = None,
         exec_result: ExecResult | None = None,
-        port: int = 5432,
+        published_ports: dict[int, int] | None = None,
+        port: int | None = None,
         published_port: int = 32768,
     ) -> None:
         self.start_error = start_error
         self.stop_error = stop_error
         self.log_error = log_error
         self.exec_result = exec_result or ExecResult()
-        self.port = port
-        self.published_port = published_port
+        self.published_ports = (
+            published_ports
+            if published_ports is not None
+            else {port if port is not None else 5432: published_port}
+        )
         self.env: dict[str, str] = {}
         self.kwargs: dict[str, Any] = {}
         self.ports: dict[str, Any] = {}
@@ -103,8 +113,7 @@ class StubContainer:
         return self
 
     def get_exposed_port(self, port: int) -> int:
-        assert port == self.port
-        return self.published_port
+        return self.published_ports[port]
 
     def exec(self, config: ExecConfig) -> ExecResult:
         self.exec_config = config
@@ -133,7 +142,7 @@ def install_stub(
     (
         "module",
         "backend_type",
-        "port",
+        "ports",
         "expected_environment",
         "expected_variables",
         "expected_schema_paths",
@@ -143,7 +152,7 @@ def install_stub(
         (
             _cassandra,
             Cassandra,
-            9042,
+            {9042: 32768},
             {
                 "CASSANDRA_CLUSTER_NAME": "otel-conformance",
                 "CASSANDRA_DC": "datacenter1",
@@ -174,7 +183,7 @@ def install_stub(
         (
             _postgres,
             Postgres,
-            5432,
+            {5432: 32768},
             {
                 "POSTGRES_DB": "conformance",
                 "POSTGRES_USER": "conformance",
@@ -211,7 +220,7 @@ def install_stub(
         (
             _mariadb,
             MariaDB,
-            3306,
+            {3306: 32768},
             {
                 "MARIADB_DATABASE": "conformance",
                 "MARIADB_USER": "conformance",
@@ -239,7 +248,7 @@ def install_stub(
         (
             _oracle,
             Oracle,
-            1521,
+            {1521: 32768},
             {
                 "ORACLE_PASSWORD": "conformance",
                 "APP_USER": "conformance",
@@ -267,7 +276,7 @@ def install_stub(
         (
             _redis,
             Redis,
-            6379,
+            {6379: 32768},
             {},
             {
                 "DATABASE_HOST": "127.0.0.1",
@@ -282,7 +291,7 @@ def install_stub(
         (
             _sql_server,
             SQLServer,
-            1433,
+            {1433: 32768},
             {
                 "ACCEPT_EULA": "Y",
                 "MSSQL_PID": "Developer",
@@ -314,7 +323,7 @@ def install_stub(
         (
             _mongodb,
             MongoDB,
-            27017,
+            {27017: 32768},
             {
                 "MONGO_INITDB_ROOT_USERNAME": "root",
                 "MONGO_INITDB_ROOT_PASSWORD": "conformance-root",
@@ -350,7 +359,7 @@ def install_stub(
         (
             _mysql,
             MySQL,
-            3306,
+            {3306: 32768},
             {
                 "MYSQL_DATABASE": "conformance",
                 "MYSQL_USER": "conformance",
@@ -375,19 +384,53 @@ def install_stub(
                 environment={"MYSQL_PWD": "conformance"},
             ),
         ),
+        (
+            _elasticsearch,
+            Elasticsearch,
+            {9200: 32768},
+            {
+                "discovery.type": "single-node",
+                "xpack.security.enabled": "false",
+                "ES_JAVA_OPTS": "-Xms256m -Xmx256m",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "",
+                "DATABASE_PASSWORD": "",
+            },
+            ["/tmp/otel-conformance-elasticsearch.json"],
+            ExecConfig(
+                command=[
+                    "curl",
+                    "--fail",
+                    "--silent",
+                    "--show-error",
+                    "--header",
+                    "Content-Type: application/json",
+                    "--request",
+                    "PUT",
+                    "http://127.0.0.1:9200/conformance",
+                    "--data-binary",
+                    "@/tmp/otel-conformance-elasticsearch.json",
+                ],
+                environment={},
+            ),
+        ),
     ],
 )
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
     backend_type: Callable[[], DatabaseContainer],
-    port: int,
+    ports: dict[int, int],
     expected_environment: dict[str, str],
     expected_variables: dict[str, str],
     expected_schema_paths: list[str],
     expected_initialization: ExecConfig | None,
 ) -> None:
-    container = StubContainer(port=port)
+    container = StubContainer(published_ports=ports)
     install_stub(monkeypatch, module, container)
 
     with backend_type() as database:
@@ -396,20 +439,30 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.started
     assert container.stopped
     assert container.env == expected_environment
-    assert container.ports == {f"{port}/tcp": ("127.0.0.1", 0)}
+    assert container.ports == {
+        f"{port}/tcp": ("127.0.0.1", 0) for port in ports
+    }
     assert [path for _, path in container.transfers] == expected_schema_paths
     for schema, _ in container.transfers:
-        assert (
-            b"createCollection" if backend_type is MongoDB else b"CREATE"
-        ) in schema
+        if backend_type is Elasticsearch:
+            assert b'"dynamic": "strict"' in schema
+            assert b'"index.number_of_shards": 1' in schema
+        elif backend_type is MongoDB:
+            assert b"createCollection" in schema
+        else:
+            assert b"CREATE" in schema
+            assert b"INSERT INTO" not in schema
     assert container.exec_config == expected_initialization
     assert container.wait_strategy is not None
+    with pytest.raises(RuntimeError, match="has not been started"):
+        _ = database.variables
 
 
 @pytest.mark.parametrize(
     ("spec", "default_seconds"),
     [
         (_cassandra.CASSANDRA, 180.0),
+        (_elasticsearch.ELASTICSEARCH, 60.0),
         (_postgres.POSTGRES, 60.0),
         (_mariadb.MARIADB, 60.0),
         (_mongodb.MONGODB, 60.0),
@@ -711,6 +764,7 @@ def test_hbase_cannot_build_a_second_image_while_started(
     ("module", "backend_type", "port", "default_timeout"),
     [
         (_cassandra, Cassandra, 9042, 180.0),
+        (_elasticsearch, Elasticsearch, 9200, 60.0),
         (_hbase, HBase, HBASE_MASTER_PORT, 60.0),
         (_postgres, Postgres, 5432, 60.0),
         (_mariadb, MariaDB, 3306, 60.0),
@@ -882,7 +936,7 @@ def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
 ) -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"Incorrect syntax"),
-        port=1433,
+        published_ports={1433: 32768},
     )
     install_stub(monkeypatch, _sql_server, container)
 
@@ -891,6 +945,26 @@ def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
         match=r"(?s)Incorrect syntax.*ready to accept connections",
     ):
         SQLServer().start()
+
+    assert container.stopped
+
+
+def test_elasticsearch_schema_failure_reports_curl_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(
+            exit_code=22, output=b"index bootstrap rejected"
+        ),
+        published_ports={9200: 32768},
+    )
+    install_stub(monkeypatch, _elasticsearch, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)index bootstrap rejected.*ready to accept connections",
+    ):
+        Elasticsearch().start()
 
     assert container.stopped
 
@@ -952,7 +1026,7 @@ def test_oracle_schema_failure_reports_sqlplus_output_and_logs(
 def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     container = StubContainer(
         exec_result=ExecResult(exit_code=1, output=b"SET failed"),
-        port=6379,
+        published_ports={6379: 32768},
     )
     spec = replace(_redis.REDIS, initialize_command=("initialize",))
 
@@ -966,6 +1040,17 @@ def test_command_only_initialization_failure_uses_general_diagnostic() -> None:
     assert "schema" not in message
     assert "SET failed" in message
     assert container.stopped
+
+
+def test_elasticsearch_readiness_waits_for_a_yellow_cluster() -> None:
+    assert ELASTICSEARCH.ready_command == (
+        "sh",
+        "-c",
+        "curl --fail --silent "
+        "'http://127.0.0.1:9200/_cluster/health"
+        "?wait_for_status=yellow&timeout=1s' "
+        "| grep --quiet '\"timed_out\":false'",
+    )
 
 
 def test_cannot_start_postgres_twice(
@@ -992,6 +1077,7 @@ def test_cannot_start_postgres_twice(
         (MYSQL_IMAGE, "mysql"),
         (REDIS_IMAGE, "redis"),
         (SQL_SERVER_IMAGE, "mcr.microsoft.com/mssql/server"),
+        (ELASTICSEARCH_IMAGE, "docker.elastic.co/elasticsearch/elasticsearch"),
     ],
 )
 def test_the_image_is_pinned_by_digest(image: str, repository: str) -> None:
@@ -1052,6 +1138,14 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     assert "CREATE KEYSPACE conformance" in schema
     assert "CREATE TABLE conformance.items" in schema
     assert "INSERT INTO" not in schema
+
+    bootstrap = (
+        resources.files("database_conformance")
+        .joinpath("elasticsearch.json")
+        .read_text(encoding="utf-8")
+    )
+    assert '"dynamic": "strict"' in bootstrap
+    assert '"index.number_of_replicas": 0' in bootstrap
 
     schema = (
         resources.files("database_conformance")

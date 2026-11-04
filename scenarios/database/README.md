@@ -26,6 +26,9 @@ commands and telemetry expectations across its synchronous and Reactive Streams
 driver APIs.
 R2DBC also uses named workloads, with a separate PostgreSQL telemetry contract.
 See its [reactive workload guide](java/shared/r2dbc/README.md).
+Elasticsearch's latest Java API Client uses its native instrumentation and a
+search workload, described in the
+[Elasticsearch scenario notes](java/elasticsearch/README.md).
 
 ## Running a package
 

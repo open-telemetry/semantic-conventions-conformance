@@ -3,6 +3,7 @@
 
 [versions]
 cassandra-driver = "4.19.4"
+elasticsearch-java = "9.5.5"
 hbase = "3.0.0"
 jackson = "2.22.4"
 mariadb = "4.0.0"
@@ -30,6 +31,7 @@ redisson = "4.8.0"
 scala = "2.13.18"
 
 [libraries]
+elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch-java" }
 hbase-client = { module = "org.apache.hbase:hbase-client", version.ref = "hbase" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 cassandra-driver = { module = "org.apache.cassandra:java-driver-core", version.ref = "cassandra-driver" }

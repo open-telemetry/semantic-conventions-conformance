@@ -69,6 +69,8 @@ generic conformance runner injects only the selected contract entry's `action`
 into the scenario process. Named telemetry-only contracts, such as
 [R2DBC's](../../../scenarios/database/java/shared/r2dbc/README.md), instead
 declare a run command for each scenario.
+Backend-specific initialization and connection details for Elasticsearch are in
+its [scenario notes](../../../scenarios/database/java/elasticsearch/README.md).
 
 Cassandra's additional connection variable and container prerequisites are
 documented in its [scenario notes](../../../scenarios/database/java/cassandra/README.md).

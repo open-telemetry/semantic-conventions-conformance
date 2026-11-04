@@ -10,6 +10,7 @@ from typing import Callable
 
 from ._cassandra import Cassandra
 from ._container import DatabaseContainer
+from ._elasticsearch import Elasticsearch
 from ._hbase import HBase
 from ._mariadb import MariaDB
 from ._mongodb import MongoDB
@@ -29,6 +30,9 @@ class BackendRegistration:
 
 BACKENDS = {
     "cassandra": BackendRegistration(Cassandra, "cassandra", "db.cassandra.client"),
+    "elasticsearch": BackendRegistration(
+        Elasticsearch, "elasticsearch", "db.elasticsearch.client"
+    ),
     "hbase": BackendRegistration(HBase, "hbase", "db.hbase.client"),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
     "mongodb": BackendRegistration(MongoDB, "mongodb", "db.mongodb.client"),

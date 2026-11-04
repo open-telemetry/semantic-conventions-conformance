@@ -63,6 +63,7 @@ def test_discovers_owned_projects_and_prunes_excluded_trees(
     discovery_root: Path,
 ) -> None:
     expected_projects = {
+        "shared/elasticsearch/elasticsearch-java/native-instrumentation",
         "shared/hbase/hbase-client/scenarios",
         "shared/hbase/hbase-client/native",
         "shared/jdbc/scenarios",
@@ -169,6 +170,7 @@ def test_preserves_database_project_names() -> None:
         ":scenario-sdk",
         ":agent-control",
         ":sql-test-client",
+        ":shared:elasticsearch:elasticsearch-java:native-instrumentation",
         ":shared:jdbc:scenarios",
         ":shared:jdbc:opentelemetry-javaagent",
         ":shared:jdbc:opentelemetry-library",
@@ -192,6 +194,15 @@ def test_preserves_database_project_names() -> None:
         ":shared:cassandra:java-driver:opentelemetry-javaagent",
         ":shared:cassandra:java-driver:opentelemetry-library",
     } <= projects
+    assert (
+        not {
+            ":shared:elasticsearch:elasticsearch-java:opentelemetry-javaagent",
+            ":shared:elasticsearch:elasticsearch-java:opentelemetry-library",
+            ":shared:elasticsearch:rest-javaagent",
+            ":shared:elasticsearch:transport-javaagent",
+        }
+        & projects
+    )
     assert ":hbase:hbase-client:native" not in projects
     assert ":hbase:native" not in projects
     assert ":shared:hbase:scenarios" not in projects

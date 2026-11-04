@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 
 import database_conformance
+from database_conformance._elasticsearch import Elasticsearch
 from database_conformance._hbase import HBase
 from database_conformance._mongodb import MongoDB
 from database_conformance._mysql import MySQL
@@ -180,6 +181,61 @@ def test_database_session_closes_backend_after_an_error(
             raise RuntimeError("scenario failed")
 
     assert closed
+
+
+def test_elasticsearch_backend_is_available_for_dispatch(
+    tmp_path: Path,
+) -> None:
+    spec = _write_spec(tmp_path, "  backend: elasticsearch")
+
+    assert database_conformance._backend_name(spec) == "elasticsearch"
+    registration = database_conformance._BACKEND_REGISTRY["elasticsearch"]
+    assert registration.factory is Elasticsearch
+    assert registration.system == "elasticsearch"
+    assert registration.client_span_type == "db.elasticsearch.client"
+
+
+def test_elasticsearch_native_package_uses_the_client_instrumentation() -> (
+    None
+):
+    directory = (
+        Path(__file__).resolve().parents[4]
+        / "scenarios/database/java/elasticsearch/elasticsearch-java/native-instrumentation"
+    )
+    spec = load_spec(directory)
+    search = spec.scenarios["search"]
+
+    assert spec.instrumented_library == "elasticsearch-java"
+    assert (
+        spec.instrumentation_library == "co.elastic.clients:elasticsearch-java"
+    )
+    assert spec.setup == (
+        "otel-conformance-java",
+        "prepare",
+        "shared:elasticsearch:elasticsearch-java:native-instrumentation",
+    )
+    assert search.run == (
+        "otel-conformance-java",
+        "run",
+        "shared:elasticsearch:elasticsearch-java:native-instrumentation",
+        "ElasticsearchApiClientScenario",
+    )
+    assert "--agent" not in search.run
+    assert len(search.spans) == 1
+    assert search.spans[0].match.kind == "CLIENT"
+    assert search.spans[0].count == 1
+    scope = search.spans[0].instrumentation_scope
+    assert scope is not None
+    assert scope.name is not None
+    assert scope.name.equals == "elasticsearch-api"
+    attributes = search.spans[0].attributes
+    assert attributes["db.operation.name"].equals == "search"
+    assert attributes["db.operation.parameter.index"].equals == "conformance"
+    assert attributes["http.request.method"].equals == "POST"
+    assert attributes["url.full"].present is True
+    assert "http.response.status_code" not in attributes
+    assert search.metrics == ()
+    assert search.events == ()
 
 
 def test_database_session_dispatches_and_closes_cassandra(

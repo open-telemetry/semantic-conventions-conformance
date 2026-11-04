@@ -45,6 +45,8 @@ documented in its [scenario notes](cassandra/README.md).
 Oracle's container, JDBC runtime, and workload requirements are documented in
 its [scenario notes](oracle/README.md).
 
+The [Elasticsearch scenario notes](elasticsearch/README.md) describe the latest
+Java API Client, its native instrumentation, and its search workload.
 MySQL's container setup and Connector/J telemetry settings are documented in its
 [scenario notes](mysql/README.md).
 
