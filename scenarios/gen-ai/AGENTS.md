@@ -41,6 +41,40 @@ for what else changes in those directories.
   implementation directory). Renovate bumps them.
 - Apache-2.0 header on every `.py` and `conformance.yaml`.
 
+### JavaScript
+
+```
+scenarios/gen-ai/js/
+    package.json, package-lock.json   one npm workspace for every library
+    <library>/
+        scenarios/          package.json, common.js, <class>.js
+        <instrumentation>/  package.json, conformance.yaml, <class>.js,
+                            data.json
+```
+
+The rules above hold, with these differences:
+
+- **The shared scenarios are a package.** `<library>/scenarios/` is a
+  workspace package (`@otel-conformance/<library>-scenarios`) that depends only
+  on the client library. Each `<class>.js` exports one async function with the
+  exchange, and `common.js` holds the client and request settings the classes
+  share.
+- **One entry program per class.** JavaScript instrumentation is set up in
+  code, so every implementation directory has a `<class>.js` that calls
+  `runScenario` from [`tools/js/scenario-sdk`](../../tools/js/scenario-sdk)
+  with its instrumentation and requires the matching shared scenario. This is
+  the only place OpenTelemetry is named. A library that emits OpenTelemetry
+  itself registers its telemetry in a `run.js` beside the entry programs, as
+  `vercel-ai/native` does.
+- **One instrumentation per package.** An implementation directory's
+  `package.json` depends on its library's scenarios package, the scenario SDK
+  and its own instrumentation, nothing else.
+- Pin every third-party dependency exactly, add a new library to `workspaces`
+  in `js/package.json`, and commit the regenerated `js/package-lock.json`
+  (`npm install` in `js/`). Run `npm run format` there before committing; CI
+  checks formatting.
+- Apache-2.0 header on every `.js` and `conformance.yaml`.
+
 ## The mock server is where responses come from
 
 A scenario that needs a field the mock does not serve is a change to
@@ -53,7 +87,7 @@ reproducible.
 ## Before opening a PR
 
 ```sh
-otel-conformance scenarios/gen-ai/python/<library>/<instrumentation> --report-only
+otel-conformance scenarios/gen-ai/<language>/<library>/<instrumentation> --report-only
 ```
 
 - Commit the regenerated `data.json`. CI runs every directory and fails on any
