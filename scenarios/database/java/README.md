@@ -15,11 +15,6 @@ directories, and `bin`, `build`, `buildSrc`, `node_modules`, `out`, `src`, and
 `target` trees. Build files inside source fixtures or generated output do not
 become subprojects.
 
-CI sorts backend directories and distributes them round-robin across four
-shards. All client and instrumentation variants for a backend run in the same
-shard. The shard count is configured in
-[the scenario matrix generator](../../../tools/runner/src/opentelemetry/conformance/_scenario_matrix.py).
-
 Project-discovery integration tests require a JDK and run separately from the
 Python unit suite. CI runs them on Linux after setting up Java and Gradle.
 To run them locally from the repository root:

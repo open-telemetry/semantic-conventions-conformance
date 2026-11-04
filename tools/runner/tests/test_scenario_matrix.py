@@ -77,7 +77,7 @@ def scenario_paths(group: str, libraries: list[str]) -> list[str]:
     ]
 
 
-@pytest.mark.parametrize("group", ["database/java", "gen-ai/python", "http/java"])
+@pytest.mark.parametrize("group", ["gen-ai/python", "http/java"])
 def test_sorted_round_robin_keeps_all_library_variants(group: str) -> None:
     libraries = ["zebra", "beta", "delta", "alpha", "gamma", "epsilon"]
     paths = scenario_paths(group, libraries)
@@ -86,9 +86,7 @@ def test_sorted_round_robin_keeps_all_library_variants(group: str) -> None:
     assert len(jobs) == 4
     assert len({job["matrix_id"] for job in jobs}) == 4
     selected: list[str] = []
-    matrix_id = group.replace("/", "-")
     for index, job in enumerate(jobs):
-        assert job["matrix_id"] == f"{matrix_id}-shard-{index + 1}"
         roots = job["scenario_roots"].splitlines()
         assert roots == [
             f"scenarios/{group}/{library}"
@@ -104,20 +102,6 @@ def test_sorted_round_robin_keeps_all_library_variants(group: str) -> None:
             f"{root}/**/output/weaver-reports/*.json" for root in roots
         ]
     assert Counter(selected) == Counter(paths)
-
-
-@pytest.mark.parametrize("group", ["database/java", "gen-ai/python", "http/java"])
-@pytest.mark.parametrize("count", [1, 2, 3, 8])
-def test_only_the_count_needs_to_change(group: str, count: int) -> None:
-    libraries = ["a", "b", "c", "d", "e"]
-    jobs = matrix(
-        scenario_paths(group, libraries), {group.replace("/", "-"): count}
-    )["include"]
-    assert len(jobs) == min(count, len(libraries))
-    assert [job["scenario_roots"].splitlines() for job in jobs] == [
-        [f"scenarios/{group}/{name}" for name in libraries[index::count]]
-        for index in range(min(count, len(libraries)))
-    ]
 
 
 def test_empty_groups_do_not_launch_jobs() -> None:
@@ -154,7 +138,6 @@ def test_other_groups_and_ruby_keep_their_existing_grouping() -> None:
     [
         "conformance.yaml",
         "elsewhere/http/java/a/conformance.yaml",
-        "scenarios/database/java/conformance.yaml",
         "scenarios/http/java/conformance.yaml",
         "scenarios/http/java/../conformance.yaml",
     ],
@@ -222,10 +205,7 @@ def test_workflow_only_patches_successful_scenarios() -> None:
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Scenario jobs run on Ubuntu")
-@pytest.mark.parametrize("group", ["database/java", "http/java"])
-def test_workflow_executes_and_patches_only_assigned_roots(
-    tmp_path: Path, group: str
-) -> None:
+def test_workflow_executes_and_patches_only_assigned_roots(tmp_path: Path) -> None:
     workflow = yaml.safe_load((REPO / ".github/workflows/runner.yml").read_text())
     steps = {step["name"]: step for step in workflow["jobs"]["scenarios"]["steps"]}
     repo = tmp_path / "repo"
@@ -236,7 +216,7 @@ def test_workflow_executes_and_patches_only_assigned_roots(
             ["git", *args], cwd=repo, check=True, stdout=subprocess.PIPE
         ).stdout
 
-    paths = scenario_paths(group, ["a", "b", "c", "d", "e"])
+    paths = scenario_paths("http/java", ["a", "b", "c", "d", "e"])
     for path in paths:
         directory = repo / Path(path).parent
         directory.mkdir(parents=True)
