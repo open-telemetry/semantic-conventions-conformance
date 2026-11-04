@@ -12,6 +12,9 @@
     "open-telemetry-conformance/http-test-client": "dev-main"
   },
   "config": {
+    "allow-plugins": {
+      "tbachert/spi": true
+    },
     "platform": {
       "php": "8.4.1"
     }
