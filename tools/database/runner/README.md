@@ -26,8 +26,12 @@ runner_config:
 selector-to-factory and semantic-convention registration is in
 [`_registry.py`](src/database_conformance/_registry.py). A session starts one
 container, waits for its declared readiness check, applies any declared
-initialization, and removes the container when the session closes. Scenario data
-is not pre-seeded; each workload creates or verifies the data it needs.
+initialization, and removes the container when the session closes. Workloads
+normally create or verify their own data. The HBase fixture seeds its read row
+and uses fixed ports; its initialization, image pinning, and concurrency limits
+are documented in the [HBase scenario notes](../../../scenarios/database/java/hbase/README.md).
+MongoDB uses deterministic bootstrap fixtures as
+described in its [backend notes](../../../scenarios/database/java/mongodb/README.md).
 
 Backend readiness timeouts default to 60 seconds, 120 seconds for MySQL, and
 180 seconds for Cassandra and Oracle. Set
@@ -53,7 +57,7 @@ environment declarations:
 | Variable            | Value                                        |
 | ------------------- | -------------------------------------------- |
 | `DATABASE_HOST`     | Loopback address published by Docker         |
-| `DATABASE_PORT`     | Docker-assigned host port                    |
+| `DATABASE_PORT`     | Published host port; fixed for HBase         |
 | `DATABASE_NAME`     | Test database name or logical database index |
 | `DATABASE_USER`     | Test user                                    |
 | `DATABASE_PASSWORD` | Test-only password                           |

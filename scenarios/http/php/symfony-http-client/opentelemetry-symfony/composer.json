@@ -11,7 +11,7 @@
     "open-telemetry/transport-grpc": "^1.2",
     "open-telemetry-conformance/http-test-client": "dev-main",
     "open-telemetry-conformance/scenario": "dev-main",
-    "symfony/http-client": "^7.4"
+    "symfony/http-client": "^8.0"
   },
   "config": {
     "platform": {
