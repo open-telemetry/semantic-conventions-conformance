@@ -13,5 +13,10 @@
   },
   "devDependencies": {
     "prettier": "3.9.9"
+  },
+  "overrides": {
+    "@opentelemetry/exporter-trace-otlp-proto": {
+      "@opentelemetry/api": "1.10.0"
+    }
   }
 }
