@@ -80,7 +80,7 @@ _span_name_keyed_attr["embeddings"]        := "gen_ai.request.model"
 _span_name_keyed_attr["execute_tool"]      := "gen_ai.tool.name"
 _span_name_keyed_attr["invoke_agent"]      := "gen_ai.agent.name"
 _span_name_keyed_attr["create_agent"]      := "gen_ai.agent.name"
-_span_name_keyed_attr["invoke_workflow"]   := "gen_ai.workflow.name"
+_span_name_keyed_attr["invoke_workflow"]   := "gen_ai.agent.name"
 _span_name_keyed_attr["retrieval"]         := "gen_ai.data_source.id"
 
 # Span name SHOULD be `{op}` (when the keyed attribute is absent) or
@@ -282,6 +282,9 @@ deny contains _span_finding(
 	input.sample.span
 	op := _attr_value(input.sample.span, "gen_ai.operation.name")
 	not _known_operation_names[op]
+	# invoke_{framework_entrypoint} (e.g. invoke_runner) is a documented pattern,
+	# not an enum value (semantic-conventions-genai#571).
+	not startswith(op, "invoke_")
 }
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
