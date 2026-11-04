@@ -8,9 +8,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from ._cassandra import Cassandra
 from ._container import DatabaseContainer
 from ._elasticsearch import Elasticsearch
+from ._hbase import HBase
 from ._mariadb import MariaDB
+from ._mongodb import MongoDB
 from ._mysql import MySQL
 from ._oracle import Oracle
 from ._postgres import Postgres
@@ -26,12 +29,15 @@ class BackendRegistration:
 
 
 BACKENDS = {
+    "cassandra": BackendRegistration(Cassandra, "cassandra", "db.cassandra.client"),
     "elasticsearch": BackendRegistration(
         Elasticsearch, "elasticsearch", "db.elasticsearch.client"
     ),
+    "hbase": BackendRegistration(HBase, "hbase", "db.hbase.client"),
     "mariadb": BackendRegistration(MariaDB, "mariadb", "db.mariadb.client"),
-    "oracle": BackendRegistration(Oracle, "oracle.db", "db.oracledb.client"),
+    "mongodb": BackendRegistration(MongoDB, "mongodb", "db.mongodb.client"),
     "mysql": BackendRegistration(MySQL, "mysql", "db.mysql.client"),
+    "oracle": BackendRegistration(Oracle, "oracle.db", "db.oracledb.client"),
     "postgresql": BackendRegistration(
         Postgres, "postgresql", "db.postgresql.client"
     ),

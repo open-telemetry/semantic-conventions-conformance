@@ -17,6 +17,13 @@ it to the client API. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
+Cassandra's client, operations, and connection settings are documented
+in its [scenario notes](java/cassandra/README.md).
+HBase's native telemetry, workloads, and conformance gaps are documented in
+its [scenario notes](java/hbase/README.md).
+MongoDB's [workload guide](java/shared/mongodb/README.md) describes the shared
+commands and telemetry expectations across its synchronous and Reactive Streams
+driver APIs.
 R2DBC also uses named workloads, with a separate PostgreSQL telemetry contract.
 See its [reactive workload guide](java/shared/r2dbc/README.md).
 Elasticsearch's latest Java API Client uses its native instrumentation and a
@@ -35,7 +42,8 @@ otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
 
 Docker must be installed and running. A package run uses one backend container,
 which is removed when the run ends. Stable database semantic conventions are
-opted into by the scenarios because Java instrumentation otherwise emits legacy
-database attributes during the migration period.
+opted into by Java-agent and library scenarios because those instrumentations
+otherwise emit legacy database attributes during the migration period. Native
+HBase telemetry is measured as emitted, including its legacy attributes.
 
 [database]: https://opentelemetry.io/docs/specs/semconv/db/

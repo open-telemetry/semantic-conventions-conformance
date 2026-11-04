@@ -40,6 +40,8 @@ library instrumentation. The
 connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
+Cassandra's workload and supported instrumentation modes are
+documented in its [scenario notes](cassandra/README.md).
 Oracle's container, JDBC runtime, and workload requirements are documented in
 its [scenario notes](oracle/README.md).
 
@@ -48,11 +50,24 @@ Java API Client, its native instrumentation, and its search workload.
 MySQL's container setup and Connector/J telemetry settings are documented in its
 [scenario notes](mysql/README.md).
 
+HBase's shared workload exercises the latest stable client's native telemetry,
+without the Java agent. Its [scenario notes](hbase/README.md) cover SDK integration,
+Java toolchains, fixture requirements, and observed conformance gaps. The package
+is `hbase/hbase-client/native`; its launcher and workload live under
+`shared/hbase/hbase-client/`.
+
+MongoDB covers the latest stable synchronous and Reactive Streams drivers
+with both Java-agent and published standalone library instrumentation. Its
+[workload guide](shared/mongodb/README.md) and
+[backend notes](mongodb/README.md) describe commands, connection settings, and
+bootstrap.
+
 Run one package from the repository root:
 
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-javaagent --report-only
 ```
 
 Docker must be installed and running. Redis connection tests also use Docker and

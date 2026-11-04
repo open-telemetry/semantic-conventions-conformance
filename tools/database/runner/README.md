@@ -26,14 +26,25 @@ runner_config:
 selector-to-factory and semantic-convention registration is in
 [`_registry.py`](src/database_conformance/_registry.py). A session starts one
 container, waits for its declared readiness check, applies any declared
-initialization, and removes the container when the session closes. Scenario data
-is not pre-seeded; each workload creates or verifies the data it needs.
+initialization, and removes the container when the session closes. Workloads
+normally create or verify their own data. The HBase fixture seeds its read row
+and uses fixed ports; its initialization, image pinning, and concurrency limits
+are documented in the [HBase scenario notes](../../../scenarios/database/java/hbase/README.md).
+MongoDB uses deterministic bootstrap fixtures as
+described in its [backend notes](../../../scenarios/database/java/mongodb/README.md).
 
-Database startup defaults to 60 seconds, 120 seconds for MySQL, or 180 seconds
-for Oracle. Set
-`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` to a finite positive number of
-seconds in the runner's environment to override the selected backend's default.
-Invalid values produce a warning and use the backend's default.
+Backend readiness timeouts default to 60 seconds, 120 seconds for MySQL, and
+180 seconds for Cassandra and Oracle. Set
+`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` in the runner's environment to
+override any backend's default:
+
+```sh
+OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT=240 database-conformance path/to/directory
+```
+
+The shared container lifecycle reads this value, not `conformance.yaml` or the
+workload environment. It must be a finite positive number of seconds; invalid
+values produce a warning and use the backend's default.
 
 See the [Oracle scenario notes](../../../scenarios/database/java/oracle/README.md)
 for its container initialization, and the
@@ -46,7 +57,7 @@ environment declarations:
 | Variable            | Value                                        |
 | ------------------- | -------------------------------------------- |
 | `DATABASE_HOST`     | Loopback address published by Docker         |
-| `DATABASE_PORT`     | Docker-assigned host port                    |
+| `DATABASE_PORT`     | Published host port; fixed for HBase         |
 | `DATABASE_NAME`     | Test database name or logical database index |
 | `DATABASE_USER`     | Test user                                    |
 | `DATABASE_PASSWORD` | Test-only password                           |
@@ -60,6 +71,9 @@ into the scenario process. Named telemetry-only contracts, such as
 declare a run command for each scenario.
 Backend-specific initialization and connection details for Elasticsearch are in
 its [scenario notes](../../../scenarios/database/java/elasticsearch/README.md).
+
+Cassandra's additional connection variable and container prerequisites are
+documented in its [scenario notes](../../../scenarios/database/java/cassandra/README.md).
 
 The classifier recognizes registered semantic-convention systems only on
 `CLIENT` spans and only when their client span type exists in the resolved

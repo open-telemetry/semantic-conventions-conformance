@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from importlib import resources
@@ -17,22 +18,33 @@ from testcontainers.core.container import ExecConfig
 from testcontainers.core.wait_strategies import ExecWaitStrategy
 
 from database_conformance import (
+    _cassandra,
     _container,
     _elasticsearch,
+    _hbase,
     _mariadb,
+    _mongodb,
     _mysql,
     _oracle,
     _postgres,
     _redis,
     _sql_server,
 )
-from database_conformance._container import DatabaseContainer
+from database_conformance._cassandra import CASSANDRA_IMAGE, Cassandra
+from database_conformance._container import BackendSpec, DatabaseContainer
 from database_conformance._elasticsearch import (
     ELASTICSEARCH,
     ELASTICSEARCH_IMAGE,
     Elasticsearch,
 )
+from database_conformance._hbase import (
+    HBASE_IMAGE,
+    HBASE_MASTER_PORT,
+    HBASE_REGIONSERVER_PORT,
+    HBase,
+)
 from database_conformance._mariadb import MARIADB_IMAGE, MariaDB
+from database_conformance._mongodb import MONGODB_IMAGE, MongoDB
 from database_conformance._mysql import MYSQL_IMAGE, MySQL
 from database_conformance._oracle import ORACLE_IMAGE, Oracle
 from database_conformance._postgres import POSTGRES_IMAGE, Postgres
@@ -52,19 +64,23 @@ class StubContainer:
         *,
         start_error: BaseException | None = None,
         stop_error: Exception | None = None,
+        log_error: Exception | None = None,
         exec_result: ExecResult | None = None,
         published_ports: dict[int, int] | None = None,
         port: int | None = None,
+        published_port: int = 32768,
     ) -> None:
         self.start_error = start_error
         self.stop_error = stop_error
+        self.log_error = log_error
         self.exec_result = exec_result or ExecResult()
         self.published_ports = (
             published_ports
             if published_ports is not None
-            else {port if port is not None else 5432: 32768}
+            else {port if port is not None else 5432: published_port}
         )
         self.env: dict[str, str] = {}
+        self.kwargs: dict[str, Any] = {}
         self.ports: dict[str, Any] = {}
         self.transfers: list[tuple[bytes, str]] = []
         self.wait_strategy: object | None = None
@@ -80,6 +96,10 @@ class StubContainer:
         self, source: bytes, destination: str
     ) -> StubContainer:
         self.transfers.append((source, destination))
+        return self
+
+    def with_kwargs(self, **kwargs: Any) -> StubContainer:
+        self.kwargs = kwargs
         return self
 
     def waiting_for(self, strategy: object) -> StubContainer:
@@ -100,6 +120,8 @@ class StubContainer:
         return self.exec_result
 
     def get_logs(self) -> tuple[bytes, bytes]:
+        if self.log_error is not None:
+            raise self.log_error
         return b"ready to accept connections\n", b""
 
     def stop(self) -> None:
@@ -113,7 +135,7 @@ def install_stub(
     module: Any,
     container: StubContainer,
 ) -> None:
-    monkeypatch.setattr(module, "DockerContainer", lambda _: container)
+    monkeypatch.setattr(module, "DockerContainer", lambda _image: container)
 
 
 @pytest.mark.parametrize(
@@ -127,6 +149,37 @@ def install_stub(
         "expected_initialization",
     ),
     [
+        (
+            _cassandra,
+            Cassandra,
+            {9042: 32768},
+            {
+                "CASSANDRA_CLUSTER_NAME": "otel-conformance",
+                "CASSANDRA_DC": "datacenter1",
+                "CASSANDRA_NUM_TOKENS": "1",
+                "MAX_HEAP_SIZE": "256M",
+                "HEAP_NEWSIZE": "64M",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "",
+                "DATABASE_PASSWORD": "",
+                "DATABASE_LOCAL_DATACENTER": "datacenter1",
+            },
+            ["/tmp/otel-conformance-cassandra.cql"],
+            ExecConfig(
+                command=[
+                    "cqlsh",
+                    "127.0.0.1",
+                    "9042",
+                    "--file",
+                    "/tmp/otel-conformance-cassandra.cql",
+                ],
+                environment={},
+            ),
+        ),
         (
             _postgres,
             Postgres,
@@ -268,6 +321,42 @@ def install_stub(
             ),
         ),
         (
+            _mongodb,
+            MongoDB,
+            {27017: 32768},
+            {
+                "MONGO_INITDB_ROOT_USERNAME": "root",
+                "MONGO_INITDB_ROOT_PASSWORD": "conformance-root",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "conformance",
+                "DATABASE_PASSWORD": "conformance",
+            },
+            ["/tmp/otel-conformance-mongodb.js"],
+            ExecConfig(
+                command=[
+                    "mongosh",
+                    "--quiet",
+                    "--host",
+                    "127.0.0.1",
+                    "--port",
+                    "27017",
+                    "--username",
+                    "root",
+                    "--password",
+                    "conformance-root",
+                    "--authenticationDatabase",
+                    "admin",
+                    "--file",
+                    "/tmp/otel-conformance-mongodb.js",
+                ],
+                environment={},
+            ),
+        ),
+        (
             _mysql,
             MySQL,
             {3306: 32768},
@@ -334,7 +423,7 @@ def install_stub(
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[DatabaseContainer],
+    backend_type: Callable[[], DatabaseContainer],
     ports: dict[int, int],
     expected_environment: dict[str, str],
     expected_variables: dict[str, str],
@@ -358,6 +447,8 @@ def test_starts_initializes_publishes_and_removes_database(
         if backend_type is Elasticsearch:
             assert b'"dynamic": "strict"' in schema
             assert b'"index.number_of_shards": 1' in schema
+        elif backend_type is MongoDB:
+            assert b"createCollection" in schema
         else:
             assert b"CREATE" in schema
             assert b"INSERT INTO" not in schema
@@ -365,6 +456,84 @@ def test_starts_initializes_publishes_and_removes_database(
     assert container.wait_strategy is not None
     with pytest.raises(RuntimeError, match="has not been started"):
         _ = database.variables
+
+
+@pytest.mark.parametrize(
+    ("spec", "default_seconds"),
+    [
+        (_cassandra.CASSANDRA, 180.0),
+        (_elasticsearch.ELASTICSEARCH, 60.0),
+        (_postgres.POSTGRES, 60.0),
+        (_mariadb.MARIADB, 60.0),
+        (_mongodb.MONGODB, 60.0),
+        (_oracle.ORACLE, 180.0),
+        (_mysql.MYSQL, 120.0),
+        (_redis.REDIS, 60.0),
+        (_sql_server.SQL_SERVER, 60.0),
+    ],
+)
+@pytest.mark.parametrize(
+    ("override", "override_seconds"),
+    [
+        (None, None),
+        ("", None),
+        ("240", 240.0),
+        ("30", 30.0),
+        ("invalid", None),
+        ("0", None),
+        ("-1", None),
+        ("nan", None),
+        ("inf", None),
+        ("-inf", None),
+    ],
+)
+def test_backend_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    spec: BackendSpec,
+    default_seconds: float,
+    override: str | None,
+    override_seconds: float | None,
+) -> None:
+    variable = "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT"
+    if override is None:
+        monkeypatch.delenv(variable, raising=False)
+    else:
+        monkeypatch.setenv(variable, override)
+    container = StubContainer(port=spec.port)
+
+    with DatabaseContainer(spec, container_factory=lambda _: container):
+        assert spec.startup_timeout_seconds == default_seconds
+        assert isinstance(container.wait_strategy, ExecWaitStrategy)
+        assert container.wait_strategy._startup_timeout == (
+            default_seconds if override_seconds is None else override_seconds
+        )
+
+    if override not in (None, "") and override_seconds is None:
+        assert variable in caplog.text
+        assert "not a finite positive number of seconds" in caplog.text
+        assert f"using {default_seconds}" in caplog.text
+    else:
+        assert variable not in caplog.text
+
+
+def test_mongodb_readiness_requires_authorization() -> None:
+    assert _mongodb.MONGODB.ready_command == (
+        "mongosh",
+        "--quiet",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "27017",
+        "--username",
+        "root",
+        "--password",
+        "conformance-root",
+        "--authenticationDatabase",
+        "admin",
+        "--eval",
+        "quit(db.adminCommand({getCmdLineOpts: 1}).parsed.security?.authorization === 'enabled' ? 0 : 1)",
+    )
 
 
 def test_redis_readiness_checks_for_server_errors() -> None:
@@ -390,12 +559,216 @@ def test_sql_server_readiness_requires_online_databases() -> None:
     )
 
 
+class StubImage:
+    def __init__(
+        self,
+        *,
+        build_error: BaseException | None = None,
+        remove_error: DockerException | None = None,
+    ) -> None:
+        self.build_error = build_error
+        self.remove_error = remove_error
+        self.built = False
+        self.removed = False
+        self.remove_calls = 0
+
+    def build(self) -> StubImage:
+        if self.build_error is not None:
+            raise self.build_error
+        self.built = True
+        return self
+
+    def remove(self) -> None:
+        self.remove_calls += 1
+        if self.remove_error is not None:
+            raise self.remove_error
+        self.removed = True
+
+
+def test_hbase_readiness_requires_an_initialized_master(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: StubImage())
+    assert HBase()._spec.ready_command == (
+        "bash",
+        "-c",
+        "echo 'list_namespace' | hbase shell -n",
+    )
+
+
+def test_hbase_builds_initializes_and_removes_the_upstream_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        port=HBASE_MASTER_PORT,
+        published_port=HBASE_MASTER_PORT,
+    )
+    image = StubImage()
+    image_arguments: dict[str, Any] = {}
+
+    def image_factory(**kwargs: Any) -> StubImage:
+        image_arguments.update(kwargs)
+        return image
+
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", image_factory)
+    with HBase() as database:
+        assert database.variables == {
+            "DATABASE_HOST": "127.0.0.1",
+            "DATABASE_PORT": "16000",
+            "DATABASE_NAME": "conformance",
+            "DATABASE_USER": "",
+            "DATABASE_PASSWORD": "",
+        }
+
+    assert image.built
+    assert image.removed
+    assert image_arguments["tag"] == HBASE_IMAGE
+    assert image_arguments["clean_up"] is True
+    assert image_arguments["buildargs"] == {
+        "HBASE_VERSION": "3.0.0",
+        "HBASE_SHA512": (
+            "8290bc3cece084d36f7f47aae726268c7332e4828c6e8599df1343b03348e93f"
+            "91165fad03ac6107bfbf0d8535e72024fa5d19217890d2848d013d8418a584ed"
+        ),
+    }
+    assert container.started
+    assert container.stopped
+    assert container.kwargs == {"hostname": "localhost"}
+    assert container.ports == {
+        f"{HBASE_MASTER_PORT}/tcp": ("127.0.0.1", HBASE_MASTER_PORT),
+        f"{HBASE_REGIONSERVER_PORT}/tcp": (
+            "127.0.0.1",
+            HBASE_REGIONSERVER_PORT,
+        ),
+    }
+    assert "2181/tcp" not in container.ports
+    assert container.exec_config is not None
+    assert container.exec_config.command == [
+        "hbase",
+        "shell",
+        "-n",
+        "/tmp/otel-conformance-hbase.rb",
+    ]
+    assert len(container.transfers) == 1
+    schema, destination = container.transfers[0]
+    assert destination == "/tmp/otel-conformance-hbase.rb"
+    assert b"put 'conformance:items', 'seed', 'data:name', 'seed'" in schema
+
+
+def test_hbase_image_build_failure_is_actionable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    image = StubImage(build_error=DockerException("builder unavailable"))
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "Could not build the HBase fixture from the Apache HBase "
+            "distribution: builder unavailable"
+        ),
+    ):
+        HBase().start()
+
+    assert image.removed
+
+
+@pytest.mark.parametrize(
+    "error", [RuntimeError("build interrupted"), KeyboardInterrupt()]
+)
+def test_hbase_cleans_up_unexpected_build_failures(
+    monkeypatch: pytest.MonkeyPatch, error: BaseException
+) -> None:
+    image = StubImage(build_error=error)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(type(error)) as caught:
+        HBase().start()
+    assert caught.value is error
+    assert image.removed
+    assert image.remove_calls == 1
+
+
+def test_hbase_preserves_build_and_image_cleanup_failures(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    image = StubImage(
+        build_error=DockerException("builder unavailable"),
+        remove_error=DockerException("image removal failed"),
+    )
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)builder unavailable.*HBase fixture cleanup also failed: "
+        r"image removal failed",
+    ):
+        HBase().start()
+
+
+@pytest.mark.parametrize("stage", ["configuration", "start", "initialization"])
+def test_hbase_removes_its_image_on_container_failures(
+    monkeypatch: pytest.MonkeyPatch, stage: str
+) -> None:
+    container = StubContainer(
+        port=HBASE_MASTER_PORT,
+        start_error=RuntimeError("startup failed") if stage == "start" else None,
+        exec_result=ExecResult(exit_code=1, output=b"schema failed")
+        if stage == "initialization"
+        else None,
+    )
+    if stage == "configuration":
+        def fail_configuration(**_: Any) -> None:
+            raise RuntimeError("configuration failed")
+        monkeypatch.setattr(container, "with_kwargs", fail_configuration)
+    image = StubImage()
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(RuntimeError, match="failed"):
+        HBase().start()
+    assert image.removed
+    assert image.remove_calls == 1
+    assert container.stopped is (stage != "configuration")
+
+
+def test_hbase_removes_its_fixture_after_scenario_setup_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(port=HBASE_MASTER_PORT)
+    image = StubImage()
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with pytest.raises(RuntimeError, match="setup failed"):
+        with HBase():
+            raise RuntimeError("setup failed")
+    assert container.stopped
+    assert image.removed
+    assert image.remove_calls == 1
+
+
+def test_hbase_cannot_build_a_second_image_while_started(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(port=HBASE_MASTER_PORT)
+    image = StubImage()
+    install_stub(monkeypatch, _hbase, container)
+    monkeypatch.setattr(_hbase, "DockerImage", lambda **_: image)
+    with HBase() as backend:
+        with pytest.raises(RuntimeError, match="already been started"):
+            backend.start()
+        assert not container.stopped
+        assert not image.removed
+    assert image.remove_calls == 1
+
+
 @pytest.mark.parametrize(
     ("module", "backend_type", "port", "default_timeout"),
     [
+        (_cassandra, Cassandra, 9042, 180.0),
         (_elasticsearch, Elasticsearch, 9200, 60.0),
+        (_hbase, HBase, HBASE_MASTER_PORT, 60.0),
         (_postgres, Postgres, 5432, 60.0),
         (_mariadb, MariaDB, 3306, 60.0),
+        (_mongodb, MongoDB, 27017, 60.0),
         (_oracle, Oracle, 1521, 180.0),
         (_mysql, MySQL, 3306, 120.0),
         (_redis, Redis, 6379, 60.0),
@@ -406,7 +779,7 @@ def test_sql_server_readiness_requires_online_databases() -> None:
 def test_database_startup_timeout_uses_backend_default_or_shared_override(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[DatabaseContainer],
+    backend_type: Callable[[], DatabaseContainer],
     port: int,
     default_timeout: float,
     override: str | None,
@@ -431,6 +804,8 @@ def test_database_startup_timeout_uses_backend_default_or_shared_override(
 
     monkeypatch.setattr(_container, "ExecWaitStrategy", RecordingWaitStrategy)
     install_stub(monkeypatch, module, StubContainer(port=port))
+    if backend_type is HBase:
+        monkeypatch.setattr(_hbase, "DockerImage", lambda **_: StubImage())
 
     with backend_type():
         pass
@@ -471,7 +846,44 @@ def test_start_failure_cleans_up_the_container(
     container = StubContainer(start_error=RuntimeError("startup failed"))
     install_stub(monkeypatch, _postgres, container)
 
-    with pytest.raises(RuntimeError, match="startup failed"):
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not start PostgreSQL: startup failed.*"
+        r"ready to accept connections",
+    ):
+        Postgres().start()
+
+    assert container.stopped
+
+
+@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit])
+def test_start_control_flow_exception_is_preserved_after_cleanup(
+    monkeypatch: pytest.MonkeyPatch,
+    error_type: type[BaseException],
+) -> None:
+    container = StubContainer(start_error=error_type())
+    install_stub(monkeypatch, _postgres, container)
+
+    with pytest.raises(error_type):
+        Postgres().start()
+
+    assert container.stopped
+
+
+def test_start_failure_survives_unavailable_container_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        start_error=RuntimeError("startup failed"),
+        log_error=RuntimeError("container not started"),
+    )
+    install_stub(monkeypatch, _postgres, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not start PostgreSQL: startup failed.*"
+        r"Could not read PostgreSQL logs: container not started",
+    ):
         Postgres().start()
 
     assert container.stopped
@@ -488,7 +900,8 @@ def test_cleanup_failure_is_reported_with_start_failure(
 
     with pytest.raises(
         RuntimeError,
-        match="startup failed\nPostgreSQL cleanup also failed: cleanup failed",
+        match=r"(?s)Could not start PostgreSQL: startup failed.*"
+        r"PostgreSQL cleanup also failed: cleanup failed",
     ):
         Postgres().start()
 
@@ -552,6 +965,42 @@ def test_elasticsearch_schema_failure_reports_curl_output_and_logs(
         match=r"(?s)index bootstrap rejected.*ready to accept connections",
     ):
         Elasticsearch().start()
+
+    assert container.stopped
+
+
+def test_cassandra_schema_failure_reports_cqlsh_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=2, output=b"invalid CQL"),
+        port=9042,
+    )
+    install_stub(monkeypatch, _cassandra, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)invalid CQL.*ready to accept connections",
+    ):
+        Cassandra().start()
+
+    assert container.stopped
+
+
+def test_mongodb_bootstrap_failure_reports_output_and_cleans_up(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=1, output=b"MongoServerError"),
+        port=27017,
+    )
+    install_stub(monkeypatch, _mongodb, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)Could not initialize MongoDB.*MongoServerError.*ready to accept connections",
+    ):
+        MongoDB().start()
 
     assert container.stopped
 
@@ -622,6 +1071,8 @@ def test_cannot_start_postgres_twice(
     [
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
+        (CASSANDRA_IMAGE, "cassandra"),
+        (MONGODB_IMAGE, "mongo"),
         (ORACLE_IMAGE, "gvenzl/oracle-free"),
         (MYSQL_IMAGE, "mysql"),
         (REDIS_IMAGE, "redis"),
@@ -642,6 +1093,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
 
     assert "CREATE TABLE IF NOT EXISTS conformance.items" in schema
     assert "CREATE OR REPLACE PROCEDURE conformance.noop()" in schema
+    assert "INSERT INTO" not in schema
 
     schema = (
         resources.files("database_conformance")
@@ -650,6 +1102,7 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE OR REPLACE PROCEDURE noop()" in schema
+    assert "INSERT INTO" not in schema
 
     schema = (
         resources.files("database_conformance")
@@ -658,6 +1111,33 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE [conformance].[items]" in schema
     assert "CREATE OR ALTER PROCEDURE [conformance].[noop]" in schema
+    assert "INSERT INTO" not in schema
+
+    bootstrap = (
+        resources.files("database_conformance")
+        .joinpath("mongodb.js")
+        .read_text(encoding="utf-8")
+    )
+    assert 'createCollection("items")' in bootstrap
+    assert "createUser({" in bootstrap
+    assert bootstrap.count("_id:") == 4
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("hbase.rb")
+        .read_text(encoding="utf-8")
+    )
+    assert "create 'conformance:items', 'data'" in schema
+    assert "put 'conformance:items', 'seed', 'data:name', 'seed'" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("cassandra.cql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE KEYSPACE conformance" in schema
+    assert "CREATE TABLE conformance.items" in schema
+    assert "INSERT INTO" not in schema
 
     bootstrap = (
         resources.files("database_conformance")
@@ -688,3 +1168,21 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "CREATE TABLE IF NOT EXISTS items" in schema
     assert "CREATE PROCEDURE noop()" in schema
+
+
+def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
+    assert HBASE_IMAGE == "otel-conformance-hbase:3.0.0"
+    dockerfile = (
+        resources.files("database_conformance")
+        .joinpath("hbase-image", "Dockerfile")
+        .read_text(encoding="utf-8")
+    )
+
+    assert (
+        "FROM eclipse-temurin:17-jre-jammy@sha256:"
+        "c35794d1348777e6bc310b9b7f420098ef8f37e988199549b545fded79a895a2"
+        in dockerfile
+    )
+    assert f"ARG HBASE_VERSION={_hbase.HBASE_VERSION}" in dockerfile
+    assert f"ARG HBASE_SHA512={_hbase._HBASE_SHA512}" in dockerfile
+    assert "sha512sum --check --strict" in dockerfile
