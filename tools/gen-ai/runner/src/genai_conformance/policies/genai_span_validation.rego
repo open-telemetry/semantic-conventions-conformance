@@ -6,9 +6,10 @@
 # Three classes of rules, all keyed on `gen_ai.operation.name`:
 #
 #   1. Span name format → `violation`
-#      (`{operation_name} {request_model}` for inference / embeddings,
+#      Rendered from the registry's span name templates when it has them;
+#      otherwise `{operation_name} {request_model}` for inference / embeddings,
 #      `{operation_name} {agent_name}` for invoke_agent / create_agent,
-#      `{operation_name} {tool_name}` for execute_tool).
+#      `{operation_name} {tool_name}` for execute_tool.
 #
 #   2. Per-operation expected attributes → `violation`
 #      Combines `Required` (always must be set) and the always-emit subset
@@ -110,8 +111,88 @@ deny contains _span_finding(
 	input.sample.span
 	op := _attr_value(input.sample.span, "gen_ai.operation.name")
 	keyed_attr := _span_name_keyed_attr[op]
+	count(_template_names(input.sample.span, op)) == 0
 	not _valid_op_and_attr_span_name(input.sample.span, op, keyed_attr)
 	expected := _expected_span_name(input.sample.span, op, keyed_attr)
+}
+
+# Registries with weaver span name templates (weaver 0.28+). Each span
+# definition matching the operation renders its first template whose
+# attributes are all set; the most specific rendering wins, so a span carrying
+# a refinement's extra attributes (e.g. a skill name) is held to that
+# refinement's name rather than the base one.
+deny contains _span_finding(
+	"genai_span_name_format",
+	"violation",
+	input.sample.span,
+	{
+		"operation":     op,
+		"expected_form": expected,
+	},
+	concat("", [
+		op, " span name should be '",
+		expected, "', got '",
+		input.sample.span.name, "'",
+	]),
+) if {
+	input.sample.span
+	op := _attr_value(input.sample.span, "gen_ai.operation.name")
+	names := _template_names(input.sample.span, op)
+	count(names) > 0
+	not input.sample.span.name in names
+	expected := concat("' or '", sort([name | some name in names]))
+}
+
+# {[attribute count, rendered name]} per matching definition with templates.
+_template_candidates(span, op) := {[count(tmpl.attributes), _render_template(span, tmpl)] |
+	some span_type, span_def in data["coverage-model"].spans
+	_matching_span_type(op, span.kind, span_type)
+	templates := object.get(span_def, "name_templates", [])
+	applicable := {i | some i, t in templates; _template_applies(span, t)}
+	count(applicable) > 0
+	tmpl := templates[min(applicable)]
+}
+
+_template_names(span, op) := {name |
+	candidates := _template_candidates(span, op)
+	most := max({n | some [n, _] in candidates})
+	some [n, name] in candidates
+	n == most
+}
+
+_template_applies(span, tmpl) if {
+	every attr in tmpl.attributes {
+		_template_value(span, attr)
+	}
+}
+
+# A template attribute counts only when set, non-empty and, for enums, not
+# the `_OTHER` catch-all.
+_template_value(span, attr) := value if {
+	value := _attr_value(span, attr)
+	value != ""
+	not _other_enum_value(attr, value)
+}
+
+_other_enum_value(attr, value) if {
+	value == "_OTHER"
+	data["coverage-model"].enums[attr]
+}
+
+_render_template(span, tmpl) := concat("", [_render_part(span, part) | some part in tmpl.parts])
+
+_render_part(_, part) := part.value if part.type == "literal"
+
+_render_part(span, part) := value if {
+	part.type == "attribute"
+	value := _template_value(span, part.attribute)
+	is_string(value)
+}
+
+_render_part(span, part) := sprintf("%v", [value]) if {
+	part.type == "attribute"
+	value := _template_value(span, part.attribute)
+	not is_string(value)
 }
 
 # ─── Per-operation expected attributes (violation) ──────────────────────────
