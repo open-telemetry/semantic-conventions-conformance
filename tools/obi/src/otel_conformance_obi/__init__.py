@@ -124,7 +124,7 @@ def cache_dir(release: str, environ: Mapping[str, str] = os.environ) -> Path:
 def binary(environ: Mapping[str, str] = os.environ) -> Path:
     override = environ.get(BINARY_VARIABLE)
     if override:
-        return Path(override)
+        return Path(override).absolute()
     return cache_dir(version(), environ) / BINARY
 
 
@@ -283,7 +283,9 @@ class Scenario:
         self._gate: int | None = None
         try:
             self.process = subprocess.Popen(  # noqa: S603
-                list(command), env={**os.environ, GATE_VARIABLE: str(gate)}
+                list(command),
+                env={**os.environ, GATE_VARIABLE: str(gate)},
+                start_new_session=True,
             )
         except OSError as error:
             raise LauncherError(
@@ -320,13 +322,18 @@ class Scenario:
             os.close(self._gate)
             self._gate = None
 
+    def _signal_group(self, signum: int) -> None:
+        try:
+            os.killpg(self.process.pid, signum)
+        except ProcessLookupError:
+            pass
+
     def signal(self, signum: int) -> None:
         if self.process.poll() is None:
-            self.process.send_signal(signum)
+            self._signal_group(signum)
 
     def kill(self) -> None:
-        if self.process.poll() is None:
-            self.process.kill()
+        self._signal_group(signal.SIGKILL)
         self.process.wait()
         self.release()
 

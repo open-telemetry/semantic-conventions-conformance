@@ -48,6 +48,21 @@
     ]
   },
   "entities": {
+    "host": {
+      "identity": [
+        "host.id"
+      ],
+      "description": [
+        "host.name",
+        "host.type"
+      ]
+    },
+    "otel.scope": {
+      "identity": [
+        "otel.scope.name"
+      ],
+      "description": []
+    },
     "service": {
       "identity": [
         "service.name"

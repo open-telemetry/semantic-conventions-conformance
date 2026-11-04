@@ -6,6 +6,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import textwrap
+import time
 import urllib.error
 from pathlib import Path
 
@@ -110,8 +111,10 @@ FAKE_OBI = textwrap.dedent(
 GATED = textwrap.dedent(
     """\
     import os, pathlib, sys
+    pathlib.Path("scenario.pid").write_text(str(os.getpid()))
     with open(os.environ["OTEL_CONFORMANCE_GATE"], "rb") as gate:
         gate.read()
+    pathlib.Path("released").write_text(str(os.getpid()))
     attached = pathlib.Path("attached")
     instrumented = attached.exists() and attached.read_text() == str(os.getpid())
     sys.exit(int(sys.argv[1]) if instrumented else 99)
@@ -125,6 +128,19 @@ def gated(status: int = 0) -> list[str]:
 
 def shell(command: list[str]) -> str:
     return " ".join(f"'{part}'" for part in command)
+
+
+def running(pid: int, timeout: float = 5.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            stat = Path(f"/proc/{pid}/stat").read_text()
+        except OSError:
+            return False
+        if stat.rsplit(")", 1)[1].split()[0] == "Z":
+            return False
+        time.sleep(0.05)
+    return True
 
 
 linux_only = pytest.mark.skipif(
@@ -262,6 +278,16 @@ class TestTheRelease:
             binary({BINARY_VARIABLE: str(tmp_path / "obi")})
             == tmp_path / "obi"
         )
+
+    def test_a_relative_binary_is_made_absolute(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+
+        resolved = binary({BINARY_VARIABLE: "./obi"})
+
+        assert resolved.is_absolute()
+        assert resolved == tmp_path / "obi"
 
     def test_install_with_an_explicit_binary_runs_the_command(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
@@ -506,6 +532,22 @@ class TestRunningUnderOBI:
 
         with pytest.raises(LauncherError, match="before instrumenting"):
             run(gated(), args=SELECT_GATED, environ=environ)
+
+    def test_a_failed_launch_kills_a_wrapped_scenario_before_its_workload(
+        self,
+        environ: dict[str, str],
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        monkeypatch.setenv("FAKE_OBI_MODE", "die-early")
+        command = ["/bin/sh", "-c", shell(gated()) + "; exit $?"]
+
+        with pytest.raises(LauncherError, match="before instrumenting"):
+            run(command, args=SELECT_GATED, environ=environ)
+
+        pid = int((tmp_path / "scenario.pid").read_text())
+        assert not running(pid)
+        assert not (tmp_path / "released").exists()
 
     def test_obi_exiting_while_the_scenario_runs_fails(
         self, environ: dict[str, str], monkeypatch: pytest.MonkeyPatch
