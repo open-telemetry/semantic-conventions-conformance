@@ -188,6 +188,9 @@ def test_preserves_database_project_names() -> None:
         ":shared:redis:jedis:opentelemetry-javaagent",
         ":shared:redis:rediscala:opentelemetry-javaagent",
         ":shared:redis:redisson:opentelemetry-javaagent",
+        ":shared:cassandra:java-driver:scenarios",
+        ":shared:cassandra:java-driver:opentelemetry-javaagent",
+        ":shared:cassandra:java-driver:opentelemetry-library",
     } <= projects
     assert ":hbase:hbase-client:native" not in projects
     assert ":hbase:native" not in projects

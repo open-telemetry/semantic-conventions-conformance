@@ -17,6 +17,8 @@ it to the client API. See the
 [SQL workload and contract conventions](../../tools/database/sql-test-client/README.md).
 Redis uses named workloads and records client-specific telemetry in its
 [shared workload guide](java/shared/redis/README.md).
+Cassandra's client, operations, and connection settings are documented
+in its [scenario notes](java/cassandra/README.md).
 HBase's native telemetry, workloads, and conformance gaps are documented in
 its [scenario notes](java/hbase/README.md).
 MongoDB's [workload guide](java/shared/mongodb/README.md) describes the shared

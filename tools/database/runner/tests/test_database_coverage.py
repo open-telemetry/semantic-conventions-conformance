@@ -72,6 +72,12 @@ def test_sql_server_client_span_uses_the_vendor_refinement() -> None:
     ) == {"db.sql_server.client"}
 
 
+def test_cassandra_client_span_uses_the_vendor_refinement() -> None:
+    assert classify_span(
+        "SELECT", "CLIENT", {"db.system.name": "cassandra"}
+    ) == {"db.cassandra.client"}
+
+
 def test_mysql_client_span_uses_the_vendor_refinement() -> None:
     assert classify_span(
         "SELECT", "CLIENT", {"db.system.name": "mysql"}

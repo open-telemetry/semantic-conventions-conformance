@@ -26,6 +26,7 @@ def _model():
 @pytest.mark.parametrize(
     ("system", "span_type"),
     [
+        ("cassandra", "db.cassandra.client"),
         ("hbase", "db.hbase.client"),
         ("mariadb", "db.mariadb.client"),
         ("microsoft.sql_server", "db.sql_server.client"),

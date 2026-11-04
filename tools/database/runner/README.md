@@ -33,11 +33,18 @@ are documented in the [HBase scenario notes](../../../scenarios/database/java/hb
 MongoDB uses deterministic bootstrap fixtures as
 described in its [backend notes](../../../scenarios/database/java/mongodb/README.md).
 
-Database startup defaults to 60 seconds, 120 seconds for MySQL, or 180 seconds
-for Oracle. Set
-`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` to a finite positive number of
-seconds in the runner's environment to override the selected backend's default.
-Invalid values produce a warning and use the backend's default.
+Backend readiness timeouts default to 60 seconds, 120 seconds for MySQL, and
+180 seconds for Cassandra and Oracle. Set
+`OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT` in the runner's environment to
+override any backend's default:
+
+```sh
+OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT=240 database-conformance path/to/directory
+```
+
+The shared container lifecycle reads this value, not `conformance.yaml` or the
+workload environment. It must be a finite positive number of seconds; invalid
+values produce a warning and use the backend's default.
 
 See the [Oracle scenario notes](../../../scenarios/database/java/oracle/README.md)
 for its container initialization, and the
@@ -62,6 +69,9 @@ generic conformance runner injects only the selected contract entry's `action`
 into the scenario process. Named telemetry-only contracts, such as
 [R2DBC's](../../../scenarios/database/java/shared/r2dbc/README.md), instead
 declare a run command for each scenario.
+
+Cassandra's additional connection variable and container prerequisites are
+documented in its [scenario notes](../../../scenarios/database/java/cassandra/README.md).
 
 The classifier recognizes registered semantic-convention systems only on
 `CLIENT` spans and only when their client span type exists in the resolved

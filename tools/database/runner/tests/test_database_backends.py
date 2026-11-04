@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from importlib import resources
@@ -17,6 +18,7 @@ from testcontainers.core.container import ExecConfig
 from testcontainers.core.wait_strategies import ExecWaitStrategy
 
 from database_conformance import (
+    _cassandra,
     _container,
     _hbase,
     _mariadb,
@@ -27,7 +29,8 @@ from database_conformance import (
     _redis,
     _sql_server,
 )
-from database_conformance._container import DatabaseContainer
+from database_conformance._cassandra import CASSANDRA_IMAGE, Cassandra
+from database_conformance._container import BackendSpec, DatabaseContainer
 from database_conformance._hbase import (
     HBASE_IMAGE,
     HBASE_MASTER_PORT,
@@ -123,7 +126,7 @@ def install_stub(
     module: Any,
     container: StubContainer,
 ) -> None:
-    monkeypatch.setattr(module, "DockerContainer", lambda _: container)
+    monkeypatch.setattr(module, "DockerContainer", lambda _image: container)
 
 
 @pytest.mark.parametrize(
@@ -137,6 +140,37 @@ def install_stub(
         "expected_initialization",
     ),
     [
+        (
+            _cassandra,
+            Cassandra,
+            9042,
+            {
+                "CASSANDRA_CLUSTER_NAME": "otel-conformance",
+                "CASSANDRA_DC": "datacenter1",
+                "CASSANDRA_NUM_TOKENS": "1",
+                "MAX_HEAP_SIZE": "256M",
+                "HEAP_NEWSIZE": "64M",
+            },
+            {
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": "32768",
+                "DATABASE_NAME": "conformance",
+                "DATABASE_USER": "",
+                "DATABASE_PASSWORD": "",
+                "DATABASE_LOCAL_DATACENTER": "datacenter1",
+            },
+            ["/tmp/otel-conformance-cassandra.cql"],
+            ExecConfig(
+                command=[
+                    "cqlsh",
+                    "127.0.0.1",
+                    "9042",
+                    "--file",
+                    "/tmp/otel-conformance-cassandra.cql",
+                ],
+                environment={},
+            ),
+        ),
         (
             _postgres,
             Postgres,
@@ -346,13 +380,7 @@ def install_stub(
 def test_starts_initializes_publishes_and_removes_database(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[Postgres]
-    | type[MariaDB]
-    | type[MongoDB]
-    | type[Oracle]
-    | type[MySQL]
-    | type[Redis]
-    | type[SQLServer],
+    backend_type: Callable[[], DatabaseContainer],
     port: int,
     expected_environment: dict[str, str],
     expected_variables: dict[str, str],
@@ -376,6 +404,64 @@ def test_starts_initializes_publishes_and_removes_database(
         ) in schema
     assert container.exec_config == expected_initialization
     assert container.wait_strategy is not None
+
+
+@pytest.mark.parametrize(
+    ("spec", "default_seconds"),
+    [
+        (_cassandra.CASSANDRA, 180.0),
+        (_postgres.POSTGRES, 60.0),
+        (_mariadb.MARIADB, 60.0),
+        (_mongodb.MONGODB, 60.0),
+        (_oracle.ORACLE, 180.0),
+        (_mysql.MYSQL, 120.0),
+        (_redis.REDIS, 60.0),
+        (_sql_server.SQL_SERVER, 60.0),
+    ],
+)
+@pytest.mark.parametrize(
+    ("override", "override_seconds"),
+    [
+        (None, None),
+        ("", None),
+        ("240", 240.0),
+        ("30", 30.0),
+        ("invalid", None),
+        ("0", None),
+        ("-1", None),
+        ("nan", None),
+        ("inf", None),
+        ("-inf", None),
+    ],
+)
+def test_backend_startup_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    spec: BackendSpec,
+    default_seconds: float,
+    override: str | None,
+    override_seconds: float | None,
+) -> None:
+    variable = "OTEL_CONFORMANCE_DATABASE_STARTUP_TIMEOUT"
+    if override is None:
+        monkeypatch.delenv(variable, raising=False)
+    else:
+        monkeypatch.setenv(variable, override)
+    container = StubContainer(port=spec.port)
+
+    with DatabaseContainer(spec, container_factory=lambda _: container):
+        assert spec.startup_timeout_seconds == default_seconds
+        assert isinstance(container.wait_strategy, ExecWaitStrategy)
+        assert container.wait_strategy._startup_timeout == (
+            default_seconds if override_seconds is None else override_seconds
+        )
+
+    if override not in (None, "") and override_seconds is None:
+        assert variable in caplog.text
+        assert "not a finite positive number of seconds" in caplog.text
+        assert f"using {default_seconds}" in caplog.text
+    else:
+        assert variable not in caplog.text
 
 
 def test_mongodb_readiness_requires_authorization() -> None:
@@ -624,6 +710,7 @@ def test_hbase_cannot_build_a_second_image_while_started(
 @pytest.mark.parametrize(
     ("module", "backend_type", "port", "default_timeout"),
     [
+        (_cassandra, Cassandra, 9042, 180.0),
         (_hbase, HBase, HBASE_MASTER_PORT, 60.0),
         (_postgres, Postgres, 5432, 60.0),
         (_mariadb, MariaDB, 3306, 60.0),
@@ -638,14 +725,7 @@ def test_hbase_cannot_build_a_second_image_while_started(
 def test_database_startup_timeout_uses_backend_default_or_shared_override(
     monkeypatch: pytest.MonkeyPatch,
     module: Any,
-    backend_type: type[HBase]
-    | type[Postgres]
-    | type[MariaDB]
-    | type[MongoDB]
-    | type[Oracle]
-    | type[MySQL]
-    | type[Redis]
-    | type[SQLServer],
+    backend_type: Callable[[], DatabaseContainer],
     port: int,
     default_timeout: float,
     override: str | None,
@@ -676,8 +756,9 @@ def test_database_startup_timeout_uses_backend_default_or_shared_override(
     with backend_type():
         pass
 
-    expected_timeout = default_timeout if not override else float(override)
-    assert timeouts == [timedelta(seconds=expected_timeout)]
+    assert timeouts == [
+        timedelta(seconds=default_timeout if not override else float(override))
+    ]
 
 
 @pytest.mark.parametrize(
@@ -814,6 +895,24 @@ def test_sql_server_schema_failure_reports_sqlcmd_output_and_logs(
     assert container.stopped
 
 
+def test_cassandra_schema_failure_reports_cqlsh_output_and_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    container = StubContainer(
+        exec_result=ExecResult(exit_code=2, output=b"invalid CQL"),
+        port=9042,
+    )
+    install_stub(monkeypatch, _cassandra, container)
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?s)invalid CQL.*ready to accept connections",
+    ):
+        Cassandra().start()
+
+    assert container.stopped
+
+
 def test_mongodb_bootstrap_failure_reports_output_and_cleans_up(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -887,6 +986,7 @@ def test_cannot_start_postgres_twice(
     [
         (POSTGRES_IMAGE, "postgres"),
         (MARIADB_IMAGE, "mariadb"),
+        (CASSANDRA_IMAGE, "cassandra"),
         (MONGODB_IMAGE, "mongo"),
         (ORACLE_IMAGE, "gvenzl/oracle-free"),
         (MYSQL_IMAGE, "mysql"),
@@ -943,6 +1043,15 @@ def test_the_schema_is_packaged_with_the_runner() -> None:
     )
     assert "create 'conformance:items', 'data'" in schema
     assert "put 'conformance:items', 'seed', 'data:name', 'seed'" in schema
+
+    schema = (
+        resources.files("database_conformance")
+        .joinpath("cassandra.cql")
+        .read_text(encoding="utf-8")
+    )
+    assert "CREATE KEYSPACE conformance" in schema
+    assert "CREATE TABLE conformance.items" in schema
+    assert "INSERT INTO" not in schema
 
     schema = (
         resources.files("database_conformance")
