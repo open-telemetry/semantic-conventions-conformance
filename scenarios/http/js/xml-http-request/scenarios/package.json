@@ -6,6 +6,6 @@
   "license": "Apache-2.0",
   "main": "client.js",
   "dependencies": {
-    "@otel-conformance/http-test-client": "0.1.0"
+    "@otel-conformance/http-test-client": "file:../../../../../tools/http/test-client/js"
   }
 }

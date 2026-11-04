@@ -30,18 +30,44 @@ library instrumentation. A package directory holds its conformance
 configuration, so another client can reuse the workload without duplicating
 JDBC code.
 
+R2DBC packages share a reactive workload with Java-agent and standalone library
+launchers. Its [workload guide](shared/r2dbc/README.md) documents the named
+operations and separate PostgreSQL telemetry contract.
+
 Redis clients reuse a common workload and can be run with Java-agent or supported
 library instrumentation. The
 [Redis workload guide](shared/redis/README.md) documents its commands,
 connection settings, and client-specific telemetry. SQL Server's container and
 JDBC prerequisites are documented in its
 [scenario notes](sql_server/README.md).
+Cassandra's workload and supported instrumentation modes are
+documented in its [scenario notes](cassandra/README.md).
+Oracle's container, JDBC runtime, and workload requirements are documented in
+its [scenario notes](oracle/README.md).
+
+The [Elasticsearch scenario notes](elasticsearch/README.md) describe the latest
+Java API Client, its native instrumentation, and its search workload.
+MySQL's container setup and Connector/J telemetry settings are documented in its
+[scenario notes](mysql/README.md).
+
+HBase's shared workload exercises the latest stable client's native telemetry,
+without the Java agent. Its [scenario notes](hbase/README.md) cover SDK integration,
+Java toolchains, fixture requirements, and observed conformance gaps. The package
+is `hbase/hbase-client/native`; its launcher and workload live under
+`shared/hbase/hbase-client/`.
+
+MongoDB covers the latest stable synchronous and Reactive Streams drivers
+with both Java-agent and published standalone library instrumentation. Its
+[workload guide](shared/mongodb/README.md) and
+[backend notes](mongodb/README.md) describe commands, connection settings, and
+bootstrap.
 
 Run one package from the repository root:
 
 ```sh
 pip install -e tools/runner -e tools/database/runner -e tools/java
 otel-conformance scenarios/database/java/postgresql/jdbc/opentelemetry-javaagent
+otel-conformance scenarios/database/java/mongodb/sync/opentelemetry-javaagent --report-only
 ```
 
 Docker must be installed and running. Redis connection tests also use Docker and

@@ -8,6 +8,8 @@ scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
 
 setup: otel-conformance-js install
 
+otlp_protocol: http/protobuf
+
 server:
   run: http-mock-server --port ${PORT}
 

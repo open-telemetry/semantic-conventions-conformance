@@ -1,0 +1,38 @@
+{
+  "spans": {
+    "db.elasticsearch.client": [
+      "db.operation.name",
+      "db.system.name",
+      "http.request.method",
+      "server.address",
+      "server.port",
+      "url.full"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {
+    "service": {
+      "identity": [
+        "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
+      ],
+      "description": []
+    },
+    "telemetry.sdk": {
+      "identity": [
+        "telemetry.sdk.language",
+        "telemetry.sdk.name"
+      ],
+      "description": [
+        "telemetry.sdk.version"
+      ]
+    }
+  },
+  "findings": []
+}

@@ -11,11 +11,10 @@ public final class SpringWebLibraryClientScenario {
 
   public static void main(String[] args) throws Exception {
     try (ScenarioSdk sdk = ScenarioSdk.initialize()) {
-      SpringWebClientScenario.run(
-          restTemplate ->
-              restTemplate
-                  .getInterceptors()
-                  .add(SpringWebTelemetry.create(sdk.openTelemetry()).createInterceptor()));
+      SpringWebClientScenario.run(restTemplate ->
+          restTemplate
+              .getInterceptors()
+              .add(SpringWebTelemetry.create(sdk.openTelemetry()).createInterceptor()));
     }
   }
 }

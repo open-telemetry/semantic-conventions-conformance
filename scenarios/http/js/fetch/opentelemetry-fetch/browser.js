@@ -4,84 +4,21 @@
 "use strict";
 
 const {
-  OTLPTraceExporter,
-} = require("@opentelemetry/exporter-trace-otlp-proto");
-const { registerInstrumentations } = require("@opentelemetry/instrumentation");
-const {
   FetchInstrumentation,
 } = require("@opentelemetry/instrumentation-fetch");
 const {
-  SimpleSpanProcessor,
-  WebTracerProvider,
-} = require("@opentelemetry/sdk-trace-web");
+  BRIDGE_PATH,
+  exposeScenario,
+} = require("@otel-conformance/browser-runner/page");
+const { runWithTracing } = require("@otel-conformance/browser-runner/tracing");
 const { drive } = require("@otel-conformance/fetch-scenarios");
 
-/** Resolves once exactly `expected` Fetch spans have reached the exporter. */
-function trackingExporter(exporter, expected) {
-  let exported = 0;
-  let resolve;
-  let reject;
-  const complete = new Promise((onResolve, onReject) => {
-    resolve = onResolve;
-    reject = onReject;
-  });
-  return {
-    export(spans, callback) {
-      exporter.export(spans, (result) => {
-        callback(result);
-        if (result.code !== 0) {
-          reject(result.error || new Error("OTLP export failed"));
-          return;
-        }
-        exported += spans.length;
-        if (exported === expected) {
-          resolve();
-        } else if (exported > expected) {
-          reject(new Error(`exported ${exported} spans, expected ${expected}`));
-        }
-      });
-    },
-    forceFlush() {
-      return exporter.forceFlush();
-    },
-    shutdown() {
-      return exporter.shutdown();
-    },
-    waitForExpectedSpans() {
-      return complete;
-    },
-  };
-}
-
-async function run() {
-  const { baseUrl, exchanges, traceExporterUrl } = window.__otelConformance;
-  const exporter = trackingExporter(
-    new OTLPTraceExporter({ url: traceExporterUrl }),
-    exchanges.filter((exchange) => !exchange.readiness).length,
-  );
-  const provider = new WebTracerProvider({
-    spanProcessors: [new SimpleSpanProcessor(exporter)],
-  });
-  provider.register();
-  registerInstrumentations({
-    tracerProvider: provider,
+exposeScenario(({ exchanges }) =>
+  runWithTracing({
     instrumentations: [
-      new FetchInstrumentation({ ignoreUrls: [traceExporterUrl] }),
+      new FetchInstrumentation({ ignoreUrls: [new RegExp(`${BRIDGE_PATH}/`)] }),
     ],
-  });
-  await drive(baseUrl, exchanges);
-  await exporter.waitForExpectedSpans();
-  await provider.forceFlush();
-}
-
-run().then(
-  () => {
-    window.__otelConformanceResult = { ok: true };
-  },
-  (error) => {
-    window.__otelConformanceResult = {
-      ok: false,
-      error: String(error.stack || error),
-    };
-  },
+    expectedSpans: exchanges.filter((exchange) => !exchange.readiness).length,
+    workload: () => drive(location.origin, exchanges),
+  }),
 );

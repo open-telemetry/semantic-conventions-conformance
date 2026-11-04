@@ -4,8 +4,9 @@
 "use strict";
 
 const {
-  isJsonEqual,
-} = require("@otel-conformance/http-test-client/json-equal");
+  CONTENT_TYPE,
+  verify,
+} = require("@otel-conformance/http-test-client/response");
 
 /** Sends the shared exchanges with browser XMLHttpRequest, without telemetry setup. */
 
@@ -14,7 +15,7 @@ function request(baseUrl, exchange) {
     const xhr = new XMLHttpRequest();
     xhr.open(exchange.method, `${baseUrl}${exchange.path}`);
     if (exchange.body !== null) {
-      xhr.setRequestHeader("content-type", "application/json");
+      xhr.setRequestHeader("content-type", CONTENT_TYPE);
     }
     xhr.addEventListener("load", () =>
       resolve({ body: xhr.responseText, status: xhr.status }),
@@ -22,31 +23,27 @@ function request(baseUrl, exchange) {
     xhr.addEventListener("error", () =>
       reject(new Error(`${exchange.method} ${exchange.path} failed`)),
     );
+    xhr.addEventListener("abort", () =>
+      reject(new Error(`${exchange.method} ${exchange.path} aborted`)),
+    );
+    xhr.addEventListener("timeout", () =>
+      reject(new Error(`${exchange.method} ${exchange.path} timed out`)),
+    );
     xhr.send(exchange.body);
   });
 }
 
 async function drive(baseUrl, exchanges) {
+  const answered = [];
   for (const exchange of exchanges) {
     if (exchange.readiness) {
       continue;
     }
     const response = await request(baseUrl, exchange);
-    if (response.status !== exchange.status) {
-      throw new Error(
-        `${exchange.method} ${exchange.path} answered ${response.status}, expected ${exchange.status}`,
-      );
-    }
-    const expected = exchange.responseBody.replace(
-      "${requestBody}",
-      () => exchange.body ?? "{}",
-    );
-    if (!isJsonEqual(JSON.parse(response.body), JSON.parse(expected))) {
-      throw new Error(
-        `${exchange.method} ${exchange.path} answered outside the contract`,
-      );
-    }
+    verify(exchange, response);
+    answered.push(`${exchange.method} ${exchange.path} -> ${response.status}`);
   }
+  return answered;
 }
 
 module.exports = { drive };
