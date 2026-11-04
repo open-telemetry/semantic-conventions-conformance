@@ -490,3 +490,59 @@ test("every committed target accounts for each finding once", async (t) => {
     );
   }
 });
+
+for (const type of ["metric", "span"]) {
+  test(`${type} refinements stay visible only when emitted`, async (t) => {
+    const document = report([
+      target({
+        signals: [
+          {
+            type,
+            name: "db.duration",
+            emitted: ["db.system", "vendor.emitted"],
+            coverage,
+          },
+        ],
+      }),
+    ]);
+    document.registry["database-conformance"][`${type}s`] = {
+      "db.duration": {
+        attributes: { "db.system": "required", "db.namespace": "recommended" },
+        refinements: {
+          "vendor.db.duration": {
+            attributes: {
+              "db.namespace": "opt_in",
+              "vendor.emitted": "required",
+              "vendor.missing": "required",
+            },
+          },
+        },
+      },
+    };
+    await setup(t, document);
+    const page = view(await load(), document.targets[0].id);
+    const detail = page.querySelector(
+      `tr[data-signal="${type}:db.duration"]`,
+    ).nextElementSibling;
+    const names = (kind) =>
+      [...detail.querySelectorAll(`[data-column="${kind}"] li`)].map(
+        (li) => li.textContent,
+      );
+    assert.deepEqual(names("missing"), ["db.namespace"]);
+    assert.equal(
+      detail.querySelector('[data-column="missing"] h4').textContent,
+      "Not emitted (1)",
+    );
+    assert.deepEqual(names("emitted"), ["db.system", "vendor.emitted"]);
+    assert.deepEqual(names("extra"), []);
+    assert.equal(attention(page, "Required attributes not emitted").length, 0);
+    assert.equal(
+      attention(page, "Recommended attributes not emitted").length,
+      1,
+    );
+    assert.match(
+      page.querySelector(".verdict-sub").textContent,
+      /1\/1 required and 0\/1 recommended/,
+    );
+  });
+}

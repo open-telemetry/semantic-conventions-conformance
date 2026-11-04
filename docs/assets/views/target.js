@@ -185,7 +185,9 @@ function model(data, found) {
     const declared = Object.keys(levels).sort(
       (a, b) => rank(levels[a]) - rank(levels[b]) || a.localeCompare(b),
     );
-    const missing = declared.filter((name) => !emitted.has(name));
+    const missing = declared.filter(
+      (name) => levels[name] !== "refinement" && !emitted.has(name),
+    );
     return {
       signal,
       key,
