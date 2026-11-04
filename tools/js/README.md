@@ -16,8 +16,9 @@ tools/js/tests/             the launcher's tests
 ## A build root per domain
 
 A domain's Node scenarios are one npm workspace, rooted at its own
-`scenarios/<domain>/js` — today only
-[`scenarios/http/js`](../../scenarios/http/js). `otel-conformance-js` finds it
+`scenarios/<domain>/js` —
+[`scenarios/http/js`](../../scenarios/http/js) and
+[`scenarios/gen-ai/js`](../../scenarios/gen-ai/js). `otel-conformance-js` finds it
 by searching upwards from the scenario directory for `package-lock.json`, so a
 scenario file says nothing about how deep it is nested. Within a build,
 packages are grouped by the library they instrument, so
@@ -95,9 +96,10 @@ in the build is installed once however deep its own directory sits.
 regenerates every committed `package-lock.json` under `scenarios/` and `tools/`
 with `npm install --package-lock-only --ignore-scripts`, which installs nothing,
 runs no scripts, and changes only what the manifests require. Before invoking
-npm, it removes the cached snapshots of copied `file:` packages from the
-lockfile so npm reads their current manifests and resolves their dependencies.
-Registry package pins remain in place. If regeneration fails, the project's
+npm, it removes the cached snapshots of copied `file:` packages and their
+nested dependency entries from the lockfile so npm reads their current
+manifests and resolves their dependencies. Registry package pins outside
+those subtrees remain in place. If regeneration fails, the project's
 original lockfile is restored byte for byte. CI runs `relock` on Renovate
 PRs and commits the result. Run it by hand when `npm ci` reports that the
 lockfile is out of sync:

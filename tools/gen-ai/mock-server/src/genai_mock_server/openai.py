@@ -210,6 +210,7 @@ RESPONSES_RESPONSE = {
                 {
                     "type": "output_text",
                     "text": "This is a response from the mock server.",
+                    "annotations": [],
                 }
             ],
         }

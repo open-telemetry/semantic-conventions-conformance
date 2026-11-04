@@ -109,9 +109,22 @@ def test_copied_local_packages_are_refreshed_before_npm_runs(
             "resolved": "file:../../../tools/local",
             "dependencies": {"dependency": "1.0.0"},
         },
+        "node_modules/local/node_modules/dependency": {
+            "version": "1.0.0",
+            "dependencies": {"child": "1.0.0"},
+        },
+        "node_modules/local/node_modules/dependency/node_modules/child": {
+            "version": "1.0.0",
+        },
+        "node_modules/local-extra": {
+            "version": "1.0.0",
+        },
         "node_modules/linked": {
             "resolved": "file:../linked",
             "link": True,
+        },
+        "node_modules/linked/node_modules/dependency": {
+            "version": "1.0.0",
         },
         "node_modules/dependency": {
             "version": "1.0.0",
@@ -129,6 +142,7 @@ def test_copied_local_packages_are_refreshed_before_npm_runs(
                 name: package
                 for name, package in packages.items()
                 if name != "node_modules/local"
+                and not name.startswith("node_modules/local/node_modules/")
             }
         return 0
 
