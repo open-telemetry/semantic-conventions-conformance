@@ -51,6 +51,7 @@ def test_resolution_invokes_weaver_without_a_shell(
     assert not Path(commands[0][-1]).exists()
 
 
+@pytest.mark.parametrize("cache", ["external", "nested", "nested-relative"])
 @pytest.mark.parametrize(
     "change",
     [
@@ -66,6 +67,7 @@ def test_a_registry_is_resolved_again_only_when_its_files_change(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     change: Callable[[Path], object],
+    cache: str,
 ) -> None:
     runs: list[list[str]] = []
 
@@ -76,13 +78,26 @@ def test_a_registry_is_resolved_again_only_when_its_files_change(
         (Path(command[-1]) / "coverage-model.json").write_text("{}")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setenv("SEMCONV_CACHE", str(tmp_path / "cache"))
     monkeypatch.setattr(_model, "check_weaver", lambda: None)
     monkeypatch.setattr(_model.subprocess, "run", run)
     registry = tmp_path / "model"
     registry.mkdir()
     (registry / "spans.yaml").write_text("groups: []\n")
     (registry / "metrics.yaml").write_text("groups: []\n")
+    cache_path = (
+        tmp_path / "cache"
+        if cache == "external"
+        else registry / ".cache" / "semconv"
+    )
+    monkeypatch.chdir(registry)
+    monkeypatch.setenv(
+        "SEMCONV_CACHE",
+        str(cache_path.relative_to(registry))
+        if cache == "nested-relative"
+        else str(cache_path),
+    )
+    if cache == "nested-relative":
+        registry = Path(".")
 
     first = _model.coverage_model_for(registry)
     assert _model.coverage_model_for(registry) == first
