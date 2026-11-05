@@ -29,7 +29,7 @@ templates:
         ] | from_entries;
 
       # All identity attributes are needed to identify an entity. Weaver's
-      # v2 model no longer carries requirement levels for these attributes.
+      # v2 model carries no requirement levels for identity attributes.
       def entity_identity:
         [.identity[]? | {key: .key, value: "required"}]
         | from_entries;
