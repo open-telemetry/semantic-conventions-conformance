@@ -67,11 +67,15 @@ def coverage_model_for(registry: Path, *, pin: str | None = None) -> Path:
 
 
 def _digest(registry: Path) -> str:
-    """A digest of registry files, excluding generated coverage models."""
-    models = (cache_dir() / "coverage-models").resolve()
+    """A digest of registry files, excluding generated cache files."""
+    root = registry.resolve()
+    cache = cache_dir().resolve()
+    excluded = (cache / "coverage-models").resolve()
+    if cache != root and cache.is_relative_to(root):
+        excluded = cache
     digest = hashlib.sha256()
     for path in sorted(registry.rglob("*")):
-        if path.is_file() and not path.resolve().is_relative_to(models):
+        if path.is_file() and not path.resolve().is_relative_to(excluded):
             digest.update(path.relative_to(registry).as_posix().encode())
             digest.update(b"\0")
             digest.update(hashlib.sha256(path.read_bytes()).digest())
