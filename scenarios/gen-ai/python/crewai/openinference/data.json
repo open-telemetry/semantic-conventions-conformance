@@ -22,7 +22,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "openinference.instrumentation.crewai",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

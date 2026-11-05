@@ -15,6 +15,7 @@ import json
 import logging
 import shlex
 import shutil
+import socket
 import subprocess
 from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass, field
@@ -92,45 +93,16 @@ _TWeaver = TypeVar("_TWeaver", bound=_WeaverProcess)
 
 
 @contextmanager
-def _quiet_connection_retries() -> Generator[None, None, None]:
-    """Silence urllib3's per-retry warning while weaver is coming up.
-
-    Its ``/health`` is polled through a retrying session, so every refused
-    connection before weaver binds its port is logged as a warning. That is
-    the wait working, not a problem to report.
-    """
-    logger = logging.getLogger("urllib3.connectionpool")
-    previous = logger.level
-    logger.setLevel(logging.ERROR)
-    try:
-        yield
-    finally:
-        logger.setLevel(previous)
-
-
-@contextmanager
 def _start_weaver(
     factory: Callable[[], _TWeaver],
 ) -> Generator[_TWeaver, None, None]:
-    """Start weaver, retrying once if its fixed readiness window expires."""
-    for attempt in range(2):
-        weaver = factory()
-        try:
-            weaver.start()
-        except TimeoutError:
-            weaver.close()
-            if attempt == 1:
-                raise
-            logger.warning("Weaver live-check startup timed out; retrying")
-            continue
-
-        try:
-            yield weaver
-        finally:
-            weaver.close()
-        return
-
-    raise AssertionError("unreachable")
+    """Start one weaver process and close it even if startup fails."""
+    weaver = factory()
+    try:
+        weaver.start()
+        yield weaver
+    finally:
+        weaver.close()
 
 
 class SessionFactory(Protocol):
@@ -209,7 +181,7 @@ class ConformanceSession:
                 f"{name!r} is not declared in {self._spec.directory}; "
                 f"declared: {sorted(self._spec.scenarios)}"
             )
-        from opentelemetry.test.weaver_live_check import (  # noqa: PLC0415
+        from ._weaver import (  # noqa: PLC0415
             WeaverLiveCheck,
         )
 
@@ -224,24 +196,32 @@ class ConformanceSession:
             ]
 
         def start_weaver(policies: str | None) -> WeaverLiveCheck:
-            return WeaverLiveCheck(
-                inactivity_timeout=int(
-                    timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
-                ),
-                registry=str(
-                    registry_path(
-                        self._registry,
-                        directory=self._spec.directory,
-                        variables=self._variables,
-                    )
-                ),
-                policies_dir=policies,
-                extra_args=extra_args,
-            )
+            with (
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM) as otlp,
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM) as admin,
+            ):
+                # Hold both sockets so the OS cannot assign the same port twice.
+                otlp.bind(("127.0.0.1", 0))
+                admin.bind(("127.0.0.1", 0))
+                return WeaverLiveCheck(
+                    inactivity_timeout=int(
+                        timeout_seconds(*_WEAVER_INACTIVITY_TIMEOUT)
+                    ),
+                    registry=str(
+                        registry_path(
+                            self._registry,
+                            directory=self._spec.directory,
+                            variables=self._variables,
+                        )
+                    ),
+                    policies_dir=policies,
+                    extra_args=extra_args,
+                    otlp_port=otlp.getsockname()[1],
+                    admin_port=admin.getsockname()[1],
+                )
 
         with (
             self._scenario_policies(scenario, weaver_spec) as policies,
-            _quiet_connection_retries(),
             _start_weaver(lambda: start_weaver(policies)) as weaver,
         ):
             if self._spec.otlp_protocol == "http/protobuf":
@@ -331,6 +311,12 @@ class ConformanceSession:
         }
         if scenario.index is not None:
             injected["OTEL_CONFORMANCE_SCENARIO_INDEX"] = str(scenario.index)
+        if scenario.action is not None:
+            injected["OTEL_CONFORMANCE_SCENARIO_ACTION"] = json.dumps(
+                scenario.action,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
         env = self._env(scenario.env, injected)
         for variable in _OTLP_SIGNAL_ENV:
             env.pop(variable, None)

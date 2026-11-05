@@ -7,30 +7,36 @@
   "gitIgnoredAuthors": [
     "332156698+otelbot-semconv-conformance[bot]@users.noreply.github.com"
   ],
+  "schedule": ["before 8am on Tuesday"],
   "packageRules": [
     {
-      "groupName": "all patch versions",
-      "matchUpdateTypes": ["patch"],
-      "schedule": ["before 8am every weekday"]
+      // Fallback for patch updates not assigned to a group by a later rule.
+      // Review PRs in this group for missing grouping rules.
+      "groupName": "unclassified patch updates",
+      "matchUpdateTypes": ["patch"]
     },
     {
-      "matchUpdateTypes": ["minor", "major"],
-      "schedule": ["before 8am on Monday"]
-    },
-    {
-      // group all GitHub Actions updates into a single weekly PR
+      // group non-major GitHub Actions updates together
       // (Renovate applies packageRules in order and later rules win)
       "groupName": "github actions",
       "matchManagers": [
         "github-actions"
-      ],
-      "schedule": [
-        "before 8am on Tuesday"
       ]
     },
     {
+      // Bump the setup-python `python-version` inputs in their own PR, out of
+      // the github actions group. The Python scenarios run on the interpreter
+      // setup-python puts on PATH, so a new Python is only mergeable once their
+      // locked dependencies (grpcio, pydantic-core, ...) publish wheels for it;
+      // until then every scenario builds them from source and the jobs time
+      // out, which must not hold back the other action updates.
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["python"],
+      "groupName": "python"
+    },
+    {
       // group all non-major Java dependency updates into a single PR
-      "matchManagers": ["gradle"],
+      "matchManagers": ["gradle", "gradle-wrapper"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "java-minor"
     },
@@ -74,6 +80,19 @@
       "matchManagers": ["composer"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "php-minor"
+    },
+    {
+      // Match Docker images from all managers, including workflows and custom managers.
+      // config:best-practices enables Docker digest pinning, so include pinDigest.
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "pinDigest", "digest"],
+      "groupName": "docker-minor"
+    },
+    {
+      // Major upgrades get individual PRs outside the weekly update window.
+      "matchUpdateTypes": ["major"],
+      "groupName": null,
+      "schedule": []
     },
     {
       // Everything under this Maven group ships only `-alpha` versions, so
@@ -123,11 +142,10 @@
       "enabled": false
     },
     {
-      // google-adk and crewai cap opentelemetry-sdk below 1.43, so keep
-      // their core SDK packages pinned.
+      // google-adk caps opentelemetry-sdk at 1.44, so keep its core SDK
+      // packages pinned.
       "matchFileNames": [
-        "scenarios/gen-ai/python/google-adk/**",
-        "scenarios/gen-ai/python/crewai/**"
+        "scenarios/gen-ai/python/google-adk/**"
       ],
       "matchPackageNames": [
         "opentelemetry-api",
@@ -153,7 +171,7 @@
       // The database runner invokes these images directly rather than through
       // Dockerfiles or Compose files, so Renovate needs their Python assignments.
       "customType": "regex",
-      "managerFilePatterns": ["/tools/database/runner/src/database_conformance/_(?:postgres|mariadb)\\.py$/"],
+      "managerFilePatterns": ["tools/database/runner/src/database_conformance/*.py"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?) versioning=(?<versioning>[^\\s]+?)\\s+[A-Z_]+_IMAGE = \"[^:\"]+:(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
       ]

@@ -75,7 +75,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.apache.catalina.core.StandardEngine",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -87,7 +87,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.apache.catalina.core.StandardService",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -99,7 +99,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.apache.catalina.loader.WebappClassLoaderBase",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -111,7 +111,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.apache.coyote.http11.Http11NioProtocol",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

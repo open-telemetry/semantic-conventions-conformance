@@ -1,0 +1,26 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: database-conformance
+runner_config:
+  backend: redis
+instrumented_library: lettuce
+instrumentation_library: io.opentelemetry.instrumentation:opentelemetry-lettuce-5.1
+scenario_contract: ../../../../contracts/redis-lettuce.yaml
+
+env:
+  OTEL_SEMCONV_STABILITY_OPT_IN: database
+  OTEL_INSTRUMENTATION_RUNTIME_TELEMETRY_ENABLED: "false"
+
+weaver:
+  config: ../../../../../../tools/java/weaver.toml
+
+setup: otel-conformance-java prepare shared:redis:lettuce:opentelemetry-library
+
+scenarios:
+  set_get:
+    run: otel-conformance-java run shared:redis:lettuce:opentelemetry-library LettuceLibraryScenario set_get
+  pipeline:
+    run: otel-conformance-java run shared:redis:lettuce:opentelemetry-library LettuceLibraryScenario pipeline
+  error:
+    run: otel-conformance-java run shared:redis:lettuce:opentelemetry-library LettuceLibraryScenario error

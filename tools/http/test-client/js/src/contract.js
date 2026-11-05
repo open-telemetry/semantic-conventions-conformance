@@ -18,8 +18,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const YAML = require("yaml");
 
-/** Every route answers JSON, so a scenario has one content type rather than a rule per route. */
-const CONTENT_TYPE = "application/json";
+const { CONTENT_TYPE, renderResponseBody } = require("./response");
 
 /**
  * Fixed rather than the HTTP library's default, so a server scenario sees the
@@ -132,16 +131,6 @@ function exchangeFor(method, target) {
       (exchange) =>
         exchange.method === method && withoutQuery(exchange.path) === concrete,
     ) ?? null
-  );
-}
-
-/** An exchange's response body with the request body inserted. */
-function renderResponseBody(exchange, requestBody) {
-  // A function rather than the body itself: a string replacement reads `$&`
-  // and its siblings as substitution patterns, so a body carrying one would
-  // not be echoed literally.
-  return exchange.responseBody.replace("${requestBody}", () =>
-    requestBody ? requestBody : "{}",
   );
 }
 

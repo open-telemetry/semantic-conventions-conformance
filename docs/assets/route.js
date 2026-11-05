@@ -45,6 +45,25 @@ export function go(path) {
 }
 
 /**
+ * @param {string} id a target id, whose `/`s stay path separators
+ * @returns {string} the route path of that target's page
+ */
+export const targetPath = (id) =>
+  `/target/${id.split("/").map(encodeURIComponent).join("/")}`;
+
+/** @param {string} id @returns {string} the hash that opens that target's page */
+export const targetHref = (id) => `#${targetPath(id)}`;
+
+/**
+ * @param {string} key a `${type}:${name}` signal key
+ * @returns {string} the route path of that signal's comparison
+ */
+export const signalPath = (key) => `/signals/${encodeURIComponent(key)}`;
+
+/** @param {string} key @returns {string} the hash that opens that comparison */
+export const signalHref = (key) => `#${signalPath(key)}`;
+
+/**
  * Record filter state on the current route without re-rendering. Empty values
  * are dropped, so an unfiltered view keeps a clean URL.
  *

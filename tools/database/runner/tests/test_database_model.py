@@ -26,8 +26,16 @@ def _model():
 @pytest.mark.parametrize(
     ("system", "span_type"),
     [
+        ("cassandra", "db.cassandra.client"),
+        ("elasticsearch", "db.elasticsearch.client"),
+        ("hbase", "db.hbase.client"),
         ("mariadb", "db.mariadb.client"),
+        ("microsoft.sql_server", "db.sql_server.client"),
+        ("mongodb", "db.mongodb.client"),
+        ("oracle.db", "db.oracledb.client"),
+        ("mysql", "db.mysql.client"),
         ("postgresql", "db.postgresql.client"),
+        ("redis", "db.redis.client"),
     ],
 )
 def test_the_registry_declares_the_span_types_we_classify(

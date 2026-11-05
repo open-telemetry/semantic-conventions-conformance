@@ -3,6 +3,12 @@ plugins {
     `java-library`
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(27)
+    }
+}
+
 dependencies {
     api(libs.helidon.webserver)
 

@@ -73,7 +73,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

@@ -6,6 +6,7 @@
       "db.query.summary",
       "db.query.text",
       "db.stored_procedure.name",
+      "db.system.name",
       "server.address",
       "server.port"
     ]
@@ -24,6 +25,12 @@
     "service": {
       "identity": [
         "service.name"
+      ],
+      "description": []
+    },
+    "service.instance": {
+      "identity": [
+        "service.instance.id"
       ],
       "description": []
     },

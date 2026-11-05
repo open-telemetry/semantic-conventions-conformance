@@ -9,9 +9,11 @@
     ],
     "gen_ai.invoke_agent.internal": [
       "gen_ai.agent.name",
+      "gen_ai.conversation.id",
       "gen_ai.operation.name"
     ],
     "gen_ai.invoke_workflow.internal": [
+      "gen_ai.conversation.id",
       "gen_ai.operation.name",
       "gen_ai.workflow.name"
     ]

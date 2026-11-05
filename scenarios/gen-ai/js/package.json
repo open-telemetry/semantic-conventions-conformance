@@ -1,0 +1,17 @@
+{
+  "name": "@otel-conformance/gen-ai-js",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "workspaces": [
+    "openai/*",
+    "vercel-ai/*"
+  ],
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

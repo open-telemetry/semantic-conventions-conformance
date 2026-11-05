@@ -75,7 +75,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.restlet.Component.InternalRouter.Server",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }
@@ -87,7 +87,7 @@
       "signal_type": "instrumentation_scope",
       "signal_name": "org.restlet.Component.LogService",
       "context": {
-        "actual": "",
+        "actual": null,
         "expected": {
           "present": true
         }

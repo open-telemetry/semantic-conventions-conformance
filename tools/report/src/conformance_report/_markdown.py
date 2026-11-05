@@ -137,6 +137,8 @@ def render_diff(before: Mapping[str, Any], after: Mapping[str, Any]) -> str:
     removed = len(old.keys() - new.keys())
     changed = sum(
         old[target_id].get("signals", []) != new[target_id].get("signals", [])
+        or old[target_id].get("entities", {})
+        != new[target_id].get("entities", {})
         or _findings(old[target_id]) != _findings(new[target_id])
         for target_id in old.keys() & new.keys()
     )

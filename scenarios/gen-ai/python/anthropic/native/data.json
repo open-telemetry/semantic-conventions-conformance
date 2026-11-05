@@ -1,0 +1,183 @@
+{
+  "spans": {
+    "gen_ai.client.inference": [
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.provider.name",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.stop_sequences",
+      "gen_ai.request.stream",
+      "gen_ai.request.temperature",
+      "gen_ai.request.top_k",
+      "gen_ai.request.top_p",
+      "gen_ai.response.id",
+      "gen_ai.response.model",
+      "gen_ai.response.time_to_first_chunk",
+      "gen_ai.system_instructions",
+      "gen_ai.usage.cache_read.input_tokens",
+      "gen_ai.usage.cache_write.input_tokens",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens",
+      "server.address",
+      "server.port"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.id",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name",
+      "gen_ai.tool.type"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.request.model"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'com.anthropic.sdk.python' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "com.anthropic.sdk.python",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'anthropic.tool_result.content' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "anthropic.custom_tool_use get_current_weather",
+      "context": {
+        "attribute_key": "anthropic.tool_result.content"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'anthropic.custom_tool_use get_current_weather' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "anthropic.custom_tool_use get_current_weather",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "execute_tool span name should be 'execute_tool get_current_weather', got 'anthropic.custom_tool_use get_current_weather'",
+      "signal_type": "span",
+      "signal_name": "anthropic.custom_tool_use get_current_weather",
+      "context": {
+        "expected_form": "execute_tool get_current_weather",
+        "keyed_attr": "gen_ai.tool.name",
+        "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'anthropic.beta' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.create",
+      "context": {
+        "attribute_key": "anthropic.beta"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'anthropic.message.stop_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.create",
+      "context": {
+        "attribute_key": "anthropic.message.stop_reason"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'anthropic.messages.create' (operation 'chat') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.create",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'anthropic.messages.create' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.create",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "chat span name should be 'chat claude-sonnet-4-20250514', got 'anthropic.messages.create'",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.create",
+      "context": {
+        "expected_form": "chat claude-sonnet-4-20250514",
+        "keyed_attr": "gen_ai.request.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'anthropic.messages.tool_runner' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.tool_runner",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'anthropic.messages.tool_runner' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.tool_runner",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'anthropic.messages.tool_runner' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.tool_runner",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "span_status_ok_set_by_instrumentation",
+      "message": "Span 'anthropic.messages.tool_runner' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.tool_runner",
+      "context": {
+        "status_code": "ok"
+      }
+    },
+    {
+      "id": "genai_span_name_format",
+      "message": "invoke_agent span name should be 'invoke_agent', got 'anthropic.messages.tool_runner'",
+      "signal_type": "span",
+      "signal_name": "anthropic.messages.tool_runner",
+      "context": {
+        "expected_form": "invoke_agent",
+        "keyed_attr": "gen_ai.agent.name",
+        "operation": "invoke_agent"
+      }
+    }
+  ]
+}

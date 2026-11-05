@@ -31,7 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: Download regenerated lock file patches
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/renovate-lock-patches
@@ -39,7 +39,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Download generated data patches
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/renovate-data-patches
@@ -162,7 +162,7 @@ jobs:
           steps.apply-patches.outputs.lock_tree != '' ||
           steps.apply-patches.outputs.data_tree != ''
         id: otelbot-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ vars.OTELBOT_SEMCONV_CONFORMANCE_CLIENT_ID }}
           private-key: ${{ secrets.OTELBOT_SEMCONV_CONFORMANCE_PRIVATE_KEY }}

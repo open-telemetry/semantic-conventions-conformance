@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -12,6 +13,8 @@ import pytest
 
 import otel_conformance_php
 from otel_conformance_php import lock_projects, relock, relock_command
+
+REPOSITORY = Path(__file__).resolve().parents[3]
 
 TRACKED = (
     "scenarios/http/php/guzzle/opentelemetry-guzzle/composer.lock",
@@ -59,6 +62,33 @@ def test_only_the_lock_is_rewritten_and_minimally() -> None:
         "--no-interaction",
         "--no-progress",
     ]
+
+
+@pytest.mark.parametrize(
+    "project",
+    [
+        project
+        for project in lock_projects(REPOSITORY)
+        if project.is_relative_to(REPOSITORY / "scenarios")
+    ],
+)
+def test_path_repositories_pin_the_required_versions(project: Path) -> None:
+    manifest = json.loads(
+        (project / "composer.json").read_text(encoding="utf-8")
+    )
+    for repository in manifest["repositories"]:
+        if repository["type"] != "path":
+            continue
+        package = json.loads(
+            (project / repository["url"] / "composer.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        name = package["name"]
+        assert (
+            repository["options"]["versions"][name]
+            == manifest["require"][name]
+        )
 
 
 def test_every_package_is_relocked(

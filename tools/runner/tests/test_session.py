@@ -12,6 +12,7 @@ directly.
 from __future__ import annotations
 
 import json
+import socket
 import subprocess
 import sys
 from collections.abc import Mapping
@@ -83,22 +84,23 @@ def test_a_command_that_overruns(
     assert "did not finish within" in completed.stderr
 
 
-def test_weaver_startup_retries_after_a_timeout() -> None:
+def test_weaver_starts_one_process() -> None:
     attempts: list[_FakeWeaver] = []
 
     def factory() -> _FakeWeaver:
-        weaver = _FakeWeaver(fail_start=not attempts)
+        weaver = _FakeWeaver(fail_start=False)
         attempts.append(weaver)
         return weaver
 
     with _start_weaver(factory) as weaver:
-        assert weaver is attempts[1]
+        assert weaver is attempts[0]
 
-    assert [attempt.starts for attempt in attempts] == [1, 1]
-    assert [attempt.closes for attempt in attempts] == [1, 1]
+    assert len(attempts) == 1
+    assert attempts[0].starts == 1
+    assert attempts[0].closes == 1
 
 
-def test_weaver_startup_stops_after_the_retry() -> None:
+def test_weaver_startup_timeout_closes_without_retrying() -> None:
     attempts: list[_FakeWeaver] = []
 
     def factory() -> _FakeWeaver:
@@ -109,8 +111,20 @@ def test_weaver_startup_stops_after_the_retry() -> None:
     with pytest.raises(TimeoutError), _start_weaver(factory):
         pass
 
-    assert len(attempts) == 2
-    assert [attempt.closes for attempt in attempts] == [1, 1]
+    assert len(attempts) == 1
+    assert attempts[0].starts == 1
+    assert attempts[0].closes == 1
+
+
+def test_weaver_closes_when_the_scenario_raises() -> None:
+    weaver = _FakeWeaver(fail_start=False)
+
+    with pytest.raises(RuntimeError, match="scenario failed"):
+        with _start_weaver(lambda: weaver):
+            raise RuntimeError("scenario failed")
+
+    assert weaver.starts == 1
+    assert weaver.closes == 1
 
 
 class _FakeWeaver:
@@ -229,6 +243,39 @@ def session(
             "reports": reports.name,
         },
     )
+
+
+def test_weaver_reserves_distinct_ports(
+    directory: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("opentelemetry.test.weaver_live_check")
+
+    ports: list[int] = []
+
+    def construct(
+        *, otlp_port: int, admin_port: int, **kwargs: object
+    ) -> None:
+        ports.extend([otlp_port, admin_port])
+        assert 0 < otlp_port <= 65535
+        assert 0 < admin_port <= 65535
+        assert otlp_port != admin_port
+        for port in ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+                with pytest.raises(OSError):
+                    other.bind(("127.0.0.1", port))
+        raise RuntimeError("weaver configured")
+
+    monkeypatch.setattr(
+        "opentelemetry.conformance._weaver.WeaverLiveCheck", construct
+    )
+
+    with pytest.raises(RuntimeError, match="weaver configured"):
+        session(directory, tmp_path / "data.json").run("inference")
+
+    assert len(ports) == 2
+    for port in ports:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
+            other.bind(("127.0.0.1", port))
 
 
 @pytest.mark.parametrize("index", [None, 3])
@@ -390,10 +437,33 @@ def test_declared_paths_resolve_against_the_package(
     assert opened._resolve_path(absolute) == absolute
 
 
-def test_contract_index_is_injected_into_the_scenario_process(
+@pytest.mark.parametrize(
+    ("action", "expected_action"),
+    [
+        (
+            {"request": {"method": "POST", "path": "/items"}},
+            '{"request":{"method":"POST","path":"/items"}}',
+        ),
+        (
+            {
+                "kind": "prepared_query",
+                "sql": "SELECT ${1}, ${2}",
+                "parameters": [
+                    {"type": "integer", "value": 7},
+                    {"type": "integer", "value": -2},
+                ],
+            },
+            '{"kind":"prepared_query","parameters":[{"type":"integer","value":7},'
+            '{"type":"integer","value":-2}],"sql":"SELECT ${1}, ${2}"}',
+        ),
+    ],
+)
+def test_contract_selection_is_injected_into_the_scenario_process(
     directory: Path,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    action: dict[str, object],
+    expected_action: str,
 ) -> None:
     captured: dict[str, str] = {}
 
@@ -409,11 +479,13 @@ def test_contract_index_is_injected_into_the_scenario_process(
     scenario = replace(
         opened.spec.scenarios["inference"],
         index=3,
+        action=action,
     )
 
     opened._execute(scenario, "http://collector")
 
     assert captured["OTEL_CONFORMANCE_SCENARIO_INDEX"] == "3"
+    assert captured["OTEL_CONFORMANCE_SCENARIO_ACTION"] == expected_action
 
 
 def test_a_missing_registry_is_a_spec_error(

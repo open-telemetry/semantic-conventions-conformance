@@ -11,6 +11,7 @@ server:
 env:
   ANTHROPIC_BASE_URL: ${MOCK_SERVER_URL}
   ANTHROPIC_API_KEY: test_anthropic_api_key
+  ANTHROPIC_OPEN_TELEMETRY: "false"
   # OpenLLMetry's own switches. It has no opt-in for the current
   # GenAI conventions: what it emits is its own take on them.
   TRACELOOP_TRACE_CONTENT: "true"
@@ -25,6 +26,9 @@ scenarios:
 
   tool_calling:
     run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/tool_calling.py
+
+  server_tool_calling:
+    run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/server_tool_calling.py
 
   automatic_tool_calling:
     run: uv run --frozen --project . opentelemetry-instrument python ../scenarios/automatic_tool_calling.py

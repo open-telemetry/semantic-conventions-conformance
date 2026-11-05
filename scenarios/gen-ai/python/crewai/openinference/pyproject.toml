@@ -5,12 +5,12 @@ version = "0.0.0"
 # not work on Python 3.14.
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "crewai==1.15.23",
-    "openinference-instrumentation-crewai==1.1.20",
-    "opentelemetry-api==1.42.0",
-    "opentelemetry-sdk==1.42.0",
-    "opentelemetry-exporter-otlp-proto-grpc==1.42.0",
-    "opentelemetry-distro==0.63b0",
+    "crewai==1.15.34",
+    "openinference-instrumentation-crewai==1.1.22",
+    "opentelemetry-api==1.45.2",
+    "opentelemetry-sdk==1.45.2",
+    "opentelemetry-exporter-otlp-proto-grpc==1.45.2",
+    "opentelemetry-distro==0.66b2",
 ]
 
 # What OTEL_TRACES_EXPORTER names; zero-code resolves it through this group.

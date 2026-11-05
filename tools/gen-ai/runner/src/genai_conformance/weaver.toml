@@ -17,4 +17,26 @@ exclude_samples = [
   "rpc.method",
   "http.request.method",
   "http.response.status_code",
+  "http.route",
+  "url.full",
+  "url.path",
+  "url.scheme",
+]
+
+# Resources from the Node SDK detectors are outside the GenAI measurement.
+[[live-check.finding_filters]]
+signal_type = "resource"
+exclude_samples = [
+  "host.arch",
+  "host.id",
+  "host.name",
+  "process.command",
+  "process.command_args",
+  "process.executable.name",
+  "process.executable.path",
+  "process.owner",
+  "process.pid",
+  "process.runtime.description",
+  "process.runtime.name",
+  "process.runtime.version",
 ]
