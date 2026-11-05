@@ -1,7 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-import { LEVELS, LEVEL_LABEL, levelColor, ratio } from "./data.js";
+import {
+  LEVELS,
+  LEVEL_LABEL,
+  REFINEMENT_COLOR,
+  REFINEMENT_LABEL,
+  levelColor,
+  ratio,
+} from "./data.js";
 
 /**
  * Build an element, treating string content as text.
@@ -32,19 +39,18 @@ export function el(tag, attrs = {}, children = []) {
 
 /**
  * @param {string[]} [levels] the requirement levels to show, in order
+ * @param {boolean} [refinements] whether to add the refinement group after them
  * @returns {HTMLElement} a `<p>` with one swatch and label per level
  */
-export function levelLegend(levels = LEVELS) {
-  return el(
-    "p",
-    { class: "legend" },
-    levels.map((level) =>
-      el("span", {}, [
-        el("i", { style: `background:${levelColor(level)}` }),
-        LEVEL_LABEL[level] ?? level,
-      ]),
+export function levelLegend(levels = LEVELS, refinements = false) {
+  const swatch = (color, label) =>
+    el("span", {}, [el("i", { style: `background:${color}` }), label]);
+  return el("p", { class: "legend" }, [
+    ...levels.map((level) =>
+      swatch(levelColor(level), LEVEL_LABEL[level] ?? level),
     ),
-  );
+    refinements && swatch(REFINEMENT_COLOR, REFINEMENT_LABEL),
+  ]);
 }
 
 let bandSize;

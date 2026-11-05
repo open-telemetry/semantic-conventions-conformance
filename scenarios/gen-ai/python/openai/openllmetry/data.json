@@ -17,7 +17,9 @@
       "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
-      "gen_ai.usage.output_tokens"
+      "gen_ai.usage.output_tokens",
+      "openai.request.service_tier",
+      "openai.response.service_tier"
     ],
     "gen_ai.embeddings.client": [
       "gen_ai.operation.name",

@@ -7,7 +7,9 @@ The default reduction in :mod:`._coverage` keys spans by what a scenario
 *declares*, which is all it can do without knowing the conventions. This one
 reads the registry: every span is classified into a registry span type, and
 the data file records, per type, which of that type's declared attributes were
-present. Same for every event and metric the registry declares.
+present, including fields declared by its refinements. Refinement applicability
+is not inferred from those fields. Same for every metric the registry declares;
+events keep their own declared attributes.
 
 A domain supplies two things — a resolved coverage model and a way to
 recognise its span types — and gets a ``build_data`` back.
@@ -46,9 +48,7 @@ def semconv_coverage(
     return build
 
 
-def _reduce(
-    observed: Observed, model: Mapping[str, Any]
-) -> dict[str, object]:
+def _reduce(observed: Observed, model: Mapping[str, Any]) -> dict[str, object]:
     """A parsed run, reduced to the committed data-file shape.
 
     Every key is always there, empty or not: a run that emitted no metrics has
@@ -81,7 +81,11 @@ def _signals(
     for name, carried in sorted(observed.items()):
         if name not in declared:
             continue
-        present = sorted(declared[name]["attributes"].keys() & carried)
+        definition = declared[name]
+        attributes = set(definition["attributes"])
+        for refinement in definition.get("refinements", {}).values():
+            attributes.update(refinement["attributes"])
+        present = sorted(attributes & carried)
         if present or bare:
             recorded[name] = present
     return recorded
