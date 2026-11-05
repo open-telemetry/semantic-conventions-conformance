@@ -1186,3 +1186,21 @@ def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
     assert f"ARG HBASE_VERSION={_hbase.HBASE_VERSION}" in dockerfile
     assert f"ARG HBASE_SHA512={_hbase._HBASE_SHA512}" in dockerfile
     assert "sha512sum --check --strict" in dockerfile
+
+
+def test_hbase_fixture_falls_back_across_apache_mirrors() -> None:
+    dockerfile = (
+        resources.files("database_conformance")
+        .joinpath("hbase-image", "Dockerfile")
+        .read_text(encoding="utf-8")
+    )
+
+    mirrors = [
+        "https://dlcdn.apache.org/${path}",
+        "https://downloads.apache.org/${path}",
+        "https://archive.apache.org/dist/${path}",
+    ]
+    positions = [dockerfile.index(mirror) for mirror in mirrors]
+    assert positions == sorted(positions)
+    assert "--retry-all-errors" in dockerfile
+    assert "ADD https://" not in dockerfile
