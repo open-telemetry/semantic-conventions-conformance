@@ -1202,5 +1202,6 @@ def test_hbase_fixture_falls_back_across_apache_mirrors() -> None:
     ]
     positions = [dockerfile.index(mirror) for mirror in mirrors]
     assert positions == sorted(positions)
+    assert "--retry 5 " in dockerfile
     assert "--retry-all-errors" in dockerfile
     assert "ADD https://" not in dockerfile
