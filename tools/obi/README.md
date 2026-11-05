@@ -46,7 +46,8 @@ and maps each digest to the new release's archive.
    usually with `--args`: the Python interpreter and the Java runtime are the
    same executable as the mock server and every other scenario. The launcher
    and its ancestors are excluded ahead of that match, since their command
-   lines carry the scenario command too. OBI runs under a small root-side `sh`
+   lines carry the scenario command too, and so is the launcher's reaper,
+   which runs the same interpreter. OBI runs under a small root-side `sh`
    that stops it when its standard input from the launcher closes, so OBI
    never outlives the launcher, however it dies.
 4. Releases the scenario once OBI's `obi_instrumented_processes` internal

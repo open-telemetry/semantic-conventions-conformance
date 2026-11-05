@@ -448,6 +448,10 @@ class Scenario:
                 f"the scenario reaper could not be started: {error}"
             ) from error
 
+    @property
+    def reaper_pid(self) -> int:
+        return self._reaper.pid
+
     def finish(self) -> int:
         code = self.process.wait()
         self.finished = True
@@ -610,7 +614,11 @@ def run(
                 config = Path(scratch) / "obi.yaml"
                 config.write_text(
                     render_config(
-                        template, selector, metrics_port, environ, lineage()
+                        template,
+                        selector,
+                        metrics_port,
+                        environ,
+                        [*lineage(), scenario.reaper_pid],
                     ),
                     encoding="utf-8",
                 )

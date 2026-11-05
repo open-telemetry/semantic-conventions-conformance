@@ -108,7 +108,7 @@ FAKE_OBI = textwrap.dedent(
         time.sleep(0.5)
     found = None
     while found is None:
-        for entry in os.listdir("/proc"):
+        for entry in sorted((name for name in os.listdir("/proc") if name.isdigit()), key=int, reverse=True):
             if entry.isdigit() and int(entry) not in (os.getpid(), os.getppid(), *excluded) and matches(entry):
                 found = int(entry)
                 break
@@ -973,6 +973,13 @@ class TestRunningUnderOBI:
 
         time.sleep(0.5)
         assert gated_children() == []
+
+    def test_the_reaper_never_satisfies_readiness(
+        self, environ: dict[str, str]
+    ) -> None:
+        interpreter = glob_literal(os.path.realpath(sys.executable))
+
+        assert run(gated(), exe=interpreter, environ=environ) == 0
 
     def test_a_wrapper_that_exits_takes_its_gated_child_with_it(
         self,
