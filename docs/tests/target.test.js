@@ -492,6 +492,81 @@ test("every committed target accounts for each finding once", async (t) => {
 });
 
 for (const type of ["metric", "span"]) {
+  for (const reverse of [false, true]) {
+    test(`${type} target refinements use its runner's registry (reverse=${reverse})`, async (t) => {
+      const document = report([
+        target({
+          signals: [
+            {
+              type,
+              name: "db.duration",
+              emitted: ["db.system", "vendor.response"],
+              coverage,
+            },
+          ],
+        }),
+      ]);
+      const first = document.targets[0];
+      const other = target({ ...first, id: "other", runner: "other" });
+      document.targets.push(other);
+      if (reverse) document.targets.reverse();
+      const attributes = {
+        "db.system": "required",
+        "db.namespace": "recommended",
+      };
+      document.registry["database-conformance"][`${type}s`] = {
+        "db.duration": { attributes },
+      };
+      document.registry.other = {
+        [`${type}s`]: {
+          "db.duration": {
+            attributes,
+            refinements: {
+              "vendor.db.duration": {
+                attributes: {
+                  "db.system": "opt_in",
+                  "vendor.response": "required",
+                },
+              },
+            },
+          },
+        },
+      };
+      document.domains.other = document.domains["database-conformance"];
+      await setup(t, document);
+      const data = await load();
+      for (const item of [first, other]) {
+        const page = view(data, item.id);
+        const detail = page.querySelector(
+          `tr[data-signal="${type}:db.duration"]`,
+        ).nextElementSibling;
+        const names = (kind) =>
+          [...detail.querySelectorAll(`[data-column="${kind}"] li`)].map(
+            (li) => li.textContent,
+          );
+        assert.deepEqual(names("missing"), ["db.namespace"]);
+        assert.deepEqual(
+          names("emitted"),
+          item === first ? ["db.system"] : ["db.system", "vendor.response"],
+        );
+        assert.deepEqual(
+          names("extra"),
+          item === first ? ["vendor.response"] : [],
+        );
+        assert.equal(
+          detail.querySelector('[data-column="extra"] h4')?.textContent ?? null,
+          item === first ? "Not in the registry (1)" : null,
+        );
+      }
+      const comparison = signals(data, `${type}:db.duration`);
+      assert.match(
+        comparison.textContent,
+        /Refinement attributes \(unscored\)/,
+      );
+      assert.match(comparison.textContent, /vendor.response/);
+    });
+  }
+
   test(`${type} refinements stay visible only when emitted`, async (t) => {
     const document = report([
       target({

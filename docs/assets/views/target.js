@@ -181,9 +181,15 @@ function directory(items) {
 function model(data, found) {
   const signals = found.signals.map((signal) => {
     const key = signalKey(signal.type, signal.name);
-    const declaration = data.signals.get(key);
+    const declaration =
+      data.report.registry?.[found.runner]?.[`${signal.type}s`]?.[signal.name];
     const levels = declaration?.attributes ?? {};
-    const refined = declaration?.refinementAttributes ?? new Set();
+    const refined = new Set();
+    for (const refinement of Object.values(declaration?.refinements ?? {})) {
+      for (const name of Object.keys(refinement.attributes)) {
+        if (!Object.hasOwn(levels, name)) refined.add(name);
+      }
+    }
     const emitted = new Set(signal.emitted);
     const declared = Object.keys(levels).sort(
       (a, b) => rank(levels[a]) - rank(levels[b]) || a.localeCompare(b),

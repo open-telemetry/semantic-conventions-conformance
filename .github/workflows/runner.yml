@@ -343,6 +343,7 @@ jobs:
       - name: Test the coverage models and Weaver lifecycle
         run: |
           python -m pytest \
+            tools/runner/tests/test_model.py \
             tools/runner/tests/test_session.py \
             tools/runner/tests/test_weaver.py \
             tools/database/runner/tests \
