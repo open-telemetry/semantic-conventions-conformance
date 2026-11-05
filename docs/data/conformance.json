@@ -10946,6 +10946,18 @@
       "entities": {},
       "findings": [
         {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'com.anthropic.sdk.python' does not have schema_url.",
+          "signal_name": "com.anthropic.sdk.python",
+          "signal_type": "instrumentation_scope"
+        },
+        {
           "id": "missing_metric",
           "message": "Metric does not exist in the registry.",
           "signal_name": "gen_ai.client.operation.time_per_output_chunk",
@@ -10971,6 +10983,45 @@
           "message": "Metric does not exist in the registry.",
           "signal_name": "gen_ai.client.token.usage",
           "signal_type": "metric"
+        },
+        {
+          "context": {
+            "attribute_key": "anthropic.message.stop_reason"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'anthropic.message.stop_reason' does not exist in the registry.",
+          "signal_name": "anthropic.messages.create",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "missing_attribute": "gen_ai.response.finish_reasons",
+            "operation": "chat"
+          },
+          "id": "genai_expected_attribute_missing",
+          "message": "Span 'anthropic.messages.create' (operation 'chat') is missing expected attribute 'gen_ai.response.finish_reasons'",
+          "signal_name": "anthropic.messages.create",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "status_code": "ok"
+          },
+          "id": "span_status_ok_set_by_instrumentation",
+          "message": "Span 'anthropic.messages.create' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
+          "signal_name": "anthropic.messages.create",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "expected_form": "chat claude-sonnet-4-20250514",
+            "keyed_attr": "gen_ai.request.model",
+            "operation": "chat"
+          },
+          "id": "genai_span_name_format",
+          "message": "chat span name should be 'chat claude-sonnet-4-20250514', got 'anthropic.messages.create'",
+          "signal_name": "anthropic.messages.create",
+          "signal_type": "span"
         },
         {
           "context": {
@@ -11013,7 +11064,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 11,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 5,
@@ -11021,7 +11072,7 @@
             },
             "recommended": {
               "declared": 12,
-              "emitted": 9
+              "emitted": 10
             },
             "recommended_conditional": {
               "declared": 16,
@@ -11052,7 +11103,9 @@
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.cache_write.input_tokens",
             "gen_ai.usage.input_tokens",
-            "gen_ai.usage.output_tokens"
+            "gen_ai.usage.output_tokens",
+            "server.address",
+            "server.port"
           ],
           "identity": {
             "attributes": [
@@ -11075,7 +11128,9 @@
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.cache_write.input_tokens",
               "gen_ai.usage.input_tokens",
-              "gen_ai.usage.output_tokens"
+              "gen_ai.usage.output_tokens",
+              "server.address",
+              "server.port"
             ],
             "span_kind": "client"
           },
@@ -11103,9 +11158,7 @@
             "gen_ai.usage.reasoning.output_tokens",
             "gen_ai.usage.text.cache_read.input_tokens",
             "gen_ai.usage.text.input_tokens",
-            "gen_ai.usage.text.output_tokens",
-            "server.address",
-            "server.port"
+            "gen_ai.usage.text.output_tokens"
           ],
           "name": "gen_ai.client.inference",
           "type": "span"
@@ -11217,10 +11270,10 @@
         }
       ],
       "summary": {
-        "findings": 6,
+        "findings": 11,
         "recommended": {
           "declared": 26,
-          "emitted": 19
+          "emitted": 20
         },
         "required": {
           "declared": 5,
@@ -51723,6 +51776,155 @@
       "backend": null,
       "domain": "http",
       "entities": {
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/instrumentation-fetch' does not have schema_url.",
+          "signal_name": "@opentelemetry/instrumentation-fetch",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "client"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "client"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "POST",
+          "signal_type": "span"
+        }
+      ],
+      "id": "http/js/fetch/opentelemetry-fetch/client",
+      "instrumentation_library": "@opentelemetry/instrumentation-fetch",
+      "instrumented_library": "fetch",
+      "label": "opentelemetry-fetch",
+      "language": "js",
+      "path": "scenarios/http/js/fetch/opentelemetry-fetch/client",
+      "runner": "http-conformance",
+      "scenario_classes": [
+        "0000",
+        "0001",
+        "0002",
+        "0003",
+        "0004"
+      ],
+      "side": "client",
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 13,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 4,
+              "emitted": 4
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "server.address",
+            "server.port",
+            "url.full"
+          ],
+          "identity": {
+            "attributes": [
+              "error.type",
+              "http.request.method",
+              "http.response.status_code",
+              "server.address",
+              "server.port",
+              "url.full"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "http.request.body.content",
+            "http.request.body.size",
+            "http.request.header",
+            "http.request.method_original",
+            "http.request.resend_count",
+            "http.request.size",
+            "http.response.body.content",
+            "http.response.body.size",
+            "http.response.header",
+            "http.response.size",
+            "network.peer.address",
+            "network.peer.port",
+            "network.protocol.name",
+            "network.protocol.version",
+            "network.transport",
+            "url.scheme",
+            "url.template",
+            "user_agent.original",
+            "user_agent.synthetic.type"
+          ],
+          "name": "http.client",
+          "type": "span"
+        }
+      ],
+      "summary": {
+        "findings": 3,
+        "recommended": {
+          "declared": 2,
+          "emitted": 0
+        },
+        "required": {
+          "declared": 4,
+          "emitted": 4
+        }
+      }
+    },
+    {
+      "backend": null,
+      "domain": "http",
+      "entities": {
         "host": {
           "description": [
             "host.arch",
@@ -52280,6 +52482,155 @@
         "required": {
           "declared": 7,
           "emitted": 7
+        }
+      }
+    },
+    {
+      "backend": null,
+      "domain": "http",
+      "entities": {
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/instrumentation-xml-http-request' does not have schema_url.",
+          "signal_name": "@opentelemetry/instrumentation-xml-http-request",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "client"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "client"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "POST",
+          "signal_type": "span"
+        }
+      ],
+      "id": "http/js/xml-http-request/opentelemetry-xml-http-request/client",
+      "instrumentation_library": "@opentelemetry/instrumentation-xml-http-request",
+      "instrumented_library": "xml-http-request",
+      "label": "opentelemetry-xml-http-request",
+      "language": "js",
+      "path": "scenarios/http/js/xml-http-request/opentelemetry-xml-http-request/client",
+      "runner": "http-conformance",
+      "scenario_classes": [
+        "0000",
+        "0001",
+        "0002",
+        "0003",
+        "0004"
+      ],
+      "side": "client",
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 13,
+              "emitted": 0
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 4,
+              "emitted": 4
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "server.address",
+            "server.port",
+            "url.full"
+          ],
+          "identity": {
+            "attributes": [
+              "error.type",
+              "http.request.method",
+              "http.response.status_code",
+              "server.address",
+              "server.port",
+              "url.full"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "http.request.body.content",
+            "http.request.body.size",
+            "http.request.header",
+            "http.request.method_original",
+            "http.request.resend_count",
+            "http.request.size",
+            "http.response.body.content",
+            "http.response.body.size",
+            "http.response.header",
+            "http.response.size",
+            "network.peer.address",
+            "network.peer.port",
+            "network.protocol.name",
+            "network.protocol.version",
+            "network.transport",
+            "url.scheme",
+            "url.template",
+            "user_agent.original",
+            "user_agent.synthetic.type"
+          ],
+          "name": "http.client",
+          "type": "span"
+        }
+      ],
+      "summary": {
+        "findings": 3,
+        "recommended": {
+          "declared": 2,
+          "emitted": 0
+        },
+        "required": {
+          "declared": 4,
+          "emitted": 4
         }
       }
     },
@@ -53364,7 +53715,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 3
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -53393,6 +53744,7 @@
             "server.address",
             "server.port",
             "url.path",
+            "url.query",
             "url.scheme",
             "user_agent.original"
           ],
@@ -53407,6 +53759,7 @@
               "server.address",
               "server.port",
               "url.path",
+              "url.query",
               "url.scheme",
               "user_agent.original"
             ],
@@ -53429,7 +53782,6 @@
             "network.peer.port",
             "network.protocol.name",
             "network.transport",
-            "url.query",
             "user_agent.synthetic.type"
           ],
           "name": "http.server",
