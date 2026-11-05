@@ -432,13 +432,27 @@ class Scenario:
             raise LauncherError(
                 f"{command[0]} could not be started: {error}"
             ) from error
-        self._reaper = subprocess.Popen(  # noqa: S603
-            [sys.executable, "-I", "-c", REAPER, str(self.process.pid)],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
+        self.finished = False
+        try:
+            self._reaper = subprocess.Popen(  # noqa: S603
+                [sys.executable, "-I", "-c", REAPER, str(self.process.pid)],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        except OSError as error:
+            self._signal_group(signal.SIGKILL)
+            self.process.wait()
+            raise LauncherError(
+                f"the scenario reaper could not be started: {error}"
+            ) from error
+
+    def finish(self) -> int:
+        code = self.process.wait()
+        self.finished = True
+        self.stand_down()
+        return exit_status(code)
 
     def stand_down(self) -> None:
         if self._reaper.stdin is not None and not self._reaper.stdin.closed:
@@ -499,8 +513,9 @@ class Scenario:
             self._signal_group(signum)
 
     def kill(self) -> None:
-        self._signal_group(signal.SIGKILL)
-        self.process.wait()
+        if not self.finished:
+            self._signal_group(signal.SIGKILL)
+            self.process.wait()
         self.close_gate()
 
 
@@ -615,7 +630,7 @@ def run(
                     ready_timeout,
                 )
                 scenario.release()
-                status = exit_status(scenario.process.wait())
+                status = scenario.finish()
                 settled = time.monotonic() + settle
                 while time.monotonic() < settled and obi.poll() is None:
                     time.sleep(POLL_INTERVAL)

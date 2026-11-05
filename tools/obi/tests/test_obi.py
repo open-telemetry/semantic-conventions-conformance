@@ -155,7 +155,7 @@ def wait_for(*paths: Path, timeout: float = 20.0) -> None:
         time.sleep(0.05)
 
 
-def gated_children() -> list[int]:
+def running_scripts(script: str) -> list[int]:
     alive: list[int] = []
     for entry in Path("/proc").iterdir():
         if not entry.name.isdigit():
@@ -164,9 +164,13 @@ def gated_children() -> list[int]:
             argv = (entry / "cmdline").read_bytes().split(b"\0")
         except OSError:
             continue
-        if GATED.encode() in argv and running(int(entry.name), timeout=0.1):
+        if script.encode() in argv and running(int(entry.name), timeout=0.1):
             alive.append(int(entry.name))
     return alive
+
+
+def gated_children() -> list[int]:
+    return running_scripts(GATED)
 
 
 def cleanup(tmp_path: Path, launched: subprocess.Popen[bytes]) -> None:
@@ -913,6 +917,62 @@ class TestRunningUnderOBI:
 
         assert launched.returncode == 0, launched.stderr
         assert time.monotonic() - started < 15
+
+    def test_a_finished_scenario_is_not_killed_after_the_fact(
+        self, environ: dict[str, str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("FAKE_OBI_MODE", "die-later")
+        signalled: list[tuple[int, int]] = []
+        killpg = os.killpg
+
+        def record(pgid: int, signum: int) -> None:
+            signalled.append((pgid, signum))
+            killpg(pgid, signum)
+
+        monkeypatch.setattr(otel_conformance_obi.os, "killpg", record)
+
+        with pytest.raises(LauncherError, match="while the scenario ran"):
+            run(gated(), args=SELECT_GATED, environ=environ)
+
+        assert signalled == []
+
+    def test_the_reaper_stands_down_as_soon_as_the_scenario_exits(
+        self, environ: dict[str, str], tmp_path: Path
+    ) -> None:
+        launched = launcher(
+            tmp_path,
+            {**environ, SETTLE_VARIABLE: "20"},
+            "--args",
+            SELECT_GATED,
+            *gated(),
+        )
+        try:
+            wait_for(tmp_path / "released")
+            scenario_pid = int((tmp_path / "scenario.pid").read_text())
+            assert not running(scenario_pid)
+            time.sleep(0.5)
+
+            assert running_scripts(otel_conformance_obi.REAPER) == []
+            assert launched.poll() is None
+        finally:
+            cleanup(tmp_path, launched)
+
+    def test_a_reaper_that_cannot_start_takes_the_scenario_with_it(
+        self,
+        environ: dict[str, str],
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        command = gated()
+        monkeypatch.setattr(
+            otel_conformance_obi.sys, "executable", str(tmp_path / "missing")
+        )
+
+        with pytest.raises(LauncherError, match="reaper could not be started"):
+            run(command, args=SELECT_GATED, environ=environ)
+
+        time.sleep(0.5)
+        assert gated_children() == []
 
     def test_a_wrapper_that_exits_takes_its_gated_child_with_it(
         self,
