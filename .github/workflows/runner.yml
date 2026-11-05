@@ -339,7 +339,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/otel-conformance/semconv
-          key: semconv-${{ hashFiles('tools/**/versions.env') }}
+          key: semconv-${{ hashFiles('tools/**/versions.env', '!tools/obi/**') }}
 
       - name: Install
         run: |
@@ -699,7 +699,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/otel-conformance/semconv
-          key: semconv-${{ matrix.domain }}-${{ hashFiles('tools/**/versions.env') }}
+          key: semconv-${{ matrix.domain }}-${{ hashFiles('tools/**/versions.env', '!tools/obi/**') }}
 
       - name: Run scenarios
         id: run-scenarios

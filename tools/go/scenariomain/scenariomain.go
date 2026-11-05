@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"os"
 
 	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenario"
 	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenariosdk"
@@ -25,11 +24,7 @@ func Run(run func() error) {
 // RunServer runs an instrumented server scenario until the driver closes
 // standard input.
 func RunServer(run func(stopping <-chan error) error) {
-	Run(func() error {
-		stopping := make(chan error, 1)
-		go func() { stopping <- scenario.WaitForEOF(os.Stdin) }()
-		return run(stopping)
-	})
+	Run(func() error { return scenario.Serve(run) })
 }
 
 func runWithSDK(ctx context.Context, run func() error) (err error) {

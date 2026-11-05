@@ -7,19 +7,14 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/open-telemetry/semantic-conventions-conformance/scenarios/http/go/net-http/scenarios"
 	"github.com/open-telemetry/semantic-conventions-conformance/tools/go/scenario"
 )
 
 func main() {
-	if err := scenario.WaitAtGate(); err != nil {
-		log.Fatal(err)
-	}
-	stopping := make(chan error, 1)
-	go func() { stopping <- scenario.WaitForEOF(os.Stdin) }()
-	if err := scenarios.RunServer(nil, stopping); err != nil {
+	serve := func(stopping <-chan error) error { return scenarios.RunServer(nil, stopping) }
+	if err := scenario.RunServer(serve); err != nil {
 		log.Fatal(err)
 	}
 }

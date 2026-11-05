@@ -72,6 +72,34 @@ func TestWaitAtGateWithoutAGateReturns(t *testing.T) {
 	}
 }
 
+func TestRunWithoutAGateRunsTheWorkload(t *testing.T) {
+	t.Setenv(GateVariable, "")
+	want := errors.New("workload failed")
+
+	err := Run(func() error { return want })
+
+	if !errors.Is(err, want) {
+		t.Errorf("Run() returned %v, want %v", err, want)
+	}
+}
+
+func TestServeStopsOnceInputCloses(t *testing.T) {
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	stdin := os.Stdin
+	os.Stdin = reader
+	t.Cleanup(func() { os.Stdin = stdin })
+	_ = writer.Close()
+
+	err = Serve(func(stopping <-chan error) error { return <-stopping })
+
+	if err != nil {
+		t.Errorf("Serve() returned %v", err)
+	}
+}
+
 func TestWaitAtGateFailsWithoutAGate(t *testing.T) {
 	t.Setenv(GateVariable, filepath.Join(t.TempDir(), "missing"))
 

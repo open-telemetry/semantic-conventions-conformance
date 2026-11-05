@@ -3,8 +3,13 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
+import os
+import signal
 import subprocess
 import sys
+import tarfile
 import textwrap
 import time
 import urllib.error
@@ -28,12 +33,16 @@ from otel_conformance_obi import (
     check_host,
     config_template,
     exit_status,
+    glob_literal,
     install,
     instrumented,
     main,
+    pin,
+    pins,
     process_match,
     render_config,
     run,
+    seconds,
     version,
 )
 
@@ -51,6 +60,7 @@ FAKE_OBI = textwrap.dedent(
     port = obi["daemon"]["internal_metrics"]["prometheus"]["port"]
     selector = obi["capture"]["rules"][0]["match"]["process"]
     mode = os.environ.get("FAKE_OBI_MODE", "ready")
+    open("obi.pid", "w").write(str(os.getpid()))
     print("fake obi on stdout", flush=True)
     print("fake obi on stderr", file=sys.stderr, flush=True)
     if mode == "die-early":
@@ -110,16 +120,46 @@ FAKE_OBI = textwrap.dedent(
 
 GATED = textwrap.dedent(
     """\
-    import os, pathlib, sys
+    import os, pathlib, subprocess, sys, time
     pathlib.Path("scenario.pid").write_text(str(os.getpid()))
     with open(os.environ["OTEL_CONFORMANCE_GATE"], "rb") as gate:
-        gate.read()
+        if gate.read() != b"1":
+            sys.exit(98)
     pathlib.Path("released").write_text(str(os.getpid()))
+    time.sleep(float(os.environ.get("GATED_LINGER", "0")))
+    if os.environ.get("GATED_INTERRUPT_LAUNCHER"):
+        subprocess.Popen(
+            ["sh", "-c", f"sleep 0.5; kill -INT {os.getppid()}"],
+            start_new_session=True,
+        )
     attached = pathlib.Path("attached")
     instrumented = attached.exists() and attached.read_text() == str(os.getpid())
     sys.exit(int(sys.argv[1]) if instrumented else 99)
     """
 )
+
+
+def wait_for(*paths: Path, timeout: float = 20.0) -> None:
+    deadline = time.monotonic() + timeout
+    while not all(path.exists() for path in paths):
+        assert time.monotonic() < deadline, f"none of {paths} appeared"
+        time.sleep(0.05)
+
+
+def launcher(
+    tmp_path: Path, environ: dict[str, str], *command: str
+) -> subprocess.Popen[bytes]:
+    code = (
+        "import sys, otel_conformance_obi as obi; "
+        "obi._privileged = lambda command: command; "
+        "sys.exit(obi.main(sys.argv[1:]))"
+    )
+    return subprocess.Popen(
+        [sys.executable, "-c", code, "run", *command],
+        cwd=tmp_path,
+        env={**os.environ, **environ},
+        start_new_session=True,
+    )
 
 
 def gated(status: int = 0) -> list[str]:
@@ -332,6 +372,84 @@ class TestTheRelease:
         with pytest.raises(LauncherError, match="no route"):
             install({"XDG_CACHE_HOME": str(tmp_path)})
 
+    @staticmethod
+    def serve_archive(
+        monkeypatch: pytest.MonkeyPatch, digest: str | None = None
+    ) -> str:
+        payload = b"#!/bin/sh\n"
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w:gz") as bundle:
+            member = tarfile.TarInfo("obi")
+            member.size = len(payload)
+            bundle.addfile(member, io.BytesIO(payload))
+        body = archive.getvalue()
+        pinned = digest or hashlib.sha256(body).hexdigest()
+        monkeypatch.setattr(
+            otel_conformance_obi, "pin", lambda arch: ("v9.9.9", pinned)
+        )
+        monkeypatch.setattr(
+            otel_conformance_obi.urllib.request,
+            "urlopen",
+            lambda url: io.BytesIO(body),
+        )
+        return pinned
+
+    def test_an_archive_matching_its_pin_is_installed(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self.serve_archive(monkeypatch)
+
+        target = install({"XDG_CACHE_HOME": str(tmp_path)})
+
+        assert target.read_bytes() == b"#!/bin/sh\n"
+        assert (
+            target == tmp_path / "otel-conformance" / "obi" / "v9.9.9" / "obi"
+        )
+
+    def test_an_archive_that_does_not_match_its_pin_is_refused(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        self.serve_archive(monkeypatch, digest="0" * 64)
+
+        with pytest.raises(LauncherError, match="SHA-256"):
+            install({"XDG_CACHE_HOME": str(tmp_path)})
+
+        assert not (
+            tmp_path / "otel-conformance" / "obi" / "v9.9.9" / "obi"
+        ).exists()
+
+
+class TestThePins:
+    PINS = textwrap.dedent(
+        """\
+        # renovate: datasource=github-release-attachments depName=x
+        OBI_LINUX_AMD64=v2.0.0@sha256:{amd64}
+
+        # renovate: datasource=github-release-attachments depName=x
+        OBI_LINUX_ARM64=v2.0.0@sha256:{arm64}
+        """
+    ).format(amd64="a" * 64, arm64="b" * 64)
+
+    def test_each_architecture_pins_a_release_and_a_digest(self) -> None:
+        assert pins(self.PINS) == {
+            "amd64": ("v2.0.0", "a" * 64),
+            "arm64": ("v2.0.0", "b" * 64),
+        }
+
+    def test_a_file_without_pins_says_so(self) -> None:
+        with pytest.raises(LauncherError, match="pins no OBI release"):
+            pins("OBI_VERSION=v1.0.0\n")
+
+    def test_the_shipped_pins_cover_every_architecture(self) -> None:
+        shipped = pins()
+
+        assert set(shipped) == set(otel_conformance_obi.ARCHITECTURES.values())
+        assert len({release for release, _ in shipped.values()}) == 1
+
+    def test_an_unpinned_architecture_says_so(self) -> None:
+        with pytest.raises(LauncherError, match="no OBI build for riscv64"):
+            pin("riscv64")
+
 
 class TestTheConfig:
     def test_it_is_config_v2(self) -> None:
@@ -430,6 +548,61 @@ class TestTheSelector:
         with pytest.raises(LauncherError, match="could not be started"):
             process_match([str(tmp_path / "missing")])
 
+    def test_glob_characters_are_escaped_as_obi_reads_them(self) -> None:
+        assert glob_literal("/a[b]/c*{d,e}?\\f") == r"/a\[b\]/c\*\{d,e\}\?\\f"
+
+    def test_the_default_selector_is_literal(self, tmp_path: Path) -> None:
+        directory = tmp_path / "build[1]"
+        directory.mkdir()
+        scenario = directory / "scenario*"
+        scenario.write_text("#!/bin/sh\n")
+        scenario.chmod(0o755)
+
+        selector = process_match([str(scenario)])
+
+        assert selector == {
+            "exe_path_glob": [glob_literal(str(scenario.resolve()))]
+        }
+        assert r"build\[1\]/scenario\*" in selector["exe_path_glob"][0]
+
+
+class TestTheTimeouts:
+    def test_an_unset_variable_takes_the_default(self) -> None:
+        assert seconds({}, READY_TIMEOUT_VARIABLE, 45.0) == 45.0
+
+    def test_a_number_of_seconds_is_read(self) -> None:
+        assert (
+            seconds(
+                {READY_TIMEOUT_VARIABLE: "2.5"}, READY_TIMEOUT_VARIABLE, 45.0
+            )
+            == 2.5
+        )
+
+    @pytest.mark.parametrize("raw", ["3s", "-1"])
+    def test_anything_else_says_so(self, raw: str) -> None:
+        with pytest.raises(LauncherError, match=READY_TIMEOUT_VARIABLE):
+            seconds(
+                {READY_TIMEOUT_VARIABLE: raw}, READY_TIMEOUT_VARIABLE, 45.0
+            )
+
+    def test_the_default_fits_inside_the_drive_startup_timeout(self) -> None:
+        assert otel_conformance_obi.DEFAULT_READY_TIMEOUT < 60
+
+    @linux_only
+    def test_a_malformed_timeout_is_a_launcher_error(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        fake = tmp_path / "obi"
+        fake.write_text("#!/bin/sh\n")
+        monkeypatch.setenv(BINARY_VARIABLE, str(fake))
+        monkeypatch.setenv(SETTLE_VARIABLE, "3s")
+
+        assert main(["run", "--args", "*", "true"]) == 1
+        assert f"{SETTLE_VARIABLE} must be a number" in capsys.readouterr().err
+
 
 class TestTheInstrumentedProcessesMetric:
     EXPOSITION = textwrap.dedent(
@@ -473,13 +646,7 @@ class TestRunningUnderOBI:
         fake.chmod(0o755)
         monkeypatch.chdir(tmp_path)
         monkeypatch.setattr(
-            otel_conformance_obi,
-            "obi_command",
-            lambda executable, config: [
-                str(executable),
-                "-config",
-                str(config),
-            ],
+            otel_conformance_obi, "_privileged", lambda command: command
         )
         return {
             BINARY_VARIABLE: str(fake),
@@ -554,8 +721,88 @@ class TestRunningUnderOBI:
     ) -> None:
         monkeypatch.setenv("FAKE_OBI_MODE", "die-later")
 
-        with pytest.raises(LauncherError, match="while the scenario ran"):
+        with pytest.raises(
+            LauncherError,
+            match="while the scenario ran .the scenario exited with status 3",
+        ):
+            run(gated(3), args=SELECT_GATED, environ=environ)
+
+    def test_the_gate_and_the_attach_share_one_deadline(
+        self, environ: dict[str, str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("FAKE_OBI_MODE", "slow")
+        environ[READY_TIMEOUT_VARIABLE] = "1.2"
+        command = ["/bin/sh", "-c", "sleep 0.8; exec " + shell(gated())]
+
+        with pytest.raises(LauncherError, match="within 1.2s"):
+            run(command, args=SELECT_GATED, environ=environ)
+
+    def test_the_signal_handlers_are_restored(
+        self, environ: dict[str, str]
+    ) -> None:
+        before = {
+            signum: signal.getsignal(signum)
+            for signum in (signal.SIGINT, signal.SIGTERM)
+        }
+
+        run(gated(), args=SELECT_GATED, environ=environ)
+
+        assert {
+            signum: signal.getsignal(signum) for signum in before
+        } == before
+
+    def test_an_interrupt_after_the_scenario_exits_is_not_swallowed(
+        self, environ: dict[str, str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GATED_INTERRUPT_LAUNCHER", "1")
+        environ[SETTLE_VARIABLE] = "10"
+        started = time.monotonic()
+
+        with pytest.raises(KeyboardInterrupt):
             run(gated(), args=SELECT_GATED, environ=environ)
+
+        assert time.monotonic() - started < 8
+
+    def test_obi_stops_when_the_launcher_is_killed(
+        self, environ: dict[str, str], tmp_path: Path
+    ) -> None:
+        launched = launcher(
+            tmp_path,
+            {**environ, "GATED_LINGER": "30"},
+            "--args",
+            SELECT_GATED,
+            *gated(),
+        )
+        try:
+            wait_for(tmp_path / "obi.pid", tmp_path / "released")
+            obi_pid = int((tmp_path / "obi.pid").read_text())
+
+            os.kill(launched.pid, signal.SIGKILL)
+            launched.wait()
+
+            assert not running(obi_pid)
+        finally:
+            scenario_pid = (tmp_path / "scenario.pid").read_text()
+            os.kill(int(scenario_pid), signal.SIGKILL)
+            try:
+                os.killpg(launched.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+    def test_a_scenario_held_by_a_killed_launcher_never_runs(
+        self, environ: dict[str, str], tmp_path: Path
+    ) -> None:
+        launched = launcher(
+            tmp_path, environ, "--args", "* another-scenario", *gated()
+        )
+        wait_for(tmp_path / "obi.pid", tmp_path / "scenario.pid")
+        scenario_pid = int((tmp_path / "scenario.pid").read_text())
+
+        os.kill(launched.pid, signal.SIGKILL)
+        launched.wait()
+
+        assert not running(scenario_pid)
+        assert not (tmp_path / "released").exists()
 
     def test_a_scenario_that_exits_before_the_gate_fails(
         self, environ: dict[str, str]

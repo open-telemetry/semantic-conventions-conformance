@@ -13,10 +13,7 @@ import (
 )
 
 func main() {
-	if err := scenario.WaitAtGate(); err != nil {
-		log.Fatal(err)
-	}
-	if err := scenarios.RunClient(nil); err != nil {
+	if err := scenario.Run(func() error { return scenarios.RunClient(nil) }); err != nil {
 		log.Fatal(err)
 	}
 }

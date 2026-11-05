@@ -163,7 +163,7 @@
       "customType": "regex",
       "managerFilePatterns": ["/(^|/)versions\\.env$/"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?)(?: packageName=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+[A-Z_]+=(?<currentValue>[^\\s]+)"
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>[^\\s]+?)(?: packageName=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?\\s+[A-Z0-9_]+=(?<currentValue>[^\\s@]+)(?:@sha256:(?<currentDigest>[a-f0-9]{64}))?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },

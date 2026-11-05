@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import errno
+import hashlib
 import json
 import os
 import platform
@@ -70,7 +71,9 @@ CONFIG_VARIABLE = "OTEL_CONFORMANCE_OBI_CONFIG"
 
 CONFIG = "obi.yaml"
 
-DEFAULT_READY_TIMEOUT = 60.0
+GATE_RELEASE = b"1"
+
+DEFAULT_READY_TIMEOUT = 45.0
 
 METRIC_EXPORT_INTERVAL_MILLIS = 1000
 
@@ -91,17 +94,59 @@ ARCHITECTURES = {
     "arm64": "arm64",
 }
 
+PIN = re.compile(
+    r"^OBI_LINUX_(?P<arch>[A-Z0-9]+)="
+    r"(?P<release>[^\s@]+)@sha256:(?P<digest>[0-9a-f]{64})$",
+    re.MULTILINE,
+)
+
+GLOB_SPECIALS = re.compile(r"([*?\\\[\]{}])")
+
+WATCHDOG = """\
+exec 3<&0
+"$0" -config "$1" </dev/null 3<&- &
+obi=$!
+(cat <&3 >/dev/null; kill -TERM "$obi" 2>/dev/null; sleep "$2"; kill -KILL "$obi" 2>/dev/null) &
+watch=$!
+exec 3<&-
+wait "$obi"
+status=$?
+kill "$watch" 2>/dev/null
+exit "$status"
+"""
+
 
 class LauncherError(RuntimeError):
     """OBI could not be installed, started, or attached."""
 
 
+def pins(text: str | None = None) -> dict[str, tuple[str, str]]:
+    if text is None:
+        text = (
+            Path(__file__)
+            .with_name("versions.env")
+            .read_text(encoding="utf-8")
+        )
+    found = {
+        match["arch"].lower(): (match["release"], match["digest"])
+        for match in PIN.finditer(text)
+    }
+    if not found:
+        raise LauncherError("versions.env pins no OBI release")
+    return found
+
+
+def pin(arch: str) -> tuple[str, str]:
+    try:
+        return pins()[arch]
+    except KeyError:
+        raise LauncherError(
+            f"versions.env pins no OBI build for {arch}"
+        ) from None
+
+
 def version() -> str:
-    pins = Path(__file__).with_name("versions.env").read_text(encoding="utf-8")
-    match = re.search(r"^OBI_VERSION=(\S+)$", pins, re.MULTILINE)
-    if match is None:
-        raise LauncherError("versions.env pins no OBI_VERSION")
-    return match.group(1)
+    return pin(architecture())[0]
 
 
 def architecture(machine: str | None = None) -> str:
@@ -155,22 +200,31 @@ def install(environ: Mapping[str, str] = os.environ) -> Path:
     check_host()
     if environ.get(BINARY_VARIABLE):
         return binary(environ)
-    release = version()
+    arch = architecture()
+    release, digest = pin(arch)
     target = cache_dir(release, environ) / BINARY
     if target.is_file():
         return target
     target.parent.mkdir(parents=True, exist_ok=True)
-    url = archive_url(release, architecture())
+    url = archive_url(release, arch)
     print(f"downloading {url}", file=sys.stderr, flush=True)
     with tempfile.TemporaryDirectory(dir=target.parent) as scratch:
         archive = Path(scratch) / "obi.tar.gz"
         staged = Path(scratch) / BINARY
         try:
+            hasher = hashlib.sha256()
             with (
                 urllib.request.urlopen(url) as response,  # noqa: S310
                 archive.open("wb") as out,
             ):
-                shutil.copyfileobj(response, out)
+                while chunk := response.read(1 << 16):
+                    hasher.update(chunk)
+                    out.write(chunk)
+            if hasher.hexdigest() != digest:
+                raise LauncherError(
+                    f"{url} has SHA-256 {hasher.hexdigest()}, but "
+                    f"versions.env pins {digest}"
+                )
             with tarfile.open(archive) as bundle:
                 source = bundle.extractfile(bundle.getmember(BINARY))
                 if source is None:
@@ -193,6 +247,27 @@ def config_template(environ: Mapping[str, str] = os.environ) -> Path:
     return Path(override) if override else Path(__file__).with_name(CONFIG)
 
 
+def glob_literal(text: str) -> str:
+    return GLOB_SPECIALS.sub(r"\\\1", text)
+
+
+def seconds(
+    environ: Mapping[str, str], variable: str, default: float
+) -> float:
+    raw = environ.get(variable)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        raise LauncherError(
+            f"{variable} must be a number of seconds, not {raw!r}"
+        ) from None
+    if value < 0:
+        raise LauncherError(f"{variable} must not be negative, not {raw!r}")
+    return value
+
+
 def process_match(
     command: Sequence[str], exe: str | None = None, args: str | None = None
 ) -> dict[str, list[str]]:
@@ -202,7 +277,7 @@ def process_match(
             raise LauncherError(
                 f"{command[0]} could not be started: not found"
             )
-        exe = os.path.realpath(resolved)
+        exe = glob_literal(os.path.realpath(resolved))
     match: dict[str, list[str]] = {}
     if exe is not None:
         match["exe_path_glob"] = [exe]
@@ -265,11 +340,21 @@ def _scrape(port: int) -> str:
         return ""
 
 
+def _privileged(command: list[str]) -> list[str]:
+    return command if os.geteuid() == 0 else ["sudo", "-n", *command]
+
+
 def obi_command(executable: Path, config: Path) -> list[str]:
-    command = [str(executable), "-config", str(config)]
-    if os.geteuid() != 0:
-        command = ["sudo", "-n", *command]
-    return command
+    return _privileged(
+        [
+            "sh",
+            "-c",
+            WATCHDOG,
+            str(executable),
+            str(config),
+            f"{STOP_TIMEOUT:g}",
+        ]
+    )
 
 
 def exit_status(code: int) -> int:
@@ -296,14 +381,15 @@ class Scenario:
         code = self.process.poll()
         return None if code is None else exit_status(code)
 
-    def wait_at_gate(self, timeout: float) -> None:
-        deadline = time.monotonic() + timeout
+    def wait_at_gate(self, deadline: float, timeout: float) -> None:
         while self._gate is None:
             try:
                 self._gate = os.open(self._path, os.O_WRONLY | os.O_NONBLOCK)
             except OSError as error:
                 if error.errno != errno.ENXIO:
-                    raise
+                    raise LauncherError(
+                        f"opening the gate {self._path}: {error}"
+                    ) from error
                 status = self.status()
                 if status is not None:
                     raise LauncherError(
@@ -319,6 +405,14 @@ class Scenario:
 
     def release(self) -> None:
         if self._gate is not None:
+            try:
+                os.write(self._gate, GATE_RELEASE)
+            except BrokenPipeError:
+                pass
+        self.close_gate()
+
+    def close_gate(self) -> None:
+        if self._gate is not None:
             os.close(self._gate)
             self._gate = None
 
@@ -333,18 +427,19 @@ class Scenario:
             self._signal_group(signum)
 
     def kill(self) -> None:
-        self._signal_group(signal.SIGKILL)
-        self.process.wait()
-        self.release()
+        if self.process.poll() is None:
+            self._signal_group(signal.SIGKILL)
+            self.process.wait()
+        self.close_gate()
 
 
 def _wait_ready(
     obi: subprocess.Popen[bytes],
     scenario: Scenario,
     metrics_port: int,
+    deadline: float,
     timeout: float,
 ) -> None:
-    deadline = time.monotonic() + timeout
     while not instrumented(_scrape(metrics_port)):
         time.sleep(POLL_INTERVAL)
         if obi.poll() is not None:
@@ -364,11 +459,10 @@ def _wait_ready(
 
 
 def _stop(obi: subprocess.Popen[bytes]) -> None:
-    if obi.poll() is not None:
-        return
-    obi.send_signal(signal.SIGTERM)
+    if obi.stdin is not None:
+        obi.stdin.close()
     try:
-        obi.wait(STOP_TIMEOUT)
+        obi.wait(STOP_TIMEOUT + 5)
     except subprocess.TimeoutExpired:
         obi.kill()
         obi.wait()
@@ -390,57 +484,73 @@ def run(
         raise LauncherError(
             f"{executable} is missing — `otel-conformance-obi install` fetches it"
         )
-    ready_timeout = float(
-        environ.get(READY_TIMEOUT_VARIABLE, DEFAULT_READY_TIMEOUT)
+    ready_timeout = seconds(
+        environ, READY_TIMEOUT_VARIABLE, DEFAULT_READY_TIMEOUT
     )
-    settle = float(environ.get(SETTLE_VARIABLE, DEFAULT_SETTLE))
+    settle = seconds(environ, SETTLE_VARIABLE, DEFAULT_SETTLE)
     template = config_template(environ).read_text(encoding="utf-8")
 
     scenario: Scenario | None = None
+    forwarded = (signal.SIGINT, signal.SIGTERM)
+    previous = {signum: signal.getsignal(signum) for signum in forwarded}
 
     def forward(signum: int, _frame: object) -> None:
-        if scenario is not None:
+        if scenario is not None and scenario.status() is None:
             scenario.signal(signum)
+            return
+        handler = previous[signal.Signals(signum)]
+        signal.signal(signum, signal.SIG_DFL if handler is None else handler)
+        signal.raise_signal(signum)
 
-    for forwarded in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(forwarded, forward)
+    for signum in forwarded:
+        signal.signal(signum, forward)
     obi: subprocess.Popen[bytes] | None = None
-    with tempfile.TemporaryDirectory() as scratch:
-        try:
-            scenario = Scenario(command, Path(scratch) / "gate")
-            scenario.wait_at_gate(ready_timeout)
-            metrics_port = free_port()
-            config = Path(scratch) / "obi.yaml"
-            config.write_text(
-                render_config(template, selector, metrics_port, environ),
-                encoding="utf-8",
-            )
-            sys.stderr.flush()
-            obi = subprocess.Popen(  # noqa: S603
-                obi_command(executable, config),
-                stdin=subprocess.DEVNULL,
-                stdout=sys.stderr,
-                stderr=sys.stderr,
-            )
-            _wait_ready(obi, scenario, metrics_port, ready_timeout)
-            scenario.release()
-            status = exit_status(scenario.process.wait())
-            deadline = time.monotonic() + settle
-            while time.monotonic() < deadline and obi.poll() is None:
-                time.sleep(POLL_INTERVAL)
-            if obi.poll() is not None:
-                raise LauncherError(
-                    f"OBI exited with status {obi.returncode} while the "
-                    "scenario ran"
+    try:
+        with tempfile.TemporaryDirectory() as scratch:
+            try:
+                deadline = time.monotonic() + ready_timeout
+                scenario = Scenario(command, Path(scratch) / "gate")
+                scenario.wait_at_gate(deadline, ready_timeout)
+                metrics_port = free_port()
+                config = Path(scratch) / "obi.yaml"
+                config.write_text(
+                    render_config(template, selector, metrics_port, environ),
+                    encoding="utf-8",
                 )
-            _stop(obi)
-            return status
-        except BaseException:
-            if scenario is not None:
-                scenario.kill()
-            if obi is not None:
+                sys.stderr.flush()
+                obi = subprocess.Popen(  # noqa: S603
+                    obi_command(executable, config),
+                    stdin=subprocess.PIPE,
+                    stdout=sys.stderr,
+                    stderr=sys.stderr,
+                )
+                _wait_ready(
+                    obi, scenario, metrics_port, deadline, ready_timeout
+                )
+                scenario.release()
+                status = exit_status(scenario.process.wait())
+                settled = time.monotonic() + settle
+                while time.monotonic() < settled and obi.poll() is None:
+                    time.sleep(POLL_INTERVAL)
+                if obi.poll() is not None:
+                    raise LauncherError(
+                        f"OBI exited with status {obi.returncode} while the "
+                        f"scenario ran (the scenario exited with status "
+                        f"{status})"
+                    )
                 _stop(obi)
-            raise
+                return status
+            except BaseException:
+                if scenario is not None:
+                    scenario.kill()
+                if obi is not None:
+                    _stop(obi)
+                raise
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(
+                signum, signal.SIG_DFL if handler is None else handler
+            )
 
 
 def _parser() -> argparse.ArgumentParser:

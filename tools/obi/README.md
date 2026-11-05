@@ -19,28 +19,37 @@ implementations, so the report compares OBI with them library by library.
 ## `otel-conformance-obi`
 
 `install [-- COMMAND...]` downloads the release pinned in
-[`versions.env`](src/otel_conformance_obi/versions.env) into
+[`versions.env`](src/otel_conformance_obi/versions.env), checks the archive
+against the SHA-256 pinned there for the host's architecture, unpacks it into
 `~/.cache/otel-conformance/obi/<version>/`, then runs `COMMAND`, which is the
-directory's own build step: `setup:` is one command.
+directory's own build step: `setup:` is one command. Renovate bumps the version
+and maps each digest to the new release's archive.
 
 `run [--exe GLOB] [--args GLOB] COMMAND...` runs a scenario:
 
-1. Starts `COMMAND` with `OTEL_CONFORMANCE_GATE` naming a named pipe.
+1. Starts `COMMAND` in its own session with `OTEL_CONFORMANCE_GATE` naming a
+   named pipe.
 2. Waits for the scenario to reach the gate: before its workload, the
    scenario opens the pipe and reads it until end of file, which cannot come
-   while the launcher holds the write end. In Go the gate is
-   [`scenario.WaitAtGate`](../go/scenario).
+   while the launcher holds the write end. The scenario runs only if the
+   launcher wrote `1` before closing it, so a scenario whose launcher died
+   exits instead of running unmeasured. In Go,
+   [`scenario.Run` and `scenario.RunServer`](../go/scenario) wait at the gate
+   before the workload.
 3. Starts OBI with [`obi.yaml`](src/otel_conformance_obi/obi.yaml) selecting
    processes by OBI's own process match: `--exe` on the resolved executable
    path, `--args` on the command line without `argv[0]`. Without either it
    selects `COMMAND`'s resolved executable, which is exact for a binary run
    directly. A scenario behind a wrapper names what the wrapper finally runs,
    usually with `--args`: the Python interpreter and the Java runtime are the
-   same executable as the mock server and every other scenario.
-4. Closes the pipe, releasing the scenario, once OBI's
-   `obi_instrumented_processes` internal metric counts a process. OBI raises
-   it after it registered the process, and only processes the selector
-   matches are counted, so the first request is measured.
+   same executable as the mock server and every other scenario. OBI runs under
+   a small root-side `sh` that stops it when its standard input from the
+   launcher closes, so OBI never outlives the launcher, however it dies.
+4. Releases the scenario once OBI's `obi_instrumented_processes` internal
+   metric counts a process. OBI raises it after it registered the process,
+   and only processes the selector matches are counted, so the first request
+   is measured. Reaching the gate and OBI attaching share one deadline,
+   below `otel-http-drive`'s startup timeout.
 5. After `COMMAND` exits, keeps OBI running for the settle period, longer than
    both the span batch delay and the metric export interval, then stops it.
    OBI does not export what it still buffers when it is stopped.
@@ -85,7 +94,7 @@ A replacement template must keep the internal metrics endpoint on
 | --- | --- |
 | `OTEL_CONFORMANCE_OBI_BINARY` | an OBI binary to use instead of the pinned release |
 | `OTEL_CONFORMANCE_OBI_CONFIG` | another config template, for example one adding `daemon.logging.debug_trace_output: text` |
-| `OTEL_CONFORMANCE_OBI_READY_TIMEOUT` | seconds to wait for the scenario to reach the gate, and again for OBI to attach to it (60) |
+| `OTEL_CONFORMANCE_OBI_READY_TIMEOUT` | seconds for the scenario to reach the gate and OBI to attach to it, together (45) |
 | `OTEL_CONFORMANCE_OBI_SETTLE` | seconds OBI keeps running after `COMMAND` exits (3) |
 
 OBI logs to the launcher's standard error, so the runner shows it next to the
