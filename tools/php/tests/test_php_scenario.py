@@ -792,6 +792,35 @@ def test_repository_url_is_compared_as_a_path(scenario: Path) -> None:
     assert lock_problems(scenario) == []
 
 
+def as_named_repositories(manifest: dict[str, Any]) -> None:
+    """Rewrite ``repositories`` in Composer's object form, packagist off."""
+    manifest["repositories"] = {
+        "packagist.org": False,
+        "client": manifest["repositories"][0],
+    }
+
+
+def test_named_repositories_are_searched(scenario: Path) -> None:
+    edit_json(scenario / "composer.json", as_named_repositories)
+
+    assert lock_problems(scenario) == []
+
+
+def test_unpinned_named_repository_is_reported(scenario: Path) -> None:
+    def unpinned(manifest: dict[str, Any]) -> None:
+        as_named_repositories(manifest)
+        manifest["repositories"]["client"]["options"].pop("versions")
+
+    edit_json(scenario / "composer.json", unpinned)
+
+    [problem] = lock_problems(scenario)
+
+    assert (
+        'acme/client: path repository ../client has no "versions" pin'
+        in problem
+    )
+
+
 def test_path_package_without_a_path_repository_is_reported(
     scenario: Path,
 ) -> None:

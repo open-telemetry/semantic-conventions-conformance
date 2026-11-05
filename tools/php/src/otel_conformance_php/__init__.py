@@ -277,8 +277,17 @@ def _supplying_repository(
     Composer ignores the same package in any later repository, pinned or not.
     """
     source = (root / url).resolve()
-    for repository in scenario.get("repositories", []):
-        if repository.get("type") != "path" or "url" not in repository:
+    repositories = scenario.get("repositories", [])
+    # Composer also takes repositories as an object keyed by name, in order,
+    # where false disables one, such as "packagist.org": false.
+    if isinstance(repositories, dict):
+        repositories = list(repositories.values())
+    for repository in repositories:
+        if (
+            not isinstance(repository, dict)
+            or repository.get("type") != "path"
+            or "url" not in repository
+        ):
             continue
         pattern = root / repository["url"]
         if pattern.resolve() == source or any(
