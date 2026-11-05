@@ -67,6 +67,7 @@ jobs:
             -e tools/gen-ai/runner \
             -e tools/http/mock-server \
             -e tools/http/test-client/python \
+            -e tools/browser/runner \
             -e tools/http/runner \
             -e tools/report
 
