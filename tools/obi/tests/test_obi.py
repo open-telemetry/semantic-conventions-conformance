@@ -532,7 +532,9 @@ class TestTheConfig:
 class TestTheSelector:
     def test_by_default_it_is_the_resolved_command(self) -> None:
         assert process_match([sys.executable]) == {
-            "exe_path_glob": [str(Path(sys.executable).resolve())]
+            "exe_path_glob": [
+                glob_literal(str(Path(sys.executable).resolve()))
+            ]
         }
 
     def test_the_globs_replace_the_default(self) -> None:
@@ -551,6 +553,7 @@ class TestTheSelector:
     def test_glob_characters_are_escaped_as_obi_reads_them(self) -> None:
         assert glob_literal("/a[b]/c*{d,e}?\\f") == r"/a\[b\]/c\*\{d,e\}\?\\f"
 
+    @linux_only
     def test_the_default_selector_is_literal(self, tmp_path: Path) -> None:
         directory = tmp_path / "build[1]"
         directory.mkdir()
