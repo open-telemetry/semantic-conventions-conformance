@@ -597,8 +597,91 @@ def test_pin_that_differs_from_the_requirement_is_reported(
 
     assert lock_problems(scenario) == [
         "acme/client: composer.json requires dev-main but its path "
+        "repository pins dev-feature",
+        "acme/client: the lock has version dev-main but its path "
+        "repository pins dev-feature",
+    ]
+
+
+def test_pin_and_requirement_ahead_of_the_lock_are_reported(
+    scenario: Path,
+) -> None:
+    # Requirement and pin agree, but the lock still has the old version.
+    def renamed(manifest: dict[str, Any]) -> None:
+        manifest["require"]["acme/client"] = "dev-feature"
+        manifest["repositories"][0]["options"]["versions"] = {
+            "acme/client": "dev-feature"
+        }
+
+    edit_json(scenario / "composer.json", renamed)
+
+    assert lock_problems(scenario) == [
+        "acme/client: the lock has version dev-main but its path "
         "repository pins dev-feature"
     ]
+
+
+def test_lock_without_a_version_is_reported(scenario: Path) -> None:
+    edit_json(
+        scenario / "composer.lock",
+        lambda lock: lock["packages"][1].pop("version"),
+    )
+
+    assert lock_problems(scenario) == [
+        "acme/client: the lock has no version but its path repository "
+        "pins dev-main"
+    ]
+
+
+def with_client_version(
+    scenario: Path, required: str, version: str, *, pinned: bool = True
+) -> None:
+    """Require ``acme/client`` as ``required``, locked (and pinned) at
+    ``version``."""
+
+    def manifest_edit(manifest: dict[str, Any]) -> None:
+        manifest["require"]["acme/client"] = required
+        options = manifest["repositories"][0]["options"]
+        if pinned:
+            options["versions"] = {"acme/client": version}
+        else:
+            options.pop("versions")
+
+    def lock_edit(lock: dict[str, Any]) -> None:
+        lock["packages"][1]["version"] = version
+
+    edit_json(scenario / "composer.json", manifest_edit)
+    edit_json(scenario / "composer.lock", lock_edit)
+
+
+@pytest.mark.parametrize(
+    ("required", "version"),
+    [
+        ("^1.0", "1.2.3"),
+        ("1.2.*", "1.2.3"),
+        ("dev-main as 1.0.x-dev", "dev-main"),
+        ("dev-main#0123abc", "dev-main"),
+        ("dev-main || dev-next", "dev-next"),
+    ],
+)
+def test_pin_within_a_constraint_is_accepted(
+    scenario: Path, required: str, version: str
+) -> None:
+    # Only a bare branch requirement names one version; Composer matches a
+    # pin against anything else.
+    with_client_version(scenario, required, version)
+
+    assert lock_problems(scenario) == []
+
+
+def test_pin_is_suggested_from_the_lock_for_a_constraint(
+    scenario: Path,
+) -> None:
+    with_client_version(scenario, "^1.0", "1.2.3", pinned=False)
+
+    [problem] = lock_problems(scenario)
+
+    assert '"versions": {"acme/client": "1.2.3"}' in problem
 
 
 def as_development_dependency(scenario: Path) -> None:
@@ -628,7 +711,9 @@ def test_pin_that_differs_from_the_dev_requirement_is_reported(
 
     assert lock_problems(scenario) == [
         "acme/client: composer.json requires dev-main but its path "
-        "repository pins dev-feature"
+        "repository pins dev-feature",
+        "acme/client: the lock has version dev-main but its path "
+        "repository pins dev-feature",
     ]
 
 
@@ -690,7 +775,9 @@ def test_pin_on_a_glob_repository_that_differs_is_reported(
 
     assert lock_problems(scenario) == [
         "acme/client: composer.json requires dev-main but its path "
-        "repository pins 1.0"
+        "repository pins 1.0",
+        "acme/client: the lock has version dev-main but its path "
+        "repository pins 1.0",
     ]
 
 

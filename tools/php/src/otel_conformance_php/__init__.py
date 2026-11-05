@@ -9,6 +9,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,9 @@ _SNAPSHOT_KEYS = (
     "autoload",
     "bin",
 )
+# A requirement naming one branch version, such as dev-main, not a range,
+# an alternative, a reference (#) or a stability flag (@).
+_BRANCH_VERSION = re.compile(r"dev-[^\s|,#@]+")
 PORT_VARIABLE = "OTEL_HTTP_SCENARIO_PORT"
 _READ_BUFFER_SIZE = 8192
 _POLL_INTERVAL_SECONDS = 0.05
@@ -189,7 +193,7 @@ def lock_problems(root: Path) -> list[str]:
     problems: list[str] = []
     for name, url in sorted(paths.items()):
         entry = locked[name]
-        problems.extend(_pin_problems(name, url, root, scenario))
+        problems.extend(_pin_problems(name, url, root, scenario, entry))
         source = (root / url).resolve()
         manifest = source / "composer.json"
         if not manifest.is_file():
@@ -209,12 +213,14 @@ def _pin_problems(
     url: str,
     root: Path,
     scenario: dict[str, Any],
+    entry: dict[str, Any],
 ) -> list[str]:
     """Where the scenario does not pin a path package's version.
 
     Unpinned, Composer names a path package after the current checkout, which
     is ``dev-<sha>`` in a detached CI checkout, so ``composer update`` stops
-    matching the scenario's ``dev-main`` requirement.
+    matching the scenario's ``dev-main`` requirement. A pin that differs from
+    the lock's ``version`` means the lock predates the pin.
     """
     repository = _supplying_repository(url, root, scenario)
     if repository is None:
@@ -226,19 +232,38 @@ def _pin_problems(
     required = scenario.get("require", {}).get(name)
     if required is None:
         required = scenario.get("require-dev", {}).get(name)
+    # Only a branch requirement names one version; a range such as ^1.0 is
+    # Composer's to match against the pin.
+    exact = (
+        required
+        if isinstance(required, str) and _BRANCH_VERSION.fullmatch(required)
+        else None
+    )
+    locked_version = entry.get("version")
     pin = repository.get("options", {}).get("versions", {}).get(name)
     if pin is None:
-        suggested = json.dumps({name: required or "dev-main"})
+        suggested = json.dumps({name: exact or locked_version or "dev-main"})
         return [
             f"{name}: path repository {repository['url']} has no "
             f'"versions" pin; add "versions": {suggested} to its options'
         ]
-    if required is not None and pin != required:
-        return [
-            f"{name}: composer.json requires {required} but its path "
+
+    problems: list[str] = []
+    if exact is not None and pin != exact:
+        problems.append(
+            f"{name}: composer.json requires {exact} but its path "
             f"repository pins {pin}"
-        ]
-    return []
+        )
+    if locked_version != pin:
+        has = (
+            "no version"
+            if locked_version is None
+            else f"version {locked_version}"
+        )
+        problems.append(
+            f"{name}: the lock has {has} but its path repository pins {pin}"
+        )
+    return problems
 
 
 def _supplying_repository(

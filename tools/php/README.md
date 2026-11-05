@@ -32,7 +32,9 @@ regenerate a stale lock with `composer update <package> --with-dependencies`.
 
 The check also fails when the scenario's `composer.json` does not pin a path
 package's version with `"versions": {"<package>": "dev-main"}` in the path
-repository's `options`, or pins a different version than it requires. Unpinned,
+repository's `options`, when the pin differs from the version in the lock, or
+when the scenario requires a branch such as `dev-main` and the pin names a
+different one. A range such as `^1.0` is left to Composer to match. Unpinned,
 Composer names the package after the current checkout, `dev-<sha>` in CI, and
 `relock` then cannot resolve the scenario's `dev-main` requirement. The pin
 must be on the first path repository whose `url`, or glob, matches the
@@ -52,7 +54,8 @@ lock only, and changes nothing the manifests don't require. A lock records a
 path package's `dist.reference`, a hash of that package's `composer.json` and
 path-repository options, so
 editing `scenario/` or the HTTP test client's `composer.json` leaves the locks
-that depend on it stale. `composer install` does not notice this. CI runs
+that depend on it stale. `composer install` does not notice this, but
+`check-lock`, and so `install`, fails on a stale requirement or pin. CI runs
 `relock` on Renovate PRs and commits the result. CI pins the Composer version,
 because Composer stamps its plugin API version into every lock. Use the same
 Composer version when running it by hand:
