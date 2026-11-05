@@ -25,9 +25,10 @@ const {
 const EVENTS_TIMEOUT_MILLIS = 20_000;
 
 /**
- * Counts records by event name and exception type. `emitted()` resolves once each event in
- * `expected` has been seen at least as often as it says, since a browser
- * event arrives from a listener or an observer after the workload returned.
+ * Counts records by event name and exception type. `emitted()` resolves once
+ * each event in `expected` has been seen at least as often as it says, since
+ * a browser event arrives from a listener or an observer after the workload
+ * returned.
  */
 function counting(expected) {
   const seen = {};
