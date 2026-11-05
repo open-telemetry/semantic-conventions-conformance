@@ -15,7 +15,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from typing import Any, BinaryIO, Sequence
+from typing import Any, BinaryIO, Sequence, cast
 
 BUILD_MARKER = "composer.json"
 LOCKFILE = "composer.lock"
@@ -277,17 +277,8 @@ def _supplying_repository(
     Composer ignores the same package in any later repository, pinned or not.
     """
     source = (root / url).resolve()
-    repositories = scenario.get("repositories", [])
-    # Composer also takes repositories as an object keyed by name, in order,
-    # where false disables one, such as "packagist.org": false.
-    if isinstance(repositories, dict):
-        repositories = list(repositories.values())
-    for repository in repositories:
-        if (
-            not isinstance(repository, dict)
-            or repository.get("type") != "path"
-            or "url" not in repository
-        ):
+    for repository in _repositories(scenario):
+        if repository.get("type") != "path" or "url" not in repository:
             continue
         pattern = root / repository["url"]
         if pattern.resolve() == source or any(
@@ -296,6 +287,25 @@ def _supplying_repository(
         ):
             return repository
     return None
+
+
+def _repositories(scenario: dict[str, Any]) -> list[dict[str, Any]]:
+    """The scenario's repository objects, in Composer's order.
+
+    Composer also takes ``repositories`` as an object keyed by name, where
+    ``false`` disables one, such as ``"packagist.org": false``.
+    """
+    declared: Any = scenario.get("repositories", [])
+    entries: list[Any] = (
+        list(cast(dict[str, Any], declared).values())
+        if isinstance(declared, dict)
+        else list(declared)
+    )
+    return [
+        cast(dict[str, Any], entry)
+        for entry in entries
+        if isinstance(entry, dict)
+    ]
 
 
 def _snapshot_problems(
