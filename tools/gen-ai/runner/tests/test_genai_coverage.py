@@ -55,7 +55,8 @@ def _reduce_for(model):
     def build(span_types=(), events=(), metrics=(), entities=()):
         def signals(names, section):
             return {
-                name: set(model[section][name]["attributes"]) for name in names
+                name: set(model[section][name]["attributes"])
+                for name in names
             }
 
         resources = {
@@ -218,9 +219,7 @@ def test_every_declared_event_is_recordable(model, reduce_for) -> None:
 
 def test_every_declared_entity_is_recordable(model, reduce_for) -> None:
     declared = [
-        name
-        for name in model.get("entities", {})
-        if name.startswith("gen_ai.")
+        name for name in model.get("entities", {}) if name.startswith("gen_ai.")
     ]
 
     recorded = reduce_for(entities=declared)["entities"]

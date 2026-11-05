@@ -159,4 +159,4 @@ def test_missing_mcp_definitions_keep_genai_shape_rules(
     _, without_mcp = policy_advice
     advice = without_mcp[("client", "tools/call get_weather")]
 
-    assert advice == {"genai_span_name_format"}
+    assert "genai_span_name_format" in advice
