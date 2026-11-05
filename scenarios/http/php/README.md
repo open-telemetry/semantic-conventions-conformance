@@ -33,6 +33,10 @@ extensions. CodeIgniter needs `intl`, and the curl, PSR-18, and Symfony HTTP
 Client scenarios need `curl`. The self-contained WordPress fixture uses
 `pdo_sqlite`.
 
+Laravel's SPI-based hooks require the optional `tbachert/spi` Composer plugin.
+Its package enables the plugin in `config.allow-plugins` so Composer builds
+the SDK's provider registry.
+
 The measured releases emit stable HTTP attributes by default. Runs therefore
 need no `OTEL_SEMCONV_STABILITY_OPT_IN`.
 

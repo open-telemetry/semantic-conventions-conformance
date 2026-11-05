@@ -91,6 +91,13 @@ A run is bounded: an error thrown while the page loads fails it at once with
 that error, the workload gets 30 seconds, and the page's console and errors go
 to stderr.
 
+`browser-runner/tracing` exports `runWithTracing`, which registers the supplied
+instrumentations and runs a workload with a provider and OTLP exporter. It
+waits up to 20 seconds for the expected span count and flushes the provider.
+Fetch and XMLHttpRequest use this setup. Their decoded-span integration tests
+share `assertSelectedHttpClientSpan` from `browser-runner/testing`, including
+the mock server, export receiver, and protobuf decoder.
+
 ## CommonJS, not ESM
 
 Scenarios are CommonJS because that is what Node's instrumentations can
