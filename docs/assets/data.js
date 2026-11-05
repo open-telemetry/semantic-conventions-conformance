@@ -14,7 +14,6 @@ export const LEVELS = [
   "recommended",
   "recommended_conditional",
   "opt_in",
-  "refinement",
 ];
 
 export const LEVEL_LABEL = {
@@ -23,7 +22,6 @@ export const LEVEL_LABEL = {
   recommended: "Recommended",
   recommended_conditional: "Recommended (conditional)",
   opt_in: "Opt-in",
-  refinement: "Refinement attributes (unscored)",
 };
 
 const LEVEL_VAR = {
@@ -32,7 +30,6 @@ const LEVEL_VAR = {
   recommended: "--recommended",
   recommended_conditional: "--conditional",
   opt_in: "--optin",
-  refinement: "--conditional",
 };
 
 /**
@@ -40,6 +37,14 @@ const LEVEL_VAR = {
  * @returns {string} a CSS `var()` reference to that level's colour
  */
 export const levelColor = (level) => `var(${LEVEL_VAR[level] ?? "--optin"})`;
+
+/**
+ * Attributes only a signal's refinements declare. That is where an attribute
+ * came from, not a level: they are shown in a group of their own and never
+ * scored, since the signal does not say which refinement applies.
+ */
+export const REFINEMENT_LABEL = "Refinement attributes (unscored)";
+export const REFINEMENT_COLOR = "var(--refinement)";
 
 /**
  * Assigned in sorted language order when the report is indexed.
@@ -123,6 +128,8 @@ export const signalKey = (type, name) => `${type}:${name}`;
  * @property {string} runner the domain the declaration was read from
  * @property {Object<string,string>|null} attributes declared attribute to
  *   requirement level, or null where no target's registry declares the signal
+ * @property {Set<string>} refinementAttributes attributes only its
+ *   refinements declare
  * @property {{target: Target, signal: ReportSignal}[]} rows one per target emitting it
  */
 
@@ -199,17 +206,26 @@ function index(report) {
           type: signal.type,
           kind: declared?.kind ?? null,
           runner: target.runner,
-          attributes: displayAttributes(declared),
+          attributes: declared?.attributes ?? null,
+          refinementAttributes: new Set(),
           rows: [],
         };
         signals.set(key, entry);
       } else if (
         entry.kind !== (declared?.kind ?? null) ||
-        !sameAttributes(entry.attributes, displayAttributes(declared))
+        !sameAttributes(entry.attributes, declared?.attributes ?? null)
       ) {
         throw new Error(
           `Conflicting declarations for ${key} in ${entry.runner} and ${target.runner}`,
         );
+      }
+      // Only base attributes have to agree; refinement fields are merged.
+      for (const refinement of Object.values(declared?.refinements ?? {})) {
+        for (const name of Object.keys(refinement.attributes)) {
+          if (!Object.hasOwn(entry.attributes, name)) {
+            entry.refinementAttributes.add(name);
+          }
+        }
       }
       entry.rows.push({ target, signal });
     }
@@ -221,17 +237,6 @@ function index(report) {
     signals,
     byId: new Map(targets.map((target) => [target.id, target])),
   };
-}
-
-function displayAttributes(declared) {
-  if (!declared?.attributes) return null;
-  const attributes = { ...declared.attributes };
-  for (const refinement of Object.values(declared.refinements ?? {})) {
-    for (const name of Object.keys(refinement.attributes)) {
-      attributes[name] ??= "refinement";
-    }
-  }
-  return attributes;
 }
 
 function sameAttributes(left, right) {

@@ -352,10 +352,19 @@ test("refinement attributes appear separately from scored requirements", async (
   main.replaceChildren(signals(await load(), null));
   const ui = driver(window, main);
 
-  assert.match(main.textContent, /Refinement attributes \(unscored\)/);
+  assert.match(
+    main.querySelector("details.lede summary").textContent,
+    /Rows are the 2 attributes .*, plus 1 more its refinements declare;/,
+  );
+  const heads = [...main.querySelectorAll("tr.level-head")];
+  assert.match(heads.at(-1).textContent, /Refinement attributes \(unscored\)/);
+  assert.equal(
+    heads.at(-1).querySelector("i").getAttribute("style"),
+    "background:var(--refinement)",
+  );
   assert.match(main.textContent, /vendor.response/);
   assert.equal(main.querySelectorAll("td.cell-yes").length, 2);
   ui.level("Required + recommended");
-  assert.doesNotMatch(main.textContent, /vendor.response/);
+  assert.doesNotMatch(main.textContent, /vendor.response|unscored/);
   assert.equal(main.querySelectorAll("td.cell-yes").length, 1);
 });

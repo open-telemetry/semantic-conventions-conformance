@@ -53,30 +53,3 @@ def test_explicit_refinement_does_not_pick_up_sibling_attributes():
     assert _reduce(observed, model)["spans"] == {
         "tool.load_skill": ["skill.name"],
     }
-
-
-def test_metric_name_matching_refinement_id_does_not_select_it():
-    refinement = {"attributes": {"skill.name": "required"}}
-    model = {
-        "metrics": {
-            "tool.duration": {
-                "name": "tool.duration",
-                "attributes": {"tool.name": "required"},
-                "refinements": {"tool.skill.duration": refinement},
-            },
-            "tool.skill.duration": {
-                "name": "tool.duration",
-                **refinement,
-            },
-        },
-    }
-    observed = Observed(
-        metrics={
-            "tool.duration": {"tool.name", "skill.name"},
-            "tool.skill.duration": {"skill.name"},
-        },
-    )
-
-    assert _reduce(observed, model)["metrics"] == {
-        "tool.duration": ["skill.name", "tool.name"],
-    }

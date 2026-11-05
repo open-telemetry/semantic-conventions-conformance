@@ -22,6 +22,9 @@
   --recommended: #1d6fa5;
   --conditional: #7a6a9e;
   --optin: #8a8f9a;
+  /* Attributes only a refinement declares: not a level and never scored,
+     so a muted neutral rather than another level colour. */
+  --refinement: #bcc0c8;
 
   --good: #1a7f5a;
   --bad: #b4295c;
@@ -65,6 +68,7 @@
     --recommended: #6fb6e0;
     --conditional: #b0a2d4;
     --optin: #7d838f;
+    --refinement: #50565f;
 
     --good: #4fc294;
     --bad: #f07fa5;

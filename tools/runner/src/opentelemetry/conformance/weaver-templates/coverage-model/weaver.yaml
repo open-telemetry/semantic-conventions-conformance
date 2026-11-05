@@ -6,9 +6,12 @@
 # the levels are for readers of the model, since a missing required attribute
 # is a weaver violation rather than a coverage gap.
 #
-# Refinements keep their own ids and are also attached to their base signal.
-# Observed fields can then be retained without inferring which refinement
-# applies or changing the base signal's requirement levels.
+# Span refinements keep their own ids, so a classifier can select the most
+# specific applicable definition. Span and metric refinements are also listed
+# under their base signal, so observed fields can be retained without
+# inferring which refinement applies or changing the base signal's
+# requirement levels. Metrics stay keyed by name, the only thing an
+# observation carries.
 templates:
   - template: "coverage-model.json.j2"
     application_mode: single
@@ -57,12 +60,11 @@ templates:
           key: .name,
           value: {attributes: attributes},
         }) | from_entries),
-        metrics: ([.refinements.metrics[]?] | map({
-          key: .id,
+        metrics: ([.refinements.metrics[]? | select(.id == .name)] | map({
+          key: .name,
           value: {
-            name: .name,
             attributes: attributes,
-            refinements: (if .id == .name then refinements($metrics; "name"; .name) else {} end),
+            refinements: refinements($metrics; "name"; .name),
           },
         }) | from_entries),
         enums: enums,

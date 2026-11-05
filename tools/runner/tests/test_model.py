@@ -123,5 +123,5 @@ metric_refinements:
             "demo.skill"
             in model[kind][base]["refinements"][refinement]["attributes"]
         )
-        assert "demo.skill" in model[kind][refinement]["attributes"]
-    assert model["metrics"]["demo.skill.duration"]["name"] == "demo.duration"
+    assert "demo.skill" in model["spans"]["demo.tool.skill"]["attributes"]
+    assert list(model["metrics"]) == ["demo.duration"]

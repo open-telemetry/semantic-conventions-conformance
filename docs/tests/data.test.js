@@ -252,7 +252,35 @@ test("refinement-only attributes are visible without becoming base requirements"
     json: async () => document,
   }));
   const signal = (await load()).signals.get("metric:db.duration");
-  assert.equal(signal.attributes["db.system"], "required");
-  assert.equal(signal.attributes["vendor.response"], "refinement");
-  assert.equal(declaration.attributes["vendor.response"], undefined);
+  assert.equal(signal.attributes, declaration.attributes);
+  assert.deepEqual(signal.refinementAttributes, new Set(["vendor.response"]));
+});
+
+test("runners that differ only in refinements are merged, not conflicting", async (t) => {
+  const document = report([target(), target({ id: "other", runner: "other" })]);
+  const declaration =
+    document.registry["database-conformance"].metrics["db.duration"];
+  declaration.refinements = {
+    "vendor.db.duration": { attributes: { "vendor.response": "required" } },
+  };
+  document.registry.other = {
+    metrics: {
+      "db.duration": {
+        attributes: declaration.attributes,
+        refinements: {
+          "other.db.duration": { attributes: { "other.response": "opt_in" } },
+        },
+      },
+    },
+  };
+  t.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    json: async () => document,
+  }));
+  const signal = (await load()).signals.get("metric:db.duration");
+  assert.equal(signal.rows.length, 2);
+  assert.deepEqual(
+    signal.refinementAttributes,
+    new Set(["vendor.response", "other.response"]),
+  );
 });
