@@ -1,5 +1,5 @@
 {
-  "name": "@otel-conformance/chromium-opentelemetry-browser-instrumentation",
+  "name": "@otel-conformance/chrome-opentelemetry-browser-instrumentation",
   "version": "0.1.0",
   "private": true,
   "description": "A page's own events measured through @opentelemetry/browser-instrumentation.",
@@ -11,6 +11,6 @@
     "@opentelemetry/instrumentation": "0.222.0",
     "@opentelemetry/sdk-logs": "0.222.0",
     "@otel-conformance/browser-runner": "file:../../../../../tools/js/browser-runner",
-    "@otel-conformance/chromium-scenarios": "*"
+    "@otel-conformance/chrome-scenarios": "*"
   }
 }

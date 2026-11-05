@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 runner: http-conformance
-instrumented_library: chromium
+instrumented_library: chrome
 instrumentation_library: "@opentelemetry/browser-instrumentation"
 
 setup: otel-conformance-js install

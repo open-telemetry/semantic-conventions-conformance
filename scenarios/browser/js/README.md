@@ -1,8 +1,8 @@
 # Browser conformance scenarios in JavaScript
 
 ```text
-chromium/scenarios/                               what each page does, no OTel
-chromium/opentelemetry-browser-instrumentation/   run.js, pages/, conformance.yaml
+chrome/scenarios/                               what each page does, no OTel
+chrome/opentelemetry-browser-instrumentation/   run.js, pages/, conformance.yaml
 ```
 
 This directory is the build root: one npm workspace with a committed lockfile.
@@ -17,9 +17,9 @@ one instrumentation scope:
 | `console`    | `experimental/console`    | `browser.console`   |
 | `web_vitals` | `experimental/web-vitals` | `browser.web_vital` |
 
-The errors page waits for two `exception` events and the console page waits
-for three `browser.console` events. These checks count event names, they do not
-assert each exception type or console method. The web-vitals page waits for
+The errors page waits for one `TypeError` and one `Error` exception event.
+The console page waits for three `browser.console` events without checking
+which console methods emitted them. The web-vitals page waits for
 one `browser.web_vital` event, so it does not establish coverage of every
 web vital, including interaction and page-lifecycle measurements.
 

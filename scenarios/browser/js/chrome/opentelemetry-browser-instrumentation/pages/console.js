@@ -9,7 +9,7 @@ const {
 const { exposeEvents } = require("../events");
 const {
   writeToConsole,
-} = require("@otel-conformance/chromium-scenarios/console");
+} = require("@otel-conformance/chrome-scenarios/console");
 
 exposeEvents(
   {

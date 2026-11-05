@@ -5,18 +5,14 @@
   "description": "The JavaScript build root for the browser conformance scenarios.",
   "license": "Apache-2.0",
   "workspaces": [
-    "chromium/*"
+    "chrome/*"
   ],
   "scripts": {
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "node --test chrome/opentelemetry-browser-instrumentation/test/*.test.js"
   },
   "devDependencies": {
-    "prettier": "3.9.9"
-  },
-  "overrides": {
-    "@opentelemetry/exporter-trace-otlp-proto": {
-      "@opentelemetry/api": "1.10.0"
-    }
+    "prettier": "3.9.10"
   }
 }

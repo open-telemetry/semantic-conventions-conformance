@@ -1,5 +1,5 @@
 {
-  "name": "@otel-conformance/chromium-scenarios",
+  "name": "@otel-conformance/chrome-scenarios",
   "version": "0.1.0",
   "private": true,
   "description": "What every browser conformance scenario does in the page, with no OpenTelemetry in it.",

@@ -7,7 +7,7 @@
  * What every page here shares: the logs SDK, exporting through the shared
  * browser runner, and a wait for the events the page expects.
  *
- * Bundled into the page, never loaded by Node.
+ * Bundled into the page; the counter is also tested in Node.
  */
 
 const {
@@ -25,7 +25,7 @@ const {
 const EVENTS_TIMEOUT_MILLIS = 20_000;
 
 /**
- * Counts records by event name. `emitted()` resolves once each event in
+ * Counts records by event name and exception type. `emitted()` resolves once each event in
  * `expected` has been seen at least as often as it says, since a browser
  * event arrives from a listener or an observer after the workload returned.
  */
@@ -40,7 +40,10 @@ function counting(expected) {
       done() ? Promise.resolve() : new Promise((resolve) => (wake = resolve)),
     processor: {
       onEmit(record) {
-        const name = record.eventName ?? "";
+        let name = record.eventName ?? "";
+        if (name === "exception") {
+          name += `:${record.attributes?.["exception.type"] ?? ""}`;
+        }
         seen[name] = (seen[name] ?? 0) + 1;
         if (done()) {
           wake();
@@ -85,4 +88,4 @@ function exposeEvents({ instrumentations = [], events = {} } = {}, workload) {
   });
 }
 
-module.exports = { exposeEvents };
+module.exports = { counting, exposeEvents };

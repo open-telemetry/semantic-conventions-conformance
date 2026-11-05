@@ -7,7 +7,7 @@ const {
   WebVitalsInstrumentation,
 } = require("@opentelemetry/browser-instrumentation/experimental/web-vitals");
 const { exposeEvents } = require("../events");
-const { paint } = require("@otel-conformance/chromium-scenarios/web-vitals");
+const { paint } = require("@otel-conformance/chrome-scenarios/web-vitals");
 
 exposeEvents(
   {
