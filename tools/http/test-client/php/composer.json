@@ -13,5 +13,10 @@
   },
   "scripts": {
     "test": "@php tests/run.php"
+  },
+  "config": {
+    "platform": {
+      "php": "8.4.1"
+    }
   }
 }
