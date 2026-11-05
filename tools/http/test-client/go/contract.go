@@ -20,7 +20,7 @@ import (
 	"strings"
 	"sync"
 
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // ContentType is what every route answers, so a scenario has one content type

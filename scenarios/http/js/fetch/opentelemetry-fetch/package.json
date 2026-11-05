@@ -5,10 +5,7 @@
   "description": "Browser Fetch measured through @opentelemetry/instrumentation-fetch.",
   "license": "Apache-2.0",
   "dependencies": {
-    "@opentelemetry/exporter-trace-otlp-proto": "0.300.0",
-    "@opentelemetry/instrumentation": "0.300.0",
     "@opentelemetry/instrumentation-fetch": "0.300.0",
-    "@opentelemetry/sdk-trace": "3.0.0",
     "@otel-conformance/browser-runner": "file:../../../../../tools/js/browser-runner",
     "@otel-conformance/fetch-scenarios": "*",
     "@otel-conformance/http-test-client": "file:../../../../../tools/http/test-client/js"
