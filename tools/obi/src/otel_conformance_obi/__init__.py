@@ -106,7 +106,7 @@ WATCHDOG = """\
 exec 3<&0
 "$0" -config "$1" </dev/null 3<&- &
 obi=$!
-(cat <&3 >/dev/null; kill -TERM "$obi" 2>/dev/null; sleep "$2"; kill -KILL "$obi" 2>/dev/null) &
+(cat <&3; kill -TERM "$obi"; sleep "$2"; kill -KILL "$obi") >/dev/null 2>&1 &
 watch=$!
 exec 3<&-
 wait "$obi"
@@ -114,6 +114,17 @@ status=$?
 kill "$watch" 2>/dev/null
 exit "$status"
 """
+
+REAPER = """\
+import os, signal, sys
+if sys.stdin.buffer.read() != b"done\\n":
+    try:
+        os.killpg(int(sys.argv[1]), signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+"""
+
+REAPER_DONE = b"done\n"
 
 
 class LauncherError(RuntimeError):
@@ -291,6 +302,7 @@ def render_config(
     selector: Mapping[str, list[str]],
     metrics_port: int,
     environ: Mapping[str, str],
+    launcher: Sequence[int] = (),
 ) -> str:
     endpoint = environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
     if not endpoint:
@@ -300,6 +312,7 @@ def render_config(
         raise LauncherError(f"OBI scenarios export over grpc, not {protocol}")
     values = {
         "OBI_PROCESS_MATCH": json.dumps(dict(selector)),
+        "OBI_LAUNCHER_PIDS": json.dumps(list(launcher)),
         "OBI_INTERNAL_METRICS_PORT": str(metrics_port),
         "OTEL_EXPORTER_OTLP_ENDPOINT": endpoint,
         "OBI_METRIC_EXPORT_INTERVAL": str(METRIC_EXPORT_INTERVAL_MILLIS),
@@ -314,14 +327,57 @@ def render_config(
     return re.sub(r"\$\{([A-Z0-9_]+)\}", substitute, template)
 
 
-def instrumented(exposition: str) -> bool:
+def instrumented(exposition: str, executable: str) -> bool:
     for sample in INSTRUMENTED_PROCESSES.finditer(exposition):
+        if sample["name"] != executable:
+            continue
         try:
             if float(sample["value"]) > 0:
                 return True
         except ValueError:
             continue
     return False
+
+
+def lineage(pid: int | None = None) -> list[int]:
+    pid = os.getpid() if pid is None else pid
+    found: list[int] = []
+    while pid > 1:
+        found.append(pid)
+        try:
+            stat = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
+        except OSError:
+            break
+        pid = int(stat.rsplit(")", 1)[1].split()[1])
+    return found
+
+
+def gate_holder(gate: Path) -> int | None:
+    target = os.path.realpath(gate)
+    own = os.getpid()
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit() or int(entry.name) == own:
+            continue
+        try:
+            descriptors = list((entry / "fd").iterdir())
+        except OSError:
+            continue
+        for descriptor in descriptors:
+            try:
+                if os.readlink(descriptor) == target:
+                    return int(entry.name)
+            except OSError:
+                continue
+    return None
+
+
+def executable_name(pid: int) -> str:
+    try:
+        return Path(os.readlink(f"/proc/{pid}/exe")).name
+    except OSError as error:
+        raise LauncherError(
+            f"reading the executable of the scenario process {pid}: {error}"
+        ) from error
 
 
 def free_port() -> int:
@@ -376,6 +432,22 @@ class Scenario:
             raise LauncherError(
                 f"{command[0]} could not be started: {error}"
             ) from error
+        self._reaper = subprocess.Popen(  # noqa: S603
+            [sys.executable, "-I", "-c", REAPER, str(self.process.pid)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+
+    def stand_down(self) -> None:
+        if self._reaper.stdin is not None and not self._reaper.stdin.closed:
+            try:
+                self._reaper.stdin.write(REAPER_DONE)
+                self._reaper.stdin.close()
+            except BrokenPipeError:
+                pass
+        self._reaper.wait()
 
     def status(self) -> int | None:
         code = self.process.poll()
@@ -427,9 +499,8 @@ class Scenario:
             self._signal_group(signum)
 
     def kill(self) -> None:
-        if self.process.poll() is None:
-            self._signal_group(signal.SIGKILL)
-            self.process.wait()
+        self._signal_group(signal.SIGKILL)
+        self.process.wait()
         self.close_gate()
 
 
@@ -437,10 +508,11 @@ def _wait_ready(
     obi: subprocess.Popen[bytes],
     scenario: Scenario,
     metrics_port: int,
+    executable: str,
     deadline: float,
     timeout: float,
 ) -> None:
-    while not instrumented(_scrape(metrics_port)):
+    while not instrumented(_scrape(metrics_port), executable):
         time.sleep(POLL_INTERVAL)
         if obi.poll() is not None:
             raise LauncherError(
@@ -509,12 +581,22 @@ def run(
         with tempfile.TemporaryDirectory() as scratch:
             try:
                 deadline = time.monotonic() + ready_timeout
-                scenario = Scenario(command, Path(scratch) / "gate")
+                gate = Path(scratch) / "gate"
+                scenario = Scenario(command, gate)
                 scenario.wait_at_gate(deadline, ready_timeout)
+                holder = gate_holder(gate)
+                if holder is None:
+                    raise LauncherError(
+                        "no process holds the gate open, though the scenario "
+                        "reached it"
+                    )
+                waiting = executable_name(holder)
                 metrics_port = free_port()
                 config = Path(scratch) / "obi.yaml"
                 config.write_text(
-                    render_config(template, selector, metrics_port, environ),
+                    render_config(
+                        template, selector, metrics_port, environ, lineage()
+                    ),
                     encoding="utf-8",
                 )
                 sys.stderr.flush()
@@ -525,7 +607,12 @@ def run(
                     stderr=sys.stderr,
                 )
                 _wait_ready(
-                    obi, scenario, metrics_port, deadline, ready_timeout
+                    obi,
+                    scenario,
+                    metrics_port,
+                    waiting,
+                    deadline,
+                    ready_timeout,
                 )
                 scenario.release()
                 status = exit_status(scenario.process.wait())
@@ -547,6 +634,8 @@ def run(
                     _stop(obi)
                 raise
     finally:
+        if scenario is not None:
+            scenario.stand_down()
         for signum, handler in previous.items():
             signal.signal(
                 signum, signal.SIG_DFL if handler is None else handler

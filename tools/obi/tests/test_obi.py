@@ -36,6 +36,7 @@ from otel_conformance_obi import (
     glob_literal,
     install,
     instrumented,
+    lineage,
     main,
     pin,
     pins,
@@ -58,7 +59,14 @@ FAKE_OBI = textwrap.dedent(
     config = yaml.safe_load(open(sys.argv[sys.argv.index("-config") + 1]))
     obi = config["extensions"]["obi"]
     port = obi["daemon"]["internal_metrics"]["prometheus"]["port"]
-    selector = obi["capture"]["rules"][0]["match"]["process"]
+    excluded = set()
+    selector = {}
+    for rule in obi["capture"]["rules"]:
+        process = rule["match"]["process"]
+        if rule["action"] == "exclude":
+            excluded.update(process.get("target_pids", []))
+        else:
+            selector = process
     mode = os.environ.get("FAKE_OBI_MODE", "ready")
     open("obi.pid", "w").write(str(os.getpid()))
     print("fake obi on stdout", flush=True)
@@ -101,7 +109,7 @@ FAKE_OBI = textwrap.dedent(
     found = None
     while found is None:
         for entry in os.listdir("/proc"):
-            if entry.isdigit() and int(entry) not in (os.getpid(), os.getppid()) and matches(entry):
+            if entry.isdigit() and int(entry) not in (os.getpid(), os.getppid(), *excluded) and matches(entry):
                 found = int(entry)
                 break
         time.sleep(0.05)
@@ -122,6 +130,7 @@ GATED = textwrap.dedent(
     """\
     import os, pathlib, subprocess, sys, time
     pathlib.Path("scenario.pid").write_text(str(os.getpid()))
+    time.sleep(float(os.environ.get("GATED_DELAY", "0")))
     with open(os.environ["OTEL_CONFORMANCE_GATE"], "rb") as gate:
         if gate.read() != b"1":
             sys.exit(98)
@@ -144,6 +153,32 @@ def wait_for(*paths: Path, timeout: float = 20.0) -> None:
     while not all(path.exists() for path in paths):
         assert time.monotonic() < deadline, f"none of {paths} appeared"
         time.sleep(0.05)
+
+
+def gated_children() -> list[int]:
+    alive: list[int] = []
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            argv = (entry / "cmdline").read_bytes().split(b"\0")
+        except OSError:
+            continue
+        if GATED.encode() in argv and running(int(entry.name), timeout=0.1):
+            alive.append(int(entry.name))
+    return alive
+
+
+def cleanup(tmp_path: Path, launched: subprocess.Popen[bytes]) -> None:
+    for name in ("scenario.pid", "obi.pid"):
+        try:
+            os.kill(int((tmp_path / name).read_text()), signal.SIGKILL)
+        except (OSError, ValueError):
+            pass
+    try:
+        os.killpg(launched.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
 
 
 def launcher(
@@ -464,9 +499,27 @@ class TestTheConfig:
         capture = rendered(selector)["extensions"]["obi"]["capture"]
 
         assert capture["policy"]["default_action"] == "exclude"
-        assert [rule["match"]["process"] for rule in capture["rules"]] == [
-            selector
-        ]
+        assert capture["rules"][-1]["action"] == "include"
+        assert capture["rules"][-1]["match"]["process"] == selector
+
+    def test_the_launcher_and_its_ancestors_are_excluded_first(self) -> None:
+        config = yaml.safe_load(
+            render_config(
+                config_template({}).read_text(),
+                {"cmd_args_glob": ["*main.py"]},
+                9400,
+                {"OTEL_EXPORTER_OTLP_ENDPOINT": ENDPOINT},
+                [4242, 17],
+            )
+        )
+        capture = config["extensions"]["obi"]["capture"]
+
+        assert capture["policy"]["match_order"] == "first_match_wins"
+        assert capture["rules"][0] == {
+            "action": "exclude",
+            "name": "launcher",
+            "match": {"process": {"target_pids": [4242, 17]}},
+        }
 
     def test_it_exposes_the_instrumented_processes_metric(self) -> None:
         internal = rendered(port=9123)["extensions"]["obi"]["daemon"][
@@ -617,17 +670,28 @@ class TestTheInstrumentedProcessesMetric:
         """
     )
 
-    def test_a_counted_process_is_instrumented(self) -> None:
-        assert instrumented(self.EXPOSITION)
+    def test_the_waiting_executable_counted_is_instrumented(self) -> None:
+        assert instrumented(self.EXPOSITION, "scenario")
 
-    def test_only_zero_counts_are_not(self) -> None:
-        assert not instrumented(
-            'obi_instrumented_processes{process_executable_name="java"} 0\n'
-        )
+    def test_another_executable_counted_is_not(self) -> None:
+        assert not instrumented(self.EXPOSITION, "python3")
+
+    def test_a_zero_count_is_not(self) -> None:
+        assert not instrumented(self.EXPOSITION, "java")
 
     def test_no_series_is_not(self) -> None:
-        assert not instrumented("obi_tracer_flushes_count 3\n")
-        assert not instrumented("")
+        assert not instrumented("obi_tracer_flushes_count 3\n", "scenario")
+        assert not instrumented("", "scenario")
+
+
+@linux_only
+class TestTheLauncherLineage:
+    def test_it_starts_at_the_launcher_and_walks_up(self) -> None:
+        found = lineage()
+
+        assert found[0] == os.getpid()
+        assert os.getppid() in found or os.getppid() <= 1
+        assert 1 not in found
 
 
 class TestTheExitStatus:
@@ -766,7 +830,7 @@ class TestRunningUnderOBI:
 
         assert time.monotonic() - started < 8
 
-    def test_obi_stops_when_the_launcher_is_killed(
+    def test_obi_and_the_scenario_stop_when_the_launcher_is_killed(
         self, environ: dict[str, str], tmp_path: Path
     ) -> None:
         launched = launcher(
@@ -779,18 +843,92 @@ class TestRunningUnderOBI:
         try:
             wait_for(tmp_path / "obi.pid", tmp_path / "released")
             obi_pid = int((tmp_path / "obi.pid").read_text())
+            scenario_pid = int((tmp_path / "scenario.pid").read_text())
 
             os.kill(launched.pid, signal.SIGKILL)
             launched.wait()
 
             assert not running(obi_pid)
+            assert not running(scenario_pid)
         finally:
-            scenario_pid = (tmp_path / "scenario.pid").read_text()
-            os.kill(int(scenario_pid), signal.SIGKILL)
-            try:
-                os.killpg(launched.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            cleanup(tmp_path, launched)
+
+    def test_a_scenario_still_starting_when_the_launcher_dies_is_killed(
+        self, environ: dict[str, str], tmp_path: Path
+    ) -> None:
+        launched = launcher(
+            tmp_path,
+            {**environ, "GATED_DELAY": "1"},
+            "--args",
+            SELECT_GATED,
+            *gated(),
+        )
+        try:
+            wait_for(tmp_path / "scenario.pid")
+            scenario_pid = int((tmp_path / "scenario.pid").read_text())
+
+            os.kill(launched.pid, signal.SIGKILL)
+            launched.wait()
+
+            assert not running(scenario_pid)
+            assert not (tmp_path / "released").exists()
+        finally:
+            cleanup(tmp_path, launched)
+
+    def test_an_args_selector_matching_the_launcher_waits_for_the_scenario(
+        self, environ: dict[str, str], tmp_path: Path
+    ) -> None:
+        launched = launcher(
+            tmp_path, environ, "--args", SELECT_GATED, *gated()
+        )
+        try:
+            assert launched.wait(60) == 0
+            attached = int((tmp_path / "attached").read_text())
+            assert attached == int((tmp_path / "scenario.pid").read_text())
+        finally:
+            cleanup(tmp_path, launched)
+
+    def test_the_watchdog_does_not_hold_the_launcher_output_open(
+        self, environ: dict[str, str], tmp_path: Path
+    ) -> None:
+        started = time.monotonic()
+        launched = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import sys, otel_conformance_obi as obi; "
+                "obi._privileged = lambda command: command; "
+                "sys.exit(obi.main(sys.argv[1:]))",
+                "run",
+                "--args",
+                SELECT_GATED,
+                *gated(),
+            ],
+            cwd=tmp_path,
+            env={**os.environ, **environ},
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+
+        assert launched.returncode == 0, launched.stderr
+        assert time.monotonic() - started < 15
+
+    def test_a_wrapper_that_exits_takes_its_gated_child_with_it(
+        self,
+        environ: dict[str, str],
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        monkeypatch.setenv("GATED_DELAY", "1")
+        command = ["/bin/sh", "-c", shell(gated()) + " & exit 0"]
+
+        with pytest.raises(LauncherError, match="before reaching the gate"):
+            run(command, args=SELECT_GATED, environ=environ)
+
+        time.sleep(1.5)
+        assert gated_children() == []
+        assert not (tmp_path / "released").exists()
 
     def test_a_scenario_held_by_a_killed_launcher_never_runs(
         self, environ: dict[str, str], tmp_path: Path

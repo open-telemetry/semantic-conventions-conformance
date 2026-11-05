@@ -28,7 +28,9 @@ and maps each digest to the new release's archive.
 `run [--exe GLOB] [--args GLOB] COMMAND...` runs a scenario:
 
 1. Starts `COMMAND` in its own session with `OTEL_CONFORMANCE_GATE` naming a
-   named pipe.
+   named pipe, with a reaper that kills that session's process group if the
+   launcher dies, whether the scenario is still starting, waiting at the
+   gate, or running.
 2. Waits for the scenario to reach the gate: before its workload, the
    scenario opens the pipe and reads it until end of file, which cannot come
    while the launcher holds the write end. The scenario runs only if the
@@ -42,14 +44,16 @@ and maps each digest to the new release's archive.
    selects `COMMAND`'s resolved executable, which is exact for a binary run
    directly. A scenario behind a wrapper names what the wrapper finally runs,
    usually with `--args`: the Python interpreter and the Java runtime are the
-   same executable as the mock server and every other scenario. OBI runs under
-   a small root-side `sh` that stops it when its standard input from the
-   launcher closes, so OBI never outlives the launcher, however it dies.
+   same executable as the mock server and every other scenario. The launcher
+   and its ancestors are excluded ahead of that match, since their command
+   lines carry the scenario command too. OBI runs under a small root-side `sh`
+   that stops it when its standard input from the launcher closes, so OBI
+   never outlives the launcher, however it dies.
 4. Releases the scenario once OBI's `obi_instrumented_processes` internal
-   metric counts a process. OBI raises it after it registered the process,
-   and only processes the selector matches are counted, so the first request
-   is measured. Reaching the gate and OBI attaching share one deadline,
-   below `otel-http-drive`'s startup timeout.
+   metric counts the executable of the process holding the gate open. OBI
+   raises it after it registered the process, so the first request is
+   measured. Reaching the gate and OBI attaching share one deadline, below
+   `otel-http-drive`'s startup timeout.
 5. After `COMMAND` exits, keeps OBI running for the settle period, longer than
    both the span batch delay and the metric export interval, then stops it.
    OBI does not export what it still buffers when it is stopped.
@@ -73,7 +77,7 @@ committed `data.json`.
 ## Configuration
 
 [`obi.yaml`](src/otel_conformance_obi/obi.yaml) is an OBI Config v2 document.
-`run` substitutes `${OBI_PROCESS_MATCH}`, `${OBI_INTERNAL_METRICS_PORT}` (a free
+`run` substitutes `${OBI_PROCESS_MATCH}`, `${OBI_LAUNCHER_PIDS}`, `${OBI_INTERNAL_METRICS_PORT}` (a free
 local port for the internal metrics endpoint readiness is read from),
 `${OTEL_EXPORTER_OTLP_ENDPOINT}` and `${OBI_METRIC_EXPORT_INTERVAL}` and passes
 the result to `obi -config`. It
