@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""How to recognise a GenAI span type.
+"""How to recognise a GenAI or MCP span type.
 
 A run is reduced by asking, per registry span type, which of that type's
 attributes were present. The registry declares a type's attributes but not how
@@ -13,6 +13,11 @@ to supply beyond its pin and its policies.
 from __future__ import annotations
 
 from typing import Any, Callable, Mapping
+
+_MCP_SPAN_TYPES = {
+    "client": "mcp.client",
+    "server": "mcp.server",
+}
 
 # Which operation names belong to which span type.
 _OPERATION_NAMES = {
@@ -75,20 +80,30 @@ def classifier(
     ) -> set[str]:
         """The span types a span belongs to.
 
-        ``gen_ai.operation.name`` names the type when it is set. A span that
-        omits it is recognised by the attributes only its type carries — but a
-        span that names its operation *is* that operation, whatever else it
-        carries, so an inference span holding ``gen_ai.agent.id`` is not an
-        agent invocation.
+        ``mcp.method.name`` identifies an MCP span before GenAI compatibility
+        attributes are considered. Otherwise, ``gen_ai.operation.name`` names
+        the type. If the operation is absent, attributes specific to the type
+        identify it. When the operation is present, it takes precedence: an
+        inference span holding ``gen_ai.agent.id`` is not an agent invocation.
 
         ``span_name`` is unused; it is accepted to match the runner's
         signature.
         """
         del span_name
-        operation = str(attributes.get("gen_ai.operation.name", "")).lower()
         present = {
             name for name, value in attributes.items() if value is not None
         }
+        spans = coverage_model["spans"]
+
+        mcp_span_type = _MCP_SPAN_TYPES.get(span_kind.lower())
+        if (
+            "mcp.method.name" in present
+            and mcp_span_type is not None
+            and mcp_span_type in spans
+        ):
+            return {mcp_span_type}
+
+        operation = str(attributes.get("gen_ai.operation.name", "")).lower()
 
         named = {
             span_type
@@ -101,7 +116,6 @@ def classifier(
             if identifying & present
         }
 
-        spans = coverage_model["spans"]
         matched = {t for t in matched if t in spans} or matched
 
         # Span kind separates otherwise identical types, e.g. an agent invoked

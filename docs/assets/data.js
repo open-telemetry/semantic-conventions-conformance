@@ -39,6 +39,14 @@ const LEVEL_VAR = {
 export const levelColor = (level) => `var(${LEVEL_VAR[level] ?? "--optin"})`;
 
 /**
+ * Attributes only a signal's refinements declare. That is where an attribute
+ * came from, not a level: they are shown in a group of their own and never
+ * scored, since the signal does not say which refinement applies.
+ */
+export const REFINEMENT_LABEL = "Refinement attributes (unscored)";
+export const REFINEMENT_COLOR = "var(--refinement)";
+
+/**
  * Assigned in sorted language order when the report is indexed.
  */
 const LANGUAGE_SLOT = new Map();
@@ -120,6 +128,8 @@ export const signalKey = (type, name) => `${type}:${name}`;
  * @property {string} runner the domain the declaration was read from
  * @property {Object<string,string>|null} attributes declared attribute to
  *   requirement level, or null where no target's registry declares the signal
+ * @property {Set<string>} refinementAttributes attributes only its
+ *   refinements declare
  * @property {{target: Target, signal: ReportSignal}[]} rows one per target emitting it
  */
 
@@ -149,7 +159,8 @@ export const signalKey = (type, name) => `${type}:${name}`;
  * @property {Object<string,{identity: string[], description: string[]}>} entities
  * @property {string[]} scenario_classes
  * @property {ReportSignal[]} signals
- * @typedef {{attributes: Object<string,string>, kind?: string}} Declaration
+ * @typedef {{attributes: Object<string,string>, kind?: string,
+ *   refinements?: Object<string,{attributes: Object<string,string>}>}} Declaration
  * @typedef {{registry_repo: string, registry_ref: string,
  *   registry_dir: string}} Pin one runner's registry pin
  * @typedef {object} Report
@@ -196,6 +207,7 @@ function index(report) {
           kind: declared?.kind ?? null,
           runner: target.runner,
           attributes: declared?.attributes ?? null,
+          refinementAttributes: new Set(),
           rows: [],
         };
         signals.set(key, entry);
@@ -206,6 +218,14 @@ function index(report) {
         throw new Error(
           `Conflicting declarations for ${key} in ${entry.runner} and ${target.runner}`,
         );
+      }
+      // Only base attributes have to agree; refinement fields are merged.
+      for (const refinement of Object.values(declared?.refinements ?? {})) {
+        for (const name of Object.keys(refinement.attributes)) {
+          if (!Object.hasOwn(entry.attributes, name)) {
+            entry.refinementAttributes.add(name);
+          }
+        }
       }
       entry.rows.push({ target, signal });
     }

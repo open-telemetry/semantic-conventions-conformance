@@ -4,6 +4,8 @@
 import {
   LEVELS,
   LEVEL_LABEL,
+  REFINEMENT_COLOR,
+  REFINEMENT_LABEL,
   fullLabel,
   attributeUrl,
   levelColor,
@@ -179,25 +181,38 @@ function directory(items) {
 function model(data, found) {
   const signals = found.signals.map((signal) => {
     const key = signalKey(signal.type, signal.name);
-    const declaration = data.signals.get(key);
+    const declaration =
+      data.report.registry?.[found.runner]?.[`${signal.type}s`]?.[signal.name];
     const levels = declaration?.attributes ?? {};
+    const refined = new Set();
+    for (const refinement of Object.values(declaration?.refinements ?? {})) {
+      for (const name of Object.keys(refinement.attributes)) {
+        if (!Object.hasOwn(levels, name)) refined.add(name);
+      }
+    }
     const emitted = new Set(signal.emitted);
     const declared = Object.keys(levels).sort(
       (a, b) => rank(levels[a]) - rank(levels[b]) || a.localeCompare(b),
     );
     const missing = declared.filter((name) => !emitted.has(name));
+    // Unscored, so only shown once emitted: never a gap.
+    const refinements = [...refined].filter((name) => emitted.has(name)).sort();
     return {
       signal,
       key,
       levels,
+      refinements,
       spanKind:
         signal.type === "span"
           ? (signal.identity?.span_kind ?? declaration?.kind ?? null)
           : null,
-      emitted: declared.filter((name) => emitted.has(name)),
+      emitted: [
+        ...declared.filter((name) => emitted.has(name)),
+        ...refinements,
+      ],
       missing,
       extra: signal.emitted
-        .filter((name) => !Object.hasOwn(levels, name))
+        .filter((name) => !Object.hasOwn(levels, name) && !refined.has(name))
         .sort(),
       requiredMissing: missing.filter((name) => levels[name] === "required")
         .length,
@@ -683,7 +698,10 @@ function signalTable(view) {
         el("tbody", {}, rows),
       ]),
     ]),
-    levelLegend(),
+    levelLegend(
+      LEVELS,
+      signals.some((s) => s.refinements.length),
+    ),
   ]);
 }
 
@@ -703,6 +721,7 @@ function signalDetail(s, pin) {
             names.map((name) =>
               el("li", {}, [
                 levels[name] && levelDot(levels[name]),
+                s.refinements.includes(name) && refinementDot(),
                 attributeLink(name, pin),
               ]),
             ),
@@ -750,6 +769,14 @@ function levelDot(level) {
     class: "dot",
     style: `background:${levelColor(level)}`,
     title: LEVEL_LABEL[level] ?? level,
+  });
+}
+
+function refinementDot() {
+  return el("i", {
+    class: "dot",
+    style: `background:${REFINEMENT_COLOR}`,
+    title: REFINEMENT_LABEL,
   });
 }
 

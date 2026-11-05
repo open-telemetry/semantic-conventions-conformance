@@ -6,9 +6,12 @@
 # the levels are for readers of the model, since a missing required attribute
 # is a weaver violation rather than a coverage gap.
 #
-# Span refinements keep their own ids. A classifier can select the most
-# specific applicable definition without attributing its fields to the base
-# signal.
+# Span refinements keep their own ids, so a classifier can select the most
+# specific applicable definition. Span and metric refinements are also listed
+# under their base signal, so observed fields can be retained without
+# inferring which refinement applies or changing the base signal's
+# requirement levels. Metrics stay keyed by name, the only thing an
+# observation carries.
 templates:
   - template: "coverage-model.json.j2"
     application_mode: single
@@ -28,18 +31,32 @@ templates:
           }
         ] | from_entries;
 
+      # All identity attributes are needed to identify an entity. Weaver's
+      # v2 model carries no requirement levels for identity attributes.
       def entity_identity:
-        [.identity[]? | {key: .key, value: (.requirement_level | level)}]
+        [.identity[]? | {key: .key, value: "required"}]
         | from_entries;
 
       def entity_description:
         [.description[]? | {key: .key, value: (.requirement_level | level)}]
         | from_entries;
 
+      def refinements($signals; $field; $base):
+        [$signals[]? | select(.[$field] == $base and .id != $base) | {
+          key: .id,
+          value: {attributes: attributes},
+        }] | from_entries;
+
+      .refinements.spans as $spans |
+      .refinements.metrics as $metrics |
       {
         spans: ([.refinements.spans[]?] | map({
           key: .id,
-          value: {kind: .kind, attributes: attributes},
+          value: {
+            kind: .kind,
+            attributes: attributes,
+            refinements: (if .id == .type then refinements($spans; "type"; .type) else {} end),
+          },
         }) | from_entries),
         events: ([.refinements.events[]? | select(.id == .name)] | map({
           key: .name,
@@ -47,7 +64,10 @@ templates:
         }) | from_entries),
         metrics: ([.refinements.metrics[]? | select(.id == .name)] | map({
           key: .name,
-          value: {attributes: attributes},
+          value: {
+            attributes: attributes,
+            refinements: refinements($metrics; "name"; .name),
+          },
         }) | from_entries),
         enums: enums,
         entities: ([.refinements.entities[]? | select(.id == .type)] | map({

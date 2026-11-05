@@ -5,11 +5,15 @@
 
 Weaver resolves a registry into one JSON file. Span refinements keep their own
 ids, so a classifier can select a provider-specific definition without
-counting its attributes as coverage of the base signal::
+counting its attributes as coverage of the base signal. Base spans and metrics
+also list their refinements, so a reduction can keep the fields those declare
+without inferring which refinement applies. Metrics are keyed by name only::
 
-    {"spans":    {"http.server": {"kind": "server", "attributes": {name: level}}},
+    {"spans":    {"http.server": {"kind": "server", "attributes": {name: level},
+                                  "refinements": {id: {"attributes": {name: level}}}}},
      "events":   {name: {"attributes": {name: level}}},
-     "metrics":  {name: {"attributes": {name: level}}},
+     "metrics":  {name: {"attributes": {name: level},
+                         "refinements": {id: {"attributes": {name: level}}}}},
      "entities": {name: {"identity": {name: level}, "description": {name: level}}}}
 
 That is what a reduction reads to say which of a signal's declared attributes

@@ -6,6 +6,8 @@
 import {
   LEVELS,
   LEVEL_LABEL,
+  REFINEMENT_COLOR,
+  REFINEMENT_LABEL,
   attributeUrl,
   distinguish,
   fullLabel,
@@ -202,8 +204,17 @@ export default function signals(data, key, params) {
           : state.level === "scored"
             ? ["required", "recommended"]
             : LEVELS;
+      const refinements = state.level
+        ? []
+        : [...chosen.refinementAttributes].sort();
       body.replaceChildren(
-        heatmap(chosen, rows, levels, data.report.domains?.[chosen.runner]),
+        heatmap(
+          chosen,
+          rows,
+          levels,
+          refinements,
+          data.report.domains?.[chosen.runner],
+        ),
       );
       return rows.length === chosen.rows.length
         ? `${rows.length} target${rows.length === 1 ? "" : "s"}`
@@ -214,6 +225,7 @@ export default function signals(data, key, params) {
   const declared = chosen.attributes
     ? Object.keys(chosen.attributes).length
     : 0;
+  const refined = chosen.refinementAttributes.size;
 
   const controls = el("div", { class: "controls" }, [
     el("div", { class: "controls-row" }, [
@@ -241,8 +253,9 @@ export default function signals(data, key, params) {
     el("details", { class: "lede" }, [
       el("summary", {}, [
         `Rows are the ${declared} attributes the registry declares on this ` +
-          `${chosen.type}; columns are the ${chosen.rows.length} targets that ` +
-          "emitted it.",
+          `${chosen.type}` +
+          (refined ? `, plus ${refined} more its refinements declare` : "") +
+          `; columns are the ${chosen.rows.length} targets that emitted it.`,
       ]),
       el("p", {
         text:
@@ -250,13 +263,15 @@ export default function signals(data, key, params) {
           "attribute was observed at least once with an accepted type; it does " +
           "not mean every observation conformed. A blank cell means no accepted " +
           "value was observed. Missing conditional or opt-in attributes are not " +
-          "automatically conformance failures.",
+          "automatically conformance failures. Refinement attributes are shown " +
+          "without a score, since the signal does not identify which refinement " +
+          "applies. Their blank cells do not establish a conformance gap.",
       }),
     ]),
     body,
   ]);
 }
-function heatmap(signal, rows, levels, pin) {
+function heatmap(signal, rows, levels, refinements, pin) {
   if (!rows.length) {
     return el("p", { class: "empty", text: "No targets match those filters." });
   }
@@ -287,9 +302,8 @@ function heatmap(signal, rows, levels, pin) {
   // Each requirement level needs a row group for its accessible header.
   const groups = [];
   let drawn = 0;
-  for (const level of levels) {
-    const attributes = (grouped.get(level) ?? []).sort();
-    if (!attributes.length) continue;
+  const group = (color, label, attributes) => {
+    if (!attributes.length) return;
     groups.push(
       el("tbody", {}, [
         el("tr", { class: "level-head" }, [
@@ -297,8 +311,8 @@ function heatmap(signal, rows, levels, pin) {
             // The heading spans every column, and a cell that wide cannot be
             // held in place on its own, so the text inside it is what sticks.
             el("span", {}, [
-              el("i", { style: `background:${levelColor(level)}` }),
-              `${LEVEL_LABEL[level] ?? level} · ${attributes.length}`,
+              el("i", { style: `background:${color}` }),
+              `${label} · ${attributes.length}`,
             ]),
           ]),
         ]),
@@ -306,7 +320,15 @@ function heatmap(signal, rows, levels, pin) {
       ]),
     );
     drawn += attributes.length;
+  };
+  for (const level of levels) {
+    group(
+      levelColor(level),
+      LEVEL_LABEL[level] ?? level,
+      (grouped.get(level) ?? []).sort(),
+    );
   }
+  group(REFINEMENT_COLOR, REFINEMENT_LABEL, refinements);
 
   if (!drawn) {
     return el("p", {
@@ -322,7 +344,7 @@ function heatmap(signal, rows, levels, pin) {
         ...groups,
       ]),
     ]),
-    levelLegend(levels),
+    levelLegend(levels, refinements.length > 0),
   ]);
 }
 
