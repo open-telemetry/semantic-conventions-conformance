@@ -274,8 +274,11 @@ def seconds(
         raise LauncherError(
             f"{variable} must be a number of seconds, not {raw!r}"
         ) from None
-    if value < 0:
-        raise LauncherError(f"{variable} must not be negative, not {raw!r}")
+    if not 0 <= value < float("inf"):
+        raise LauncherError(
+            f"{variable} must be a finite, non-negative number of seconds, "
+            f"not {raw!r}"
+        )
     return value
 
 

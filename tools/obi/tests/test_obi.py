@@ -638,7 +638,7 @@ class TestTheTimeouts:
             == 2.5
         )
 
-    @pytest.mark.parametrize("raw", ["3s", "-1"])
+    @pytest.mark.parametrize("raw", ["3s", "-1", "nan", "inf", "-inf"])
     def test_anything_else_says_so(self, raw: str) -> None:
         with pytest.raises(LauncherError, match=READY_TIMEOUT_VARIABLE):
             seconds(
