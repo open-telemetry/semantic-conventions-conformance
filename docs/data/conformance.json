@@ -26,8 +26,8 @@
             "process.runtime.description": "recommended"
           },
           "identity": {
-            "process.runtime.name": null,
-            "process.runtime.version": null
+            "process.runtime.name": "required",
+            "process.runtime.version": "required"
           }
         },
         "service": {
@@ -36,7 +36,7 @@
             "service.version": "recommended"
           },
           "identity": {
-            "service.name": null
+            "service.name": "required"
           }
         },
         "service.instance": {
@@ -45,7 +45,7 @@
             "service.instance.cost_center.name": "opt_in"
           },
           "identity": {
-            "service.instance.id": null
+            "service.instance.id": "required"
           }
         },
         "telemetry.distro": {
@@ -53,7 +53,7 @@
             "telemetry.distro.version": "recommended"
           },
           "identity": {
-            "telemetry.distro.name": null
+            "telemetry.distro.name": "required"
           }
         },
         "telemetry.sdk": {
@@ -61,8 +61,8 @@
             "telemetry.sdk.version": "required"
           },
           "identity": {
-            "telemetry.sdk.language": null,
-            "telemetry.sdk.name": null
+            "telemetry.sdk.language": "required",
+            "telemetry.sdk.name": "required"
           }
         }
       },
@@ -83,7 +83,8 @@
             "network.peer.port": "recommended_conditional",
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         }
       },
       "spans": {
@@ -111,7 +112,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.elasticsearch.client": {
           "attributes": {
@@ -130,7 +132,8 @@
             "server.port": "conditionally_required_conditional",
             "url.full": "required"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.mariadb.client": {
           "attributes": {
@@ -149,7 +152,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.mongodb.client": {
           "attributes": {
@@ -163,7 +167,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.mysql.client": {
           "attributes": {
@@ -182,7 +187,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.oracledb.client": {
           "attributes": {
@@ -206,7 +212,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.postgresql.client": {
           "attributes": {
@@ -225,7 +232,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.redis.client": {
           "attributes": {
@@ -242,7 +250,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "db.sql_server.client": {
           "attributes": {
@@ -261,7 +270,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         }
       }
     },
@@ -329,6 +339,21 @@
             "gen_ai.response.model": "recommended",
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
+          },
+          "refinements": {
+            "openai.client.operation.duration": {
+              "attributes": {
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.operation.name": "required",
+                "gen_ai.provider.name": "conditionally_required_conditional",
+                "gen_ai.request.model": "conditionally_required_conditional",
+                "gen_ai.response.model": "recommended",
+                "openai.response.service_tier": "recommended",
+                "openai.response.system_fingerprint": "recommended",
+                "server.address": "recommended",
+                "server.port": "conditionally_required_conditional"
+              }
+            }
           }
         },
         "gen_ai.execute_tool.duration": {
@@ -337,30 +362,35 @@
             "gen_ai.agent.name": "conditionally_required_conditional",
             "gen_ai.tool.name": "required",
             "gen_ai.tool.type": "recommended_conditional"
-          }
+          },
+          "refinements": {}
         },
         "gen_ai.invoke_agent.duration": {
           "attributes": {
             "error.type": "conditionally_required_conditional",
             "gen_ai.agent.name": "conditionally_required_conditional",
             "gen_ai.request.model": "recommended_conditional"
-          }
+          },
+          "refinements": {}
         },
         "gen_ai.invoke_agent.inference_calls": {
           "attributes": {
             "gen_ai.agent.name": "recommended"
-          }
+          },
+          "refinements": {}
         },
         "gen_ai.invoke_agent.tool_calls": {
           "attributes": {
             "gen_ai.agent.name": "recommended"
-          }
+          },
+          "refinements": {}
         },
         "gen_ai.invoke_workflow.duration": {
           "attributes": {
             "error.type": "conditionally_required_conditional",
             "gen_ai.workflow.name": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         },
         "gen_ai.server.time_per_output_token": {
           "attributes": {
@@ -370,7 +400,8 @@
             "gen_ai.response.model": "recommended",
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         },
         "gen_ai.server.time_to_first_token": {
           "attributes": {
@@ -380,7 +411,8 @@
             "gen_ai.response.model": "recommended",
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         }
       },
       "spans": {
@@ -433,7 +465,216 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {
+            "anthropic.gen_ai.client.inference": {
+              "attributes": {
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.conversation.compacted": "recommended_conditional",
+                "gen_ai.conversation.id": "conditionally_required_conditional",
+                "gen_ai.input.messages": "opt_in",
+                "gen_ai.operation.name": "required",
+                "gen_ai.output.messages": "opt_in",
+                "gen_ai.output.type": "conditionally_required_conditional",
+                "gen_ai.prompt.name": "conditionally_required_conditional",
+                "gen_ai.prompt.variable": "opt_in",
+                "gen_ai.prompt.version": "conditionally_required_conditional",
+                "gen_ai.provider.name": "required",
+                "gen_ai.request.choice.count": "conditionally_required_conditional",
+                "gen_ai.request.frequency_penalty": "recommended",
+                "gen_ai.request.max_tokens": "recommended",
+                "gen_ai.request.model": "conditionally_required_conditional",
+                "gen_ai.request.presence_penalty": "recommended",
+                "gen_ai.request.previous_response.id": "recommended_conditional",
+                "gen_ai.request.reasoning.level": "recommended_conditional",
+                "gen_ai.request.seed": "conditionally_required_conditional",
+                "gen_ai.request.stop_sequences": "recommended",
+                "gen_ai.request.stream": "conditionally_required_conditional",
+                "gen_ai.request.temperature": "recommended",
+                "gen_ai.request.top_k": "recommended",
+                "gen_ai.request.top_p": "recommended",
+                "gen_ai.response.finish_reasons": "recommended",
+                "gen_ai.response.id": "recommended",
+                "gen_ai.response.model": "recommended",
+                "gen_ai.response.time_to_first_chunk": "recommended_conditional",
+                "gen_ai.system_instructions": "opt_in",
+                "gen_ai.tool.definitions": "opt_in",
+                "gen_ai.usage.audio.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.output_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_write.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.output_tokens": "recommended_conditional",
+                "gen_ai.usage.input_tokens": "recommended",
+                "gen_ai.usage.output_tokens": "recommended",
+                "gen_ai.usage.reasoning.output_tokens": "recommended_conditional",
+                "gen_ai.usage.text.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.output_tokens": "recommended_conditional",
+                "server.address": "recommended",
+                "server.port": "conditionally_required_conditional"
+              }
+            },
+            "aws.bedrock.gen_ai.client.inference": {
+              "attributes": {
+                "aws.bedrock.guardrail.id": "required",
+                "aws.bedrock.knowledge_base.id": "recommended",
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.conversation.compacted": "recommended_conditional",
+                "gen_ai.conversation.id": "conditionally_required_conditional",
+                "gen_ai.input.messages": "opt_in",
+                "gen_ai.operation.name": "required",
+                "gen_ai.output.messages": "opt_in",
+                "gen_ai.output.type": "conditionally_required_conditional",
+                "gen_ai.prompt.name": "conditionally_required_conditional",
+                "gen_ai.prompt.variable": "opt_in",
+                "gen_ai.prompt.version": "conditionally_required_conditional",
+                "gen_ai.provider.name": "required",
+                "gen_ai.request.choice.count": "conditionally_required_conditional",
+                "gen_ai.request.frequency_penalty": "recommended",
+                "gen_ai.request.max_tokens": "recommended",
+                "gen_ai.request.model": "conditionally_required_conditional",
+                "gen_ai.request.presence_penalty": "recommended",
+                "gen_ai.request.previous_response.id": "recommended_conditional",
+                "gen_ai.request.reasoning.level": "recommended_conditional",
+                "gen_ai.request.seed": "conditionally_required_conditional",
+                "gen_ai.request.stop_sequences": "recommended",
+                "gen_ai.request.stream": "conditionally_required_conditional",
+                "gen_ai.request.temperature": "recommended",
+                "gen_ai.request.top_k": "recommended",
+                "gen_ai.request.top_p": "recommended",
+                "gen_ai.response.finish_reasons": "recommended",
+                "gen_ai.response.id": "recommended",
+                "gen_ai.response.model": "recommended",
+                "gen_ai.response.time_to_first_chunk": "recommended_conditional",
+                "gen_ai.system_instructions": "opt_in",
+                "gen_ai.tool.definitions": "opt_in",
+                "gen_ai.usage.audio.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.output_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_write.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.output_tokens": "recommended_conditional",
+                "gen_ai.usage.input_tokens": "recommended",
+                "gen_ai.usage.output_tokens": "recommended",
+                "gen_ai.usage.reasoning.output_tokens": "recommended_conditional",
+                "gen_ai.usage.text.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.output_tokens": "recommended_conditional",
+                "server.address": "recommended",
+                "server.port": "conditionally_required_conditional"
+              }
+            },
+            "azure.ai.gen_ai.client.inference": {
+              "attributes": {
+                "azure.resource_provider.namespace": "recommended",
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.conversation.compacted": "recommended_conditional",
+                "gen_ai.conversation.id": "conditionally_required_conditional",
+                "gen_ai.input.messages": "opt_in",
+                "gen_ai.operation.name": "required",
+                "gen_ai.output.messages": "opt_in",
+                "gen_ai.output.type": "conditionally_required_conditional",
+                "gen_ai.prompt.name": "conditionally_required_conditional",
+                "gen_ai.prompt.variable": "opt_in",
+                "gen_ai.prompt.version": "conditionally_required_conditional",
+                "gen_ai.provider.name": "required",
+                "gen_ai.request.choice.count": "conditionally_required_conditional",
+                "gen_ai.request.frequency_penalty": "recommended",
+                "gen_ai.request.max_tokens": "recommended",
+                "gen_ai.request.model": "conditionally_required_conditional",
+                "gen_ai.request.presence_penalty": "recommended",
+                "gen_ai.request.previous_response.id": "recommended_conditional",
+                "gen_ai.request.reasoning.level": "recommended_conditional",
+                "gen_ai.request.seed": "conditionally_required_conditional",
+                "gen_ai.request.stop_sequences": "recommended",
+                "gen_ai.request.stream": "conditionally_required_conditional",
+                "gen_ai.request.temperature": "recommended",
+                "gen_ai.request.top_k": "conditionally_required_conditional",
+                "gen_ai.request.top_p": "recommended",
+                "gen_ai.response.finish_reasons": "recommended",
+                "gen_ai.response.id": "recommended",
+                "gen_ai.response.model": "recommended",
+                "gen_ai.response.time_to_first_chunk": "recommended_conditional",
+                "gen_ai.system_instructions": "opt_in",
+                "gen_ai.tool.definitions": "opt_in",
+                "gen_ai.usage.audio.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.output_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_write.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.output_tokens": "recommended_conditional",
+                "gen_ai.usage.input_tokens": "recommended",
+                "gen_ai.usage.output_tokens": "recommended",
+                "gen_ai.usage.reasoning.output_tokens": "recommended_conditional",
+                "gen_ai.usage.text.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.output_tokens": "recommended_conditional",
+                "server.address": "recommended",
+                "server.port": "conditionally_required_conditional"
+              }
+            },
+            "openai.gen_ai.client.inference": {
+              "attributes": {
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.conversation.compacted": "recommended_conditional",
+                "gen_ai.conversation.id": "conditionally_required_conditional",
+                "gen_ai.input.messages": "opt_in",
+                "gen_ai.operation.name": "required",
+                "gen_ai.output.messages": "opt_in",
+                "gen_ai.output.type": "conditionally_required_conditional",
+                "gen_ai.prompt.name": "conditionally_required_conditional",
+                "gen_ai.prompt.variable": "opt_in",
+                "gen_ai.prompt.version": "conditionally_required_conditional",
+                "gen_ai.provider.name": "required",
+                "gen_ai.request.choice.count": "conditionally_required_conditional",
+                "gen_ai.request.frequency_penalty": "recommended",
+                "gen_ai.request.max_tokens": "recommended",
+                "gen_ai.request.model": "required",
+                "gen_ai.request.presence_penalty": "recommended",
+                "gen_ai.request.previous_response.id": "recommended_conditional",
+                "gen_ai.request.reasoning.level": "recommended_conditional",
+                "gen_ai.request.seed": "conditionally_required_conditional",
+                "gen_ai.request.stop_sequences": "recommended",
+                "gen_ai.request.stream": "conditionally_required_conditional",
+                "gen_ai.request.temperature": "recommended",
+                "gen_ai.request.top_k": "conditionally_required_conditional",
+                "gen_ai.request.top_p": "recommended",
+                "gen_ai.response.finish_reasons": "recommended",
+                "gen_ai.response.id": "recommended",
+                "gen_ai.response.model": "recommended",
+                "gen_ai.response.time_to_first_chunk": "recommended_conditional",
+                "gen_ai.system_instructions": "opt_in",
+                "gen_ai.tool.definitions": "opt_in",
+                "gen_ai.usage.audio.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.input_tokens": "recommended_conditional",
+                "gen_ai.usage.audio.output_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.cache_write.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.input_tokens": "recommended_conditional",
+                "gen_ai.usage.image.output_tokens": "recommended_conditional",
+                "gen_ai.usage.input_tokens": "recommended",
+                "gen_ai.usage.output_tokens": "recommended",
+                "gen_ai.usage.reasoning.output_tokens": "recommended_conditional",
+                "gen_ai.usage.text.cache_read.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.input_tokens": "recommended_conditional",
+                "gen_ai.usage.text.output_tokens": "recommended_conditional",
+                "openai.api.type": "recommended",
+                "openai.request.service_tier": "conditionally_required_conditional",
+                "openai.response.service_tier": "conditionally_required_conditional",
+                "openai.response.system_fingerprint": "recommended",
+                "server.address": "recommended",
+                "server.port": "conditionally_required_conditional"
+              }
+            }
+          }
         },
         "gen_ai.create_agent.client": {
           "attributes": {
@@ -449,7 +690,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "gen_ai.embeddings.client": {
           "attributes": {
@@ -464,7 +706,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "gen_ai.execute_tool.internal": {
           "attributes": {
@@ -479,7 +722,65 @@
             "gen_ai.tool.name": "required",
             "gen_ai.tool.type": "recommended_conditional"
           },
-          "kind": "internal"
+          "kind": "internal",
+          "refinements": {
+            "gen_ai.execute_tool.command.internal": {
+              "attributes": {
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.agent.name": "conditionally_required_conditional",
+                "gen_ai.conversation.id": "conditionally_required_conditional",
+                "gen_ai.operation.name": "required",
+                "gen_ai.skill.description": "recommended_conditional",
+                "gen_ai.skill.name": "conditionally_required_conditional",
+                "gen_ai.skill.resource.name": "conditionally_required_conditional",
+                "gen_ai.skill.source.uri": "recommended_conditional",
+                "gen_ai.tool.call.arguments": "opt_in",
+                "gen_ai.tool.call.id": "conditionally_required_conditional",
+                "gen_ai.tool.call.result": "opt_in",
+                "gen_ai.tool.description": "recommended_conditional",
+                "gen_ai.tool.name": "required",
+                "gen_ai.tool.type": "recommended_conditional",
+                "process.executable.name": "conditionally_required_conditional",
+                "process.executable.path": "recommended_conditional",
+                "process.exit.code": "conditionally_required_conditional"
+              }
+            },
+            "gen_ai.execute_tool.load_skill.internal": {
+              "attributes": {
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.agent.name": "conditionally_required_conditional",
+                "gen_ai.conversation.id": "conditionally_required_conditional",
+                "gen_ai.operation.name": "required",
+                "gen_ai.skill.description": "recommended_conditional",
+                "gen_ai.skill.name": "conditionally_required_conditional",
+                "gen_ai.skill.source.uri": "recommended_conditional",
+                "gen_ai.tool.call.arguments": "opt_in",
+                "gen_ai.tool.call.id": "conditionally_required_conditional",
+                "gen_ai.tool.call.result": "opt_in",
+                "gen_ai.tool.description": "recommended_conditional",
+                "gen_ai.tool.name": "required",
+                "gen_ai.tool.type": "recommended_conditional"
+              }
+            },
+            "gen_ai.execute_tool.read_skill_resource.internal": {
+              "attributes": {
+                "error.type": "conditionally_required_conditional",
+                "gen_ai.agent.name": "conditionally_required_conditional",
+                "gen_ai.conversation.id": "conditionally_required_conditional",
+                "gen_ai.operation.name": "required",
+                "gen_ai.skill.description": "recommended_conditional",
+                "gen_ai.skill.name": "conditionally_required_conditional",
+                "gen_ai.skill.resource.name": "conditionally_required_conditional",
+                "gen_ai.skill.source.uri": "recommended_conditional",
+                "gen_ai.tool.call.arguments": "opt_in",
+                "gen_ai.tool.call.id": "conditionally_required_conditional",
+                "gen_ai.tool.call.result": "opt_in",
+                "gen_ai.tool.description": "recommended_conditional",
+                "gen_ai.tool.name": "required",
+                "gen_ai.tool.type": "recommended_conditional"
+              }
+            }
+          }
         },
         "gen_ai.invoke_agent.client": {
           "attributes": {
@@ -524,7 +825,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "gen_ai.invoke_agent.internal": {
           "attributes": {
@@ -552,7 +854,8 @@
             "gen_ai.usage.input_tokens": "recommended",
             "gen_ai.usage.output_tokens": "recommended"
           },
-          "kind": "internal"
+          "kind": "internal",
+          "refinements": {}
         },
         "gen_ai.invoke_workflow.internal": {
           "attributes": {
@@ -563,7 +866,8 @@
             "gen_ai.output.messages": "opt_in",
             "gen_ai.workflow.name": "conditionally_required_conditional"
           },
-          "kind": "internal"
+          "kind": "internal",
+          "refinements": {}
         },
         "gen_ai.retrieval.client": {
           "attributes": {
@@ -578,7 +882,8 @@
             "server.address": "recommended",
             "server.port": "conditionally_required_conditional"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         }
       }
     },
@@ -596,7 +901,7 @@
             "host.type": "recommended"
           },
           "identity": {
-            "host.id": null
+            "host.id": "required"
           }
         },
         "process.runtime": {
@@ -604,8 +909,8 @@
             "process.runtime.description": "recommended"
           },
           "identity": {
-            "process.runtime.name": null,
-            "process.runtime.version": null
+            "process.runtime.name": "required",
+            "process.runtime.version": "required"
           }
         },
         "service": {
@@ -614,7 +919,7 @@
             "service.version": "recommended"
           },
           "identity": {
-            "service.name": null
+            "service.name": "required"
           }
         },
         "service.instance": {
@@ -623,7 +928,7 @@
             "service.instance.cost_center.name": "opt_in"
           },
           "identity": {
-            "service.instance.id": null
+            "service.instance.id": "required"
           }
         },
         "telemetry.distro": {
@@ -631,7 +936,7 @@
             "telemetry.distro.version": "recommended"
           },
           "identity": {
-            "telemetry.distro.name": null
+            "telemetry.distro.name": "required"
           }
         },
         "telemetry.sdk": {
@@ -639,8 +944,8 @@
             "telemetry.sdk.version": "required"
           },
           "identity": {
-            "telemetry.sdk.language": null,
-            "telemetry.sdk.name": null
+            "telemetry.sdk.language": "required",
+            "telemetry.sdk.name": "required"
           }
         }
       },
@@ -650,7 +955,8 @@
           "attributes": {
             "dns.question.name": "required",
             "error.type": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         },
         "http.client.active_requests": {
           "attributes": {
@@ -659,7 +965,8 @@
             "server.port": "required",
             "url.scheme": "opt_in",
             "url.template": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         },
         "http.client.connection.duration": {
           "attributes": {
@@ -668,7 +975,8 @@
             "server.address": "required",
             "server.port": "required",
             "url.scheme": "opt_in"
-          }
+          },
+          "refinements": {}
         },
         "http.client.open_connections": {
           "attributes": {
@@ -678,7 +986,8 @@
             "server.address": "required",
             "server.port": "required",
             "url.scheme": "opt_in"
-          }
+          },
+          "refinements": {}
         },
         "http.client.request.body.size": {
           "attributes": {
@@ -691,7 +1000,8 @@
             "server.port": "required",
             "url.scheme": "opt_in",
             "url.template": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         },
         "http.client.request.duration": {
           "attributes": {
@@ -704,7 +1014,8 @@
             "server.port": "required",
             "url.scheme": "opt_in",
             "url.template": "opt_in"
-          }
+          },
+          "refinements": {}
         },
         "http.client.response.body.size": {
           "attributes": {
@@ -717,7 +1028,8 @@
             "server.port": "required",
             "url.scheme": "opt_in",
             "url.template": "conditionally_required_conditional"
-          }
+          },
+          "refinements": {}
         },
         "http.server.active_requests": {
           "attributes": {
@@ -725,7 +1037,8 @@
             "server.address": "opt_in",
             "server.port": "opt_in",
             "url.scheme": "required"
-          }
+          },
+          "refinements": {}
         },
         "http.server.request.body.size": {
           "attributes": {
@@ -739,7 +1052,8 @@
             "server.port": "opt_in",
             "url.scheme": "required",
             "user_agent.synthetic.type": "opt_in"
-          }
+          },
+          "refinements": {}
         },
         "http.server.request.duration": {
           "attributes": {
@@ -753,7 +1067,8 @@
             "server.port": "opt_in",
             "url.scheme": "required",
             "user_agent.synthetic.type": "opt_in"
-          }
+          },
+          "refinements": {}
         },
         "http.server.response.body.size": {
           "attributes": {
@@ -767,7 +1082,8 @@
             "server.port": "opt_in",
             "url.scheme": "required",
             "user_agent.synthetic.type": "opt_in"
-          }
+          },
+          "refinements": {}
         }
       },
       "spans": {
@@ -799,7 +1115,8 @@
             "user_agent.original": "opt_in",
             "user_agent.synthetic.type": "opt_in"
           },
-          "kind": "client"
+          "kind": "client",
+          "refinements": {}
         },
         "http.server": {
           "attributes": {
@@ -833,7 +1150,8 @@
             "user_agent.original": "recommended",
             "user_agent.synthetic.type": "opt_in"
           },
-          "kind": "server"
+          "kind": "server",
+          "refinements": {}
         }
       }
     }
@@ -34838,7 +35156,9 @@
             "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
-            "gen_ai.usage.output_tokens"
+            "gen_ai.usage.output_tokens",
+            "openai.request.service_tier",
+            "openai.response.service_tier"
           ],
           "identity": {
             "attributes": [
@@ -34858,7 +35178,9 @@
               "gen_ai.tool.definitions",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
-              "gen_ai.usage.output_tokens"
+              "gen_ai.usage.output_tokens",
+              "openai.request.service_tier",
+              "openai.response.service_tier"
             ],
             "span_kind": "client"
           },
@@ -35454,6 +35776,9 @@
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens",
             "gen_ai.usage.reasoning.output_tokens",
+            "openai.api.type",
+            "openai.request.service_tier",
+            "openai.response.service_tier",
             "server.address",
             "server.port"
           ],
@@ -35486,6 +35811,9 @@
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens",
               "gen_ai.usage.reasoning.output_tokens",
+              "openai.api.type",
+              "openai.request.service_tier",
+              "openai.response.service_tier",
               "server.address",
               "server.port"
             ],
@@ -35655,6 +35983,7 @@
             "gen_ai.provider.name",
             "gen_ai.request.model",
             "gen_ai.response.model",
+            "openai.response.service_tier",
             "server.address",
             "server.port"
           ],
