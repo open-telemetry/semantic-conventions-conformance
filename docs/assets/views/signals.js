@@ -385,7 +385,10 @@ function trackEdges(frame, scroller, rail) {
     },
     { passive: true },
   );
-  if (typeof ResizeObserver !== "function") return;
+  if (typeof ResizeObserver !== "function") {
+    setTimeout(update, 0);
+    return;
+  }
   edgeObserver?.disconnect();
   edgeObserver = new ResizeObserver(update);
   edgeObserver.observe(scroller);

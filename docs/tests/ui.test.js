@@ -265,6 +265,34 @@ test("column headers name the library, its qualifier, and the distribution", asy
   assert.match(headers[1].getAttribute("title"), /opentelemetry-library/);
 });
 
+test("scroll rail initializes after mounting without ResizeObserver", async (t) => {
+  const window = await setup(t);
+  assert.equal(typeof globalThis.ResizeObserver, "undefined");
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+
+  const view = signals(await load(), null);
+  const frame = view.querySelector(".scroll-frame");
+  const scroller = frame.querySelector(".scroller");
+  const rail = frame.querySelector(".scroll-rail");
+  Object.defineProperties(scroller, {
+    scrollWidth: { value: 1000 },
+    clientWidth: { value: 400 },
+  });
+  Object.defineProperty(scroller.querySelector("th.attr"), "offsetWidth", {
+    value: 200,
+  });
+  assert.equal(rail.firstElementChild.style.width, "");
+
+  window.document.querySelector("main").replaceChildren(view);
+  t.mock.timers.tick(0);
+
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+  assert.equal(frame.style.getPropertyValue("--pinned-w"), "200px");
+  assert.equal(frame.classList.contains("fits"), false);
+  assert.equal(frame.classList.contains("more-left"), false);
+  assert.equal(frame.classList.contains("more-right"), true);
+});
+
 test("empty reports and unknown signals give useful messages", async (t) => {
   await setup(t, report([]));
   assert.equal(
