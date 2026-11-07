@@ -6,6 +6,7 @@ package scenario
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -60,5 +61,49 @@ func TestWaitForEOFReturnsReadError(t *testing.T) {
 
 	if !errors.Is(err, want) {
 		t.Errorf("WaitForEOF() returned %v, want %v", err, want)
+	}
+}
+
+func TestWaitAtGateWithoutAGateReturns(t *testing.T) {
+	t.Setenv(GateVariable, "")
+
+	if err := WaitAtGate(); err != nil {
+		t.Errorf("WaitAtGate() returned %v", err)
+	}
+}
+
+func TestRunWithoutAGateRunsTheWorkload(t *testing.T) {
+	t.Setenv(GateVariable, "")
+	want := errors.New("workload failed")
+
+	err := Run(func() error { return want })
+
+	if !errors.Is(err, want) {
+		t.Errorf("Run() returned %v, want %v", err, want)
+	}
+}
+
+func TestServeStopsOnceInputCloses(t *testing.T) {
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	stdin := os.Stdin
+	os.Stdin = reader
+	t.Cleanup(func() { os.Stdin = stdin })
+	_ = writer.Close()
+
+	err = Serve(func(stopping <-chan error) error { return <-stopping })
+
+	if err != nil {
+		t.Errorf("Serve() returned %v", err)
+	}
+}
+
+func TestWaitAtGateFailsWithoutAGate(t *testing.T) {
+	t.Setenv(GateVariable, filepath.Join(t.TempDir(), "missing"))
+
+	if err := WaitAtGate(); err == nil || !strings.Contains(err.Error(), "reaching the gate") {
+		t.Errorf("WaitAtGate() returned %v, want an error reaching the gate", err)
 	}
 }

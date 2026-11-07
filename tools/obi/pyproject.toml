@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "otel-conformance-obi"
+version = "0.1.0.dev0"
+description = "Runs a conformance scenario under OpenTelemetry eBPF Instrumentation (OBI), attached before the scenario's first network socket."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+otel-conformance-obi = "otel_conformance_obi:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/otel_conformance_obi"]
