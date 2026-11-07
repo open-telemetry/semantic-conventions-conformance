@@ -648,6 +648,7 @@ td.num {
   position: sticky;
   bottom: 0;
   z-index: 5;
+  min-height: 1rem;
   overflow-x: auto;
   overflow-y: hidden;
   background: var(--bg);
