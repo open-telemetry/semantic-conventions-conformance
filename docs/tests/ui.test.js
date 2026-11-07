@@ -236,6 +236,35 @@ test("attribute rows link to the registry, and the band colours the language", a
   assert.match(bands[0].getAttribute("style"), /--lang-\d/);
 });
 
+test("column headers name the library, its qualifier, and the distribution", async (t) => {
+  const jdbc = (label) =>
+    target({
+      id: `database/java/mariadb/jdbc/${label}`,
+      label,
+      signals: [
+        { type: "metric", name: "db.duration", emitted: ["db.system"] },
+      ],
+    });
+  const window = await setup(
+    t,
+    report([jdbc("opentelemetry-javaagent"), jdbc("opentelemetry-library")]),
+  );
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+
+  const headers = [...main.querySelectorAll("th.col a")];
+  assert.deepEqual(
+    headers.map((header) =>
+      [...header.children].map((part) => part.textContent),
+    ),
+    [
+      ["jdbc", "mariadb", "otel-javaagent"],
+      ["jdbc", "mariadb", "otel-library"],
+    ],
+  );
+  assert.match(headers[1].getAttribute("title"), /opentelemetry-library/);
+});
+
 test("empty reports and unknown signals give useful messages", async (t) => {
   await setup(t, report([]));
   assert.equal(

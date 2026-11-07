@@ -253,8 +253,8 @@ h2 {
    masthead gives up `sticky` for it, so this can hold `top: 0` without having
    to know how tall a wrapped tagline is. Full-bleed across main's padding, and
    main runs the width of the screen, so nothing shows beside it. Its height
-   reaches the table pane as `--controls-h` (`trackBand` in `ui.js`), because
-   the filter chips and the extra filters both change it. */
+   is published as `--controls-h` (`trackBand` in `ui.js`), so a row scrolled
+   into view lands below it however the filters wrap. */
 .controls {
   position: sticky;
   top: 0;
@@ -263,6 +263,12 @@ h2 {
   padding: 0.8rem 1.5rem 0.65rem;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
+}
+/* The heatmap's band scrolls away with the page instead, leaving the whole
+   screen to the table: its filters wrap onto a second row, and it is set once
+   before reading rather than reached for mid-table. */
+.controls.unpinned {
+  position: static;
 }
 .controls-row {
   display: flex;
@@ -624,19 +630,77 @@ td.num {
 
 /* --- heatmap ------------------------------------------------------------- */
 
-/* The heatmap is wider than the screen and longer than it, so it scrolls in
-   its own pane rather than dragging the page sideways: one scrollbar per axis,
-   and the header row parks under the controls band instead of behind it. The
-   fallback is a band with one row of filters; `trackBand` replaces it with the
-   measured height as soon as the page has one. */
+/* The heatmap is wider than the screen, so it scrolls sideways in its own pane
+   rather than dragging the page with it. Down is the page's job, so a swipe
+   down the table never gets stuck inside it. */
 .scroller {
-  overflow: auto;
-  max-height: max(22rem, calc(100vh - var(--controls-h, 7rem) - 9rem));
+  overflow-x: auto;
   overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+/* The table's own scrollbar is below its last row, often a screen or more
+   away, so this one stands in for it: held at the bottom of the screen while
+   the table is in view, and resting under the last row once that is. */
+.scroll-rail {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--bg);
+}
+.scroll-rail > div {
+  height: 1px;
+}
+.scroll-frame.fits .scroll-rail {
+  display: none;
+}
+
+/* The scrollbar only says how far along the table is, so a shadow on each side
+   that still has columns past it is what says where it goes on. The left one
+   starts at the pinned attribute column's edge, which `trackEdges` in
+   `signals.js` publishes as `--pinned-w`. */
+.scroll-frame {
+  position: relative;
+}
+.scroll-frame::before,
+.scroll-frame::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1.25rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 4;
+}
+.scroll-frame::before {
+  left: var(--pinned-w, 0);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--ink) 16%, transparent),
+    transparent
+  );
+}
+.scroll-frame::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    color-mix(in srgb, var(--ink) 16%, transparent),
+    transparent
+  );
+}
+.scroll-frame.more-left::before,
+.scroll-frame.more-right::after {
+  opacity: 1;
 }
 
 .heatmap {
-  width: auto;
+  width: max-content;
   font-size: 0.8rem;
   border-collapse: separate;
   border-spacing: 0;
@@ -644,19 +708,21 @@ td.num {
 .heatmap th.attr {
   position: sticky;
   left: 0;
-  background: var(--surface);
   z-index: 2;
+  background: var(--surface);
   font-family: var(--mono);
   font-size: 0.78rem;
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
+  text-align: left;
   white-space: nowrap;
   border-right: 1px solid var(--line-strong);
   color: var(--ink);
 }
 /* The attribute name is the row's label first and a registry link second, so it
-   keeps the row's colour and only underlines under the pointer. */
+   keeps the row's colour and only underlines under the pointer. The namespace
+   is muted, so the part that differs between neighbours stands out. */
 .heatmap th.attr a {
   color: inherit;
   text-decoration: none;
@@ -664,61 +730,74 @@ td.num {
 .heatmap th.attr a:hover {
   text-decoration: underline;
 }
+.heatmap th.attr .ns {
+  color: var(--ink-3);
+}
 .heatmap thead th.attr {
   z-index: 3;
-  background: var(--surface-2);
-}
-.heatmap thead th.col {
-  height: 11.5rem;
-  padding: 0.3rem 0;
   vertical-align: bottom;
   background: var(--surface-2);
+}
+/* A target's name runs up its column on one line, so the column is only as
+   wide as a cell. */
+.heatmap thead th.col,
+.heatmap thead th.tally {
+  padding: 0.4rem 0;
+  vertical-align: bottom;
+  text-align: center;
   text-transform: none;
   letter-spacing: 0;
 }
-/* Rotated, and two blocks rather than one string: in vertical writing the block
-   axis runs across the screen, so the lines sit side by side and the height is
-   the longer one rather than their sum. `overflow` is a backstop. */
-.heatmap thead th.col > a {
-  display: block;
+.heatmap thead th.col {
+  width: 1.6rem;
+  min-width: 1.6rem;
+  max-width: 1.6rem;
+  border-left: 1px solid var(--line);
+}
+.heatmap thead .upright {
+  display: inline-block;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-family: var(--mono);
-  font-weight: 400;
   white-space: nowrap;
-  max-height: 11rem;
-  overflow: hidden;
-  margin: 0 auto;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  line-height: 1.25;
+  font-weight: 400;
   color: var(--ink);
+  text-decoration: none;
+}
+.heatmap thead th.col > a > * + * {
+  margin-inline-start: 0.5em;
 }
 .heatmap thead th.col b {
-  display: block;
-  font-weight: 400;
-  font-size: 0.74rem;
+  font-weight: 600;
+}
+.heatmap thead th.col span {
+  color: var(--ink-2);
 }
 .heatmap thead th.col i {
-  display: block;
   font-style: normal;
-  font-size: 0.68rem;
   color: var(--ink-3);
-  margin-right: 0.12rem;
 }
-/* The one horizontal header: a count column reads as a count column, not as
-   another rotated name. */
-.heatmap thead th.tally {
-  vertical-align: bottom;
-  text-align: right;
-  white-space: nowrap;
+.heatmap thead th.col > a:hover,
+.heatmap thead th.col > a:hover > * {
+  color: var(--accent);
+}
+.heatmap thead th.col > a:hover {
+  text-decoration: underline;
+}
+/* A count column reads as a count column, not as another target. */
+.heatmap thead th.tally .upright {
+  color: var(--ink-2);
+}
+.heatmap thead tr.band th {
   background: var(--surface-2);
-  padding: 0.3rem 0.5rem;
-  width: 6rem;
-  min-width: 6rem;
 }
 .heatmap thead tr.band th.band-cell {
-  height: 1.5rem;
-  padding: 0 0.3rem;
-  text-align: center;
-  background: var(--surface-2);
+  position: relative;
+  height: 1.3rem;
+  padding: 0;
+  text-align: left;
   color: var(--ink-2);
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -726,36 +805,44 @@ td.num {
   border-left: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line);
 }
-/* Two header rows, so the second one has to start where the first one ends. */
-.heatmap thead th.col,
-.heatmap thead th.tally,
-.heatmap thead th.attr {
-  top: 1.5rem;
-}
-.heatmap thead tr.band th {
-  top: 0;
+.heatmap thead tr.band th.band-cell > span {
+  position: absolute;
+  inset: 0;
+  padding: 0 0.3rem;
+  line-height: 1.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .heatmap td.cell {
-  width: 1.9rem;
-  min-width: 1.9rem;
+  min-width: 1.5rem;
   padding: 0;
   text-align: center;
   border-left: 1px solid var(--line);
 }
+/* Dense rows, so more of a signal fits on one screen. The colour alone tells a
+   filled cell from a blank one, except where the system replaces the colours. */
+.heatmap tbody th,
+.heatmap tbody td {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
 .heatmap td.cell > span {
   display: block;
   width: 100%;
-  height: 1.55rem;
-  line-height: 1.55rem;
-  font-size: 0.7rem;
+  height: 1.3rem;
 }
 .cell-yes > span {
   background: var(--good);
-  color: var(--bg);
 }
 .cell-no > span {
   background: var(--miss);
-  color: var(--ink-3);
+}
+@media (forced-colors: active) {
+  .cell-yes > span {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
 }
 .heatmap tr.level-head th {
   background: var(--surface-2);
@@ -763,11 +850,14 @@ td.num {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ink-2);
+  padding-left: 0;
 }
+/* The label carries the cell's indent, so it holds its place once it sticks. */
 .heatmap tr.level-head span {
   position: sticky;
   left: 0;
   display: inline-block;
+  padding-left: 0.7rem;
 }
 .heatmap tr.level-head i {
   display: inline-block;
@@ -779,6 +869,16 @@ td.num {
 .rowcount {
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
+}
+/* A table that fits the screen needs no pane of its own, so its header can
+   stay in view while the page scrolls the rows under it. */
+.scroll-frame.fits .scroller {
+  overflow-x: visible;
+}
+.scroll-frame.fits .heatmap thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
 .note {
@@ -828,14 +928,10 @@ td.num {
   .count {
     margin-left: 0;
   }
-  /* Wrapped onto six rows this is most of a phone screen, which is no longer
-     worth keeping on top of the table. */
+  /* Wrapped onto a phone's width, even the one-row bands take a large share of
+     the screen, which is no longer worth keeping on top of the table. */
   .controls {
     position: static;
-  }
-  /* And with the band scrolled away, the pane can have the whole screen. */
-  .scroller {
-    max-height: max(22rem, calc(100vh - 4rem));
   }
 }
 
@@ -920,14 +1016,6 @@ details > summary {
 }
 details[open] > summary {
   margin-bottom: 0.4rem;
-}
-.heatmap thead th.col > a {
-  color: inherit;
-  text-decoration: none;
-}
-.heatmap thead th.col > a:hover {
-  color: var(--accent);
-  text-decoration: underline;
 }
 
 /* --- target detail ------------------------------------------------------- */
