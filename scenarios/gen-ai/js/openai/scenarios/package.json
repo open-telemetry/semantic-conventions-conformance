@@ -4,6 +4,6 @@
   "private": true,
   "license": "Apache-2.0",
   "dependencies": {
-    "openai": "6.49.0"
+    "openai": "7.50.0"
   }
 }
