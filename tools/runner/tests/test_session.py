@@ -249,12 +249,20 @@ def test_weaver_reserves_distinct_ports(
     directory: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("opentelemetry.test.weaver_live_check")
+    monkeypatch.delenv(
+        "OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT", raising=False
+    )
 
     ports: list[int] = []
 
     def construct(
-        *, otlp_port: int, admin_port: int, **kwargs: object
+        *,
+        otlp_port: int,
+        admin_port: int,
+        startup_timeout: float,
+        **kwargs: object,
     ) -> None:
+        assert startup_timeout == 120.0
         ports.extend([otlp_port, admin_port])
         assert 0 < otlp_port <= 65535
         assert 0 < admin_port <= 65535
@@ -276,6 +284,40 @@ def test_weaver_reserves_distinct_ports(
     for port in ports:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as other:
             other.bind(("127.0.0.1", port))
+
+
+def test_startup_timeout_limit_matches_the_health_poll() -> None:
+    pytest.importorskip("opentelemetry.test.weaver_live_check")
+    from opentelemetry.conformance._session import (  # noqa: PLC0415
+        _WEAVER_STARTUP_TIMEOUT,
+    )
+    from opentelemetry.conformance._weaver import (  # noqa: PLC0415
+        _STARTUP_TIMEOUT,
+    )
+
+    assert _WEAVER_STARTUP_TIMEOUT == _STARTUP_TIMEOUT
+
+
+def test_weaver_startup_timeout_follows_the_environment(
+    directory: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("opentelemetry.test.weaver_live_check")
+    seen: dict[str, float] = {}
+
+    def construct(*, startup_timeout: float, **kwargs: object) -> None:
+        del kwargs
+        seen["startup_timeout"] = startup_timeout
+        raise RuntimeError("weaver configured")
+
+    monkeypatch.setenv("OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT", "240")
+    monkeypatch.setattr(
+        "opentelemetry.conformance._weaver.WeaverLiveCheck", construct
+    )
+
+    with pytest.raises(RuntimeError, match="weaver configured"):
+        session(directory, tmp_path / "data.json").run("inference")
+
+    assert seen["startup_timeout"] == 240.0
 
 
 @pytest.mark.parametrize("index", [None, 3])

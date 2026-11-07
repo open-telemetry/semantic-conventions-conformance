@@ -169,6 +169,92 @@ def test_nonready_health_response_times_out(
     assert not starting_weaver._ready
 
 
+def test_startup_timeout_is_forwarded_when_the_helper_accepts_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_weaver, "_PARENT_ACCEPTS_STARTUP_TIMEOUT", True)
+    seen: dict[str, object] = {}
+
+    def parent_init(self: object, *args: object, **kwargs: object) -> None:
+        del self, args
+        seen.update(kwargs)
+
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "__init__", parent_init)
+    weaver = _weaver.WeaverLiveCheck(startup_timeout=120.0, registry="model")
+
+    assert seen["startup_timeout"] == 120.0
+    assert weaver._startup_timeout_fallback == 120.0
+
+
+def test_startup_timeout_stays_local_when_the_helper_lacks_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_weaver, "_PARENT_ACCEPTS_STARTUP_TIMEOUT", False)
+    seen: dict[str, object] = {}
+
+    def parent_init(self: object, *args: object, **kwargs: object) -> None:
+        del self, args
+        seen.update(kwargs)
+
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "__init__", parent_init)
+    weaver = _weaver.WeaverLiveCheck(startup_timeout=120.0)
+
+    assert "startup_timeout" not in seen
+    assert weaver._startup_timeout_fallback == 120.0
+
+
+def test_local_poll_uses_the_timeout_passed_by_the_session(
+    starting_weaver: _weaver.WeaverLiveCheck,
+    clock: list[float],
+    health: Mock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OTEL_CONFORMANCE_WEAVER_STARTUP_TIMEOUT", "30")
+    starting_weaver._startup_timeout_fallback = 2.5
+    health.side_effect = ReadTimeoutError(None, "/health", "slow")
+
+    with pytest.raises(TimeoutError, match="within 2.5s"):
+        starting_weaver._wait_for_ready()
+
+    assert clock[0] == 2.5
+
+
+@pytest.mark.parametrize("response_time", [0.5, 0.6])
+def test_forwarded_startup_timeout_rejects_health_at_or_after_deadline(
+    starting_weaver: _weaver.WeaverLiveCheck,
+    clock: list[float],
+    health: Mock,
+    monkeypatch: pytest.MonkeyPatch,
+    response_time: float,
+) -> None:
+    monkeypatch.setattr(_weaver, "_PARENT_ACCEPTS_STARTUP_TIMEOUT", True)
+    parent_init = Mock()
+    parent_wait = Mock()
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "__init__", parent_init)
+    monkeypatch.setattr(_weaver._WeaverLiveCheck, "_wait_for_ready", parent_wait)
+    starting_weaver.__init__(startup_timeout=0.5)
+    parent_init.assert_called_once_with(startup_timeout=0.5)
+    response = HTTPResponse(body=BytesIO(), status=200, preload_content=False)
+
+    def get(
+        method: str, url: str, *, timeout: HttpTimeout, **kwargs: object
+    ) -> HTTPResponse:
+        assert timeout.total == 0.5
+        clock[0] = response_time
+        return response
+
+    health.side_effect = get
+
+    with pytest.raises(TimeoutError, match="within 0.5s"):
+        starting_weaver._wait_for_ready()
+
+    assert clock[0] == response_time
+    assert response.closed
+    assert not starting_weaver._ready
+    health.assert_called_once()
+    parent_wait.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "error",
     [
