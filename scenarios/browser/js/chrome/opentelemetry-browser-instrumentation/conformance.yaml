@@ -1,0 +1,26 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: chrome
+instrumentation_library: "@opentelemetry/browser-instrumentation"
+
+setup: otel-conformance-js install
+
+otlp_protocol: http/protobuf
+
+scenarios:
+  errors:
+    run: node run.js errors
+    events:
+      - exception
+
+  console:
+    run: node run.js console
+    events:
+      - browser.console
+
+  web_vitals:
+    run: node run.js web-vitals
+    events:
+      - browser.web_vital

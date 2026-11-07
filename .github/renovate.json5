@@ -154,6 +154,18 @@
         "opentelemetry-distro"
       ],
       "enabled": false
+    },
+    {
+      // browser-instrumentation 0.8.1 requires the 0.222 SDK line. Delete
+      // this rule once it moves to 0.300, and bump these four packages with it.
+      "matchFileNames": ["scenarios/browser/js/**"],
+      "matchPackageNames": [
+        "@opentelemetry/api",
+        "@opentelemetry/exporter-logs-otlp-proto",
+        "@opentelemetry/instrumentation",
+        "@opentelemetry/sdk-logs"
+      ],
+      "enabled": false
     }
   ],
   "customManagers": [
