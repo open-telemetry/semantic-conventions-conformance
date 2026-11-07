@@ -265,7 +265,7 @@ test("column headers name the library, its qualifier, and the distribution", asy
   assert.match(headers[1].getAttribute("title"), /opentelemetry-library/);
 });
 
-test("scroll rail initializes after mounting without ResizeObserver", async (t) => {
+test("scroll rail initializes and follows window resizing without ResizeObserver", async (t) => {
   const window = await setup(t);
   assert.equal(typeof globalThis.ResizeObserver, "undefined");
   t.mock.timers.enable({ apis: ["setTimeout"] });
@@ -276,7 +276,7 @@ test("scroll rail initializes after mounting without ResizeObserver", async (t) 
   const rail = frame.querySelector(".scroll-rail");
   Object.defineProperties(scroller, {
     scrollWidth: { value: 1000 },
-    clientWidth: { value: 400 },
+    clientWidth: { value: 400, writable: true },
   });
   Object.defineProperty(scroller.querySelector("th.attr"), "offsetWidth", {
     value: 200,
@@ -291,6 +291,43 @@ test("scroll rail initializes after mounting without ResizeObserver", async (t) 
   assert.equal(frame.classList.contains("fits"), false);
   assert.equal(frame.classList.contains("more-left"), false);
   assert.equal(frame.classList.contains("more-right"), true);
+
+  scroller.clientWidth = 1200;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(frame.classList.contains("fits"), true);
+  assert.equal(frame.classList.contains("more-right"), false);
+
+  scroller.clientWidth = 400;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(frame.classList.contains("fits"), false);
+  assert.equal(frame.classList.contains("more-right"), true);
+});
+
+test("fallback resize listeners and pending updates are removed when the heatmap is replaced", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", {
+    value: 1000,
+    writable: true,
+  });
+  t.mock.timers.tick(0);
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+
+  driver(window, main).search("jdbc");
+  const replacementRail = main.querySelector(".scroll-rail");
+  driver(window, main).search("absent");
+  assert.equal(main.querySelector(".scroll-frame"), null);
+
+  scroller.scrollWidth = 1500;
+  window.dispatchEvent(new window.Event("resize"));
+  t.mock.timers.tick(0);
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+  assert.equal(replacementRail.firstElementChild.style.width, "");
 });
 
 test("empty reports and unknown signals give useful messages", async (t) => {

@@ -271,6 +271,8 @@ export default function signals(data, key, params) {
   ]);
 }
 function heatmap(signal, rows, levels, refinements, pin) {
+  stopTrackingEdges?.();
+  stopTrackingEdges = null;
   if (!rows.length) {
     return el("p", { class: "empty", text: "No targets match those filters." });
   }
@@ -352,15 +354,15 @@ function heatmap(signal, rows, levels, refinements, pin) {
   return el("div", {}, [frame, levelLegend(levels, refinements.length > 0)]);
 }
 
-let edgeObserver = null;
+let stopTrackingEdges = null;
 
 /**
  * Flag the sides of the frame that have columns scrolled past them, or `fits`
  * when there are none, and publish `--pinned-w`, the pinned attribute column's
  * width, where the left shadow starts. The rail is a scrollbar held at the
  * bottom of the screen, kept as wide as the table and in step with it, since
- * the table's own is past the last row. One observer serves the one heatmap on
- * the page.
+ * the table's own is past the last row. Only the current heatmap listens for
+ * size changes.
  */
 function trackEdges(frame, scroller, rail) {
   const update = () => {
@@ -386,13 +388,18 @@ function trackEdges(frame, scroller, rail) {
     { passive: true },
   );
   if (typeof ResizeObserver !== "function") {
-    setTimeout(update, 0);
+    const timer = setTimeout(update, 0);
+    addEventListener("resize", update, { passive: true });
+    stopTrackingEdges = () => {
+      clearTimeout(timer);
+      removeEventListener("resize", update);
+    };
     return;
   }
-  edgeObserver?.disconnect();
-  edgeObserver = new ResizeObserver(update);
-  edgeObserver.observe(scroller);
-  edgeObserver.observe(scroller.firstElementChild);
+  const observer = new ResizeObserver(update);
+  observer.observe(scroller);
+  observer.observe(scroller.firstElementChild);
+  stopTrackingEdges = () => observer.disconnect();
 }
 
 /** One attribute, across every column, and how many of them carried it. */
