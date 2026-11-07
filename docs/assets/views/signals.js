@@ -271,8 +271,7 @@ export default function signals(data, key, params) {
   ]);
 }
 function heatmap(signal, rows, levels, refinements, pin) {
-  stopTrackingEdges?.();
-  stopTrackingEdges = null;
+  dispose();
   if (!rows.length) {
     return el("p", { class: "empty", text: "No targets match those filters." });
   }
@@ -355,6 +354,11 @@ function heatmap(signal, rows, levels, refinements, pin) {
 }
 
 let stopTrackingEdges = null;
+
+export function dispose() {
+  stopTrackingEdges?.();
+  stopTrackingEdges = null;
+}
 
 /**
  * Flag the sides of the frame that have columns scrolled past them, or `fits`

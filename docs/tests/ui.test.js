@@ -7,7 +7,7 @@ import { setImmediate } from "node:timers/promises";
 import { test } from "node:test";
 import { load } from "../assets/data.js";
 import { split } from "../assets/route.js";
-import signals from "../assets/views/signals.js";
+import signals, { dispose } from "../assets/views/signals.js";
 import { report, target } from "./fixtures.js";
 
 /** Click, press and read the controls the way someone using them would. */
@@ -330,6 +330,24 @@ test("fallback resize listeners and pending updates are removed when the heatmap
   assert.equal(replacementRail.firstElementChild.style.width, "");
 });
 
+test("disposing the signals view cancels pending measurement and resize tracking", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", { value: 1000 });
+
+  dispose();
+  main.replaceChildren();
+  window.dispatchEvent(new window.Event("resize"));
+  t.mock.timers.tick(0);
+
+  assert.equal(rail.firstElementChild.style.width, "");
+  dispose();
+});
+
 test("empty reports and unknown signals give useful messages", async (t) => {
   await setup(t, report([]));
   assert.equal(
@@ -407,9 +425,21 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
   );
   const column = main.querySelector("th.col a");
   assert.ok(column);
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", {
+    value: 1000,
+    writable: true,
+  });
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+
   window.location.hash = column.getAttribute("href");
   window.dispatchEvent(new window.HashChangeEvent("hashchange"));
   assert.ok(main.querySelector(".target-detail"));
+  scroller.scrollWidth = 1500;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(rail.firstElementChild.style.width, "1000px");
   assert.match(window.document.title, /jdbc/);
   assert.equal(
     window.document.querySelector('nav [aria-current="page"]').textContent,
