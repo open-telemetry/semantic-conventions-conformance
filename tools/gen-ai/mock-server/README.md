@@ -22,7 +22,7 @@ and supplies its URL as `${MOCK_SERVER_URL}`.
 | `bedrock` | `converse`, `converse-stream`, `invoke` |
 | `bedrock_agent`, `bedrock_agentcore` | agent invocation, knowledge-base retrieval/generation (including streaming), the memory APIs, and evaluator lookup and evaluation |
 | `cohere` | `/v1` and `/v2` chat and embed |
-| `google_genai` | Gemini and Vertex content generation, code execution, and interaction creation/retrieval with Google Search |
+| `google_genai` | Gemini and Vertex content generation, code execution, and interaction creation/retrieval with Google Search; Gemini under both `/v1/…` (google-genai 3) and `/v1beta/…` (google-genai 2), except agent creation, which is `/v1beta/agents` only because `/v1/agents` is Anthropic's |
 | `mistral` | chat completions, FIM and embeddings, under `/mistral/v1/…` |
 | `ollama` | `/api/chat`, including tool use and NDJSON streaming, and `/api/embed` |
 | `openai` | chat completions, embeddings and the Responses API (including non-streaming web search), under `/v1/…`, the Azure `/openai/deployments/<deployment>/…` paths, and bare paths |
@@ -33,7 +33,7 @@ assign new IDs. Streaming formats follow the provider's API.
 
 ## Google interactions and hosted tools
 
-`GET /v1beta/interactions/{id}` returns a completed interaction with the requested
+`GET /v1/interactions/{id}` (or `/v1beta/…`) returns a completed interaction with the requested
 ID, model output, and token usage. No create request is needed, so a fetch
 scenario emits only retrieval telemetry.
 
