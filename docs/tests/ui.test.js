@@ -7,7 +7,7 @@ import { setImmediate } from "node:timers/promises";
 import { test } from "node:test";
 import { load } from "../assets/data.js";
 import { split } from "../assets/route.js";
-import signals from "../assets/views/signals.js";
+import signals, { dispose } from "../assets/views/signals.js";
 import { report, target } from "./fixtures.js";
 
 /** Click, press and read the controls the way someone using them would. */
@@ -236,6 +236,118 @@ test("attribute rows link to the registry, and the band colours the language", a
   assert.match(bands[0].getAttribute("style"), /--lang-\d/);
 });
 
+test("column headers name the library, its qualifier, and the distribution", async (t) => {
+  const jdbc = (label) =>
+    target({
+      id: `database/java/mariadb/jdbc/${label}`,
+      label,
+      signals: [
+        { type: "metric", name: "db.duration", emitted: ["db.system"] },
+      ],
+    });
+  const window = await setup(
+    t,
+    report([jdbc("opentelemetry-javaagent"), jdbc("opentelemetry-library")]),
+  );
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+
+  const headers = [...main.querySelectorAll("th.col a")];
+  assert.deepEqual(
+    headers.map((header) =>
+      [...header.children].map((part) => part.textContent),
+    ),
+    [
+      ["jdbc", "mariadb", "otel-javaagent"],
+      ["jdbc", "mariadb", "otel-library"],
+    ],
+  );
+  assert.match(headers[1].getAttribute("title"), /opentelemetry-library/);
+});
+
+test("scroll rail initializes and follows window resizing without ResizeObserver", async (t) => {
+  const window = await setup(t);
+  assert.equal(typeof globalThis.ResizeObserver, "undefined");
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+
+  const view = signals(await load(), null);
+  const frame = view.querySelector(".scroll-frame");
+  const scroller = frame.querySelector(".scroller");
+  const rail = frame.querySelector(".scroll-rail");
+  Object.defineProperties(scroller, {
+    scrollWidth: { value: 1000 },
+    clientWidth: { value: 400, writable: true },
+  });
+  Object.defineProperty(scroller.querySelector("th.attr"), "offsetWidth", {
+    value: 200,
+  });
+  assert.equal(rail.firstElementChild.style.width, "");
+
+  window.document.querySelector("main").replaceChildren(view);
+  t.mock.timers.tick(0);
+
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+  assert.equal(frame.style.getPropertyValue("--pinned-w"), "200px");
+  assert.equal(frame.classList.contains("fits"), false);
+  assert.equal(frame.classList.contains("more-left"), false);
+  assert.equal(frame.classList.contains("more-right"), true);
+
+  scroller.clientWidth = 1200;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(frame.classList.contains("fits"), true);
+  assert.equal(frame.classList.contains("more-right"), false);
+
+  scroller.clientWidth = 400;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(frame.classList.contains("fits"), false);
+  assert.equal(frame.classList.contains("more-right"), true);
+});
+
+test("fallback resize listeners and pending updates are removed when the heatmap is replaced", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", {
+    value: 1000,
+    writable: true,
+  });
+  t.mock.timers.tick(0);
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+
+  driver(window, main).search("jdbc");
+  const replacementRail = main.querySelector(".scroll-rail");
+  driver(window, main).search("absent");
+  assert.equal(main.querySelector(".scroll-frame"), null);
+
+  scroller.scrollWidth = 1500;
+  window.dispatchEvent(new window.Event("resize"));
+  t.mock.timers.tick(0);
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+  assert.equal(replacementRail.firstElementChild.style.width, "");
+});
+
+test("disposing the signals view cancels pending measurement and resize tracking", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", { value: 1000 });
+
+  dispose();
+  main.replaceChildren();
+  window.dispatchEvent(new window.Event("resize"));
+  t.mock.timers.tick(0);
+
+  assert.equal(rail.firstElementChild.style.width, "");
+  dispose();
+});
+
 test("empty reports and unknown signals give useful messages", async (t) => {
   await setup(t, report([]));
   assert.equal(
@@ -313,9 +425,21 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
   );
   const column = main.querySelector("th.col a");
   assert.ok(column);
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", {
+    value: 1000,
+    writable: true,
+  });
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+
   window.location.hash = column.getAttribute("href");
   window.dispatchEvent(new window.HashChangeEvent("hashchange"));
   assert.ok(main.querySelector(".target-detail"));
+  scroller.scrollWidth = 1500;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(rail.firstElementChild.style.width, "1000px");
   assert.match(window.document.title, /jdbc/);
   assert.equal(
     window.document.querySelector('nav [aria-current="page"]').textContent,

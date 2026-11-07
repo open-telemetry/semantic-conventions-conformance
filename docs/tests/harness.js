@@ -19,6 +19,7 @@ export async function setup(t, document = report(), hash = "") {
     history: dom.window.history,
     navigator: dom.window.navigator,
     addEventListener: dom.window.addEventListener.bind(dom.window),
+    removeEventListener: dom.window.removeEventListener.bind(dom.window),
     scrollTo: t.mock.fn(),
   };
 

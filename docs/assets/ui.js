@@ -56,8 +56,8 @@ export function levelLegend(levels = LEVELS, refinements = false) {
 let bandSize;
 
 /**
- * Publish a sticky band's height as `--controls-h`, so the table pane under it
- * can leave exactly that much room however the filters wrap. Browsers without
+ * Publish a sticky band's height as `--controls-h`, so a row scrolled into
+ * view can land below it however the filters wrap. Browsers without
  * `ResizeObserver` fall back to the value in the stylesheet.
  *
  * @param {HTMLElement} band the sticky element to measure
