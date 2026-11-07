@@ -732,7 +732,7 @@ td.num {
   text-decoration: underline;
 }
 .heatmap th.attr .ns {
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .heatmap thead th.attr {
   z-index: 3;
