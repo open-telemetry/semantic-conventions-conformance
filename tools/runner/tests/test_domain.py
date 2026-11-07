@@ -130,8 +130,8 @@ def test_a_package_registry_drives_the_coverage_model(
     monkeypatch.setattr(_domain, "check_weaver", lambda: None)
     monkeypatch.setattr(
         _domain,
-        "resolve_coverage_model",
-        lambda registry, output: resolved.append(registry),
+        "coverage_model_for",
+        lambda registry: resolved.append(registry),
     )
     monkeypatch.setattr(_domain, "load_coverage_model", lambda path: {})
 
