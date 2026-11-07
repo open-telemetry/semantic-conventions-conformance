@@ -9,7 +9,9 @@ short-circuit: one run reports every problem it found.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from decimal import Decimal, DecimalException
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
 from ._report import carried_attributes
@@ -17,6 +19,8 @@ from ._spans import span_kind
 from ._spec import (
     AttributeMatcher,
     ExpectedViolation,
+    JsonEach,
+    JsonMatcher,
     ScenarioSpec,
     SpanExpectation,
 )
@@ -217,6 +221,9 @@ def _check_attribute(
     attribute: str,
     matcher: AttributeMatcher,
 ) -> str | None:
+    if matcher.json is not None:
+        return _check_json_attribute(spans, attribute, matcher.json)
+
     present = [span for span in spans if attribute in span.attributes]
     values = [span.attributes[attribute] for span in present]
 
@@ -241,6 +248,96 @@ def _check_attribute(
         return (
             f"{attribute} expected {matcher.equals!r} on every span, saw "
             f"{[span.attributes.get(attribute) for span in spans]}"
+        )
+    return None
+
+
+def _reject_json_constant(value: str) -> object:
+    """The JSON decoder otherwise accepts nonstandard NaN/Infinity tokens."""
+    raise ValueError("nonstandard JSON constant")
+
+
+def _json_nodes(
+    value: object, path: Sequence[str | int | JsonEach]
+) -> list[object]:
+    nodes = [value]
+    for segment in path:
+        selected: list[object] = []
+        for node in nodes:
+            if segment is JsonEach.EACH and isinstance(node, list):
+                selected.extend(cast("list[object]", node))
+            elif isinstance(segment, str) and isinstance(node, dict):
+                mapping = cast("dict[str, object]", node)
+                if segment in mapping:
+                    selected.append(mapping[segment])
+            elif isinstance(segment, int) and isinstance(node, list):
+                array = cast("list[object]", node)
+                if segment < len(array):
+                    selected.append(array[segment])
+        nodes = selected
+    return nodes
+
+
+def _json_scalar_equal(value: object, expected: object) -> bool:
+    # JSON booleans are distinct from numbers, despite Python's True == 1.
+    if isinstance(value, bool) or isinstance(expected, bool):
+        return (
+            type(value) is bool
+            and type(expected) is bool
+            and value == expected
+        )
+    if value is None or expected is None:
+        return value is expected
+    if isinstance(value, str):
+        return isinstance(expected, str) and value == expected
+    if isinstance(expected, float):
+        expected = Decimal(str(expected))
+    return (
+        isinstance(value, (int, Decimal))
+        and isinstance(expected, (int, Decimal))
+        and value == expected
+    )
+
+
+def _check_json_attribute(
+    spans: Sequence[ObservedSpan], attribute: str, matcher: JsonMatcher
+) -> str | None:
+    reasons: dict[str, int] = {}
+    for span in spans:
+        reason: str | None = None
+        if attribute not in span.attributes:
+            reason = "missing attribute"
+        else:
+            value = span.attributes[attribute]
+            if not isinstance(value, str):
+                reason = "attribute is not a string"
+            else:
+                try:
+                    decoded: object = json.loads(
+                        value,
+                        parse_float=Decimal,
+                        parse_constant=_reject_json_constant,
+                    )
+                except (ValueError, RecursionError, DecimalException):
+                    reason = "invalid or excessively nested JSON"
+                else:
+                    if not any(
+                        _json_scalar_equal(node, matcher.contains)
+                        for node in _json_nodes(decoded, matcher.path)
+                    ):
+                        reason = "no selected node matches"
+        if reason is not None:
+            reasons[reason] = reasons.get(reason, 0) + 1
+
+    if reasons:
+        # Do not include actual content or decoder errors: these attributes may
+        # contain prompts, tool arguments, or other sensitive data.
+        details = ", ".join(
+            f"{reason}: {count}" for reason, count in reasons.items()
+        )
+        return (
+            f"{attribute} expected {matcher.describe()} on every span; "
+            f"failed {sum(reasons.values())}/{len(spans)} ({details})"
         )
     return None
 
