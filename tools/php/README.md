@@ -21,6 +21,26 @@ scenarios:
 `composer.json` and runs Composer there. This keeps each instrumentation side
 as its own locked package and also resolves `composer.bat` on Windows.
 
+A scenario lock copies each path package's requirements, and `composer install`
+does not notice when they have changed since. `install` therefore first runs
+`otel-conformance-php check-lock` and fails if the lock disagrees with a path
+package: its `require`, `require-dev`, `conflict`, `replace`, `provide`,
+`autoload`, `bin` or `type` differ from the package's `composer.json` (a
+missing `type` counts as `library`), or a dependency it names is locked at a
+different version than in the package's own `composer.lock`. The check is offline and changes nothing;
+regenerate a stale lock with `composer update <package> --with-dependencies`.
+
+The check also fails when the scenario's `composer.json` does not pin a path
+package's version with `"versions": {"<package>": "dev-main"}` in the path
+repository's `options`, when the pin differs from the version in the lock, or
+when the scenario requires a branch such as `dev-main` and the pin names a
+different one. A range such as `^1.0` is left to Composer to match. Unpinned,
+Composer names the package after the current checkout, `dev-<sha>` in CI, and
+`relock` then cannot resolve the scenario's `dev-main` requirement. The pin
+must be on the first path repository whose `url`, or glob, matches the
+package's directory: Composer takes the package from that repository and
+ignores it in any later one.
+
 `serve` starts `php -S 127.0.0.1:$OTEL_HTTP_SCENARIO_PORT <router>`. The PHP
 built-in server keeps the normal request-scoped lifecycle used by PHP-FPM:
 Composer and the OpenTelemetry SDK initialize for each request, then shutdown
@@ -34,7 +54,8 @@ lock only, and changes nothing the manifests don't require. A lock records a
 path package's `dist.reference`, a hash of that package's `composer.json` and
 path-repository options, so
 editing `scenario/` or the HTTP test client's `composer.json` leaves the locks
-that depend on it stale. `composer install` does not notice this. CI runs
+that depend on it stale. `composer install` does not notice this, but
+`check-lock`, and so `install`, fails on a stale requirement or pin. CI runs
 `relock` on Renovate PRs and commits the result. CI pins the Composer version,
 because Composer stamps its plugin API version into every lock. Use the same
 Composer version when running it by hand:
