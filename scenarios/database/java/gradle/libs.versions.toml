@@ -28,7 +28,7 @@ reactivestreams = "1.0.4"
 reactor = "3.8.7"
 rediscala = "1.17.0"
 redisson = "4.8.0"
-scala = "2.13.18"
+scala = "3.10.0"
 
 [libraries]
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch-java" }
