@@ -32,7 +32,7 @@ hyper = { version = "1.11.0", features = ["http1", "server"] }
 hyper-util = { version = "0.1.20", features = ["server-graceful", "service", "tokio"] }
 opentelemetry = { version = "0.32.0", features = ["trace"] }
 opentelemetry-instrumentation-actix-web = { version = "=0.24.0", features = ["awc", "metrics"] }
-opentelemetry-instrumentation-tower = { version = "=0.18.0", default-features = false, features = ["axum"] }
+opentelemetry-instrumentation-tower = { version = "=0.18.0", default-features = false }
 opentelemetry-otlp = { version = "0.32.0", default-features = false, features = ["grpc-tonic", "metrics", "trace"] }
 opentelemetry_sdk = { version = "0.32.0", features = ["metrics", "trace"] }
 serde = { version = "1.0.228", features = ["derive"] }
