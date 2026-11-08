@@ -163,6 +163,28 @@ test("column names shorten the distribution and qualify by backend and side", ()
     columnName(target({ label: "otelhttp" }), false).distribution,
     "otelhttp",
   );
+  assert.equal(
+    columnName(target({ label: "native-instrumentation" }), false).distribution,
+    "native",
+  );
+  assert.deepEqual(
+    columnName(
+      target({
+        instrumented_library: "elasticsearch-java",
+        backend: "elasticsearch",
+        label: "native-instrumentation",
+      }),
+      false,
+    ),
+    { library: "elasticsearch-java", qualifier: "", distribution: "native" },
+  );
+  assert.equal(
+    columnName(
+      target({ instrumented_library: "mariadb", backend: "mariadb" }),
+      false,
+    ).qualifier,
+    "",
+  );
 });
 
 test("every committed signal has distinct column names within each language", async (t) => {

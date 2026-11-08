@@ -248,10 +248,11 @@ function sameAttributes(left, right) {
 }
 
 /**
- * Name a target as a heatmap column: its library, what sets it apart from the
- * library's other targets (its backend, and its side when `sided`), and its
- * distribution. The distribution's common `opentelemetry-` prefix is shortened
+ * Name a target as a heatmap column: its library, a backend the library does
+ * not already name, its side when `sided`, and its distribution.
+ * The distribution's common `opentelemetry-` prefix is shortened
  * to `otel-`, and to just `otel` when the rest only repeats the library.
+ * `native-instrumentation` is displayed as `native`.
  *
  * @param {Target} target one report target
  * @param {boolean} sided whether the columns shown together differ in side
@@ -259,13 +260,19 @@ function sameAttributes(left, right) {
  */
 export function columnName(target, sided) {
   const library = target.instrumented_library;
-  const qualifier = [target.backend, sided && target.side]
+  const backend =
+    target.backend &&
+    (library === target.backend || library.startsWith(`${target.backend}-`))
+      ? null
+      : target.backend;
+  const qualifier = [backend, sided && target.side]
     .filter(Boolean)
     .join(" · ");
-  const distribution =
+  let distribution =
     target.label === `opentelemetry-${library}`
       ? "otel"
       : target.label.replace(/^opentelemetry-/, "otel-");
+  if (distribution === "native-instrumentation") distribution = "native";
   return { library, qualifier, distribution };
 }
 

@@ -25,6 +25,15 @@ The browser compares signals by type and name. If two runners provide conflictin
 declarations, loading fails rather than comparing targets against the wrong
 registry. Coverage interpretation is documented in [`tools/report`](../tools/report).
 
+Heatmap column labels have two vertical lines: the library, then an indented
+qualifier and shortened distribution name. Labels are capped at 10rem; tooltips
+and accessible names retain the full target names.
+
+Headers stay visible while scrolling only when the table fits horizontally and
+the header occupies at most one-third of the viewport height. Otherwise they
+scroll away with the page. The condition is recalculated when the viewport or
+table size changes, not while scrolling.
+
 The site has no runtime dependencies. Development checks use Node's test runner,
 jsdom for DOM behavior, and Prettier:
 

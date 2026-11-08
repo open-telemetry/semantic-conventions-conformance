@@ -369,41 +369,57 @@ export function dispose() {
  * size changes.
  */
 function trackEdges(frame, scroller, rail) {
-  const update = () => {
-    const end = scroller.scrollWidth - scroller.clientWidth;
-    frame.classList.toggle("fits", end <= 1);
+  const table = scroller.firstElementChild;
+  const header = table.querySelector("thead");
+  const pinned = table.querySelector("th.attr");
+  let end = 0;
+  const updatePosition = () => {
     frame.classList.toggle("more-left", scroller.scrollLeft > 1);
     frame.classList.toggle("more-right", scroller.scrollLeft < end - 1);
-    const pinned = scroller.querySelector("th.attr");
-    frame.style.setProperty("--pinned-w", `${pinned?.offsetWidth ?? 0}px`);
-    rail.firstElementChild.style.width = `${scroller.scrollWidth}px`;
     if (rail.scrollLeft !== scroller.scrollLeft) {
       rail.scrollLeft = scroller.scrollLeft;
     }
   };
-  scroller.addEventListener("scroll", update, { passive: true });
-  rail.addEventListener(
-    "scroll",
-    () => {
-      if (scroller.scrollLeft !== rail.scrollLeft) {
-        scroller.scrollLeft = rail.scrollLeft;
-      }
-    },
-    { passive: true },
-  );
-  if (typeof ResizeObserver !== "function") {
-    const timer = setTimeout(update, 0);
-    addEventListener("resize", update, { passive: true });
-    stopTrackingEdges = () => {
-      clearTimeout(timer);
-      removeEventListener("resize", update);
-    };
-    return;
+  const measure = () => {
+    const width = scroller.scrollWidth;
+    end = width - scroller.clientWidth;
+    const headerHeight = header.offsetHeight;
+    const viewportHeight = document.documentElement.clientHeight;
+    const pinnedWidth = pinned?.offsetWidth ?? 0;
+    frame.classList.toggle("fits", end <= 1);
+    frame.classList.toggle(
+      "sticky-header",
+      end <= 1 && headerHeight > 0 && headerHeight <= viewportHeight / 3,
+    );
+    frame.style.setProperty("--pinned-w", `${pinnedWidth}px`);
+    rail.firstElementChild.style.width = `${width}px`;
+    updatePosition();
+  };
+  const scrollRail = () => {
+    if (scroller.scrollLeft !== rail.scrollLeft) {
+      scroller.scrollLeft = rail.scrollLeft;
+    }
+  };
+  scroller.addEventListener("scroll", updatePosition, { passive: true });
+  rail.addEventListener("scroll", scrollRail, { passive: true });
+  addEventListener("resize", measure, { passive: true });
+  let observer;
+  let timer;
+  if (typeof ResizeObserver === "function") {
+    observer = new ResizeObserver(measure);
+    observer.observe(scroller);
+    observer.observe(table);
+    observer.observe(header);
+  } else {
+    timer = setTimeout(measure, 0);
   }
-  const observer = new ResizeObserver(update);
-  observer.observe(scroller);
-  observer.observe(scroller.firstElementChild);
-  stopTrackingEdges = () => observer.disconnect();
+  stopTrackingEdges = () => {
+    observer?.disconnect();
+    clearTimeout(timer);
+    removeEventListener("resize", measure);
+    scroller.removeEventListener("scroll", updatePosition);
+    rail.removeEventListener("scroll", scrollRail);
+  };
 }
 
 /** One attribute, across every column, and how many of them carried it. */
@@ -436,9 +452,9 @@ function attributeRow(attribute, columns, pin) {
 }
 
 /**
- * A target named on one line, read up from the foot of its column, with the
- * part that tells it from its neighbours darkest. The link's name has the
- * whole label.
+ * A target named on two lines, read up from the foot of its column. The
+ * library leads, followed by its qualifier and distribution. The link's
+ * accessible name and tooltip carry the whole label.
  */
 function columnHeader(target, sided) {
   const full = `${fullLabel(target)} · ${target.instrumentation_library}`;
@@ -454,8 +470,10 @@ function columnHeader(target, sided) {
       },
       [
         el("b", { text: name.library }),
-        name.qualifier && el("span", { text: name.qualifier }),
-        el("i", { text: name.distribution }),
+        el("span", { class: "secondary" }, [
+          name.qualifier && `${name.qualifier} · `,
+          el("i", { text: name.distribution }),
+        ]),
       ],
     ),
   ]);

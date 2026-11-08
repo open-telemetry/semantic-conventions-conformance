@@ -258,11 +258,32 @@ test("column headers name the library, its qualifier, and the distribution", asy
       [...header.children].map((part) => part.textContent),
     ),
     [
-      ["jdbc", "mariadb", "otel-javaagent"],
-      ["jdbc", "mariadb", "otel-library"],
+      ["jdbc", "mariadb · otel-javaagent"],
+      ["jdbc", "mariadb · otel-library"],
     ],
   );
+  assert.ok(headers[0].querySelector(".secondary"));
   assert.match(headers[1].getAttribute("title"), /opentelemetry-library/);
+});
+
+test("native column headers use a short secondary line and retain the full accessible name", async (t) => {
+  const window = await setup(
+    t,
+    report([
+      target({
+        instrumented_library: "elasticsearch-java",
+        backend: "elasticsearch",
+        label: "native-instrumentation",
+      }),
+    ]),
+  );
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+  const header = main.querySelector("th.col a");
+  assert.equal(header.querySelector("b").textContent, "elasticsearch-java");
+  assert.equal(header.querySelector(".secondary").textContent, "native");
+  assert.match(header.getAttribute("title"), /native-instrumentation/);
+  assert.equal(header.getAttribute("aria-label"), header.getAttribute("title"));
 });
 
 test("scroll rail initializes and follows window resizing without ResizeObserver", async (t) => {
@@ -302,6 +323,104 @@ test("scroll rail initializes and follows window resizing without ResizeObserver
   assert.equal(frame.classList.contains("fits"), false);
   assert.equal(frame.classList.contains("more-right"), true);
 });
+
+for (const observed of [false, true]) {
+  test(`headers stick only when they fit horizontally and within one-third of the viewport, ${observed ? "with" : "without"} ResizeObserver`, async (t) => {
+    const window = await setup(t);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    let observer;
+    if (observed) {
+      const previous = Object.getOwnPropertyDescriptor(
+        globalThis,
+        "ResizeObserver",
+      );
+      Object.defineProperty(globalThis, "ResizeObserver", {
+        configurable: true,
+        value: class {
+          constructor(callback) {
+            this.callback = callback;
+            this.observe = t.mock.fn();
+            this.disconnect = t.mock.fn();
+            observer = this;
+          }
+        },
+      });
+      t.after(() => {
+        if (previous)
+          Object.defineProperty(globalThis, "ResizeObserver", previous);
+        else delete globalThis.ResizeObserver;
+      });
+    }
+
+    const view = signals(await load(), null);
+    const frame = view.querySelector(".scroll-frame");
+    const scroller = frame.querySelector(".scroller");
+    const table = scroller.firstElementChild;
+    const header = table.querySelector("thead");
+    const rail = frame.querySelector(".scroll-rail");
+    const viewport = window.document.documentElement;
+    Object.defineProperties(scroller, {
+      scrollWidth: { value: 1000 },
+      clientWidth: { value: 1000, writable: true },
+    });
+    Object.defineProperty(header, "offsetHeight", {
+      value: 300,
+      writable: true,
+    });
+    Object.defineProperty(viewport, "clientHeight", {
+      value: 900,
+      writable: true,
+    });
+    window.document.querySelector("main").replaceChildren(view);
+    if (observed) {
+      assert.deepEqual(
+        observer.observe.mock.calls.map((call) => call.arguments[0]),
+        [scroller, table, header],
+      );
+      observer.callback();
+    } else {
+      t.mock.timers.tick(0);
+    }
+    assert.equal(frame.classList.contains("fits"), true);
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    viewport.clientHeight = 899;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("fits"), true);
+    assert.equal(frame.classList.contains("sticky-header"), false);
+
+    viewport.clientHeight = 900;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    header.offsetHeight = 301;
+    if (observed) observer.callback();
+    else window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("sticky-header"), false);
+
+    header.offsetHeight = 300;
+    scroller.clientWidth = 998;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("fits"), false);
+    assert.equal(frame.classList.contains("sticky-header"), false);
+
+    scroller.clientWidth = 999;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("fits"), true);
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    header.offsetHeight = 301;
+    scroller.dispatchEvent(new window.Event("scroll"));
+    rail.dispatchEvent(new window.Event("scroll"));
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    dispose();
+    window.dispatchEvent(new window.Event("resize"));
+    t.mock.timers.tick(0);
+    assert.equal(frame.classList.contains("sticky-header"), true);
+    if (observed) assert.equal(observer.disconnect.mock.callCount(), 1);
+  });
+}
 
 test("fallback resize listeners and pending updates are removed when the heatmap is replaced", async (t) => {
   const window = await setup(t);

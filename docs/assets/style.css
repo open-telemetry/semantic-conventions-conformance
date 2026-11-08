@@ -739,8 +739,8 @@ td.num {
   vertical-align: bottom;
   background: var(--surface-2);
 }
-/* A target's name runs up its column on one line, so the column is only as
-   wide as a cell. */
+/* Two vertical lines keep the library separate from its qualifier and
+   distribution, with the secondary line starting a little farther up. */
 .heatmap thead th.col,
 .heatmap thead th.tally {
   padding: 0.4rem 0;
@@ -750,9 +750,9 @@ td.num {
   letter-spacing: 0;
 }
 .heatmap thead th.col {
-  width: 1.6rem;
-  min-width: 1.6rem;
-  max-width: 1.6rem;
+  width: 2.4rem;
+  min-width: 2.4rem;
+  max-width: 2.4rem;
   border-left: 1px solid var(--line);
 }
 .heatmap thead .upright {
@@ -767,21 +767,25 @@ td.num {
   color: var(--ink);
   text-decoration: none;
 }
-.heatmap thead th.col > a > * + * {
-  margin-inline-start: 0.5em;
+.heatmap thead th.col > a {
+  max-height: 10rem;
+  overflow: hidden;
+  text-align: left;
 }
 .heatmap thead th.col b {
+  display: block;
   font-weight: 600;
 }
-.heatmap thead th.col span {
+.heatmap thead th.col .secondary {
+  display: block;
+  margin-inline-start: 0.65rem;
   color: var(--ink-2);
 }
 .heatmap thead th.col i {
   font-style: normal;
-  color: var(--ink-3);
 }
 .heatmap thead th.col > a:hover,
-.heatmap thead th.col > a:hover > * {
+.heatmap thead th.col > a:hover .secondary {
   color: var(--accent);
 }
 .heatmap thead th.col > a:hover {
@@ -871,12 +875,12 @@ td.num {
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
-/* A table that fits the screen needs no pane of its own, so its header can
-   stay in view while the page scrolls the rows under it. */
+/* A table that fits the screen needs no horizontal scrolling pane. Its header
+   sticks only when it occupies at most a third of the viewport height. */
 .scroll-frame.fits .scroller {
   overflow-x: visible;
 }
-.scroll-frame.fits .heatmap thead {
+.scroll-frame.sticky-header .heatmap thead {
   position: sticky;
   top: 0;
   z-index: 3;
