@@ -8,6 +8,8 @@ members = [
   "../../../tools/rust/scenario-sdk",
   "actix-web/opentelemetry-actix-web/server",
   "actix-web/scenarios",
+  "axum/opentelemetry-instrumentation-tower/server",
+  "axum/scenarios",
   "awc/opentelemetry-actix-web/client",
   "awc/scenarios",
   "tower/opentelemetry-instrumentation-tower/server",
@@ -23,13 +25,14 @@ rust-version = "1.88.0"
 [workspace.dependencies]
 actix-web = "4.12.1"
 awc = { version = "3.8.2", default-features = false }
+axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio"] }
 http = "1.5.0"
 http-body-util = "0.1.5"
 hyper = { version = "1.11.0", features = ["http1", "server"] }
 hyper-util = { version = "0.1.20", features = ["server-graceful", "service", "tokio"] }
 opentelemetry = { version = "0.32.0", features = ["trace"] }
 opentelemetry-instrumentation-actix-web = { version = "=0.24.0", features = ["awc", "metrics"] }
-opentelemetry-instrumentation-tower = { version = "=0.18.0", default-features = false }
+opentelemetry-instrumentation-tower = { version = "=0.18.0", default-features = false, features = ["axum"] }
 opentelemetry-otlp = { version = "0.32.0", default-features = false, features = ["grpc-tonic", "metrics", "trace"] }
 opentelemetry_sdk = { version = "0.32.0", features = ["metrics", "trace"] }
 serde = { version = "1.0.228", features = ["derive"] }

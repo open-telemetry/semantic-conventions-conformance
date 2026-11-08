@@ -11,6 +11,8 @@ awc/scenarios/                                 plain awc client workload
 awc/opentelemetry-actix-web/client/            traced client binary
 tower/scenarios/                               plain Tower HTTP server workload
 tower/opentelemetry-instrumentation-tower/server/ traced and measured server binary
+axum/scenarios/                                 plain Axum HTTP server workload
+axum/opentelemetry-instrumentation-tower/server/ traced and measured server binary
 ../../../tools/http/test-client/rust/          shared HTTP contract
 ../../../tools/rust/scenario/                  environment and shutdown protocol
 ../../../tools/rust/scenario-sdk/              OTLP gRPC SDK bootstrap
@@ -27,6 +29,10 @@ HTTP server metrics.
 
 The Tower instrumentation emits an empty `url.scheme` for the origin-form
 request targets received by Hyper.
+
+The Axum scenario uses the same Tower instrumentation at the Axum router layer.
+Axum's native router supplies matched route templates to the instrumentation,
+so its server telemetry is separate from the route-free Tower service above.
 
 Client and server remain separate conformance packages and coverage files.
 Combining them would let one side's telemetry hide a missing signal from the

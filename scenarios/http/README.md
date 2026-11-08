@@ -87,8 +87,8 @@ through path dependencies, and neither package writes to the user-wide gem
 installation.
 
 In Rust the split is between crates. Its plain workload crates hold native
-Actix Web routes, a Tower HTTP service, and the awc request sequence without
-importing OpenTelemetry. The instrumentation-specific binary crates install
+Actix Web and Axum routes, a Tower HTTP service, and the awc request sequence
+without importing OpenTelemetry. The instrumentation-specific binary crates install
 their middleware around those workloads. One Cargo workspace at `rust/`
 includes the shared crates under `tools/` and commits one lockfile for all of
 them. The Tower service uses Hyper for HTTP transport without a router, so it
@@ -186,6 +186,7 @@ otel-conformance scenarios/http/php/guzzle/opentelemetry-guzzle/client
 otel-conformance scenarios/http/rust/actix-web/opentelemetry-actix-web/server
 otel-conformance scenarios/http/rust/awc/opentelemetry-actix-web/client
 otel-conformance scenarios/http/rust/tower/opentelemetry-instrumentation-tower/server
+otel-conformance scenarios/http/rust/axum/opentelemetry-instrumentation-tower/server
 ```
 
 Every Java package is built and started the same way, so
