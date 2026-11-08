@@ -772,12 +772,16 @@ td.num {
   overflow: hidden;
   text-align: left;
 }
-.heatmap thead th.col b {
+.heatmap thead th.col b,
+.heatmap thead th.col .secondary {
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.heatmap thead th.col b {
   font-weight: 600;
 }
 .heatmap thead th.col .secondary {
-  display: block;
   margin-inline-start: 0.65rem;
   color: var(--ink-2);
 }

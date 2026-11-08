@@ -27,22 +27,18 @@ registry. Coverage interpretation is documented in [`tools/report`](../tools/rep
 
 Heatmap column labels have two vertical lines: the library, then an indented
 qualifier and shortened distribution name. Labels are capped at 10rem; tooltips
-and accessible names retain the full target names.
+and accessible names retain the full target names. Each truncated line ends
+with an ellipsis.
 
 In browsers that support CSS view timelines and animation ranges, headers stay
 visible while scrolling when they occupy at most one-third of the viewport height,
-including horizontally scrolling tables. The timeline moves the existing header
-within its table and stops at the last row, preserving column alignment and
-accessible table relationships.
+including horizontally scrolling tables. Headers stay aligned with their columns
+and stop at the last row.
 
 Taller headers and all headers in unsupported browsers scroll away with the page.
-There is no JavaScript pinning fallback. The height condition is recalculated when
-the viewport or table size changes, not while scrolling.
 
-The horizontal scrollbar and table ignore matching programmatic scroll echoes
-while preserving new user input. Requirement-group headings wrap within the
-pinned attribute column, and emission indicators have accessible status labels.
-View disposal releases resize observers, pending measurements, and listeners.
+Requirement-group headings wrap within the pinned attribute column, and emission
+indicators have accessible status labels.
 
 The site has no runtime dependencies. Development checks use Node's test runner,
 jsdom for DOM behavior, and Prettier:
