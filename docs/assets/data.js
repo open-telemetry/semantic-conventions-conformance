@@ -265,9 +265,7 @@ export function columnName(target, sided) {
     (library === target.backend || library.startsWith(`${target.backend}-`))
       ? null
       : target.backend;
-  const qualifier = [backend, sided && target.side]
-    .filter(Boolean)
-    .join(" · ");
+  const qualifier = [backend, sided && target.side].filter(Boolean).join(" · ");
   let distribution =
     target.label === `opentelemetry-${library}`
       ? "otel"

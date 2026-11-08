@@ -325,7 +325,7 @@ test("scroll rail initializes and follows window resizing without ResizeObserver
 });
 
 for (const observed of [false, true]) {
-  test(`headers stick only when they fit horizontally and within one-third of the viewport, ${observed ? "with" : "without"} ResizeObserver`, async (t) => {
+  test(`headers stick within one-third of the viewport regardless of horizontal overflow, ${observed ? "with" : "without"} ResizeObserver`, async (t) => {
     const window = await setup(t);
     t.mock.timers.enable({ apis: ["setTimeout"] });
     let observer;
@@ -367,10 +367,19 @@ for (const observed of [false, true]) {
       value: 300,
       writable: true,
     });
+    Object.defineProperty(table, "offsetHeight", {
+      value: 1200,
+      writable: true,
+    });
     Object.defineProperty(viewport, "clientHeight", {
       value: 900,
       writable: true,
     });
+    Object.defineProperty(window, "scrollY", { value: 0, writable: true });
+    let tableTop = 200;
+    t.mock.method(table, "getBoundingClientRect", () => ({
+      top: tableTop - window.scrollY,
+    }));
     window.document.querySelector("main").replaceChildren(view);
     if (observed) {
       assert.deepEqual(
@@ -402,7 +411,40 @@ for (const observed of [false, true]) {
     scroller.clientWidth = 998;
     window.dispatchEvent(new window.Event("resize"));
     assert.equal(frame.classList.contains("fits"), false);
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    window.scrollY = 250;
+    window.dispatchEvent(new window.Event("scroll"));
+    assert.equal(header.style.getPropertyValue("--header-offset"), "50px");
+    assert.equal(scroller.scrollLeft, 0);
+
+    tableTop = 240;
+    window.dispatchEvent(new window.Event("scroll"));
+    assert.equal(header.style.getPropertyValue("--header-offset"), "10px");
+
+    window.scrollY = 2000;
+    window.dispatchEvent(new window.Event("scroll"));
+    assert.equal(header.style.getPropertyValue("--header-offset"), "900px");
+
+    window.scrollY = 100;
+    window.dispatchEvent(new window.Event("scroll"));
+    assert.equal(header.style.getPropertyValue("--header-offset"), "0px");
+
+    window.scrollY = 290;
+    window.dispatchEvent(new window.Event("scroll"));
+    assert.equal(header.style.getPropertyValue("--header-offset"), "50px");
+    viewport.clientHeight = 899;
+    window.dispatchEvent(new window.Event("resize"));
     assert.equal(frame.classList.contains("sticky-header"), false);
+    assert.equal(header.style.getPropertyValue("--header-offset"), "0px");
+
+    viewport.clientHeight = 900;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(header.style.getPropertyValue("--header-offset"), "50px");
+
+    table.offsetHeight = 320;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(header.style.getPropertyValue("--header-offset"), "20px");
 
     scroller.clientWidth = 999;
     window.dispatchEvent(new window.Event("resize"));
@@ -415,9 +457,12 @@ for (const observed of [false, true]) {
     assert.equal(frame.classList.contains("sticky-header"), true);
 
     dispose();
+    window.scrollY = 100;
+    window.dispatchEvent(new window.Event("scroll"));
     window.dispatchEvent(new window.Event("resize"));
     t.mock.timers.tick(0);
     assert.equal(frame.classList.contains("sticky-header"), true);
+    assert.equal(header.style.getPropertyValue("--header-offset"), "20px");
     if (observed) assert.equal(observer.disconnect.mock.callCount(), 1);
   });
 }

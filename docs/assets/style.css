@@ -875,15 +875,19 @@ td.num {
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
-/* A table that fits the screen needs no horizontal scrolling pane. Its header
-   sticks only when it occupies at most a third of the viewport height. */
+/* A table that fits the screen needs no horizontal scrolling pane. */
 .scroll-frame.fits .scroller {
   overflow-x: visible;
 }
-.scroll-frame.sticky-header .heatmap thead {
-  position: sticky;
-  top: 0;
+/* The header moves vertically within its own table, so horizontal scrolling
+   keeps the header and body aligned without a second table. */
+.heatmap thead {
+  position: relative;
+  transform: translateY(var(--header-offset, 0px));
   z-index: 3;
+}
+.heatmap thead th {
+  top: auto;
 }
 
 .note {
