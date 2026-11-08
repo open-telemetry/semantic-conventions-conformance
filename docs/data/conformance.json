@@ -904,6 +904,14 @@
             "host.id": "required"
           }
         },
+        "otel.scope": {
+          "description": {
+            "otel.scope.version": "recommended"
+          },
+          "identity": {
+            "otel.scope.name": "required"
+          }
+        },
         "process.runtime": {
           "description": {
             "process.runtime.description": "recommended"
@@ -949,7 +957,26 @@
           }
         }
       },
-      "events": {},
+      "events": {
+        "browser.web_vital": {
+          "attributes": {
+            "browser.web_vital.delta": "required",
+            "browser.web_vital.id": "required",
+            "browser.web_vital.name": "required",
+            "browser.web_vital.navigation_type": "recommended",
+            "browser.web_vital.rating": "recommended",
+            "browser.web_vital.value": "required"
+          }
+        },
+        "exception": {
+          "attributes": {
+            "exception.escaped": "recommended",
+            "exception.message": "conditionally_required_conditional",
+            "exception.stacktrace": "recommended",
+            "exception.type": "conditionally_required_conditional"
+          }
+        }
+      },
       "metrics": {
         "dns.lookup.duration": {
           "attributes": {
@@ -1158,6 +1185,151 @@
   },
   "schema_version": 1,
   "targets": [
+    {
+      "backend": null,
+      "domain": "browser",
+      "entities": {
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/browser-instrumentation/console' does not have schema_url.",
+          "signal_name": "@opentelemetry/browser-instrumentation/console",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/browser-instrumentation/errors' does not have schema_url.",
+          "signal_name": "@opentelemetry/browser-instrumentation/errors",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '@opentelemetry/browser-instrumentation/web-vitals' does not have schema_url.",
+          "signal_name": "@opentelemetry/browser-instrumentation/web-vitals",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "attribute_key": "browser.console.method"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'browser.console.method' does not exist in the registry.",
+          "signal_name": "browser.console",
+          "signal_type": "log"
+        },
+        {
+          "id": "missing_event",
+          "message": "Event 'browser.console' does not exist in the registry.",
+          "signal_name": "browser.console",
+          "signal_type": "log"
+        }
+      ],
+      "id": "browser/js/chrome/opentelemetry-browser-instrumentation",
+      "instrumentation_library": "@opentelemetry/browser-instrumentation",
+      "instrumented_library": "chrome",
+      "label": "opentelemetry-browser-instrumentation",
+      "language": "js",
+      "path": "scenarios/browser/js/chrome/opentelemetry-browser-instrumentation",
+      "runner": "http-conformance",
+      "scenario_classes": [
+        "console",
+        "errors",
+        "web_vitals"
+      ],
+      "side": null,
+      "signals": [
+        {
+          "coverage": {
+            "recommended": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "required": {
+              "declared": 4,
+              "emitted": 4
+            }
+          },
+          "emitted": [
+            "browser.web_vital.delta",
+            "browser.web_vital.id",
+            "browser.web_vital.name",
+            "browser.web_vital.navigation_type",
+            "browser.web_vital.rating",
+            "browser.web_vital.value"
+          ],
+          "missing": [],
+          "name": "browser.web_vital",
+          "type": "event"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 2,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 1
+            }
+          },
+          "emitted": [
+            "exception.message",
+            "exception.stacktrace",
+            "exception.type"
+          ],
+          "missing": [
+            "exception.escaped"
+          ],
+          "name": "exception",
+          "type": "event"
+        }
+      ],
+      "summary": {
+        "findings": 5,
+        "recommended": {
+          "declared": 4,
+          "emitted": 3
+        },
+        "required": {
+          "declared": 4,
+          "emitted": 4
+        }
+      }
+    },
     {
       "backend": "cassandra",
       "domain": "database",
@@ -42798,6 +42970,748 @@
         "recommended": {
           "declared": 8,
           "emitted": 8
+        },
+        "required": {
+          "declared": 9,
+          "emitted": 9
+        }
+      }
+    },
+    {
+      "backend": null,
+      "domain": "http",
+      "entities": {
+        "host": {
+          "description": [
+            "host.name",
+            "host.type"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
+        "otel.scope": {
+          "description": [],
+          "identity": [
+            "otel.scope.name"
+          ]
+        },
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.distro": {
+          "description": [
+            "telemetry.distro.version"
+          ],
+          "identity": [
+            "telemetry.distro.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_name_missing",
+          "message": "Instrumentation scope '<missing>' does not have name.",
+          "signal_name": "<missing>",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '<missing>' does not have schema_url.",
+          "signal_name": "<missing>",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/obi' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/obi",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "attribute_key": "instance"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'instance' does not exist in the registry.",
+          "signal_name": "target.info",
+          "signal_type": "metric"
+        },
+        {
+          "context": {
+            "attribute_key": "job"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'job' does not exist in the registry.",
+          "signal_name": "target.info",
+          "signal_type": "metric"
+        },
+        {
+          "id": "missing_metric",
+          "message": "Metric does not exist in the registry.",
+          "signal_name": "target.info",
+          "signal_type": "metric"
+        },
+        {
+          "context": {
+            "attribute_key": "service.peer.name",
+            "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
+            "deprecation_reason": "uncategorized"
+          },
+          "id": "deprecated",
+          "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
+          "signal_name": "GET /status/*",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "client"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'GET /status/*' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET /status/*",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "service.peer.name",
+            "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
+            "deprecation_reason": "uncategorized"
+          },
+          "id": "deprecated",
+          "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
+          "signal_name": "GET /users/*",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "client"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'GET /users/*' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET /users/*",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "service.peer.name",
+            "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
+            "deprecation_reason": "uncategorized"
+          },
+          "id": "deprecated",
+          "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
+          "signal_name": "POST /items",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "client"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "POST /items",
+          "signal_type": "span"
+        }
+      ],
+      "id": "http/go/net-http/obi/client",
+      "instrumentation_library": "go.opentelemetry.io/obi",
+      "instrumented_library": "net/http",
+      "label": "obi",
+      "language": "go",
+      "path": "scenarios/http/go/net-http/obi/client",
+      "runner": "http-conformance",
+      "scenario_classes": [
+        "0000",
+        "0001",
+        "0002",
+        "0003",
+        "0004"
+      ],
+      "side": "client",
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 13,
+              "emitted": 4
+            },
+            "recommended": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended_conditional": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 4,
+              "emitted": 4
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.body.size",
+            "http.request.method",
+            "http.response.body.size",
+            "http.response.status_code",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port",
+            "url.full",
+            "url.scheme",
+            "url.template"
+          ],
+          "identity": {
+            "attributes": [
+              "error.type",
+              "http.request.body.size",
+              "http.request.method",
+              "http.response.body.size",
+              "http.response.status_code",
+              "network.peer.address",
+              "network.peer.port",
+              "server.address",
+              "server.port",
+              "url.full",
+              "url.scheme",
+              "url.template"
+            ],
+            "span_kind": "client"
+          },
+          "missing": [
+            "http.request.body.content",
+            "http.request.header",
+            "http.request.method_original",
+            "http.request.resend_count",
+            "http.request.size",
+            "http.response.body.content",
+            "http.response.header",
+            "http.response.size",
+            "network.protocol.name",
+            "network.protocol.version",
+            "network.transport",
+            "user_agent.original",
+            "user_agent.synthetic.type"
+          ],
+          "name": "http.client",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 3,
+              "emitted": 3
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "server.address",
+            "server.port",
+            "url.scheme"
+          ],
+          "missing": [
+            "network.protocol.name",
+            "network.protocol.version",
+            "url.template"
+          ],
+          "name": "http.client.request.body.size",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 3,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 2,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 3,
+              "emitted": 3
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "server.address",
+            "server.port",
+            "url.scheme"
+          ],
+          "missing": [
+            "network.protocol.name",
+            "network.protocol.version",
+            "url.template"
+          ],
+          "name": "http.client.request.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 2
+            },
+            "opt_in": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 3,
+              "emitted": 3
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "server.address",
+            "server.port",
+            "url.scheme"
+          ],
+          "missing": [
+            "network.protocol.name",
+            "network.protocol.version",
+            "url.template"
+          ],
+          "name": "http.client.response.body.size",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 12,
+        "recommended": {
+          "declared": 5,
+          "emitted": 1
+        },
+        "required": {
+          "declared": 13,
+          "emitted": 13
+        }
+      }
+    },
+    {
+      "backend": null,
+      "domain": "http",
+      "entities": {
+        "host": {
+          "description": [
+            "host.name",
+            "host.type"
+          ],
+          "identity": [
+            "host.id"
+          ]
+        },
+        "otel.scope": {
+          "description": [],
+          "identity": [
+            "otel.scope.name"
+          ]
+        },
+        "service": {
+          "description": [],
+          "identity": [
+            "service.name"
+          ]
+        },
+        "service.instance": {
+          "description": [],
+          "identity": [
+            "service.instance.id"
+          ]
+        },
+        "telemetry.distro": {
+          "description": [
+            "telemetry.distro.version"
+          ],
+          "identity": [
+            "telemetry.distro.name"
+          ]
+        },
+        "telemetry.sdk": {
+          "description": [
+            "telemetry.sdk.version"
+          ],
+          "identity": [
+            "telemetry.sdk.language",
+            "telemetry.sdk.name"
+          ]
+        }
+      },
+      "findings": [
+        {
+          "context": {
+            "actual": "",
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_name_missing",
+          "message": "Instrumentation scope '<missing>' does not have name.",
+          "signal_name": "<missing>",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope '<missing>' does not have schema_url.",
+          "signal_name": "<missing>",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "actual": null,
+            "expected": {
+              "present": true
+            }
+          },
+          "id": "instrumentation_scope_schema_url_missing",
+          "message": "Instrumentation scope 'go.opentelemetry.io/obi' does not have schema_url.",
+          "signal_name": "go.opentelemetry.io/obi",
+          "signal_type": "instrumentation_scope"
+        },
+        {
+          "context": {
+            "attribute_key": "instance"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'instance' does not exist in the registry.",
+          "signal_name": "target.info",
+          "signal_type": "metric"
+        },
+        {
+          "context": {
+            "attribute_key": "job"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'job' does not exist in the registry.",
+          "signal_name": "target.info",
+          "signal_type": "metric"
+        },
+        {
+          "id": "missing_metric",
+          "message": "Metric does not exist in the registry.",
+          "signal_name": "target.info",
+          "signal_type": "metric"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "server"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'GET /health' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET /health",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "server"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'GET /status/{code}' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET /status/{code}",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "server"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'GET /users/{userId}' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET /users/{userId}",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "network.protocol.version",
+            "kind": "server"
+          },
+          "id": "recommended_attribute_not_present",
+          "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "POST /items",
+          "signal_type": "span"
+        }
+      ],
+      "id": "http/go/net-http/obi/server",
+      "instrumentation_library": "go.opentelemetry.io/obi",
+      "instrumented_library": "net/http",
+      "label": "obi",
+      "language": "go",
+      "path": "scenarios/http/go/net-http/obi/server",
+      "runner": "http-conformance",
+      "scenario_classes": [
+        "server"
+      ],
+      "side": "server",
+      "signals": [
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 7,
+              "emitted": 5
+            },
+            "opt_in": {
+              "declared": 13,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 5,
+              "emitted": 3
+            },
+            "recommended_conditional": {
+              "declared": 1,
+              "emitted": 1
+            },
+            "required": {
+              "declared": 3,
+              "emitted": 3
+            }
+          },
+          "emitted": [
+            "client.address",
+            "error.type",
+            "http.request.body.size",
+            "http.request.method",
+            "http.response.body.size",
+            "http.response.status_code",
+            "http.route",
+            "network.peer.address",
+            "network.peer.port",
+            "server.address",
+            "server.port",
+            "url.path",
+            "url.query",
+            "url.scheme"
+          ],
+          "identity": {
+            "attributes": [
+              "client.address",
+              "error.type",
+              "http.request.body.size",
+              "http.request.method",
+              "http.response.body.size",
+              "http.response.status_code",
+              "http.route",
+              "network.peer.address",
+              "network.peer.port",
+              "server.address",
+              "server.port",
+              "url.path",
+              "url.query",
+              "url.scheme"
+            ],
+            "span_kind": "server"
+          },
+          "missing": [
+            "client.port",
+            "http.request.body.content",
+            "http.request.header",
+            "http.request.method_original",
+            "http.request.size",
+            "http.response.body.content",
+            "http.response.header",
+            "http.response.size",
+            "network.local.address",
+            "network.local.port",
+            "network.protocol.name",
+            "network.protocol.version",
+            "network.transport",
+            "user_agent.original",
+            "user_agent.synthetic.type"
+          ],
+          "name": "http.server",
+          "type": "span"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 3
+            },
+            "opt_in": {
+              "declared": 3,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "http.route",
+            "server.address",
+            "server.port",
+            "url.scheme"
+          ],
+          "missing": [
+            "network.protocol.name",
+            "network.protocol.version",
+            "user_agent.synthetic.type"
+          ],
+          "name": "http.server.request.body.size",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 3
+            },
+            "opt_in": {
+              "declared": 3,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "http.route",
+            "server.address",
+            "server.port",
+            "url.scheme"
+          ],
+          "missing": [
+            "network.protocol.name",
+            "network.protocol.version",
+            "user_agent.synthetic.type"
+          ],
+          "name": "http.server.request.duration",
+          "type": "metric"
+        },
+        {
+          "coverage": {
+            "conditionally_required_conditional": {
+              "declared": 4,
+              "emitted": 3
+            },
+            "opt_in": {
+              "declared": 3,
+              "emitted": 2
+            },
+            "recommended": {
+              "declared": 1,
+              "emitted": 0
+            },
+            "required": {
+              "declared": 2,
+              "emitted": 2
+            }
+          },
+          "emitted": [
+            "error.type",
+            "http.request.method",
+            "http.response.status_code",
+            "http.route",
+            "server.address",
+            "server.port",
+            "url.scheme"
+          ],
+          "missing": [
+            "network.protocol.name",
+            "network.protocol.version",
+            "user_agent.synthetic.type"
+          ],
+          "name": "http.server.response.body.size",
+          "type": "metric"
+        }
+      ],
+      "summary": {
+        "findings": 10,
+        "recommended": {
+          "declared": 8,
+          "emitted": 3
         },
         "required": {
           "declared": 9,
