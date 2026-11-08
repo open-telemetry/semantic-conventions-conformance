@@ -61,6 +61,11 @@ its environment must hold only its own instrumentation, or someone else's
 spans land in the results. So a scenario program never names an
 instrumentation, and never imports OpenTelemetry.
 
+Client libraries can also emit OpenTelemetry themselves. Disable that telemetry
+in environments measuring a separate instrumentation, as the Anthropic
+implementations do with `ANTHROPIC_OPEN_TELEMETRY: "false"`. Keep it enabled in
+the `native` environment.
+
 ## The scenario contract
 
 Each class below defines one exchange. Every library makes that same exchange,
