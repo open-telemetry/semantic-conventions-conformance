@@ -441,6 +441,7 @@ def _stream_sse():
         yield f"data: {json.dumps(chunk)}\n\n"
 
 
+@bp.route("/v1/models/<path:model_action>", methods=["POST"])
 @bp.route("/v1beta/models/<path:model_action>", methods=["POST"])
 def google_genai(model_action):
     """Handle Google GenAI API requests (generateContent, streamGenerateContent, embedContent)."""
@@ -463,6 +464,8 @@ def google_genai(model_action):
     return RESPONSE
 
 
+# v1beta only: google-genai 3 sends agents to /v1/agents, which the
+# anthropic_agents blueprint answers. No scenario creates Gemini agents.
 @bp.route("/v1beta/agents", methods=["POST"])
 def google_genai_agents():
     """Handle Google GenAI Agents API requests."""
@@ -473,6 +476,7 @@ def google_genai_agents():
     }
 
 
+@bp.route("/v1/interactions", methods=["POST"])
 @bp.route("/v1beta/interactions", methods=["POST"])
 def google_genai_interactions():
     """Handle Google GenAI Interactions API requests."""
@@ -501,6 +505,7 @@ def google_genai_interactions():
     return resp
 
 
+@bp.route("/v1/interactions/<interaction_id>", methods=["GET"])
 @bp.route("/v1beta/interactions/<interaction_id>", methods=["GET"])
 def google_genai_get_interaction(interaction_id: str) -> dict[str, object]:
     """Return a completed interaction without requiring a preceding create."""

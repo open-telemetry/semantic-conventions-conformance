@@ -119,6 +119,25 @@ ENDPOINTS = [
         "/v1beta/models/gemini-2.5-flash:generateContent",
         {"contents": [{"role": "user", "parts": [{"text": "hi"}]}]},
     ),
+    # google-genai 3 defaults to the v1 API version.
+    (
+        "google-genai-v1-interaction-get",
+        "get",
+        "/v1/interactions/interaction-fetch-1",
+        None,
+    ),
+    (
+        "google-genai-v1-interaction-create",
+        "post",
+        "/v1/interactions",
+        {"model": "gemini-2.5-flash", "input": "hi"},
+    ),
+    (
+        "google-genai-v1",
+        "post",
+        "/v1/models/gemini-2.5-flash:generateContent",
+        {"contents": [{"role": "user", "parts": [{"text": "hi"}]}]},
+    ),
     (
         "bedrock",
         "post",
@@ -937,6 +956,45 @@ def test_google_answers_a_response_schema_with_matching_json(client):
     )
     text = response.json["candidates"][0]["content"]["parts"][0]["text"]
     assert json.loads(text) == {"location": "Seattle", "temperature": 1}
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "body"),
+    [
+        (
+            "post",
+            "/models/gemini-2.0-flash:generateContent",
+            {"contents": [{"role": "user", "parts": [{"text": "hi"}]}]},
+        ),
+        (
+            "post",
+            "/models/gemini-2.0-flash:streamGenerateContent?alt=sse",
+            {"contents": [{"role": "user", "parts": [{"text": "hi"}]}]},
+        ),
+        (
+            "post",
+            "/models/text-embedding-004:batchEmbedContents",
+            {"requests": [{"content": {"parts": [{"text": "one"}]}}]},
+        ),
+        ("post", "/interactions", {"model": "gemini-2.5-flash", "input": "hi"}),
+        ("get", "/interactions/interaction-fetch-1?stream=false", None),
+    ],
+)
+def test_google_v1_answers_like_v1beta(client, method, path, body):
+    """google-genai 2 calls v1beta and google-genai 3 calls v1; both get one answer."""
+    v1beta = getattr(client, method)(f"/v1beta{path}", json=body)
+    v1 = getattr(client, method)(f"/v1{path}", json=body)
+    assert v1.status_code == v1beta.status_code == 200
+    assert v1.mimetype == v1beta.mimetype
+    assert v1.get_data() == v1beta.get_data()
+
+
+def test_v1_agents_stays_anthropic(client):
+    """Gemini agents stay on v1beta: Anthropic already answers POST /v1/agents."""
+    response = client.post("/v1/agents", json={"model": "claude-sonnet-4-20250514"})
+    assert response.status_code == 200
+    assert response.json["type"] == "agent"
+    assert response.json["model"] == {"id": "claude-sonnet-4-20250514"}
 
 
 def test_google_batch_embeddings_answer_one_vector_per_request(client):

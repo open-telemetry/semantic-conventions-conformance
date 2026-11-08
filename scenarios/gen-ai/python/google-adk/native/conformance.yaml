@@ -9,8 +9,8 @@ server:
   run: genai-mock-server --port ${PORT}
 
 env:
-  # The mock serves Gemini under /v1beta, the SDK's default; a client pinned
-  # to v1 would not find these routes.
+  # The mock serves Gemini under both /v1 (the google-genai 3 default) and
+  # /v1beta (google-genai 2), so no API version pin is needed.
   GOOGLE_GEMINI_BASE_URL: ${MOCK_SERVER_URL}
   GOOGLE_API_KEY: test_google_api_key
   GOOGLE_GENAI_USE_VERTEXAI: "0"
