@@ -3,11 +3,12 @@
 
 import assert from "node:assert/strict";
 import { setup } from "./harness.js";
-import { setImmediate } from "node:timers/promises";
+import { setImmediate, setTimeout as delay } from "node:timers/promises";
 import { test } from "node:test";
 import { load } from "../assets/data.js";
 import { split } from "../assets/route.js";
 import signals, { dispose } from "../assets/views/signals.js";
+import { trackBand } from "../assets/ui.js";
 import { report, target } from "./fixtures.js";
 
 /** Click, press and read the controls the way someone using them would. */
@@ -225,6 +226,19 @@ test("attribute rows link to the registry, and the band colours the language", a
     "https://opentelemetry.io/docs/specs/semconv/registry/attributes/db/#db-system",
   );
   assert.equal(links[0].getAttribute("rel"), "noreferrer");
+  assert.deepEqual(
+    [...main.querySelectorAll('td.cell [role="img"]')].map((status) =>
+      status.getAttribute("aria-label"),
+    ),
+    ["emits", "does not emit"],
+  );
+  for (const status of main.querySelectorAll('td.cell [role="img"]')) {
+    assert.match(status.getAttribute("title"), /jdbc.*db\./);
+    assert.equal(
+      status.closest("tr").querySelector("th").getAttribute("scope"),
+      "row",
+    );
+  }
 
   // One language still gets a band: nothing else on the page names it.
   const bands = [...main.querySelectorAll("tr.band th.band-cell")];
@@ -322,6 +336,148 @@ test("scroll rail initializes and follows window resizing without ResizeObserver
   window.dispatchEvent(new window.Event("resize"));
   assert.equal(frame.classList.contains("fits"), false);
   assert.equal(frame.classList.contains("more-right"), true);
+});
+
+for (const sourceClass of ["scroller", "scroll-rail"]) {
+  test(`scroll echoes preserve newer input from the ${sourceClass}`, async (t) => {
+    const window = await setup(t);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const view = signals(await load(), null);
+    const frame = view.querySelector(".scroll-frame");
+    const scroller = frame.querySelector(".scroller");
+    const rail = frame.querySelector(".scroll-rail");
+    const width = t.mock.fn(() => 1000);
+    const pinnedWidth = t.mock.fn(() => 200);
+    Object.defineProperties(scroller, {
+      scrollWidth: { get: width },
+      clientWidth: { value: 400 },
+    });
+    Object.defineProperty(scroller.querySelector("th.attr"), "offsetWidth", {
+      get: pinnedWidth,
+    });
+    window.document.querySelector("main").replaceChildren(view);
+    t.mock.timers.tick(0);
+    const widthReads = width.mock.callCount();
+    const pinnedReads = pinnedWidth.mock.callCount();
+    const source = frame.querySelector(`.${sourceClass}`);
+    const destination = source === rail ? scroller : rail;
+    const scroll = (node) => node.dispatchEvent(new window.Event("scroll"));
+
+    source.scrollLeft = 40.25;
+    scroll(source);
+    assert.equal(destination.scrollLeft, 40.25);
+    source.scrollLeft = 80.5;
+    scroll(destination);
+    assert.equal(source.scrollLeft, 80.5);
+    scroll(source);
+    assert.equal(destination.scrollLeft, 80.5);
+
+    destination.scrollLeft = 140.75;
+    scroll(destination);
+    assert.equal(source.scrollLeft, 140.75);
+    source.scrollLeft = 180.875;
+    scroll(source);
+    assert.equal(destination.scrollLeft, 180.875);
+    scroll(destination);
+    assert.equal(source.scrollLeft, 180.875);
+    assert.equal(frame.classList.contains("more-left"), true);
+    assert.equal(frame.classList.contains("more-right"), true);
+    assert.equal(width.mock.callCount(), widthReads);
+    assert.equal(pinnedWidth.mock.callCount(), pinnedReads);
+
+    scroller.scrollLeft = 600;
+    scroll(scroller);
+    assert.equal(frame.classList.contains("more-right"), false);
+    scroller.scrollLeft = 0;
+    scroll(scroller);
+    assert.equal(frame.classList.contains("more-left"), false);
+  });
+}
+
+test("scroll echoes use the offset the destination accepted", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const view = signals(await load(), null);
+  const scroller = view.querySelector(".scroller");
+  const rail = view.querySelector(".scroll-rail");
+  let offset = 0;
+  Object.defineProperty(rail, "scrollLeft", {
+    get: () => offset,
+    set: (value) => {
+      offset = Math.round(value);
+    },
+  });
+  window.document.querySelector("main").replaceChildren(view);
+  t.mock.timers.tick(0);
+  scroller.scrollLeft = 120.75;
+  scroller.dispatchEvent(new window.Event("scroll"));
+  assert.equal(rail.scrollLeft, 121);
+  scroller.scrollLeft = 140.5;
+  rail.dispatchEvent(new window.Event("scroll"));
+  assert.equal(scroller.scrollLeft, 140.5);
+});
+
+test("band observers have independent, idempotent cleanup", async (t) => {
+  const window = await setup(t);
+  const previous = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "ResizeObserver",
+  );
+  const observers = [];
+  Object.defineProperty(globalThis, "ResizeObserver", {
+    configurable: true,
+    value: class {
+      constructor(callback) {
+        this.callback = callback;
+        this.observe = t.mock.fn();
+        this.disconnect = t.mock.fn();
+        observers.push(this);
+      }
+    },
+  });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, "ResizeObserver", previous);
+    else delete globalThis.ResizeObserver;
+  });
+  const first = window.document.createElement("div");
+  const second = window.document.createElement("div");
+  Object.defineProperty(first, "offsetHeight", { value: 100 });
+  Object.defineProperty(second, "offsetHeight", { value: 200 });
+  const stopFirst = trackBand(first);
+  const stopSecond = trackBand(second);
+  observers[0].callback();
+  assert.equal(
+    window.document.documentElement.style.getPropertyValue("--controls-h"),
+    "100px",
+  );
+  stopFirst();
+  stopFirst();
+  assert.equal(observers[0].disconnect.mock.callCount(), 1);
+  assert.equal(observers[1].disconnect.mock.callCount(), 0);
+  observers[1].callback();
+  observers[0].callback();
+  assert.equal(
+    window.document.documentElement.style.getPropertyValue("--controls-h"),
+    "200px",
+  );
+  stopSecond();
+  assert.equal(observers[1].disconnect.mock.callCount(), 1);
+});
+
+test("harness teardown cancels a view's pending measurement", async (t) => {
+  let rail;
+  await t.test("render a view without disposing it explicitly", async (t) => {
+    const window = await setup(t);
+    const view = signals(await load(), null);
+    rail = view.querySelector(".scroll-rail");
+    Object.defineProperty(view.querySelector(".scroller"), "scrollWidth", {
+      value: 1000,
+    });
+    window.document.querySelector("main").replaceChildren(view);
+    assert.equal(rail.firstElementChild.style.width, "");
+  });
+  await delay(0);
+  assert.equal(rail.firstElementChild.style.width, "");
 });
 
 for (const observed of [false, true]) {
@@ -435,6 +591,7 @@ for (const observed of [false, true]) {
     window.dispatchEvent(new window.Event("scroll"));
     window.dispatchEvent(new window.Event("resize"));
     t.mock.timers.tick(0);
+    if (observed) observer.callback();
     assert.equal(frame.classList.contains("sticky-header"), true);
     assert.equal(header.getAttribute("style"), style);
     if (observed) assert.equal(observer.disconnect.mock.callCount(), 1);
@@ -621,6 +778,26 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
     }),
   ]);
   const window = await setup(t, document, "#/signals/metric%3Adb.duration");
+  const previous = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "ResizeObserver",
+  );
+  const observers = [];
+  Object.defineProperty(globalThis, "ResizeObserver", {
+    configurable: true,
+    value: class {
+      constructor(callback) {
+        this.callback = callback;
+        this.observe = t.mock.fn();
+        this.disconnect = t.mock.fn();
+        observers.push(this);
+      }
+    },
+  });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, "ResizeObserver", previous);
+    else delete globalThis.ResizeObserver;
+  });
   await import("../assets/app.js");
   await setImmediate();
   const main = window.document.querySelector("main");
@@ -695,9 +872,16 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
     window.document.querySelector('nav [aria-current="page"]').textContent,
     "Instrumentations",
   );
+  let bandObserver = observers.at(-1);
+  assert.equal(
+    bandObserver.observe.mock.calls[0].arguments[0],
+    main.querySelector(".controls"),
+  );
   for (const hash of ["#/target", "#/target/"]) {
     window.location.hash = hash;
     window.dispatchEvent(new window.HashChangeEvent("hashchange"));
+    assert.equal(bandObserver.disconnect.mock.callCount(), 1);
+    bandObserver = observers.at(-1);
     assert.ok(main.querySelector(".picker"));
     assert.equal(main.querySelector(".target-detail"), null);
     assert.equal(
@@ -708,6 +892,7 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
 
   window.location.hash = "#/signals/50%";
   window.dispatchEvent(new window.HashChangeEvent("hashchange"));
+  assert.equal(bandObserver.disconnect.mock.callCount(), 1);
   assert.ok(main.querySelector("table"));
   assert.doesNotMatch(main.textContent, /Could not render/);
 });

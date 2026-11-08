@@ -248,6 +248,14 @@ function sameAttributes(left, right) {
 }
 
 /**
+ * @param {Target[]} targets the targets shown together
+ * @returns {boolean} whether their column names need side qualifiers
+ */
+export function hasMixedSides(targets) {
+  return new Set(targets.map((target) => target.side ?? "")).size > 1;
+}
+
+/**
  * Name a target as a heatmap column: its library, a backend the library does
  * not already name, its side when `sided`, and its distribution.
  * The distribution's common `opentelemetry-` prefix is shortened

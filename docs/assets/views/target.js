@@ -72,6 +72,13 @@ const rank = (level) => {
   return index === -1 ? LEVELS.length : index;
 };
 
+let stopTrackingBand = null;
+
+export function dispose() {
+  stopTrackingBand?.();
+  stopTrackingBand = null;
+}
+
 /** @param {import('../data.js').Data} data @param {string|null} id */
 export function title(data, id) {
   const found = data.byId.get(id);
@@ -88,6 +95,7 @@ export function title(data, id) {
  * @returns {HTMLElement}
  */
 export default function target(data, id) {
+  dispose();
   const found = data.byId.get(id);
   const items = data.targets
     .map((target) => ({
@@ -111,7 +119,7 @@ export default function target(data, id) {
       picker.node,
     ]),
   ]);
-  trackBand(controls);
+  stopTrackingBand = trackBand(controls);
   if (!found)
     return el("div", {}, [
       controls,

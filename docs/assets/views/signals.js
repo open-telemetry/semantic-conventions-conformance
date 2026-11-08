@@ -11,6 +11,7 @@ import {
   attributeUrl,
   columnName,
   fullLabel,
+  hasMixedSides,
   languageColor,
   levelColor,
 } from "../data.js";
@@ -285,7 +286,7 @@ function heatmap(signal, rows, levels, refinements, pin) {
   }
 
   const columns = rows.slice().sort(compareColumns);
-  const sided = new Set(columns.map((row) => row.target.side ?? "")).size > 1;
+  const sided = hasMixedSides(columns.map((row) => row.target));
   const header = el("tr", {}, [
     el("th", { class: "attr", scope: "col", text: "Attribute" }),
     ...columns.map((row) => columnHeader(row.target, sided)),
@@ -381,14 +382,32 @@ function trackEdges(frame, scroller, rail) {
   );
   frame.classList.toggle("scroll-driven-header", scrollDrivenHeader);
   let end = 0;
+  let active = true;
+  const mirrored = new Map();
+  const copyPosition = (from, to) => {
+    const position = from.scrollLeft;
+    const before = to.scrollLeft;
+    if (before !== position) {
+      to.scrollLeft = position;
+      if (to.scrollLeft !== before) mirrored.set(to, to.scrollLeft);
+    }
+  };
+  const mirror = (from, to) => {
+    const echo = mirrored.get(from);
+    mirrored.delete(from);
+    // New input can arrive before a programmatic scroll's event.
+    if (from.scrollLeft !== echo) copyPosition(from, to);
+  };
   const updatePosition = () => {
     frame.classList.toggle("more-left", scroller.scrollLeft > 1);
     frame.classList.toggle("more-right", scroller.scrollLeft < end - 1);
-    if (rail.scrollLeft !== scroller.scrollLeft) {
-      rail.scrollLeft = scroller.scrollLeft;
-    }
+  };
+  const scrollTable = () => {
+    updatePosition();
+    mirror(scroller, rail);
   };
   const measure = () => {
+    if (!active) return;
     const width = scroller.scrollWidth;
     end = width - scroller.clientWidth;
     const pinnedWidth = pinned?.offsetWidth ?? 0;
@@ -411,13 +430,12 @@ function trackEdges(frame, scroller, rail) {
       header.style.setProperty("--viewport-height", `${viewportHeight}px`);
     }
     updatePosition();
+    copyPosition(scroller, rail);
   };
   const scrollRail = () => {
-    if (scroller.scrollLeft !== rail.scrollLeft) {
-      scroller.scrollLeft = rail.scrollLeft;
-    }
+    mirror(rail, scroller);
   };
-  scroller.addEventListener("scroll", updatePosition, { passive: true });
+  scroller.addEventListener("scroll", scrollTable, { passive: true });
   rail.addEventListener("scroll", scrollRail, { passive: true });
   addEventListener("resize", measure, { passive: true });
   let observer;
@@ -431,10 +449,11 @@ function trackEdges(frame, scroller, rail) {
     timer = setTimeout(measure, 0);
   }
   stopTrackingEdges = () => {
+    active = false;
     observer?.disconnect();
     clearTimeout(timer);
     removeEventListener("resize", measure);
-    scroller.removeEventListener("scroll", updatePosition);
+    scroller.removeEventListener("scroll", scrollTable);
     rail.removeEventListener("scroll", scrollRail);
   };
 }
@@ -460,6 +479,8 @@ function attributeRow(attribute, columns, pin) {
     ...emitted.map((yes, i) =>
       el("td", { class: `cell ${yes ? "cell-yes" : "cell-no"}` }, [
         el("span", {
+          role: "img",
+          "aria-label": yes ? "emits" : "does not emit",
           title: `${fullLabel(columns[i].target)} ${yes ? "emits" : "does not emit"} ${attribute}`,
         }),
       ]),

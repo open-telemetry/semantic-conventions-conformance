@@ -863,6 +863,9 @@ td.num {
   left: 0;
   display: inline-block;
   padding-left: 0.7rem;
+  max-width: var(--pinned-w, 100%);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .heatmap tr.level-head i {
   display: inline-block;

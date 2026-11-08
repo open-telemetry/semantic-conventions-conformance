@@ -39,6 +39,11 @@ Taller headers and all headers in unsupported browsers scroll away with the page
 There is no JavaScript pinning fallback. The height condition is recalculated when
 the viewport or table size changes, not while scrolling.
 
+The horizontal scrollbar and table ignore matching programmatic scroll echoes
+while preserving new user input. Requirement-group headings wrap within the
+pinned attribute column, and emission indicators have accessible status labels.
+View disposal releases resize observers, pending measurements, and listeners.
+
 The site has no runtime dependencies. Development checks use Node's test runner,
 jsdom for DOM behavior, and Prettier:
 

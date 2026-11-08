@@ -4,7 +4,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { attributeUrl, columnName, load } from "../assets/data.js";
+import {
+  attributeUrl,
+  columnName,
+  hasMixedSides,
+  load,
+} from "../assets/data.js";
 import { report, target } from "./fixtures.js";
 
 test("load fetches the report and rejects unsupported schemas and HTTP failures", async (t) => {
@@ -187,6 +192,28 @@ test("column names shorten the distribution and qualify by backend and side", ()
   );
 });
 
+test("side qualifiers are needed only when the targets shown differ in side", () => {
+  assert.equal(hasMixedSides([]), false);
+  assert.equal(hasMixedSides([target({ side: "client" })]), false);
+  assert.equal(
+    hasMixedSides([target({ side: "client" }), target({ side: "client" })]),
+    false,
+  );
+  assert.equal(
+    hasMixedSides([
+      target(),
+      target({ side: undefined }),
+      target({ side: "" }),
+    ]),
+    false,
+  );
+  assert.equal(
+    hasMixedSides([target({ side: "client" }), target({ side: "server" })]),
+    true,
+  );
+  assert.equal(hasMixedSides([target(), target({ side: "client" })]), true);
+});
+
 test("every committed signal has distinct column names within each language", async (t) => {
   const document = JSON.parse(
     await readFile(
@@ -200,8 +227,7 @@ test("every committed signal has distinct column names within each language", as
   }));
   const data = await load();
   for (const signal of data.signals.values()) {
-    const sided =
-      new Set(signal.rows.map((row) => row.target.side ?? "")).size > 1;
+    const sided = hasMixedSides(signal.rows.map((row) => row.target));
     const columns = signal.rows.map(({ target }) => {
       const name = columnName(target, sided);
       return `${target.language}:${name.library}:${name.qualifier}:${name.distribution}`;
