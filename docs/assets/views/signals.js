@@ -372,22 +372,15 @@ function trackEdges(frame, scroller, rail) {
   const table = scroller.firstElementChild;
   const header = table.querySelector("thead");
   const pinned = table.querySelector("th.attr");
+  const scrollDrivenHeader = [
+    ["view-timeline", "--heatmap block 0px"],
+    ["animation-timeline", "--heatmap"],
+    ["animation-range", "cover 0px cover calc(100% - 1px)"],
+  ].every(([property, value]) =>
+    document.defaultView.CSS?.supports?.(property, value),
+  );
+  frame.classList.toggle("scroll-driven-header", scrollDrivenHeader);
   let end = 0;
-  let stickyHeader = false;
-  let maxHeaderOffset = 0;
-  let headerOffset = 0;
-  const updateHeader = () => {
-    const offset = stickyHeader
-      ? Math.max(
-          0,
-          Math.min(maxHeaderOffset, -table.getBoundingClientRect().top),
-        )
-      : 0;
-    if (offset !== headerOffset) {
-      headerOffset = offset;
-      header.style.setProperty("--header-offset", `${offset}px`);
-    }
-  };
   const updatePosition = () => {
     frame.classList.toggle("more-left", scroller.scrollLeft > 1);
     frame.classList.toggle("more-right", scroller.scrollLeft < end - 1);
@@ -398,17 +391,26 @@ function trackEdges(frame, scroller, rail) {
   const measure = () => {
     const width = scroller.scrollWidth;
     end = width - scroller.clientWidth;
-    const headerHeight = header.offsetHeight;
-    const viewportHeight = document.documentElement.clientHeight;
     const pinnedWidth = pinned?.offsetWidth ?? 0;
-    maxHeaderOffset = Math.max(0, table.offsetHeight - headerHeight);
-    stickyHeader = headerHeight > 0 && headerHeight <= viewportHeight / 3;
     frame.classList.toggle("fits", end <= 1);
-    frame.classList.toggle("sticky-header", stickyHeader);
     frame.style.setProperty("--pinned-w", `${pinnedWidth}px`);
     rail.firstElementChild.style.width = `${width}px`;
+    if (scrollDrivenHeader) {
+      const tableHeight = table.getBoundingClientRect().height;
+      const headerHeight = header.getBoundingClientRect().height;
+      const viewportHeight = document.documentElement.clientHeight;
+      frame.classList.toggle(
+        "sticky-header",
+        headerHeight > 0 && headerHeight <= viewportHeight / 3,
+      );
+      header.style.setProperty(
+        "--header-travel",
+        `${Math.max(0, tableHeight - headerHeight)}px`,
+      );
+      header.style.setProperty("--header-height", `${headerHeight}px`);
+      header.style.setProperty("--viewport-height", `${viewportHeight}px`);
+    }
     updatePosition();
-    updateHeader();
   };
   const scrollRail = () => {
     if (scroller.scrollLeft !== rail.scrollLeft) {
@@ -418,7 +420,6 @@ function trackEdges(frame, scroller, rail) {
   scroller.addEventListener("scroll", updatePosition, { passive: true });
   rail.addEventListener("scroll", scrollRail, { passive: true });
   addEventListener("resize", measure, { passive: true });
-  addEventListener("scroll", updateHeader, { passive: true });
   let observer;
   let timer;
   if (typeof ResizeObserver === "function") {
@@ -433,7 +434,6 @@ function trackEdges(frame, scroller, rail) {
     observer?.disconnect();
     clearTimeout(timer);
     removeEventListener("resize", measure);
-    removeEventListener("scroll", updateHeader);
     scroller.removeEventListener("scroll", updatePosition);
     rail.removeEventListener("scroll", scrollRail);
   };

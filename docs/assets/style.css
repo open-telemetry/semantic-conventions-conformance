@@ -883,11 +883,30 @@ td.num {
    keeps the header and body aligned without a second table. */
 .heatmap thead {
   position: relative;
-  transform: translateY(var(--header-offset, 0px));
   z-index: 3;
 }
 .heatmap thead th {
   top: auto;
+}
+.scroll-frame.scroll-driven-header .scroller {
+  view-timeline: --heatmap block 0px;
+}
+@keyframes pin-heatmap-header {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(var(--header-travel));
+  }
+}
+.scroll-frame.scroll-driven-header.sticky-header .heatmap thead {
+  animation: pin-heatmap-header 1s linear both;
+  animation-timeline: --heatmap;
+  /* Cover starts when the table reaches the viewport's bottom edge. Advance
+     by a viewport height to begin pinning at the top, and stop before the
+     table's bottom passes the header's bottom. */
+  animation-range: cover var(--viewport-height) cover
+    calc(100% - var(--header-height));
 }
 
 .note {
