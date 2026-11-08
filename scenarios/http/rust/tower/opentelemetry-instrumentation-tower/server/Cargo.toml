@@ -9,13 +9,18 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-axum.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
 opentelemetry-instrumentation-tower.workspace = true
 otel-conformance-http.workspace = true
 otel-conformance-scenario.workspace = true
 otel-conformance-scenario-sdk.workspace = true
 tokio.workspace = true
+tower.workspace = true
 tower-scenarios = { path = "../../scenarios" }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["io-util", "time"] }
 
 [lints]
 workspace = true

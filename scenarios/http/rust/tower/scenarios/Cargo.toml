@@ -9,8 +9,14 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-axum.workspace = true
+http.workspace = true
+http-body-util.workspace = true
+hyper.workspace = true
 otel-conformance-http.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
+tower.workspace = true
 
 [lib]
 path = "src/lib.rs"

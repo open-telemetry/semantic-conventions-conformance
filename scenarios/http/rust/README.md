@@ -9,7 +9,7 @@ actix-web/scenarios/                           plain Actix Web server workload
 actix-web/opentelemetry-actix-web/server/      traced and measured server binary
 awc/scenarios/                                 plain awc client workload
 awc/opentelemetry-actix-web/client/            traced client binary
-tower/scenarios/                               plain Axum/Tower server workload
+tower/scenarios/                               plain Tower HTTP server workload
 tower/opentelemetry-instrumentation-tower/server/ traced and measured server binary
 ../../../tools/http/test-client/rust/          shared HTTP contract
 ../../../tools/rust/scenario/                  environment and shutdown protocol
@@ -19,9 +19,14 @@ tower/opentelemetry-instrumentation-tower/server/ traced and measured server bin
 The workload crates import no OpenTelemetry code. The Actix Web binary crates
 add `opentelemetry-instrumentation-actix-web`: `RequestTracing` and
 `RequestMetrics` wrap the server, while the crate's `awc` feature traces each
-client request. The Tower binary wraps its Axum router with
-`opentelemetry-instrumentation-tower`. Both server instrumentations emit the
-standard HTTP server metrics.
+client request. The Tower binary wraps a plain Tower service with
+`opentelemetry-instrumentation-tower` and uses Hyper only for HTTP transport.
+It has no router-provided route metadata, so server spans have method-only
+names and no `http.route`. Both server instrumentations emit the standard
+HTTP server metrics.
+
+The Tower instrumentation emits an empty `url.scheme` for the origin-form
+request targets received by Hyper.
 
 Client and server remain separate conformance packages and coverage files.
 Combining them would let one side's telemetry hide a missing signal from the

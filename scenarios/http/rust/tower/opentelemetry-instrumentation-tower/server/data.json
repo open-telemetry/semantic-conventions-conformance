@@ -3,7 +3,6 @@
     "http.server": [
       "http.request.method",
       "http.response.status_code",
-      "http.route",
       "url.path",
       "url.scheme",
       "user_agent.original"
@@ -18,7 +17,6 @@
     "http.server.request.body.size": [
       "http.request.method",
       "http.response.status_code",
-      "http.route",
       "network.protocol.name",
       "network.protocol.version",
       "url.scheme"
@@ -26,7 +24,6 @@
     "http.server.request.duration": [
       "http.request.method",
       "http.response.status_code",
-      "http.route",
       "network.protocol.name",
       "network.protocol.version",
       "url.scheme"
@@ -34,7 +31,6 @@
     "http.server.response.body.size": [
       "http.request.method",
       "http.response.status_code",
-      "http.route",
       "network.protocol.name",
       "network.protocol.version",
       "url.scheme"
@@ -71,49 +67,19 @@
       }
     },
     {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
-      "signal_type": "span",
-      "signal_name": "GET /health",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /health' is missing recommended attribute 'network.protocol.version'",
-      "signal_type": "span",
-      "signal_name": "GET /health",
-      "context": {
-        "attribute_key": "network.protocol.version",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /health' is missing recommended attribute 'server.address'",
-      "signal_type": "span",
-      "signal_name": "GET /health",
-      "context": {
-        "attribute_key": "server.address",
-        "kind": "server"
-      }
-    },
-    {
       "id": "error_type_missing_on_error",
-      "message": "Span 'GET /status/{status}' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
+      "message": "Span 'GET' has status.code='error' but is missing 'error.type'; it MUST be set when the operation fails.",
       "signal_type": "span",
-      "signal_name": "GET /status/{status}",
+      "signal_name": "GET",
       "context": {
         "status_code": "error"
       }
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /status/{status}' is missing recommended attribute 'client.address'",
+      "message": "Span 'GET' is missing recommended attribute 'client.address'",
       "signal_type": "span",
-      "signal_name": "GET /status/{status}",
+      "signal_name": "GET",
       "context": {
         "attribute_key": "client.address",
         "kind": "server"
@@ -121,9 +87,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /status/{status}' is missing recommended attribute 'network.protocol.version'",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
       "signal_type": "span",
-      "signal_name": "GET /status/{status}",
+      "signal_name": "GET",
       "context": {
         "attribute_key": "network.protocol.version",
         "kind": "server"
@@ -131,9 +97,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /status/{status}' is missing recommended attribute 'server.address'",
+      "message": "Span 'GET' is missing recommended attribute 'server.address'",
       "signal_type": "span",
-      "signal_name": "GET /status/{status}",
+      "signal_name": "GET",
       "context": {
         "attribute_key": "server.address",
         "kind": "server"
@@ -141,9 +107,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /users/{user_id}' is missing recommended attribute 'client.address'",
+      "message": "Span 'POST' is missing recommended attribute 'client.address'",
       "signal_type": "span",
-      "signal_name": "GET /users/{user_id}",
+      "signal_name": "POST",
       "context": {
         "attribute_key": "client.address",
         "kind": "server"
@@ -151,9 +117,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /users/{user_id}' is missing recommended attribute 'network.protocol.version'",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
       "signal_type": "span",
-      "signal_name": "GET /users/{user_id}",
+      "signal_name": "POST",
       "context": {
         "attribute_key": "network.protocol.version",
         "kind": "server"
@@ -161,39 +127,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /users/{user_id}' is missing recommended attribute 'server.address'",
+      "message": "Span 'POST' is missing recommended attribute 'server.address'",
       "signal_type": "span",
-      "signal_name": "GET /users/{user_id}",
-      "context": {
-        "attribute_key": "server.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
-      "signal_type": "span",
-      "signal_name": "POST /items",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
-      "signal_type": "span",
-      "signal_name": "POST /items",
-      "context": {
-        "attribute_key": "network.protocol.version",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /items' is missing recommended attribute 'server.address'",
-      "signal_type": "span",
-      "signal_name": "POST /items",
+      "signal_name": "POST",
       "context": {
         "attribute_key": "server.address",
         "kind": "server"

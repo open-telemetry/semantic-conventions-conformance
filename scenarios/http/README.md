@@ -87,10 +87,12 @@ through path dependencies, and neither package writes to the user-wide gem
 installation.
 
 In Rust the split is between crates. Its plain workload crates hold native
-Actix Web and Axum/Tower routes and the awc request sequence without importing
-OpenTelemetry. The instrumentation-specific binary crates install their
-middleware around those workloads. One Cargo workspace at `rust/` includes the
-shared crates under `tools/` and commits one lockfile for all of them.
+Actix Web routes, a Tower HTTP service, and the awc request sequence without
+importing OpenTelemetry. The instrumentation-specific binary crates install
+their middleware around those workloads. One Cargo workspace at `rust/`
+includes the shared crates under `tools/` and commits one lockfile for all of
+them. The Tower service uses Hyper for HTTP transport without a router, so it
+does not provide `http.route` or route-template span names.
 
 ## The scenario contract
 
