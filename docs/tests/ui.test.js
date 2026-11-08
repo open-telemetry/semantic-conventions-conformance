@@ -3,11 +3,12 @@
 
 import assert from "node:assert/strict";
 import { setup } from "./harness.js";
-import { setImmediate } from "node:timers/promises";
+import { setImmediate, setTimeout as delay } from "node:timers/promises";
 import { test } from "node:test";
 import { load } from "../assets/data.js";
 import { split } from "../assets/route.js";
-import signals from "../assets/views/signals.js";
+import signals, { dispose } from "../assets/views/signals.js";
+import { trackBand } from "../assets/ui.js";
 import { report, target } from "./fixtures.js";
 
 /** Click, press and read the controls the way someone using them would. */
@@ -225,6 +226,19 @@ test("attribute rows link to the registry, and the band colours the language", a
     "https://opentelemetry.io/docs/specs/semconv/registry/attributes/db/#db-system",
   );
   assert.equal(links[0].getAttribute("rel"), "noreferrer");
+  assert.deepEqual(
+    [...main.querySelectorAll('td.cell [role="img"]')].map((status) =>
+      status.getAttribute("aria-label"),
+    ),
+    ["emits", "does not emit"],
+  );
+  for (const status of main.querySelectorAll('td.cell [role="img"]')) {
+    assert.match(status.getAttribute("title"), /jdbc.*db\./);
+    assert.equal(
+      status.closest("tr").querySelector("th").getAttribute("scope"),
+      "row",
+    );
+  }
 
   // One language still gets a band: nothing else on the page names it.
   const bands = [...main.querySelectorAll("tr.band th.band-cell")];
@@ -234,6 +248,511 @@ test("attribute rows link to the registry, and the band colours the language", a
   );
   assert.equal(bands[0].getAttribute("colspan"), "1");
   assert.match(bands[0].getAttribute("style"), /--lang-\d/);
+});
+
+test("column headers name the library, its qualifier, and the distribution", async (t) => {
+  const jdbc = (label) =>
+    target({
+      id: `database/java/mariadb/jdbc/${label}`,
+      label,
+      signals: [
+        { type: "metric", name: "db.duration", emitted: ["db.system"] },
+      ],
+    });
+  const window = await setup(
+    t,
+    report([jdbc("opentelemetry-javaagent"), jdbc("opentelemetry-library")]),
+  );
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+
+  const headers = [...main.querySelectorAll("th.col a")];
+  assert.deepEqual(
+    headers.map((header) =>
+      [...header.children].map((part) => part.textContent),
+    ),
+    [
+      ["jdbc", "mariadb · otel-javaagent"],
+      ["jdbc", "mariadb · otel-library"],
+    ],
+  );
+  assert.ok(headers[0].querySelector(".secondary"));
+  assert.match(headers[1].getAttribute("title"), /opentelemetry-library/);
+});
+
+test("native column headers use a short secondary line and retain the full accessible name", async (t) => {
+  const window = await setup(
+    t,
+    report([
+      target({
+        instrumented_library: "elasticsearch-java",
+        backend: "elasticsearch",
+        label: "native-instrumentation",
+      }),
+    ]),
+  );
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+  const header = main.querySelector("th.col a");
+  assert.equal(header.querySelector("b").textContent, "elasticsearch-java");
+  assert.equal(header.querySelector(".secondary").textContent, "native");
+  assert.match(header.getAttribute("title"), /native-instrumentation/);
+  assert.equal(header.getAttribute("aria-label"), header.getAttribute("title"));
+});
+
+test("scroll rail initializes and follows window resizing without ResizeObserver", async (t) => {
+  const window = await setup(t);
+  assert.equal(typeof globalThis.ResizeObserver, "undefined");
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+
+  const view = signals(await load(), null);
+  const frame = view.querySelector(".scroll-frame");
+  const scroller = frame.querySelector(".scroller");
+  const rail = frame.querySelector(".scroll-rail");
+  Object.defineProperties(scroller, {
+    scrollWidth: { value: 1000 },
+    clientWidth: { value: 400, writable: true },
+  });
+  Object.defineProperty(scroller.querySelector("th.attr"), "offsetWidth", {
+    value: 200,
+  });
+  assert.equal(rail.firstElementChild.style.width, "");
+
+  window.document.querySelector("main").replaceChildren(view);
+  t.mock.timers.tick(0);
+
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+  assert.equal(frame.style.getPropertyValue("--pinned-w"), "200px");
+  assert.equal(frame.classList.contains("fits"), false);
+  assert.equal(frame.classList.contains("more-left"), false);
+  assert.equal(frame.classList.contains("more-right"), true);
+
+  scroller.clientWidth = 1200;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(frame.classList.contains("fits"), true);
+  assert.equal(frame.classList.contains("more-right"), false);
+
+  scroller.clientWidth = 400;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(frame.classList.contains("fits"), false);
+  assert.equal(frame.classList.contains("more-right"), true);
+});
+
+for (const sourceClass of ["scroller", "scroll-rail"]) {
+  test(`scroll echoes preserve newer input from the ${sourceClass}`, async (t) => {
+    const window = await setup(t);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const view = signals(await load(), null);
+    const frame = view.querySelector(".scroll-frame");
+    const scroller = frame.querySelector(".scroller");
+    const rail = frame.querySelector(".scroll-rail");
+    const width = t.mock.fn(() => 1000);
+    const pinnedWidth = t.mock.fn(() => 200);
+    Object.defineProperties(scroller, {
+      scrollWidth: { get: width },
+      clientWidth: { value: 400 },
+    });
+    Object.defineProperty(scroller.querySelector("th.attr"), "offsetWidth", {
+      get: pinnedWidth,
+    });
+    window.document.querySelector("main").replaceChildren(view);
+    t.mock.timers.tick(0);
+    const widthReads = width.mock.callCount();
+    const pinnedReads = pinnedWidth.mock.callCount();
+    const source = frame.querySelector(`.${sourceClass}`);
+    const destination = source === rail ? scroller : rail;
+    const scroll = (node) => node.dispatchEvent(new window.Event("scroll"));
+
+    source.scrollLeft = 40.25;
+    scroll(source);
+    assert.equal(destination.scrollLeft, 40.25);
+    source.scrollLeft = 80.5;
+    scroll(destination);
+    assert.equal(source.scrollLeft, 80.5);
+    scroll(source);
+    assert.equal(destination.scrollLeft, 80.5);
+
+    destination.scrollLeft = 140.75;
+    scroll(destination);
+    assert.equal(source.scrollLeft, 140.75);
+    source.scrollLeft = 180.875;
+    scroll(source);
+    assert.equal(destination.scrollLeft, 180.875);
+    scroll(destination);
+    assert.equal(source.scrollLeft, 180.875);
+    assert.equal(frame.classList.contains("more-left"), true);
+    assert.equal(frame.classList.contains("more-right"), true);
+    assert.equal(width.mock.callCount(), widthReads);
+    assert.equal(pinnedWidth.mock.callCount(), pinnedReads);
+
+    scroller.scrollLeft = 600;
+    scroll(scroller);
+    assert.equal(frame.classList.contains("more-right"), false);
+    scroller.scrollLeft = 0;
+    scroll(scroller);
+    assert.equal(frame.classList.contains("more-left"), false);
+  });
+}
+
+test("scroll echoes use the offset the destination accepted", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const view = signals(await load(), null);
+  const scroller = view.querySelector(".scroller");
+  const rail = view.querySelector(".scroll-rail");
+  let offset = 0;
+  Object.defineProperty(rail, "scrollLeft", {
+    get: () => offset,
+    set: (value) => {
+      offset = Math.round(value);
+    },
+  });
+  window.document.querySelector("main").replaceChildren(view);
+  t.mock.timers.tick(0);
+  scroller.scrollLeft = 120.75;
+  scroller.dispatchEvent(new window.Event("scroll"));
+  assert.equal(rail.scrollLeft, 121);
+  scroller.scrollLeft = 140.5;
+  rail.dispatchEvent(new window.Event("scroll"));
+  assert.equal(scroller.scrollLeft, 140.5);
+});
+
+test("band observers have independent, idempotent cleanup", async (t) => {
+  const window = await setup(t);
+  const previous = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "ResizeObserver",
+  );
+  const observers = [];
+  Object.defineProperty(globalThis, "ResizeObserver", {
+    configurable: true,
+    value: class {
+      constructor(callback) {
+        this.callback = callback;
+        this.observe = t.mock.fn();
+        this.disconnect = t.mock.fn();
+        observers.push(this);
+      }
+    },
+  });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, "ResizeObserver", previous);
+    else delete globalThis.ResizeObserver;
+  });
+  const first = window.document.createElement("div");
+  const second = window.document.createElement("div");
+  Object.defineProperty(first, "offsetHeight", { value: 100 });
+  Object.defineProperty(second, "offsetHeight", { value: 200 });
+  const stopFirst = trackBand(first);
+  const stopSecond = trackBand(second);
+  observers[0].callback();
+  assert.equal(
+    window.document.documentElement.style.getPropertyValue("--controls-h"),
+    "100px",
+  );
+  stopFirst();
+  stopFirst();
+  assert.equal(observers[0].disconnect.mock.callCount(), 1);
+  assert.equal(observers[1].disconnect.mock.callCount(), 0);
+  observers[1].callback();
+  observers[0].callback();
+  assert.equal(
+    window.document.documentElement.style.getPropertyValue("--controls-h"),
+    "200px",
+  );
+  stopSecond();
+  assert.equal(observers[1].disconnect.mock.callCount(), 1);
+});
+
+test("harness teardown cancels a view's pending measurement", async (t) => {
+  let rail;
+  await t.test("render a view without disposing it explicitly", async (t) => {
+    const window = await setup(t);
+    const view = signals(await load(), null);
+    rail = view.querySelector(".scroll-rail");
+    Object.defineProperty(view.querySelector(".scroller"), "scrollWidth", {
+      value: 1000,
+    });
+    window.document.querySelector("main").replaceChildren(view);
+    assert.equal(rail.firstElementChild.style.width, "");
+  });
+  await delay(0);
+  assert.equal(rail.firstElementChild.style.width, "");
+});
+
+for (const observed of [false, true]) {
+  test(`headers stick within one-third of the viewport regardless of horizontal overflow, ${observed ? "with" : "without"} ResizeObserver`, async (t) => {
+    const window = await setup(t);
+    Object.defineProperty(window, "CSS", {
+      configurable: true,
+      value: { supports: () => true },
+    });
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    let observer;
+    if (observed) {
+      const previous = Object.getOwnPropertyDescriptor(
+        globalThis,
+        "ResizeObserver",
+      );
+      Object.defineProperty(globalThis, "ResizeObserver", {
+        configurable: true,
+        value: class {
+          constructor(callback) {
+            this.callback = callback;
+            this.observe = t.mock.fn();
+            this.disconnect = t.mock.fn();
+            observer = this;
+          }
+        },
+      });
+      t.after(() => {
+        if (previous)
+          Object.defineProperty(globalThis, "ResizeObserver", previous);
+        else delete globalThis.ResizeObserver;
+      });
+    }
+
+    const view = signals(await load(), null);
+    const frame = view.querySelector(".scroll-frame");
+    const scroller = frame.querySelector(".scroller");
+    const table = scroller.firstElementChild;
+    const header = table.querySelector("thead");
+    const rail = frame.querySelector(".scroll-rail");
+    const viewport = window.document.documentElement;
+    Object.defineProperties(scroller, {
+      scrollWidth: { value: 1000 },
+      clientWidth: { value: 1000, writable: true },
+    });
+    let headerHeight = 300;
+    let tableHeight = 1200;
+    Object.defineProperty(viewport, "clientHeight", {
+      value: 900,
+      writable: true,
+    });
+    t.mock.method(table, "getBoundingClientRect", () => ({
+      height: tableHeight,
+    }));
+    t.mock.method(header, "getBoundingClientRect", () => ({
+      height: headerHeight,
+    }));
+    window.document.querySelector("main").replaceChildren(view);
+    if (observed) {
+      assert.deepEqual(
+        observer.observe.mock.calls.map((call) => call.arguments[0]),
+        [scroller, table, header],
+      );
+      observer.callback();
+    } else {
+      t.mock.timers.tick(0);
+    }
+    assert.equal(frame.classList.contains("fits"), true);
+    assert.equal(frame.classList.contains("sticky-header"), true);
+    assert.equal(header.style.getPropertyValue("--header-travel"), "900px");
+    assert.equal(header.style.getPropertyValue("--header-height"), "300px");
+    assert.equal(header.style.getPropertyValue("--viewport-height"), "900px");
+
+    viewport.clientHeight = 899;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("fits"), true);
+    assert.equal(frame.classList.contains("sticky-header"), false);
+
+    viewport.clientHeight = 900;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    headerHeight = 301;
+    if (observed) observer.callback();
+    else window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("sticky-header"), false);
+
+    headerHeight = 300;
+    scroller.clientWidth = 998;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("fits"), false);
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    tableHeight = 320;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(header.style.getPropertyValue("--header-travel"), "20px");
+
+    scroller.clientWidth = 999;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("fits"), true);
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    headerHeight = 301;
+    scroller.dispatchEvent(new window.Event("scroll"));
+    rail.dispatchEvent(new window.Event("scroll"));
+    assert.equal(frame.classList.contains("sticky-header"), true);
+
+    const style = header.getAttribute("style");
+    dispose();
+    viewport.clientHeight = 899;
+    window.dispatchEvent(new window.Event("scroll"));
+    window.dispatchEvent(new window.Event("resize"));
+    t.mock.timers.tick(0);
+    if (observed) observer.callback();
+    assert.equal(frame.classList.contains("sticky-header"), true);
+    assert.equal(header.getAttribute("style"), style);
+    if (observed) assert.equal(observer.disconnect.mock.callCount(), 1);
+  });
+}
+
+for (const missingFeature of [
+  null,
+  "CSS API",
+  "view-timeline",
+  "animation-timeline",
+  "animation-range",
+]) {
+  test(`CSS header pinning ${missingFeature ? `is disabled without ${missingFeature}` : "avoids JavaScript scroll tracking"}`, async (t) => {
+    const window = await setup(t);
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    Object.defineProperty(window, "CSS", {
+      configurable: true,
+      value:
+        missingFeature === "CSS API"
+          ? undefined
+          : { supports: (property) => property !== missingFeature },
+    });
+    const listen = t.mock.method(globalThis, "addEventListener");
+    const view = signals(await load(), null);
+    const frame = view.querySelector(".scroll-frame");
+    const scroller = frame.querySelector(".scroller");
+    const table = scroller.firstElementChild;
+    const header = table.querySelector("thead");
+    const viewport = window.document.documentElement;
+    let tableHeight = 1200.75;
+    let headerHeight = 300.25;
+    Object.defineProperties(scroller, {
+      scrollWidth: { value: 1000 },
+      clientWidth: { value: 400 },
+    });
+    Object.defineProperty(viewport, "clientHeight", {
+      value: 901,
+      writable: true,
+    });
+    const bounds = t.mock.method(table, "getBoundingClientRect", () => ({
+      height: tableHeight,
+    }));
+    const headerBounds = t.mock.method(header, "getBoundingClientRect", () => ({
+      height: headerHeight,
+    }));
+    window.document.querySelector("main").replaceChildren(view);
+    t.mock.timers.tick(0);
+
+    assert.equal(
+      frame.classList.contains("scroll-driven-header"),
+      missingFeature === null,
+    );
+    assert.equal(
+      frame.classList.contains("sticky-header"),
+      missingFeature === null,
+    );
+    assert.equal(
+      listen.mock.calls.some((call) => call.arguments[0] === "scroll"),
+      false,
+    );
+    if (missingFeature === null) {
+      assert.equal(header.style.getPropertyValue("--header-travel"), "900.5px");
+      assert.equal(
+        header.style.getPropertyValue("--header-height"),
+        "300.25px",
+      );
+      assert.equal(header.style.getPropertyValue("--viewport-height"), "901px");
+    } else {
+      assert.equal(header.getAttribute("style"), null);
+      assert.equal(bounds.mock.callCount(), 0);
+      assert.equal(headerBounds.mock.callCount(), 0);
+    }
+
+    const style = header.getAttribute("style");
+    const measurements = bounds.mock.callCount();
+    const headerMeasurements = headerBounds.mock.callCount();
+    window.dispatchEvent(new window.Event("scroll"));
+    assert.equal(header.getAttribute("style"), style);
+    assert.equal(bounds.mock.callCount(), measurements);
+    assert.equal(headerBounds.mock.callCount(), headerMeasurements);
+
+    viewport.clientHeight = 900;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(frame.classList.contains("sticky-header"), false);
+
+    tableHeight = 600.5;
+    headerHeight = 199.25;
+    viewport.clientHeight = 600;
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(
+      frame.classList.contains("sticky-header"),
+      missingFeature === null,
+    );
+    if (missingFeature === null) {
+      assert.equal(
+        header.style.getPropertyValue("--header-travel"),
+        "401.25px",
+      );
+      assert.equal(
+        header.style.getPropertyValue("--header-height"),
+        "199.25px",
+      );
+      assert.equal(header.style.getPropertyValue("--viewport-height"), "600px");
+    } else {
+      assert.equal(header.getAttribute("style"), null);
+    }
+
+    const resizedStyle = header.getAttribute("style");
+    const reads = bounds.mock.callCount();
+    dispose();
+    window.dispatchEvent(new window.Event("scroll"));
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(header.getAttribute("style"), resizedStyle);
+    assert.equal(bounds.mock.callCount(), reads);
+  });
+}
+
+test("fallback resize listeners and pending updates are removed when the heatmap is replaced", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", {
+    value: 1000,
+    writable: true,
+  });
+  t.mock.timers.tick(0);
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+
+  driver(window, main).search("jdbc");
+  const replacementRail = main.querySelector(".scroll-rail");
+  driver(window, main).search("absent");
+  assert.equal(main.querySelector(".scroll-frame"), null);
+
+  scroller.scrollWidth = 1500;
+  window.dispatchEvent(new window.Event("resize"));
+  t.mock.timers.tick(0);
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+  assert.equal(replacementRail.firstElementChild.style.width, "");
+});
+
+test("disposing the signals view cancels pending measurement and resize tracking", async (t) => {
+  const window = await setup(t);
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const main = window.document.querySelector("main");
+  main.replaceChildren(signals(await load(), null));
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", { value: 1000 });
+
+  dispose();
+  main.replaceChildren();
+  window.dispatchEvent(new window.Event("resize"));
+  t.mock.timers.tick(0);
+
+  assert.equal(rail.firstElementChild.style.width, "");
+  dispose();
 });
 
 test("empty reports and unknown signals give useful messages", async (t) => {
@@ -259,6 +778,26 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
     }),
   ]);
   const window = await setup(t, document, "#/signals/metric%3Adb.duration");
+  const previous = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "ResizeObserver",
+  );
+  const observers = [];
+  Object.defineProperty(globalThis, "ResizeObserver", {
+    configurable: true,
+    value: class {
+      constructor(callback) {
+        this.callback = callback;
+        this.observe = t.mock.fn();
+        this.disconnect = t.mock.fn();
+        observers.push(this);
+      }
+    },
+  });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, "ResizeObserver", previous);
+    else delete globalThis.ResizeObserver;
+  });
   await import("../assets/app.js");
   await setImmediate();
   const main = window.document.querySelector("main");
@@ -313,17 +852,36 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
   );
   const column = main.querySelector("th.col a");
   assert.ok(column);
+  const scroller = main.querySelector(".scroller");
+  const rail = main.querySelector(".scroll-rail");
+  Object.defineProperty(scroller, "scrollWidth", {
+    value: 1000,
+    writable: true,
+  });
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(rail.firstElementChild.style.width, "1000px");
+
   window.location.hash = column.getAttribute("href");
   window.dispatchEvent(new window.HashChangeEvent("hashchange"));
   assert.ok(main.querySelector(".target-detail"));
+  scroller.scrollWidth = 1500;
+  window.dispatchEvent(new window.Event("resize"));
+  assert.equal(rail.firstElementChild.style.width, "1000px");
   assert.match(window.document.title, /jdbc/);
   assert.equal(
     window.document.querySelector('nav [aria-current="page"]').textContent,
     "Instrumentations",
   );
+  let bandObserver = observers.at(-1);
+  assert.equal(
+    bandObserver.observe.mock.calls[0].arguments[0],
+    main.querySelector(".controls"),
+  );
   for (const hash of ["#/target", "#/target/"]) {
     window.location.hash = hash;
     window.dispatchEvent(new window.HashChangeEvent("hashchange"));
+    assert.equal(bandObserver.disconnect.mock.callCount(), 1);
+    bandObserver = observers.at(-1);
     assert.ok(main.querySelector(".picker"));
     assert.equal(main.querySelector(".target-detail"), null);
     assert.equal(
@@ -334,6 +892,7 @@ test("app loads a deep link, skips to content, and follows signal changes", asyn
 
   window.location.hash = "#/signals/50%";
   window.dispatchEvent(new window.HashChangeEvent("hashchange"));
+  assert.equal(bandObserver.disconnect.mock.callCount(), 1);
   assert.ok(main.querySelector("table"));
   assert.doesNotMatch(main.textContent, /Could not render/);
 });

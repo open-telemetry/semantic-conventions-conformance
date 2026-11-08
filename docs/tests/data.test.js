@@ -4,7 +4,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { attributeUrl, distinguish, load } from "../assets/data.js";
+import {
+  attributeUrl,
+  columnName,
+  hasMixedSides,
+  load,
+} from "../assets/data.js";
 import { report, target } from "./fixtures.js";
 
 test("load fetches the report and rejects unsupported schemas and HTTP failures", async (t) => {
@@ -141,63 +146,75 @@ test("every attribute in the committed report resolves to a link", async () => {
   }
 });
 
-test("database labels distinguish both backend and instrumentation", () => {
-  const targets = ["mariadb", "postgresql"].flatMap((backend) =>
-    ["opentelemetry-javaagent", "opentelemetry-library"].map((label) =>
-      target({
-        id: `database/java/${backend}/jdbc/${label}`,
-        backend,
-        label,
-      }),
-    ),
+test("column names shorten the distribution and qualify by backend and side", () => {
+  assert.deepEqual(columnName(target(), false), {
+    library: "jdbc",
+    qualifier: "mariadb",
+    distribution: "otel-javaagent",
+  });
+  const express = target({
+    instrumented_library: "express",
+    label: "opentelemetry-express",
+    backend: null,
+    side: "server",
+  });
+  assert.deepEqual(columnName(express, true), {
+    library: "express",
+    qualifier: "server",
+    distribution: "otel",
+  });
+  assert.equal(columnName(express, false).qualifier, "");
+  assert.equal(
+    columnName(target({ label: "otelhttp" }), false).distribution,
+    "otelhttp",
   );
-  const labels = [...distinguish(targets).values()];
-  assert.equal(new Set(labels.map((label) => label.secondary)).size, 4);
-  assert.equal(new Set(labels.map((label) => label.full)).size, 4);
-  assert.equal(labels[0].secondary, "mariadb · opentelemetry-javaagent");
-});
-
-test("competing instrumentations and HTTP sides remain distinguishable", () => {
-  const targets = ["client", "server"].flatMap((side) =>
-    ["native", "instrumented"].map((label) =>
-      target({
-        id: `${side}/${label}`,
-        backend: null,
-        side,
-        label,
-      }),
-    ),
+  assert.equal(
+    columnName(target({ label: "native-instrumentation" }), false).distribution,
+    "native",
   );
-  const labels = [...distinguish(targets).values()];
-  assert.equal(new Set(labels.map((label) => label.secondary)).size, 4);
-  assert.equal(distinguish([targets[0]]).get(targets[0].id).secondary, null);
-});
-
-test("one library shared by two languages needs no distribution", () => {
-  const targets = [
-    target({
-      id: "http/go/net-http/otelhttp",
-      language: "go",
-      backend: null,
-      instrumented_library: "net/http",
-      label: "otelhttp",
-    }),
-    target({
-      id: "http/ruby/net-http/instrumentation",
-      language: "ruby",
-      backend: null,
-      instrumented_library: "net/http",
-      label: "opentelemetry-instrumentation-net_http",
-    }),
-  ];
-  const labels = [...distinguish(targets).values()];
   assert.deepEqual(
-    labels.map((label) => label.secondary),
-    [null, null],
+    columnName(
+      target({
+        instrumented_library: "elasticsearch-java",
+        backend: "elasticsearch",
+        label: "native-instrumentation",
+      }),
+      false,
+    ),
+    { library: "elasticsearch-java", qualifier: "", distribution: "native" },
+  );
+  assert.equal(
+    columnName(
+      target({ instrumented_library: "mariadb", backend: "mariadb" }),
+      false,
+    ).qualifier,
+    "",
   );
 });
 
-test("every committed signal has distinct column labels within each language", async (t) => {
+test("side qualifiers are needed only when the targets shown differ in side", () => {
+  assert.equal(hasMixedSides([]), false);
+  assert.equal(hasMixedSides([target({ side: "client" })]), false);
+  assert.equal(
+    hasMixedSides([target({ side: "client" }), target({ side: "client" })]),
+    false,
+  );
+  assert.equal(
+    hasMixedSides([
+      target(),
+      target({ side: undefined }),
+      target({ side: "" }),
+    ]),
+    false,
+  );
+  assert.equal(
+    hasMixedSides([target({ side: "client" }), target({ side: "server" })]),
+    true,
+  );
+  assert.equal(hasMixedSides([target(), target({ side: "client" })]), true);
+});
+
+test("every committed signal has distinct column names within each language", async (t) => {
   const document = JSON.parse(
     await readFile(
       new URL("../data/conformance.json", import.meta.url),
@@ -210,10 +227,10 @@ test("every committed signal has distinct column labels within each language", a
   }));
   const data = await load();
   for (const signal of data.signals.values()) {
-    const labels = distinguish(signal.rows.map((row) => row.target));
+    const sided = hasMixedSides(signal.rows.map((row) => row.target));
     const columns = signal.rows.map(({ target }) => {
-      const label = labels.get(target.id);
-      return `${target.language}:${label.primary}:${label.secondary}`;
+      const name = columnName(target, sided);
+      return `${target.language}:${name.library}:${name.qualifier}:${name.distribution}`;
     });
     assert.equal(new Set(columns).size, columns.length, signal.key);
   }

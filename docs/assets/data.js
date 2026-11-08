@@ -248,44 +248,38 @@ function sameAttributes(left, right) {
 }
 
 /**
- * Return display labels that distinguish the supplied targets.
- *
- * @param {Target[]} targets the targets being shown together
- * @returns {Map<string,{primary: string, secondary: string|null, full: string}>}
- *   keyed by `target.id`
+ * @param {Target[]} targets the targets shown together
+ * @returns {boolean} whether their column names need side qualifiers
  */
-export function distinguish(targets) {
-  // Columns are banded by language, so a library only has to be told apart
-  // from the others in its own band: `net/http` is instrumented in both Go
-  // and Ruby, and naming the distribution in either is noise.
-  const group = (target) =>
-    `${target.language}\u0000${target.instrumented_library}`;
-  const byLibrary = new Map();
-  for (const target of targets) {
-    const key = group(target);
-    if (!byLibrary.has(key)) byLibrary.set(key, new Set());
-    byLibrary.get(key).add(target.label);
-  }
-  const sides = new Set(targets.map((target) => target.side ?? ""));
+export function hasMixedSides(targets) {
+  return new Set(targets.map((target) => target.side ?? "")).size > 1;
+}
 
-  return new Map(
-    targets.map((target) => {
-      const parts = [];
-      if (target.backend) parts.push(target.backend);
-      if (byLibrary.get(group(target)).size > 1) {
-        parts.push(target.label);
-      }
-      if (sides.size > 1 && target.side) parts.push(target.side);
-      return [
-        target.id,
-        {
-          primary: target.instrumented_library,
-          secondary: parts.join(" · ") || null,
-          full: fullLabel(target),
-        },
-      ];
-    }),
-  );
+/**
+ * Name a target as a heatmap column: its library, a backend the library does
+ * not already name, its side when `sided`, and its distribution.
+ * The distribution's common `opentelemetry-` prefix is shortened
+ * to `otel-`, and to just `otel` when the rest only repeats the library.
+ * `native-instrumentation` is displayed as `native`.
+ *
+ * @param {Target} target one report target
+ * @param {boolean} sided whether the columns shown together differ in side
+ * @returns {{library: string, qualifier: string, distribution: string}}
+ */
+export function columnName(target, sided) {
+  const library = target.instrumented_library;
+  const backend =
+    target.backend &&
+    (library === target.backend || library.startsWith(`${target.backend}-`))
+      ? null
+      : target.backend;
+  const qualifier = [backend, sided && target.side].filter(Boolean).join(" · ");
+  let distribution =
+    target.label === `opentelemetry-${library}`
+      ? "otel"
+      : target.label.replace(/^opentelemetry-/, "otel-");
+  if (distribution === "native-instrumentation") distribution = "native";
+  return { library, qualifier, distribution };
 }
 
 /**

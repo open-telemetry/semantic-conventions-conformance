@@ -25,6 +25,21 @@ The browser compares signals by type and name. If two runners provide conflictin
 declarations, loading fails rather than comparing targets against the wrong
 registry. Coverage interpretation is documented in [`tools/report`](../tools/report).
 
+Heatmap column labels have two vertical lines: the library, then an indented
+qualifier and shortened distribution name. Labels are capped at 10rem; tooltips
+and accessible names retain the full target names. Each truncated line ends
+with an ellipsis.
+
+In browsers that support CSS view timelines and animation ranges, headers stay
+visible while scrolling when they occupy at most one-third of the viewport height,
+including horizontally scrolling tables. Headers stay aligned with their columns
+and stop at the last row.
+
+Taller headers and all headers in unsupported browsers scroll away with the page.
+
+Requirement-group headings wrap within the pinned attribute column, and emission
+indicators have accessible status labels.
+
 The site has no runtime dependencies. Development checks use Node's test runner,
 jsdom for DOM behavior, and Prettier:
 

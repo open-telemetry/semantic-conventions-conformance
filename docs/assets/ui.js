@@ -53,27 +53,28 @@ export function levelLegend(levels = LEVELS, refinements = false) {
   ]);
 }
 
-let bandSize;
-
 /**
- * Publish a sticky band's height as `--controls-h`, so the table pane under it
- * can leave exactly that much room however the filters wrap. Browsers without
+ * Publish a sticky band's height as `--controls-h`, so a row scrolled into
+ * view can land below it however the filters wrap. Browsers without
  * `ResizeObserver` fall back to the value in the stylesheet.
  *
  * @param {HTMLElement} band the sticky element to measure
+ * @returns {(()=>void)|undefined} cleanup for the band's observer
  */
 export function trackBand(band) {
   if (typeof ResizeObserver !== "function") return;
-  // One observer for the page: a re-render replaces the band, and an observer
-  // still holding the old one would keep it alive.
-  bandSize?.disconnect();
-  bandSize = new ResizeObserver(() =>
-    document.documentElement.style.setProperty(
-      "--controls-h",
-      `${band.offsetHeight}px`,
-    ),
-  );
-  bandSize.observe(band);
+  const root = band.ownerDocument.documentElement;
+  let active = true;
+  const observer = new ResizeObserver(() => {
+    if (!active) return;
+    root.style.setProperty("--controls-h", `${band.offsetHeight}px`);
+  });
+  observer.observe(band);
+  return () => {
+    if (!active) return;
+    active = false;
+    observer.disconnect();
+  };
 }
 
 /** Distinct ids, so a label and the thing it names can find each other. */

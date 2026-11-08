@@ -17,6 +17,7 @@ const ROUTES = [
 ];
 
 const main = document.querySelector("main");
+let activeView = null;
 
 document.querySelector(".skip").addEventListener("click", (event) => {
   event.preventDefault();
@@ -36,9 +37,13 @@ function render(data) {
   const { route, argument, params } = resolve();
   let title = `${route.name} · conformance`;
   try {
+    activeView?.dispose?.();
+    activeView = route.view;
     main.replaceChildren(route.view.default(data, argument, params));
     title = route.view.title?.(data, argument) ?? title;
   } catch (error) {
+    activeView?.dispose?.();
+    activeView = null;
     console.error(error);
     main.replaceChildren(
       el("p", {

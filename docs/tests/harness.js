@@ -4,6 +4,8 @@
 import { readFile } from "node:fs/promises";
 import { JSDOM } from "jsdom";
 import { report } from "./fixtures.js";
+import { dispose as disposeSignals } from "../assets/views/signals.js";
+import { dispose as disposeTarget } from "../assets/views/target.js";
 
 export async function setup(t, document = report(), hash = "") {
   const html = await readFile(
@@ -11,6 +13,10 @@ export async function setup(t, document = report(), hash = "") {
     "utf8",
   );
   const dom = new JSDOM(html, { url: `https://example.test/${hash}` });
+  t.after(() => {
+    disposeSignals();
+    disposeTarget();
+  });
   const globals = {
     document: dom.window.document,
     Node: dom.window.Node,
@@ -19,6 +25,7 @@ export async function setup(t, document = report(), hash = "") {
     history: dom.window.history,
     navigator: dom.window.navigator,
     addEventListener: dom.window.addEventListener.bind(dom.window),
+    removeEventListener: dom.window.removeEventListener.bind(dom.window),
     scrollTo: t.mock.fn(),
   };
 

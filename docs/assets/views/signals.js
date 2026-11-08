@@ -9,12 +9,13 @@ import {
   REFINEMENT_COLOR,
   REFINEMENT_LABEL,
   attributeUrl,
-  distinguish,
+  columnName,
   fullLabel,
+  hasMixedSides,
   languageColor,
   levelColor,
 } from "../data.js";
-import { el, filterBar, levelLegend, palette, trackBand } from "../ui.js";
+import { el, filterBar, levelLegend, palette } from "../ui.js";
 import { go, setParams, signalPath, targetHref } from "../route.js";
 
 /** The three requirement-level views, the first being the default. */
@@ -227,14 +228,13 @@ export default function signals(data, key, params) {
     : 0;
   const refined = chosen.refinementAttributes.size;
 
-  const controls = el("div", { class: "controls" }, [
+  const controls = el("div", { class: "controls unpinned" }, [
     el("div", { class: "controls-row" }, [
       el("h2", { text: "Signal" }),
       picker.node,
     ]),
     bar.node,
   ]);
-  trackBand(controls);
 
   return el("div", {}, [
     controls,
@@ -272,6 +272,7 @@ export default function signals(data, key, params) {
   ]);
 }
 function heatmap(signal, rows, levels, refinements, pin) {
+  dispose();
   if (!rows.length) {
     return el("p", { class: "empty", text: "No targets match those filters." });
   }
@@ -285,13 +286,13 @@ function heatmap(signal, rows, levels, refinements, pin) {
   }
 
   const columns = rows.slice().sort(compareColumns);
-  const labels = distinguish(columns.map((row) => row.target));
+  const sided = hasMixedSides(columns.map((row) => row.target));
   const header = el("tr", {}, [
     el("th", { class: "attr", scope: "col", text: "Attribute" }),
-    ...columns.map((row) =>
-      columnHeader(row.target, labels.get(row.target.id)),
-    ),
-    el("th", { class: "tally", scope: "col", text: "emitted by" }),
+    ...columns.map((row) => columnHeader(row.target, sided)),
+    el("th", { class: "tally", scope: "col" }, [
+      el("span", { class: "upright", text: "emitted by" }),
+    ]),
   ]);
 
   const grouped = new Map(levels.map((level) => [level, []]));
@@ -337,15 +338,124 @@ function heatmap(signal, rows, levels, refinements, pin) {
     });
   }
 
-  return el("div", {}, [
-    el("div", { class: "scroller" }, [
-      el("table", { class: "heatmap" }, [
-        el("thead", {}, [languageBands(columns), header]),
-        ...groups,
-      ]),
+  const scroller = el("div", { class: "scroller" }, [
+    el("table", { class: "heatmap" }, [
+      el("thead", {}, [header, languageBands(columns)]),
+      ...groups,
     ]),
-    levelLegend(levels, refinements.length > 0),
   ]);
+  const rail = el(
+    "div",
+    { class: "scroll-rail", "aria-hidden": "true", tabindex: "-1" },
+    [el("div")],
+  );
+  const frame = el("div", { class: "scroll-frame" }, [scroller, rail]);
+  trackEdges(frame, scroller, rail);
+  return el("div", {}, [frame, levelLegend(levels, refinements.length > 0)]);
+}
+
+let stopTrackingEdges = null;
+
+export function dispose() {
+  stopTrackingEdges?.();
+  stopTrackingEdges = null;
+}
+
+/**
+ * Flag the sides of the frame that have columns scrolled past them, or `fits`
+ * when there are none, and publish `--pinned-w`, the pinned attribute column's
+ * width, where the left shadow starts. The rail is a scrollbar held at the
+ * bottom of the screen, kept as wide as the table and in step with it, since
+ * the table's own is past the last row. Moving the existing header vertically
+ * keeps it aligned with the columns inside the horizontal scroller.
+ */
+function trackEdges(frame, scroller, rail) {
+  const table = scroller.firstElementChild;
+  const header = table.querySelector("thead");
+  const pinned = table.querySelector("th.attr");
+  const scrollDrivenHeader = [
+    ["view-timeline", "--heatmap block 0px"],
+    ["animation-timeline", "--heatmap"],
+    ["animation-range", "cover 0px cover calc(100% - 1px)"],
+  ].every(([property, value]) =>
+    document.defaultView.CSS?.supports?.(property, value),
+  );
+  frame.classList.toggle("scroll-driven-header", scrollDrivenHeader);
+  let end = 0;
+  let active = true;
+  const mirrored = new Map();
+  const copyPosition = (from, to) => {
+    const position = from.scrollLeft;
+    const before = to.scrollLeft;
+    if (before !== position) {
+      to.scrollLeft = position;
+      if (to.scrollLeft !== before) mirrored.set(to, to.scrollLeft);
+    }
+  };
+  const mirror = (from, to) => {
+    const echo = mirrored.get(from);
+    mirrored.delete(from);
+    // New input can arrive before a programmatic scroll's event.
+    if (from.scrollLeft !== echo) copyPosition(from, to);
+  };
+  const updatePosition = () => {
+    frame.classList.toggle("more-left", scroller.scrollLeft > 1);
+    frame.classList.toggle("more-right", scroller.scrollLeft < end - 1);
+  };
+  const scrollTable = () => {
+    updatePosition();
+    mirror(scroller, rail);
+  };
+  const measure = () => {
+    if (!active) return;
+    const width = scroller.scrollWidth;
+    end = width - scroller.clientWidth;
+    const pinnedWidth = pinned?.offsetWidth ?? 0;
+    frame.classList.toggle("fits", end <= 1);
+    frame.style.setProperty("--pinned-w", `${pinnedWidth}px`);
+    rail.firstElementChild.style.width = `${width}px`;
+    if (scrollDrivenHeader) {
+      const tableHeight = table.getBoundingClientRect().height;
+      const headerHeight = header.getBoundingClientRect().height;
+      const viewportHeight = document.documentElement.clientHeight;
+      frame.classList.toggle(
+        "sticky-header",
+        headerHeight > 0 && headerHeight <= viewportHeight / 3,
+      );
+      header.style.setProperty(
+        "--header-travel",
+        `${Math.max(0, tableHeight - headerHeight)}px`,
+      );
+      header.style.setProperty("--header-height", `${headerHeight}px`);
+      header.style.setProperty("--viewport-height", `${viewportHeight}px`);
+    }
+    updatePosition();
+    copyPosition(scroller, rail);
+  };
+  const scrollRail = () => {
+    mirror(rail, scroller);
+  };
+  scroller.addEventListener("scroll", scrollTable, { passive: true });
+  rail.addEventListener("scroll", scrollRail, { passive: true });
+  addEventListener("resize", measure, { passive: true });
+  let observer;
+  let timer;
+  if (typeof ResizeObserver === "function") {
+    observer = new ResizeObserver(measure);
+    observer.observe(scroller);
+    observer.observe(table);
+    observer.observe(header);
+  } else {
+    timer = setTimeout(measure, 0);
+  }
+  stopTrackingEdges = () => {
+    active = false;
+    observer?.disconnect();
+    clearTimeout(timer);
+    removeEventListener("resize", measure);
+    scroller.removeEventListener("scroll", scrollTable);
+    rail.removeEventListener("scroll", scrollRail);
+  };
 }
 
 /** One attribute, across every column, and how many of them carried it. */
@@ -353,16 +463,24 @@ function attributeRow(attribute, columns, pin) {
   const emitted = columns.map((row) => row.signal.emitted.includes(attribute));
   const count = emitted.filter(Boolean).length;
   const url = attributeUrl(attribute, pin);
+  // The namespace is muted, so the part that differs between neighbours
+  // stands out.
+  const leaf = attribute.lastIndexOf(".") + 1;
+  const name = [
+    leaf > 0 && el("span", { class: "ns", text: attribute.slice(0, leaf) }),
+    attribute.slice(leaf),
+  ];
   return el("tr", {}, [
     el("th", { class: "attr", scope: "row" }, [
       url
-        ? el("a", { href: url, rel: "noreferrer", text: attribute })
-        : attribute,
+        ? el("a", { href: url, rel: "noreferrer" }, name)
+        : el("span", {}, name),
     ]),
     ...emitted.map((yes, i) =>
       el("td", { class: `cell ${yes ? "cell-yes" : "cell-no"}` }, [
         el("span", {
-          text: yes ? "•" : "",
+          role: "img",
+          "aria-label": yes ? "emits" : "does not emit",
           title: `${fullLabel(columns[i].target)} ${yes ? "emits" : "does not emit"} ${attribute}`,
         }),
       ]),
@@ -372,33 +490,31 @@ function attributeRow(attribute, columns, pin) {
 }
 
 /**
- * Keep the library and qualifiers separate so the rotated header fits.
+ * A target named on two lines, read up from the foot of its column. The
+ * library leads, followed by its qualifier and distribution. The link's
+ * accessible name and tooltip carry the whole label.
  */
-function columnHeader(target, label) {
-  const full = `${label.full} · ${target.instrumentation_library}`;
-  const colour = languageColor(target.language);
-  return el(
-    "th",
-    {
-      class: "col",
-      scope: "col",
-      style: `box-shadow: inset 0 -2px 0 ${colour}`,
-    },
-    [
-      el(
-        "a",
-        {
-          href: targetHref(target.id),
-          title: full,
-          "aria-label": full,
-        },
-        [
-          el("b", { text: label.primary }),
-          label.secondary && el("i", { text: label.secondary }),
-        ],
-      ),
-    ],
-  );
+function columnHeader(target, sided) {
+  const full = `${fullLabel(target)} · ${target.instrumentation_library}`;
+  const name = columnName(target, sided);
+  return el("th", { class: "col", scope: "col" }, [
+    el(
+      "a",
+      {
+        class: "upright",
+        href: targetHref(target.id),
+        title: full,
+        "aria-label": full,
+      },
+      [
+        el("b", { text: name.library }),
+        el("span", { class: "secondary" }, [
+          name.qualifier && `${name.qualifier} · `,
+          el("i", { text: name.distribution }),
+        ]),
+      ],
+    ),
+  ]);
 }
 
 /**
@@ -417,16 +533,21 @@ function languageBands(columns) {
     el("th", { class: "attr", scope: "col" }),
     ...groups.map((group) => {
       const colour = languageColor(group.language);
-      return el("th", {
-        class: "band-cell",
-        scope: "colgroup",
-        colspan: group.span,
-        text: group.language,
-        style:
-          `color:${colour};` +
-          `background:color-mix(in srgb, ${colour} 10%, var(--surface-2));` +
-          `box-shadow: inset 0 2px 0 ${colour}`,
-      });
+      return el(
+        "th",
+        {
+          class: "band-cell",
+          scope: "colgroup",
+          colspan: group.span,
+          title: group.language,
+          style:
+            `color:${colour};` +
+            `background:color-mix(in srgb, ${colour} 10%, var(--surface-2));` +
+            `box-shadow: inset 0 2px 0 ${colour}`,
+        },
+        // The name is clipped to the band rather than widening its columns.
+        [el("span", { text: group.language })],
+      );
     }),
     el("th", { class: "tally", scope: "col" }),
   ]);
