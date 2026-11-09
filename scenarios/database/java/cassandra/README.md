@@ -39,10 +39,7 @@ the canonical exception name.
 
 Both instrumentations omit `db.response.status_code` on this failure.
 Cassandra's Invalid protocol error is `0x2200`, so the expected attribute value
-is `"8704"`. Recording this conditional requirement as a report-only finding
-is tracked in [#384](https://github.com/open-telemetry/semantic-conventions-conformance/issues/384).
-An ordinary contract assertion would fail even with `--report-only`, so the
-contract does not assert this known instrumentation gap.
+is `"8704"`. The contract records this omission as a semantic finding.
 Capturing the protocol code is tracked in
 [open-telemetry/opentelemetry-java-instrumentation#21188](https://github.com/open-telemetry/opentelemetry-java-instrumentation/issues/21188).
 

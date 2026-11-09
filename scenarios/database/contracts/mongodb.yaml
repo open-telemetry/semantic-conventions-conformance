@@ -98,6 +98,8 @@ scenarios:
             db.operation.name: find
         expect:
           count: 1
+          semantic_conventions:
+            db.response.status_code: "2"
           attributes:
             db.namespace: conformance
             db.collection.name: items

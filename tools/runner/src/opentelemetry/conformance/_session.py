@@ -233,8 +233,13 @@ class ConformanceSession:
                 timeout=int(timeout_seconds(*_WEAVER_STOP_TIMEOUT))
             )
 
-        # Before the checks, so a failing run still leaves a report to read.
-        self._dump(name, report)
+        # Record semantic findings even when the scenario fails.
+        contract_checks: list[dict[str, object]] = []
+        try:
+            findings = check(scenario, report)
+            contract_checks = findings.contract_checks
+        finally:
+            self._dump(name, report, contract_checks=contract_checks)
         self._ran.add(name)
 
         failures: list[str] = []
@@ -245,7 +250,6 @@ class ConformanceSession:
                 f"--- stdout ---\n{completed.stdout}\n"
                 f"--- stderr ---\n{completed.stderr}"
             )
-        findings = check(scenario, report)
         failures += findings.failures
         return ScenarioReport(
             name=scenario.display_name,
@@ -358,13 +362,23 @@ class ConformanceSession:
             )
         return completed
 
-    def _dump(self, name: str, report: LiveCheckReport) -> None:
+    def _dump(
+        self,
+        name: str,
+        report: LiveCheckReport,
+        *,
+        contract_checks: list[dict[str, object]] | None = None,
+    ) -> None:
+        # Keep runner advice separate from the unchanged Weaver samples.
+        document = dict(report._report)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        if contract_checks:
+            document["contract_checks"] = {
+                "live_check_result": {"all_advice": contract_checks}
+            }
         self._report_dir.mkdir(parents=True, exist_ok=True)
         (self._report_dir / f"{name}.json").write_text(
-            # The report's own dict; weaver_live_check exposes no public
-            # accessor for it yet.
-            json.dumps(  # noqa: SLF001
-                report._report,  # pyright: ignore[reportPrivateUsage]
+            json.dumps(
+                document,
                 indent=2,
                 sort_keys=True,
             )

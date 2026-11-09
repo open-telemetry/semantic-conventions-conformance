@@ -25,10 +25,8 @@ The [pinned Oracle semantic conventions][oracle-semconv] define `db.namespace`
 as `DB_UNIQUE_NAME`, which is `FREE` in this fixture, not the PDB or service name
 `FREEPDB1`. Instrumentation may omit it if obtaining it requires an additional
 network call. Java currently emits the lowercase service name `freepdb1`, which
-does not satisfy this definition. The shared contract does not require
-`db.namespace`; coverage still records the emitted attribute, but Weaver does
-not check its Oracle-specific meaning. Recording this gap as a report-only
-finding depends on [#384][contract-findings].
+does not satisfy this definition. The shared contract records this mismatch
+as a semantic finding, tolerated with `--report-only` and rejected in strict mode.
+Its `{if_present: FREE}` matcher preserves the permitted omission.
 
 [oracle-semconv]: https://github.com/open-telemetry/semantic-conventions/blob/v1.45.0/docs/db/oracledb.md
-[contract-findings]: https://github.com/open-telemetry/semantic-conventions-conformance/issues/384

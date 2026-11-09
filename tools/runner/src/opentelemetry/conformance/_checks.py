@@ -9,7 +9,7 @@ short-circuit: one run reports every problem it found.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
 
 from ._report import carried_attributes
@@ -30,6 +30,7 @@ class ObservedSpan:
     name: str
     kind: str
     attributes: Mapping[str, object]
+    emitted_attributes: frozenset[str] | None = None
 
 
 def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
@@ -44,6 +45,12 @@ def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
             kind=entry["span"].get("kind", ""),
             attributes=carried_attributes(
                 cast("Mapping[str, object]", entry["span"])
+            ),
+            emitted_attributes=frozenset(
+                carried_attributes(
+                    cast("Mapping[str, object]", entry["span"]),
+                    include_rejected=True,
+                )
             ),
         )
         for entry in report["samples"]
@@ -109,6 +116,9 @@ class Findings:
 
     failures: list[str]
     violations: list[str]
+    contract_checks: list[dict[str, object]] = field(
+        default_factory=list[dict[str, object]]
+    )
 
     def all(self) -> list[str]:
         return [*self.failures, *self.violations]
@@ -118,6 +128,7 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
     """Return every way the report fails to match the scenario spec."""
     statistics = report["statistics"]
     spans = observed_spans(report)
+    contract_checks = _semantic_checks(spec, spans)
     expected_metrics = set(spec.metrics or ())
     expected_events = set(spec.events or ())
     return Findings(
@@ -152,8 +163,61 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
                 )
             ),
         ],
-        violations=_check_violations(spec, report),
+        violations=_check_violations(spec, report, additional=contract_checks),
+        contract_checks=contract_checks,
     )
+
+
+def _semantic_checks(
+    spec: ScenarioSpec, spans: Sequence[ObservedSpan]
+) -> list[dict[str, object]]:
+    """Attribute requirements the contract opts into conformance reporting."""
+    advice: list[dict[str, object]] = []
+    for expectation in spec.spans or ():
+        matched = [span for span in spans if selects(expectation, span)]
+        if not matched:
+            continue
+        for attribute, matcher in expectation.semantic_conventions.items():
+            groups = (
+                [matched]
+                if matcher.distinct is not None
+                else [[span] for span in matched]
+            )
+            for group in groups:
+                if matcher.optional:
+                    group = [
+                        span
+                        for span in group
+                        if attribute
+                        in (
+                            span.emitted_attributes
+                            if span.emitted_attributes is not None
+                            else span.attributes
+                        )
+                    ]
+                    if not group:
+                        continue
+                failure = _check_attribute(
+                    group, attribute, matcher, strict_types=True
+                )
+                if failure is None:
+                    continue
+                for name in sorted({span.name for span in group}):
+                    advice.append(
+                        {
+                            "id": "contract_attribute_mismatch",
+                            "level": "violation",
+                            "message": failure,
+                            "context": {
+                                "attribute_key": attribute,
+                                "scenario": spec.name,
+                                "match": expectation.match.as_dict(),
+                            },
+                            "signal_type": "span",
+                            "signal_name": name,
+                        }
+                    )
+    return advice
 
 
 def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
@@ -216,6 +280,8 @@ def _check_attribute(
     spans: Sequence[ObservedSpan],
     attribute: str,
     matcher: AttributeMatcher,
+    *,
+    strict_types: bool = False,
 ) -> str | None:
     present = [span for span in spans if attribute in span.attributes]
     values = [span.attributes[attribute] for span in present]
@@ -228,7 +294,12 @@ def _check_attribute(
         return None
 
     if matcher.distinct is not None:
-        distinct = {_hashable(value) for value in values}
+        distinct = {
+            (type(value).__name__, _hashable(value))
+            if strict_types
+            else _hashable(value)
+            for value in values
+        }
         if len(distinct) != matcher.distinct:
             return (
                 f"{attribute} expected {matcher.distinct} distinct values, "
@@ -236,13 +307,33 @@ def _check_attribute(
             )
         return None
 
-    mismatched = [value for value in values if value != matcher.equals]
+    mismatched = [
+        value
+        for value in values
+        if not (
+            _typed_equal(value, matcher.equals)
+            if strict_types
+            else value == matcher.equals
+        )
+    ]
     if mismatched or len(present) != len(spans):
         return (
             f"{attribute} expected {matcher.equals!r} on every span, saw "
             f"{[span.attributes.get(attribute) for span in spans]}"
         )
     return None
+
+
+def _typed_equal(value: object, expected: object) -> bool:
+    if type(value) is not type(expected):
+        return False
+    if isinstance(value, list) and isinstance(expected, list):
+        left = cast("list[object]", value)
+        right = cast("list[object]", expected)
+        return len(left) == len(right) and all(
+            _typed_equal(a, b) for a, b in zip(left, right)
+        )
+    return value == expected
 
 
 def _hashable(value: object) -> object:
@@ -275,9 +366,27 @@ def _matches(
 
 
 def _check_violations(
-    spec: ScenarioSpec, report: LiveCheckReport
+    spec: ScenarioSpec,
+    report: LiveCheckReport,
+    *,
+    additional: Sequence[Mapping[str, object]] = (),
 ) -> list[str]:
-    violations = report.violations
+    violations: list[Mapping[str, object]] = list(report.violations)
+    for advice in additional:
+        if not any(
+            all(
+                existing.get(key) == advice.get(key)
+                for key in (
+                    "id",
+                    "message",
+                    "context",
+                    "signal_type",
+                    "signal_name",
+                )
+            )
+            for existing in violations
+        ):
+            violations.append(advice)
     expected = spec.expected_violations
     accepted = expected + spec.inherited_violations
 

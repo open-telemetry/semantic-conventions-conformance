@@ -152,6 +152,8 @@ scenarios:
             db.operation.name: LPUSH
         expect:
           count: 1
+          semantic_conventions:
+            db.response.status_code: WRONGTYPE
           attributes:
             db.query.text: "LPUSH conformance:error ?"
             error.type: WRONGTYPE
