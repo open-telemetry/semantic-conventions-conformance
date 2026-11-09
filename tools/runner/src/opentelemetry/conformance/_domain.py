@@ -90,6 +90,8 @@ class Domain:
 
         Cached under its pin rather than inside the checkout, so it survives a
         re-fetch and doesn't depend on the registry being a local directory.
+        The cache keeps only the most recently used pins, so one it has
+        pruned since is resolved again.
         """
         return load_coverage_model(
             coverage_model_for(self.registry, pin=self._pin)

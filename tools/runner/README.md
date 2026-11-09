@@ -473,15 +473,23 @@ That view is `weaver registry generate --v2` over the
 resolved once into the cache, under the pin it came from and the template that
 produced it. Starting a session resolves it if the pin hasn't got one, so the weaver run
 happens up front rather than after the scenarios have. A registry passed with
-`--registry` is cached under a digest of its files instead, so an edit, delete
-or rename gets a fresh model and a repeat run reuses the last one. A repo that
+`--registry` uses a digest of the YAML files weaver reads in the registry and
+its local dependencies. This catches edits, deletions and renames. Registries
+with URL or archive dependencies resolve on every call, since their transitive
+dependencies may change.
+
+`coverage-models/working-trees` and `coverage-models/pinned` each keep the 8 most
+recently used models. Callers receive process-private copies, removed on normal
+exit. Files locked by Windows wait for a later cleanup. Legacy files elsewhere
+in the cache are left alone. `SEMCONV_CACHE` must not be the registry directory
+itself. A repo that
 needs the same model for its own reports can call
 `coverage_model_for(registry)` for it. To see what was
 resolved, list the cached models and choose the file whose name contains the
 pin and fingerprint you need:
 
 ```console
-python -c "from opentelemetry.conformance import cache_dir; print(*sorted((cache_dir() / 'coverage-models').glob('*.json')), sep='\n')"
+python -c "from opentelemetry.conformance import cache_dir; print(*sorted((cache_dir() / 'coverage-models').glob('*/*.json')), sep='\n')"
 ```
 
 An attribute counts as covered when any sample of that signal carried it,
