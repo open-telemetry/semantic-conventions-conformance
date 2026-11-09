@@ -236,7 +236,7 @@ class ConformanceSession:
         # Record semantic findings even when the scenario fails.
         contract_checks: list[dict[str, object]] = []
         try:
-            findings = check(scenario, report)
+            findings = check(scenario, report, variables=self._variables)
             contract_checks = findings.contract_checks
         finally:
             self._dump(name, report, contract_checks=contract_checks)

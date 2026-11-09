@@ -124,11 +124,16 @@ class Findings:
         return [*self.failures, *self.violations]
 
 
-def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
+def check(
+    spec: ScenarioSpec,
+    report: LiveCheckReport,
+    *,
+    variables: Mapping[str, str] | None = None,
+) -> Findings:
     """Return every way the report fails to match the scenario spec."""
     statistics = report["statistics"]
     spans = observed_spans(report)
-    contract_checks = _semantic_checks(spec, spans)
+    contract_checks = _semantic_checks(spec, spans, variables)
     expected_metrics = set(spec.metrics or ())
     expected_events = set(spec.events or ())
     return Findings(
@@ -169,7 +174,9 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
 
 
 def _semantic_checks(
-    spec: ScenarioSpec, spans: Sequence[ObservedSpan]
+    spec: ScenarioSpec,
+    spans: Sequence[ObservedSpan],
+    variables: Mapping[str, str] | None = None,
 ) -> list[dict[str, object]]:
     """Attribute requirements the contract opts into conformance reporting."""
     advice: list[dict[str, object]] = []
@@ -202,7 +209,9 @@ def _semantic_checks(
                 )
                 if failure is None:
                     continue
-                for name in sorted({span.name for span in group}):
+                for name in sorted(
+                    {_semantic_signal_name(span, variables) for span in group}
+                ):
                     advice.append(
                         {
                             "id": "contract_attribute_mismatch",
@@ -218,6 +227,30 @@ def _semantic_checks(
                         }
                     )
     return advice
+
+
+def _semantic_signal_name(
+    span: ObservedSpan, variables: Mapping[str, str] | None
+) -> str:
+    """Keep the name, with a declared runtime endpoint's port as its variable.
+
+    Both endpoint attributes must confirm the exact injected host and port.
+    Other numbers, endpoints and meaningful operation names stay unchanged.
+    Only runner advice uses this label; the Weaver samples remain untouched.
+    """
+    for key, port in sorted((variables or {}).items()):
+        if not key.endswith("_PORT") or not port.isdecimal():
+            continue
+        host = (variables or {}).get(key.removesuffix("_PORT") + "_HOST")
+        if (
+            not host
+            or span.attributes.get("server.address") != host
+            or str(span.attributes.get("server.port")) != port
+        ):
+            continue
+        if span.name.endswith(f" {host}:{port}"):
+            return span.name[: -len(port)] + "${" + key + "}"
+    return span.name
 
 
 def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:

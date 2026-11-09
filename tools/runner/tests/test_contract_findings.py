@@ -462,3 +462,122 @@ def test_accepted_gap_is_specific_to_its_span_selector(tmp_path: Path) -> None:
     assert len(fixed.contract_checks) == 1
     assert len(fixed.violations) == 2
     assert any("no longer reported" in finding for finding in fixed.violations)
+
+
+def test_saved_contract_names_are_stable_across_mapped_ports(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    snapshots = []
+    for port in (32802, 32775):
+        directory = tmp_path / str(port)
+        directory.mkdir()
+        package(directory)
+        config = directory / "conformance.yaml"
+        config.write_text(config.read_text().replace("count: 1", "count: 2"))
+        samples = []
+        for operation in ("LPUSH", "LPUSH retry"):
+            span = report(
+                {"server.address": "127.0.0.1", "server.port": port}
+            )["samples"][0]["span"]
+            span["name"] = f"{operation} 127.0.0.1:{port}"
+            samples.append({"span": span})
+        observed = LiveCheckReport({"statistics": {}, "samples": samples})
+
+        class Weaver:
+            def __init__(self, **_kwargs: Any) -> None:
+                self.otlp_endpoint = "http://127.0.0.1:1"
+
+            def start(self) -> Weaver:
+                return self
+
+            def close(self) -> None:
+                pass
+
+            def end(self, **_kwargs: Any) -> LiveCheckReport:
+                return observed
+
+        monkeypatch.setattr(
+            "opentelemetry.conformance._weaver.WeaverLiveCheck", Weaver
+        )
+        with ConformanceSession(
+            load_spec(directory),
+            directory / "reports",
+            variables={
+                "DATABASE_HOST": "127.0.0.1",
+                "DATABASE_PORT": str(port),
+            },
+            weaver=WeaverSpec(registry=str(directory)),
+            env={},
+            data_file=directory / "data.json",
+            build_data=semconv_coverage(
+                lambda *_: {"db.redis.client"}, lambda: {}
+            ),
+        ) as session:
+            result = session.run("error")
+            assert not result.failures
+        snapshots.append((directory / "data.json").read_bytes())
+        saved_report = json.loads(
+            (directory / "reports/error.json").read_text()
+        )
+        assert saved_report["samples"] == samples
+        assert observed["samples"] == samples
+    assert snapshots[0] == snapshots[1]
+    findings = json.loads(snapshots[0])["findings"]
+    assert {finding["signal_name"] for finding in findings} == {
+        "LPUSH 127.0.0.1:${DATABASE_PORT}",
+        "LPUSH retry 127.0.0.1:${DATABASE_PORT}",
+    }
+    assert len(findings) == 2
+    assert all(
+        finding["context"]["match"] == LPUSH_MATCH for finding in findings
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "host", "port", "expected"),
+    [
+        (
+            "LPUSH 127.0.0.1:32802",
+            "127.0.0.1",
+            32802,
+            "LPUSH 127.0.0.1:${DATABASE_PORT}",
+        ),
+        (
+            "LPUSH 32802 records 127.0.0.1:32802",
+            "127.0.0.1",
+            32802,
+            "LPUSH 32802 records 127.0.0.1:${DATABASE_PORT}",
+        ),
+        (
+            "LPUSH 127.0.0.1:328020",
+            "127.0.0.1",
+            32802,
+            "LPUSH 127.0.0.1:328020",
+        ),
+        (
+            "LPUSH other-host:32802",
+            "127.0.0.1",
+            32802,
+            "LPUSH other-host:32802",
+        ),
+        ("LPUSH 127.0.0.1:32802", "127.0.0.1", 9999, "LPUSH 127.0.0.1:32802"),
+        (
+            "LPUSH 127.0.0.1:32802",
+            "other-host",
+            32802,
+            "LPUSH 127.0.0.1:32802",
+        ),
+        ("LPUSH 32802", "127.0.0.1", 32802, "LPUSH 32802"),
+    ],
+)
+def test_only_the_confirmed_runtime_endpoint_port_changes(
+    tmp_path: Path, name: str, host: str, port: int, expected: str
+) -> None:
+    spec = load_spec(package(tmp_path)).scenarios["error"]
+    observed = report({"server.address": host, "server.port": port})
+    observed["samples"][0]["span"]["name"] = name
+    variables = {"DATABASE_HOST": "127.0.0.1", "DATABASE_PORT": "32802"}
+    findings = check(spec, observed, variables=variables)
+    assert findings.contract_checks[0]["signal_name"] == expected
+    assert check(spec, observed).contract_checks[0]["signal_name"] == name
+    assert observed["samples"][0]["span"]["name"] == name
