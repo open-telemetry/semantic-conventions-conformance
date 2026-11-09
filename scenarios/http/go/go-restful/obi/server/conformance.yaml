@@ -1,0 +1,20 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# OBI has no route support for go-restful, so it cannot see the registered
+# templates (`/users/{userId}`, `/status/{code}`). It falls back to a route
+# derived from the request path (`/users/*`, `/status/*`) and uses it for
+# `http.route` and the span name. Semconv says `http.route` must not be
+# populated in that case and the span name should be just the method; OBI does
+# that with `routes.unmatched: unset`. This baseline records OBI's default,
+# `heuristic`.
+
+runner: http-conformance
+instrumented_library: github.com/emicklei/go-restful/v3
+instrumentation_library: go.opentelemetry.io/obi
+
+setup: otel-conformance-obi install -- otel-conformance-go build
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-obi run build/scenario
