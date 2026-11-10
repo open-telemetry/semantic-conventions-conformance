@@ -124,9 +124,13 @@ def test_hbase_contract_requires_the_native_workload_span(
 
     findings = check(spec, Report(spans, sdk_metrics))
     assert (not findings.failures) is valid
-    assert findings.violations == [
-        "[deprecated_attribute] Legacy HBase attributes"
-    ]
+    assert [
+        finding
+        for finding in findings.violations
+        if not finding.startswith("[contract_attribute_mismatch]")
+    ] == ["[deprecated_attribute] Legacy HBase attributes"]
+    if findings.contract_checks:
+        assert scenario == "batch"
     assert classify_span(f"{operation} {table}", kind, attributes) == set()
 
 

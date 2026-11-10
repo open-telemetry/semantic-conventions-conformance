@@ -31,9 +31,8 @@ and the unknown-operator message. Unexpected success or unrelated failures fail
 the scenario. This command reaches `commandFailed`; duplicate-key writes can
 instead reach `commandSucceeded` with `writeErrors` and no instrumentation error.
 The contract requires `error.type: "2"`. Instrumentation 2.33.1 does not emit
-`db.response.status_code`, which is a conformance gap. Recording this missing
-conditional attribute as a finding is deferred to
-[#384](https://github.com/open-telemetry/semantic-conventions-conformance/issues/384).
+`db.response.status_code`, which is a conformance gap. The contract records
+this omission as a semantic finding.
 
 Standalone library launchers pass the driver's configured seed addresses to
 `MongoTelemetry.createCommandListener` so `server.address` and `server.port`

@@ -259,13 +259,19 @@ def _data_point_attributes(metric: _Json) -> set[str]:
     }
 
 
-def carried_attributes(owner: _Json) -> dict[str, object]:
-    """The owner's attributes by name, dropping any weaver rejected."""
+def carried_attributes(
+    owner: _Json, *, include_rejected: bool = False
+) -> dict[str, object]:
+    """The owner's attributes by name, dropping rejected values by default."""
     attributes: dict[str, object] = {}
     for record in _list(owner.get("attributes")):
         attribute = _mapping(record)
         name = attribute.get("name")
-        if isinstance(name, str) and name and _counts_as_present(attribute):
+        if (
+            isinstance(name, str)
+            and name
+            and (include_rejected or _counts_as_present(attribute))
+        ):
             attributes[name] = attribute.get("value")
     return attributes
 

@@ -210,6 +210,42 @@
       }
     },
     {
+      "id": "contract_attribute_mismatch",
+      "message": "db.operation.batch.size expected 2 on every span, saw [None]",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.operation.batch.size",
+        "match": {
+          "attributes": {
+            "db.hbase.table": "conformance:items",
+            "db.operation": "BATCH",
+            "db.system": "hbase"
+          },
+          "kind": "CLIENT"
+        },
+        "scenario": "batch"
+      }
+    },
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.operation.name expected 'BATCH PUT' on every span, saw [None]",
+      "signal_type": "span",
+      "signal_name": "BATCH conformance:items",
+      "context": {
+        "attribute_key": "db.operation.name",
+        "match": {
+          "attributes": {
+            "db.hbase.table": "conformance:items",
+            "db.operation": "BATCH",
+            "db.system": "hbase"
+          },
+          "kind": "CLIENT"
+        },
+        "scenario": "batch"
+      }
+    },
+    {
       "id": "span_status_ok_set_by_instrumentation",
       "message": "Span 'ConnectionFactory.createAsyncConnection' has status.code='ok'; instrumentations must leave status UNSET on success (OK is reserved for application code).",
       "signal_type": "span",

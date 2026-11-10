@@ -33,10 +33,8 @@ also has a separate `transaction` scenario that records a `MULTI` batch.
 Expectations record client differences: Rediscala does not emit query text,
 while Jedis does not currently mark the rejected command as an error. Lettuce
 records the Redis server's `WRONGTYPE` code in `error.type` rather than the Java
-exception class. The contracts do not assert `db.response.status_code` on
-rejected `LPUSH` spans while
-[#384](https://github.com/open-telemetry/semantic-conventions-conformance/issues/384)
-tracks recording conditional semantic-convention violations as findings.
+exception class. No client emits `db.response.status_code: WRONGTYPE` on the
+rejected `LPUSH` span. The contracts record this omission as a semantic finding.
 
 Connection tests require Docker and prepared scenario runtimes. Clients whose
 runtimes have not been prepared are skipped locally. Linux CI prepares the

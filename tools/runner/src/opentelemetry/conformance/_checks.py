@@ -9,8 +9,10 @@ short-circuit: one run reports every problem it found.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
+import copy
+import re
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Hashable, Iterator, Mapping, Sequence, cast
 
 from ._report import carried_attributes
 from ._spans import span_kind
@@ -30,6 +32,7 @@ class ObservedSpan:
     name: str
     kind: str
     attributes: Mapping[str, object]
+    emitted_attributes: Mapping[str, object] | None = None
 
 
 def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
@@ -44,6 +47,10 @@ def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
             kind=entry["span"].get("kind", ""),
             attributes=carried_attributes(
                 cast("Mapping[str, object]", entry["span"])
+            ),
+            emitted_attributes=carried_attributes(
+                cast("Mapping[str, object]", entry["span"]),
+                include_rejected=True,
             ),
         )
         for entry in report["samples"]
@@ -109,15 +116,24 @@ class Findings:
 
     failures: list[str]
     violations: list[str]
+    contract_checks: list[dict[str, object]] = field(
+        default_factory=list[dict[str, object]]
+    )
 
     def all(self) -> list[str]:
         return [*self.failures, *self.violations]
 
 
-def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
+def check(
+    spec: ScenarioSpec,
+    report: LiveCheckReport,
+    *,
+    variables: Mapping[str, str] | None = None,
+) -> Findings:
     """Return every way the report fails to match the scenario spec."""
     statistics = report["statistics"]
     spans = observed_spans(report)
+    contract_checks = _semantic_checks(spec, spans, variables)
     expected_metrics = set(spec.metrics or ())
     expected_events = set(spec.events or ())
     return Findings(
@@ -152,8 +168,154 @@ def check(spec: ScenarioSpec, report: LiveCheckReport) -> Findings:
                 )
             ),
         ],
-        violations=_check_violations(spec, report),
+        violations=_check_violations(spec, report, additional=contract_checks),
+        contract_checks=contract_checks,
     )
+
+
+def _semantic_checks(
+    spec: ScenarioSpec,
+    spans: Sequence[ObservedSpan],
+    variables: Mapping[str, str] | None = None,
+) -> list[dict[str, object]]:
+    """Attribute requirements the contract opts into conformance reporting."""
+    advice: list[dict[str, object]] = []
+    for expectation in spec.spans or ():
+        matched = [span for span in spans if selects(expectation, span)]
+        if not matched:
+            continue
+        for attribute, matcher in expectation.semantic_conventions.items():
+            groups = (
+                [matched]
+                if matcher.distinct is not None
+                else [[span] for span in matched]
+            )
+            for group in groups:
+                if matcher.optional:
+                    group = [
+                        span
+                        for span in group
+                        if attribute
+                        in (
+                            span.emitted_attributes
+                            if span.emitted_attributes is not None
+                            else span.attributes
+                        )
+                    ]
+                    if not group:
+                        continue
+                failure = _check_attribute(
+                    group, attribute, matcher, strict_types=True
+                )
+                if failure is None:
+                    continue
+                for name in sorted(
+                    {
+                        _stable_name(span.name, span.attributes, variables)
+                        for span in group
+                    }
+                ):
+                    finding: dict[str, object] = {
+                        "id": "contract_attribute_mismatch",
+                        "level": "violation",
+                        "message": failure,
+                        "context": {
+                            "attribute_key": attribute,
+                            "scenario": spec.name,
+                            "match": expectation.match.as_dict(),
+                        },
+                        "signal_type": "span",
+                        "signal_name": name,
+                    }
+                    # Spans sharing a name and a failure are one finding.
+                    if finding not in advice:
+                        advice.append(finding)
+    return advice
+
+
+def stable_signal_names(
+    report: Mapping[str, object], variables: Mapping[str, str] | None
+) -> dict[str, object]:
+    """A copy of the report with span advice named as runner findings are.
+
+    A finding about a span names it, and a span name can carry a runtime
+    endpoint's port, which changes every run. Renaming Weaver's advice the
+    same way as the runner's keeps both stable in ``data.json``, including a
+    policy message that quotes the span name. The span samples themselves
+    keep the name they were emitted with.
+    """
+    renamed = copy.deepcopy(dict(report))
+    samples = renamed.get("samples")
+    for entry in cast(
+        "list[object]", samples if isinstance(samples, list) else []
+    ):
+        span = (
+            cast("dict[str, object]", entry).get("span")
+            if isinstance(entry, dict)
+            else None
+        )
+        if not isinstance(span, dict):
+            continue
+        span = cast("dict[str, object]", span)
+        name = str(span.get("name") or "")
+        stable = _stable_name(name, carried_attributes(span), variables)
+        if stable == name:
+            continue
+        # The name ends in the port, so a longer number is another port.
+        embedded = re.compile(re.escape(name) + r"(?!\d)")
+        for advice in _advice(span):
+            if (
+                advice.get("signal_type") == "span"
+                and advice.get("signal_name") == name
+            ):
+                advice["signal_name"] = stable
+                message = advice.get("message")
+                if isinstance(message, str):
+                    advice["message"] = embedded.sub(lambda _: stable, message)
+    return renamed
+
+
+def _advice(document: object) -> Iterator[dict[str, object]]:
+    """Every piece of advice anywhere under ``document``."""
+    if isinstance(document, dict):
+        owner = cast("dict[str, object]", document)
+        result = owner.get("live_check_result")
+        if isinstance(result, dict):
+            entries = cast("dict[str, object]", result).get("all_advice")
+            if isinstance(entries, list):
+                for entry in cast("list[object]", entries):
+                    if isinstance(entry, dict):
+                        yield cast("dict[str, object]", entry)
+        for value in owner.values():
+            yield from _advice(value)
+    elif isinstance(document, list):
+        for item in cast("list[object]", document):
+            yield from _advice(item)
+
+
+def _stable_name(
+    name: str,
+    attributes: Mapping[str, object],
+    variables: Mapping[str, str] | None,
+) -> str:
+    """Keep the name, with a declared runtime endpoint's port as its variable.
+
+    Both endpoint attributes must confirm the exact injected host and port.
+    Other numbers, endpoints and meaningful operation names stay unchanged.
+    """
+    for key, port in sorted((variables or {}).items()):
+        if not key.endswith("_PORT") or not port.isdecimal():
+            continue
+        host = (variables or {}).get(key.removesuffix("_PORT") + "_HOST")
+        if (
+            not host
+            or attributes.get("server.address") != host
+            or str(attributes.get("server.port")) != port
+        ):
+            continue
+        if name.endswith(f" {host}:{port}"):
+            return name[: -len(port)] + "${" + key + "}"
+    return name
 
 
 def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
@@ -216,6 +378,8 @@ def _check_attribute(
     spans: Sequence[ObservedSpan],
     attribute: str,
     matcher: AttributeMatcher,
+    *,
+    strict_types: bool = False,
 ) -> str | None:
     present = [span for span in spans if attribute in span.attributes]
     values = [span.attributes[attribute] for span in present]
@@ -228,7 +392,12 @@ def _check_attribute(
         return None
 
     if matcher.distinct is not None:
-        distinct = {_hashable(value) for value in values}
+        distinct = {
+            (type(value).__name__, _hashable(value))
+            if strict_types
+            else _hashable(value)
+            for value in values
+        }
         if len(distinct) != matcher.distinct:
             return (
                 f"{attribute} expected {matcher.distinct} distinct values, "
@@ -236,13 +405,47 @@ def _check_attribute(
             )
         return None
 
-    mismatched = [value for value in values if value != matcher.equals]
+    mismatched = [
+        value
+        for value in values
+        if not (
+            _typed_equal(value, matcher.equals)
+            if strict_types
+            else value == matcher.equals
+        )
+    ]
     if mismatched or len(present) != len(spans):
         return (
             f"{attribute} expected {matcher.equals!r} on every span, saw "
-            f"{[span.attributes.get(attribute) for span in spans]}"
+            f"[{', '.join(_shown(span, attribute) for span in spans)}]"
         )
     return None
+
+
+def _shown(span: ObservedSpan, attribute: str) -> str:
+    """The span's value, saying so when weaver rejected it.
+
+    A rejected value doesn't count, but showing it as ``None`` would read as
+    if the span never set the attribute.
+    """
+    if attribute in span.attributes:
+        return repr(span.attributes[attribute])
+    emitted = span.emitted_attributes or {}
+    if attribute in emitted:
+        return f"{emitted[attribute]!r} (rejected by Weaver)"
+    return repr(None)
+
+
+def _typed_equal(value: object, expected: object) -> bool:
+    if type(value) is not type(expected):
+        return False
+    if isinstance(value, list) and isinstance(expected, list):
+        left = cast("list[object]", value)
+        right = cast("list[object]", expected)
+        return len(left) == len(right) and all(
+            _typed_equal(a, b) for a, b in zip(left, right)
+        )
+    return value == expected
 
 
 def _hashable(value: object) -> object:
@@ -275,9 +478,12 @@ def _matches(
 
 
 def _check_violations(
-    spec: ScenarioSpec, report: LiveCheckReport
+    spec: ScenarioSpec,
+    report: LiveCheckReport,
+    *,
+    additional: Sequence[Mapping[str, object]] = (),
 ) -> list[str]:
-    violations = report.violations
+    violations: list[Mapping[str, object]] = [*report.violations, *additional]
     expected = spec.expected_violations
     accepted = expected + spec.inherited_violations
 

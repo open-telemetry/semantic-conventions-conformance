@@ -332,6 +332,33 @@ under `expect.attributes` takes one of three forms:
 So `gen_ai.tool.name: { distinct: 2 }` above says the two `execute_tool` spans
 called two *different* tools, without pinning down which.
 
+Use `expect.semantic_conventions` for attribute requirements that should become
+conformance findings:
+
+```yaml
+expect:
+  count: 1
+  semantic_conventions:
+    db.response.status_code: WRONGTYPE
+```
+
+It accepts the same matchers as `attributes`, with exact value types. Findings
+use `contract_attribute_mismatch` and context `{attribute_key, scenario, match}`,
+where `match` is the expectation's full selector. An accepted gap on one
+selection does not suppress a gap on another.
+They persist in `data.json`, respect `expected_violations`, and fail strict
+runs. `--report-only` tolerates them. Counts, ordinary `attributes`, and
+workload failures remain hard failures. Raw reports keep runner findings under
+`contract_checks`, separate from Weaver samples. When a span name ends in the
+runtime endpoint the runner injected, both runner and Weaver findings name it
+with the port variable, such as `LPUSH 127.0.0.1:${DATABASE_PORT}`. A Weaver
+message that quotes the span name gets the same name. A rerun on another port
+leaves `data.json` unchanged.
+
+`db.namespace: {if_present: FREE}` checks an optional attribute's value without
+requiring its presence. An emitted value rejected by Weaver still produces a
+finding. Ordinary `attributes` do not accept this matcher.
+
 `spans`, `metrics` and `events` follow the same rule. A key you leave out is
 **not checked** — a scenario with no expectations only has to run cleanly. A
 key you write is checked exactly: nothing missing, nothing extra, including

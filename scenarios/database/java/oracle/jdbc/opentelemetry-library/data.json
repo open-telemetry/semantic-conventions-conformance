@@ -44,5 +44,66 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.namespace expected 'FREE' on every span, saw ['freepdb1']",
+      "signal_type": "span",
+      "signal_name": "BATCH INSERT conformance.items",
+      "context": {
+        "attribute_key": "db.namespace",
+        "match": {
+          "attributes": {
+            "db.system.name": "oracle.db"
+          }
+        },
+        "scenario": "0002"
+      }
+    },
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.namespace expected 'FREE' on every span, saw ['freepdb1']",
+      "signal_type": "span",
+      "signal_name": "CALL conformance.noop",
+      "context": {
+        "attribute_key": "db.namespace",
+        "match": {
+          "attributes": {
+            "db.system.name": "oracle.db"
+          }
+        },
+        "scenario": "0003"
+      }
+    },
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.namespace expected 'FREE' on every span, saw ['freepdb1']",
+      "signal_type": "span",
+      "signal_name": "SELECT conformance.items",
+      "context": {
+        "attribute_key": "db.namespace",
+        "match": {
+          "attributes": {
+            "db.system.name": "oracle.db"
+          }
+        },
+        "scenario": "0000"
+      }
+    },
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.namespace expected 'FREE' on every span, saw ['freepdb1']",
+      "signal_type": "span",
+      "signal_name": "SELECT conformance.items",
+      "context": {
+        "attribute_key": "db.namespace",
+        "match": {
+          "attributes": {
+            "db.system.name": "oracle.db"
+          }
+        },
+        "scenario": "0001"
+      }
+    }
+  ]
 }
