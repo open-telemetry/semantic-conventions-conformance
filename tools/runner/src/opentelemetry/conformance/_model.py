@@ -190,58 +190,78 @@ def _digest(registry: Path) -> str | None:
             f"SEMCONV_CACHE is the registry {registry} itself. The runner "
             "writes generated files there, so point it at another directory."
         )
-    digest = hashlib.sha256()
-    if not _feed(digest, root, cache=cache, seen=set()):
+    dependencies = _local_dependencies(root)
+    if dependencies is None:
         return None
+    digest = hashlib.sha256()
+    _feed(digest, root, cache)
+    for dependency in dependencies:
+        digest.update(f"dependency\0{dependency}\0".encode())
+        _feed(digest, dependency, cache)
     return digest.hexdigest()[:12]
 
 
-def _feed(digest: Any, root: Path, *, cache: Path, seen: set[Path]) -> bool:
-    """Feed ``root``'s definitions and its dependencies' into ``digest``.
-
-    False when a dependency can change without a file here changing.
-    """
-    if root in seen:
-        return True
-    seen.add(root)
+def _feed(digest: Any, registry: Path, cache: Path) -> None:
+    """Feed the definitions weaver reads in ``registry`` into ``digest``."""
     digest.update(b"registry\0")
-    for relative, path in _definitions(root, cache):
+    for relative, path in _definitions(registry, cache):
         digest.update(relative.encode())
         digest.update(b"\0")
         digest.update(hashlib.sha256(path.read_bytes()).digest())
-    for dependency in _dependencies(root):
-        registry_path = dependency.get("registry_path")
-        if registry_path is None:
-            # Weaver fetches the schema URL, whose content can change.
-            return False
-        registry_path = str(registry_path)
-        match = _REGISTRY_PATH.match(registry_path)
-        if match is None:
-            return False
-        source = match["source"]
-        if source.startswith(("http://", "https://")):
-            # Even a git commit can depend on a branch, a tag or an archive
-            # that moves, and weaver resolves dependencies recursively.
-            return False
-        if source.endswith((".zip", ".tar.gz")):
-            # An archive's own manifest can depend on something that moves.
-            return False
-        # Weaver reads a local folder whole: it keeps only ``source`` and
-        # ignores any ``@refspec`` or ``[sub_folder]`` that follows it.
-        local = _local(source, root)
-        if local is None:
-            return False
-        digest.update(f"dependency\0{local}\0{registry_path}\0".encode())
-        if not _feed(digest, local, cache=cache, seen=seen):
-            return False
-    return True
+
+
+def _local_dependencies(root: Path) -> list[Path] | None:
+    """The registries ``root`` depends on, directly or not, each once.
+
+    ``None`` when one can change without any file here changing. Only
+    manifests are read for this, so a registry that can't be cached costs no
+    more than that.
+    """
+    found: list[Path] = []
+    pending = [root]
+    while pending:
+        registry = pending.pop()
+        for dependency in _dependencies(registry):
+            local = _local_dependency(dependency, registry)
+            if local is None:
+                return None
+            if local != root and local not in found:
+                found.append(local)
+                pending.append(local)
+    return found
+
+
+def _local_dependency(dependency: dict[str, Any], root: Path) -> Path | None:
+    """The local folder weaver reads for ``dependency`` of ``root``.
+
+    ``None`` when it is anything else, or can't be found.
+    """
+    registry_path = dependency.get("registry_path")
+    if registry_path is None:
+        # Weaver fetches the schema URL, whose content can change.
+        return None
+    match = _REGISTRY_PATH.match(str(registry_path))
+    if match is None:
+        return None
+    source = match["source"]
+    if source.startswith(("http://", "https://")):
+        # Even a git commit can depend on a branch, a tag or an archive
+        # that moves, and weaver resolves dependencies recursively.
+        return None
+    if source.endswith((".zip", ".tar.gz")):
+        # An archive's own manifest can depend on something that moves.
+        return None
+    # Weaver reads a local folder whole: it keeps only ``source`` and
+    # ignores any ``@refspec`` or ``[sub_folder]`` that follows it.
+    return _local(source, root)
 
 
 def _definitions(root: Path, cache: Path) -> list[tuple[str, Path]]:
     """The YAML files weaver reads under ``root``, by their path within it.
 
-    Symlinked folders are followed, once each, and a cache inside ``root`` is
-    left out, since the runner generates files there.
+    Symlinked folders are followed, once each, though weaver isn't told to
+    follow them: an edit there costs at most a rebuild. A cache inside
+    ``root`` is left out, since the runner generates files there.
     """
     found: list[tuple[str, Path]] = []
     visited: set[str] = set()
@@ -314,7 +334,12 @@ def resolve(registry: Path, output: Path) -> Path:
 
 @contextmanager
 def _generated(registry: Path) -> Generator[Path, None, None]:
-    """Run weaver over ``registry``; the model it wrote, while it exists."""
+    """Run weaver over ``registry``; the model it wrote, while it exists.
+
+    Weaver also reads the first ``.weaver.toml`` above the working directory,
+    whose ``[registry]`` settings change what is resolved. Neither is part of
+    a cached model's name, so both are passed here with weaver's defaults.
+    """
     check_weaver()
 
     with tempfile.TemporaryDirectory() as generated:
@@ -325,6 +350,8 @@ def _generated(registry: Path) -> Generator[Path, None, None]:
                 "generate",
                 "--quiet",
                 "--v2",
+                "--follow-symlinks=false",
+                "--include-unreferenced=false",
                 "--registry",
                 str(registry),
                 "--templates",

@@ -68,6 +68,8 @@ def test_resolution_invokes_weaver_without_a_shell(
         "generate",
         "--quiet",
         "--v2",
+        "--follow-symlinks=false",
+        "--include-unreferenced=false",
         "--registry",
         str(registry),
         "--templates",
@@ -322,6 +324,26 @@ def test_a_dependency_that_can_move_is_resolved_every_time(
     assert "-unpinned-" in first.name
     assert sorted(first.parent.iterdir()) == [first]
     assert not (tmp_path / "cache").exists()
+
+
+def test_a_dependency_that_can_move_is_found_before_any_definition_is_read(
+    tmp_path: Path,
+    weaver_runs: list[list[str]],  # noqa: ARG001
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _depending_on(tmp_path / "core", "https://example.com/latest.zip")
+    registry = _depending_on(tmp_path / "model", "./core")
+    read: list[Path] = []
+    definitions = _model._definitions  # noqa: SLF001
+
+    def reading(root: Path, cache: Path) -> list[tuple[str, Path]]:
+        read.append(root)
+        return definitions(root, cache)
+
+    monkeypatch.setattr(_model, "_definitions", reading)
+
+    assert _model._digest(registry) is None  # noqa: SLF001
+    assert read == []
 
 
 def _changing_weaver(
@@ -957,3 +979,57 @@ metric_refinements:
         )
     assert "demo.skill" in model["spans"]["demo.tool.skill"]["attributes"]
     assert list(model["metrics"]) == ["demo.duration"]
+
+
+@pytest.mark.skipif(
+    shutil.which("weaver") is None, reason="weaver not installed"
+)
+def test_a_weaver_toml_above_the_working_directory_leaves_the_model_alone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = tmp_path / "registry"
+    registry.mkdir()
+    (registry / "manifest.yaml").write_text(
+        "name: demo\nschema_url: https://example.com/schemas/1.0.0\n"
+    )
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    for folder, name in [(registry, "demo.tool"), (shared, "demo.shared")]:
+        (folder / "signals.yaml").write_text(
+            f"""\
+file_format: definition/2
+attributes:
+  - key: {name}.name
+    type: string
+    brief: A name.
+    stability: development
+spans:
+  - type: {name}
+    name:
+      note: A span.
+    kind: internal
+    brief: A span.
+    stability: development
+    attributes:
+      - ref: {name}.name
+"""
+        )
+    try:
+        (registry / "shared").symlink_to(shared, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks are not available here")
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    monkeypatch.chdir(plain)
+    expected = _model.load(_model.resolve(registry, tmp_path / "plain.json"))
+
+    project = tmp_path / "project"
+    (project / "nested").mkdir(parents=True)
+    (project / ".weaver.toml").write_text(
+        "[registry]\nfollow_symlinks = true\ninclude_unreferenced = true\n"
+    )
+    monkeypatch.chdir(project / "nested")
+    model = _model.load(_model.resolve(registry, tmp_path / "project.json"))
+
+    assert list(expected["spans"]) == ["demo.tool"]
+    assert model == expected

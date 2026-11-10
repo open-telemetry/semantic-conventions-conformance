@@ -476,15 +476,18 @@ happens up front rather than after the scenarios have. A registry passed with
 `--registry` uses a digest of the YAML files weaver reads in the registry and
 its local dependencies. This catches edits, deletions and renames. Registries
 with URL or archive dependencies resolve on every call, since their transitive
-dependencies may change.
+dependencies may change. Weaver is called with its defaults for
+`follow_symlinks` and `include_unreferenced`, so a `.weaver.toml` above the
+working directory doesn't change the model.
 
 `coverage-models/working-trees` and `coverage-models/pinned` each keep the 8 most
 recently used models. Callers receive process-private copies, removed on normal
-exit. Files locked by Windows wait for a later cleanup. Legacy files elsewhere
-in the cache are left alone. `SEMCONV_CACHE` must not be the registry directory
-itself. A repo that
-needs the same model for its own reports can call
-`coverage_model_for(registry)` for it. To see what was
+exit. Files locked by Windows wait for a later cleanup. Models stored directly
+in `coverage-models/` come from older runners. Nothing prunes them, so they can
+be deleted. `SEMCONV_CACHE` must not be the registry directory itself. A repo
+that needs the same model for its own reports can call
+`coverage_model_for(registry)` for it. The path it returns lasts until that
+process exits, so copy the file if a later step needs it. To see what was
 resolved, list the cached models and choose the file whose name contains the
 pin and fingerprint you need:
 
