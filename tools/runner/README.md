@@ -499,12 +499,32 @@ That view is `weaver registry generate --v2` over the
 [coverage-model template](src/opentelemetry/conformance/weaver-templates/coverage-model),
 resolved once into the cache, under the pin it came from and the template that
 produced it. Starting a session resolves it if the pin hasn't got one, so the weaver run
-happens up front rather than after the scenarios have. To see what it
+happens up front rather than after the scenarios have. A registry passed with
+`--registry` uses a digest of the YAML files weaver reads in the registry and
+its local dependencies. This catches edits, deletions and renames. Registries
+with URL or archive dependencies resolve on every call, since their transitive
+dependencies may change. So do registries that are, or depend on, a published
+registry, since its resolved registry can be anywhere. Weaver is called with its
+defaults for `follow_symlinks` and `include_unreferenced`, so those two settings
+in a `.weaver.toml` above the working directory don't change the model. While
+that file sets `[resolve.schema_url_overrides]`, every model, pinned or not,
+resolves on every call. A model whose files change while weaver reads them goes
+only to the caller, not the cache.
+
+`coverage-models/working-trees` and `coverage-models/pinned` each keep the 8 most
+recently used models. Callers receive process-private copies, removed on normal
+exit. Files locked by Windows wait for a later cleanup. Models stored directly
+in `coverage-models/` come from older runners. Nothing prunes them, so they can
+be deleted. `SEMCONV_CACHE` must not be a folder weaver reads as part of the
+registry or a local dependency. A hidden folder such as `.cache` inside it is
+fine. A repo that needs the same model for its own reports can call
+`coverage_model_for(registry)` for it. The path it returns lasts until that
+process exits, so copy the file if a later step needs it. To see what was
 resolved, list the cached models and choose the file whose name contains the
 pin and fingerprint you need:
 
 ```console
-python -c "from opentelemetry.conformance import cache_dir; print(*sorted((cache_dir() / 'coverage-models').glob('*.json')), sep='\n')"
+python -c "from opentelemetry.conformance import cache_dir; print(*sorted((cache_dir() / 'coverage-models').glob('*/*.json')), sep='\n')"
 ```
 
 An attribute counts as covered when any sample of that signal carried it,
