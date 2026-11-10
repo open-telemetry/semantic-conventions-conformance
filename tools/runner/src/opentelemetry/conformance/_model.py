@@ -31,7 +31,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
 from functools import cache
 from pathlib import Path
@@ -109,7 +109,10 @@ def coverage_model_for(registry: Path, *, pin: str | None = None) -> Path:
         return _uncached(registry, f"{name}-unpinned")
 
     return _cached(
-        registry, models / "working-trees", f"{name}-{digest}-{fingerprint()}"
+        registry,
+        models / "working-trees",
+        f"{name}-{digest}-{fingerprint()}",
+        unchanged=lambda: _digest(registry) == digest,
     )
 
 
@@ -143,11 +146,20 @@ def _overrides_schema_urls() -> bool:
     return False
 
 
-def _cached(registry: Path, directory: Path, key: str) -> Path:
+def _cached(
+    registry: Path,
+    directory: Path,
+    key: str,
+    *,
+    unchanged: Callable[[], bool] | None = None,
+) -> Path:
     """This process's copy of the model for ``registry`` stored as ``key``.
 
     ``directory`` holds only models the runner stored there, so pruning it
-    to the ``_KEPT_MODELS`` most recently used removes nothing else.
+    to the ``_KEPT_MODELS`` most recently used removes nothing else. A model
+    resolved here is stored only if ``unchanged`` still holds once weaver is
+    done, so a file saved while weaver read it can't leave a model under a
+    key that names other files.
     """
     output = _process_models() / directory.name / f"{key}.json"
     if output.is_file():
@@ -161,6 +173,11 @@ def _cached(registry: Path, directory: Path, key: str) -> Path:
         logger.info("Resolving the coverage model into %s", stored)
         with _generated(registry) as produced:
             model = produced.read_bytes()
+        if unchanged is not None and not unchanged():
+            content = hashlib.sha256(model).hexdigest()[:16]
+            output = _process_models() / f"{key}-{content}.json"
+            _publish(model, output)
+            return output
         _publish(model, stored)
     else:
         with suppress(OSError):
@@ -214,12 +231,7 @@ def _digest(registry: Path) -> str | None:
     ``None`` when a dependency can change without any file here changing.
     """
     root = registry.resolve()
-    cache = cache_dir().resolve()
-    if cache == root:
-        raise RuntimeError(
-            f"SEMCONV_CACHE is the registry {registry} itself. The runner "
-            "writes generated files there, so point it at another directory."
-        )
+    _refuse_cache_in(root)
     if not root.is_dir():
         # A manifest file, maybe a published one.
         return None
@@ -227,17 +239,38 @@ def _digest(registry: Path) -> str | None:
     if dependencies is None:
         return None
     digest = hashlib.sha256()
-    _feed(digest, root, cache)
+    _feed(digest, root)
     for dependency in dependencies:
+        _refuse_cache_in(dependency)
         digest.update(f"dependency\0{dependency}\0".encode())
-        _feed(digest, dependency, cache)
+        _feed(digest, dependency)
     return digest.hexdigest()[:12]
 
 
-def _feed(digest: Any, registry: Path, cache: Path) -> None:
+def _refuse_cache_in(registry: Path) -> None:
+    """Refuse a ``SEMCONV_CACHE`` that weaver reads as part of ``registry``.
+
+    The runner fetches registries and writes generated files there, which
+    weaver would resolve with the rest and no digest here would follow. One
+    in a hidden folder is fine, since weaver skips that.
+    """
+    cache = cache_dir().resolve()
+    try:
+        within = cache.relative_to(registry)
+    except ValueError:
+        return
+    if not any(part.startswith(".") for part in within.parts):
+        raise RuntimeError(
+            f"SEMCONV_CACHE {cache} is where weaver reads the registry "
+            f"{registry}. The runner writes files there, so point it at a "
+            "hidden folder or one outside the registry."
+        )
+
+
+def _feed(digest: Any, registry: Path) -> None:
     """Feed the definitions weaver reads in ``registry`` into ``digest``."""
     digest.update(b"registry\0")
-    for relative, path in _definitions(registry, cache):
+    for relative, path in _definitions(registry):
         digest.update(relative.encode())
         digest.update(b"\0")
         digest.update(hashlib.sha256(path.read_bytes()).digest())
@@ -296,18 +329,14 @@ def _local_dependency(dependency: dict[str, Any], root: Path) -> Path | None:
     return local
 
 
-def _definitions(root: Path, cache: Path) -> list[tuple[str, Path]]:
+def _definitions(root: Path) -> list[tuple[str, Path]]:
     """The YAML files weaver reads under ``root``, by their path within it.
 
     Like weaver with ``--follow-symlinks=false``, this doesn't go into a
-    symlinked folder, and skips a link that leads to no file. A cache inside
-    ``root`` is left out, since the runner generates files there.
+    symlinked folder, and skips a link that leads to no file.
     """
     found: list[tuple[str, Path]] = []
     for directory, folders, files in os.walk(root):
-        if Path(directory) == cache:
-            folders[:] = []
-            continue
         folders[:] = [f for f in folders if not f.startswith(".")]
         relative = Path(directory).relative_to(root)
         for file in files:

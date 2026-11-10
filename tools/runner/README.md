@@ -481,14 +481,16 @@ registry, since its resolved registry can be anywhere. Weaver is called with its
 defaults for `follow_symlinks` and `include_unreferenced`, so those two settings
 in a `.weaver.toml` above the working directory don't change the model. While
 that file sets `[resolve.schema_url_overrides]`, every model, pinned or not,
-resolves on every call.
+resolves on every call. A model whose files change while weaver reads them goes
+only to the caller, not the cache.
 
 `coverage-models/working-trees` and `coverage-models/pinned` each keep the 8 most
 recently used models. Callers receive process-private copies, removed on normal
 exit. Files locked by Windows wait for a later cleanup. Models stored directly
 in `coverage-models/` come from older runners. Nothing prunes them, so they can
-be deleted. `SEMCONV_CACHE` must not be the registry directory itself. A repo
-that needs the same model for its own reports can call
+be deleted. `SEMCONV_CACHE` must not be a folder weaver reads as part of the
+registry or a local dependency. A hidden folder such as `.cache` inside it is
+fine. A repo that needs the same model for its own reports can call
 `coverage_model_for(registry)` for it. The path it returns lasts until that
 process exits, so copy the file if a later step needs it. To see what was
 resolved, list the cached models and choose the file whose name contains the

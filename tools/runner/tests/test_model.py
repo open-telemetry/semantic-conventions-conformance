@@ -198,6 +198,77 @@ def test_a_cache_that_is_the_registry_is_refused(
         _model.coverage_model_for(registry)
 
 
+@pytest.mark.parametrize(
+    "cache",
+    ["model/cache", "model/cache/semconv", "model/spans/.cache", "core/cache"],
+)
+def test_a_cache_weaver_would_read_is_refused(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    weaver_runs: list[list[str]],
+    cache: str,
+) -> None:
+    _registry(tmp_path / "core")
+    registry = _registry(
+        tmp_path / "model",
+        "name: demo\n"
+        "schema_url: https://example.com/schemas/demo/1.0.0\n"
+        "dependencies:\n"
+        "  - schema_url: https://example.com/schemas/core/1.0.0\n"
+        "    registry_path: ../core\n",
+    )
+    monkeypatch.chdir(registry)
+    monkeypatch.setenv("SEMCONV_CACHE", str(tmp_path / cache))
+
+    if cache == "model/spans/.cache":
+        # A hidden folder is one weaver skips.
+        _model.coverage_model_for(registry)
+        assert len(weaver_runs) == 1
+        return
+    with pytest.raises(RuntimeError, match="SEMCONV_CACHE"):
+        _model.coverage_model_for(registry)
+    assert weaver_runs == []
+
+
+def test_a_model_of_files_that_changed_while_weaver_read_them_stays_out(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = _registry(tmp_path / "model")
+    runs: list[str] = []
+
+    def run(
+        command: list[str], **_kwargs: object
+    ) -> subprocess.CompletedProcess[str]:
+        if not runs:
+            # Saved in an editor while weaver is reading the registry.
+            (registry / "spans.yaml").write_text("groups: [b]\n")
+        runs.append((registry / "spans.yaml").read_text())
+        model = json.dumps({"read": runs[-1]})
+        (Path(command[-1]) / "coverage-model.json").write_text(model)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(_model, "check_weaver", lambda: None)
+    monkeypatch.setattr(_model.subprocess, "run", run)
+    monkeypatch.setenv("SEMCONV_CACHE", str(tmp_path / "cache"))
+    monkeypatch.chdir(tmp_path)
+
+    first = _model.coverage_model_for(registry)
+    assert json.loads(first.read_text()) == {"read": "groups: [b]\n"}
+    stored = tmp_path / "cache" / "coverage-models" / "working-trees"
+    assert not list(stored.glob("*.json"))
+
+    second = _model.coverage_model_for(registry)
+    assert json.loads(second.read_text()) == {"read": "groups: [b]\n"}
+    assert len(runs) == 2
+
+    (registry / "spans.yaml").write_text("groups: []\n")
+
+    third = _model.coverage_model_for(registry)
+    assert json.loads(third.read_text()) == {"read": "groups: []\n"}
+    assert len(runs) == 3
+    assert first.is_file()
+
+
 def test_files_weaver_does_not_read_leave_the_model_alone(
     tmp_path: Path, weaver_runs: list[list[str]]
 ) -> None:
