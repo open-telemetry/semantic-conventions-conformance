@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import sys
 from contextlib import contextmanager
@@ -304,6 +305,7 @@ def test_a_weaver_rejected_value_cannot_satisfy_a_semantic_check(
     findings = check(spec, observed)
     assert any(
         "contract_attribute_mismatch" in finding
+        and "'WRONGTYPE' (rejected by Weaver)" in finding
         for finding in findings.violations
     )
     assert any("type_mismatch" in finding for finding in findings.violations)
@@ -341,22 +343,18 @@ def test_raw_report_survives_a_check_exception(
     assert not (directory / "data.json").exists()
 
 
-def test_saved_report_can_be_checked_without_duplicate_findings(
+def test_spans_with_the_same_name_and_failure_are_one_finding(
     tmp_path: Path,
 ) -> None:
-    spec = load_spec(package(tmp_path)).scenarios["error"]
-    observed = report({})
-    initial = check(spec, observed)
-    replayed = LiveCheckReport(
-        {
-            "statistics": observed["statistics"],
-            "samples": observed["samples"],
-            "contract_checks": {
-                "live_check_result": {"all_advice": initial.contract_checks}
-            },
-        }
-    )
-    assert check(spec, replayed).violations == initial.violations
+    directory = package(tmp_path)
+    config = directory / "conformance.yaml"
+    config.write_text(config.read_text().replace("count: 1", "count: 2"))
+    sample = report({})["samples"][0]
+    observed = LiveCheckReport({"statistics": {}, "samples": [sample, sample]})
+    findings = check(load_spec(directory).scenarios["error"], observed)
+    assert not findings.failures
+    assert len(findings.contract_checks) == 1
+    assert len(findings.violations) == 1
 
 
 @pytest.mark.parametrize(
@@ -408,6 +406,10 @@ def test_optional_attribute_rejected_by_weaver_is_still_a_finding(
     }
     findings = check(load_spec(directory).scenarios["error"], observed)
     assert len(findings.contract_checks) == 1
+    assert findings.contract_checks[0]["message"] == (
+        "db.namespace expected 'FREE' on every span, saw "
+        "[1 (rejected by Weaver)]"
+    )
     assert findings.contract_checks[0]["context"] == {
         "attribute_key": "db.namespace",
         "scenario": "error",
@@ -464,7 +466,7 @@ def test_accepted_gap_is_specific_to_its_span_selector(tmp_path: Path) -> None:
     assert any("no longer reported" in finding for finding in fixed.violations)
 
 
-def test_saved_contract_names_are_stable_across_mapped_ports(
+def test_saved_finding_names_are_stable_across_mapped_ports(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     snapshots = []
@@ -480,7 +482,21 @@ def test_saved_contract_names_are_stable_across_mapped_ports(
                 {"server.address": "127.0.0.1", "server.port": port}
             )["samples"][0]["span"]
             span["name"] = f"{operation} 127.0.0.1:{port}"
+            # Weaver names the span its own advice is about.
+            span["live_check_result"] = {
+                "all_advice": [
+                    {
+                        "id": "missing_attribute",
+                        "level": "violation",
+                        "message": "Attribute is required",
+                        "context": {"attribute_name": "db.query.text"},
+                        "signal_type": "span",
+                        "signal_name": span["name"],
+                    }
+                ]
+            }
             samples.append({"span": span})
+        emitted = copy.deepcopy(samples)
         observed = LiveCheckReport({"statistics": {}, "samples": samples})
 
         class Weaver:
@@ -519,17 +535,29 @@ def test_saved_contract_names_are_stable_across_mapped_ports(
         saved_report = json.loads(
             (directory / "reports/error.json").read_text()
         )
-        assert saved_report["samples"] == samples
-        assert observed["samples"] == samples
+        assert [s["span"]["name"] for s in saved_report["samples"]] == [
+            s["span"]["name"] for s in emitted
+        ]
+        assert observed["samples"] == emitted
     assert snapshots[0] == snapshots[1]
     findings = json.loads(snapshots[0])["findings"]
-    assert {finding["signal_name"] for finding in findings} == {
+    names = {
         "LPUSH 127.0.0.1:${DATABASE_PORT}",
         "LPUSH retry 127.0.0.1:${DATABASE_PORT}",
     }
-    assert len(findings) == 2
+    contract = [
+        finding
+        for finding in findings
+        if finding["id"] == "contract_attribute_mismatch"
+    ]
+    weaver = [
+        finding for finding in findings if finding["id"] == "missing_attribute"
+    ]
+    assert {finding["signal_name"] for finding in contract} == names
+    assert {finding["signal_name"] for finding in weaver} == names
+    assert len(findings) == 4
     assert all(
-        finding["context"]["match"] == LPUSH_MATCH for finding in findings
+        finding["context"]["match"] == LPUSH_MATCH for finding in contract
     )
 
 

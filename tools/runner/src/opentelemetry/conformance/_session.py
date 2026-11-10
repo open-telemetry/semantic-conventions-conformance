@@ -32,7 +32,7 @@ from typing import (
     TypeVar,
 )
 
-from ._checks import check
+from ._checks import check, stable_signal_names
 from ._coverage import coverage
 from ._env import (
     METRIC_EXPORT_INTERVAL_MILLIS,
@@ -369,8 +369,11 @@ class ConformanceSession:
         *,
         contract_checks: list[dict[str, object]] | None = None,
     ) -> None:
-        # Keep runner advice separate from the unchanged Weaver samples.
-        document = dict(report._report)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        # Keep runner advice separate from the Weaver samples.
+        document = stable_signal_names(
+            report._report,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            self._variables,
+        )
         if contract_checks:
             document["contract_checks"] = {
                 "live_check_result": {"all_advice": contract_checks}

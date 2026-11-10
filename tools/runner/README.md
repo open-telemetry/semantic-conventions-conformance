@@ -349,7 +349,10 @@ selection does not suppress a gap on another.
 They persist in `data.json`, respect `expected_violations`, and fail strict
 runs. `--report-only` tolerates them. Counts, ordinary `attributes`, and
 workload failures remain hard failures. Raw reports keep runner findings under
-`contract_checks`, separate from Weaver samples.
+`contract_checks`, separate from Weaver samples. When a span name ends in the
+runtime endpoint the runner injected, both runner and Weaver findings name it
+with the port variable, such as `LPUSH 127.0.0.1:${DATABASE_PORT}`, so a rerun
+on another port leaves `data.json` unchanged.
 
 `db.namespace: {if_present: FREE}` checks an optional attribute's value without
 requiring its presence. An emitted value rejected by Weaver still produces a

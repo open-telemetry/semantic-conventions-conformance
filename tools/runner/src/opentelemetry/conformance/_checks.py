@@ -9,8 +9,9 @@ short-circuit: one run reports every problem it found.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Hashable, Mapping, Sequence, cast
+from typing import TYPE_CHECKING, Hashable, Iterator, Mapping, Sequence, cast
 
 from ._report import carried_attributes
 from ._spans import span_kind
@@ -30,7 +31,7 @@ class ObservedSpan:
     name: str
     kind: str
     attributes: Mapping[str, object]
-    emitted_attributes: frozenset[str] | None = None
+    emitted_attributes: Mapping[str, object] | None = None
 
 
 def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
@@ -46,11 +47,9 @@ def observed_spans(report: LiveCheckReport) -> list[ObservedSpan]:
             attributes=carried_attributes(
                 cast("Mapping[str, object]", entry["span"])
             ),
-            emitted_attributes=frozenset(
-                carried_attributes(
-                    cast("Mapping[str, object]", entry["span"]),
-                    include_rejected=True,
-                )
+            emitted_attributes=carried_attributes(
+                cast("Mapping[str, object]", entry["span"]),
+                include_rejected=True,
             ),
         )
         for entry in report["samples"]
@@ -210,33 +209,92 @@ def _semantic_checks(
                 if failure is None:
                     continue
                 for name in sorted(
-                    {_semantic_signal_name(span, variables) for span in group}
+                    {
+                        _stable_name(span.name, span.attributes, variables)
+                        for span in group
+                    }
                 ):
-                    advice.append(
-                        {
-                            "id": "contract_attribute_mismatch",
-                            "level": "violation",
-                            "message": failure,
-                            "context": {
-                                "attribute_key": attribute,
-                                "scenario": spec.name,
-                                "match": expectation.match.as_dict(),
-                            },
-                            "signal_type": "span",
-                            "signal_name": name,
-                        }
-                    )
+                    finding: dict[str, object] = {
+                        "id": "contract_attribute_mismatch",
+                        "level": "violation",
+                        "message": failure,
+                        "context": {
+                            "attribute_key": attribute,
+                            "scenario": spec.name,
+                            "match": expectation.match.as_dict(),
+                        },
+                        "signal_type": "span",
+                        "signal_name": name,
+                    }
+                    # Spans sharing a name and a failure are one finding.
+                    if finding not in advice:
+                        advice.append(finding)
     return advice
 
 
-def _semantic_signal_name(
-    span: ObservedSpan, variables: Mapping[str, str] | None
+def stable_signal_names(
+    report: Mapping[str, object], variables: Mapping[str, str] | None
+) -> dict[str, object]:
+    """A copy of the report with span advice named as runner findings are.
+
+    A finding about a span names it, and a span name can carry a runtime
+    endpoint's port, which changes every run. Renaming Weaver's advice the
+    same way as the runner's keeps both stable in ``data.json``. The span
+    samples themselves keep the name they were emitted with.
+    """
+    renamed = copy.deepcopy(dict(report))
+    samples = renamed.get("samples")
+    for entry in cast(
+        "list[object]", samples if isinstance(samples, list) else []
+    ):
+        span = (
+            cast("dict[str, object]", entry).get("span")
+            if isinstance(entry, dict)
+            else None
+        )
+        if not isinstance(span, dict):
+            continue
+        span = cast("dict[str, object]", span)
+        name = str(span.get("name") or "")
+        stable = _stable_name(name, carried_attributes(span), variables)
+        if stable == name:
+            continue
+        for advice in _advice(span):
+            if (
+                advice.get("signal_type") == "span"
+                and advice.get("signal_name") == name
+            ):
+                advice["signal_name"] = stable
+    return renamed
+
+
+def _advice(document: object) -> Iterator[dict[str, object]]:
+    """Every piece of advice anywhere under ``document``."""
+    if isinstance(document, dict):
+        owner = cast("dict[str, object]", document)
+        result = owner.get("live_check_result")
+        if isinstance(result, dict):
+            entries = cast("dict[str, object]", result).get("all_advice")
+            if isinstance(entries, list):
+                for entry in cast("list[object]", entries):
+                    if isinstance(entry, dict):
+                        yield cast("dict[str, object]", entry)
+        for value in owner.values():
+            yield from _advice(value)
+    elif isinstance(document, list):
+        for item in cast("list[object]", document):
+            yield from _advice(item)
+
+
+def _stable_name(
+    name: str,
+    attributes: Mapping[str, object],
+    variables: Mapping[str, str] | None,
 ) -> str:
     """Keep the name, with a declared runtime endpoint's port as its variable.
 
     Both endpoint attributes must confirm the exact injected host and port.
     Other numbers, endpoints and meaningful operation names stay unchanged.
-    Only runner advice uses this label; the Weaver samples remain untouched.
     """
     for key, port in sorted((variables or {}).items()):
         if not key.endswith("_PORT") or not port.isdecimal():
@@ -244,13 +302,13 @@ def _semantic_signal_name(
         host = (variables or {}).get(key.removesuffix("_PORT") + "_HOST")
         if (
             not host
-            or span.attributes.get("server.address") != host
-            or str(span.attributes.get("server.port")) != port
+            or attributes.get("server.address") != host
+            or str(attributes.get("server.port")) != port
         ):
             continue
-        if span.name.endswith(f" {host}:{port}"):
-            return span.name[: -len(port)] + "${" + key + "}"
-    return span.name
+        if name.endswith(f" {host}:{port}"):
+            return name[: -len(port)] + "${" + key + "}"
+    return name
 
 
 def selects(expectation: SpanExpectation, span: ObservedSpan) -> bool:
@@ -352,9 +410,23 @@ def _check_attribute(
     if mismatched or len(present) != len(spans):
         return (
             f"{attribute} expected {matcher.equals!r} on every span, saw "
-            f"{[span.attributes.get(attribute) for span in spans]}"
+            f"[{', '.join(_shown(span, attribute) for span in spans)}]"
         )
     return None
+
+
+def _shown(span: ObservedSpan, attribute: str) -> str:
+    """The span's value, saying so when weaver rejected it.
+
+    A rejected value doesn't count, but showing it as ``None`` would read as
+    if the span never set the attribute.
+    """
+    if attribute in span.attributes:
+        return repr(span.attributes[attribute])
+    emitted = span.emitted_attributes or {}
+    if attribute in emitted:
+        return f"{emitted[attribute]!r} (rejected by Weaver)"
+    return repr(None)
 
 
 def _typed_equal(value: object, expected: object) -> bool:
@@ -404,22 +476,7 @@ def _check_violations(
     *,
     additional: Sequence[Mapping[str, object]] = (),
 ) -> list[str]:
-    violations: list[Mapping[str, object]] = list(report.violations)
-    for advice in additional:
-        if not any(
-            all(
-                existing.get(key) == advice.get(key)
-                for key in (
-                    "id",
-                    "message",
-                    "context",
-                    "signal_type",
-                    "signal_name",
-                )
-            )
-            for existing in violations
-        ):
-            violations.append(advice)
+    violations: list[Mapping[str, object]] = [*report.violations, *additional]
     expected = spec.expected_violations
     accepted = expected + spec.inherited_violations
 
