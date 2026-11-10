@@ -1,0 +1,12 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: spring-webmvc
+instrumentation_library: go.opentelemetry.io/obi
+
+setup: otel-conformance-obi install -- otel-conformance-java prepare spring-webmvc:obi
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*SpringWebMvcObiServerScenario*' otel-conformance-java run spring-webmvc:obi SpringWebMvcObiServerScenario
