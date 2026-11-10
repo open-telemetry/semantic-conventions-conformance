@@ -12,7 +12,7 @@ from ._container import BackendSpec, DatabaseContainer
 ELASTICSEARCH_INDEX = "conformance"
 ELASTICSEARCH_PORT = 9200
 # renovate: datasource=docker depName=docker.elastic.co/elasticsearch/elasticsearch versioning=docker
-ELASTICSEARCH_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.5.5@sha256:13b4a40bb095774f5fda635e45fd5677cc6a26565e42b24997b0c72b88e75984"
+ELASTICSEARCH_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.5.6@sha256:79b4f1de4c15e6eca824723086a51e5934406d614d410cc11be77748cafac537"
 
 ELASTICSEARCH = BackendSpec(
     name="Elasticsearch",
