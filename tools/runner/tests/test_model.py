@@ -220,7 +220,7 @@ def test_files_weaver_does_not_read_leave_the_model_alone(
     assert len(weaver_runs) == 1
 
 
-def test_an_edit_under_a_symlinked_folder_is_a_change(
+def test_a_symlinked_folder_is_left_out_as_weaver_leaves_it(
     tmp_path: Path, weaver_runs: list[list[str]]
 ) -> None:
     shared = _registry(tmp_path / "common" / "model")
@@ -233,9 +233,27 @@ def test_an_edit_under_a_symlinked_folder_is_a_change(
     first = _model.coverage_model_for(registry)
 
     (shared / "spans.yaml").write_text("groups: [x]\n")
+    assert _model.coverage_model_for(registry) == first
+
+    (registry / "shared").unlink()
+    shutil.copytree(shared, registry / "shared", symlinks=True)
 
     assert _model.coverage_model_for(registry) != first
     assert len(weaver_runs) == 2
+
+
+def test_a_link_to_a_missing_file_is_skipped_as_weaver_skips_it(
+    tmp_path: Path, weaver_runs: list[list[str]]
+) -> None:
+    registry = _registry(tmp_path / "model")
+    first = _model.coverage_model_for(registry)
+    try:
+        (registry / "stale.yaml").symlink_to(tmp_path / "removed.yaml")
+    except OSError:
+        pytest.skip("symlinks are not available here")
+
+    assert _model.coverage_model_for(registry) == first
+    assert len(weaver_runs) == 1
 
 
 def test_a_local_dependency_is_part_of_the_key(
@@ -344,6 +362,76 @@ def test_a_dependency_that_can_move_is_found_before_any_definition_is_read(
 
     assert _model._digest(registry) is None  # noqa: SLF001
     assert read == []
+
+
+_PUBLICATION = (
+    "file_format: manifest/2.0\n"
+    "schema_url: https://example.com/schemas/core/1.44.0\n"
+    "resolved_registry_uri: {uri}\n"
+)
+
+
+@pytest.mark.parametrize(
+    "uri", ["https://example.com/resolved.yaml", "../resolved.json"]
+)
+@pytest.mark.parametrize("published", ["registry", "dependency"])
+def test_a_published_registry_is_resolved_every_time(
+    tmp_path: Path,
+    weaver_runs: list[list[str]],
+    published: str,
+    uri: str,
+) -> None:
+    """Weaver reads the resolved registry it points at, wherever that is."""
+    manifest = _PUBLICATION.format(uri=uri)
+    if published == "registry":
+        registry = _registry(tmp_path / "model", manifest)
+    else:
+        _registry(tmp_path / "core", manifest)
+        registry = _depending_on(tmp_path / "model", "./core")
+
+    first = _model.coverage_model_for(registry)
+
+    assert _model.coverage_model_for(registry) == first
+    assert len(weaver_runs) == 2
+    assert "-unpinned-" in first.name
+    assert not (tmp_path / "cache").exists()
+
+
+def test_a_dependency_on_a_manifest_file_is_resolved_every_time(
+    tmp_path: Path, weaver_runs: list[list[str]]
+) -> None:
+    _registry(tmp_path / "core", _PUBLICATION.format(uri="../resolved.json"))
+    registry = _depending_on(tmp_path / "model", "./core/manifest.yaml")
+
+    first = _model.coverage_model_for(registry)
+
+    assert _model.coverage_model_for(registry) == first
+    assert len(weaver_runs) == 2
+    assert "-unpinned-" in first.name
+    assert not (tmp_path / "cache").exists()
+
+
+@pytest.mark.parametrize("pin", [None, "semconv-v1-model"])
+def test_schema_url_overrides_keep_every_model_out_of_the_cache(
+    tmp_path: Path,
+    weaver_runs: list[list[str]],
+    monkeypatch: pytest.MonkeyPatch,
+    pin: str | None,
+) -> None:
+    registry = _registry(tmp_path / "model")
+    project = tmp_path / "project"
+    (project / "nested").mkdir(parents=True)
+    (project / ".weaver.toml").write_text(
+        "[resolve.schema_url_overrides]\n"
+        '"https://example.com/schemas/core/1.44.0" = "../core"\n'
+    )
+    monkeypatch.chdir(project / "nested")
+
+    first = _model.coverage_model_for(registry, pin=pin)
+
+    assert _model.coverage_model_for(registry, pin=pin) == first
+    assert len(weaver_runs) == 2
+    assert not (tmp_path / "cache").exists()
 
 
 def _changing_weaver(

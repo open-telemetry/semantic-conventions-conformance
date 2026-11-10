@@ -476,9 +476,12 @@ happens up front rather than after the scenarios have. A registry passed with
 `--registry` uses a digest of the YAML files weaver reads in the registry and
 its local dependencies. This catches edits, deletions and renames. Registries
 with URL or archive dependencies resolve on every call, since their transitive
-dependencies may change. Weaver is called with its defaults for
-`follow_symlinks` and `include_unreferenced`, so a `.weaver.toml` above the
-working directory doesn't change the model.
+dependencies may change. So do registries that are, or depend on, a published
+registry, since its resolved registry can be anywhere. Weaver is called with its
+defaults for `follow_symlinks` and `include_unreferenced`, so those two settings
+in a `.weaver.toml` above the working directory don't change the model. While
+that file sets `[resolve.schema_url_overrides]`, every model, pinned or not,
+resolves on every call.
 
 `coverage-models/working-trees` and `coverage-models/pinned` each keep the 8 most
 recently used models. Callers receive process-private copies, removed on normal
