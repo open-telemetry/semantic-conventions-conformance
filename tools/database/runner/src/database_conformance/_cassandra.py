@@ -13,7 +13,7 @@ CASSANDRA_DATABASE = "conformance"
 CASSANDRA_DATACENTER = "datacenter1"
 CASSANDRA_PORT = 9042
 # renovate: datasource=docker depName=cassandra versioning=docker
-CASSANDRA_IMAGE = "cassandra:5.0.9@sha256:d35e159439b302146f964919904f84fd3c2cebf347272b8cb8c4368c1cf200e5"
+CASSANDRA_IMAGE = "cassandra:5.0.9@sha256:7e2afd76d5afb991f64c5d9be7d1f8abf749e7ab0e9daaccfd6e865efcece7cc"
 
 CASSANDRA = BackendSpec(
     name="Cassandra",
