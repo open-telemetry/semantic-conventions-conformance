@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
-    "@opentelemetry/browser-instrumentation": "0.8.1",
+    "@opentelemetry/browser-instrumentation": "0.9.0",
     "@opentelemetry/exporter-logs-otlp-proto": "0.222.0",
     "@opentelemetry/instrumentation": "0.222.0",
     "@opentelemetry/sdk-logs": "0.222.0",
