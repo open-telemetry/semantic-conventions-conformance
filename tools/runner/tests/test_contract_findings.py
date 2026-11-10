@@ -18,7 +18,7 @@ import pytest
 import yaml
 
 from opentelemetry.conformance import load_spec
-from opentelemetry.conformance._checks import check
+from opentelemetry.conformance._checks import check, stable_signal_names
 from opentelemetry.conformance._cli import main
 from opentelemetry.conformance._coverage import coverage
 from opentelemetry.conformance._semconv import semconv_coverage
@@ -492,7 +492,18 @@ def test_saved_finding_names_are_stable_across_mapped_ports(
                         "context": {"attribute_name": "db.query.text"},
                         "signal_type": "span",
                         "signal_name": span["name"],
-                    }
+                    },
+                    # Shaped like policies/span_validation.rego advice.
+                    {
+                        "id": "error_type_missing_on_error",
+                        "level": "violation",
+                        "message": f"Span '{span['name']}' has status.code="
+                        "'error' but is missing 'error.type'; it MUST be set "
+                        "when the operation fails.",
+                        "context": {"status_code": "error"},
+                        "signal_type": "span",
+                        "signal_name": span["name"],
+                    },
                 ]
             }
             samples.append({"span": span})
@@ -555,7 +566,13 @@ def test_saved_finding_names_are_stable_across_mapped_ports(
     ]
     assert {finding["signal_name"] for finding in contract} == names
     assert {finding["signal_name"] for finding in weaver} == names
-    assert len(findings) == 4
+    policy = [
+        finding
+        for finding in findings
+        if finding["id"] == "error_type_missing_on_error"
+    ]
+    assert {finding["message"].split("'")[1] for finding in policy} == names
+    assert len(findings) == 6
     assert all(
         finding["context"]["match"] == LPUSH_MATCH for finding in contract
     )
@@ -609,3 +626,36 @@ def test_only_the_confirmed_runtime_endpoint_port_changes(
     assert findings.contract_checks[0]["signal_name"] == expected
     assert check(spec, observed).contract_checks[0]["signal_name"] == name
     assert observed["samples"][0]["span"]["name"] == name
+
+
+def test_a_message_keeps_a_longer_port_that_only_starts_the_same() -> None:
+    name = "LPUSH 127.0.0.1:32802"
+    message = f"Span '{name}' differs from 'LPUSH 127.0.0.1:328020'."
+    span = {
+        "name": name,
+        "attributes": [
+            {"name": "server.address", "value": "127.0.0.1"},
+            {"name": "server.port", "value": 32802},
+        ],
+        "live_check_result": {
+            "all_advice": [
+                {
+                    "id": "policy",
+                    "level": "violation",
+                    "message": message,
+                    "signal_type": "span",
+                    "signal_name": name,
+                }
+            ]
+        },
+    }
+    renamed = stable_signal_names(
+        {"samples": [{"span": span}]},
+        {"DATABASE_HOST": "127.0.0.1", "DATABASE_PORT": "32802"},
+    )
+    advice = renamed["samples"][0]["span"]["live_check_result"]["all_advice"]
+    assert advice[0]["message"] == (
+        "Span 'LPUSH 127.0.0.1:${DATABASE_PORT}' differs from "
+        "'LPUSH 127.0.0.1:328020'."
+    )
+    assert span["live_check_result"]["all_advice"][0]["message"] == message

@@ -10,6 +10,7 @@ short-circuit: one run reports every problem it found.
 from __future__ import annotations
 
 import copy
+import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Hashable, Iterator, Mapping, Sequence, cast
 
@@ -239,8 +240,9 @@ def stable_signal_names(
 
     A finding about a span names it, and a span name can carry a runtime
     endpoint's port, which changes every run. Renaming Weaver's advice the
-    same way as the runner's keeps both stable in ``data.json``. The span
-    samples themselves keep the name they were emitted with.
+    same way as the runner's keeps both stable in ``data.json``, including a
+    policy message that quotes the span name. The span samples themselves
+    keep the name they were emitted with.
     """
     renamed = copy.deepcopy(dict(report))
     samples = renamed.get("samples")
@@ -259,12 +261,17 @@ def stable_signal_names(
         stable = _stable_name(name, carried_attributes(span), variables)
         if stable == name:
             continue
+        # The name ends in the port, so a longer number is another port.
+        embedded = re.compile(re.escape(name) + r"(?!\d)")
         for advice in _advice(span):
             if (
                 advice.get("signal_type") == "span"
                 and advice.get("signal_name") == name
             ):
                 advice["signal_name"] = stable
+                message = advice.get("message")
+                if isinstance(message, str):
+                    advice["message"] = embedded.sub(lambda _: stable, message)
     return renamed
 
 
