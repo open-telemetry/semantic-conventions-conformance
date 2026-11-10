@@ -354,12 +354,16 @@ def _dependencies(root: Path) -> list[dict[str, Any]] | None:
     """The dependencies ``root``'s manifest declares.
 
     ``None`` when the manifest is a published one: weaver reads the resolved
-    registry it points at instead of anything here.
+    registry it points at instead of anything here. Also ``None`` when it
+    can't be read, so weaver runs and reports why.
     """
     for name in _MANIFESTS:
         manifest = root / name
         if manifest.is_file():
-            loaded = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+            try:
+                loaded = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+            except (yaml.YAMLError, UnicodeDecodeError):
+                return None
             if not isinstance(loaded, dict):
                 return []
             fields = cast("dict[str, object]", loaded)

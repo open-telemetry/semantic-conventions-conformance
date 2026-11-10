@@ -482,6 +482,35 @@ def test_a_dependency_on_a_manifest_file_is_resolved_every_time(
     assert not (tmp_path / "cache").exists()
 
 
+@pytest.mark.parametrize(
+    "manifest",
+    [b"dependencies: [\n", b"\xff\xfe not utf-8\n"],
+    ids=["not-yaml", "not-utf-8"],
+)
+@pytest.mark.parametrize("broken", ["registry", "dependency"])
+def test_a_manifest_weaver_cannot_read_is_left_to_weaver(
+    tmp_path: Path,
+    weaver_runs: list[list[str]],
+    broken: str,
+    manifest: bytes,
+) -> None:
+    """Weaver reports the error, so no model is cached for it either."""
+    if broken == "registry":
+        registry = _registry(tmp_path / "model")
+        (registry / "manifest.yaml").write_bytes(manifest)
+    else:
+        _registry(tmp_path / "core")
+        (tmp_path / "core" / "manifest.yaml").write_bytes(manifest)
+        registry = _depending_on(tmp_path / "model", "./core")
+
+    first = _model.coverage_model_for(registry)
+
+    assert _model.coverage_model_for(registry) == first
+    assert len(weaver_runs) == 2
+    assert "-unpinned-" in first.name
+    assert not (tmp_path / "cache").exists()
+
+
 @pytest.mark.parametrize("pin", [None, "semconv-v1-model"])
 def test_schema_url_overrides_keep_every_model_out_of_the_cache(
     tmp_path: Path,
