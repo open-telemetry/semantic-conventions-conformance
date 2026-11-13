@@ -1011,16 +1011,6 @@
           },
           "refinements": {}
         },
-        "http.client.active_requests": {
-          "attributes": {
-            "http.request.method": "recommended",
-            "server.address": "required",
-            "server.port": "required",
-            "url.scheme": "opt_in",
-            "url.template": "conditionally_required_conditional"
-          },
-          "refinements": {}
-        },
         "http.client.connection.duration": {
           "attributes": {
             "network.peer.address": "opt_in",
@@ -41961,46 +41951,6 @@
           "message": "Instrumentation scope 'Microsoft.AspNetCore.Hosting' does not have schema_url.",
           "signal_name": "Microsoft.AspNetCore.Hosting",
           "signal_type": "instrumentation_scope"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /health",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /status/{code}' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /status/{code}",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /users/{userId}' is missing recommended attribute 'client.address'",
-          "signal_name": "GET /users/{userId}",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "client.address",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
-          "signal_name": "POST /items",
-          "signal_type": "span"
         }
       ],
       "id": "http/dotnet/aspnetcore/opentelemetry-aspnetcore/server",
@@ -42027,11 +41977,11 @@
             },
             "recommended": {
               "declared": 5,
-              "emitted": 3
+              "emitted": 5
             },
             "recommended_conditional": {
               "declared": 1,
-              "emitted": 0
+              "emitted": 1
             },
             "required": {
               "declared": 3,
@@ -42039,10 +41989,13 @@
             }
           },
           "emitted": [
+            "client.address",
             "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
+            "network.peer.address",
+            "network.peer.port",
             "network.protocol.version",
             "server.address",
             "server.port",
@@ -42053,10 +42006,13 @@
           ],
           "identity": {
             "attributes": [
+              "client.address",
               "error.type",
               "http.request.method",
               "http.response.status_code",
               "http.route",
+              "network.peer.address",
+              "network.peer.port",
               "network.protocol.version",
               "server.address",
               "server.port",
@@ -42068,7 +42024,6 @@
             "span_kind": "server"
           },
           "missing": [
-            "client.address",
             "client.port",
             "http.request.body.content",
             "http.request.body.size",
@@ -42081,8 +42036,6 @@
             "http.response.size",
             "network.local.address",
             "network.local.port",
-            "network.peer.address",
-            "network.peer.port",
             "network.protocol.name",
             "network.transport",
             "user_agent.synthetic.type"
@@ -42116,7 +42069,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 4,
-              "emitted": 2
+              "emitted": 3
             },
             "opt_in": {
               "declared": 3,
@@ -42132,6 +42085,7 @@
             }
           },
           "emitted": [
+            "error.type",
             "http.request.method",
             "http.response.status_code",
             "http.route",
@@ -42139,7 +42093,6 @@
             "url.scheme"
           ],
           "missing": [
-            "error.type",
             "network.protocol.name",
             "server.address",
             "server.port",
@@ -42150,10 +42103,10 @@
         }
       ],
       "summary": {
-        "findings": 6,
+        "findings": 2,
         "recommended": {
           "declared": 6,
-          "emitted": 4
+          "emitted": 6
         },
         "required": {
           "declared": 7,
@@ -42318,37 +42271,6 @@
         },
         {
           "coverage": {
-            "conditionally_required_conditional": {
-              "declared": 1,
-              "emitted": 0
-            },
-            "opt_in": {
-              "declared": 1,
-              "emitted": 1
-            },
-            "recommended": {
-              "declared": 1,
-              "emitted": 1
-            },
-            "required": {
-              "declared": 2,
-              "emitted": 2
-            }
-          },
-          "emitted": [
-            "http.request.method",
-            "server.address",
-            "server.port",
-            "url.scheme"
-          ],
-          "missing": [
-            "url.template"
-          ],
-          "name": "http.client.active_requests",
-          "type": "metric"
-        },
-        {
-          "coverage": {
             "opt_in": {
               "declared": 2,
               "emitted": 2
@@ -42439,12 +42361,12 @@
       "summary": {
         "findings": 3,
         "recommended": {
-          "declared": 6,
-          "emitted": 5
+          "declared": 5,
+          "emitted": 4
         },
         "required": {
-          "declared": 15,
-          "emitted": 15
+          "declared": 13,
+          "emitted": 13
         }
       }
     },
