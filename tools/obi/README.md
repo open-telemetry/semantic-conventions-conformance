@@ -37,7 +37,9 @@ and maps each digest to the new release's archive.
    launcher wrote `1` before closing it, so a scenario whose launcher died
    exits instead of running unmeasured. In Go,
    [`scenario.Run` and `scenario.RunServer`](../go/scenario) wait at the gate
-   before the workload.
+   before the workload; in Java,
+   [`ScenarioGate.waitAtGate`](../java/scenario-support/src/main/java/io/opentelemetry/conformance/scenario/ScenarioGate.java)
+   does.
 3. Starts OBI with [`obi.yaml`](src/otel_conformance_obi/obi.yaml) selecting
    processes by OBI's own process match: `--exe` on the resolved executable
    path, `--args` on the command line without `argv[0]`. Without either it

@@ -1,0 +1,19 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# OBI does not get the route templates for Undertow, so it falls back to a route
+# derived from the request path (`/users/*`, `/status/*`) and uses it for
+# `http.route` and the span name. Semconv says `http.route` must not be
+# populated in that case and the span name should be just the method; OBI does
+# that with `routes.unmatched: unset`. This baseline records OBI's default,
+# `heuristic`.
+
+runner: http-conformance
+instrumented_library: undertow
+instrumentation_library: go.opentelemetry.io/obi
+
+setup: otel-conformance-obi install -- otel-conformance-java prepare undertow:obi
+
+scenarios:
+  server:
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*UndertowObiServerScenario*' otel-conformance-java run undertow:obi UndertowObiServerScenario
