@@ -19,7 +19,7 @@ class ClientTest < Minitest::Test
     assert_equal(
       [
         "GET /users/123",
-        "GET /users/123?fields=name&verbose=true",
+        "GET /users/456?fields=name&verbose=true",
         "POST /items",
         "GET /status/404",
         "GET /status/500"

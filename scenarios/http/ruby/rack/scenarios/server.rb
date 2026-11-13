@@ -13,6 +13,7 @@ module RackServerScenario
   ROUTES = [
     "/health",
     "/users/123",
+    "/users/456",
     "/items",
     "/status/404",
     "/status/500"
