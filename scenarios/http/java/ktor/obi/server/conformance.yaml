@@ -16,4 +16,4 @@ setup: otel-conformance-obi install -- otel-conformance-java prepare ktor:obi
 
 scenarios:
   server:
-    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*KtorObiServerScenario*' otel-conformance-java run ktor:obi KtorObiServerScenario
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*KtorServerScenario*' otel-conformance-java run ktor:obi io.opentelemetry.conformance.http.ktor.KtorServerScenario

@@ -4,6 +4,7 @@
  */
 package io.opentelemetry.conformance.scenario;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -11,20 +12,16 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 /** The scenario side of {@code otel-conformance-obi run}'s gate. */
-public final class ScenarioGate {
+final class ScenarioGate {
   static final String GATE_VARIABLE = "OTEL_CONFORMANCE_GATE";
   private static final byte[] RELEASE = {'1'};
 
   private ScenarioGate() {}
 
   /**
-   * Reads the named pipe in {@code OTEL_CONFORMANCE_GATE} until the launcher closes it, and fails
-   * unless the launcher released the gate first. Returns at once when the variable is unset.
+   * Reads the named pipe at {@code gate} until the launcher closes it, and fails unless the
+   * launcher released the gate first. Returns at once when there is no gate.
    */
-  public static void waitAtGate() {
-    waitAtGate(System.getenv(GATE_VARIABLE));
-  }
-
   static void waitAtGate(String gate) {
     if (gate == null || gate.isEmpty()) {
       return;
@@ -35,13 +32,16 @@ public final class ScenarioGate {
     } catch (IOException error) {
       throw new IllegalStateException("reaching the gate: " + error.getMessage(), error);
     }
-    byte[] received;
+    ByteArrayOutputStream received = new ByteArrayOutputStream();
     try (pipe) {
-      received = pipe.readAllBytes();
+      byte[] buffer = new byte[8];
+      for (int read; (read = pipe.read(buffer)) != -1; ) {
+        received.write(buffer, 0, read);
+      }
     } catch (IOException error) {
       throw new IllegalStateException("waiting at the gate: " + error.getMessage(), error);
     }
-    if (!Arrays.equals(received, RELEASE)) {
+    if (!Arrays.equals(received.toByteArray(), RELEASE)) {
       throw new IllegalStateException("the launcher closed the gate without releasing it");
     }
   }

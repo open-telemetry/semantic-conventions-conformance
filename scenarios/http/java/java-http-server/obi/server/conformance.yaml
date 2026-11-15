@@ -16,4 +16,4 @@ setup: otel-conformance-obi install -- otel-conformance-java prepare java-http-s
 
 scenarios:
   server:
-    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*JavaHttpServerObiServerScenario*' otel-conformance-java run java-http-server:obi JavaHttpServerObiServerScenario
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*JavaHttpServerServerScenario*' otel-conformance-java run java-http-server:obi io.opentelemetry.conformance.http.javahttpserver.JavaHttpServerServerScenario

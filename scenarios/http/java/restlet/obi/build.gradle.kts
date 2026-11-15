@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":restlet:scenarios"))
-    implementation(project(":scenario-support"))
 }

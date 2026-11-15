@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":spring-webflux:scenarios"))
-    implementation(project(":scenario-support"))
 }

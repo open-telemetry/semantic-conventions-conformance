@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":armeria:scenarios"))
-    implementation(project(":scenario-support"))
 }

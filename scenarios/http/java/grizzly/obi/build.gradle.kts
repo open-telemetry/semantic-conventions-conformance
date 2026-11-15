@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":grizzly:scenarios"))
-    implementation(project(":scenario-support"))
 }

@@ -5,16 +5,22 @@
 package io.opentelemetry.conformance.scenario;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class ScenarioLauncherTest {
+  @TempDir Path directory;
+
   private static final String CONTROL_NAME = "io.opentelemetry.conformance:type=AgentControl";
   private static final String CONTROL_REQUIRED = "otel.conformance.agent.control.required";
   private static final List<String> EVENTS = new ArrayList<>();
@@ -56,6 +62,38 @@ class ScenarioLauncherTest {
     }
 
     assertEquals(List.of("scenario", "trace and log", "metric", "exit 0"), EVENTS);
+  }
+
+  @Test
+  void runsTheScenarioOnceTheGateIsReleased() throws Exception {
+    Path gate = Files.createTempFile(directory, "gate", "");
+    Files.write(gate, new byte[] {'1'});
+    EVENTS.clear();
+
+    ScenarioLauncher.run(
+        new String[] {TestScenario.class.getName()},
+        status -> EVENTS.add("exit " + status),
+        gate.toString());
+
+    assertEquals(List.of("scenario"), EVENTS);
+  }
+
+  @Test
+  void doesNotRunTheScenarioPastAClosedGate() throws Exception {
+    Path gate = Files.createTempFile(directory, "gate", "");
+    EVENTS.clear();
+
+    IllegalStateException error =
+        assertThrows(
+            IllegalStateException.class,
+            () ->
+                ScenarioLauncher.run(
+                    new String[] {TestScenario.class.getName()},
+                    status -> EVENTS.add("exit " + status),
+                    gate.toString()));
+
+    assertEquals("the launcher closed the gate without releasing it", error.getMessage());
+    assertEquals(List.of(), EVENTS);
   }
 
   public interface TestControlMBean {

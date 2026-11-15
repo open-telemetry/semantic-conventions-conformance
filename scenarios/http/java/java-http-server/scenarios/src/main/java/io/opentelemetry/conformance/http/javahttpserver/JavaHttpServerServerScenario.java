@@ -22,6 +22,10 @@ import java.util.function.Consumer;
 public final class JavaHttpServerServerScenario {
   private JavaHttpServerServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(context -> {});
   }

@@ -16,4 +16,4 @@ setup: otel-conformance-obi install -- otel-conformance-java prepare netty:obi
 
 scenarios:
   server:
-    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*NettyObiServerScenario*' otel-conformance-java run netty:obi NettyObiServerScenario
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*NettyServerScenario*' otel-conformance-java run netty:obi io.opentelemetry.conformance.http.netty.NettyServerScenario

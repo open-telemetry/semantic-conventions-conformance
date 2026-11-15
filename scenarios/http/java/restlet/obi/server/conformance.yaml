@@ -16,4 +16,4 @@ setup: otel-conformance-obi install -- otel-conformance-java prepare restlet:obi
 
 scenarios:
   server:
-    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*RestletObiServerScenario*' otel-conformance-java run restlet:obi RestletObiServerScenario
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*RestletServerScenario*' otel-conformance-java run restlet:obi io.opentelemetry.conformance.http.restlet.RestletServerScenario

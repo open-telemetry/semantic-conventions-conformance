@@ -9,4 +9,4 @@ setup: otel-conformance-obi install -- otel-conformance-java prepare spring-webm
 
 scenarios:
   server:
-    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*SpringWebMvcObiServerScenario*' otel-conformance-java run spring-webmvc:obi SpringWebMvcObiServerScenario
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*SpringWebMvcServerScenario*' otel-conformance-java run spring-webmvc:obi io.opentelemetry.conformance.http.springwebmvc.SpringWebMvcServerScenario

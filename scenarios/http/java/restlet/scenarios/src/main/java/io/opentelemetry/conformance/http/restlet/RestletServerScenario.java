@@ -23,6 +23,10 @@ import org.restlet.routing.VirtualHost;
 public final class RestletServerScenario {
   private RestletServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run((route, restlet) -> restlet);
   }

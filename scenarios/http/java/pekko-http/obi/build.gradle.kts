@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":pekko-http:scenarios"))
-    implementation(project(":scenario-support"))
 }

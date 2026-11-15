@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":ratpack:scenarios"))
-    implementation(project(":scenario-support"))
 }

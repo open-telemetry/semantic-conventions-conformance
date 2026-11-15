@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":java-http-server:scenarios"))
-    implementation(project(":scenario-support"))
 }

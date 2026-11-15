@@ -5,5 +5,4 @@ plugins {
 
 dependencies {
     implementation(project(":ktor:scenarios"))
-    implementation(project(":scenario-support"))
 }

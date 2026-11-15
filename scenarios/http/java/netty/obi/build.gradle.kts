@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":netty:scenarios"))
-    implementation(project(":scenario-support"))
 }

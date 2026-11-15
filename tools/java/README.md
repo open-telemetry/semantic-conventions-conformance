@@ -70,9 +70,10 @@ agent scenarios measure a different instrumentation from the library ones.
 all, which is the point: an agent scenario's classpath must hold the agent's
 instrumentation and nothing else, so what every scenario needs — the runner's
 environment, and the driver's shutdown protocol — cannot live beside the SDK.
-It also holds `ScenarioGate`, the scenario side of
-[`otel-conformance-obi`](../obi)'s gate, which an OBI scenario waits at before
-its workload.
+Its `ScenarioLauncher` is the scenario side of
+[`otel-conformance-obi`](../obi)'s gate: when `OTEL_CONFORMANCE_GATE` is set,
+it waits at the gate before it calls the scenario's `main`, so an OBI package
+runs the shared workload class directly.
 
 [`scenario-sdk/`](scenario-sdk) is the other half: SDK autoconfiguration, the
 OTLP exporter, and shutdown, for scenarios measuring explicit library

@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":spring-webmvc:scenarios"))
-    implementation(project(":scenario-support"))
 }

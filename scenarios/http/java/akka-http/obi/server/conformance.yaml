@@ -16,4 +16,4 @@ setup: otel-conformance-obi install -- otel-conformance-java prepare akka-http:o
 
 scenarios:
   server:
-    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*AkkaHttpObiServerScenario*' otel-conformance-java run akka-http:obi AkkaHttpObiServerScenario
+    run: otel-http-drive --serve otel-conformance-obi run --exe '*/java' --args '*AkkaHttpServerScenario*' otel-conformance-java run akka-http:obi io.opentelemetry.conformance.http.akkahttp.AkkaHttpServerScenario

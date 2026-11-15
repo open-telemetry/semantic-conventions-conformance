@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":akka-http:scenarios"))
-    implementation(project(":scenario-support"))
 }

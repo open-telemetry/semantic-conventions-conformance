@@ -25,6 +25,10 @@ import org.apache.catalina.startup.Tomcat;
 public final class TomcatServerScenario {
   private TomcatServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     Tomcat tomcat = new Tomcat();
     tomcat.setHostname("127.0.0.1");

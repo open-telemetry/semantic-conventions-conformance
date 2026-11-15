@@ -10,5 +10,4 @@ java {
 
 dependencies {
     implementation(project(":helidon:scenarios"))
-    implementation(project(":scenario-support"))
 }

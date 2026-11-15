@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":undertow:scenarios"))
-    implementation(project(":scenario-support"))
 }

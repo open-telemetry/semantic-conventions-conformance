@@ -35,6 +35,10 @@ public final class ArmeriaServerScenario {
   private ArmeriaServerScenario() {}
 
   /** Hosts them plainly, for a scenario whose instrumentation attaches itself. */
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(builder -> {});
   }

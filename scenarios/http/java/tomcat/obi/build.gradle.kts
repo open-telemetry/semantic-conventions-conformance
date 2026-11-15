@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     implementation(project(":tomcat:scenarios"))
-    implementation(project(":scenario-support"))
 }
