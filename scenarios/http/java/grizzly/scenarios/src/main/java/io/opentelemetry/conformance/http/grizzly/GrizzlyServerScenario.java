@@ -17,6 +17,10 @@ import org.glassfish.grizzly.http.server.Request;
 public final class GrizzlyServerScenario {
   private GrizzlyServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     HttpServer server =
         HttpServer.createSimpleServer(null, "127.0.0.1", HttpServerWorkload.scenarioPort());

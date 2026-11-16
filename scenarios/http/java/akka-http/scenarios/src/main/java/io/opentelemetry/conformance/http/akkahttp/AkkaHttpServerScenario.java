@@ -30,6 +30,10 @@ import java.util.concurrent.TimeoutException;
 public final class AkkaHttpServerScenario {
   private AkkaHttpServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     ActorSystem system = ActorSystem.create("http-conformance");
     try {

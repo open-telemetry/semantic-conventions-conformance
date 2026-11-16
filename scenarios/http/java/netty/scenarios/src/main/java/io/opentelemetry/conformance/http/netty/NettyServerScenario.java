@@ -50,6 +50,10 @@ public final class NettyServerScenario {
 
   private NettyServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(pipeline -> {});
   }
