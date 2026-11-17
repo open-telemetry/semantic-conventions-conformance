@@ -22,6 +22,7 @@
       "error.type",
       "http.request.method",
       "http.response.status_code",
+      "http.route",
       "server.address",
       "server.port",
       "url.scheme"
@@ -30,6 +31,7 @@
       "error.type",
       "http.request.method",
       "http.response.status_code",
+      "http.route",
       "server.address",
       "server.port",
       "url.scheme"
@@ -38,6 +40,7 @@
       "error.type",
       "http.request.method",
       "http.response.status_code",
+      "http.route",
       "server.address",
       "server.port",
       "url.scheme"
@@ -152,9 +155,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /health' is missing recommended attribute 'network.protocol.version'",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
       "signal_type": "span",
-      "signal_name": "GET /health",
+      "signal_name": "GET",
       "context": {
         "attribute_key": "network.protocol.version",
         "kind": "server"
@@ -162,29 +165,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /status/*' is missing recommended attribute 'network.protocol.version'",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
       "signal_type": "span",
-      "signal_name": "GET /status/*",
-      "context": {
-        "attribute_key": "network.protocol.version",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /users/*' is missing recommended attribute 'network.protocol.version'",
-      "signal_type": "span",
-      "signal_name": "GET /users/*",
-      "context": {
-        "attribute_key": "network.protocol.version",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
-      "signal_type": "span",
-      "signal_name": "POST /items",
+      "signal_name": "POST",
       "context": {
         "attribute_key": "network.protocol.version",
         "kind": "server"

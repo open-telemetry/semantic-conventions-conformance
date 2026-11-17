@@ -24,6 +24,7 @@
       "error.type",
       "http.request.method",
       "http.response.status_code",
+      "http.route",
       "server.address",
       "server.port",
       "url.scheme"
@@ -32,6 +33,7 @@
       "error.type",
       "http.request.method",
       "http.response.status_code",
+      "http.route",
       "server.address",
       "server.port",
       "url.scheme"
@@ -40,6 +42,7 @@
       "error.type",
       "http.request.method",
       "http.response.status_code",
+      "http.route",
       "server.address",
       "server.port",
       "url.scheme"
