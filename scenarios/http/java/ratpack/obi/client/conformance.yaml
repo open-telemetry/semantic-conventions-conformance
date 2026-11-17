@@ -1,0 +1,14 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: ratpack
+instrumentation_library: go.opentelemetry.io/obi
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+
+setup: otel-conformance-obi install -- otel-conformance-java prepare ratpack:obi
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenario_run: otel-conformance-obi run --exe '*/java' --args '*RatpackClientScenario*' otel-conformance-java run ratpack:obi io.opentelemetry.conformance.http.ratpack.RatpackClientScenario

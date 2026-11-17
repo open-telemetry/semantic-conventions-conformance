@@ -14,6 +14,10 @@ import jodd.http.HttpResponse;
 public final class JoddHttpClientScenario {
   private JoddHttpClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     HttpClientWorkload.drive(
         ScenarioEnvironment.require("MOCK_SERVER_URL"),

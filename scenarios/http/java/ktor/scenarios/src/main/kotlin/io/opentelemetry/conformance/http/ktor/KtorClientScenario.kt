@@ -23,6 +23,11 @@ import kotlinx.coroutines.runBlocking
 
 /** Runs the shared request contract through a Ktor 3 CIO client. */
 object KtorClientScenario {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        run {}
+    }
+
     fun run(configureTelemetry: HttpClientConfig<*>.() -> Unit) {
         HttpClient(CIO) {
             install(HttpTimeout) {

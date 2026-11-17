@@ -23,6 +23,10 @@ import org.apache.http.util.EntityUtils;
 public final class ApacheHttpAsyncClientClientScenario {
   private ApacheHttpAsyncClientClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     try (CloseableHttpAsyncClient client = HttpAsyncClients.createDefault()) {
       client.start();

@@ -17,6 +17,10 @@ import java.util.concurrent.TimeUnit;
 public final class VertxHttpClientClientScenario {
   private VertxHttpClientClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     Vertx vertx = Vertx.vertx();
     HttpClient client = vertx.createHttpClient();

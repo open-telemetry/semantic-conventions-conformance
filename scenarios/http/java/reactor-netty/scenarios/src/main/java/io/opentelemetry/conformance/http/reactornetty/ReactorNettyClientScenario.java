@@ -15,6 +15,10 @@ import reactor.netty.http.client.HttpClient;
 public final class ReactorNettyClientScenario {
   private ReactorNettyClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     HttpClient client =
         HttpClient.create().headers(headers -> headers.set("user-agent", HttpContract.USER_AGENT));

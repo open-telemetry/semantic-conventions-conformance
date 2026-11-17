@@ -17,6 +17,10 @@ import java.nio.charset.StandardCharsets;
 public final class HttpUrlConnectionClientScenario {
   private HttpUrlConnectionClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     HttpClientWorkload.drive(
         ScenarioEnvironment.require("MOCK_SERVER_URL"),
