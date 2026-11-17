@@ -58,6 +58,10 @@ extensions:
         http:
           buffer_size: 65536
           routes:
+            incoming:
+              unmatched: unset
+            outgoing:
+              unmatched: unset
             discovery:
               java:
                 delay: 0s
