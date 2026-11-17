@@ -46,10 +46,13 @@ def test_openai_web_search_is_a_hosted_call(
 def test_openai_can_fetch_a_stored_web_search_response(
     client: FlaskClient,
 ) -> None:
+    tools = [{"type": "web_search", "search_context_size": "low"}]
     response = client.post(
         "/v1/responses",
-        json={"input": "hi", "tools": [{"type": "web_search"}], "store": True},
+        json={"input": "hi", "tools": tools, "store": True},
     )
+    assert response.status_code == 200
+    assert response.json["tools"] == tools
     assert (
         client.get(f"/v1/responses/{response.json['id']}").json
         == response.json

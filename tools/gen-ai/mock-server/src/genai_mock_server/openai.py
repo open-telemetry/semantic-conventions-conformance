@@ -308,6 +308,7 @@ def _responses_tool_call_response(body, call_index=1):
     response = copy.deepcopy(RESPONSES_RESPONSE)
     response["id"] = "resp-mock-tool-001"
     response["model"] = body.get("model", response["model"])
+    response["tools"] = body.get("tools") or []
     tool = body.get("tools", [{}])[0]
     function = tool.get("function", {})
     tool_name = tool.get("name") or function.get("name")
@@ -741,6 +742,7 @@ def responses():
         resp = copy.deepcopy(RESPONSES_RESPONSE)
         resp["id"] = "resp-mock-web-search-001"
         resp["model"] = body.get("model", resp["model"])
+        resp["tools"] = body.get("tools") or []
         resp["output"].insert(
             0,
             {
@@ -771,10 +773,14 @@ def responses():
     called, _ = _responses_called_tool_info(_responses_current_turn(request_input))
     _, call_ids = _responses_called_tool_info(request_input)
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
-        return _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
+        resp = _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
+        if body.get("store"):
+            _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+        return resp
 
     resp = copy.deepcopy(RESPONSES_RESPONSE)
     resp["model"] = body.get("model", resp["model"])
+    resp["tools"] = body.get("tools") or []
     if body.get("instructions") is not None:
         resp["instructions"] = body["instructions"]
     context_management = body.get("context_management") or []

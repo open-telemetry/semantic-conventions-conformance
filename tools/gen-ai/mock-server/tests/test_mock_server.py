@@ -472,6 +472,112 @@ def test_responses_calls_the_same_tool_again_in_a_later_turn(client):
     assert call["call_id"] == "call_mock_002"
 
 
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+@pytest.mark.parametrize("tool_called", [False, True])
+def test_responses_preserve_stored_tools(client, endpoint, tool_called):
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get the weather for a location.",
+            "parameters": {
+                "type": "object",
+                "properties": {"location": {"type": "string"}},
+                "required": ["location"],
+                "additionalProperties": False,
+            },
+            "strict": True,
+        },
+        {"type": "function", "name": "get_time", "parameters": {"type": "object"}},
+    ]
+    request_input = [{"role": "user", "content": "weather in Seattle?"}]
+    if tool_called:
+        request_input += [
+            {
+                "type": "function_call",
+                "name": "get_weather",
+                "call_id": "call_mock_001",
+                "arguments": '{"location": "Seattle"}',
+            },
+            {
+                "type": "function_call_output",
+                "call_id": "call_mock_001",
+                "output": "70 degrees",
+            },
+        ]
+    body = {
+        "model": "gpt-4.1",
+        "input": request_input,
+        "tools": tools,
+        "store": True,
+    }
+    response = client.post(endpoint, json=body)
+    assert response.status_code == 200
+    result = response.json
+    assert result["tools"] == tools
+    assert result["model"] == "gpt-4.1"
+    assert result["output"][0]["type"] == ("message" if tool_called else "function_call")
+    if not tool_called:
+        assert result["output"][0]["name"] == "get_weather"
+    retrieved = client.get(f"{endpoint}/{result['id']}")
+    assert retrieved.status_code == 200
+    assert retrieved.json == result
+    assert response.data == client.post(endpoint, json=body).data
+
+
+@pytest.mark.parametrize("background", [False, True])
+def test_responses_streams_preserve_stored_tools(client, background):
+    tools = [{"type": "function", "name": "get_weather"}]
+    response = client.post(
+        "/v1/responses",
+        json={
+            "input": [
+                {"role": "user", "content": "weather?"},
+                {
+                    "type": "function_call",
+                    "name": "get_weather",
+                    "call_id": "call_mock_001",
+                    "arguments": "{}",
+                },
+                {
+                    "type": "function_call_output",
+                    "call_id": "call_mock_001",
+                    "output": "70 degrees",
+                },
+            ],
+            "tools": tools,
+            "store": True,
+            "stream": True,
+            "background": background,
+        },
+    )
+    assert response.status_code == 200
+    assert response.mimetype == "text/event-stream"
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in response.get_data(as_text=True).splitlines()
+        if line.startswith("data: ")
+    ]
+    created = events[0]["response"]
+    assert created["tools"] == tools
+    retrieved = client.get(f"/v1/responses/{created['id']}")
+    assert retrieved.status_code == 200
+    assert retrieved.json["tools"] == tools
+    if background:
+        assert events[-1]["type"] == "response.in_progress"
+        resumed = client.get(
+            f"/v1/responses/{created['id']}?stream=true&starting_after=1"
+        )
+        assert resumed.status_code == 200
+        completed = json.loads(resumed.get_data(as_text=True).splitlines()[0][len("data: ") :])
+        assert completed["type"] == "response.completed"
+        assert completed["sequence_number"] == 2
+        assert completed["response"] == retrieved.json
+    else:
+        assert events[-1]["type"] == "response.completed"
+        assert events[-1]["response"] == retrieved.json
+
+
 def test_anthropic_numbers_tool_calls_across_turns(client):
     first = client.post(
         "/v1/messages",
