@@ -561,6 +561,47 @@ def test_stored_function_responses_do_not_overwrite_each_other(client, other_req
     assert second.data == client.post("/v1/responses", json=other_body).data
 
 
+def test_stored_function_responses_preserve_argument_order(client):
+    responses = []
+    for property_names in (["location", "unit"], ["unit", "location"]):
+        body = {
+            "model": "gpt-4o-mini",
+            "input": "weather in Seattle?",
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "get_weather",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            name: {"type": "string"} for name in property_names
+                        },
+                    },
+                }
+            ],
+            "store": True,
+        }
+        response = client.post(
+            "/v1/responses",
+            data=json.dumps(body),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.data == client.post(
+            "/v1/responses",
+            data=json.dumps(body),
+            content_type="application/json",
+        ).data
+        responses.append(response)
+    first, second = responses
+    assert first.json["output"][0]["arguments"] != second.json["output"][0]["arguments"]
+    assert first.json["id"] != second.json["id"]
+    for response in responses:
+        retrieved = client.get(f"/v1/responses/{response.json['id']}")
+        assert retrieved.status_code == 200
+        assert retrieved.json == response.json
+
+
 @pytest.mark.parametrize("background", [False, True])
 def test_responses_streams_preserve_stored_tools(client, background):
     tools = [{"type": "function", "name": "get_weather"}]

@@ -726,10 +726,10 @@ def embeddings(deployment=None):
 
 
 def _store_response(body, response):
-    request_hash = hashlib.sha256(
-        json.dumps(body, sort_keys=True).encode()
+    response_hash = hashlib.sha256(
+        json.dumps([body, response], sort_keys=True).encode()
     ).hexdigest()[:16]
-    response["id"] = f"resp-mock-{request_hash}"
+    response["id"] = f"resp-mock-{response_hash}"
     _STORED_RESPONSES[response["id"]] = copy.deepcopy(response)
 
 
