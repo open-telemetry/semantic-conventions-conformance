@@ -525,6 +525,38 @@ def test_responses_preserve_stored_tools(client, endpoint, tool_called):
     assert response.data == client.post(endpoint, json=body).data
 
 
+@pytest.mark.parametrize(
+    "other_request",
+    [
+        {"tools": [{"type": "function", "name": "get_time"}]},
+        {"model": "gpt-4.1"},
+        {"input": "weather in Portland?"},
+    ],
+)
+def test_stored_function_responses_do_not_overwrite_each_other(client, other_request):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "weather in Seattle?",
+        "tools": [{"type": "function", "name": "get_weather"}],
+        "store": True,
+    }
+    other_body = {**body, **other_request}
+    first = client.post("/v1/responses", json=body)
+    second = client.post("/v1/responses", json=other_body)
+    assert first.status_code == second.status_code == 200
+    assert first.json["id"] != second.json["id"]
+    for response in (first, second):
+        retrieved = client.get(f"/v1/responses/{response.json['id']}")
+        assert retrieved.status_code == 200
+        assert retrieved.json == response.json
+    assert first.data == client.post(
+        "/v1/responses",
+        data=json.dumps(body),
+        content_type="application/json",
+    ).data
+    assert second.data == client.post("/v1/responses", json=other_body).data
+
+
 @pytest.mark.parametrize("background", [False, True])
 def test_responses_streams_preserve_stored_tools(client, background):
     tools = [{"type": "function", "name": "get_weather"}]

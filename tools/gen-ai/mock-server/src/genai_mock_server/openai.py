@@ -1,6 +1,7 @@
 """OpenAI-compatible chat / embeddings / responses endpoints."""
 
 import copy
+import hashlib
 import json
 import re
 
@@ -775,6 +776,10 @@ def responses():
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
         resp = _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
         if body.get("store"):
+            request_hash = hashlib.sha256(
+                json.dumps(body, sort_keys=True).encode()
+            ).hexdigest()[:16]
+            resp["id"] = f"resp-mock-tool-{request_hash}"
             _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
         return resp
 
