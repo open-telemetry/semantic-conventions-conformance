@@ -1,9 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-# OBI cannot discover this server's route templates. The shared OBI
-# configuration leaves unknown routes unset, so `http.route` is omitted
-# and the server span name is just the HTTP method.
+# See tools/obi/README.md#configuration for OBI's route settings.
 
 runner: http-conformance
 instrumented_library: github.com/labstack/echo/v5

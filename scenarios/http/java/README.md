@@ -16,11 +16,10 @@ from outside.
 
 OBI can read route templates from the Spring annotations on the classpath, so
 the Spring WebFlux and Spring Web MVC `obi` packages may report the declared
-routes. It has no route support for the other servers here, which declare
-their routes in code.
-
-The shared OBI configuration sets `unmatched: unset` for incoming and outgoing
-routes to conform with HTTP semantic conventions.
+routes. For the other servers here, OBI does not read the routes declared in
+code, including the `/users/*` and `/status/*` mappings in Tomcat and Grizzly.
+See the [shared OBI configuration](../../../tools/obi/README.md#configuration)
+for what spans and metrics report when OBI doesn't know the route.
 
 `servlet` has no `obi` package: OBI's Java agent injection can deadlock the
 servlet scenario at startup

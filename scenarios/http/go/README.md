@@ -58,8 +58,9 @@ gorilla/mux it reads the template the framework matched, so `http.route` and the
 span name carry the declared route (`/users/{userId}`, `/users/:userId`). It has
 no route support for echo or go-restful.
 
-The shared OBI configuration sets `unmatched: unset` for incoming and outgoing
-routes to conform with HTTP semantic conventions.
+With the [shared OBI configuration](../../../tools/obi/README.md#configuration),
+the `net/http` client spans omit `url.template` and use method-only names
+(`GET` and `POST`).
 
 ## Running one
 
