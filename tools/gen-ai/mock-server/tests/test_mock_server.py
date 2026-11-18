@@ -519,9 +519,13 @@ def test_responses_preserve_stored_tools(client, endpoint, tool_called):
     assert result["output"][0]["type"] == ("message" if tool_called else "function_call")
     if not tool_called:
         assert result["output"][0]["name"] == "get_weather"
+    other = client.post(endpoint, json={**body, "tools": []})
+    assert other.status_code == 200
+    assert result["id"] != other.json["id"]
     retrieved = client.get(f"{endpoint}/{result['id']}")
     assert retrieved.status_code == 200
     assert retrieved.json == result
+    assert client.get(f"{endpoint}/{other.json['id']}").json == other.json
     assert response.data == client.post(endpoint, json=body).data
 
 
@@ -592,9 +596,15 @@ def test_responses_streams_preserve_stored_tools(client, background):
     ]
     created = events[0]["response"]
     assert created["tools"] == tools
+    other = client.post(
+        "/v1/responses", json={"input": "hi", "tools": [], "store": True}
+    )
+    assert other.status_code == 200
+    assert created["id"] != other.json["id"]
     retrieved = client.get(f"/v1/responses/{created['id']}")
     assert retrieved.status_code == 200
     assert retrieved.json["tools"] == tools
+    assert client.get(f"/v1/responses/{other.json['id']}").json == other.json
     if background:
         assert events[-1]["type"] == "response.in_progress"
         resumed = client.get(

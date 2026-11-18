@@ -53,10 +53,23 @@ def test_openai_can_fetch_a_stored_web_search_response(
     )
     assert response.status_code == 200
     assert response.json["tools"] == tools
-    assert (
-        client.get(f"/v1/responses/{response.json['id']}").json
-        == response.json
-    )
+    other_body = {
+        "input": "hi",
+        "tools": [{"type": "web_search", "search_context_size": "high"}],
+        "store": True,
+    }
+    other = client.post("/v1/responses", json=other_body)
+    assert other.status_code == 200
+    assert response.json["id"] != other.json["id"]
+    for created in (response, other):
+        retrieved = client.get(f"/v1/responses/{created.json['id']}")
+        assert retrieved.status_code == 200
+        assert retrieved.json == created.json
+    assert other.data == client.post("/v1/responses", json=other_body).data
+    assert response.data == client.post(
+        "/v1/responses",
+        json={"input": "hi", "tools": tools, "store": True},
+    ).data
 
 
 @pytest.mark.parametrize(

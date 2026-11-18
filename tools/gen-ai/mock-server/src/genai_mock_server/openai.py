@@ -725,6 +725,14 @@ def embeddings(deployment=None):
     return resp
 
 
+def _store_response(body, response):
+    request_hash = hashlib.sha256(
+        json.dumps(body, sort_keys=True).encode()
+    ).hexdigest()[:16]
+    response["id"] = f"resp-mock-{request_hash}"
+    _STORED_RESPONSES[response["id"]] = copy.deepcopy(response)
+
+
 @bp.route("/v1/responses", methods=["POST"])
 @bp.route("/openai/v1/responses", methods=["POST"])
 def responses():
@@ -754,7 +762,7 @@ def responses():
             },
         )
         if body.get("store"):
-            _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+            _store_response(body, resp)
         return resp
     raw_request_input = body.get("input")
     if isinstance(raw_request_input, list):
@@ -776,11 +784,7 @@ def responses():
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
         resp = _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
         if body.get("store"):
-            request_hash = hashlib.sha256(
-                json.dumps(body, sort_keys=True).encode()
-            ).hexdigest()[:16]
-            resp["id"] = f"resp-mock-tool-{request_hash}"
-            _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+            _store_response(body, resp)
         return resp
 
     resp = copy.deepcopy(RESPONSES_RESPONSE)
@@ -800,7 +804,7 @@ def responses():
             },
         )
     if body.get("store"):
-        _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+        _store_response(body, resp)
     if body.get("stream"):
         # Background streaming create: emit lifecycle events then end before
         # completion, as if the caller disconnected. Such a response can be
