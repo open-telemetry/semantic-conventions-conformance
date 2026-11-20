@@ -27,6 +27,15 @@ _STORED_RESPONSES = {}
 # which rejects cursor-based resumption of non-background/non-streaming responses.
 _RESUMABLE_RESPONSES = set()
 
+# Ids of stored background responses, created without streaming, that have not
+# been fetched yet. OpenAI answers such a create before the generation completes
+# and reports the response `queued` or `in_progress` until it does. Here the
+# create returns it `queued`, the first fetch reports it `in_progress` without
+# output or usage, and later fetches return it completed. Creating it again
+# restarts the sequence, so the same requests in the same order get the same
+# bytes.
+_RUNNING_RESPONSES = set()
+
 
 CHAT_REFUSAL_RESPONSE = {
     "id": "chatcmpl-mock-refusal-001",
@@ -798,6 +807,11 @@ def responses():
             _RESUMABLE_RESPONSES.add(resp["id"])
             return Response(_stream_create(resp), mimetype="text/event-stream")
         return Response(_stream_response(resp), mimetype="text/event-stream")
+    if body.get("background") and body.get("store"):
+        # Background create without streaming: answer before the generation
+        # completes, and let the next fetch find the response still running.
+        _RUNNING_RESPONSES.add(resp["id"])
+        return _unfinished(resp, "queued")
     return resp
 
 
@@ -897,6 +911,15 @@ def _stream_create(response):
     yield sse({"type": "response.in_progress", "sequence_number": 1, "response": in_progress})
 
 
+def _unfinished(response, status):
+    """Return `response` as reported before its generation completes."""
+    unfinished = copy.deepcopy(response)
+    unfinished["status"] = status
+    unfinished["output"] = []
+    unfinished["usage"] = None
+    return unfinished
+
+
 @bp.route("/v1/responses/<response_id>", methods=["GET"])
 @bp.route("/openai/v1/responses/<response_id>", methods=["GET"])
 def retrieve_response(response_id):
@@ -933,6 +956,9 @@ def retrieve_response(response_id):
             }, 400
         starting_after = request.args.get("starting_after")
         return Response(_stream_retrieve(stored, starting_after), mimetype="text/event-stream")
+    if response_id in _RUNNING_RESPONSES:
+        _RUNNING_RESPONSES.discard(response_id)
+        return _unfinished(stored, "in_progress")
     return dict(stored)
 
 
