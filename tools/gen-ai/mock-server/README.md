@@ -55,11 +55,11 @@ They exist so a scenario can exercise the zero-output and failed-call paths of
 token usage recording.
 
 `POST /v1/responses` stores responses and their tool definitions by default.
-Set `store: false` to skip normal storage. `GET /v1/responses/{id}` returns the
-stored response if one exists, or a canned response for a synthetic ID.
-Background streams can resume with `stream=true&starting_after=<seq>`. With
-`store: false`, the mock keeps the background stream's response available for
-retrieval and resumption for 10 minutes.
+Set `store: false` to skip storage unless the request creates a background
+stream. The mock keeps background stream responses in memory until it exits so
+clients can resume them with `stream=true&starting_after=<seq>`.
+`GET /v1/responses/{id}` returns the stored response if one exists, or a canned
+response for a synthetic ID.
 
 ## Adding a response
 

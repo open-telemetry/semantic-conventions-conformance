@@ -16,7 +16,7 @@ import struct
 import pytest
 from flask.testing import FlaskClient
 
-from genai_mock_server import app, openai
+from genai_mock_server import app
 
 # Inference-style endpoints: same request in, same bytes out.
 ENDPOINTS = [
@@ -696,7 +696,7 @@ def test_responses_can_opt_out_of_storage(client, options):
     assert "tools" not in retrieved.json
 
 
-@pytest.mark.parametrize("store", [True, False], ids=["stored", "temporary"])
+@pytest.mark.parametrize("store", [True, False], ids=["store-true", "store-false"])
 def test_background_streams_preserve_tool_property_order(client, store):
     endpoint = "/v1/responses"
     parameters = {"type": "object"}
@@ -752,30 +752,6 @@ def test_background_streams_preserve_tool_property_order(client, store):
         resumed = client.get(f"{endpoint}/{response_id}?stream=true&starting_after=1")
         assert resumed.status_code == 200
         assert resumed.data == replay
-
-
-def test_temporary_background_stream_expires(client, monkeypatch):
-    now = openai.monotonic()
-    monkeypatch.setattr(openai, "monotonic", lambda: now)
-    response = client.post(
-        "/v1/responses",
-        json={
-            "input": "temporary response",
-            "store": False,
-            "stream": True,
-            "background": True,
-        },
-    )
-    assert response.status_code == 200
-    created = json.loads(response.data.splitlines()[0].removeprefix(b"data: "))
-    url = f"/v1/responses/{created['response']['id']}"
-    resume_url = f"{url}?stream=true&starting_after=1"
-
-    now += 599
-    assert client.get(resume_url).status_code == 200
-    now += 1
-    assert client.get(resume_url).status_code == 400
-    assert "tools" not in client.get(url).json
 
 
 def test_anthropic_numbers_tool_calls_across_turns(client):
