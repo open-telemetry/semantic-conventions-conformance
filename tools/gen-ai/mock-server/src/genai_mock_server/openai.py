@@ -4,6 +4,8 @@ import copy
 import hashlib
 import json
 import re
+from threading import Lock
+from time import monotonic
 
 from flask import Blueprint, Response, request
 
@@ -25,6 +27,11 @@ _STORED_RESPONSES = {}
 # IDs of stored background streams, which may be resumed via
 # `GET /v1/responses/{id}?stream=true&starting_after=...`.
 _RESUMABLE_RESPONSES = set()
+
+# Background streams can resume briefly even when normal storage is disabled.
+_BACKGROUND_RETENTION_SECONDS = 600
+_TEMPORARY_BACKGROUND_RESPONSES = {}
+_TEMPORARY_BACKGROUND_LOCK = Lock()
 
 
 CHAT_REFUSAL_RESPONSE = {
@@ -723,14 +730,42 @@ def embeddings(deployment=None):
     return resp
 
 
-def _store_response(body, response, *, stream=False):
+def _store_response(body, response, *, stream=False, temporary=False):
     # SSE preserves the response's key order, unlike Flask's JSON replies.
     payload = sse(response) if stream else response
     response_hash = hashlib.sha256(
         json.dumps([body, payload], sort_keys=True).encode()
     ).hexdigest()[:16]
-    response["id"] = f"resp-mock-{response_hash}"
-    _STORED_RESPONSES[response["id"]] = copy.deepcopy(response)
+    response_id = response["id"] = f"resp-mock-{response_hash}"
+    stored = copy.deepcopy(response)
+    if not temporary:
+        _STORED_RESPONSES[response_id] = stored
+        return
+    with _TEMPORARY_BACKGROUND_LOCK:
+        now = monotonic()
+        expired_ids = [
+            key
+            for key, (expires_at, _) in _TEMPORARY_BACKGROUND_RESPONSES.items()
+            if expires_at <= now
+        ]
+        for key in expired_ids:
+            del _TEMPORARY_BACKGROUND_RESPONSES[key]
+        _TEMPORARY_BACKGROUND_RESPONSES[response_id] = (
+            now + _BACKGROUND_RETENTION_SECONDS,
+            stored,
+        )
+
+
+def _get_temporary_background_response(response_id):
+    with _TEMPORARY_BACKGROUND_LOCK:
+        entry = _TEMPORARY_BACKGROUND_RESPONSES.get(response_id)
+        if entry is None:
+            return None
+        expires_at, response = entry
+        if expires_at <= monotonic():
+            del _TEMPORARY_BACKGROUND_RESPONSES[response_id]
+            return None
+        return response
 
 
 @bp.route("/v1/responses", methods=["POST"])
@@ -805,11 +840,12 @@ def responses():
                 "created_by": "server",
             },
         )
-    if store:
-        _store_response(body, resp, stream=stream)
+    background_stream = stream and body.get("background")
+    if store or background_stream:
+        _store_response(body, resp, stream=stream, temporary=not store)
     if stream:
         # End a background stream before completion to model a disconnect.
-        if body.get("background"):
+        if background_stream:
             if store:
                 _RESUMABLE_RESPONSES.add(resp["id"])
             return Response(_stream_create(resp), mimetype="text/event-stream")
@@ -931,19 +967,21 @@ def retrieve_response(response_id):
         }
         return dict(failed)
     stored = _STORED_RESPONSES.get(response_id)
+    resumable = response_id in _RESUMABLE_RESPONSES
+    if stored is None:
+        stored = _get_temporary_background_response(response_id)
+        resumable = stored is not None
     if stored is None:
         stored = copy.deepcopy(RESPONSES_RESPONSE)
         stored["id"] = response_id
     # A streaming retrieve resumes the response stream from `starting_after`,
-    # OpenAI's cursor for the last event the caller already received. Only
-    # stored background streams can emit the terminal `response.completed`
-    # event carrying the full response object.
+    # OpenAI's cursor for the last event the caller already received.
     if request.args.get("stream", "").lower() in ("1", "true"):
-        if response_id not in _RESUMABLE_RESPONSES:
+        if not resumable:
             return {
                 "error": {
                     "type": "invalid_request_error",
-                    "message": "Only stored background streams can be resumed.",
+                    "message": "Only available background streams can be resumed.",
                 }
             }, 400
         starting_after = request.args.get("starting_after")

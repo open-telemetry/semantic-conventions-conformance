@@ -16,7 +16,7 @@ import struct
 import pytest
 from flask.testing import FlaskClient
 
-from genai_mock_server import app
+from genai_mock_server import app, openai
 
 # Inference-style endpoints: same request in, same bytes out.
 ENDPOINTS = [
@@ -673,9 +673,9 @@ def test_responses_streams_preserve_stored_tools(client, background, store_optio
         {"tools": [{"type": "function", "name": "get_weather"}]},
         {"tools": [{"type": "web_search"}]},
         {},
-        {"stream": True, "background": True},
+        {"stream": True},
     ],
-    ids=["function-call", "web-search", "message", "background-stream"],
+    ids=["function-call", "web-search", "message", "stream"],
 )
 def test_responses_can_opt_out_of_storage(client, options):
     response = client.post(
@@ -694,11 +694,10 @@ def test_responses_can_opt_out_of_storage(client, options):
     assert retrieved.status_code == 200
     assert retrieved.json["id"] == created["id"]
     assert "tools" not in retrieved.json
-    if options.get("background"):
-        assert client.get(f"{url}?stream=true&starting_after=1").status_code == 400
 
 
-def test_stored_background_streams_preserve_tool_property_order(client):
+@pytest.mark.parametrize("store", [True, False], ids=["stored", "temporary"])
+def test_background_streams_preserve_tool_property_order(client, store):
     endpoint = "/v1/responses"
     parameters = {"type": "object"}
     body = {
@@ -719,7 +718,7 @@ def test_stored_background_streams_preserve_tool_property_order(client):
         "tools": [
             {"type": "function", "name": "get_weather", "parameters": parameters}
         ],
-        "store": True,
+        "store": store,
         "stream": True,
         "background": True,
     }
@@ -742,14 +741,41 @@ def test_stored_background_streams_preserve_tool_property_order(client):
         resumed = client.get(f"{endpoint}/{response_id}?stream=true&starting_after=1")
         assert resumed.status_code == 200
         completed = json.loads(resumed.data.splitlines()[0].removeprefix(b"data: "))
+        assert completed["type"] == "response.completed"
+        assert completed["sequence_number"] == 2
         properties = completed["response"]["tools"][0]["parameters"]["properties"]
         assert list(properties) == property_names
+        assert client.get(f"{endpoint}/{response_id}").json == completed["response"]
         replays[response_id] = resumed.data
 
     for response_id, replay in replays.items():
         resumed = client.get(f"{endpoint}/{response_id}?stream=true&starting_after=1")
         assert resumed.status_code == 200
         assert resumed.data == replay
+
+
+def test_temporary_background_stream_expires(client, monkeypatch):
+    now = openai.monotonic()
+    monkeypatch.setattr(openai, "monotonic", lambda: now)
+    response = client.post(
+        "/v1/responses",
+        json={
+            "input": "temporary response",
+            "store": False,
+            "stream": True,
+            "background": True,
+        },
+    )
+    assert response.status_code == 200
+    created = json.loads(response.data.splitlines()[0].removeprefix(b"data: "))
+    url = f"/v1/responses/{created['response']['id']}"
+    resume_url = f"{url}?stream=true&starting_after=1"
+
+    now += 599
+    assert client.get(resume_url).status_code == 200
+    now += 1
+    assert client.get(resume_url).status_code == 400
+    assert "tools" not in client.get(url).json
 
 
 def test_anthropic_numbers_tool_calls_across_turns(client):
