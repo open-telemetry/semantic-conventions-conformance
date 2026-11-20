@@ -39,13 +39,7 @@ agent = ChatCompletionAgent(
     plugins=[WeatherPlugin()],
     arguments=KernelArguments(
         settings=OpenAIChatPromptExecutionSettings(
-            max_tokens=100,
-            temperature=0.5,
-            top_p=0.9,
-            frequency_penalty=0.1,
-            presence_penalty=0.2,
-            stop=["\n\n"],
-            seed=42,
+            max_tokens=100, temperature=0.5
         ),
     ),
 )
