@@ -59,8 +59,8 @@ Set `store: false` to skip storage unless the request creates a background
 stream. The mock keeps background stream responses in memory until it exits so
 clients can resume them with `stream=true&starting_after=<seq>`, even when the
 response requests a function call.
-`GET /v1/responses/{id}` returns the stored response if one exists, or a canned
-response for a synthetic ID.
+`GET /v1/responses/{id}` returns the stored response if one exists. If no stored
+response matches the ID, it returns a canned response with `tools: []`.
 
 ## Adding a response
 

@@ -226,6 +226,7 @@ RESPONSES_RESPONSE = {
         },
         "total_tokens": 37,
     },
+    "tools": [],
 }
 
 

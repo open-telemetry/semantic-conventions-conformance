@@ -679,7 +679,8 @@ def test_responses_streams_preserve_stored_tools(client, background, store_optio
 )
 def test_responses_can_opt_out_of_storage(client, options):
     response = client.post(
-        "/v1/responses", json={"input": "hi", "store": False, **options}
+        "/v1/responses",
+        json={"model": "gpt-4.1", "input": "hi", "store": False, **options},
     )
     assert response.status_code == 200
     if options.get("stream"):
@@ -687,13 +688,15 @@ def test_responses_can_opt_out_of_storage(client, options):
         created = event["response"]
     else:
         created = response.json
+    assert created["model"] == "gpt-4.1"
     assert created["tools"] == options.get("tools", [])
 
     url = f"/v1/responses/{created['id']}"
     retrieved = client.get(url)
     assert retrieved.status_code == 200
     assert retrieved.json["id"] == created["id"]
-    assert "tools" not in retrieved.json
+    assert retrieved.json["model"] == "gpt-4o-mini"
+    assert retrieved.json["tools"] == []
 
 
 @pytest.mark.parametrize("store", [True, False], ids=["store-true", "store-false"])
