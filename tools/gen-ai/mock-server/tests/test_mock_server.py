@@ -1295,6 +1295,40 @@ def test_responses_report_a_terminal_status(client):
     assert response.json["status"] == "completed"
 
 
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_background_responses_complete_after_the_first_fetch(client, endpoint):
+    """Polling a background response finds it running, then completed."""
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "hi",
+        "store": True,
+        "background": True,
+    }
+    created = client.post(endpoint, json=body)
+    assert created.status_code == 200
+    queued = created.json
+    assert queued["status"] == "queued"
+    assert queued["output"] == []
+    assert queued["usage"] is None
+
+    fetches = [client.get(f"{endpoint}/{queued['id']}") for _ in range(3)]
+    assert [fetch.status_code for fetch in fetches] == [200, 200, 200]
+    running, completed = fetches[0].json, fetches[1].json
+    assert running["id"] == completed["id"] == queued["id"]
+    assert running["status"] == "in_progress"
+    assert running["output"] == []
+    assert running["usage"] is None
+    foreground = client.post(endpoint, json={**body, "background": False}).json
+    assert completed["status"] == "completed"
+    assert completed["output"] == foreground["output"]
+    assert completed["usage"] == foreground["usage"]
+    assert fetches[2].data == fetches[1].data
+
+    # Creating it again restarts the sequence, with the same bytes.
+    assert client.post(endpoint, json=body).data == created.data
+    assert client.get(f"{endpoint}/{queued['id']}").data == fetches[0].data
+
+
 # qwen-agent and other Hermes/Nous-protocol clients advertise tools inside a
 # <tools> block in the system prompt and expect the call back as <tool_call>
 # JSON in the assistant content — not through the `tools` request field.
