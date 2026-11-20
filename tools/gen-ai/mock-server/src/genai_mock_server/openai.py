@@ -18,14 +18,12 @@ from ._common import (
 
 bp = Blueprint("openai", __name__)
 
-# Stored responses from `POST /v1/responses` with `store=True`, served back by
-# `GET /v1/responses/{id}` so scenarios can fetch a previously generated
-# response by its identifier.
+# `POST /v1/responses` stores by default so `GET /v1/responses/{id}` can
+# return the generated response.
 _STORED_RESPONSES = {}
 
-# Ids of responses created as background streams. Only these may be resumed via
-# `GET /v1/responses/{id}?stream=true&starting_after=...`, mirroring OpenAI,
-# which rejects cursor-based resumption of non-background/non-streaming responses.
+# IDs of stored background streams, which may be resumed via
+# `GET /v1/responses/{id}?stream=true&starting_after=...`.
 _RESUMABLE_RESPONSES = set()
 
 
@@ -737,6 +735,7 @@ def _store_response(body, response):
 @bp.route("/openai/v1/responses", methods=["POST"])
 def responses():
     body = request.get_json(silent=True) or {}
+    store = body.get("store", True)
     if any(
         tool.get("type") in {"web_search", "web_search_preview", "web_search_preview_2025_03_11"}
         for tool in body.get("tools") or []
@@ -761,7 +760,7 @@ def responses():
                 "action": {"type": "search", "query": "OpenTelemetry"},
             },
         )
-        if body.get("store"):
+        if store:
             _store_response(body, resp)
         return resp
     raw_request_input = body.get("input")
@@ -783,7 +782,7 @@ def responses():
     _, call_ids = _responses_called_tool_info(request_input)
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
         resp = _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
-        if body.get("store"):
+        if store:
             _store_response(body, resp)
         return resp
 
@@ -803,14 +802,13 @@ def responses():
                 "created_by": "server",
             },
         )
-    if body.get("store"):
+    if store:
         _store_response(body, resp)
     if body.get("stream"):
-        # Background streaming create: emit lifecycle events then end before
-        # completion, as if the caller disconnected. Such a response can be
-        # resumed later via `GET .../{id}?stream=true&starting_after=<seq>`.
+        # End a background stream before completion to model a disconnect.
         if body.get("background"):
-            _RESUMABLE_RESPONSES.add(resp["id"])
+            if store:
+                _RESUMABLE_RESPONSES.add(resp["id"])
             return Response(_stream_create(resp), mimetype="text/event-stream")
         return Response(_stream_response(resp), mimetype="text/event-stream")
     return resp
@@ -935,15 +933,14 @@ def retrieve_response(response_id):
         stored["id"] = response_id
     # A streaming retrieve resumes the response stream from `starting_after`,
     # OpenAI's cursor for the last event the caller already received. Only
-    # background streaming responses are resumable; reject cursor retrieval of
-    # any other response, as OpenAI does. Emit the terminal `response.completed`
+    # stored background streams can emit the terminal `response.completed`
     # event carrying the full response object.
     if request.args.get("stream", "").lower() in ("1", "true"):
         if response_id not in _RESUMABLE_RESPONSES:
             return {
                 "error": {
                     "type": "invalid_request_error",
-                    "message": "Only background responses created with streaming can be resumed.",
+                    "message": "Only stored background streams can be resumed.",
                 }
             }, 400
         starting_after = request.args.get("starting_after")

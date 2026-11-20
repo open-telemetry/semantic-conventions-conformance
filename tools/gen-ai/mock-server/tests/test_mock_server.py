@@ -474,7 +474,10 @@ def test_responses_calls_the_same_tool_again_in_a_later_turn(client):
 
 @pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
 @pytest.mark.parametrize("tool_called", [False, True])
-def test_responses_preserve_stored_tools(client, endpoint, tool_called):
+@pytest.mark.parametrize(
+    "store_option", [{}, {"store": True}], ids=["default", "explicit"]
+)
+def test_responses_preserve_stored_tools(client, endpoint, tool_called, store_option):
     tools = [
         {
             "type": "function",
@@ -509,7 +512,7 @@ def test_responses_preserve_stored_tools(client, endpoint, tool_called):
         "model": "gpt-4.1",
         "input": request_input,
         "tools": tools,
-        "store": True,
+        **store_option,
     }
     response = client.post(endpoint, json=body)
     assert response.status_code == 200
@@ -603,7 +606,10 @@ def test_stored_function_responses_preserve_argument_order(client):
 
 
 @pytest.mark.parametrize("background", [False, True])
-def test_responses_streams_preserve_stored_tools(client, background):
+@pytest.mark.parametrize(
+    "store_option", [{}, {"store": True}], ids=["default", "explicit"]
+)
+def test_responses_streams_preserve_stored_tools(client, background, store_option):
     tools = [{"type": "function", "name": "get_weather"}]
     response = client.post(
         "/v1/responses",
@@ -623,9 +629,9 @@ def test_responses_streams_preserve_stored_tools(client, background):
                 },
             ],
             "tools": tools,
-            "store": True,
             "stream": True,
             "background": background,
+            **store_option,
         },
     )
     assert response.status_code == 200
@@ -659,6 +665,37 @@ def test_responses_streams_preserve_stored_tools(client, background):
     else:
         assert events[-1]["type"] == "response.completed"
         assert events[-1]["response"] == retrieved.json
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"tools": [{"type": "function", "name": "get_weather"}]},
+        {"tools": [{"type": "web_search"}]},
+        {},
+        {"stream": True, "background": True},
+    ],
+    ids=["function-call", "web-search", "message", "background-stream"],
+)
+def test_responses_can_opt_out_of_storage(client, options):
+    response = client.post(
+        "/v1/responses", json={"input": "hi", "store": False, **options}
+    )
+    assert response.status_code == 200
+    if options.get("stream"):
+        event = json.loads(response.data.splitlines()[0].removeprefix(b"data: "))
+        created = event["response"]
+    else:
+        created = response.json
+    assert created["tools"] == options.get("tools", [])
+
+    url = f"/v1/responses/{created['id']}"
+    retrieved = client.get(url)
+    assert retrieved.status_code == 200
+    assert retrieved.json["id"] == created["id"]
+    assert "tools" not in retrieved.json
+    if options.get("background"):
+        assert client.get(f"{url}?stream=true&starting_after=1").status_code == 400
 
 
 def test_anthropic_numbers_tool_calls_across_turns(client):
