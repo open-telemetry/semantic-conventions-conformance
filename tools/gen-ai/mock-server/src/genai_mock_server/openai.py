@@ -846,10 +846,7 @@ def responses():
 
 def _stream_response(response):
     """Yield the SSE lifecycle of a streaming response that runs to completion."""
-    in_progress = copy.deepcopy(response)
-    in_progress["status"] = "in_progress"
-    in_progress["output"] = []
-    in_progress["usage"] = None
+    in_progress = _unfinished(response, "in_progress")
     yield sse({"type": "response.created", "sequence_number": 0, "response": in_progress})
     yield sse({"type": "response.in_progress", "sequence_number": 1, "response": in_progress})
 
@@ -932,10 +929,7 @@ def _stream_create(response):
     Ends after `response.in_progress` (before completion), modelling a caller
     that disconnects mid-stream and later resumes the response by cursor.
     """
-    in_progress = copy.deepcopy(response)
-    in_progress["status"] = "in_progress"
-    in_progress["output"] = []
-    in_progress["usage"] = None
+    in_progress = _unfinished(response, "in_progress")
     yield sse({"type": "response.created", "sequence_number": 0, "response": in_progress})
     yield sse({"type": "response.in_progress", "sequence_number": 1, "response": in_progress})
 
