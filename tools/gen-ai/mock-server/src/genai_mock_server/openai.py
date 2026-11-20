@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import re
+from threading import Lock
 
 from flask import Blueprint, Response, request
 
@@ -18,6 +19,9 @@ from ._common import (
 
 bp = Blueprint("openai", __name__)
 
+# Store the response and its polling or streaming state together.
+_RESPONSE_LOCK = Lock()
+
 # `POST /v1/responses` stores by default. Background streams are always stored
 # so clients can resume them.
 _STORED_RESPONSES = {}
@@ -25,6 +29,10 @@ _STORED_RESPONSES = {}
 # IDs of stored background streams, which may be resumed via
 # `GET /v1/responses/{id}?stream=true&starting_after=...`.
 _RESUMABLE_RESPONSES = set()
+
+# IDs of non-streaming background responses awaiting their first GET.
+_RUNNING_RESPONSES = set()
+_QUEUED_RESPONSE_COUNTS: dict[str, int] = {}
 
 
 CHAT_REFUSAL_RESPONSE = {
@@ -724,19 +732,28 @@ def embeddings(deployment=None):
     return resp
 
 
-def _store_response(body, response, *, stream=False):
+def _store_response(body, response, *, stream=False, pending_poll=False):
     # SSE preserves the response's key order, unlike Flask's JSON replies.
     payload = sse(response) if stream else response
     response_hash = hashlib.sha256(
         json.dumps([body, payload], sort_keys=True).encode()
     ).hexdigest()[:16]
-    response["id"] = f"resp-mock-{response_hash}"
-    _STORED_RESPONSES[response["id"]] = copy.deepcopy(response)
+    response_id = f"resp-mock-{response_hash}"
+    with _RESPONSE_LOCK:
+        if pending_poll:
+            occurrence = _QUEUED_RESPONSE_COUNTS.get(response_hash, 0) + 1
+            _QUEUED_RESPONSE_COUNTS[response_hash] = occurrence
+            if occurrence > 1:
+                response_id = f"{response_id}-{occurrence}"
+            _RUNNING_RESPONSES.add(response_id)
+        response["id"] = response_id
+        _STORED_RESPONSES[response_id] = copy.deepcopy(response)
+        if stream and body.get("background"):
+            _RESUMABLE_RESPONSES.add(response_id)
 
 
 def _start_background_stream(body, response):
     _store_response(body, response, stream=True)
-    _RESUMABLE_RESPONSES.add(response["id"])
     return Response(_stream_create(response), mimetype="text/event-stream")
 
 
@@ -817,19 +834,19 @@ def responses():
         )
     if background_stream:
         return _start_background_stream(body, resp)
+    pending_poll = store and body.get("background")
     if store:
-        _store_response(body, resp, stream=stream)
+        _store_response(body, resp, stream=stream, pending_poll=pending_poll)
     if stream:
         return Response(_stream_response(resp), mimetype="text/event-stream")
+    if pending_poll:
+        return _unfinished(resp, "queued")
     return resp
 
 
 def _stream_response(response):
     """Yield the SSE lifecycle of a streaming response that runs to completion."""
-    in_progress = copy.deepcopy(response)
-    in_progress["status"] = "in_progress"
-    in_progress["output"] = []
-    in_progress["usage"] = None
+    in_progress = _unfinished(response, "in_progress")
     yield sse({"type": "response.created", "sequence_number": 0, "response": in_progress})
     yield sse({"type": "response.in_progress", "sequence_number": 1, "response": in_progress})
 
@@ -912,12 +929,18 @@ def _stream_create(response):
     Ends after `response.in_progress` (before completion), modelling a caller
     that disconnects mid-stream and later resumes the response by cursor.
     """
-    in_progress = copy.deepcopy(response)
-    in_progress["status"] = "in_progress"
-    in_progress["output"] = []
-    in_progress["usage"] = None
+    in_progress = _unfinished(response, "in_progress")
     yield sse({"type": "response.created", "sequence_number": 0, "response": in_progress})
     yield sse({"type": "response.in_progress", "sequence_number": 1, "response": in_progress})
+
+
+def _unfinished(response, status):
+    """Return `response` as reported before its generation completes."""
+    unfinished = copy.deepcopy(response)
+    unfinished["status"] = status
+    unfinished["output"] = []
+    unfinished["usage"] = None
+    return unfinished
 
 
 @bp.route("/v1/responses/<response_id>", methods=["GET"])
@@ -937,14 +960,20 @@ def retrieve_response(response_id):
             "message": "The model failed to generate a response.",
         }
         return dict(failed)
-    stored = _STORED_RESPONSES.get(response_id)
+    stream = request.args.get("stream", "").lower() in ("1", "true")
+    with _RESPONSE_LOCK:
+        stored = _STORED_RESPONSES.get(response_id)
+        resumable = response_id in _RESUMABLE_RESPONSES
+        in_progress = not stream and response_id in _RUNNING_RESPONSES
+        if in_progress and request.method == "GET":
+            _RUNNING_RESPONSES.remove(response_id)
     if stored is None:
         stored = copy.deepcopy(RESPONSES_RESPONSE)
         stored["id"] = response_id
     # A streaming retrieve resumes the response stream from `starting_after`,
     # OpenAI's cursor for the last event the caller already received.
-    if request.args.get("stream", "").lower() in ("1", "true"):
-        if response_id not in _RESUMABLE_RESPONSES:
+    if stream:
+        if not resumable:
             return {
                 "error": {
                     "type": "invalid_request_error",
@@ -953,6 +982,8 @@ def retrieve_response(response_id):
             }, 400
         starting_after = request.args.get("starting_after")
         return Response(_stream_retrieve(stored, starting_after), mimetype="text/event-stream")
+    if in_progress:
+        return _unfinished(stored, "in_progress")
     return dict(stored)
 
 

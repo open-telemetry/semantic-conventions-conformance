@@ -12,6 +12,8 @@ import base64
 import json
 import re
 import struct
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 
 import pytest
 from flask.testing import FlaskClient
@@ -1612,6 +1614,163 @@ def test_responses_report_a_terminal_status(client):
     )
 
     assert response.json["status"] == "completed"
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_background_responses_complete_after_the_first_fetch(client, endpoint):
+    """Polling a background response finds it running, then completed."""
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "hi",
+        "background": True,
+    }
+    created = client.post(endpoint, json=body)
+    assert created.status_code == 200
+    queued = created.json
+    assert queued["status"] == "queued"
+    assert queued["output"] == []
+    assert queued["usage"] is None
+
+    url = f"{endpoint}/{queued['id']}"
+    head = client.head(url)
+    assert head.status_code == 200
+    assert head.data == b""
+
+    fetches = [client.get(url) for _ in range(3)]
+    assert [fetch.status_code for fetch in fetches] == [200, 200, 200]
+    running, completed = fetches[0].json, fetches[1].json
+    assert running["id"] == completed["id"] == queued["id"]
+    assert running["status"] == "in_progress"
+    assert running["output"] == []
+    assert running["usage"] is None
+    foreground = client.post(endpoint, json={**body, "background": False}).json
+    assert completed["status"] == "completed"
+    assert completed["output"] == foreground["output"]
+    assert completed["usage"] == foreground["usage"]
+    assert fetches[2].data == fetches[1].data
+
+    recreated = client.post(endpoint, json=body)
+    assert recreated.status_code == 200
+    assert recreated.json["id"] != queued["id"]
+    assert {**recreated.json, "id": queued["id"]} == queued
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_identical_background_creates_poll_independently(client, endpoint):
+    body = {"input": "identical background creates", "background": True}
+    first, second = [client.post(endpoint, json=body) for _ in range(2)]
+    assert first.status_code == second.status_code == 200
+    assert first.json["status"] == second.json["status"] == "queued"
+    first_id, second_id = first.json["id"], second.json["id"]
+    assert first_id != second_id
+    urls = [f"{endpoint}/{response_id}" for response_id in (first_id, second_id)]
+
+    for url in urls:
+        assert client.get(url).json["status"] == "in_progress"
+    completed = [client.get(url) for url in urls]
+    assert [fetch.json["status"] for fetch in completed] == ["completed", "completed"]
+
+    third = client.post(endpoint, json=body)
+    assert third.status_code == 200
+    assert third.json["status"] == "queued"
+    assert third.json["id"] not in (first_id, second_id)
+    assert [client.get(url).data for url in urls] == [fetch.data for fetch in completed]
+    assert client.get(f"{endpoint}/{third.json['id']}").json["status"] == "in_progress"
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+@pytest.mark.parametrize(
+    ("stream", "background"), [(False, False), (True, False), (True, True)]
+)
+def test_stored_responses_do_not_share_pending_poll_state(
+    client, endpoint, stream, background
+):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "background request",
+        "store": True,
+        "background": True,
+    }
+    queued = client.post(endpoint, json=body)
+    assert queued.status_code == 200
+    assert queued.json["status"] == "queued"
+
+    other = client.post(
+        endpoint,
+        json={
+            **body,
+            "stream": stream,
+            "background": background,
+        },
+    )
+    assert other.status_code == 200
+    if stream:
+        event = json.loads(other.data.splitlines()[0].removeprefix(b"data: "))
+        response_id = event["response"]["id"]
+    else:
+        assert other.json["status"] == "completed"
+        response_id = other.json["id"]
+
+    assert response_id != queued.json["id"]
+    fetched = client.get(f"{endpoint}/{response_id}")
+    assert fetched.status_code == 200
+    assert fetched.json["status"] == "completed"
+    assert fetched.json["output"]
+    assert fetched.json["usage"] is not None
+
+    polling_url = f"{endpoint}/{queued.json['id']}"
+    assert client.get(f"{polling_url}?stream=true").status_code == 400
+    assert client.get(polling_url).json["status"] == "in_progress"
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_unstored_background_response_is_not_queued(client, endpoint):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "background request",
+        "store": True,
+        "background": True,
+    }
+    queued = client.post(endpoint, json=body)
+    assert queued.status_code == 200
+    assert queued.json["status"] == "queued"
+
+    unstored = client.post(endpoint, json={**body, "store": False})
+    assert unstored.status_code == 200
+    assert unstored.json["status"] == "completed"
+
+    url = f"{endpoint}/{queued.json['id']}"
+    fetched = client.get(url)
+    assert fetched.status_code == 200
+    assert fetched.json["status"] == "in_progress"
+    assert fetched.json["usage"] is None
+    assert client.get(url).json["status"] == "completed"
+
+
+def test_only_one_concurrent_get_observes_a_running_response(client):
+    created = client.post(
+        "/v1/responses",
+        json={"input": "concurrent polling", "background": True},
+    )
+    assert created.status_code == 200
+    assert created.json["status"] == "queued"
+    url = f"/v1/responses/{created.json['id']}"
+    start = Barrier(2, timeout=5)
+
+    def fetch():
+        start.wait()
+        return app.test_client().get(url)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(fetch)
+        second = pool.submit(fetch)
+        fetches = [first.result(), second.result()]
+
+    assert all(fetch.status_code == 200 for fetch in fetches)
+    assert sorted(fetch.json["status"] for fetch in fetches) == [
+        "completed",
+        "in_progress",
+    ]
 
 
 # qwen-agent and other Hermes/Nous-protocol clients advertise tools inside a

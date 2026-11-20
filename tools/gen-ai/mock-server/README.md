@@ -29,7 +29,10 @@ and supplies its URL as `${MOCK_SERVER_URL}`.
 
 Responses depend on the request's model, tools, and streaming options. Most
 endpoints return fixed IDs and token counts; resource-creation endpoints may
-assign new IDs. Streaming formats follow the provider's API.
+assign new IDs. Streaming formats follow the provider's API. A stored OpenAI
+Responses `background` request answered with a message, without streaming,
+comes back `queued`. Its first `GET` reports `in_progress` with no output or
+usage, and later `GET`s return the completed response. Storage is on by default.
 
 ## Google interactions and hosted tools
 
