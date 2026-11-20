@@ -799,6 +799,7 @@ def responses():
         )
     if body.get("store"):
         _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+        _RUNNING_RESPONSES.discard(resp["id"])
     if body.get("stream"):
         # Background streaming create: emit lifecycle events then end before
         # completion, as if the caller disconnected. Such a response can be
