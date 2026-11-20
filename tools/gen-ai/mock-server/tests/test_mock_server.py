@@ -1329,6 +1329,81 @@ def test_background_responses_complete_after_the_first_fetch(client, endpoint):
     assert client.get(f"{endpoint}/{queued['id']}").data == fetches[0].data
 
 
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+@pytest.mark.parametrize(
+    ("stream", "background"), [(False, False), (True, False), (True, True)]
+)
+def test_stored_response_replaces_pending_background_state(
+    client, endpoint, stream, background
+):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "background request",
+        "store": True,
+        "background": True,
+    }
+    queued = client.post(endpoint, json=body)
+    assert queued.status_code == 200
+    assert queued.json["status"] == "queued"
+
+    replacement = client.post(
+        endpoint,
+        json={
+            **body,
+            "input": "replacement request",
+            "stream": stream,
+            "background": background,
+        },
+    )
+    assert replacement.status_code == 200
+    if stream:
+        events = [
+            json.loads(line[len("data: ") :])
+            for line in replacement.get_data(as_text=True).splitlines()
+            if line.startswith("data: ")
+        ]
+        response_id = events[0]["response"]["id"]
+    else:
+        assert replacement.json["status"] == "completed"
+        response_id = replacement.json["id"]
+
+    fetched = client.get(f"{endpoint}/{response_id}")
+    assert fetched.status_code == 200
+    assert fetched.json["status"] == "completed"
+    assert fetched.json["output"]
+    assert fetched.json["usage"] is not None
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_unstored_response_preserves_pending_background_state(
+    client, endpoint
+):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "background request",
+        "store": True,
+        "background": True,
+    }
+    queued = client.post(endpoint, json=body)
+    assert queued.status_code == 200
+    assert queued.json["status"] == "queued"
+
+    foreground = client.post(
+        endpoint, json={**body, "store": False, "background": False}
+    )
+    assert foreground.status_code == 200
+    assert foreground.json["status"] == "completed"
+
+    fetched = client.get(f"{endpoint}/{queued.json['id']}")
+    assert fetched.status_code == 200
+    assert fetched.json["status"] == "in_progress"
+    assert fetched.json["usage"] is None
+    assert (
+        client.get(f"{endpoint}/{queued.json['id']}").json["status"]
+        == "completed"
+    )
+
+
 # qwen-agent and other Hermes/Nous-protocol clients advertise tools inside a
 # <tools> block in the system prompt and expect the call back as <tool_call>
 # JSON in the assistant content — not through the `tools` request field.
