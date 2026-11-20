@@ -57,7 +57,8 @@ token usage recording.
 `POST /v1/responses` stores responses and their tool definitions by default.
 Set `store: false` to skip storage unless the request creates a background
 stream. The mock keeps background stream responses in memory until it exits so
-clients can resume them with `stream=true&starting_after=<seq>`.
+clients can resume them with `stream=true&starting_after=<seq>`, even when the
+response requests a function call.
 `GET /v1/responses/{id}` returns the stored response if one exists, or a canned
 response for a synthetic ID.
 

@@ -733,12 +733,19 @@ def _store_response(body, response, *, stream=False):
     _STORED_RESPONSES[response["id"]] = copy.deepcopy(response)
 
 
+def _start_background_stream(body, response):
+    _store_response(body, response, stream=True)
+    _RESUMABLE_RESPONSES.add(response["id"])
+    return Response(_stream_create(response), mimetype="text/event-stream")
+
+
 @bp.route("/v1/responses", methods=["POST"])
 @bp.route("/openai/v1/responses", methods=["POST"])
 def responses():
     body = request.get_json(silent=True) or {}
     store = body.get("store", True)
     stream = body.get("stream")
+    background_stream = stream and body.get("background")
     if any(
         tool.get("type") in {"web_search", "web_search_preview", "web_search_preview_2025_03_11"}
         for tool in body.get("tools") or []
@@ -785,6 +792,8 @@ def responses():
     _, call_ids = _responses_called_tool_info(request_input)
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
         resp = _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
+        if background_stream:
+            return _start_background_stream(body, resp)
         if store:
             _store_response(body, resp)
         return resp
@@ -805,13 +814,10 @@ def responses():
                 "created_by": "server",
             },
         )
-    background_stream = stream and body.get("background")
-    if store or background_stream:
-        _store_response(body, resp, stream=stream)
     if background_stream:
-        # End a background stream before completion to model a disconnect.
-        _RESUMABLE_RESPONSES.add(resp["id"])
-        return Response(_stream_create(resp), mimetype="text/event-stream")
+        return _start_background_stream(body, resp)
+    if store:
+        _store_response(body, resp, stream=stream)
     if stream:
         return Response(_stream_response(resp), mimetype="text/event-stream")
     return resp

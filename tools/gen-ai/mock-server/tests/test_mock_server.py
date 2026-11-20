@@ -697,6 +697,40 @@ def test_responses_can_opt_out_of_storage(client, options):
 
 
 @pytest.mark.parametrize("store", [True, False], ids=["store-true", "store-false"])
+def test_background_stream_resumes_with_a_first_turn_function_call(client, store):
+    body = {
+        "input": "weather?",
+        "tools": [{"type": "function", "name": "get_weather"}],
+        "background": True,
+        "stream": True,
+        "store": store,
+    }
+    response = client.post("/v1/responses", json=body)
+    assert response.status_code == 200
+    assert response.mimetype == "text/event-stream"
+    assert response.data == client.post("/v1/responses", json=body).data
+    created, in_progress = [
+        json.loads(line.removeprefix(b"data: "))
+        for line in response.data.splitlines()
+        if line.startswith(b"data: ")
+    ]
+    assert created["type"] == "response.created"
+    assert in_progress["type"] == "response.in_progress"
+
+    url = f"/v1/responses/{created['response']['id']}"
+    resumed = client.get(f"{url}?stream=true&starting_after={in_progress['sequence_number']}")
+    assert resumed.status_code == 200
+    assert resumed.mimetype == "text/event-stream"
+    completed = json.loads(resumed.data.splitlines()[0].removeprefix(b"data: "))
+    assert completed["type"] == "response.completed"
+    result = completed["response"]
+    assert result["tools"] == body["tools"]
+    assert result["output"][0]["type"] == "function_call"
+    assert result["output"][0]["name"] == "get_weather"
+    assert client.get(url).json == result
+
+
+@pytest.mark.parametrize("store", [True, False], ids=["store-true", "store-false"])
 def test_background_streams_preserve_tool_property_order(client, store):
     endpoint = "/v1/responses"
     parameters = {"type": "object"}
