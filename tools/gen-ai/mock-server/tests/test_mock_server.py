@@ -698,6 +698,60 @@ def test_responses_can_opt_out_of_storage(client, options):
         assert client.get(f"{url}?stream=true&starting_after=1").status_code == 400
 
 
+def test_stored_background_streams_preserve_tool_property_order(client):
+    endpoint = "/v1/responses"
+    parameters = {"type": "object"}
+    body = {
+        "input": [
+            {"role": "user", "content": "weather?"},
+            {
+                "type": "function_call",
+                "name": "get_weather",
+                "call_id": "call_mock_001",
+                "arguments": "{}",
+            },
+            {
+                "type": "function_call_output",
+                "call_id": "call_mock_001",
+                "output": "70 degrees",
+            },
+        ],
+        "tools": [
+            {"type": "function", "name": "get_weather", "parameters": parameters}
+        ],
+        "store": True,
+        "stream": True,
+        "background": True,
+    }
+
+    replays = {}
+    for property_names in (["location", "unit"], ["unit", "location"]):
+        parameters["properties"] = {
+            name: {"type": "string"} for name in property_names
+        }
+        # Flask's json= test client argument sorts keys.
+        options = {"data": json.dumps(body), "content_type": "application/json"}
+        response = client.post(endpoint, **options)
+        assert response.status_code == 200
+        assert response.mimetype == "text/event-stream"
+        assert response.data == client.post(endpoint, **options).data
+
+        created = json.loads(response.data.splitlines()[0].removeprefix(b"data: "))
+        response_id = created["response"]["id"]
+        assert response_id not in replays
+        resumed = client.get(f"{endpoint}/{response_id}?stream=true&starting_after=1")
+        assert resumed.status_code == 200
+        completed = json.loads(resumed.data.splitlines()[0].removeprefix(b"data: "))
+        properties = completed["response"]["tools"][0]["parameters"]["properties"]
+        assert list(properties) == property_names
+        replays[response_id] = resumed.data
+
+    for response_id, replay in replays.items():
+        resumed = client.get(f"{endpoint}/{response_id}?stream=true&starting_after=1")
+        assert resumed.status_code == 200
+        assert resumed.data == replay
+
+
 def test_anthropic_numbers_tool_calls_across_turns(client):
     first = client.post(
         "/v1/messages",

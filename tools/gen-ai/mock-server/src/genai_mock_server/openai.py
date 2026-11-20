@@ -723,9 +723,11 @@ def embeddings(deployment=None):
     return resp
 
 
-def _store_response(body, response):
+def _store_response(body, response, *, stream=False):
+    # SSE preserves the response's key order, unlike Flask's JSON replies.
+    payload = sse(response) if stream else response
     response_hash = hashlib.sha256(
-        json.dumps([body, response], sort_keys=True).encode()
+        json.dumps([body, payload], sort_keys=True).encode()
     ).hexdigest()[:16]
     response["id"] = f"resp-mock-{response_hash}"
     _STORED_RESPONSES[response["id"]] = copy.deepcopy(response)
@@ -736,11 +738,12 @@ def _store_response(body, response):
 def responses():
     body = request.get_json(silent=True) or {}
     store = body.get("store", True)
+    stream = body.get("stream")
     if any(
         tool.get("type") in {"web_search", "web_search_preview", "web_search_preview_2025_03_11"}
         for tool in body.get("tools") or []
     ):
-        if body.get("stream"):
+        if stream:
             return {
                 "error": {
                     "type": "invalid_request_error",
@@ -803,8 +806,8 @@ def responses():
             },
         )
     if store:
-        _store_response(body, resp)
-    if body.get("stream"):
+        _store_response(body, resp, stream=stream)
+    if stream:
         # End a background stream before completion to model a disconnect.
         if body.get("background"):
             if store:
