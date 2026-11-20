@@ -1,6 +1,7 @@
 """OpenAI-compatible chat / embeddings / responses endpoints."""
 
 import copy
+import hashlib
 import json
 import re
 
@@ -17,14 +18,12 @@ from ._common import (
 
 bp = Blueprint("openai", __name__)
 
-# Stored responses from `POST /v1/responses` with `store=True`, served back by
-# `GET /v1/responses/{id}` so scenarios can fetch a previously generated
-# response by its identifier.
+# `POST /v1/responses` stores by default. Background streams are always stored
+# so clients can resume them.
 _STORED_RESPONSES = {}
 
-# Ids of responses created as background streams. Only these may be resumed via
-# `GET /v1/responses/{id}?stream=true&starting_after=...`, mirroring OpenAI,
-# which rejects cursor-based resumption of non-background/non-streaming responses.
+# IDs of stored background streams, which may be resumed via
+# `GET /v1/responses/{id}?stream=true&starting_after=...`.
 _RESUMABLE_RESPONSES = set()
 
 
@@ -227,6 +226,7 @@ RESPONSES_RESPONSE = {
         },
         "total_tokens": 37,
     },
+    "tools": [],
 }
 
 
@@ -308,6 +308,7 @@ def _responses_tool_call_response(body, call_index=1):
     response = copy.deepcopy(RESPONSES_RESPONSE)
     response["id"] = "resp-mock-tool-001"
     response["model"] = body.get("model", response["model"])
+    response["tools"] = body.get("tools") or []
     tool = body.get("tools", [{}])[0]
     function = tool.get("function", {})
     tool_name = tool.get("name") or function.get("name")
@@ -723,15 +724,34 @@ def embeddings(deployment=None):
     return resp
 
 
+def _store_response(body, response, *, stream=False):
+    # SSE preserves the response's key order, unlike Flask's JSON replies.
+    payload = sse(response) if stream else response
+    response_hash = hashlib.sha256(
+        json.dumps([body, payload], sort_keys=True).encode()
+    ).hexdigest()[:16]
+    response["id"] = f"resp-mock-{response_hash}"
+    _STORED_RESPONSES[response["id"]] = copy.deepcopy(response)
+
+
+def _start_background_stream(body, response):
+    _store_response(body, response, stream=True)
+    _RESUMABLE_RESPONSES.add(response["id"])
+    return Response(_stream_create(response), mimetype="text/event-stream")
+
+
 @bp.route("/v1/responses", methods=["POST"])
 @bp.route("/openai/v1/responses", methods=["POST"])
 def responses():
     body = request.get_json(silent=True) or {}
+    store = body.get("store", True)
+    stream = body.get("stream")
+    background_stream = stream and body.get("background")
     if any(
         tool.get("type") in {"web_search", "web_search_preview", "web_search_preview_2025_03_11"}
         for tool in body.get("tools") or []
     ):
-        if body.get("stream"):
+        if stream:
             return {
                 "error": {
                     "type": "invalid_request_error",
@@ -741,6 +761,7 @@ def responses():
         resp = copy.deepcopy(RESPONSES_RESPONSE)
         resp["id"] = "resp-mock-web-search-001"
         resp["model"] = body.get("model", resp["model"])
+        resp["tools"] = body.get("tools") or []
         resp["output"].insert(
             0,
             {
@@ -750,8 +771,8 @@ def responses():
                 "action": {"type": "search", "query": "OpenTelemetry"},
             },
         )
-        if body.get("store"):
-            _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
+        if store:
+            _store_response(body, resp)
         return resp
     raw_request_input = body.get("input")
     if isinstance(raw_request_input, list):
@@ -771,10 +792,16 @@ def responses():
     called, _ = _responses_called_tool_info(_responses_current_turn(request_input))
     _, call_ids = _responses_called_tool_info(request_input)
     if body.get("tools") and "agent_reference" not in body and not (offered & called):
-        return _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
+        resp = _responses_tool_call_response(body, call_index=len(set(call_ids)) + 1)
+        if background_stream:
+            return _start_background_stream(body, resp)
+        if store:
+            _store_response(body, resp)
+        return resp
 
     resp = copy.deepcopy(RESPONSES_RESPONSE)
     resp["model"] = body.get("model", resp["model"])
+    resp["tools"] = body.get("tools") or []
     if body.get("instructions") is not None:
         resp["instructions"] = body["instructions"]
     context_management = body.get("context_management") or []
@@ -788,15 +815,11 @@ def responses():
                 "created_by": "server",
             },
         )
-    if body.get("store"):
-        _STORED_RESPONSES[resp["id"]] = copy.deepcopy(resp)
-    if body.get("stream"):
-        # Background streaming create: emit lifecycle events then end before
-        # completion, as if the caller disconnected. Such a response can be
-        # resumed later via `GET .../{id}?stream=true&starting_after=<seq>`.
-        if body.get("background"):
-            _RESUMABLE_RESPONSES.add(resp["id"])
-            return Response(_stream_create(resp), mimetype="text/event-stream")
+    if background_stream:
+        return _start_background_stream(body, resp)
+    if store:
+        _store_response(body, resp, stream=stream)
+    if stream:
         return Response(_stream_response(resp), mimetype="text/event-stream")
     return resp
 
@@ -919,16 +942,13 @@ def retrieve_response(response_id):
         stored = copy.deepcopy(RESPONSES_RESPONSE)
         stored["id"] = response_id
     # A streaming retrieve resumes the response stream from `starting_after`,
-    # OpenAI's cursor for the last event the caller already received. Only
-    # background streaming responses are resumable; reject cursor retrieval of
-    # any other response, as OpenAI does. Emit the terminal `response.completed`
-    # event carrying the full response object.
+    # OpenAI's cursor for the last event the caller already received.
     if request.args.get("stream", "").lower() in ("1", "true"):
         if response_id not in _RESUMABLE_RESPONSES:
             return {
                 "error": {
                     "type": "invalid_request_error",
-                    "message": "Only background responses created with streaming can be resumed.",
+                    "message": "No resumable background stream for this response.",
                 }
             }, 400
         starting_after = request.args.get("starting_after")
