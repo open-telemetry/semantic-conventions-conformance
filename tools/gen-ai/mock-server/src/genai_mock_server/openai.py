@@ -32,6 +32,7 @@ _RESUMABLE_RESPONSES = set()
 
 # IDs of non-streaming background responses awaiting their first GET.
 _RUNNING_RESPONSES = set()
+_QUEUED_RESPONSE_COUNTS: dict[str, int] = {}
 
 
 CHAT_REFUSAL_RESPONSE = {
@@ -737,14 +738,18 @@ def _store_response(body, response, *, stream=False, pending_poll=False):
     response_hash = hashlib.sha256(
         json.dumps([body, payload], sort_keys=True).encode()
     ).hexdigest()[:16]
-    response["id"] = f"resp-mock-{response_hash}"
-    stored = copy.deepcopy(response)
+    response_id = f"resp-mock-{response_hash}"
     with _RESPONSE_LOCK:
-        _STORED_RESPONSES[response["id"]] = stored
         if pending_poll:
-            _RUNNING_RESPONSES.add(response["id"])
+            occurrence = _QUEUED_RESPONSE_COUNTS.get(response_hash, 0) + 1
+            _QUEUED_RESPONSE_COUNTS[response_hash] = occurrence
+            if occurrence > 1:
+                response_id = f"{response_id}-{occurrence}"
+            _RUNNING_RESPONSES.add(response_id)
+        response["id"] = response_id
+        _STORED_RESPONSES[response_id] = copy.deepcopy(response)
         if stream and body.get("background"):
-            _RESUMABLE_RESPONSES.add(response["id"])
+            _RESUMABLE_RESPONSES.add(response_id)
 
 
 def _start_background_stream(body, response):

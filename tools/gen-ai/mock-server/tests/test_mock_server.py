@@ -1649,9 +1649,33 @@ def test_background_responses_complete_after_the_first_fetch(client, endpoint):
     assert completed["usage"] == foreground["usage"]
     assert fetches[2].data == fetches[1].data
 
-    # Creating it again restarts the sequence, with the same bytes.
-    assert client.post(endpoint, json=body).data == created.data
-    assert client.get(url).data == fetches[0].data
+    recreated = client.post(endpoint, json=body)
+    assert recreated.status_code == 200
+    assert recreated.json["id"] != queued["id"]
+    assert {**recreated.json, "id": queued["id"]} == queued
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_identical_background_creates_poll_independently(client, endpoint):
+    body = {"input": "identical background creates", "background": True}
+    first, second = [client.post(endpoint, json=body) for _ in range(2)]
+    assert first.status_code == second.status_code == 200
+    assert first.json["status"] == second.json["status"] == "queued"
+    first_id, second_id = first.json["id"], second.json["id"]
+    assert first_id != second_id
+    urls = [f"{endpoint}/{response_id}" for response_id in (first_id, second_id)]
+
+    for url in urls:
+        assert client.get(url).json["status"] == "in_progress"
+    completed = [client.get(url) for url in urls]
+    assert [fetch.json["status"] for fetch in completed] == ["completed", "completed"]
+
+    third = client.post(endpoint, json=body)
+    assert third.status_code == 200
+    assert third.json["status"] == "queued"
+    assert third.json["id"] not in (first_id, second_id)
+    assert [client.get(url).data for url in urls] == [fetch.data for fetch in completed]
+    assert client.get(f"{endpoint}/{third.json['id']}").json["status"] == "in_progress"
 
 
 @pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
