@@ -8,6 +8,7 @@
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
@@ -94,6 +95,16 @@
         "expected_form": "execute_tool get_current_weather",
         "keyed_attr": "gen_ai.tool.name",
         "operation": "execute_tool"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"function\":{\"description\":\"Get the current weather in a given location.\",\"name\":\"get_current_weather\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"location\":{\"title\":\"Location\",\"type\":\"string\"}},\"required\":[\"location\"],\"title\":\"get_current_weather_args\",\"type\":\"object\"}},\"type\":\"function\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "openai.response",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"function\":{\"description\":\"Get the current weather in a given location.\",\"name\":\"get_current_weather\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"location\":{\"title\":\"Location\",\"type\":\"string\"}},\"required\":[\"location\"],\"title\":\"get_current_weather_args\",\"type\":\"object\"}},\"type\":\"function\"} is not valid under any of the schemas listed in the 'anyOf' keyword"
       }
     },
     {
