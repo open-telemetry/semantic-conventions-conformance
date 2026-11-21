@@ -11,8 +11,7 @@
       "server.address",
       "server.port",
       "url.full",
-      "url.scheme",
-      "url.template"
+      "url.scheme"
     ]
   },
   "events": {},
@@ -153,7 +152,7 @@
       "id": "deprecated",
       "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
       "signal_type": "span",
-      "signal_name": "GET /status/*",
+      "signal_name": "GET",
       "context": {
         "attribute_key": "service.peer.name",
         "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
@@ -162,9 +161,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /status/*' is missing recommended attribute 'network.protocol.version'",
+      "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
       "signal_type": "span",
-      "signal_name": "GET /status/*",
+      "signal_name": "GET",
       "context": {
         "attribute_key": "network.protocol.version",
         "kind": "client"
@@ -174,7 +173,7 @@
       "id": "deprecated",
       "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
       "signal_type": "span",
-      "signal_name": "GET /users/*",
+      "signal_name": "POST",
       "context": {
         "attribute_key": "service.peer.name",
         "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
@@ -183,30 +182,9 @@
     },
     {
       "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /users/*' is missing recommended attribute 'network.protocol.version'",
+      "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
       "signal_type": "span",
-      "signal_name": "GET /users/*",
-      "context": {
-        "attribute_key": "network.protocol.version",
-        "kind": "client"
-      }
-    },
-    {
-      "id": "deprecated",
-      "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
-      "signal_type": "span",
-      "signal_name": "POST /items",
-      "context": {
-        "attribute_key": "service.peer.name",
-        "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
-        "deprecation_reason": "uncategorized"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
-      "signal_type": "span",
-      "signal_name": "POST /items",
+      "signal_name": "POST",
       "context": {
         "attribute_key": "network.protocol.version",
         "kind": "client"

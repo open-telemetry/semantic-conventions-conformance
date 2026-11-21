@@ -7,7 +7,6 @@
       "http.request.method",
       "http.response.body.size",
       "http.response.status_code",
-      "http.route",
       "network.peer.address",
       "network.peer.port",
       "network.protocol.version",

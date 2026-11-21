@@ -88,6 +88,12 @@ selects every attribute OBI can emit (`attributes.select: {"*": {include:
 ["*"]}}`) and every HTTP payload extractor with 64 KiB capture buffers, so a
 run measures the most OBI can say, not its default subset.
 
+The shared OBI configuration sets `unmatched: unset` for incoming and outgoing
+routes and keeps framework route discovery enabled. When OBI doesn't know the
+route, server spans omit `http.route`, client spans omit `url.template`, and the
+span name is just the HTTP method. The pinned OBI release still emits
+`http.route` on server metrics even when it doesn't know the route.
+
 `wakeup_len: 0` makes the kernel wake OBI's ring-buffer reader on every event.
 Any other value sizes the wakeup threshold by the Go tracer's event, which the
 generic tracer's smaller HTTP event never reaches, so a single request is only
