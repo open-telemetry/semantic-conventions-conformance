@@ -2,9 +2,10 @@
   Copyright The OpenTelemetry Authors
   SPDX-License-Identifier: Apache-2.0
 
-  The instrumentation releases this domain measures, pinned in one place so
-  the client and the server measure the same one. The SDK they export through
-  is pinned once for every domain, in tools/dotnet.
+  The instrumentation releases this domain measures, pinned in one place. Only
+  the client has one: the server is measured with what ASP.NET Core emits
+  itself. The SDK they export through is pinned once for every domain, in
+  tools/dotnet.
 
   Central package management is per directory tree rather than per build, so
   the shared projects under tools/ keep their own pins instead of reading
@@ -16,7 +17,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.21.0" />
   </ItemGroup>
 </Project>
