@@ -17,6 +17,10 @@ import org.eclipse.jetty.client.StringRequestContent;
 public final class JettyHttpClientClientScenario {
   private JettyHttpClientClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(HttpClient::new);
   }

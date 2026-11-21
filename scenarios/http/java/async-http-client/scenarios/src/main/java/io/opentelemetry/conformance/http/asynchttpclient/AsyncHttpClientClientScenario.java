@@ -17,6 +17,10 @@ import org.asynchttpclient.Response;
 public final class AsyncHttpClientClientScenario {
   private AsyncHttpClientClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     try (AsyncHttpClient client = new DefaultAsyncHttpClient()) {
       HttpClientWorkload.drive(

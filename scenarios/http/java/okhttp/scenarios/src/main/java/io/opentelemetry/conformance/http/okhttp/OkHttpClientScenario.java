@@ -22,6 +22,10 @@ public final class OkHttpClientScenario {
 
   private OkHttpClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(new OkHttpClient.Builder().build());
   }

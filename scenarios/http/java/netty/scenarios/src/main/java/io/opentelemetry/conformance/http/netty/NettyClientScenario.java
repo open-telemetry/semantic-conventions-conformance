@@ -41,6 +41,10 @@ public final class NettyClientScenario {
 
   private NettyClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(pipeline -> {}, channel -> {});
   }
