@@ -30,6 +30,10 @@ import reactor.core.publisher.Mono;
 public final class SpringWebfluxServerScenario {
   private SpringWebfluxServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(application -> {});
   }

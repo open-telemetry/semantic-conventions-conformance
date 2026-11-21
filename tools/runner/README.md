@@ -332,6 +332,33 @@ under `expect.attributes` takes one of three forms:
 So `gen_ai.tool.name: { distinct: 2 }` above says the two `execute_tool` spans
 called two *different* tools, without pinning down which.
 
+Use `expect.semantic_conventions` for attribute requirements that should become
+conformance findings:
+
+```yaml
+expect:
+  count: 1
+  semantic_conventions:
+    db.response.status_code: WRONGTYPE
+```
+
+It accepts the same matchers as `attributes`, with exact value types. Findings
+use `contract_attribute_mismatch` and context `{attribute_key, scenario, match}`,
+where `match` is the expectation's full selector. An accepted gap on one
+selection does not suppress a gap on another.
+They persist in `data.json`, respect `expected_violations`, and fail strict
+runs. `--report-only` tolerates them. Counts, ordinary `attributes`, and
+workload failures remain hard failures. Raw reports keep runner findings under
+`contract_checks`, separate from Weaver samples. When a span name ends in the
+runtime endpoint the runner injected, both runner and Weaver findings name it
+with the port variable, such as `LPUSH 127.0.0.1:${DATABASE_PORT}`. A Weaver
+message that quotes the span name gets the same name. A rerun on another port
+leaves `data.json` unchanged.
+
+`db.namespace: {if_present: FREE}` checks an optional attribute's value without
+requiring its presence. An emitted value rejected by Weaver still produces a
+finding. Ordinary `attributes` do not accept this matcher.
+
 `spans`, `metrics` and `events` follow the same rule. A key you leave out is
 **not checked** — a scenario with no expectations only has to run cleanly. A
 key you write is checked exactly: nothing missing, nothing extra, including
@@ -472,12 +499,32 @@ That view is `weaver registry generate --v2` over the
 [coverage-model template](src/opentelemetry/conformance/weaver-templates/coverage-model),
 resolved once into the cache, under the pin it came from and the template that
 produced it. Starting a session resolves it if the pin hasn't got one, so the weaver run
-happens up front rather than after the scenarios have. To see what it
+happens up front rather than after the scenarios have. A registry passed with
+`--registry` uses a digest of the YAML files weaver reads in the registry and
+its local dependencies. This catches edits, deletions and renames. Registries
+with URL or archive dependencies resolve on every call, since their transitive
+dependencies may change. So do registries that are, or depend on, a published
+registry, since its resolved registry can be anywhere. Weaver is called with its
+defaults for `follow_symlinks` and `include_unreferenced`, so those two settings
+in a `.weaver.toml` above the working directory don't change the model. While
+that file sets `[resolve.schema_url_overrides]`, every model, pinned or not,
+resolves on every call. A model whose files change while weaver reads them goes
+only to the caller, not the cache.
+
+`coverage-models/working-trees` and `coverage-models/pinned` each keep the 8 most
+recently used models. Callers receive process-private copies, removed on normal
+exit. Files locked by Windows wait for a later cleanup. Models stored directly
+in `coverage-models/` come from older runners. Nothing prunes them, so they can
+be deleted. `SEMCONV_CACHE` must not be a folder weaver reads as part of the
+registry or a local dependency. A hidden folder such as `.cache` inside it is
+fine. A repo that needs the same model for its own reports can call
+`coverage_model_for(registry)` for it. The path it returns lasts until that
+process exits, so copy the file if a later step needs it. To see what was
 resolved, list the cached models and choose the file whose name contains the
 pin and fingerprint you need:
 
 ```console
-python -c "from opentelemetry.conformance import cache_dir; print(*sorted((cache_dir() / 'coverage-models').glob('*.json')), sep='\n')"
+python -c "from opentelemetry.conformance import cache_dir; print(*sorted((cache_dir() / 'coverage-models').glob('*/*.json')), sep='\n')"
 ```
 
 An attribute counts as covered when any sample of that signal carried it,

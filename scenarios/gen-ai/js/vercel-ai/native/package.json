@@ -6,7 +6,7 @@
   "dependencies": {
     "@otel-conformance/vercel-ai-scenarios": "*",
     "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
-    "@ai-sdk/otel": "1.0.156",
-    "ai": "7.0.156"
+    "@ai-sdk/otel": "1.0.164",
+    "ai": "7.0.165"
   }
 }

@@ -12,6 +12,8 @@ import base64
 import json
 import re
 import struct
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 
 import pytest
 from flask.testing import FlaskClient
@@ -470,6 +472,325 @@ def test_responses_calls_the_same_tool_again_in_a_later_turn(client):
     assert call["type"] == "function_call"
     assert call["name"] == "get_weather"
     assert call["call_id"] == "call_mock_002"
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+@pytest.mark.parametrize("tool_called", [False, True])
+@pytest.mark.parametrize(
+    "store_option", [{}, {"store": True}], ids=["default", "explicit"]
+)
+def test_responses_preserve_stored_tools(client, endpoint, tool_called, store_option):
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get the weather for a location.",
+            "parameters": {
+                "type": "object",
+                "properties": {"location": {"type": "string"}},
+                "required": ["location"],
+                "additionalProperties": False,
+            },
+            "strict": True,
+        },
+        {"type": "function", "name": "get_time", "parameters": {"type": "object"}},
+    ]
+    request_input = [{"role": "user", "content": "weather in Seattle?"}]
+    if tool_called:
+        request_input += [
+            {
+                "type": "function_call",
+                "name": "get_weather",
+                "call_id": "call_mock_001",
+                "arguments": '{"location": "Seattle"}',
+            },
+            {
+                "type": "function_call_output",
+                "call_id": "call_mock_001",
+                "output": "70 degrees",
+            },
+        ]
+    body = {
+        "model": "gpt-4.1",
+        "input": request_input,
+        "tools": tools,
+        **store_option,
+    }
+    response = client.post(endpoint, json=body)
+    assert response.status_code == 200
+    result = response.json
+    assert result["tools"] == tools
+    assert result["model"] == "gpt-4.1"
+    assert result["output"][0]["type"] == ("message" if tool_called else "function_call")
+    if not tool_called:
+        assert result["output"][0]["name"] == "get_weather"
+    other = client.post(endpoint, json={**body, "tools": []})
+    assert other.status_code == 200
+    assert result["id"] != other.json["id"]
+    retrieved = client.get(f"{endpoint}/{result['id']}")
+    assert retrieved.status_code == 200
+    assert retrieved.json == result
+    assert client.get(f"{endpoint}/{other.json['id']}").json == other.json
+    assert response.data == client.post(endpoint, json=body).data
+
+
+@pytest.mark.parametrize(
+    "other_request",
+    [
+        {"tools": [{"type": "function", "name": "get_time"}]},
+        {"model": "gpt-4.1"},
+        {"input": "weather in Portland?"},
+    ],
+)
+def test_stored_function_responses_do_not_overwrite_each_other(client, other_request):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "weather in Seattle?",
+        "tools": [{"type": "function", "name": "get_weather"}],
+        "store": True,
+    }
+    other_body = {**body, **other_request}
+    first = client.post("/v1/responses", json=body)
+    second = client.post("/v1/responses", json=other_body)
+    assert first.status_code == second.status_code == 200
+    assert first.json["id"] != second.json["id"]
+    for response in (first, second):
+        retrieved = client.get(f"/v1/responses/{response.json['id']}")
+        assert retrieved.status_code == 200
+        assert retrieved.json == response.json
+    assert first.data == client.post(
+        "/v1/responses",
+        data=json.dumps(body),
+        content_type="application/json",
+    ).data
+    assert second.data == client.post("/v1/responses", json=other_body).data
+
+
+def test_stored_function_responses_preserve_argument_order(client):
+    responses = []
+    for property_names in (["location", "unit"], ["unit", "location"]):
+        body = {
+            "model": "gpt-4o-mini",
+            "input": "weather in Seattle?",
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "get_weather",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            name: {"type": "string"} for name in property_names
+                        },
+                    },
+                }
+            ],
+            "store": True,
+        }
+        response = client.post(
+            "/v1/responses",
+            data=json.dumps(body),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.data == client.post(
+            "/v1/responses",
+            data=json.dumps(body),
+            content_type="application/json",
+        ).data
+        responses.append(response)
+    first, second = responses
+    assert first.json["output"][0]["arguments"] != second.json["output"][0]["arguments"]
+    assert first.json["id"] != second.json["id"]
+    for response in responses:
+        retrieved = client.get(f"/v1/responses/{response.json['id']}")
+        assert retrieved.status_code == 200
+        assert retrieved.json == response.json
+
+
+@pytest.mark.parametrize("background", [False, True])
+@pytest.mark.parametrize(
+    "store_option", [{}, {"store": True}], ids=["default", "explicit"]
+)
+def test_responses_streams_preserve_stored_tools(client, background, store_option):
+    tools = [{"type": "function", "name": "get_weather"}]
+    response = client.post(
+        "/v1/responses",
+        json={
+            "input": [
+                {"role": "user", "content": "weather?"},
+                {
+                    "type": "function_call",
+                    "name": "get_weather",
+                    "call_id": "call_mock_001",
+                    "arguments": "{}",
+                },
+                {
+                    "type": "function_call_output",
+                    "call_id": "call_mock_001",
+                    "output": "70 degrees",
+                },
+            ],
+            "tools": tools,
+            "stream": True,
+            "background": background,
+            **store_option,
+        },
+    )
+    assert response.status_code == 200
+    assert response.mimetype == "text/event-stream"
+    events = [
+        json.loads(line[len("data: ") :])
+        for line in response.get_data(as_text=True).splitlines()
+        if line.startswith("data: ")
+    ]
+    created = events[0]["response"]
+    assert created["tools"] == tools
+    other = client.post(
+        "/v1/responses", json={"input": "hi", "tools": [], "store": True}
+    )
+    assert other.status_code == 200
+    assert created["id"] != other.json["id"]
+    retrieved = client.get(f"/v1/responses/{created['id']}")
+    assert retrieved.status_code == 200
+    assert retrieved.json["tools"] == tools
+    assert client.get(f"/v1/responses/{other.json['id']}").json == other.json
+    if background:
+        assert events[-1]["type"] == "response.in_progress"
+        resumed = client.get(
+            f"/v1/responses/{created['id']}?stream=true&starting_after=1"
+        )
+        assert resumed.status_code == 200
+        completed = json.loads(resumed.get_data(as_text=True).splitlines()[0][len("data: ") :])
+        assert completed["type"] == "response.completed"
+        assert completed["sequence_number"] == 2
+        assert completed["response"] == retrieved.json
+    else:
+        assert events[-1]["type"] == "response.completed"
+        assert events[-1]["response"] == retrieved.json
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"tools": [{"type": "function", "name": "get_weather"}]},
+        {"tools": [{"type": "web_search"}]},
+        {},
+        {"stream": True},
+    ],
+    ids=["function-call", "web-search", "message", "stream"],
+)
+def test_responses_can_opt_out_of_storage(client, options):
+    response = client.post(
+        "/v1/responses",
+        json={"model": "gpt-4.1", "input": "hi", "store": False, **options},
+    )
+    assert response.status_code == 200
+    if options.get("stream"):
+        event = json.loads(response.data.splitlines()[0].removeprefix(b"data: "))
+        created = event["response"]
+    else:
+        created = response.json
+    assert created["model"] == "gpt-4.1"
+    assert created["tools"] == options.get("tools", [])
+
+    url = f"/v1/responses/{created['id']}"
+    retrieved = client.get(url)
+    assert retrieved.status_code == 200
+    assert retrieved.json["id"] == created["id"]
+    assert retrieved.json["model"] == "gpt-4o-mini"
+    assert retrieved.json["tools"] == []
+
+
+@pytest.mark.parametrize("store", [True, False], ids=["store-true", "store-false"])
+def test_background_stream_resumes_with_a_first_turn_function_call(client, store):
+    body = {
+        "input": "weather?",
+        "tools": [{"type": "function", "name": "get_weather"}],
+        "background": True,
+        "stream": True,
+        "store": store,
+    }
+    response = client.post("/v1/responses", json=body)
+    assert response.status_code == 200
+    assert response.mimetype == "text/event-stream"
+    assert response.data == client.post("/v1/responses", json=body).data
+    created, in_progress = [
+        json.loads(line.removeprefix(b"data: "))
+        for line in response.data.splitlines()
+        if line.startswith(b"data: ")
+    ]
+    assert created["type"] == "response.created"
+    assert in_progress["type"] == "response.in_progress"
+
+    url = f"/v1/responses/{created['response']['id']}"
+    resumed = client.get(f"{url}?stream=true&starting_after={in_progress['sequence_number']}")
+    assert resumed.status_code == 200
+    assert resumed.mimetype == "text/event-stream"
+    completed = json.loads(resumed.data.splitlines()[0].removeprefix(b"data: "))
+    assert completed["type"] == "response.completed"
+    result = completed["response"]
+    assert result["tools"] == body["tools"]
+    assert result["output"][0]["type"] == "function_call"
+    assert result["output"][0]["name"] == "get_weather"
+    assert client.get(url).json == result
+
+
+@pytest.mark.parametrize("store", [True, False], ids=["store-true", "store-false"])
+def test_background_streams_preserve_tool_property_order(client, store):
+    endpoint = "/v1/responses"
+    parameters = {"type": "object"}
+    body = {
+        "input": [
+            {"role": "user", "content": "weather?"},
+            {
+                "type": "function_call",
+                "name": "get_weather",
+                "call_id": "call_mock_001",
+                "arguments": "{}",
+            },
+            {
+                "type": "function_call_output",
+                "call_id": "call_mock_001",
+                "output": "70 degrees",
+            },
+        ],
+        "tools": [
+            {"type": "function", "name": "get_weather", "parameters": parameters}
+        ],
+        "store": store,
+        "stream": True,
+        "background": True,
+    }
+
+    replays = {}
+    for property_names in (["location", "unit"], ["unit", "location"]):
+        parameters["properties"] = {
+            name: {"type": "string"} for name in property_names
+        }
+        # Flask's json= test client argument sorts keys.
+        options = {"data": json.dumps(body), "content_type": "application/json"}
+        response = client.post(endpoint, **options)
+        assert response.status_code == 200
+        assert response.mimetype == "text/event-stream"
+        assert response.data == client.post(endpoint, **options).data
+
+        created = json.loads(response.data.splitlines()[0].removeprefix(b"data: "))
+        response_id = created["response"]["id"]
+        assert response_id not in replays
+        resumed = client.get(f"{endpoint}/{response_id}?stream=true&starting_after=1")
+        assert resumed.status_code == 200
+        completed = json.loads(resumed.data.splitlines()[0].removeprefix(b"data: "))
+        assert completed["type"] == "response.completed"
+        assert completed["sequence_number"] == 2
+        properties = completed["response"]["tools"][0]["parameters"]["properties"]
+        assert list(properties) == property_names
+        assert client.get(f"{endpoint}/{response_id}").json == completed["response"]
+        replays[response_id] = resumed.data
+
+    for response_id, replay in replays.items():
+        resumed = client.get(f"{endpoint}/{response_id}?stream=true&starting_after=1")
+        assert resumed.status_code == 200
+        assert resumed.data == replay
 
 
 def test_anthropic_numbers_tool_calls_across_turns(client):
@@ -1293,6 +1614,163 @@ def test_responses_report_a_terminal_status(client):
     )
 
     assert response.json["status"] == "completed"
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_background_responses_complete_after_the_first_fetch(client, endpoint):
+    """Polling a background response finds it running, then completed."""
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "hi",
+        "background": True,
+    }
+    created = client.post(endpoint, json=body)
+    assert created.status_code == 200
+    queued = created.json
+    assert queued["status"] == "queued"
+    assert queued["output"] == []
+    assert queued["usage"] is None
+
+    url = f"{endpoint}/{queued['id']}"
+    head = client.head(url)
+    assert head.status_code == 200
+    assert head.data == b""
+
+    fetches = [client.get(url) for _ in range(3)]
+    assert [fetch.status_code for fetch in fetches] == [200, 200, 200]
+    running, completed = fetches[0].json, fetches[1].json
+    assert running["id"] == completed["id"] == queued["id"]
+    assert running["status"] == "in_progress"
+    assert running["output"] == []
+    assert running["usage"] is None
+    foreground = client.post(endpoint, json={**body, "background": False}).json
+    assert completed["status"] == "completed"
+    assert completed["output"] == foreground["output"]
+    assert completed["usage"] == foreground["usage"]
+    assert fetches[2].data == fetches[1].data
+
+    recreated = client.post(endpoint, json=body)
+    assert recreated.status_code == 200
+    assert recreated.json["id"] != queued["id"]
+    assert {**recreated.json, "id": queued["id"]} == queued
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_identical_background_creates_poll_independently(client, endpoint):
+    body = {"input": "identical background creates", "background": True}
+    first, second = [client.post(endpoint, json=body) for _ in range(2)]
+    assert first.status_code == second.status_code == 200
+    assert first.json["status"] == second.json["status"] == "queued"
+    first_id, second_id = first.json["id"], second.json["id"]
+    assert first_id != second_id
+    urls = [f"{endpoint}/{response_id}" for response_id in (first_id, second_id)]
+
+    for url in urls:
+        assert client.get(url).json["status"] == "in_progress"
+    completed = [client.get(url) for url in urls]
+    assert [fetch.json["status"] for fetch in completed] == ["completed", "completed"]
+
+    third = client.post(endpoint, json=body)
+    assert third.status_code == 200
+    assert third.json["status"] == "queued"
+    assert third.json["id"] not in (first_id, second_id)
+    assert [client.get(url).data for url in urls] == [fetch.data for fetch in completed]
+    assert client.get(f"{endpoint}/{third.json['id']}").json["status"] == "in_progress"
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+@pytest.mark.parametrize(
+    ("stream", "background"), [(False, False), (True, False), (True, True)]
+)
+def test_stored_responses_do_not_share_pending_poll_state(
+    client, endpoint, stream, background
+):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "background request",
+        "store": True,
+        "background": True,
+    }
+    queued = client.post(endpoint, json=body)
+    assert queued.status_code == 200
+    assert queued.json["status"] == "queued"
+
+    other = client.post(
+        endpoint,
+        json={
+            **body,
+            "stream": stream,
+            "background": background,
+        },
+    )
+    assert other.status_code == 200
+    if stream:
+        event = json.loads(other.data.splitlines()[0].removeprefix(b"data: "))
+        response_id = event["response"]["id"]
+    else:
+        assert other.json["status"] == "completed"
+        response_id = other.json["id"]
+
+    assert response_id != queued.json["id"]
+    fetched = client.get(f"{endpoint}/{response_id}")
+    assert fetched.status_code == 200
+    assert fetched.json["status"] == "completed"
+    assert fetched.json["output"]
+    assert fetched.json["usage"] is not None
+
+    polling_url = f"{endpoint}/{queued.json['id']}"
+    assert client.get(f"{polling_url}?stream=true").status_code == 400
+    assert client.get(polling_url).json["status"] == "in_progress"
+
+
+@pytest.mark.parametrize("endpoint", ["/v1/responses", "/openai/v1/responses"])
+def test_unstored_background_response_is_not_queued(client, endpoint):
+    body = {
+        "model": "gpt-4o-mini",
+        "input": "background request",
+        "store": True,
+        "background": True,
+    }
+    queued = client.post(endpoint, json=body)
+    assert queued.status_code == 200
+    assert queued.json["status"] == "queued"
+
+    unstored = client.post(endpoint, json={**body, "store": False})
+    assert unstored.status_code == 200
+    assert unstored.json["status"] == "completed"
+
+    url = f"{endpoint}/{queued.json['id']}"
+    fetched = client.get(url)
+    assert fetched.status_code == 200
+    assert fetched.json["status"] == "in_progress"
+    assert fetched.json["usage"] is None
+    assert client.get(url).json["status"] == "completed"
+
+
+def test_only_one_concurrent_get_observes_a_running_response(client):
+    created = client.post(
+        "/v1/responses",
+        json={"input": "concurrent polling", "background": True},
+    )
+    assert created.status_code == 200
+    assert created.json["status"] == "queued"
+    url = f"/v1/responses/{created.json['id']}"
+    start = Barrier(2, timeout=5)
+
+    def fetch():
+        start.wait()
+        return app.test_client().get(url)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(fetch)
+        second = pool.submit(fetch)
+        fetches = [first.result(), second.result()]
+
+    assert all(fetch.status_code == 200 for fetch in fetches)
+    assert sorted(fetch.json["status"] for fetch in fetches) == [
+        "completed",
+        "in_progress",
+    ]
 
 
 # qwen-agent and other Hermes/Nous-protocol clients advertise tools inside a

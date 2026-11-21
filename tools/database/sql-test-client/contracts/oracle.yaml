@@ -16,6 +16,8 @@ scenarios:
               db.system.name: oracle.db
           expect:
             count: 1
+            semantic_conventions:
+              db.namespace: {if_present: FREE}
             attributes:
               db.query.summary: SELECT conformance.items
               db.query.text: SELECT CASE WHEN count(*) >= ? THEN ? ELSE ? END FROM conformance.items
@@ -40,6 +42,8 @@ scenarios:
               db.system.name: oracle.db
           expect:
             count: 1
+            semantic_conventions:
+              db.namespace: {if_present: FREE}
             attributes:
               db.query.summary: SELECT conformance.items
               db.query.text: SELECT name FROM conformance.items WHERE id = ?
@@ -63,6 +67,8 @@ scenarios:
               db.system.name: oracle.db
           expect:
             count: 1
+            semantic_conventions:
+              db.namespace: {if_present: FREE}
             attributes:
               db.operation.batch.size: 2
               db.query.summary: BATCH INSERT conformance.items
@@ -85,6 +91,8 @@ scenarios:
               db.system.name: oracle.db
           expect:
             count: 1
+            semantic_conventions:
+              db.namespace: {if_present: FREE}
             attributes:
               db.query.summary: CALL conformance.noop
               db.query.text: CALL conformance.noop()

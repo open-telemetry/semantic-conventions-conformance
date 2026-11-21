@@ -120,6 +120,22 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'os.type' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "os.type"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'os.version' does not exist in the registry.",
+      "signal_type": "resource",
+      "context": {
+        "attribute_key": "os.version"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'gen_ai.system' does not exist in the registry.",
       "signal_type": "span",
       "signal_name": "chat gpt-4o-audio-preview",

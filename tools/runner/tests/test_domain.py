@@ -125,13 +125,15 @@ def test_a_package_registry_drives_the_coverage_model(
         "  inference:\n"
         "    run: python inference.py\n"
     )
-    resolved: list[Path] = []
+    resolved: list[tuple[Path, str | None]] = []
 
     monkeypatch.setattr(_domain, "check_weaver", lambda: None)
     monkeypatch.setattr(
         _domain,
-        "resolve_coverage_model",
-        lambda registry, output: resolved.append(registry),
+        "coverage_model_for",
+        lambda registry, *, pin=None: (
+            resolved.append((registry, pin)) or tmp_path / "model.json"
+        ),
     )
     monkeypatch.setattr(_domain, "load_coverage_model", lambda path: {})
 
@@ -145,4 +147,4 @@ def test_a_package_registry_drives_the_coverage_model(
     with domain().session(directory):
         pass
 
-    assert resolved == [directory / "model"]
+    assert resolved == [(directory / "model", None)]

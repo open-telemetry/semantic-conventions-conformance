@@ -79,6 +79,8 @@ scenarios:
             db.system.name: postgresql
         expect:
           count: 1
+          semantic_conventions:
+            db.response.status_code: 42P01
           attributes:
             db.namespace: conformance
             db.query.summary: SELECT conformance.missing_items

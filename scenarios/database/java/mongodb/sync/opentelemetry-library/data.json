@@ -45,5 +45,22 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.response.status_code expected '2' on every span, saw [None]",
+      "signal_type": "span",
+      "signal_name": "find items",
+      "context": {
+        "attribute_key": "db.response.status_code",
+        "match": {
+          "attributes": {
+            "db.operation.name": "find",
+            "db.system.name": "mongodb"
+          }
+        },
+        "scenario": "error"
+      }
+    }
+  ]
 }

@@ -46,5 +46,21 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.response.status_code expected '42P01' on every span, saw [None]",
+      "signal_type": "span",
+      "signal_name": "SELECT conformance.missing_items",
+      "context": {
+        "attribute_key": "db.response.status_code",
+        "match": {
+          "attributes": {
+            "db.system.name": "postgresql"
+          }
+        },
+        "scenario": "error"
+      }
+    }
+  ]
 }

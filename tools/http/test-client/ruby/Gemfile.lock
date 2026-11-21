@@ -6,7 +6,18 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    minitest (5.27.0)
+    drb (2.2.3)
+    minitest (6.1.0)
+      drb (~> 2.0)
+      prism (>= 1.5, < 3)
+    prism (2.1.0)
+    prism (2.1.0-aarch64-linux-gnu)
+    prism (2.1.0-aarch64-linux-musl)
+    prism (2.1.0-arm64-darwin)
+    prism (2.1.0-x64-mingw-ucrt)
+    prism (2.1.0-x86_64-darwin)
+    prism (2.1.0-x86_64-linux-gnu)
+    prism (2.1.0-x86_64-linux-musl)
     rake (13.4.2)
 
 PLATFORMS
@@ -22,7 +33,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  minitest (~> 5.0)
+  minitest (~> 6.0)
   opentelemetry-conformance-http!
   rake (~> 13.0)
 

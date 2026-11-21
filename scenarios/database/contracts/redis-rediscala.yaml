@@ -83,6 +83,8 @@ scenarios:
             db.operation.name: LPUSH
         expect:
           count: 1
+          semantic_conventions:
+            db.response.status_code: WRONGTYPE
           attributes:
             error.type: redis.actors.ReplyErrorException
             server.address: 127.0.0.1

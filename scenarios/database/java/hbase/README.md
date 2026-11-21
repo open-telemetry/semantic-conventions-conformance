@@ -133,9 +133,8 @@ Stable database span and metric coverage is empty; entity coverage and the real
 findings remain recorded. Raw per-workload reports are written under
 `hbase-client/native/output/weaver-reports/` when running the command above.
 
-All five scenarios satisfy their native telemetry expectations. Strict runs
-report 52 violations for GET, 52 for PUT, 47 for SCAN, 53 for BATCH, and 48 for
-the missing-table GET, and exit
-nonzero for those findings. CI's `--report-only` mode reports the same violations
+The batch contract also records the missing stable operation and batch size
+as semantic findings. Strict runs exit nonzero for findings.
+CI's `--report-only` mode reports the same violations
 as warnings and exits zero. Missing native workload spans, incorrect attributes,
 unexpected events, or workload crashes still fail in both modes.

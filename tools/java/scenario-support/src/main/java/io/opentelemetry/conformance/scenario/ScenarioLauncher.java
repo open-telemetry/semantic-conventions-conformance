@@ -12,7 +12,10 @@ import java.util.function.IntConsumer;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-/** Runs a scenario, then controls an agent-owned SDK before normal JVM shutdown. */
+/**
+ * Runs a scenario once {@code otel-conformance-obi}'s gate, if any, is released, then controls an
+ * agent-owned SDK before normal JVM shutdown.
+ */
 public final class ScenarioLauncher {
   private static final String AGENT_CONTROL_REQUIRED = "otel.conformance.agent.control.required";
   private static final String AGENT_CONTROL_NAME = "io.opentelemetry.conformance:type=AgentControl";
@@ -25,12 +28,17 @@ public final class ScenarioLauncher {
   }
 
   static void run(String[] arguments, IntConsumer exit) throws Exception {
+    run(arguments, exit, System.getenv(ScenarioGate.GATE_VARIABLE));
+  }
+
+  static void run(String[] arguments, IntConsumer exit, String gate) throws Exception {
     if (arguments.length == 0) {
       throw new IllegalArgumentException("a scenario main class is required");
     }
 
     Throwable scenarioFailure = null;
     try {
+      ScenarioGate.waitAtGate(gate);
       invokeScenario(arguments[0], Arrays.copyOfRange(arguments, 1, arguments.length));
     } catch (Throwable failure) {
       scenarioFailure = failure;

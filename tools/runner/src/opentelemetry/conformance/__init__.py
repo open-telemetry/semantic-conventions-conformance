@@ -24,6 +24,7 @@ failing.
 from ._cli import main
 from ._coverage import coverage
 from ._domain import Domain
+from ._model import coverage_model_for
 from ._model import load as load_coverage_model
 from ._model import resolve as resolve_coverage_model
 from ._registry import (
@@ -65,6 +66,7 @@ __all__ = [
     "WeaverNotInstalledError",
     "check_weaver",
     "coverage",
+    "coverage_model_for",
     "ExpectedViolation",
     "InstrumentationScopeExpectation",
     "PackageSpec",

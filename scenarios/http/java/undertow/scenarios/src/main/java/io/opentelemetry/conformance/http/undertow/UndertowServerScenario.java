@@ -20,6 +20,10 @@ import java.nio.charset.StandardCharsets;
 public final class UndertowServerScenario {
   private UndertowServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     PathTemplateHandler routes = Handlers.pathTemplate();
     routes.add("/health", UndertowServerScenario::answer);

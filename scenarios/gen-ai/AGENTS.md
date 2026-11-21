@@ -82,7 +82,11 @@ A scenario that needs a field the mock does not serve is a change to
 branch in the provider's blueprint plus a test. It is never a workaround in
 the scenario. The response must stay deterministic: the same request has to
 produce the same bytes, because that is what makes a run's coverage
-reproducible.
+reproducible. Stored OpenAI responses are the exception, because a `GET` has
+to return what an earlier create stored. A non-streaming `background` create
+also gets its own ID, and only the first `GET` of that ID reports
+`in_progress`. A scenario that makes the same calls in the same order still
+gets the same bytes on every run.
 
 ## Before opening a PR
 

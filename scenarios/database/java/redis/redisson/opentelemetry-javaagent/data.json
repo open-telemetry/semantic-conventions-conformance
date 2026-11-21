@@ -66,5 +66,22 @@
       ]
     }
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "contract_attribute_mismatch",
+      "message": "db.response.status_code expected 'WRONGTYPE' on every span, saw [None]",
+      "signal_type": "span",
+      "signal_name": "LPUSH 127.0.0.1:${DATABASE_PORT}",
+      "context": {
+        "attribute_key": "db.response.status_code",
+        "match": {
+          "attributes": {
+            "db.operation.name": "LPUSH"
+          },
+          "type": "db.redis.client"
+        },
+        "scenario": "error"
+      }
+    }
+  ]
 }

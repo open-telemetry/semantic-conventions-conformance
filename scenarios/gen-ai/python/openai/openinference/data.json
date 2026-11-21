@@ -570,12 +570,12 @@
     },
     {
       "id": "genai_content_schema",
-      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"type\":\"web_search\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"external_web_access\":null,\"filters\":null,\"search_context_size\":null,\"type\":\"web_search\",\"user_location\":null} is not valid under any of the schemas listed in the 'anyOf' keyword",
       "signal_type": "span",
       "signal_name": "Response",
       "context": {
         "attribute": "gen_ai.tool.definitions",
-        "errors": "{\"type\":\"web_search\"} is not valid under any of the schemas listed in the 'anyOf' keyword"
+        "errors": "{\"external_web_access\":null,\"filters\":null,\"search_context_size\":null,\"type\":\"web_search\",\"user_location\":null} is not valid under any of the schemas listed in the 'anyOf' keyword"
       }
     },
     {

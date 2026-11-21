@@ -5,7 +5,7 @@
   "description": "Browser XMLHttpRequest measured through @opentelemetry/instrumentation-xml-http-request.",
   "license": "Apache-2.0",
   "dependencies": {
-    "@opentelemetry/instrumentation-xml-http-request": "0.300.0",
+    "@opentelemetry/instrumentation-xml-http-request": "0.301.0",
     "@otel-conformance/browser-runner": "file:../../../../../tools/js/browser-runner",
     "@otel-conformance/http-test-client": "file:../../../../../tools/http/test-client/js",
     "@otel-conformance/xml-http-request-scenarios": "*"

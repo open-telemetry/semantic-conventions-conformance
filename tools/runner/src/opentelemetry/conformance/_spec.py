@@ -34,6 +34,7 @@ class AttributeMatcher:
     equals: object | None = None
     present: bool | None = None
     distinct: int | None = None
+    optional: bool = False
 
     def describe(self) -> str:
         if self.present is not None:
@@ -118,6 +119,9 @@ class SpanExpectation:
         default_factory=dict[str, AttributeMatcher]
     )
     instrumentation_scope: InstrumentationScopeExpectation | None = None
+    semantic_conventions: Mapping[str, AttributeMatcher] = field(
+        default_factory=dict[str, AttributeMatcher]
+    )
 
     def describe(self) -> str:
         return self.match.describe()
@@ -392,6 +396,17 @@ def _parse_scope_field(value: object, where: str) -> AttributeMatcher:
     return AttributeMatcher(present=matcher["present"])
 
 
+def _parse_semantic_matcher(value: object, where: str) -> AttributeMatcher:
+    if isinstance(value, Mapping) and "if_present" in value:
+        matcher = cast("Mapping[str, object]", value)
+        _check_keys(matcher, ("if_present",), where)
+        expected = matcher["if_present"]
+        if isinstance(expected, Mapping):
+            raise SpecError(f"{where}.if_present: expected an attribute value")
+        return AttributeMatcher(equals=expected, optional=True)
+    return _parse_matcher(cast("object", value), where)
+
+
 def _parse_instrumentation_scope(
     value: object, where: str
 ) -> InstrumentationScopeExpectation:
@@ -443,7 +458,12 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
     expect = _require_mapping(span["expect"], f"{where}.expect")
     _check_keys(
         expect,
-        ("count", "attributes", "instrumentation_scope"),
+        (
+            "count",
+            "attributes",
+            "instrumentation_scope",
+            "semantic_conventions",
+        ),
         f"{where}.expect",
     )
     count = expect.get("count")
@@ -454,12 +474,26 @@ def _parse_span(value: object, where: str) -> SpanExpectation:
     attributes = _require_mapping(
         expect.get("attributes") or {}, f"{where}.expect.attributes"
     )
+    semantic_conventions: Mapping[str, object] = (
+        _require_mapping(
+            expect["semantic_conventions"],
+            f"{where}.expect.semantic_conventions",
+        )
+        if "semantic_conventions" in expect
+        else {}
+    )
     return SpanExpectation(
         match=match,
         count=count,
         attributes={
             name: _parse_matcher(matcher, f"{where}.expect.attributes.{name}")
             for name, matcher in attributes.items()
+        },
+        semantic_conventions={
+            name: _parse_semantic_matcher(
+                matcher, f"{where}.expect.semantic_conventions.{name}"
+            )
+            for name, matcher in semantic_conventions.items()
         },
         instrumentation_scope=_parse_instrumentation_scope(
             expect["instrumentation_scope"],

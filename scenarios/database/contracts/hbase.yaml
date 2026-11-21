@@ -139,6 +139,9 @@ scenarios:
             db.hbase.table: conformance:items
         expect:
           count: 1
+          semantic_conventions:
+            db.operation.name: BATCH PUT
+            db.operation.batch.size: 2
           attributes:
             db.name: conformance
             db.hbase.container_operations: [PUT]

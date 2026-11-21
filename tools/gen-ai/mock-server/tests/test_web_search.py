@@ -43,17 +43,30 @@ def test_openai_web_search_is_a_hosted_call(
     assert result["usage"]["output_tokens"] > 0
 
 
+@pytest.mark.parametrize(
+    "store_option", [{}, {"store": True}], ids=["default", "explicit"]
+)
 def test_openai_can_fetch_a_stored_web_search_response(
-    client: FlaskClient,
+    client: FlaskClient, store_option: dict[str, bool]
 ) -> None:
-    response = client.post(
-        "/v1/responses",
-        json={"input": "hi", "tools": [{"type": "web_search"}], "store": True},
-    )
-    assert (
-        client.get(f"/v1/responses/{response.json['id']}").json
-        == response.json
-    )
+    tools = [{"type": "web_search", "search_context_size": "low"}]
+    body = {"input": "hi", "tools": tools, **store_option}
+    response = client.post("/v1/responses", json=body)
+    assert response.status_code == 200
+    assert response.json["tools"] == tools
+    other_body = {
+        **body,
+        "tools": [{"type": "web_search", "search_context_size": "high"}],
+    }
+    other = client.post("/v1/responses", json=other_body)
+    assert other.status_code == 200
+    assert response.json["id"] != other.json["id"]
+    for created in (response, other):
+        retrieved = client.get(f"/v1/responses/{created.json['id']}")
+        assert retrieved.status_code == 200
+        assert retrieved.json == created.json
+    assert other.data == client.post("/v1/responses", json=other_body).data
+    assert response.data == client.post("/v1/responses", json=body).data
 
 
 @pytest.mark.parametrize(

@@ -67,6 +67,8 @@ scenarios:
             db.system.name: cassandra
         expect:
           count: 1
+          semantic_conventions:
+            db.response.status_code: "8704"
           attributes:
             db.namespace: conformance
             db.operation.name: SELECT

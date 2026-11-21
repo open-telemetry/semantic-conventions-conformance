@@ -15,12 +15,6 @@
     "dns.lookup.duration": [
       "dns.question.name"
     ],
-    "http.client.active_requests": [
-      "http.request.method",
-      "server.address",
-      "server.port",
-      "url.scheme"
-    ],
     "http.client.connection.duration": [
       "network.peer.address",
       "network.protocol.version",

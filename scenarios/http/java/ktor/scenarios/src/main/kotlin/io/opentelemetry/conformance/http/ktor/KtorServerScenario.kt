@@ -23,6 +23,11 @@ import io.opentelemetry.conformance.scenario.ScenarioLifecycle
 
 /** Hosts the shared HTTP exchanges on Ktor 3 until the driver says stop. */
 object KtorServerScenario {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        run {}
+    }
+
     fun run(configureTelemetry: Application.() -> Unit) {
         val server =
             embeddedServer(

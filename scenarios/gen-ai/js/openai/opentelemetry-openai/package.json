@@ -6,6 +6,6 @@
   "dependencies": {
     "@otel-conformance/openai-scenarios": "*",
     "@otel-conformance/scenario-sdk": "file:../../../../../tools/js/scenario-sdk",
-    "@opentelemetry/instrumentation-openai": "0.21.0"
+    "@opentelemetry/instrumentation-openai": "0.23.0"
   }
 }

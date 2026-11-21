@@ -30,6 +30,10 @@ import org.apache.pekko.http.javadsl.unmarshalling.Unmarshaller;
 public final class PekkoHttpServerScenario {
   private PekkoHttpServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     ActorSystem system = ActorSystem.create("http-conformance");
     try {
