@@ -44,7 +44,9 @@ The traffic is shared because both mechanisms measure the same Armeria
 behavior. Bootstrap and runtime classpaths are not: the agent launchers use
 plain Armeria and attach the agent, while the library launchers use the shared
 [`scenario-sdk`](../../tools/java/scenario-sdk) project for SDK lifecycle and
-install their framework-specific decorators. The version-pinned Gradle build
+install their framework-specific decorators. The `obi` launchers use neither:
+they wait at [`otel-conformance-obi`](../../tools/obi)'s gate and are
+instrumented from outside. The version-pinned Gradle build
 they all belong to is rooted at `java/`, which also pulls in the projects
 under [`tools/java`](../../tools/java) that any domain's scenarios share.
 

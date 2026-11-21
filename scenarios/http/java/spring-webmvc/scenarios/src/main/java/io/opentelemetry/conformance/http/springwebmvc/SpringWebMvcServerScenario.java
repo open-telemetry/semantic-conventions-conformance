@@ -34,6 +34,14 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 public final class SpringWebMvcServerScenario {
   private SpringWebMvcServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
+  public static void run() throws Exception {
+    run((request, response, chain) -> chain.doFilter(request, response));
+  }
+
   public static void run(Filter telemetryFilter) throws Exception {
     Tomcat tomcat = new Tomcat();
     tomcat.setHostname("127.0.0.1");

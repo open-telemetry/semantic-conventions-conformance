@@ -1,10 +1,13 @@
 {
   "spans": {
     "http.server": [
+      "client.address",
       "error.type",
       "http.request.method",
       "http.response.status_code",
       "http.route",
+      "network.peer.address",
+      "network.peer.port",
       "network.protocol.version",
       "server.address",
       "server.port",
@@ -21,6 +24,7 @@
       "url.scheme"
     ],
     "http.server.request.duration": [
+      "error.type",
       "http.request.method",
       "http.response.status_code",
       "http.route",
@@ -68,46 +72,6 @@
         "expected": {
           "present": true
         }
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /health' is missing recommended attribute 'client.address'",
-      "signal_type": "span",
-      "signal_name": "GET /health",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /status/{code}' is missing recommended attribute 'client.address'",
-      "signal_type": "span",
-      "signal_name": "GET /status/{code}",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'GET /users/{userId}' is missing recommended attribute 'client.address'",
-      "signal_type": "span",
-      "signal_name": "GET /users/{userId}",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
-      }
-    },
-    {
-      "id": "recommended_attribute_not_present",
-      "message": "Span 'POST /items' is missing recommended attribute 'client.address'",
-      "signal_type": "span",
-      "signal_name": "POST /items",
-      "context": {
-        "attribute_key": "client.address",
-        "kind": "server"
       }
     }
   ]

@@ -29,7 +29,10 @@ and supplies its URL as `${MOCK_SERVER_URL}`.
 
 Responses depend on the request's model, tools, and streaming options. Most
 endpoints return fixed IDs and token counts; resource-creation endpoints may
-assign new IDs. Streaming formats follow the provider's API.
+assign new IDs. Streaming formats follow the provider's API. A stored OpenAI
+Responses `background` request answered with a message, without streaming,
+comes back `queued`. Its first `GET` reports `in_progress` with no output or
+usage, and later `GET`s return the completed response. Storage is on by default.
 
 ## Google interactions and hosted tools
 
@@ -45,12 +48,22 @@ grounding metadata and a text answer, plus `toolCall`/`toolResponse` parts when
 Interaction creation requests with `google_search` return a search call, its
 result, and model output. The server does not execute code or search the web.
 
+## OpenAI
+
 For OpenAI chat completions, streamed or not, a request whose last user message contains
 `[MOCK_EMPTY_COMPLETION]` gets an empty completion whose usage reports `completion_tokens: 0`, and one
 whose last user message contains `[MOCK_BAD_REQUEST]` gets a 400 `invalid_request_error` with no usage.
 Markers in earlier turns or in system, assistant, or tool messages are ignored.
 They exist so a scenario can exercise the zero-output and failed-call paths of
 token usage recording.
+
+`POST /v1/responses` stores responses and their tool definitions by default.
+Set `store: false` to skip storage unless the request creates a background
+stream. The mock keeps background stream responses in memory until it exits so
+clients can resume them with `stream=true&starting_after=<seq>`, even when the
+response requests a function call.
+`GET /v1/responses/{id}` returns the stored response if one exists. If no stored
+response matches the ID, it returns a canned response with `tools: []`.
 
 ## Adding a response
 

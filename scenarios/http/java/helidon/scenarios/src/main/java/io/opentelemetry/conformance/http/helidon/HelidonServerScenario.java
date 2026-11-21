@@ -20,6 +20,10 @@ import java.util.function.Consumer;
 public final class HelidonServerScenario {
   private HelidonServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(builder -> {});
   }

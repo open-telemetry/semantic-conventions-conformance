@@ -9,6 +9,7 @@
       "gen_ai.response.finish_reasons",
       "gen_ai.response.id",
       "gen_ai.response.model",
+      "gen_ai.tool.definitions",
       "gen_ai.usage.cache_read.input_tokens",
       "gen_ai.usage.input_tokens",
       "gen_ai.usage.output_tokens"
@@ -461,6 +462,15 @@
       "signal_name": "response",
       "context": {
         "attribute_key": "llm.token_count.total"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "response",
+      "context": {
+        "attribute_key": "llm.tools.0.tool.json_schema"
       }
     },
     {

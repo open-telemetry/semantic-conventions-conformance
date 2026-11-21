@@ -18,6 +18,10 @@ import ratpack.server.RatpackServer;
 public final class RatpackServerScenario {
   private RatpackServerScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(registry -> {});
   }
