@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-runner: http-conformance
+runner: browser-conformance
 instrumented_library: chrome
 instrumentation_library: "@opentelemetry/browser-instrumentation"
 

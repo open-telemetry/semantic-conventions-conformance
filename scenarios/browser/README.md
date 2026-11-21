@@ -9,12 +9,9 @@ js/<browser>/<instrumentation>/
     data.json           the coverage it produced, committed
 ```
 
-No runner package covers browser conventions yet. These scenarios declare
-`runner: http-conformance` because that runner pins the upstream registry
-([`versions.env`](../../tools/http/runner/src/http_conformance/versions.env)),
-which defines the `exception` and `browser.web_vital` events, and because its
-span classifier only acts on spans carrying `http.request.method`. The report
-files a target by its path, so these appear under `browser`.
+These scenarios use [`browser-conformance`](../../tools/browser/runner), which
+pins the upstream registry independently of the HTTP domain. It checks
+`exception` and `browser.web_vital` events without classifying spans.
 
 [`tools/js/browser-runner`](../../tools/js/browser-runner), which the HTTP
 Fetch scenario also uses, serves each page and relays its OTLP exports to the

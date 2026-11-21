@@ -13,6 +13,7 @@ against expectations declared in YAML.
 | [`tools/gen-ai/`](tools/gen-ai) | what makes a run a *GenAI* run: the registry pin, the advice policies, and a mock LLM server so scenarios are deterministic without cassettes |
 | [`tools/database/`](tools/database) | what makes a run a *database* run: the upstream registry pin, database span classification, and ephemeral database backends |
 | [`tools/http/`](tools/http) | the same for HTTP: the upstream registry pin, and the test client that drives both sides of the domain |
+| [`tools/browser/runner/`](tools/browser/runner) | the browser event registry pin, independent of the HTTP domain |
 | [`tools/python/`](tools/python) | the launcher a Python scenario runs under when programmatic configuration is needed for a scenario |
 | [`tools/java/`](tools/java) | what every JVM scenario shares, in any domain: the launcher that builds and runs one, the Gradle convention plugins, and the SDK bootstrap |
 | [`tools/js/`](tools/js) | what every Node scenario shares: the launcher that installs a build, and the SDK bootstrap |
