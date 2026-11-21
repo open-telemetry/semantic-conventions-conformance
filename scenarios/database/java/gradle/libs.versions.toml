@@ -3,29 +3,29 @@
 
 [versions]
 cassandra-driver = "4.19.4"
-elasticsearch-java = "9.5.5"
+elasticsearch-java = "9.5.6"
 hbase = "3.0.0"
-jackson = "2.22.4"
+jackson = "2.23.0"
 mariadb = "4.0.0"
 jedis = "8.0.2"
 lettuce = "7.9.0.RELEASE"
 mssql = "13.6.2.jre11"
 # The modern MongoDB sync and Reactive Streams drivers are released
 # together from the same source tree, so one version covers both.
-mongodb-driver = "5.14.0"
-mysql = "26.7.0"
-opentelemetry = "1.67.0"
+mongodb-driver = "5.15.0"
+mysql = "26.10.0"
+opentelemetry = "1.68.0"
 # The agent and the instrumentation BOM are one release, published under two
 # coordinates, so these two move together or the library scenarios measure a
 # different instrumentation from the agent scenarios.
-opentelemetry-instrumentation = "2.33.1"
-opentelemetry-instrumentation-alpha = "2.33.1-alpha"
-oracle = "23.26.3.0.0"
+opentelemetry-instrumentation = "2.34.0"
+opentelemetry-instrumentation-alpha = "2.34.0-alpha"
+oracle = "23.26.4.0.0"
 postgresql = "42.7.14"
-r2dbc-postgresql = "1.1.2.RELEASE"
+r2dbc-postgresql = "1.1.3.RELEASE"
 r2dbc-spi = "1.0.0.RELEASE"
 reactivestreams = "1.0.4"
-reactor = "3.8.7"
+reactor = "3.9.0"
 rediscala = "1.17.0"
 redisson = "4.8.0"
 scala = "2.13.18"
