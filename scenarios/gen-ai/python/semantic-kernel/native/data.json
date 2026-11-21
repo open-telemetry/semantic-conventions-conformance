@@ -1,0 +1,204 @@
+{
+  "spans": {
+    "gen_ai.client.inference": [
+      "gen_ai.operation.name",
+      "gen_ai.request.max_tokens",
+      "gen_ai.request.model",
+      "gen_ai.request.temperature",
+      "gen_ai.response.id",
+      "gen_ai.usage.input_tokens",
+      "gen_ai.usage.output_tokens",
+      "server.address"
+    ],
+    "gen_ai.execute_tool.internal": [
+      "gen_ai.operation.name",
+      "gen_ai.tool.call.arguments",
+      "gen_ai.tool.call.id",
+      "gen_ai.tool.call.result",
+      "gen_ai.tool.description",
+      "gen_ai.tool.name"
+    ],
+    "gen_ai.invoke_agent.internal": [
+      "gen_ai.agent.name",
+      "gen_ai.input.messages",
+      "gen_ai.operation.name",
+      "gen_ai.output.messages",
+      "gen_ai.tool.definitions"
+    ]
+  },
+  "events": {},
+  "metrics": {},
+  "entities": {},
+  "findings": [
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'semantic_kernel.connectors.ai.chat_completion_client_base' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "semantic_kernel.connectors.ai.chat_completion_client_base",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'semantic_kernel.functions.kernel_function' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "semantic_kernel.functions.kernel_function",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'semantic_kernel.utils.telemetry.agent_diagnostics.decorators' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "semantic_kernel.utils.telemetry.agent_diagnostics.decorators",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "instrumentation_scope_schema_url_missing",
+      "message": "Instrumentation scope 'semantic_kernel.utils.telemetry.model_diagnostics.decorators' does not have schema_url.",
+      "signal_type": "instrumentation_scope",
+      "signal_name": "semantic_kernel.utils.telemetry.model_diagnostics.decorators",
+      "context": {
+        "actual": null,
+        "expected": {
+          "present": true
+        }
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'semantic_kernel.function.name' does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "semantic_kernel.function.invocation.duration",
+      "context": {
+        "attribute_key": "semantic_kernel.function.name"
+      }
+    },
+    {
+      "id": "missing_metric",
+      "message": "Metric does not exist in the registry.",
+      "signal_type": "metric",
+      "signal_name": "semantic_kernel.function.invocation.duration"
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'sk.available_functions' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "AutoFunctionInvocationLoop",
+      "context": {
+        "attribute_key": "sk.available_functions"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.response.finish_reason' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.response.finish_reason"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'gen_ai.provider.name'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "missing_attribute": "gen_ai.provider.name",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'chat gpt-4o-mini' (operation 'chat') is missing expected attribute 'gen_ai.response.model'",
+      "signal_type": "span",
+      "signal_name": "chat gpt-4o-mini",
+      "context": {
+        "missing_attribute": "gen_ai.response.model",
+        "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.output.messages' value does not conform to the GenAI schema: \"parts\" is a required property",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute": "gen_ai.output.messages",
+        "errors": "\"parts\" is a required property"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"function\":{\"description\":\"Get the current weather in a given location.\",\"name\":\"WeatherPlugin-get_current_weather\",\"parameters\":{\"properties\":{\"location\":{\"description\":\"The city name.\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}},\"type\":\"function\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute": "gen_ai.tool.definitions",
+        "errors": "{\"function\":{\"description\":\"Get the current weather in a given location.\",\"name\":\"WeatherPlugin-get_current_weather\",\"parameters\":{\"properties\":{\"location\":{\"description\":\"The city name.\",\"type\":\"string\"}},\"required\":[\"location\"],\"type\":\"object\"}},\"type\":\"function\"} is not valid under any of the schemas listed in the 'anyOf' keyword"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.response.finish_reasons'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.response.finish_reasons",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.input_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.input_tokens",
+        "operation": "invoke_agent"
+      }
+    },
+    {
+      "id": "genai_expected_attribute_missing",
+      "message": "Span 'invoke_agent weather_assistant' (operation 'invoke_agent') is missing expected attribute 'gen_ai.usage.output_tokens'",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "missing_attribute": "gen_ai.usage.output_tokens",
+        "operation": "invoke_agent"
+      }
+    }
+  ]
+}
