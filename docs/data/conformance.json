@@ -34895,10 +34895,10 @@
         {
           "context": {
             "attribute": "gen_ai.tool.definitions",
-            "errors": "{\"type\":\"web_search\"} is not valid under any of the schemas listed in the 'anyOf' keyword"
+            "errors": "{\"external_web_access\":null,\"filters\":null,\"search_context_size\":null,\"type\":\"web_search\",\"user_location\":null} is not valid under any of the schemas listed in the 'anyOf' keyword"
           },
           "id": "genai_content_schema",
-          "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"type\":\"web_search\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
+          "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"external_web_access\":null,\"filters\":null,\"search_context_size\":null,\"type\":\"web_search\",\"user_location\":null} is not valid under any of the schemas listed in the 'anyOf' keyword",
           "signal_name": "Response",
           "signal_type": "span"
         },
@@ -37007,6 +37007,15 @@
         },
         {
           "context": {
+            "attribute_key": "llm.tools.0.tool.json_schema"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'llm.tools.0.tool.json_schema' does not exist in the registry.",
+          "signal_name": "response",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "openinference.span.kind"
           },
           "id": "missing_attribute",
@@ -37179,7 +37188,7 @@
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 2
+              "emitted": 3
             },
             "recommended": {
               "declared": 12,
@@ -37203,6 +37212,7 @@
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
@@ -37217,6 +37227,7 @@
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
+              "gen_ai.tool.definitions",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens"
@@ -37245,7 +37256,6 @@
             "gen_ai.request.top_p",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
-            "gen_ai.tool.definitions",
             "gen_ai.usage.audio.cache_read.input_tokens",
             "gen_ai.usage.audio.input_tokens",
             "gen_ai.usage.audio.output_tokens",
@@ -37372,7 +37382,7 @@
         }
       ],
       "summary": {
-        "findings": 63,
+        "findings": 64,
         "recommended": {
           "declared": 21,
           "emitted": 5
@@ -37454,6 +37464,16 @@
           "id": "genai_span_name_format",
           "message": "execute_tool span name should be 'execute_tool get_current_weather', got 'get_current_weather.tool'",
           "signal_name": "get_current_weather.tool",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute": "gen_ai.tool.definitions",
+            "errors": "{\"function\":{\"description\":\"Get the current weather in a given location.\",\"name\":\"get_current_weather\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"location\":{\"title\":\"Location\",\"type\":\"string\"}},\"required\":[\"location\"],\"title\":\"get_current_weather_args\",\"type\":\"object\"}},\"type\":\"function\"} is not valid under any of the schemas listed in the 'anyOf' keyword"
+          },
+          "id": "genai_content_schema",
+          "message": "Attribute 'gen_ai.tool.definitions' value does not conform to the GenAI schema: {\"function\":{\"description\":\"Get the current weather in a given location.\",\"name\":\"get_current_weather\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"location\":{\"title\":\"Location\",\"type\":\"string\"}},\"required\":[\"location\"],\"title\":\"get_current_weather_args\",\"type\":\"object\"}},\"type\":\"function\"} is not valid under any of the schemas listed in the 'anyOf' keyword",
+          "signal_name": "openai.response",
           "signal_type": "span"
         },
         {
@@ -37585,7 +37605,7 @@
             },
             "opt_in": {
               "declared": 5,
-              "emitted": 2
+              "emitted": 3
             },
             "recommended": {
               "declared": 12,
@@ -37608,6 +37628,7 @@
             "gen_ai.response.finish_reasons",
             "gen_ai.response.id",
             "gen_ai.response.model",
+            "gen_ai.tool.definitions",
             "gen_ai.usage.cache_read.input_tokens",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens"
@@ -37621,6 +37642,7 @@
               "gen_ai.response.finish_reasons",
               "gen_ai.response.id",
               "gen_ai.response.model",
+              "gen_ai.tool.definitions",
               "gen_ai.usage.cache_read.input_tokens",
               "gen_ai.usage.input_tokens",
               "gen_ai.usage.output_tokens"
@@ -37650,7 +37672,6 @@
             "gen_ai.request.top_p",
             "gen_ai.response.time_to_first_chunk",
             "gen_ai.system_instructions",
-            "gen_ai.tool.definitions",
             "gen_ai.usage.audio.cache_read.input_tokens",
             "gen_ai.usage.audio.input_tokens",
             "gen_ai.usage.audio.output_tokens",
@@ -37776,7 +37797,7 @@
         }
       ],
       "summary": {
-        "findings": 18,
+        "findings": 19,
         "recommended": {
           "declared": 21,
           "emitted": 5
