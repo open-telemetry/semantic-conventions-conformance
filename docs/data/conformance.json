@@ -42752,8 +42752,8 @@
             "kind": "server"
           },
           "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /health' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /health",
+          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET",
           "signal_type": "span"
         },
         {
@@ -42762,28 +42762,8 @@
             "kind": "server"
           },
           "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /status/*' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /status/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /users/*' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /users/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "POST /items",
+          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "POST",
           "signal_type": "span"
         }
       ],
@@ -42803,7 +42783,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -42829,7 +42809,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "server.address",
@@ -42846,7 +42825,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "server.address",
@@ -42866,6 +42844,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -42987,7 +42966,7 @@
         }
       ],
       "summary": {
-        "findings": 10,
+        "findings": 8,
         "recommended": {
           "declared": 8,
           "emitted": 3
@@ -43729,8 +43708,8 @@
             "kind": "server"
           },
           "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /health' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /health",
+          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET",
           "signal_type": "span"
         },
         {
@@ -43739,28 +43718,8 @@
             "kind": "server"
           },
           "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /status/*' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /status/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /users/*' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /users/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "server"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "POST /items",
+          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "POST",
           "signal_type": "span"
         }
       ],
@@ -43780,7 +43739,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -43806,7 +43765,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "server.address",
@@ -43823,7 +43781,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "server.address",
@@ -43843,6 +43800,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -43964,7 +43922,7 @@
         }
       ],
       "summary": {
-        "findings": 10,
+        "findings": 8,
         "recommended": {
           "declared": 8,
           "emitted": 3
@@ -44885,7 +44843,7 @@
           },
           "id": "deprecated",
           "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
-          "signal_name": "GET /status/*",
+          "signal_name": "GET",
           "signal_type": "span"
         },
         {
@@ -44894,8 +44852,8 @@
             "kind": "client"
           },
           "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /status/*' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /status/*",
+          "message": "Span 'GET' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "GET",
           "signal_type": "span"
         },
         {
@@ -44906,7 +44864,7 @@
           },
           "id": "deprecated",
           "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
-          "signal_name": "GET /users/*",
+          "signal_name": "POST",
           "signal_type": "span"
         },
         {
@@ -44915,29 +44873,8 @@
             "kind": "client"
           },
           "id": "recommended_attribute_not_present",
-          "message": "Span 'GET /users/*' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "GET /users/*",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "service.peer.name",
-            "deprecation_note": "Use `server.service.name` on the client side or `client.service.name` on the server side.",
-            "deprecation_reason": "uncategorized"
-          },
-          "id": "deprecated",
-          "message": "Attribute 'service.peer.name' is deprecated; reason = 'uncategorized', note = 'Use `server.service.name` on the client side or `client.service.name` on the server side.'.",
-          "signal_name": "POST /items",
-          "signal_type": "span"
-        },
-        {
-          "context": {
-            "attribute_key": "network.protocol.version",
-            "kind": "client"
-          },
-          "id": "recommended_attribute_not_present",
-          "message": "Span 'POST /items' is missing recommended attribute 'network.protocol.version'",
-          "signal_name": "POST /items",
+          "message": "Span 'POST' is missing recommended attribute 'network.protocol.version'",
+          "signal_name": "POST",
           "signal_type": "span"
         }
       ],
@@ -44965,7 +44902,7 @@
             },
             "opt_in": {
               "declared": 13,
-              "emitted": 4
+              "emitted": 3
             },
             "recommended": {
               "declared": 2,
@@ -44991,8 +44928,7 @@
             "server.address",
             "server.port",
             "url.full",
-            "url.scheme",
-            "url.template"
+            "url.scheme"
           ],
           "identity": {
             "attributes": [
@@ -45006,8 +44942,7 @@
               "server.address",
               "server.port",
               "url.full",
-              "url.scheme",
-              "url.template"
+              "url.scheme"
             ],
             "span_kind": "client"
           },
@@ -45023,6 +44958,7 @@
             "network.protocol.name",
             "network.protocol.version",
             "network.transport",
+            "url.template",
             "user_agent.original",
             "user_agent.synthetic.type"
           ],
@@ -45136,7 +45072,7 @@
         }
       ],
       "summary": {
-        "findings": 12,
+        "findings": 10,
         "recommended": {
           "declared": 5,
           "emitted": 1
@@ -46149,7 +46085,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -46175,7 +46111,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -46194,7 +46129,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -46216,6 +46150,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -47164,7 +47099,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -47190,7 +47125,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -47209,7 +47143,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -47231,6 +47164,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -48351,7 +48285,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -48377,7 +48311,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -48396,7 +48329,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -48418,6 +48350,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -48882,7 +48815,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -48908,7 +48841,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -48927,7 +48859,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -48949,6 +48880,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -50112,7 +50044,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -50138,7 +50070,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -50157,7 +50088,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -50179,6 +50109,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -51293,7 +51224,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -51319,7 +51250,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -51338,7 +51268,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -51360,6 +51289,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -51940,7 +51870,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -51966,7 +51896,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -51985,7 +51914,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -52007,6 +51935,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -53285,7 +53214,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -53311,7 +53240,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -53330,7 +53258,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -53352,6 +53279,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -53792,7 +53720,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -53818,7 +53746,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -53837,7 +53764,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -53859,6 +53785,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -55033,7 +54960,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -55059,7 +54986,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -55078,7 +55004,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -55100,6 +55025,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -57899,7 +57825,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -57925,7 +57851,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -57944,7 +57869,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -57966,6 +57890,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
@@ -58455,7 +58380,7 @@
           "coverage": {
             "conditionally_required_conditional": {
               "declared": 7,
-              "emitted": 5
+              "emitted": 4
             },
             "opt_in": {
               "declared": 13,
@@ -58481,7 +58406,6 @@
             "http.request.method",
             "http.response.body.size",
             "http.response.status_code",
-            "http.route",
             "network.peer.address",
             "network.peer.port",
             "network.protocol.version",
@@ -58500,7 +58424,6 @@
               "http.request.method",
               "http.response.body.size",
               "http.response.status_code",
-              "http.route",
               "network.peer.address",
               "network.peer.port",
               "network.protocol.version",
@@ -58522,6 +58445,7 @@
             "http.response.body.content",
             "http.response.header",
             "http.response.size",
+            "http.route",
             "network.local.address",
             "network.local.port",
             "network.protocol.name",
