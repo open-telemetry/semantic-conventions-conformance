@@ -56,12 +56,11 @@ sizes.
 OBI gets the route from outside the process. For `net/http`, gin and
 gorilla/mux it reads the template the framework matched, so `http.route` and the
 span name carry the declared route (`/users/{userId}`, `/users/:userId`). It has
-no route support for echo or go-restful, so for those it falls back to a route
-derived from the request path (`/users/*`, `/status/*`). That is OBI's default,
-`routes.unmatched: heuristic`, and it is what the `obi` baselines record. It
-does not follow semconv, which says `http.route` must not be populated when the
-framework does not provide it and the span name should then be just the method;
-OBI behaves that way with `routes.unmatched: unset`.
+no route support for echo or go-restful.
+
+With the [shared OBI configuration](../../../tools/obi/README.md#configuration),
+the `net/http` client spans omit `url.template` and use method-only names
+(`GET` and `POST`).
 
 ## Running one
 

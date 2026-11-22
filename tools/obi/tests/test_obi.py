@@ -563,6 +563,21 @@ class TestTheConfig:
 
         assert select == {"*": {"include": ["*"]}}
 
+    @pytest.mark.parametrize("direction", ["incoming", "outgoing"])
+    def test_unknown_http_routes_are_unset(self, direction: str) -> None:
+        routes = rendered()["extensions"]["obi"]["capture"]["instrumentation"][
+            "http"
+        ]["routes"]
+
+        assert routes[direction]["unmatched"] == "unset"
+
+    def test_java_route_discovery_has_no_delay(self) -> None:
+        routes = rendered()["extensions"]["obi"]["capture"]["instrumentation"][
+            "http"
+        ]["routes"]
+
+        assert routes["discovery"]["java"]["delay"] == "0s"
+
     def test_a_missing_endpoint_says_so(self) -> None:
         with pytest.raises(LauncherError, match="OTEL_EXPORTER_OTLP_ENDPOINT"):
             render_config("log_level: info\n", {}, 1, {})

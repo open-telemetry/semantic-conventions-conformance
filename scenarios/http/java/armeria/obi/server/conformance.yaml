@@ -1,12 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-# OBI does not get the route templates for Armeria, so it falls back to a route
-# derived from the request path (`/users/*`, `/status/*`) and uses it for
-# `http.route` and the span name. Semconv says `http.route` must not be
-# populated in that case and the span name should be just the method; OBI does
-# that with `routes.unmatched: unset`. This baseline records OBI's default,
-# `heuristic`.
+# See tools/obi/README.md#configuration for OBI's route settings.
 
 runner: http-conformance
 instrumented_library: armeria
