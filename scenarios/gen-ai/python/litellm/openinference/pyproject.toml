@@ -1,10 +1,10 @@
 [project]
 name = "litellm-openinference-conformance"
 version = "0.0.0"
-# litellm needs fastuuid, which has no 3.15 wheel and whose PyO3 cannot build for 3.15.
+# The OpenInference instrumentor requires Python below 3.15.
 requires-python = ">=3.12,<3.15"
 dependencies = [
-    "litellm[mcp]==1.106.6",
+    "litellm[mcp]==1.110.2",
     "openinference-instrumentation-litellm==0.1.52",
     "opentelemetry-api==1.45.2",
     "opentelemetry-sdk==1.45.2",
