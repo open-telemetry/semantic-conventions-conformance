@@ -51,8 +51,8 @@ passes only the instrumentation under test:
 
 ```csharp
 using var sdk = ScenarioSdk.Initialize(
-    tracing => tracing.AddAspNetCoreInstrumentation(),
-    metrics => metrics.AddAspNetCoreInstrumentation());
+    tracing => tracing.AddHttpClientInstrumentation(),
+    metrics => metrics.AddHttpClientInstrumentation());
 ```
 
 The flush is explicit rather than left to the providers' own shutdown, because

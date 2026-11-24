@@ -3,7 +3,7 @@
 
 runner: http-conformance
 instrumented_library: Microsoft.AspNetCore
-instrumentation_library: OpenTelemetry.Instrumentation.AspNetCore
+instrumentation_library: Microsoft.AspNetCore
 
 # Publishing here rather than in `run:` keeps the toolchain out of the measured
 # process: a `dotnet run` would restore and compile on the clock.

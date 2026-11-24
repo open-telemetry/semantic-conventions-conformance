@@ -1,13 +1,16 @@
 # .NET HTTP conformance scenarios
 
-Two packages: an ASP.NET Core server and a `System.Net.Http.HttpClient` client,
-each measured with the OpenTelemetry instrumentation written for it.
+Two packages: an ASP.NET Core server and a `System.Net.Http.HttpClient` client.
+The client is measured with the OpenTelemetry instrumentation written for it,
+and the server with what ASP.NET Core emits itself.
 
-On .NET 10 those instrumentations are mostly subscriptions rather than
+On .NET 11 those instrumentations are mostly subscriptions rather than
 implementations. `System.Net.Http` and ASP.NET Core emit the spans and metrics
-themselves, and a package here turns that on and exports it. So a divergence a
-scenario records is usually the platform's to close rather than the package's,
-and its `conformance.yaml` says which.
+themselves. The client still turns that on through a package, and the server
+needs no package at all: its launcher subscribes to the `Microsoft.AspNetCore`
+activity source and the `Microsoft.AspNetCore.Hosting` meter by name. So a
+divergence a scenario records is usually the platform's to close rather than a
+package's, and its `conformance.yaml` says which.
 
 ```text
 aspnetcore/scenarios/                    what the server does, no OTel
@@ -41,6 +44,17 @@ using var sdk = ScenarioSdk.Initialize(
     metrics => metrics.AddHttpClientInstrumentation());
 ```
 
+Telemetry the platform emits itself needs no package, only the names of its
+sources and meters. The server subscribes to exactly the ones that carry HTTP
+server telemetry, rather than a wildcard that would also pick up Kestrel,
+routing and memory-pool metrics:
+
+```csharp
+using var sdk = ScenarioSdk.Initialize(
+    tracing => tracing.AddSource("Microsoft.AspNetCore"),
+    metrics => metrics.AddMeter("Microsoft.AspNetCore.Hosting"));
+```
+
 So unlike a framework instrumented by decoration, the workload projects here
 have nothing to hand their launcher — they are plain, and the launcher's whole
 job is to build the SDK before the workload starts. They stay separate projects
@@ -63,8 +77,9 @@ framework, so a route here says only what its template is.
 ## Versions
 
 [`Directory.Packages.props`](Directory.Packages.props) pins the instrumentation
-releases both packages measure, so a client and a server can never report
-coverage from two different releases. The SDK they export through is pinned in
+release the client measures. The server has none to pin: it is measured with
+what the .NET SDK's ASP.NET Core emits, which `global.json` below selects. The
+SDK they export through is pinned in
 [`tools/dotnet`](../../../tools/dotnet) instead, because MSBuild resolves those
 pins per directory tree and `tools/` is outside this one.
 
