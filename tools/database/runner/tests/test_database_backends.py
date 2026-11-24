@@ -1178,10 +1178,12 @@ def test_hbase_fixture_uses_pinned_upstream_inputs() -> None:
         .read_text(encoding="utf-8")
     )
 
-    assert (
-        "FROM eclipse-temurin:25-jre-jammy@sha256:"
-        "659b528cca74a0edc5c25315ec5819f35bce40bbcec645c4c534987e4c6be7c1"
-        in dockerfile
+    # Require a digest-pinned base image without hard-coding the digest, so
+    # Renovate digest bumps don't break this test.
+    assert re.search(
+        r"^FROM eclipse-temurin:25-jre-jammy@sha256:[0-9a-f]{64}$",
+        dockerfile,
+        re.MULTILINE,
     )
     assert f"ARG HBASE_VERSION={_hbase.HBASE_VERSION}" in dockerfile
     assert f"ARG HBASE_SHA512={_hbase._HBASE_SHA512}" in dockerfile

@@ -34,7 +34,7 @@ RUN set -eu; \
     done; \
     exit 1
 
-FROM eclipse-temurin:25-jre-jammy@sha256:659b528cca74a0edc5c25315ec5819f35bce40bbcec645c4c534987e4c6be7c1
+FROM eclipse-temurin:25-jre-jammy@sha256:1c6798886da1ae157e6c751cedb80eacf15d883e651ffe9acdcc534c19f482de
 
 ARG HBASE_VERSION
 ARG HBASE_SHA512
