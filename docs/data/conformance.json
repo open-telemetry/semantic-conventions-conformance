@@ -25918,6 +25918,15 @@
         },
         {
           "context": {
+            "attribute_key": "litellm.cache_hit"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'litellm.cache_hit' does not exist in the registry.",
+          "signal_name": "chat gpt-4o-audio-preview",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "litellm.call_id"
           },
           "id": "missing_attribute",
@@ -25958,6 +25967,15 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'metadata.cold_storage_object_key' does not exist in the registry.",
+          "signal_name": "chat gpt-4o-audio-preview",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "metadata.kubernetes_pod_routing"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'metadata.kubernetes_pod_routing' does not exist in the registry.",
           "signal_name": "chat gpt-4o-audio-preview",
           "signal_type": "span"
         },
@@ -26434,6 +26452,15 @@
         },
         {
           "context": {
+            "attribute_key": "litellm.cache_hit"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'litellm.cache_hit' does not exist in the registry.",
+          "signal_name": "chat gpt-4o-mini",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "litellm.call_id"
           },
           "id": "missing_attribute",
@@ -26501,6 +26528,15 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'metadata.cold_storage_object_key' does not exist in the registry.",
+          "signal_name": "chat gpt-4o-mini",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "metadata.kubernetes_pod_routing"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'metadata.kubernetes_pod_routing' does not exist in the registry.",
           "signal_name": "chat gpt-4o-mini",
           "signal_type": "span"
         },
@@ -26930,6 +26966,15 @@
         },
         {
           "context": {
+            "attribute_key": "litellm.cache_hit"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'litellm.cache_hit' does not exist in the registry.",
+          "signal_name": "embeddings text-embedding-3-small",
+          "signal_type": "span"
+        },
+        {
+          "context": {
             "attribute_key": "litellm.call_id"
           },
           "id": "missing_attribute",
@@ -26970,6 +27015,15 @@
           },
           "id": "missing_attribute",
           "message": "Attribute 'metadata.cold_storage_object_key' does not exist in the registry.",
+          "signal_name": "embeddings text-embedding-3-small",
+          "signal_type": "span"
+        },
+        {
+          "context": {
+            "attribute_key": "metadata.kubernetes_pod_routing"
+          },
+          "id": "missing_attribute",
+          "message": "Attribute 'metadata.kubernetes_pod_routing' does not exist in the registry.",
           "signal_name": "embeddings text-embedding-3-small",
           "signal_type": "span"
         },
@@ -27554,7 +27608,7 @@
         }
       ],
       "summary": {
-        "findings": 191,
+        "findings": 197,
         "recommended": {
           "declared": 23,
           "emitted": 12
