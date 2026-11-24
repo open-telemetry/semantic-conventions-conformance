@@ -14,7 +14,7 @@ MYSQL_USER = "conformance"
 MYSQL_PASSWORD = "conformance"
 MYSQL_PORT = 3306
 # renovate: datasource=docker depName=mysql versioning=docker
-MYSQL_IMAGE = "mysql:26.10.0-oraclelinux9@sha256:3819b2b23835c4a73c8b022fafc33c8095c0f81c929a8b7a84613d2fba6c52f5"
+MYSQL_IMAGE = "mysql:26.10.0-oraclelinux9@sha256:9092489f49fb59c4ba6c1425c6a59f71f864f24bf4339a5a26b718adc7a8b343"
 
 MYSQL = BackendSpec(
     name="MySQL",

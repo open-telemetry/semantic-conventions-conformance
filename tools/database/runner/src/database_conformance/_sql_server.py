@@ -17,7 +17,7 @@ SQL_SERVER_PORT = 1433
 # `docker` versioning reads as part of an incompatible suffix rather than as a
 # newer version, so this pin names the tag's parts instead.
 # renovate: datasource=docker depName=mcr.microsoft.com/mssql/server versioning=regex:^(?<major>\d+)-CU(?<minor>\d+)-(?<compatibility>ubuntu-\d+\.\d+)$
-SQL_SERVER_IMAGE = "mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04@sha256:245f6b1c8903edae52cb20fa31419cefcde1a49938bb8c3447099011fc871ca3"
+SQL_SERVER_IMAGE = "mcr.microsoft.com/mssql/server:2025-CU11-ubuntu-24.04@sha256:05644dad1266ca3d445d1e8f6d2ebb9a6a03df9a39376e0f7b48917356dca9d9"
 _SQLCMD = "/opt/mssql-tools18/bin/sqlcmd"
 
 SQL_SERVER = BackendSpec(
