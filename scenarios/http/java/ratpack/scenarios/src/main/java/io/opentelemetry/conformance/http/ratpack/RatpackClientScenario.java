@@ -27,6 +27,10 @@ import ratpack.test.exec.ExecHarness;
 public final class RatpackClientScenario {
   private RatpackClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     try (ExecHarness harness = ExecHarness.harness();
         HttpClient client = HttpClient.of(spec -> spec.execController(harness.getController()))) {

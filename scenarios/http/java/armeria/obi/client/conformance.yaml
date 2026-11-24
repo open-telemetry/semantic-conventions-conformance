@@ -1,0 +1,14 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+runner: http-conformance
+instrumented_library: armeria
+instrumentation_library: go.opentelemetry.io/obi
+scenario_contract: ../../../../../../tools/http/test-client/contract.yaml
+
+setup: otel-conformance-obi install -- otel-conformance-java prepare armeria:obi
+
+server:
+  run: http-mock-server --port ${PORT}
+
+scenario_run: otel-conformance-obi run --exe '*/java' --args '*ArmeriaClientScenario*' otel-conformance-java run armeria:obi io.opentelemetry.conformance.http.armeria.ArmeriaClientScenario

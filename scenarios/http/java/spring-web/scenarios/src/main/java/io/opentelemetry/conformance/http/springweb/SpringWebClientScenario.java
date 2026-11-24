@@ -19,6 +19,14 @@ import org.springframework.web.client.RestTemplate;
 public final class SpringWebClientScenario {
   private SpringWebClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
+  public static void run() throws Exception {
+    run(restTemplate -> {});
+  }
+
   public static void run(Consumer<RestTemplate> configureTelemetry) throws Exception {
     SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
     requestFactory.setConnectTimeout(HttpClientWorkload.REQUEST_TIMEOUT);

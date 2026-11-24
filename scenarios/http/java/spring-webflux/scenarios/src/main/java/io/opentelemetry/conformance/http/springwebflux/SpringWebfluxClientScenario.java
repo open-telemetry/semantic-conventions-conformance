@@ -15,6 +15,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 public final class SpringWebfluxClientScenario {
   private SpringWebfluxClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(builder -> {});
   }

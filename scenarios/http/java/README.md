@@ -37,6 +37,7 @@ otel-conformance scenarios/http/java/tomcat/opentelemetry-javaagent/server
 otel-conformance scenarios/http/java/okhttp/opentelemetry-library/client
 otel-conformance scenarios/http/java/servlet/opentelemetry-library/server
 otel-conformance scenarios/http/java/tomcat/obi/server
+otel-conformance scenarios/http/java/okhttp/obi/client
 ```
 
 An `obi` package runs only on Linux with BTF, as root or with passwordless

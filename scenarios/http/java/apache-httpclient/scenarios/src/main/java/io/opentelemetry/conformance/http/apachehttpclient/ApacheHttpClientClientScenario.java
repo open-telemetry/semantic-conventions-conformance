@@ -22,6 +22,10 @@ import org.apache.hc.core5.util.Timeout;
 public final class ApacheHttpClientClientScenario {
   private ApacheHttpClientClientScenario() {}
 
+  public static void main(String[] args) throws Exception {
+    run();
+  }
+
   public static void run() throws Exception {
     run(HttpClients::createDefault);
   }
