@@ -11,4 +11,5 @@ Apply the same code rules to a checkout audit and a pull request review.
 
 ## Downloaded archives
 
-- When repository code downloads a release or fixture archive directly, verify it against a pinned digest before extracting or installing it. Use the digest for the selected artifact, such as the host architecture's archive for OBI.
+- When repository code or a workflow downloads a release or fixture archive directly, verify it against a pinned digest before extracting or installing it. Use the digest for the selected artifact, such as the host architecture's archive for OBI.
+- This does not apply to a source archive that GitHub generates for a git ref, such as the semantic-convention registry the runner fetches. GitHub does not guarantee those bytes stay the same, so a pinned digest can break without the content changing.
