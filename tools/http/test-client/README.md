@@ -28,10 +28,10 @@ scenarios:
     action:
       request:
         method: GET
-        path: /users/123?fields=name&verbose=true
+        path: /users/456?fields=name&verbose=true
       response:
         status: 200
-        body: '{"id": 123, "name": "Alice"}'
+        body: '{"id": 456, "name": "Alice"}'
     expect:
       spans:
         - match:
@@ -52,6 +52,10 @@ through `OTEL_CONFORMANCE_SCENARIO_INDEX`. The language helper selects that
 entry and sends only its request. A fresh weaver report checks one request, so
 the two successful GETs cannot satisfy one aggregate count even though they
 share the same method and status.
+
+The query request uses `/users/456`, distinct from the query-free `/users/123`
+request. Server validation can therefore require `url.query` for that request
+even when the instrumentation omits it.
 
 A server declares matching routes in its framework's native form. This is
 intentionally not contract data: route builders, annotations, compile-time

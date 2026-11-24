@@ -17,9 +17,15 @@ class RackServerScenarioTest < Minitest::Test
   def test_serves_the_declared_routes
     assert_response(@request.get("/health"), 200, '{"ok": true}')
     assert_response(
-      @request.get("/users/123?fields=name&verbose=true"),
+      @request.get("/users/123"),
       200,
       '{"id": 123, "name": "Alice"}'
+    )
+    assert_includes RackServerScenario::ROUTES, "/users/456"
+    assert_response(
+      @request.get("/users/456?fields=name&verbose=true"),
+      200,
+      '{"id": 456, "name": "Alice"}'
     )
     assert_response(
       @request.get("/status/404"),
