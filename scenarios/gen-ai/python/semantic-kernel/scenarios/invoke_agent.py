@@ -34,6 +34,8 @@ agent = ChatCompletionAgent(
 
 
 def run() -> None:
+    # By position: the agent's tracing reads the input messages only from the
+    # positional arguments, and records an empty list for a keyword.
     asyncio.run(agent.get_response("Say this is a test"))
 
 

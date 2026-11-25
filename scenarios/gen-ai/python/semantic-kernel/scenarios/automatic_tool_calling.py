@@ -11,7 +11,6 @@ its own and not just a message in the next request.
 import asyncio
 from typing import Annotated
 
-from openai import AsyncOpenAI
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.connectors.ai.open_ai import (
     OpenAIChatCompletion,
@@ -44,7 +43,9 @@ agent = ChatCompletionAgent(
 
 
 def run() -> None:
-    asyncio.run(agent.get_response("Say this is a test"))
+    # By position: the agent's tracing reads the input messages only from the
+    # positional arguments, and records an empty list for a keyword.
+    asyncio.run(agent.get_response("What's the weather in Seattle today?"))
 
 
 if __name__ == "__main__":
