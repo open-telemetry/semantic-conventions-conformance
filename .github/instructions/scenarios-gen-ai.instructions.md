@@ -6,6 +6,10 @@ applyTo: "scenarios/gen-ai/**"
 
 - Each GenAI workload performs the exchange defined for its scenario class, using the client SDK's equivalents for the documented request settings and message roles it supports.
 
+- Each GenAI scenario class has its own workload file named after the class, and every implemented class is listed in `scenarios/gen-ai/README.md`.
+
+- GenAI workloads do not work around missing or incorrect mock responses. Every response field and behavior a workload depends on is served by `tools/gen-ai/mock-server`.
+
 - `inference` and `streaming` requests include every sampling option that has a GenAI semantic convention attribute and that the client API accepts. Use the SDK's parameter names and omit options it cannot express.
 
 - Each GenAI implementation measures only its own instrumentation. A Python implementation environment must not contain another auto-discoverable instrumenter, and a JavaScript implementation package must not declare another instrumenter even though it shares an npm workspace.
