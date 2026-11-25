@@ -4,8 +4,14 @@ applyTo: "scenarios/gen-ai/**"
 
 # Code rules for scenarios/gen-ai
 
-- Give each GenAI library a scenario for every README class its client API supports, even if the instrumentation does not cover that class. Use one file named for each class, perform exactly the exchange defined in the README, and supply the corresponding request options wherever the client API can express them. Do not add an unlisted class without defining it in the README first.
-- GenAI workloads use the client SDK's base-URL environment variable mapped from `${MOCK_SERVER_URL}` in `conformance.yaml` and read no configuration of their own. If the SDK lacks that setting, the workload reads the mapped endpoint and passes it to the client.
-- GenAI conformance YAML declares neither `expected_violations` nor span, metric, or event expectations. An active span `match` carrying `type` but no accompanying `expect` is allowed only when the reducer cannot classify the span on its own. Explain the need in a comment, leave all findings intact, and remove the match once the span identifies itself.
-- Enable GenAI message-content capture consistently for the whole implementation directory, never per scenario, using the instrumentation's configuration unless it captures content unconditionally. This lets the run measure content on spans and on the `gen_ai.client.inference.operation.details` event without mixing capture modes in the directory's coverage union.
-- Keep only the instrumentation under test in each GenAI implementation environment. Disable client-native OpenTelemetry when measuring a separate instrumentation, and keep it enabled when measuring the native implementation.
+- Each GenAI workload performs the exchange defined for its scenario class, using the client SDK's equivalents for the documented request settings and message roles it supports. Missing stimulus must not be reported as missing instrumentation coverage.
+
+- Each GenAI implementation measures only its own instrumentation. A Python implementation environment must not contain another auto-discoverable instrumenter, and a JavaScript implementation package must not declare another instrumenter even though it shares an npm workspace.
+
+- GenAI configurations record telemetry without `expected_violations` or span, metric, or event expectations. A span `match` with `type` and no `expect` is allowed only when reduction cannot classify the span otherwise; document why the hint is needed and remove it once the span identifies itself.
+
+- GenAI configurations map `${MOCK_SERVER_URL}` to the client SDK's native base-URL environment variable. The workload reads and passes an injected URL itself only when the SDK has no such setting.
+
+- When a GenAI client SDK emits its own OpenTelemetry, disable that telemetry in environments measuring a separate instrumentation. For example, set `ANTHROPIC_OPEN_TELEMETRY: "false"` when measuring a separate Anthropic instrumentation. Keep the SDK's telemetry enabled in the `native` environment that measures it.
+
+- Enable GenAI content capture for the entire implementation directory, never per scenario. Use `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` where the instrumentation reads it, or the implementation's own setting where one is needed. Because `data.json` combines coverage across the directory, mixed capture modes can hide that some scenarios ran with capture off.

@@ -4,4 +4,4 @@ applyTo: "tools/report/**"
 
 # Code rules for tools/report
 
-- Coverage scores required and unconditionally recommended attributes separately. Conditionally required, conditionally recommended, and opt-in attributes are counted per signal but excluded from scoring.
+- Coverage scores use only `required` and unconditional `recommended` attributes, scored separately. `conditionally_required_conditional`, `recommended_conditional`, and `opt_in` remain visible as per-signal counts but do not enter either score.
