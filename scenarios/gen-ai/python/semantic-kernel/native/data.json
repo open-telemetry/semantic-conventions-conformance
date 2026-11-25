@@ -80,6 +80,54 @@
     },
     {
       "id": "missing_attribute",
+      "message": "Attribute 'CHAT_MESSAGE_INDEX' does not exist in the registry.",
+      "signal_type": "log",
+      "context": {
+        "attribute_key": "CHAT_MESSAGE_INDEX"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'code.file.path' does not exist in the registry.",
+      "signal_type": "log",
+      "context": {
+        "attribute_key": "code.file.path"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'code.function.name' does not exist in the registry.",
+      "signal_type": "log",
+      "context": {
+        "attribute_key": "code.function.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'code.line.number' does not exist in the registry.",
+      "signal_type": "log",
+      "context": {
+        "attribute_key": "code.line.number"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'event.name' does not exist in the registry.",
+      "signal_type": "log",
+      "context": {
+        "attribute_key": "event.name"
+      }
+    },
+    {
+      "id": "missing_attribute",
+      "message": "Attribute 'gen_ai.system' does not exist in the registry.",
+      "signal_type": "log",
+      "context": {
+        "attribute_key": "gen_ai.system"
+      }
+    },
+    {
+      "id": "missing_attribute",
       "message": "Attribute 'semantic_kernel.function.name' does not exist in the registry.",
       "signal_type": "metric",
       "signal_name": "semantic_kernel.function.invocation.duration",
@@ -148,6 +196,16 @@
       "context": {
         "missing_attribute": "gen_ai.response.model",
         "operation": "chat"
+      }
+    },
+    {
+      "id": "genai_content_schema",
+      "message": "Attribute 'gen_ai.input.messages' value does not conform to the GenAI schema: \"parts\" is a required property",
+      "signal_type": "span",
+      "signal_name": "invoke_agent weather_assistant",
+      "context": {
+        "attribute": "gen_ai.input.messages",
+        "errors": "\"parts\" is a required property"
       }
     },
     {

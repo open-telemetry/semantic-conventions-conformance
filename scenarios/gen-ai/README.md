@@ -138,7 +138,7 @@ classes than the row, the row says so.
 | `portkey` | inference, streaming, tool_calling, server_tool_calling, structured_output, multimodal, embeddings | `opentelemetry-portkey`, `openinference`<br>no `openllmetry` for this library |
 | `pydantic-ai` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `qwen-agent` | invoke_agent, automatic_tool_calling. Assistant runs its Memory sub-agent, so each run carries a second agent span | `opentelemetry-qwen-agent`<br>no `openinference` or `openllmetry` for this library |
-| `semantic-kernel` | invoke_agent, automatic_tool_calling | `native`, behind the library's experimental `SEMANTICKERNEL_EXPERIMENTAL_GENAI_*` switches |
+| `semantic-kernel` | invoke_agent, automatic_tool_calling | `native` (behind the library's experimental `SEMANTICKERNEL_EXPERIMENTAL_GENAI_*` switches)<br>no `openinference` or `openllmetry` for this library |
 | `smolagents` | invoke_agent, automatic_tool_calling | `opentelemetry-smolagents`, `openinference`<br>no `openllmetry` for this library |
 | `strands-agents` | invoke_agent, automatic_tool_calling | `native`<br>no `openinference`: the package is a span processor over the library's own spans, not an instrumentation of it, so it adds no coverage<br>no `openllmetry` for this library |
 | `together` | inference, streaming, tool_calling, structured_output, multimodal, embeddings | `openinference`<br>no `openllmetry`: not compatible with together 2 |

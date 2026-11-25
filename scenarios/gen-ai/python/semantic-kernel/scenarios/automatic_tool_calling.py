@@ -32,9 +32,7 @@ class WeatherPlugin:
 
 agent = ChatCompletionAgent(
     name="weather_assistant",
-    service=OpenAIChatCompletion(
-        ai_model_id="gpt-4o-mini", async_client=AsyncOpenAI()
-    ),
+    service=OpenAIChatCompletion(ai_model_id="gpt-4o-mini"),
     instructions="You are a helpful assistant.",
     plugins=[WeatherPlugin()],
     arguments=KernelArguments(
@@ -44,6 +42,10 @@ agent = ChatCompletionAgent(
     ),
 )
 
-asyncio.run(
-    agent.get_response(messages="What's the weather in Seattle today?")
-)
+
+def run() -> None:
+    asyncio.run(agent.get_response("Say this is a test"))
+
+
+if __name__ == "__main__":
+    run()

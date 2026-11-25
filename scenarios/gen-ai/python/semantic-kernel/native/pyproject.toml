@@ -1,7 +1,9 @@
 [project]
 name = "semantic-kernel-native-conformance"
 version = "0.0.0"
-requires-python = ">=3.12"
+# semantic-kernel 1.47.0 caps pydantic below 2.14, and that pydantic's
+# pydantic-core (2.46.5) has no 3.15 wheel.
+requires-python = ">=3.12,<3.15"
 dependencies = [
     "semantic-kernel==1.47.0",
     "opentelemetry-api==1.45.2",
