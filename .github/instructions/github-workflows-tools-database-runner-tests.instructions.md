@@ -4,4 +4,4 @@ applyTo: ".github/workflows/**,tools/database/runner/tests/**"
 
 # Code rules for .github/workflows, tools/database/runner/tests
 
-- Database project-discovery tests that run Gradle belong to the opt-in Java integration suite, not the default Python unit suite, and their CI job provisions Java and Gradle.
+- Database project-discovery integration tests that invoke Gradle require a JDK and run separately from the Python unit suite. CI runs them on Linux after setting up Java and Gradle.

@@ -4,4 +4,4 @@ applyTo: "scenarios/database/contracts/**,tools/database/sql-test-client/contrac
 
 # Code rules for scenarios/database/contracts, tools/database/sql-test-client/contracts
 
-- Shared database telemetry contracts follow the pinned conventions for the backend and signal: they do not assert a known driver divergence as the correct value or require an attribute the model excludes.
+- Database telemetry expectations follow the backend's semantic conventions for the signal, not one driver's output. Use `expect.semantic_conventions`, not ordinary `expect.attributes`, for attribute requirements whose mismatches should be recorded as conformance findings. Keep known mismatches visible; do not require an attribute the convention does not define for that signal.
