@@ -4,4 +4,4 @@ applyTo: "scenarios/http/js/**"
 
 # Code rules for scenarios/http/js
 
-- The HTTP JavaScript scenarios use one npm workspace with a committed manifest and lockfile, and reference shared packages under `tools/` by local path.
+- JavaScript HTTP instrumentation keeps client and server conformance in separate packages, even when the same library supports both sides.
