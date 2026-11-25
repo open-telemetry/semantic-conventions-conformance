@@ -2,7 +2,7 @@
 applyTo: "scenarios/database/java/**"
 ---
 
-# Code rules for Java database scenarios
+# Code rules for scenarios/database/java
 
-- Java database targets place conformance configuration and coverage under `<backend>/<client>/<instrumentation>`. Keep reusable workloads and launchers under `shared/`, retaining the client level for client-specific code.
-- Gradle discovery must not register nested builds or build files found in hidden directories or source fixtures as scenario subprojects.
+- Java database instrumentation packages retain the backend, client, and instrumentation levels in their package paths; the corresponding shared launcher paths and Gradle project names retain those same levels.
+- Gradle scenario discovery excludes nested builds, dot-prefixed directories, and source, dependency, and generated-output trees.
