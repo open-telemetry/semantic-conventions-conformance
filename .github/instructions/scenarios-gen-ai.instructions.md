@@ -4,7 +4,9 @@ applyTo: "scenarios/gen-ai/**"
 
 # Code rules for scenarios/gen-ai
 
-- Each GenAI workload performs the exchange defined for its scenario class, using the client SDK's equivalents for the documented request settings and message roles it supports. Missing stimulus must not be reported as missing instrumentation coverage.
+- Each GenAI workload performs the exchange defined for its scenario class, using the client SDK's equivalents for the documented request settings and message roles it supports.
+
+- `inference` and `streaming` requests include every sampling option that has a GenAI semantic convention attribute and that the client API accepts. Use the SDK's parameter names and omit options it cannot express.
 
 - Each GenAI implementation measures only its own instrumentation. A Python implementation environment must not contain another auto-discoverable instrumenter, and a JavaScript implementation package must not declare another instrumenter even though it shares an npm workspace.
 
