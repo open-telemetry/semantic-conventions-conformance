@@ -4,4 +4,4 @@ applyTo: "scenarios/database/java/**"
 
 # Code rules for scenarios/database/java
 
-- Database Gradle project discovery finds build files in the scenario tree without traversing nested builds, hidden directories, source trees, dependency directories, or build output.
+- Gradle project discovery excludes nested builds with their own settings files, dot-prefixed directories, and `bin`, `build`, `buildSrc`, `node_modules`, `out`, `src`, and `target` trees.
