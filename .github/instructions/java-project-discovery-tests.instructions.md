@@ -2,7 +2,7 @@
 applyTo: ".github/workflows/**,tools/database/runner/tests/**"
 ---
 
-# Code rules for .github/workflows, tools/database/runner/tests
+# Java project-discovery tests
 
 - Database project-discovery tests that invoke real Gradle builds are skipped unless `OTEL_CONFORMANCE_TEST_JAVA_DISCOVERY=1`.
 
