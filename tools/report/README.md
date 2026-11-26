@@ -14,6 +14,7 @@ package has to be installed alongside this one. From the repo root, once:
 python -m pip install \
   -e tools/runner -e tools/database/runner \
   -e tools/gen-ai/runner -e tools/gen-ai/mock-server \
+  -e tools/browser/runner \
   -e tools/http/runner -e tools/http/mock-server \
   -e tools/http/test-client/python -e tools/report
 ```

@@ -26,6 +26,7 @@ ignore = [
 [tool.ruff.lint.isort]
 detect-same-package = false
 known-first-party = [
+  "browser_conformance",
   "database_conformance",
   "opentelemetry",
   "conformance_report",
@@ -55,6 +56,7 @@ pythonVersion = "3.10"
 # nothing the JSON literals next to them don't.
 include = [
   "tools/runner/src",
+  "tools/browser/runner/src",
   "tools/database/runner/src",
   "tools/report/src",
   "tools/gen-ai/runner/src",
