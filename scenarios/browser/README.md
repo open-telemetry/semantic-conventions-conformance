@@ -22,4 +22,6 @@ runner. See [`js/`](js/README.md) for the build root and what is measured.
 Only three of the nine modules in `@opentelemetry/browser-instrumentation`
 0.8.1 are measured: `errors`, `console` and `web-vitals`. `navigation`,
 `navigation-timing`, `resource-timing`, `user-action`, `fetch` and `xhr` are
-not. Only events are checked, the scenarios produce no spans or metrics.
+not. The current scenarios emit events only. To measure spans from `fetch`
+or `xhr`, use an HTTP-domain scenario such as
+[HTTP Fetch](../http/js/fetch/opentelemetry-fetch/client/conformance.yaml).
