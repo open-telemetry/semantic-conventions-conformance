@@ -2,7 +2,7 @@
 applyTo: "tools/gen-ai/mock-server/**"
 ---
 
-# Code rules for tools/gen-ai/mock-server
+# GenAI mock server
 
 - Each mock provider response and behavior is covered by a test in `tools/gen-ai/mock-server/tests`.
 

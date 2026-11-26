@@ -2,7 +2,7 @@
 applyTo: "scenarios/gen-ai/**"
 ---
 
-# Code rules for scenarios/gen-ai
+# GenAI scenarios
 
 - Each GenAI workload performs the exchange defined for its scenario class, using the client SDK's equivalents for the documented request settings and message roles it supports.
 

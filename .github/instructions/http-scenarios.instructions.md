@@ -2,7 +2,7 @@
 applyTo: "scenarios/http/**"
 ---
 
-# Code rules for scenarios/http
+# HTTP scenarios
 
 - HTTP server workloads declare matching routes in their framework's native routing model, using native parameterized mappings where supported. The shared contract specifies concrete exchanges, not a route-template syntax to implement across frameworks.
 

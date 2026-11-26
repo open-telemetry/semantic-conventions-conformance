@@ -2,7 +2,7 @@
 applyTo: "scenarios/**"
 ---
 
-# Code rules for scenarios
+# Conformance scenarios
 
 - Each conformance directory commits the runner-generated `data.json` from a complete run of its current scenarios and pinned instrumentation. A `--report-only` run can refresh the snapshot without treating Weaver findings as run failures.
 

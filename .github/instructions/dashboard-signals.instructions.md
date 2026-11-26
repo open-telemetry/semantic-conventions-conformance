@@ -2,7 +2,7 @@
 applyTo: "docs/assets/**"
 ---
 
-# Code rules for docs/assets
+# Dashboard signal declarations
 
 - The dashboard indexes signals by both type (`span`, `metric`, or `event`) and name, not by name alone or by span kind.
 
