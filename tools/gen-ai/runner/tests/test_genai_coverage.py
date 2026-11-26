@@ -239,6 +239,7 @@ def test_every_declared_entity_is_recordable(model, reduce_for) -> None:
         ("gen_ai.client.embeddings", "client", {"gen_ai.operation.name": "embeddings"}),
         ("gen_ai.invoke_agent.client", "client", {"gen_ai.operation.name": "invoke_agent"}),
         ("gen_ai.client.invoke_agent", "client", {"gen_ai.operation.name": "invoke_agent"}),
+        ("gen_ai.apply_guardrail.client", "client", {"gen_ai.operation.name": "apply_guardrail"}),
     ],
 )
 def test_spans_classify_into_the_type_name_the_registry_declares(
