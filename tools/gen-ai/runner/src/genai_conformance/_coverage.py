@@ -21,6 +21,7 @@ _MCP_SPAN_TYPES = {
 
 # Which operation names belong to which span type.
 _OPERATION_NAMES = {
+    "gen_ai.apply_guardrail.client": {"apply_guardrail"},
     "gen_ai.create_agent.client": {"create_agent"},
     "gen_ai.embeddings.client": {"embeddings"},
     "gen_ai.execute_tool.internal": {"execute_tool"},
