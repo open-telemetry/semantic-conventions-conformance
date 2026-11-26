@@ -1,34 +1,23 @@
 ---
-applyTo: "scenarios/gen-ai/**,tools/gen-ai/mock-server/**"
+applyTo: "scenarios/gen-ai/**"
 ---
 
-# Reviewing GenAI conformance scenarios
+# GenAI scenarios
 
-The contract these have to obey is in
-[`scenarios/gen-ai/README.md`](../../scenarios/gen-ai/README.md). The rules for
-changing the tree are in
-[`scenarios/gen-ai/AGENTS.md`](../../scenarios/gen-ai/AGENTS.md). Review
-against those, and check:
+- Each GenAI workload performs the exchange defined for its scenario class, using the client SDK's equivalents for the documented request settings and message roles it supports.
 
-- **Comparability.** Does the scenario make the exchange its class defines, in
-  the same shape as the same class under the other libraries? A scenario that
-  sets fewer request options than its siblings makes its `data.json` look like
-  an instrumentation gap when it is a scenario gap. Where an option is absent
-  because the API has no such parameter, say so.
-- **One class per file**, named after the class. Two classes merged into one
-  program, or a class not listed in the README, needs the README changed
-  first.
-- **No OpenTelemetry import and no instrumentation named** in a scenario
-  program, and no configuration read beyond the client library's own
-  environment variables. Telemetry needing programmatic configuration gets an
-  entry program beside `conformance.yaml`, importing the shared scenario.
-- **One instrumentation per implementation environment.** A second one in
-  `pyproject.toml` puts another library's spans in the results.
-- **`data.json` regenerated and committed**, matching the scenarios as
-  changed. CI fails on a diff.
-- **Mock server changes** carry a test and stay deterministic: same request,
-  same bytes. A scenario working around a missing mock response is the wrong
-  fix.
-- **No expectations declared.** No `expected_violations`, and no `spans`,
-  `metrics` or `events` blocks. Scenarios here measure; a finding is a result
-  this repo exists to record, so anything that quiets one is a defect.
+- Each GenAI scenario class has its own workload file named after the class, and every implemented class is listed in `scenarios/gen-ai/README.md`.
+
+- GenAI workloads do not work around missing or incorrect mock responses. Every response field and behavior a workload depends on is served by `tools/gen-ai/mock-server`.
+
+- `inference` and `streaming` requests include every sampling option that has a GenAI semantic convention attribute and that the client API accepts. Use the SDK's parameter names and omit options it cannot express.
+
+- Each GenAI implementation measures only its own instrumentation. A Python implementation environment must not contain another auto-discoverable instrumenter, and a JavaScript implementation package must not declare another instrumenter even though it shares an npm workspace.
+
+- GenAI configurations record telemetry without `expected_violations` or span, metric, or event expectations. A span `match` with `type` and no `expect` is allowed only when reduction cannot classify the span otherwise; document why the hint is needed and remove it once the span identifies itself.
+
+- GenAI configurations map `${MOCK_SERVER_URL}` to the client SDK's native base-URL environment variable. The workload reads and passes an injected URL itself only when the SDK has no such setting.
+
+- When a GenAI client SDK emits its own OpenTelemetry, disable that telemetry in environments measuring a separate instrumentation. For example, set `ANTHROPIC_OPEN_TELEMETRY: "false"` when measuring a separate Anthropic instrumentation. Keep the SDK's telemetry enabled in the `native` environment that measures it.
+
+- Enable GenAI content capture for the entire implementation directory, never per scenario. Use `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` where the instrumentation reads it, or the implementation's own setting where one is needed. Because `data.json` combines coverage across the directory, mixed capture modes can hide that some scenarios ran with capture off.
