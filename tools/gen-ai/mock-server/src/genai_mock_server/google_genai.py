@@ -569,4 +569,7 @@ def vertex_ai(rest):
         return _multimodal_response(body)
     if _wants_json(body):
         return _structured_response(body)
-    return RESPONSE
+    return {
+        **RESPONSE,
+        "usageMetadata": {**RESPONSE["usageMetadata"], "trafficType": "ON_DEMAND"},
+    }
