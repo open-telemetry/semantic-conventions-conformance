@@ -1868,6 +1868,18 @@ def test_responses_reports_cache_write_tokens(client):
     assert details["cached_tokens"] > 0
 
 
+def test_vertex_reports_traffic_type_only_on_its_own_route(client):
+    body = {"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}
+    model = "models/gemini-2.0-flash:generateContent"
+    vertex = client.post(
+        f"/v1/projects/test/locations/us-central1/publishers/google/{model}", json=body
+    )
+    gemini = client.post(f"/v1beta/{model}", json=body)
+
+    assert vertex.json["usageMetadata"]["trafficType"] == "ON_DEMAND"
+    assert "trafficType" not in gemini.json["usageMetadata"]
+
+
 def test_google_reports_a_cached_and_per_modality_breakdown(client):
     response = client.post(
         "/v1beta/models/gemini-2.0-flash:generateContent",
